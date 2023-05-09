@@ -2,11 +2,17 @@ package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 
+import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -31,6 +37,8 @@ public class WorkspaceFixtures {
       new ApiProperty().key("userkey").value("uservalue");
 
   public static final String DEFAULT_SPEND_PROFILE = "wm-default-spend-profile";
+  public static final SpendProfileId DEFAULT_SPEND_PROFILE_ID =
+      new SpendProfileId(DEFAULT_SPEND_PROFILE);
 
   /**
    * Generate the request body for creating an MC_WORKSPACE stage workspace.
@@ -42,12 +50,16 @@ public class WorkspaceFixtures {
   }
 
   public static Workspace createDefaultMcWorkspace() {
+    return createDefaultMcWorkspace(DEFAULT_SPEND_PROFILE_ID);
+  }
+
+  public static Workspace createDefaultMcWorkspace(SpendProfileId spendProfileId) {
     return new Workspace(
         UUID.randomUUID(),
         RandomStringUtils.randomAlphabetic(10).toLowerCase(Locale.ROOT),
         "default workspace",
         "this is an awesome workspace",
-        new SpendProfileId(UUID.randomUUID().toString()),
+        spendProfileId,
         Collections.emptyMap(),
         WorkspaceStage.MC_WORKSPACE,
         DEFAULT_USER_EMAIL,
@@ -100,6 +112,28 @@ public class WorkspaceFixtures {
         .stage(stageModel)
         .spendProfile(DEFAULT_SPEND_PROFILE)
         .properties(properties);
+  }
+
+  public static FlightMap createCloudContextInputs(
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest,
+      CloudPlatform cloudPlatform,
+      SpendProfile spendProfile) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    inputs.put(WorkspaceFlightMapKeys.CLOUD_PLATFORM, cloudPlatform);
+    inputs.put(WorkspaceFlightMapKeys.SPEND_PROFILE, spendProfile);
+    return inputs;
+  }
+
+  public static FlightMap deleteCloudContextInputs(
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest, CloudPlatform cloudPlatform) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    inputs.put(WorkspaceFlightMapKeys.CLOUD_PLATFORM, cloudPlatform);
+    return inputs;
   }
 
   public static String getUserFacingId(UUID workspaceId) {

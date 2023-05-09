@@ -5,7 +5,7 @@ paths:
     post:
       summary: Create a cloud context for the workspace.
       operationId: createCloudContext
-      tags: [ Workspace ]
+      tags: [Workspace]
       requestBody:
         required: true
         content:
@@ -33,7 +33,7 @@ paths:
     get:
       summary: Get the result of a async job to create a cloud context.
       operationId: getCreateCloudContextResult
-      tags: [ Workspace ]
+      tags: [Workspace]
       responses:
         '200':
           $ref: '#/components/responses/CreateCloudContextResultResponse'
@@ -57,7 +57,7 @@ paths:
     delete:
       summary: Deletes a cloud context and all of its data from a workspace.
       operationId: deleteCloudContext
-      tags: [ Workspace ]
+      tags: [Workspace]
       responses:
         '204':
           description: OK
@@ -115,7 +115,7 @@ components:
 
     CreateCloudContextRequest:
       type: object
-      required: [ cloudPlatform, jobControl ]
+      required: [cloudPlatform, jobControl]
       description: |
         Request body for asynchronously creating a cloud context for a workspace.
         Contains the CloudPlatform for the context and the JobControl object.
@@ -134,7 +134,7 @@ components:
         The result of a call to create a cloud context for a workspace. Contains
         a JobReport detailing the async operation, and either a GcpContext, AzureContext or AwsContext (if operation complete)
         or an ErrorReport detailing an error.
-      required: [ jobReport ]
+      required: [jobReport]
       properties:
         jobReport:
           $ref: '#/components/schemas/JobReport'

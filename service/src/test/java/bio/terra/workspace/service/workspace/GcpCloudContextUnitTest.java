@@ -8,14 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
@@ -25,6 +24,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.Collections;
 import java.util.UUID;
@@ -38,13 +38,17 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   private static final String POLICY_WRITER = "policy-writer";
   private static final String POLICY_READER = "policy-reader";
   private static final String POLICY_APPLICATION = "policy-application";
-  private static final String V1_JSON =
-      String.format("{\"version\": 1, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private ResourceDao resourceDao;
-  @Autowired private GcpCloudContextService gcpCloudContextService;
+
+  private DbCloudContext makeDbCloudContext(String json) {
+    return new DbCloudContext()
+        .cloudPlatform(CloudPlatform.GCP)
+        .spendProfile(WorkspaceUnitTestUtils.SPEND_PROFILE_ID)
+        .contextJson(json);
+  }
 
   @Test
   void serdesTest() {
@@ -52,8 +56,6 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         String.format(
             "{\"version\": 2, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
             GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
-    final String badV1Json =
-        String.format("{\"version\": 3, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
     final String badV2Json =
         String.format(
             "{\"version\": 3, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
@@ -62,88 +64,32 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         String.format("{\"version\": 2, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
     final String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
 
-    // Case 1: successful V1 deserialization
-    GcpCloudContext goodV1 = GcpCloudContext.deserialize(V1_JSON);
-    assertEquals(goodV1.getGcpProjectId(), GCP_PROJECT_ID);
-    assertTrue(goodV1.getSamPolicyOwner().isEmpty());
-    assertTrue(goodV1.getSamPolicyWriter().isEmpty());
-    assertTrue(goodV1.getSamPolicyReader().isEmpty());
-    assertTrue(goodV1.getSamPolicyApplication().isEmpty());
-
-    // Case 2: successful V2 deserialization
-    GcpCloudContext goodV2 = GcpCloudContext.deserialize(v2Json);
+    // Case 1: successful V2 deserialization
+    DbCloudContext dbCloudContext = makeDbCloudContext(v2Json);
+    GcpCloudContext goodV2 = GcpCloudContext.deserialize(dbCloudContext);
     assertEquals(goodV2.getGcpProjectId(), GCP_PROJECT_ID);
     assertEquals(goodV2.getSamPolicyOwner().orElse(null), POLICY_OWNER);
     assertEquals(goodV2.getSamPolicyWriter().orElse(null), POLICY_WRITER);
     assertEquals(goodV2.getSamPolicyReader().orElse(null), POLICY_READER);
     assertEquals(goodV2.getSamPolicyApplication().orElse(null), POLICY_APPLICATION);
 
-    // Case 3: bad V1 format
+    // Case 2: bad V2 format
     assertThrows(
         InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(badV1Json),
-        "Bad V1 JSON should throw");
-
-    // Case 4: bad V2 format
-    assertThrows(
-        InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(badV2Json),
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(badV2Json)),
         "Bad V2 JSON should throw");
 
-    // Case 5: incomplete V2
+    // Case 3: incomplete V2
     assertThrows(
         InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(incompleteV2Json),
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(incompleteV2Json)),
         "Incomplete V2 JSON should throw");
 
-    // Case 6: junk input
+    // Case 4: junk input
     assertThrows(
-        InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(junkJson),
+        SerializationException.class,
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(junkJson)),
         "Junk JSON should throw");
-  }
-
-  @Test
-  public void autoUpgradeTest() throws Exception {
-    // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
-    // false by Mockito default.
-    Mockito.when(
-            mockSamService()
-                .isAuthorized(
-                    Mockito.any(),
-                    Mockito.any(),
-                    Mockito.any(),
-                    Mockito.eq(SamSpendProfileAction.LINK)))
-        .thenReturn(true);
-
-    // Fake groups
-    Mockito.when(mockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.READER), any()))
-        .thenReturn(POLICY_READER);
-    Mockito.when(mockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.WRITER), any()))
-        .thenReturn(POLICY_WRITER);
-    Mockito.when(mockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.OWNER), any()))
-        .thenReturn(POLICY_OWNER);
-    Mockito.when(
-            mockSamService().getWorkspacePolicy(any(), Mockito.eq(WsmIamRole.APPLICATION), any()))
-        .thenReturn(POLICY_APPLICATION);
-
-    // Create a workspace record
-    UUID workspaceUuid = UUID.randomUUID();
-    var workspace = WorkspaceFixtures.buildMcWorkspace(workspaceUuid);
-    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
-
-    // Create a cloud context in the database with a V1 format
-    final String flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.createCloudContextFinish(workspaceUuid, CloudPlatform.GCP, V1_JSON, flightId);
-
-    // Run the service call that should do the upgrade
-    GcpCloudContext updatedContext =
-        gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid, USER_REQUEST);
-    assertEquals(updatedContext.getSamPolicyOwner().orElse(null), POLICY_OWNER);
-    assertEquals(updatedContext.getSamPolicyWriter().orElse(null), POLICY_WRITER);
-    assertEquals(updatedContext.getSamPolicyReader().orElse(null), POLICY_READER);
-    assertEquals(updatedContext.getSamPolicyApplication().orElse(null), POLICY_APPLICATION);
   }
 
   @Test
@@ -161,14 +107,11 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
             DEFAULT_USER_EMAIL,
             null);
     workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
+
     // Create a cloud context record in the DB
     String projectId = "fake-project-id";
-    GcpCloudContext fakeContext =
-        new GcpCloudContext(projectId, "fakeOwner", "fakeWriter", "fakeReader", "fakeApplication");
-    final String flightId = UUID.randomUUID().toString();
-    workspaceDao.createCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.createCloudContextFinish(
-        workspaceUuid, CloudPlatform.GCP, fakeContext.serialize(), flightId);
+    WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspaceUuid, projectId);
+
     // Create a controlled resource in the DB
     ControlledBigQueryDatasetResource bqDataset =
         ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
@@ -185,7 +128,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     setupCrlMocks();
 
     // Delete the GCP context through the service
-    workspaceService.deleteGcpCloudContext(workspace, USER_REQUEST);
+    workspaceService.deleteCloudContext(workspace, CloudPlatform.GCP, USER_REQUEST);
 
     // Verify the context and resource have both been deleted from the DB
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());

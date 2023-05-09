@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
@@ -96,8 +97,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
           .namespace("terra")
           .name("group-constraint")
           .addAdditionalDataItem(new TpsPolicyPair().key("group").value("my_fake_group"));
-
-  private static final String FAKE_SPEND_PROFILE = "fake-spend-profile";
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
@@ -302,7 +301,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiWorkspaceDescription sourceWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
 
     ApiCloneWorkspaceResult cloneWorkspace =
-        mockMvcUtils.cloneWorkspace(USER_REQUEST, workspaceId, FAKE_SPEND_PROFILE, null, null);
+        mockMvcUtils.cloneWorkspace(USER_REQUEST, workspaceId, DEFAULT_SPEND_PROFILE, null, null);
     jobService.waitForJob(cloneWorkspace.getJobReport().getId());
 
     UUID destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
@@ -366,7 +365,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     ApiCloneWorkspaceResult cloneWorkspace =
         mockMvcUtils.cloneWorkspace(
-            USER_REQUEST, sourceWorkspaceId, FAKE_SPEND_PROFILE, null, destinationWorkspaceId);
+            USER_REQUEST, sourceWorkspaceId, DEFAULT_SPEND_PROFILE, null, destinationWorkspaceId);
 
     List<ApiResourceCloneDetails> cloneDetails = cloneWorkspace.getWorkspace().getResources();
     assertEquals(3, cloneDetails.size());

@@ -14,16 +14,16 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.CreateAzureContextFlight;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.resourcemanager.compute.ComputeManager;
-import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.storage.StorageManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,23 +58,18 @@ public class AzureTestUtils {
     return crlService.getComputeManager(getAzureCloudContext(), this.azureConfiguration);
   }
 
-  public RelayManager getRelayManager() {
-    return crlService.getRelayManager(getAzureCloudContext(), this.azureConfiguration);
-  }
-
   public StorageManager getStorageManager() {
     return crlService.getStorageManager(getAzureCloudContext(), this.azureConfiguration);
   }
 
-  /** Create the FlightMap input parameters required for the {@link CreateAzureContextFlight}. */
+  /**
+   * Create the FlightMap input parameters required for the {@link
+   * bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight}.
+   */
   public FlightMap createAzureContextInputParameters(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
-    AzureCloudContext azureCloudContext = getAzureCloudContext();
-    FlightMap inputs = new FlightMap();
-    inputs.put(JobMapKeys.REQUEST.getKeyName(), azureCloudContext);
-    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
-    inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    return inputs;
+    return WorkspaceFixtures.createCloudContextInputs(
+        workspaceUuid, userRequest, CloudPlatform.AZURE, getSpendProfile());
   }
 
   public FlightMap createControlledResourceInputParameters(
@@ -124,10 +119,21 @@ public class AzureTestUtils {
     return new AzureCloudContext(
         azureTestConfiguration.getTenantId(),
         azureTestConfiguration.getSubscriptionId(),
-        azureTestConfiguration.getManagedResourceGroupId());
+        azureTestConfiguration.getManagedResourceGroupId(),
+        /* commonFields= */ null);
   }
 
   public SpendProfileId getSpendProfileId() {
     return new SpendProfileId(azureTestConfiguration.getSpendProfileId());
+  }
+
+  public SpendProfile getSpendProfile() {
+    return new SpendProfile(
+        getSpendProfileId(),
+        CloudPlatform.AZURE,
+        null,
+        UUID.fromString(azureTestConfiguration.getTenantId()),
+        UUID.fromString(azureTestConfiguration.getSubscriptionId()),
+        azureTestConfiguration.getManagedResourceGroupId());
   }
 }

@@ -57,7 +57,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -73,6 +72,12 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * <p>Use this instead of WorkspaceApiControllerTest, if you want to use real
  * bio.terra.workspace.service.iam.SamService.
  */
+
+// TODO: PF-2694 authorization check of the billing profile moved to the controller
+//  where it is supposed to be. We need a test that exercises the user with no access to
+//  billing profile generates the correct error. That test is removed from
+//  CreateContextGcpFlightTest since it makes a direct call to workspaceService. We
+//  want to see a SpendUnauthorizedException (Forbidden)
 @Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
@@ -81,7 +86,6 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private MockMvcUtils mockMvcUtils;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private SamService samService;
 
   private ApiCreatedWorkspace workspace;
@@ -491,8 +495,12 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       assertEquals(0, result.getConflicts().size());
       assertEquals(0, result.getResourcesWithConflict().size());
     } finally {
-      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
-      mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+      if (targetWorkspaceId != null) {
+        mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
+      }
+      if (sourceWorkspaceId != null) {
+        mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+      }
     }
   }
 

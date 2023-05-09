@@ -3,14 +3,17 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -21,31 +24,34 @@ public class LaunchCreateCloudContextFlightStep implements Step {
   private final WorkspaceService workspaceService;
   private final CloudPlatform cloudPlatform;
   private final String flightIdKey;
+  private final SpendProfile spendProfile;
 
   public LaunchCreateCloudContextFlightStep(
-      WorkspaceService workspaceService, CloudPlatform cloudPlatform, String flightIdKey) {
+      WorkspaceService workspaceService,
+      CloudPlatform cloudPlatform,
+      SpendProfile spendProfile,
+      String flightIdKey) {
     this.workspaceService = workspaceService;
     this.cloudPlatform = cloudPlatform;
     this.flightIdKey = flightIdKey;
+    this.spendProfile = spendProfile;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntries(
-        context.getInputParameters(),
-        ControlledResourceKeys.SOURCE_WORKSPACE_ID,
-        JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        JobMapKeys.REQUEST.getKeyName());
+        context.getInputParameters(), ControlledResourceKeys.SOURCE_WORKSPACE_ID);
     validateRequiredEntries(context.getWorkingMap(), flightIdKey);
 
-    var userRequest =
-        context
-            .getInputParameters()
-            .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
-    var destinationWorkspace =
-        context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
+    FlightMap inputs = context.getInputParameters();
 
-    var cloudContextJobId = context.getWorkingMap().get(flightIdKey, String.class);
+    var userRequest =
+        FlightUtils.getRequired(
+            inputs, JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    var destinationWorkspace =
+        FlightUtils.getRequired(inputs, JobMapKeys.REQUEST.getKeyName(), Workspace.class);
+    var cloudContextJobId =
+        FlightUtils.getRequired(context.getWorkingMap(), flightIdKey, String.class);
 
     boolean flightAlreadyExists;
     try {
@@ -58,13 +64,8 @@ public class LaunchCreateCloudContextFlightStep implements Step {
     }
     // if we already have a flight, don't launch another one
     if (!flightAlreadyExists) {
-      if (CloudPlatform.AZURE == cloudPlatform) {
-        workspaceService.createAzureCloudContext(
-            destinationWorkspace, cloudContextJobId, userRequest, null);
-      } else {
-        workspaceService.createGcpCloudContext(
-            destinationWorkspace, cloudContextJobId, userRequest);
-      }
+      workspaceService.createCloudContext(
+          destinationWorkspace, cloudPlatform, spendProfile, cloudContextJobId, userRequest, null);
     }
     return StepResult.getStepResultSuccess();
   }

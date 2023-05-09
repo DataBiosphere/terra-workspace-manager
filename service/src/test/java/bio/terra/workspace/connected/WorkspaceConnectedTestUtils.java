@@ -3,12 +3,16 @@ package bio.terra.workspace.connected;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.UUID;
@@ -22,7 +26,8 @@ public class WorkspaceConnectedTestUtils {
   private @Autowired JobService jobService;
   private @Autowired SpendConnectedTestUtils spendUtils;
   private @Autowired CrlService crlService;
-
+  private @Autowired SpendProfileService spendProfileService;
+  private @Autowired FeatureConfiguration features;
   /**
    * Creates a workspace with a GCP cloud context.
    *
@@ -32,9 +37,16 @@ public class WorkspaceConnectedTestUtils {
   public Workspace createWorkspaceWithGcpContext(AuthenticatedUserRequest userRequest) {
     Workspace workspace = createWorkspace(userRequest);
     UUID workspaceUuid = workspace.getWorkspaceId();
+
+    // With the advent of BPM use, the only safe way to get the SpendProfile is to
+    // make the authorize request.
+    SpendProfile spendProfile =
+        spendProfileService.authorizeLinking(
+            workspace.getSpendProfileId().orElseThrow(), features.isBpmGcpEnabled(), userRequest);
+
     String gcpContextJobId = UUID.randomUUID().toString();
-    workspaceService.createGcpCloudContext(
-        workspace, gcpContextJobId, userRequest, "fakeResultPath");
+    workspaceService.createCloudContext(
+        workspace, CloudPlatform.GCP, spendProfile, gcpContextJobId, userRequest, "fakeResultPath");
     jobService.waitForJob(gcpContextJobId);
     assertNull(jobService.retrieveJobResult(gcpContextJobId, Object.class).getException());
     return workspaceService.getWorkspace(workspaceUuid);

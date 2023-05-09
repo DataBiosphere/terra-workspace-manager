@@ -5,11 +5,11 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.HashMap;
@@ -36,8 +36,8 @@ public class AdminService {
   @Nullable
   public String syncIamRoleForAllGcpProjects(AuthenticatedUserRequest userRequest, boolean wetRun) {
     Map<UUID, String> workspaceIdToGcpProjectIdMap = new HashMap<>();
-    for (Map.Entry<UUID, String> cloudContext :
-        workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP).entrySet()) {
+    for (Map.Entry<UUID, DbCloudContext> cloudContext :
+        workspaceDao.getWorkspaceIdToGcpCloudContextMap().entrySet()) {
       workspaceIdToGcpProjectIdMap.put(
           cloudContext.getKey(),
           Objects.requireNonNull(GcpCloudContext.deserialize(cloudContext.getValue()))
@@ -50,7 +50,7 @@ public class AdminService {
     JobBuilder job =
         jobService
             .newJob()
-            .description("sync custom iam roles in all gcp projects")
+            .description("sync custom iam roles in all active gcp projects")
             .jobId(UUID.randomUUID().toString())
             .flightClass(SyncGcpIamRolesFlight.class)
             .userRequest(userRequest)

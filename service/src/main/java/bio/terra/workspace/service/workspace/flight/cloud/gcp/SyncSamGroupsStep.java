@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.cloud.gcp;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.GCP_PROJECT_ID;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -9,6 +11,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -54,6 +57,20 @@ public class SyncSamGroupsStep implements Step {
 
     FlightMap workingMap = flightContext.getWorkingMap();
     workingMap.put(WorkspaceFlightMapKeys.IAM_GROUP_EMAIL_MAP, workspaceRoleGroupMap);
+
+    // Build the cloud context and store it in the working map. It is used to update
+    // the DB in the common end step of the flight.
+    String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
+    GcpCloudContext context =
+        new GcpCloudContext(
+            projectId,
+            workspaceRoleGroupMap.get(WsmIamRole.OWNER),
+            workspaceRoleGroupMap.get(WsmIamRole.WRITER),
+            workspaceRoleGroupMap.get(WsmIamRole.READER),
+            workspaceRoleGroupMap.get(WsmIamRole.APPLICATION),
+            /*commonField=*/ null);
+
+    workingMap.put(WorkspaceFlightMapKeys.CLOUD_CONTEXT, context);
 
     return StepResult.getStepResultSuccess();
   }

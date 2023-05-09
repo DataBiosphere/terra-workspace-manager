@@ -61,6 +61,7 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
   @Test
   public void createAzureVmWithoutDisk() throws Exception {
     UUID workspaceId = UUID.randomUUID();
+    setupMockLandingZoneRegion(Region.US_SOUTH_CENTRAL);
 
     final ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();

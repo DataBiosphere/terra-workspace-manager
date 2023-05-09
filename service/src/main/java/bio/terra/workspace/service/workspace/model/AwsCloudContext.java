@@ -1,38 +1,39 @@
 package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.common.exception.SerializationException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-public class AwsCloudContext {
-  private String majorVersion;
-  private String organizationId;
-  private String accountId;
-  private String tenantAlias;
-  private String environmentAlias;
+public class AwsCloudContext implements CloudContext {
+  private final String majorVersion;
+  private final String organizationId;
+  private final String accountId;
+  private final String tenantAlias;
+  private final String environmentAlias;
+  private final @Nullable CloudContextCommonFields commonFields;
 
-  // Constructor for Jackson
-  public AwsCloudContext() {}
-
-  // Constructor for V1
+  @JsonCreator
   public AwsCloudContext(
-      String majorVersion,
-      String organizationId,
-      String accountId,
-      String tenantAlias,
-      String environmentAlias) {
+      @JsonProperty("majorVersion") String majorVersion,
+      @JsonProperty("organizationId") String organizationId,
+      @JsonProperty("accountId") String accountId,
+      @JsonProperty("tenantAlias") String tenantAlias,
+      @JsonProperty("environmentAlias") String environmentAlias,
+      @JsonProperty("commonFields") CloudContextCommonFields commonFields) {
     this.majorVersion = majorVersion;
     this.organizationId = organizationId;
     this.accountId = accountId;
     this.tenantAlias = tenantAlias;
     this.environmentAlias = environmentAlias;
+    this.commonFields = commonFields;
   }
 
   public String getMajorVersion() {
@@ -55,6 +56,26 @@ public class AwsCloudContext {
     return environmentAlias;
   }
 
+  @Override
+  public CloudPlatform getCloudPlatform() {
+    return CloudPlatform.AWS;
+  }
+
+  @Override
+  public @Nullable CloudContextCommonFields getCommonFields() {
+    return commonFields;
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(CloudPlatform cloudPlatform) {
+    if (cloudPlatform != getCloudPlatform()) {
+      throw new InternalLogicException(
+          String.format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
+    }
+    return (T) this;
+  }
+
   public ApiAwsContext toApi() {
     return new ApiAwsContext()
         .majorVersion(majorVersion)
@@ -64,45 +85,22 @@ public class AwsCloudContext {
         .environmentAlias(environmentAlias);
   }
 
-  public static AwsCloudContext fromApi(ApiAwsContext awsContext) {
-    return new AwsCloudContext(
-        awsContext.getMajorVersion(),
-        awsContext.getOrganizationId(),
-        awsContext.getAccountId(),
-        awsContext.getTenantAlias(),
-        awsContext.getEnvironmentAlias());
-  }
-
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    AwsCloudContext that = (AwsCloudContext) o;
-
-    return new EqualsBuilder()
-        .append(majorVersion, that.majorVersion)
-        .append(organizationId, that.organizationId)
-        .append(accountId, that.accountId)
-        .append(tenantAlias, that.tenantAlias)
-        .append(environmentAlias, that.environmentAlias)
-        .isEquals();
+    if (this == o) return true;
+    if (!(o instanceof AwsCloudContext that)) return false;
+    return Objects.equal(majorVersion, that.majorVersion)
+        && Objects.equal(organizationId, that.organizationId)
+        && Objects.equal(accountId, that.accountId)
+        && Objects.equal(tenantAlias, that.tenantAlias)
+        && Objects.equal(environmentAlias, that.environmentAlias)
+        && Objects.equal(commonFields, that.commonFields);
   }
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder(17, 37)
-        .append(majorVersion)
-        .append(organizationId)
-        .append(accountId)
-        .append(tenantAlias)
-        .append(environmentAlias)
-        .toHashCode();
+    return Objects.hashCode(
+        majorVersion, organizationId, accountId, tenantAlias, environmentAlias, commonFields);
   }
 
   public String serialize() {
@@ -110,13 +108,10 @@ public class AwsCloudContext {
     return DbSerDes.toJson(dbContext);
   }
 
-  public static @Nullable AwsCloudContext deserialize(@Nullable String json) {
-    if (json == null) {
-      return null;
-    }
-
+  public static AwsCloudContext deserialize(DbCloudContext dbCloudContext) {
     try {
-      AwsCloudContextV1 dbContext = DbSerDes.fromJson(json, AwsCloudContextV1.class);
+      AwsCloudContextV1 dbContext =
+          DbSerDes.fromJson(dbCloudContext.getContextJson(), AwsCloudContextV1.class);
       dbContext.validateVersion();
 
       return new AwsCloudContext(
@@ -124,7 +119,12 @@ public class AwsCloudContext {
           dbContext.organizationId,
           dbContext.accountId,
           dbContext.tenantAlias,
-          dbContext.environmentAlias);
+          dbContext.environmentAlias,
+          new CloudContextCommonFields(
+              dbCloudContext.getSpendProfile(),
+              dbCloudContext.getState(),
+              dbCloudContext.getFlightId(),
+              dbCloudContext.getError()));
 
     } catch (SerializationException e) {
       throw new InvalidSerializedVersionException("Invalid serialized version: " + e);

@@ -1,7 +1,8 @@
 package bio.terra.workspace.service.workspace.model;
 
-import bio.terra.common.exception.SerializationException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.DbSerDes;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -9,39 +10,28 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-public class GcpCloudContext {
-  private String gcpProjectId;
-  // V2 additions:
-  // - Sam policy groups for the workspace roles; nullable
-  @Nullable private String samPolicyOwner;
-  @Nullable private String samPolicyWriter;
-  @Nullable private String samPolicyReader;
-  @Nullable private String samPolicyApplication;
+public class GcpCloudContext implements CloudContext {
+  private final String gcpProjectId;
+  private final String samPolicyOwner;
+  private final String samPolicyWriter;
+  private final String samPolicyReader;
+  private final String samPolicyApplication;
+  private final @Nullable CloudContextCommonFields commonFields;
 
-  // Constructor for Jackson
-  public GcpCloudContext() {}
-
-  // Constructor for V1
-  public GcpCloudContext(String gcpProjectId) {
-    this.gcpProjectId = gcpProjectId;
-    this.samPolicyOwner = null;
-    this.samPolicyWriter = null;
-    this.samPolicyReader = null;
-    this.samPolicyApplication = null;
-  }
-
-  // Constructor for V2
+  @JsonCreator
   public GcpCloudContext(
-      String gcpProjectId,
-      @Nullable String samPolicyOwner,
-      @Nullable String samPolicyWriter,
-      @Nullable String samPolicyReader,
-      @Nullable String samPolicyApplication) {
+      @JsonProperty("gcpProjectId") String gcpProjectId,
+      @JsonProperty("samPolicyOwner") String samPolicyOwner,
+      @JsonProperty("samPolicyWriter") String samPolicyWriter,
+      @JsonProperty("samPolicyReader") String samPolicyReader,
+      @JsonProperty("samPolicyApplication") String samPolicyApplication,
+      @JsonProperty("commonFields") @Nullable CloudContextCommonFields commonFields) {
     this.gcpProjectId = gcpProjectId;
     this.samPolicyOwner = samPolicyOwner;
     this.samPolicyWriter = samPolicyWriter;
     this.samPolicyReader = samPolicyReader;
     this.samPolicyApplication = samPolicyApplication;
+    this.commonFields = commonFields;
   }
 
   public String getGcpProjectId() {
@@ -64,92 +54,71 @@ public class GcpCloudContext {
     return Optional.ofNullable(samPolicyApplication);
   }
 
-  public void setSamPolicyOwner(String samPolicyOwner) {
-    this.samPolicyOwner = samPolicyOwner;
+  @Override
+  public CloudPlatform getCloudPlatform() {
+    return CloudPlatform.GCP;
   }
 
-  public void setSamPolicyWriter(String samPolicyWriter) {
-    this.samPolicyWriter = samPolicyWriter;
+  @Override
+  public @Nullable CloudContextCommonFields getCommonFields() {
+    return commonFields;
   }
 
-  public void setSamPolicyReader(String samPolicyReader) {
-    this.samPolicyReader = samPolicyReader;
-  }
-
-  public void setSamPolicyApplication(String samPolicyApplication) {
-    this.samPolicyApplication = samPolicyApplication;
-  }
-
-  public ApiGcpContext toApi() {
-    return new ApiGcpContext().projectId(gcpProjectId);
-  }
-
-  public String serialize() {
-    // We use the owner policy to know when we have V1 data
-    if (samPolicyOwner == null) {
-      GcpCloudContextV1 v1Context = new GcpCloudContextV1(this);
-      return DbSerDes.toJson(v1Context);
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(CloudPlatform cloudPlatform) {
+    if (cloudPlatform != getCloudPlatform()) {
+      throw new InternalLogicException(
+          String.format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
     }
+    return (T) this;
+  }
+
+  @Override
+  public String serialize() {
     GcpCloudContextV2 dbContext = new GcpCloudContextV2(this);
     return DbSerDes.toJson(dbContext);
   }
 
-  public static @Nullable GcpCloudContext deserialize(@Nullable String json) {
-    if (json == null) {
-      return null;
+  public static GcpCloudContext deserialize(DbCloudContext dbCloudContext) {
+    // Sanity check the input
+    if (dbCloudContext == null
+        || dbCloudContext.getSpendProfile() == null
+        || dbCloudContext.getCloudPlatform() != CloudPlatform.GCP) {
+      throw new InternalLogicException("Invalid GCP cloud context state");
     }
 
-    try {
-      GcpCloudContextV2 v2Context = DbSerDes.fromJson(json, GcpCloudContextV2.class);
-      if (v2Context.version == GcpCloudContextV2.GCP_CLOUD_CONTEXT_DB_VERSION) {
-        // If the set of fields is incomplete, this will deserialize and fill in nulls.
-        // Those are valid in the GcpCloudContext, because it needs to model V1
-        // contexts. However, we should not see nulls here, so we explicitly validate.
-        if (v2Context.samPolicyOwner == null
-            || v2Context.samPolicyWriter == null
-            || v2Context.samPolicyReader == null
-            || v2Context.samPolicyApplication == null) {
-          throw new InvalidSerializedVersionException("Serialized version missing data");
-        }
-        return new GcpCloudContext(
-            v2Context.gcpProjectId,
-            v2Context.samPolicyOwner,
-            v2Context.samPolicyWriter,
-            v2Context.samPolicyReader,
-            v2Context.samPolicyApplication);
-      }
-    } catch (SerializationException e) {
-      // Deserialization of V2 failed. Try the V1 format
-    }
-    // TODO(PF-1666): Remove this branch once all workspaces are migrated to GcpCloudContextV2
-    try {
-      GcpCloudContextV1 v1Context = DbSerDes.fromJson(json, GcpCloudContextV1.class);
-      if (v1Context.version == GcpCloudContextV1.GCP_CLOUD_CONTEXT_DB_VERSION) {
-        return new GcpCloudContext(v1Context.gcpProjectId);
-      }
-    } catch (SerializationException e) {
-      // Deserialization of V1 failed.
+    GcpCloudContextV2 v2Context =
+        DbSerDes.fromJson(dbCloudContext.getContextJson(), GcpCloudContextV2.class);
+    if (v2Context.version != GcpCloudContextV2.GCP_CLOUD_CONTEXT_DB_VERSION) {
+      throw new InvalidSerializedVersionException("Invalid serialized version");
     }
 
-    throw new InvalidSerializedVersionException("Invalid serialized version");
+    // If the set of fields is incomplete, this will deserialize and fill in nulls.
+    // Those are valid in the GcpCloudContext, because it needs to model V1
+    // contexts. However, we should not see nulls here, so we explicitly validate.
+    if (v2Context.samPolicyOwner == null
+        || v2Context.samPolicyWriter == null
+        || v2Context.samPolicyReader == null
+        || v2Context.samPolicyApplication == null) {
+      throw new InvalidSerializedVersionException("Serialized version missing data");
+    }
+
+    return new GcpCloudContext(
+        v2Context.gcpProjectId,
+        v2Context.samPolicyOwner,
+        v2Context.samPolicyWriter,
+        v2Context.samPolicyReader,
+        v2Context.samPolicyApplication,
+        new CloudContextCommonFields(
+            dbCloudContext.getSpendProfile(),
+            dbCloudContext.getState(),
+            dbCloudContext.getFlightId(),
+            dbCloudContext.getError()));
   }
 
-  public static class GcpCloudContextV1 {
-    public static final long GCP_CLOUD_CONTEXT_DB_VERSION = 1;
-    public long version;
-    public String gcpProjectId;
-
-    @JsonCreator
-    public GcpCloudContextV1(
-        @JsonProperty("version") long version, @JsonProperty("gcpProjectId") String gcpProjectId) {
-      this.version = version;
-      this.gcpProjectId = gcpProjectId;
-    }
-
-    public GcpCloudContextV1(GcpCloudContext gcpCloudContext) {
-      this.version = GCP_CLOUD_CONTEXT_DB_VERSION;
-      this.gcpProjectId = gcpCloudContext.gcpProjectId;
-    }
+  public ApiGcpContext toApi() {
+    return new ApiGcpContext().projectId(gcpProjectId);
   }
 
   public static class GcpCloudContextV2 {

@@ -23,6 +23,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -34,11 +35,9 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.base.Preconditions;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -114,12 +113,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     if (operationType == OperationType.DELETE) {
       switch (af.getActivityLogChangedTarget()) {
         case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid, userEmail, subjectId);
-        case GCP_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
+        case CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
             CloudPlatform.GCP, workspaceUuid, userEmail, subjectId);
-        case AZURE_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-            CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
-        case AWS_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-            CloudPlatform.AWS, workspaceUuid, userEmail, subjectId);
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);
         default -> {
           if (af.isResourceFlight()) {
@@ -137,7 +132,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     // Always log when the flight succeeded.
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       switch (af.getActivityLogChangedTarget()) {
-        case WORKSPACE, AZURE_CLOUD_CONTEXT, GCP_CLOUD_CONTEXT -> activityLogDao.writeActivity(
+        case WORKSPACE, CLOUD_CONTEXT -> activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(
                 userEmail,
@@ -210,8 +205,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       String subjectId) {
     if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
       maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
-    } else if (GcpContextBackfillFlight.class.getName().equals(flightClassName)) {
-      maybeLogGcpContextBackfillFlight(context, operationType, userEmail, subjectId);
     } else {
       throw new UnhandledActivityLogException(
           String.format(
@@ -296,7 +289,8 @@ public class WorkspaceActivityLogHook implements StairwayHook {
 
   private void maybeLogCloudContextDeletionFlight(
       CloudPlatform cloudPlatform, UUID workspaceUuid, String userEmail, String subjectId) {
-    Optional<String> cloudContext = workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
+    Optional<DbCloudContext> cloudContext =
+        workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
     if (cloudContext.isEmpty()) {
       activityLogDao.writeActivity(
           workspaceUuid,
@@ -379,27 +373,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
           UUID.fromString(id),
           new DbWorkspaceActivityLog(
               userEmail, subjectId, operationType, id, ActivityLogChangedTarget.WORKSPACE));
-    }
-  }
-
-  private void maybeLogGcpContextBackfillFlight(
-      FlightContext context, OperationType operationType, String userEmail, String subjectId) {
-    if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
-      return;
-    }
-    List<String> backfillWorkspaceIdStrings =
-        Preconditions.checkNotNull(
-            context.getInputParameters().get(UPDATED_WORKSPACES, new TypeReference<>() {}));
-
-    for (String workspaceIdString : backfillWorkspaceIdStrings) {
-      activityLogDao.writeActivity(
-          UUID.fromString(workspaceIdString),
-          new DbWorkspaceActivityLog(
-              userEmail,
-              subjectId,
-              operationType,
-              workspaceIdString,
-              ActivityLogChangedTarget.GCP_CLOUD_CONTEXT));
     }
   }
 }

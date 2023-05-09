@@ -16,6 +16,7 @@ import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
@@ -68,15 +69,18 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import bio.terra.workspace.service.workspace.model.CloudContextHolder;
+import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -113,6 +117,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
   private final ResourceDao resourceDao;
+  private final SpendProfileService spendProfileService;
 
   @Autowired
   public WorkspaceApiController(
@@ -130,7 +135,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       AwsCloudContextService awsCloudContextService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
-      ResourceDao resourceDao) {
+      ResourceDao resourceDao,
+      SpendProfileService spendProfileService) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -147,6 +153,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.resourceDao = resourceDao;
+    this.spendProfileService = spendProfileService;
   }
 
   @Traced
@@ -177,6 +184,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
     Optional<SpendProfileId> spendProfileId =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
+    // Validate that the caller has access to the spend profile, if it is provided
+    spendProfileId.ifPresent(
+        profileId ->
+            spendProfileService.authorizeLinking(
+                profileId, features.isBpmGcpEnabled(), userRequest));
 
     // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
     // pass userFacingId in request, so use id.
@@ -550,17 +562,32 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
+
+    // Authorize creation of context in the workspace
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
-    switch (cloudPlatform) {
-      case GCP -> workspaceService.createGcpCloudContext(workspace, jobId, userRequest, resultPath);
-      case AZURE -> workspaceService.createAzureCloudContext(
-          workspace, jobId, userRequest, resultPath);
-      case AWS -> workspaceService.createAwsCloudContext(workspace, jobId, userRequest, resultPath);
-      default -> throw new FeatureNotSupportedException(
-          "Cloud context creation not supported for cloud platform " + cloudPlatform);
-    }
+    // TODO: PF-2694 REST API part
+    //  When we make the REST API changes, the spend profile will come with the create cloud context
+    //  and we will take it from there. Only if missing, will we take it from the workspace. For
+    //  this part, we do the permission check using the workspace spend profile.
+    SpendProfileId spendProfileId =
+        workspace
+            .getSpendProfileId()
+            .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspace.workspaceId()));
+
+    // Make sure the caller is authorized to use the spend profile
+    SpendProfile spendProfile =
+        spendProfileService.authorizeLinking(
+            spendProfileId, features.isBpmGcpEnabled(), userRequest);
+
+    workspaceService.createCloudContext(
+        workspace,
+        CloudPlatform.fromApiCloudPlatform(cloudPlatform),
+        spendProfile,
+        jobId,
+        userRequest,
+        resultPath);
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
@@ -577,48 +604,44 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   private ApiCreateCloudContextResult fetchCreateCloudContextResult(String jobId) {
-    JobApiUtils.AsyncJobResult<CloudContextHolder> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, CloudContextHolder.class);
+    JobApiUtils.AsyncJobResult<CloudContext> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, CloudContext.class);
 
-    ApiGcpContext gcpContext = null;
-    ApiAzureContext azureContext = null;
-    ApiAwsContext awsContext = null;
+    ApiGcpContext gcpApiContext = null;
+    ApiAzureContext azureApiContext = null;
+    ApiAwsContext awsApiContext = null;
 
     if (jobResult.getJobReport().getStatus().equals(StatusEnum.SUCCEEDED)) {
-      gcpContext =
-          Optional.ofNullable(jobResult.getResult().getGcpCloudContext())
-              .map(c -> new ApiGcpContext().projectId(c.getGcpProjectId()))
-              .orElse(null);
+      CloudContext cloudContext = jobResult.getResult();
+      if (cloudContext == null) {
+        // This is a bad state. We should never see the job succeed without the cloud
+        // context populated.
+        throw new InternalLogicException("Expected cloud context result, but found null");
+      }
 
-      azureContext =
-          Optional.ofNullable(jobResult.getResult().getAzureCloudContext())
-              .map(
-                  c ->
-                      new ApiAzureContext()
-                          .tenantId(c.getAzureTenantId())
-                          .subscriptionId(c.getAzureSubscriptionId())
-                          .resourceGroupId(c.getAzureResourceGroupId()))
-              .orElse(null);
-
-      awsContext =
-          Optional.ofNullable(jobResult.getResult().getAwsCloudContext())
-              .map(
-                  c ->
-                      new ApiAwsContext()
-                          .majorVersion(c.getMajorVersion())
-                          .organizationId(c.getOrganizationId())
-                          .accountId(c.getAccountId())
-                          .tenantAlias(c.getTenantAlias())
-                          .environmentAlias(c.getEnvironmentAlias()))
-              .orElse(null);
+      switch (cloudContext.getCloudPlatform()) {
+        case AWS -> {
+          AwsCloudContext awsCloudContext = cloudContext.castByEnum(CloudPlatform.AWS);
+          awsApiContext = awsCloudContext.toApi();
+        }
+        case AZURE -> {
+          AzureCloudContext azureCloudContext = cloudContext.castByEnum(CloudPlatform.AZURE);
+          azureApiContext = azureCloudContext.toApi();
+        }
+        case GCP -> {
+          GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
+          gcpApiContext = gcpCloudContext.toApi();
+        }
+        default -> throw new InternalLogicException("Invalid cloud platform returned");
+      }
     }
 
     return new ApiCreateCloudContextResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
-        .gcpContext(gcpContext)
-        .azureContext(azureContext)
-        .awsContext(awsContext);
+        .gcpContext(gcpApiContext)
+        .azureContext(azureApiContext)
+        .awsContext(awsApiContext);
   }
 
   @Traced
@@ -629,14 +652,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
 
-    switch (cloudPlatform) {
-      case GCP -> workspaceService.deleteGcpCloudContext(workspace, userRequest);
-      case AZURE -> workspaceService.deleteAzureCloudContext(workspace, userRequest);
-      case AWS -> workspaceService.deleteAwsCloudContext(workspace, userRequest);
-      default -> throw new FeatureNotSupportedException(
-          "Cloud context deletion not supported for cloud platform " + cloudPlatform);
-    }
-
+    workspaceService.deleteCloudContext(
+        workspace, CloudPlatform.fromApiCloudPlatform(cloudPlatform), userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -677,8 +694,23 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.validateWorkspaceAndAction(
             petRequest, workspaceUuid, SamWorkspaceAction.READ);
 
-    Optional<SpendProfileId> spendProfileId =
+    // TODO: PF-2694 REST API part
+    //  When we make the REST API changes, the spend profile will come with the source cloud context
+    //  and we will take it from there. Only if missing, will we take it from the workspace. For
+    //  this part, we do the retrieval and permission check using the workspace spend profile.
+    Optional<SpendProfileId> spendProfileIdOptional =
         Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
+    SpendProfileId spendProfileId =
+        spendProfileIdOptional.orElse(
+            sourceWorkspace
+                .getSpendProfileId()
+                .orElseThrow(
+                    () ->
+                        MissingSpendProfileException.forWorkspace(sourceWorkspace.workspaceId())));
+
+    SpendProfile spendProfile =
+        spendProfileService.authorizeLinking(
+            spendProfileId, features.isBpmGcpEnabled(), petRequest);
 
     // Accept a target workspace id if one is provided. This allows Rawls to specify an
     // existing workspace id. WSM then creates the WSMspace supporting the Rawls workspace.
@@ -704,7 +736,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)
             .userFacingId(destinationUserFacingId)
-            .spendProfileId(spendProfileId.orElse(null))
+            .spendProfileId(spendProfileId)
             .workspaceStage(sourceWorkspace.getWorkspaceStage())
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
@@ -718,7 +750,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             petRequest,
             body.getLocation(),
             TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAdditionalPolicies()),
-            destinationWorkspace);
+            destinationWorkspace,
+            spendProfile);
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =

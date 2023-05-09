@@ -21,9 +21,9 @@ import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -45,9 +45,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
         WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
     workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
 
-    gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, "flight-testentersinfo");
-    gcpCloudContextService.createGcpCloudContextFinish(
-        workspaceUuid, new GcpCloudContext("fake-project"), "flight-testentersinfo");
+    WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+        workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.PROJECT_ID);
 
     ControlledGcsBucketResource bucketResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();

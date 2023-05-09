@@ -55,6 +55,8 @@ public class SpendProfileService {
         spendProfileConfiguration);
   }
 
+  /** This constructor is only used for unit testing. DO NOT USE FOR PRODUCTION */
+  @VisibleForTesting
   public SpendProfileService(
       SamService samService,
       List<SpendProfile> spendProfiles,

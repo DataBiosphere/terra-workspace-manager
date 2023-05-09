@@ -7,6 +7,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiFlexibleRes
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
@@ -16,6 +17,7 @@ import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,6 +58,13 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
                 .userSubjectId(USER_REQUEST.getSubjectId()));
     when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
         .thenReturn(USER_REQUEST.getEmail());
+    when(mockSamService()
+            .isAuthorized(
+                any(),
+                eq(SamConstants.SamResource.SPEND_PROFILE),
+                any(),
+                eq(SamConstants.SamSpendProfileAction.LINK)))
+        .thenReturn(true);
 
     // Needed for assertion that requester has role on workspace.
     when(mockSamService().listRequesterRoles(any(), any(), any()))

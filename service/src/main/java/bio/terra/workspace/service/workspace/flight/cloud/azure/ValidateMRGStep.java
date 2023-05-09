@@ -14,22 +14,23 @@ import com.azure.resourcemanager.resources.ResourceManager;
 public class ValidateMRGStep implements Step {
   private final CrlService crlService;
   private final AzureConfiguration azureConfig;
+  private final SpendProfile spendProfile;
 
-  public ValidateMRGStep(CrlService crlService, AzureConfiguration azureConfig) {
+  public ValidateMRGStep(
+      CrlService crlService, AzureConfiguration azureConfig, SpendProfile spendProfile) {
     this.crlService = crlService;
     this.azureConfig = azureConfig;
+    this.spendProfile = spendProfile;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    var spendProfile =
-        flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
-
     AzureCloudContext azureCloudContext =
         new AzureCloudContext(
             spendProfile.tenantId().toString(),
             spendProfile.subscriptionId().toString(),
-            spendProfile.managedResourceGroupId());
+            spendProfile.managedResourceGroupId(),
+            /*commonFields=*/ null);
 
     try {
       ResourceManager resourceManager =
@@ -38,6 +39,10 @@ public class ValidateMRGStep implements Step {
     } catch (Exception azureError) {
       throw new CloudContextRequiredException("Invalid Azure cloud context", azureError);
     }
+
+    // Store the cloud context in the working map. It is used to update
+    // the DB in the common end step of the flight.
+    flightContext.getWorkingMap().put(WorkspaceFlightMapKeys.CLOUD_CONTEXT, azureCloudContext);
 
     return StepResult.getStepResultSuccess();
   }

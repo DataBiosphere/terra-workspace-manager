@@ -517,7 +517,7 @@ components:
 
     CreatedWorkspace:
       type: object
-      required: [ id ]
+      required: [id]
       properties:
         id:
           description: UUID of a newly-created workspace
@@ -526,7 +526,7 @@ components:
 
     CreateWorkspaceRequestBody:
       type: object
-      required: [ id ]
+      required: [id]
       properties:
         id:
           description: The ID of the workspace
@@ -558,7 +558,7 @@ components:
     GrantRoleRequestBody:
       description: The body for a request to grant a role to a single user.
       type: object
-      required: [ memberEmail ]
+      required: [memberEmail]
       properties:
         memberEmail:
           type: string
@@ -566,7 +566,7 @@ components:
     IamRole:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
-      enum: [ 'DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER' ]
+      enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER']
 
     MergeCheckRequest:
       description: Request with a workspace id
@@ -579,7 +579,7 @@ components:
     RoleBinding:
       description: A binding between an IAM role and users with that role
       type: object
-      required: [ role ]
+      required: [role]
       properties:
         role:
           $ref: '#/components/schemas/IamRole'
@@ -615,7 +615,7 @@ components:
 
     WorkspaceDescription:
       type: object
-      required: [ id, userFacingId, highestRole, createdBy, lastUpdatedBy, createdDate, lastUpdatedDate ]
+      required: [id, userFacingId, highestRole, createdBy, lastUpdatedBy, createdDate, lastUpdatedDate]
       properties:
         id:
           description: The ID of the workspace. Immutable.
@@ -687,5 +687,5 @@ components:
     WorkspaceStageModel:
       description: Enum for possible stages of a workspace along the Rawls migration path
       type: string
-      enum: [ 'RAWLS_WORKSPACE', 'MC_WORKSPACE' ]
+      enum: ['RAWLS_WORKSPACE', 'MC_WORKSPACE']
 
