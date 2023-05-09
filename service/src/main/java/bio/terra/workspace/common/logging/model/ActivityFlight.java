@@ -20,7 +20,6 @@ import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCl
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
-import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
 import java.util.Arrays;
 
 /**
@@ -81,11 +80,7 @@ public enum ActivityFlight {
   // AZURE
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(
       CloneControlledAzureStorageContainerResourceFlight.class.getName(),
-      ActivityLogChangedTarget.CONTROLLED_AZURE_STORAGE_CONTAINER),
-
-  // TODO: PF-2694 TEMPORARY BACKFILL
-  GCP_CONTEXT_BACKFILL_FLIGHT(
-      GcpContextBackfillFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT);
+      ActivityLogChangedTarget.CONTROLLED_AZURE_STORAGE_CONTAINER);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

@@ -8,6 +8,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
@@ -56,7 +57,11 @@ public class CreateCloudContextFinishStep implements Step {
 
     // Retrieve the stored cloud context with proper state and error
     DbCloudContext dbCloudContext =
-        workspaceDao.getCloudContext(workspaceUuid, cloudContext.getCloudPlatform()).orElseThrow();
+        workspaceDao
+            .getCloudContext(workspaceUuid, cloudContext.getCloudPlatform())
+            .orElseThrow(
+                () ->
+                    new InternalLogicException("Expected cloud context to exist, but it doesn't"));
     CloudContext fullCloudContext =
         dbCloudContext
             .getCloudPlatform()

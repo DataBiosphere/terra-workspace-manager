@@ -35,11 +35,9 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.gcpcontextbackfill.GcpContextBackfillFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.base.Preconditions;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -207,8 +205,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       String subjectId) {
     if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
       maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
-    } else if (GcpContextBackfillFlight.class.getName().equals(flightClassName)) {
-      maybeLogGcpContextBackfillFlight(context, operationType, userEmail, subjectId);
     } else {
       throw new UnhandledActivityLogException(
           String.format(
@@ -377,27 +373,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
           UUID.fromString(id),
           new DbWorkspaceActivityLog(
               userEmail, subjectId, operationType, id, ActivityLogChangedTarget.WORKSPACE));
-    }
-  }
-
-  private void maybeLogGcpContextBackfillFlight(
-      FlightContext context, OperationType operationType, String userEmail, String subjectId) {
-    if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
-      return;
-    }
-    List<String> backfillWorkspaceIdStrings =
-        Preconditions.checkNotNull(
-            context.getInputParameters().get(UPDATED_WORKSPACES, new TypeReference<>() {}));
-
-    for (String workspaceIdString : backfillWorkspaceIdStrings) {
-      activityLogDao.writeActivity(
-          UUID.fromString(workspaceIdString),
-          new DbWorkspaceActivityLog(
-              userEmail,
-              subjectId,
-              operationType,
-              workspaceIdString,
-              ActivityLogChangedTarget.CLOUD_CONTEXT));
     }
   }
 }

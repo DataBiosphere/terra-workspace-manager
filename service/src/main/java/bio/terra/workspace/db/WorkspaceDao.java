@@ -82,14 +82,14 @@ public class WorkspaceDao {
   /** Base select query for reading a cloud context; no predicate */
   private static final String BASE_CLOUD_CONTEXT_SELECT_SQL =
       """
-        SELECT workspace_id, cloud_platform, spend_profile, context, state, flight_id, error
-        FROM cloud_context
-    """;
+      SELECT workspace_id, cloud_platform, spend_profile, context, state, flight_id, error
+      FROM cloud_context
+      """;
 
   /** SQL query for reading a cloud context */
   private static final String CLOUD_CONTEXT_SELECT_SQL =
       BASE_CLOUD_CONTEXT_SELECT_SQL
-          + "WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+          + " WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
 
   private static final RowMapper<DbCloudContext> CLOUD_CONTEXT_ROW_MAPPER =
       (rs, rowNum) ->
@@ -458,9 +458,9 @@ public class WorkspaceDao {
     final String platform = cloudPlatform.toSql();
     final String sql =
         """
-      INSERT INTO cloud_context (workspace_id, cloud_platform, spend_profile, creating_flight, state, flight_id, error)
-      VALUES (:workspace_id, :cloud_platform, :spend_profile, :creating_flight, :state, :flight_id, NULL)
-      """;
+        INSERT INTO cloud_context (workspace_id, cloud_platform, spend_profile, creating_flight, state, flight_id, error)
+        VALUES (:workspace_id, :cloud_platform, :spend_profile, :creating_flight, :state, :flight_id, NULL)
+        """;
     var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
@@ -505,9 +505,9 @@ public class WorkspaceDao {
     if (context != null) {
       String sql =
           """
-        UPDATE cloud_context SET context = :context::json
-        WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform
-        """;
+          UPDATE cloud_context SET context = :context::json
+          WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform
+          """;
 
       var params =
           new MapSqlParameterSource()
@@ -579,7 +579,7 @@ public class WorkspaceDao {
    * @param workspaceUuid workspaceUuid part of PK for lookup
    * @param cloudPlatform platform part of PK for lookup
    * @param context serialized cloud context
-   * @param flightId if not null, the update filters on flight_idg
+   * @param flightId if not null, the update filters on flight_id
    * @return number of rows updated
    */
   private int updateCloudContextWorker(
@@ -781,26 +781,5 @@ public class WorkspaceDao {
             .addValue("active_resource_state", PrivateResourceState.ACTIVE.toSql());
 
     return jdbcTemplate.query(sql, params, WORKSPACE_USER_PAIR_ROW_MAPPER);
-  }
-
-  // TODO: PF-2694 - remove backfill once propagated to all environments
-  /**
-   * Retrieve the list of workspace ids where GCP cloud context needs to be back-filled.
-   *
-   * @return list of workspace ids
-   */
-  @ReadTransaction
-  public List<String> getGcpContextBackfillWorkspaceList() {
-    String sql =
-        """
-      SELECT workspace_id FROM cloud_context
-      WHERE cloud_platform = :cloud_platform AND context->'samPolicyOwner' IS NULL
-      """;
-
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("cloud_platform", CloudPlatform.GCP.toSql());
-
-    // Return the list of workspaces that need to be backfilled
-    return jdbcTemplate.query(sql, params, (rs, rowNum) -> rs.getString("workspace_id"));
   }
 }

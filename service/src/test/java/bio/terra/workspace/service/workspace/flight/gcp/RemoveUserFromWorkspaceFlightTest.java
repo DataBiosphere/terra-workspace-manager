@@ -51,7 +51,7 @@ import bio.terra.workspace.service.workspace.flight.removeuser.ReleasePrivateRes
 import bio.terra.workspace.service.workspace.flight.removeuser.RemovePrivateResourceAccessStep;
 import bio.terra.workspace.service.workspace.flight.removeuser.RemoveUserFromSamStep;
 import bio.terra.workspace.service.workspace.flight.removeuser.ValidateUserRoleStep;
-import bio.terra.workspace.service.workspace.model.CloudContextHolder;
+import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -122,10 +122,10 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     workspaceService.createCloudContext(
         workspace, CloudPlatform.GCP, spendProfile, makeContextJobId, userRequest, null);
     jobService.waitForJob(makeContextJobId);
-    JobApiUtils.AsyncJobResult<CloudContextHolder> createContextJobResult =
-        jobApiUtils.retrieveAsyncJobResult(makeContextJobId, CloudContextHolder.class);
+    JobApiUtils.AsyncJobResult<CloudContext> createContextJobResult =
+        jobApiUtils.retrieveAsyncJobResult(makeContextJobId, CloudContext.class);
     assertEquals(StatusEnum.SUCCEEDED, createContextJobResult.getJobReport().getStatus());
-    GcpCloudContext cloudContext = createContextJobResult.getResult().getGcpCloudContext();
+    GcpCloudContext cloudContext = createContextJobResult.getResult().castByEnum(CloudPlatform.GCP);
 
     // Create a private dataset for secondary user
     String datasetId = RandomStringUtils.randomAlphabetic(8);
@@ -303,6 +303,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     }
     return true;
   }
+
   // Call GCP IAM service directly to determine whether a user can impersonate the provided pet SA.
   private boolean canImpersonateSa(Iam iamClient, String projectId, String petSaEmail)
       throws Exception {

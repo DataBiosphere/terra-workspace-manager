@@ -18,6 +18,7 @@ import java.util.UUID;
 
 // TODO(PF-555): There is a race condition if this flight runs at the same time as new controlled
 //  resource creation, which may leak resources in Sam. Workspace locking would solve this issue.
+//  NOTE: PF-2694 will address this issue.
 public class WorkspaceDeleteFlight extends Flight {
 
   public WorkspaceDeleteFlight(FlightMap inputParameters, Object applicationContext) {
@@ -30,10 +31,6 @@ public class WorkspaceDeleteFlight extends Flight {
 
     UUID workspaceUuid =
         UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    // TODO: we still need the following steps once their features are supported:
-    // 1. Delete the cloud contexts from non-GCP cloud platforms
-    // 2. Notify all registered applications of deletion, once applications are supported
-    // 3. Delete policy objects in Policy Manager, once it exists.
 
     RetryRule cloudRetryRule = RetryRules.cloudLongRunning();
     RetryRule terraRetryRule = RetryRules.shortExponential();
@@ -77,17 +74,11 @@ public class WorkspaceDeleteFlight extends Flight {
     addStep(
         new EnsureNoWorkspaceChildrenStep(appContext.getSamService(), userRequest, workspaceUuid));
 
-    // This step just does the DeleteCloudFinishStep.
-    // I do not think need this at all, since we are deleting the workspace object.
-    // but I am also thinking we should run these context deletes as separate flights.
-    /*
-       addStep(
-           new DeleteAzureContextStep(appContext.getAzureCloudContextService(), workspaceUuid),
-           cloudRetryRule);
-       addStep(
-           new DeleteAwsContextStep(appContext.getAwsCloudContextService(), workspaceUuid),
-           cloudRetryRule);
-    */
+    // TODO: PF-2694 When we add state to the workspace operations, we should change this
+    //  flight to run the cloud context deletes as separate flights with proper states and,
+    //  thus, proper concurrency control. This flight would harvest the results. I think
+    //  in the case of failure to delete a cloud context, we would fail this flight and
+    //  leave the workspace intact.
     addAuthZSteps(appContext, inputParameters, userRequest, workspaceUuid, terraRetryRule);
     addStep(
         new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceUuid), terraRetryRule);

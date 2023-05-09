@@ -1,6 +1,6 @@
 databaseChangeLog:
 - changeSet:
-    id: Add state to resources and cloud contexts
+    id: Add state to workspaces and cloud contexts
     author: dd
     changes:
     - addColumn:

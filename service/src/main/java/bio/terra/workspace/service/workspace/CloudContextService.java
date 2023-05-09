@@ -12,7 +12,7 @@ import java.util.UUID;
 /** Interface to define common methods for all cloud context services */
 public interface CloudContextService {
 
-  /** Acc cloud-specific steps to the create cloud context flight */
+  /** Add cloud-specific steps to the create cloud context flight */
   void addCreateCloudContextSteps(
       CreateCloudContextFlight flight,
       FlightBeanBag appContext,
@@ -20,8 +20,10 @@ public interface CloudContextService {
       SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest);
 
+  /** Make a cloud context of the appropriate type given cloud context from the database */
   CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext);
 
+  /** Add cloud-specific steps to the delete cloud context flight */
   void addDeleteCloudContextSteps(
       DeleteCloudContextFlight flight,
       FlightBeanBag appContext,

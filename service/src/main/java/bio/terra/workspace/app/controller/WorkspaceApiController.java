@@ -576,7 +576,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .getSpendProfileId()
             .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspace.workspaceId()));
 
-    // Authorize use of the spend profile
+    // Make sure the caller is authorized to use the spend profile
     SpendProfile spendProfile =
         spendProfileService.authorizeLinking(
             spendProfileId, features.isBpmGcpEnabled(), userRequest);

@@ -10,10 +10,7 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextExc
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
 
-/**
- * Stores the previously generated Google Project Id in the {@link WorkspaceDao} as the Google cloud
- * context for the workspace.
- */
+/** Step to create the cloud context metadata in the CREATING state */
 public class CreateCloudContextStartStep implements Step {
   private final UUID workspaceUuid;
   private final WorkspaceDao workspaceDao;

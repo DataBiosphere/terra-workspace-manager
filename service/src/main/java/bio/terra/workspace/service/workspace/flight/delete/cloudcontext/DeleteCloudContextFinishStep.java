@@ -3,7 +3,9 @@ package bio.terra.workspace.service.workspace.flight.delete.cloudcontext;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;
@@ -35,11 +37,11 @@ public class DeleteCloudContextFinishStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    logger.error(
-        "Cannot undo delete of WSM {} cloud context in workspace {}.",
-        cloudPlatform,
-        workspaceUuid);
-    // Surface whatever error caused Stairway to begin undoing.
-    return flightContext.getResult();
+    return new StepResult(
+        StepStatus.STEP_RESULT_FAILURE_FATAL,
+        new InternalLogicException(
+            String.format(
+                "Cannot undo delete of WSM %s cloud context in workspace %s.",
+                cloudPlatform, workspaceUuid)));
   }
 }
