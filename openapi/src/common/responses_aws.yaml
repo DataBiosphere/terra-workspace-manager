@@ -16,3 +16,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DeleteControlledAwsResourceResult'
+
+    GetControlledAwsResourceCredentialResponse:
+      description: Response to get a AWS resource credential.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsCredential'

@@ -106,7 +106,6 @@ public class CreateAwsSagemakerNotebookStep implements Step {
             awsCloudContextService.discoverEnvironment());
 
     try {
-
       AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
       AwsUtils.waitForSageMakerNotebookStatus(
           credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
@@ -118,9 +117,8 @@ public class CreateAwsSagemakerNotebookStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     } catch (NotFoundException e) {
       logger.debug("No notebook instance {} to delete.", resource.getName());
-      return StepResult.getStepResultSuccess();
     }
 
-    return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
+    return StepResult.getStepResultSuccess();
   }
 }

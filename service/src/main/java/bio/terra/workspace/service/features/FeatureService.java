@@ -15,8 +15,7 @@ public class FeatureService {
   }
 
   public boolean awsEnabled() {
-    return true;
-    // return flagsmithService.isFeatureEnabled("terra__aws_enabled").orElse(false);
+    return flagsmithService.isFeatureEnabled("terra__aws_enabled").orElse(false);
   }
 
   public void awsEnabledCheck() {

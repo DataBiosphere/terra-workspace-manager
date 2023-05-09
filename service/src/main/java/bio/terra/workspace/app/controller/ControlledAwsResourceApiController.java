@@ -176,7 +176,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AwsUtils.appendUserTags(tags, user);
     AwsUtils.appendPrincipalTags(tags, cloudContext, awsResource);
     AwsUtils.appendRoleTags(tags, accessScope);
-    // TODO-Dex: add CLIServerName
+    // TODO(TERRA-312): add CLIServerName
     Credentials awsCredentials =
         AwsUtils.getAssumeUserRoleCredentials(
             awsCloudContextService.getRequiredAuthentication(),
