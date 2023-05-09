@@ -86,13 +86,23 @@ public class AwsUtils {
   }
 
   public static void appendUserTags(Collection<Tag> tags, SamUser user) {
-    tags.add(Tag.builder().key("UserID").value(user.getSubjectId()).build());
+    if (user != null) {
+      tags.add(Tag.builder().key("UserID").value(user.getSubjectId()).build());
+    }
   }
 
-  public static void appendResourceTags(Collection<Tag> tags, AwsCloudContext awsCloudContext) {
-    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
-    tags.add(Tag.builder().key("Tenant").value(awsCloudContext.getTenantAlias()).build());
-    tags.add(Tag.builder().key("Environment").value(awsCloudContext.getEnvironmentAlias()).build());
+  public static <T extends ControlledResource> void appendResourceTags(
+      Collection<Tag> tags, AwsCloudContext awsCloudContext, T resource) {
+    if (awsCloudContext != null) {
+      tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
+      tags.add(Tag.builder().key("Tenant").value(awsCloudContext.getTenantAlias()).build());
+      tags.add(
+          Tag.builder().key("Environment").value(awsCloudContext.getEnvironmentAlias()).build());
+    }
+    if (resource != null) {
+      tags.add(
+          Tag.builder().key("WorkspaceId").value(resource.getWorkspaceId().toString()).build());
+    }
   }
 
   public static <T extends ControlledResource> void appendPrincipalTags(

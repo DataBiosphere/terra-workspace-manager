@@ -642,9 +642,9 @@ public class ControlledResourceService {
         ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
         landingZone.getKmsKey().arn().toString());
 
-    // TODO(TERRA-312) - which config from the list?
+    // Configurations expected to be ordered: version-ASC, pick latest version
     landingZone.getNotebookLifecycleConfigurations().stream()
-        .findFirst()
+        .reduce((first, second) -> second)
         .ifPresent(
             lifecycleConfiguration ->
                 jobBuilder.addParameter(
