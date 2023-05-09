@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
+import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -18,11 +20,17 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import java.util.Collection;
 import java.util.HashSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 import software.amazon.awssdk.services.sts.model.Tag;
 
 public class CreateAwsSagemakerNotebookStep implements Step {
+
+  private static final Logger logger =
+      LoggerFactory.getLogger(CreateAwsSagemakerNotebookStep.class);
 
   private final ControlledAwsSagemakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
@@ -93,6 +101,28 @@ public class CreateAwsSagemakerNotebookStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // TODO(TERRA-312) add steps to stop, delete
-    return new StepResult(StepStatus.STEP_RESULT_SUCCESS);
+
+    AwsCredentialsProvider credentialsProvider =
+        AwsUtils.createWsmCredentialProvider(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment());
+
+    try {
+
+      AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
+      AwsUtils.waitForSageMakerNotebookStatus(
+          credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+      AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);
+      AwsUtils.waitForSageMakerNotebookStatus(
+          credentialsProvider, resource, NotebookInstanceStatus.DELETING);
+
+    } catch (ApiException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    } catch (NotFoundException e) {
+      logger.debug("No notebook instance {} to delete.", resource.getName());
+      return StepResult.getStepResultSuccess();
+    }
+
+    return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
   }
 }
