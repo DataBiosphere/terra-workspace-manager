@@ -1,7 +1,6 @@
 package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
@@ -30,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.MultiResourcesUtils;
+import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
@@ -192,7 +192,7 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
             () ->
                 ownerResourceApi.enumerateResources(
                     getWorkspaceId(), -11, 2, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
-    assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
+    TestUtils.assertContains(invalidPaginationException.getMessage(), "Invalid pagination");
 
     invalidPaginationException =
         assertThrows(
@@ -200,7 +200,7 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
             () ->
                 ownerResourceApi.enumerateResources(
                     getWorkspaceId(), 0, 0, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
-    assertThat(invalidPaginationException.getMessage(), containsString("Invalid pagination"));
+    TestUtils.assertContains(invalidPaginationException.getMessage(), "Invalid pagination");
   }
 
   private void logResult(String tag, ResourceList resourceList) {

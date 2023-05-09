@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketUtils;
+import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
@@ -147,7 +148,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
                     groupBTestReferenceResource.getMetadata().getWorkspaceId(),
                     groupBTestReferenceResource.getMetadata().getResourceId()));
     assertEquals(HttpStatus.SC_CONFLICT, exception.getCode());
-    assertTrue(exception.getMessage().contains("Cannot update group policies."));
+    TestUtils.assertContains(exception.getMessage(), "Cannot update group policies.");
 
     // group should still be A only
     validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
@@ -166,7 +167,7 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
                     groupBTestReferenceResource.getMetadata().getWorkspaceId(),
                     groupBTestReferenceResource.getMetadata().getResourceId()));
     assertEquals(HttpStatus.SC_CONFLICT, exception.getCode());
-    assertTrue(exception.getMessage().contains("Cannot update group policies."));
+    TestUtils.assertContains(exception.getMessage(), "Cannot update group policies.");
 
     WorkspaceDescription updatedWorkspace =
         workspaceApi.getWorkspace(noGroupPolicyWorkspace.getId(), null);

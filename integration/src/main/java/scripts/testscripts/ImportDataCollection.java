@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketUtils;
+import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
@@ -43,8 +44,6 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     String gcpCentralLocation = "gcp.us-central1";
     String gcpEastLocation = "gcp.us-east1";
     String usaLocation = "usa";
-    String groupNameA = "wsm-test-group";
-    String groupNameB = "wsm-test-group-alt";
 
     /*
      Create a workspace with us-central1 policy and a reference bucket. This will act as our data
@@ -79,12 +78,13 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
             CloningInstructionsEnum.DEFINITION);
 
     // make a reference to the shared Bucket
+    String referenceBucketName1 = TestUtils.appendRandomNumber("referenceBucket");
     GcpGcsBucketResource dataCollectionReferenceResource =
         GcsBucketUtils.makeGcsBucketReference(
             controlledBucketResource.getAttributes(),
             referencedGcpResourceApi,
             centralDataCollection.getId(),
-            "referenceBucket",
+            referenceBucketName1,
             CloningInstructionsEnum.REFERENCE);
 
     /*
@@ -128,12 +128,13 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
     CreatedWorkspace noPolicyDataCollection =
         createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
 
+    String referenceBucketName2 = TestUtils.appendRandomNumber("referenceBucket");
     GcpGcsBucketResource noPolicyReferenceResource =
         GcsBucketUtils.makeGcsBucketReference(
             controlledBucketResource.getAttributes(),
             referencedGcpResourceApi,
             noPolicyDataCollection.getId(),
-            "referenceBucket",
+            referenceBucketName2,
             CloningInstructionsEnum.REFERENCE);
 
     referencedGcpResourceApi.cloneGcpGcsBucketReference(
@@ -159,7 +160,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                     dataCollectionReferenceResource.getMetadata().getResourceId()));
     workspaceApi.deleteWorkspace(eastWorkspace.getId());
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
-    assertTrue(exception.getMessage().contains("Policy merge has conflicts"));
+    TestUtils.assertContains(exception.getMessage(), "Policy merge has conflicts");
 
     /*
      Scenario 5: Workspace has compatible policy but an incompatible resource. Workspace
@@ -200,7 +201,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
         "Captured exception - code: {} message: '%{}'",
         exception.getCode(), exception.getMessage());
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
-    assertTrue(exception.getMessage().contains("violation of policy"));
+    TestUtils.assertContains(exception.getMessage(), "violation of policy");
 
     workspaceApi.deleteWorkspace(scenario5Workspace.getId());
 
@@ -387,7 +388,8 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     assertEquals(JobReport.StatusEnum.FAILED, cloneBqResult.getJobReport().getStatus());
     assertEquals(HttpStatus.SC_CONFLICT, cloneBqResult.getJobReport().getStatusCode());
-    assertTrue(cloneBqResult.getErrorReport().getMessage().contains("violates region policies"));
+    TestUtils.assertContains(
+        cloneBqResult.getErrorReport().getMessage(), "violates region policies");
 
     workspaceApi.deleteWorkspace(scenario8Workspace.getId());
 
