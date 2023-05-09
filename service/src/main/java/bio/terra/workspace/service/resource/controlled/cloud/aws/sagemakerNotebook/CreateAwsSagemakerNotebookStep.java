@@ -100,8 +100,6 @@ public class CreateAwsSagemakerNotebookStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    // TODO(TERRA-312) add steps to stop, delete
-
     AwsCredentialsProvider credentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
