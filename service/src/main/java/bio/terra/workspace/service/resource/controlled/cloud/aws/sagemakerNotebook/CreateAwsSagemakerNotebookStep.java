@@ -7,6 +7,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -26,16 +27,19 @@ public class CreateAwsSagemakerNotebookStep implements Step {
   private final AwsCloudContextService awsCloudContextService;
   private final AuthenticatedUserRequest userRequest;
   private final SamService samService;
+  private final CliConfiguration cliConfiguration;
 
   public CreateAwsSagemakerNotebookStep(
       ControlledAwsSagemakerNotebookResource resource,
       AwsCloudContextService awsCloudContextService,
       AuthenticatedUserRequest userRequest,
-      SamService samService) {
+      SamService samService,
+      CliConfiguration cliConfiguration) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
     this.userRequest = userRequest;
     this.samService = samService;
+    this.cliConfiguration = cliConfiguration;
   }
 
   @Override
@@ -52,7 +56,8 @@ public class CreateAwsSagemakerNotebookStep implements Step {
     SamUser samUser = samService.getSamUser(userRequest);
     Collection<Tag> tags = new HashSet<>();
     AwsUtils.appendUserTags(tags, samUser);
-    AwsUtils.appendResourceTags(tags, cloudContext);
+    AwsUtils.appendResourceTags(tags, cloudContext, resource);
+    tags.add(Tag.builder().key("CliServerName").value(cliConfiguration.getServerName()).build());
 
     FlightMap inputParameters = flightContext.getInputParameters();
     // TODO(TERRA-550): creationParameters may be used later
