@@ -54,9 +54,11 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
 import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceRequest;
+import software.amazon.awssdk.services.sagemaker.model.DeleteNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceResponse;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
+import software.amazon.awssdk.services.sagemaker.model.StopNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleWithWebIdentityCredentialsProvider;
@@ -72,6 +74,13 @@ public class AwsUtils {
   private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
 
   private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
+
+  private static final Set<NotebookInstanceStatus> startableNotebookStatusSet =
+      Set.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED);
+  private static final Set<NotebookInstanceStatus> stoppableNotebookStatusSet =
+      Set.of(NotebookInstanceStatus.IN_SERVICE);
+  private static final Set<NotebookInstanceStatus> deletableNotebookStatusSet =
+      Set.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED);
 
   /**
    * Truncate a passed string for use as an STS session name
@@ -148,7 +157,6 @@ public class AwsUtils {
   private static AssumeRoleWithWebIdentityRequest createRefreshRequest(
       Arn roleArn, Duration duration, String jwtAudience) {
     String idToken = GcpUtils.getWsmSaJwt(jwtAudience);
-
     logger.info(
         "Google JWT Claims: {}",
         JwtDecoders.fromOidcIssuerLocation("https://accounts.google.com")
@@ -321,7 +329,6 @@ public class AwsUtils {
             .roleSessionName(getRoleSessionName(user.getEmail()))
             .tags(tags)
             .build();
-
     logger.info(
         "Assuming User role ('{}') with session name `{}`, duration {} seconds, and tags: '{}'.",
         request.roleArn(),
@@ -436,12 +443,6 @@ public class AwsUtils {
       Collection<Tag> tags) {
     S3Client s3Client = getS3Client(awsCredentialsProvider, region);
 
-    logger.info(
-        "Creating object with name '{}', key '{}' and {} content.",
-        bucketName,
-        key,
-        StringUtils.isEmpty(content) ? "(empty)" : "");
-
     Set<software.amazon.awssdk.services.s3.model.Tag> s3Tags =
         tags.stream()
             .map(
@@ -457,6 +458,12 @@ public class AwsUtils {
             .bucket(bucketName)
             .key(key)
             .tagging(Tagging.builder().tagSet(s3Tags).build());
+
+    logger.info(
+        "Creating object with name '{}', key '{}' and {} content.",
+        bucketName,
+        key,
+        StringUtils.isEmpty(content) ? "(empty)" : "");
 
     try {
       SdkHttpResponse httpResponse =
@@ -589,7 +596,7 @@ public class AwsUtils {
   // TODO(TERRA-500) Move notebook functions below to CRL
 
   /**
-   * Create AWS sagemaker notebook
+   * Create a AWS sagemaker notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
@@ -606,12 +613,8 @@ public class AwsUtils {
       Arn kmsKeyArn,
       Arn notebookLifecycleConfigArn,
       Collection<Tag> tags) {
-    Region region = Region.of(notebookResource.getRegion());
-    SageMakerClient sageMakerClient = getSagemakerClient(awsCredentialsProvider, region);
-    logger.info(
-        "Creating notebook with name '{}', type '{}'.",
-        notebookResource.getInstanceName(),
-        notebookResource.getInstanceType());
+    SageMakerClient sageMakerClient =
+        getSagemakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
 
     Set<software.amazon.awssdk.services.sagemaker.model.Tag> sagemakerTags =
         tags.stream()
@@ -623,22 +626,25 @@ public class AwsUtils {
                         .build())
             .collect(Collectors.toSet());
 
+    String policyName = null;
+    if (notebookLifecycleConfigArn != null) {
+      policyName = notebookLifecycleConfigArn.resource().resource();
+    }
+
     CreateNotebookInstanceRequest.Builder requestBuilder =
         CreateNotebookInstanceRequest.builder()
             .notebookInstanceName(notebookResource.getInstanceName())
             .instanceType(notebookResource.getInstanceType())
             .roleArn(userRoleArn.toString())
             .kmsKeyId(kmsKeyArn.resource().resource())
-            .tags(sagemakerTags);
+            .tags(sagemakerTags)
+            .lifecycleConfigName(policyName);
 
-    if (notebookLifecycleConfigArn != null) {
-      String policyName = notebookLifecycleConfigArn.resource().resource();
-      logger.info(
-          String.format(
-              "Attaching lifecycle policy '%s' to notebook '%s'.",
-              policyName, notebookResource.getInstanceName()));
-      requestBuilder.lifecycleConfigName(policyName);
-    }
+    logger.info(
+        "Creating notebook with name '{}', type '{}', lifecycle policy '{}'.",
+        notebookResource.getInstanceName(),
+        notebookResource.getInstanceType(),
+        policyName);
 
     try {
       SdkHttpResponse httpResponse =
@@ -652,6 +658,103 @@ public class AwsUtils {
     } catch (SdkException e) {
       checkException(e);
       throw new ApiException("Error creating sagemaker notebook,", e);
+    }
+  }
+
+  /**
+   * Stop a AWS sagemaker notebook
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   */
+  public static void stopSageMakerNotebook(
+      AwsCredentialsProvider awsCredentialsProvider,
+      ControlledAwsSagemakerNotebookResource notebookResource) {
+    SageMakerClient sageMakerClient =
+        getSagemakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
+    String notebookName = notebookResource.getInstanceName();
+
+    try {
+      NotebookInstanceStatus notebookStatus =
+          sageMakerClient
+              .describeNotebookInstance(
+                  DescribeNotebookInstanceRequest.builder()
+                      .notebookInstanceName(notebookName)
+                      .build())
+              .notebookInstanceStatus();
+      if (startableNotebookStatusSet.contains(notebookStatus)) {
+        logger.info(
+            "Notebook instance '{}', status {}, no stop needed.", notebookName, notebookStatus);
+        return;
+      }
+
+      checkNotebookStatus(stoppableNotebookStatusSet, notebookStatus);
+      logger.info("Stopping notebook instance '{}', status {}", notebookName, notebookStatus);
+
+      SdkHttpResponse httpResponse =
+          sageMakerClient
+              .stopNotebookInstance(
+                  StopNotebookInstanceRequest.builder().notebookInstanceName(notebookName).build())
+              .sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error stopping notebook instance, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error stopping notebook instance", e);
+    }
+  }
+
+  /**
+   * Delete a AWS sagemaker notebook
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   */
+  public static void deleteSageMakerNotebook(
+      AwsCredentialsProvider awsCredentialsProvider,
+      ControlledAwsSagemakerNotebookResource notebookResource) {
+    SageMakerClient sageMakerClient =
+        getSagemakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
+    String notebookName = notebookResource.getInstanceName();
+
+    try {
+      NotebookInstanceStatus notebookStatus =
+          sageMakerClient
+              .describeNotebookInstance(
+                  DescribeNotebookInstanceRequest.builder()
+                      .notebookInstanceName(notebookName)
+                      .build())
+              .notebookInstanceStatus();
+      if (notebookStatus == NotebookInstanceStatus.DELETING) {
+        logger.info(
+            "Notebook instance '{}', status {}, no delete needed.", notebookName, notebookStatus);
+        return;
+      }
+
+      // must be stopped or failed. AWS throws error if notebook is not found
+      checkNotebookStatus(deletableNotebookStatusSet, notebookStatus);
+      logger.info("Deleting notebook instance '{}', status {}", notebookName, notebookStatus);
+
+      SdkHttpResponse httpResponse =
+          sageMakerClient
+              .deleteNotebookInstance(
+                  DeleteNotebookInstanceRequest.builder()
+                      .notebookInstanceName(notebookName)
+                      .build())
+              .sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error deleting notebook instance, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error deleting notebook instance", e);
     }
   }
 
