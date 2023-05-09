@@ -9,6 +9,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -45,6 +46,14 @@ public class CreateAwsSagemakerNotebookStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    FlightMap inputParameters = flightContext.getInputParameters();
+    FlightUtils.validateRequiredEntries(
+        inputParameters,
+        ControlledResourceKeys.CREATION_PARAMETERS,
+        ControlledResourceKeys.AWS_ENVIRONMENT_USER_ROLE_ARN,
+        ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
+        ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
+
     AwsCloudContext cloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(resource.getWorkspaceId());
 
@@ -59,7 +68,6 @@ public class CreateAwsSagemakerNotebookStep implements Step {
     AwsUtils.appendResourceTags(tags, cloudContext, resource);
     tags.add(Tag.builder().key("CliServerName").value(cliConfiguration.getServerName()).build());
 
-    FlightMap inputParameters = flightContext.getInputParameters();
     // TODO(TERRA-550): creationParameters may be used later
     ApiAwsSagemakerNotebookCreationParameters creationParameters =
         inputParameters.get(
@@ -85,6 +93,6 @@ public class CreateAwsSagemakerNotebookStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     // TODO(TERRA-312) add steps to stop, delete
-    return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
+    return new StepResult(StepStatus.STEP_RESULT_SUCCESS);
   }
 }
