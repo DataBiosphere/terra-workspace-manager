@@ -176,7 +176,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AwsUtils.appendUserTags(tags, user);
     AwsUtils.appendPrincipalTags(tags, cloudContext, awsResource);
     AwsUtils.appendRoleTags(tags, accessScope);
-
+    // TODO-Dex: add CLIServerName
     Credentials awsCredentials =
         AwsUtils.getAssumeUserRoleCredentials(
             awsCloudContextService.getRequiredAuthentication(),
@@ -460,5 +460,57 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ApiCreateControlledAwsSagemakerNotebookResult result =
         getAwsSagemakerNotebookCreateResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsSagemakerNotebookResource> getAwsSagemakerNotebook(
+      UUID workspaceUuid, UUID resourceUuid) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsSagemakerNotebookResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceUuid,
+                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsSagemakerNotebook(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiDeleteControlledAwsResourceRequestBody body) {
+    return deleteAwsResource(workspaceUuid, resourceUuid, body);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsSagemakerNotebookResult(
+      UUID workspaceUuid, String jobId) {
+    return getDeleteAwsResourceResult(workspaceUuid, jobId);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsCredential> getAwsSagemakerNotebookCredential(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      ApiAwsCredentialAccessScope accessScope,
+      Integer durationSeconds) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager
+        .validateControlledResourceAndAction(
+            userRequest, workspaceUuid, resourceUuid, getSamAction(accessScope))
+        .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
+    ControlledAwsSagemakerNotebookResource resource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+    return getAwsResourceCredential(workspaceUuid, accessScope, durationSeconds, resource);
   }
 }
