@@ -13,6 +13,10 @@ public class AwsResourceValidationUtils {
   static final Pattern s3ObjectKeyDisallowedChars =
       Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
 
+  // https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateNotebookInstance.html#sagemaker-CreateNotebookInstance-request-NotebookInstanceName
+  protected static final Pattern sagemakerInstanceNamePattern =
+      Pattern.compile("^[a-zA-Z0-9](-*[a-zA-Z0-9])*");
+
   /**
    * Validate AWS Storage Folder name.
    *
@@ -28,6 +32,22 @@ public class AwsResourceValidationUtils {
           String.format(
               "Storage folder names must contain any sequence of valid Unicode characters (excluding %s), of length 1-1024 bytes when UTF-8 encoded",
               s3ObjectKeyDisallowedChars.pattern()));
+    }
+  }
+
+  /**
+   * Validate AWS Sagemaker Notebook name.
+   *
+   * @param instanceName prefix name
+   * @throws InvalidNameException invalid instance name
+   */
+  public static void validateAwsSagemakerNotebookName(String instanceName) {
+    int nameLength = instanceName.getBytes(StandardCharsets.UTF_8).length;
+    if (nameLength < 1
+        || nameLength > AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH
+        || !sagemakerInstanceNamePattern.matcher(instanceName).matches()) {
+      throw new InvalidNameException(
+          "Sagemaker instance names must contain any sequence alphabets, numbers and dashes (dash may not be first or last character), of length 1-64");
     }
   }
 

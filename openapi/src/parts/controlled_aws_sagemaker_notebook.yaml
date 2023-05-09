@@ -21,3 +21,103 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: |
+        Create a new controlled AWS Sagemaker Notebook instance resource. This 
+        is async, because the operation can take a few minutes.
+      operationId: createAwsSagemakerNotebook
+      tags: [ControlledAwsResource]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAwsSagemakerNotebookRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/create-result/{jobId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an AWS Sagemaker Notebook instance resource creation job.
+      operationId: getCreateAwsSagemakerNotebookResult
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AwsSagemakerNotebookCreationParameters:
+      description: >-
+        Sagemaker Notebook specific properties to be set on creation. These are a subset of the
+        values accepted by the AWS Sagemaker Notebook API.
+      type: object
+      properties:
+        instanceName:
+          description: A valid instance name per https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateNotebookInstance.html#sagemaker-CreateNotebookInstance-request-NotebookInstanceName
+          type: string
+        instanceType:
+          description: A valid instance type per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html
+          type: string
+          default: "ml.t2.medium"
+        region:
+          description: A valid Sagemaker Notebook region per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html.
+          type: string
+          default: "us-east-1"
+
+    CreateControlledAwsSagemakerNotebookRequestBody:
+      description: Payload for requesting a new controlled AWS Sagemaker Notebook instance resource.
+      type: object
+      required: [ common, awsSagemakerNotebook, jobControl ]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        awsSagemakerNotebook:
+          $ref: '#/components/schemas/AwsSagemakerNotebookCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    CreateControlledAwsSagemakerNotebookResult:
+      description: Response Payload for requesting a new controlled AWS Sagemaker Notebook instance resource.
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        awsSagemakerNotebook:
+          $ref: '#/components/schemas/AwsSagemakerNotebookResource'
+
+  responses:
+    CreateControlledAwsSagemakerNotebookResponse:
+      description: Response to create controlled AWS Sagemaker Notebook instance resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateControlledAwsSagemakerNotebookResult'

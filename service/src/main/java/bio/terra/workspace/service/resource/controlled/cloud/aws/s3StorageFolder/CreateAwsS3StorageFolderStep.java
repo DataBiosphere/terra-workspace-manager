@@ -47,7 +47,7 @@ public class CreateAwsS3StorageFolderStep implements Step {
     SamUser samUser = samService.getSamUser(userRequest);
     Collection<Tag> tags = new HashSet<>();
     AwsUtils.appendUserTags(tags, samUser);
-    AwsUtils.appendResourceTags(tags, cloudContext);
+    AwsUtils.appendResourceTags(tags, cloudContext, resource);
 
     AwsUtils.createStorageFolder(credentialsProvider, resource, tags);
     return StepResult.getStepResultSuccess();

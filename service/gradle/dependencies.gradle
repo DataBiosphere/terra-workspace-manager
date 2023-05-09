@@ -28,6 +28,7 @@ dependencies {
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:regions'
   implementation 'software.amazon.awssdk:s3'
+  implementation 'software.amazon.awssdk:sagemaker'
   implementation 'software.amazon.awssdk:sts'
 
   // Terra deps

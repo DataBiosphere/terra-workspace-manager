@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws;
 
+import java.time.Duration;
+
 /** Constants shared among resource types. */
 public class AwsResourceConstants {
 
@@ -16,4 +18,7 @@ public class AwsResourceConstants {
 
   /** Maximum length of a Sagemaker notebook instance name */
   public static final int MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH = 63;
+
+  /** Sagemaker (client) waiter timeout duration */
+  public static final Duration SAGEMAKER_CLIENT_WAITER_TIMEOUT = Duration.ofSeconds(1800);
 }

@@ -69,7 +69,7 @@ public class AwsCloudContextService {
    * #createAwsCloudContextStart}.
    *
    * @param workspaceUuid workspace id of the context
-   * @param cloudContext cloud context data
+   * @param cloudContext {@link AwsCloudContext}
    * @param flightId flight completing the creation
    */
   public void createAwsCloudContextFinish(
@@ -104,7 +104,7 @@ public class AwsCloudContextService {
    * Retrieve the optional AWS cloud context for given workspace
    *
    * @param workspaceUuid workspace identifier of the cloud context
-   * @return optional AWS cloud context
+   * @return optional {@link AwsCloudContext}
    */
   @Traced
   public Optional<AwsCloudContext> getAwsCloudContext(UUID workspaceUuid) {
@@ -117,7 +117,7 @@ public class AwsCloudContextService {
    * Retrieve the required AWS cloud context for given workspace
    *
    * @param workspaceUuid workspace identifier of the cloud context
-   * @return AWS cloud context
+   * @return {@link AwsCloudContext}
    * @throws CloudContextRequiredException CloudContextRequiredException
    */
   public AwsCloudContext getRequiredAwsCloudContext(UUID workspaceUuid) {
@@ -129,7 +129,7 @@ public class AwsCloudContextService {
   /**
    * Return a new AWS cloud context for discovered environment
    *
-   * @return AWS cloud context
+   * @return AWS cloud context {@link AwsCloudContext}
    */
   public AwsCloudContext getCloudContext() {
     return getCloudContext(discoverEnvironment());
@@ -138,10 +138,10 @@ public class AwsCloudContextService {
   /**
    * Return a new AWS cloud context for discovered environment
    *
-   * @param environment AWS environment
-   * @return AWS cloud context
+   * @param environment {@link Environment}
+   * @return {@link AwsCloudContext}
    */
-  public AwsCloudContext getCloudContext(Environment environment) {
+  public static AwsCloudContext getCloudContext(Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
         metadata.getMajorVersion(),
@@ -173,14 +173,26 @@ public class AwsCloudContextService {
   /**
    * Return the landing zone to for the given cloud context's region
    *
-   * @param awsCloudContext AWS cloud context
-   * @param region AWS region
+   * @param awsCloudContext {@link AwsCloudContext}
+   * @param region {@link Region}
    * @return AWS landing zone, if supported for the Cloud context region
    * @throws StaleConfigurationException StaleConfigurationException
    */
   public Optional<LandingZone> getLandingZone(AwsCloudContext awsCloudContext, Region region) {
-    Environment environment = discoverEnvironment();
+    return getLandingZone(discoverEnvironment(), awsCloudContext, region);
+  }
 
+  /**
+   * Return the landing zone to for the given cloud context's region
+   *
+   * @param environment {@link Environment}
+   * @param awsCloudContext {@link AwsCloudContext}
+   * @param region {@link Region}
+   * @return {@link LandingZone}, if supported for the Cloud context region
+   * @throws StaleConfigurationException StaleConfigurationException
+   */
+  public static Optional<LandingZone> getLandingZone(
+      Environment environment, AwsCloudContext awsCloudContext, Region region) {
     AwsCloudContext awsCloudContextFromEnv = getCloudContext(environment);
     if (!awsCloudContext.equals(awsCloudContextFromEnv)) {
       throw new StaleConfigurationException(

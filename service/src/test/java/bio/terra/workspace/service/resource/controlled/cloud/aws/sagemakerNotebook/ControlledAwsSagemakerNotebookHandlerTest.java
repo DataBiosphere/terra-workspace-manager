@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
@@ -39,14 +40,25 @@ public class ControlledAwsSagemakerNotebookHandlerTest extends BaseAwsUnitTest {
             .generateCloudName(workspaceUserFacingId, resourceName + ".!(){}^%`<>~#|@*+[]'\"\\"),
         "resource name expected with all non-alphanumeric characters & non-dashes removed");
 
-    resourceName =
-        StringUtil.repeat(
-            "a", AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH + 1);
     assertEquals(
         AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH,
         ControlledAwsSagemakerNotebookHandler.getHandler()
-            .generateCloudName(workspaceUserFacingId, resourceName)
+            .generateCloudName(
+                workspaceUserFacingId,
+                StringUtil.repeat(
+                    "a", AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH + 1))
             .length(),
         "resource name expected to be trimmed to max length");
+
+    int repeatLength =
+        AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH
+            - workspaceUserFacingId.length()
+            - 2;
+    assertFalse(
+        ControlledAwsSagemakerNotebookHandler.getHandler()
+            .generateCloudName(
+                workspaceUserFacingId + "-----", StringUtil.repeat("a", repeatLength))
+            .endsWith("-"),
+        "resource name expected not to have trailing dashes");
   }
 }

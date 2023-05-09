@@ -4,7 +4,9 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
@@ -27,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
+import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
 public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
   private final String instanceName;
@@ -125,14 +128,25 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
       String petSaEmail,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
-    // TODO(TERRA-312) add create steps
-    throw new ApiException("addCreateSteps NotImplemented");
+    RetryRule cloudRetry = RetryRules.cloud();
+    flight.addStep(
+        new CreateAwsSagemakerNotebookStep(
+            this,
+            flightBeanBag.getAwsCloudContextService(),
+            userRequest,
+            flightBeanBag.getSamService(),
+            flightBeanBag.getCliConfiguration()),
+        cloudRetry);
+    flight.addStep(
+        new WaitForAwsSagemakerNotebookStatusStep(
+            this, flightBeanBag.getAwsCloudContextService(), NotebookInstanceStatus.IN_SERVICE),
+        cloudRetry);
   }
 
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO(TERRA-312) add create steps
+    // TODO(TERRA-312) add delete steps
     throw new ApiException("addDeleteSteps NotImplemented");
   }
 

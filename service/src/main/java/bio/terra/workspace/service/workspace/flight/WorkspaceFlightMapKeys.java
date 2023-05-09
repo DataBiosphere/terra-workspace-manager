@@ -82,7 +82,10 @@ public final class WorkspaceFlightMapKeys {
 
     // AWS
     public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
-    public static final String AWS_ENVIRONMENT = "awsEnvironment";
+    public static final String AWS_ENVIRONMENT_USER_ROLE_ARN = "awsEnvironmentUserRoleArn";
+    public static final String AWS_LANDING_ZONE_KMS_KEY_ARN = "awsLandingZoneKmsKeyArn";
+    public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
+        "awsLandingZoneNotebookLifecycleConfigArn";
   }
 
   public static class FolderKeys {
