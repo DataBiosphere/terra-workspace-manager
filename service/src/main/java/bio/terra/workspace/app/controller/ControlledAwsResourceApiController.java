@@ -13,6 +13,7 @@ import bio.terra.workspace.generated.model.ApiAwsCredential;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
 import bio.terra.workspace.generated.model.ApiAwsResourceCloudName;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
+import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsS3StorageFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsSagemakerNotebookRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsSagemakerNotebookResult;
@@ -21,6 +22,7 @@ import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequest
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceResult;
 import bio.terra.workspace.generated.model.ApiGenerateAwsResourceCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -355,11 +357,18 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   private ApiCreateControlledAwsSagemakerNotebookResult getAwsSagemakerNotebookCreateResult(
       String jobId) {
-    JobApiUtils.AsyncJobResult<Void> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
+    JobApiUtils.AsyncJobResult<ControlledAwsSagemakerNotebookResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAwsSagemakerNotebookResource.class);
+
+    ApiAwsSagemakerNotebookResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      apiResource = jobResult.getResult().toApiResource();
+    }
+
     return new ApiCreateControlledAwsSagemakerNotebookResult()
         .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport());
+        .errorReport(jobResult.getApiErrorReport())
+        .awsSagemakerNotebook(apiResource);
   }
 
   @Traced
