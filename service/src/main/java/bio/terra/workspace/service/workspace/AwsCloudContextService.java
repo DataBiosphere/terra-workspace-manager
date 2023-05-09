@@ -105,9 +105,7 @@ public class AwsCloudContextService implements CloudContextService {
     return AwsCloudContext.deserialize(dbCloudContext);
   }
 
-  /**
-   * Returns authentication from configuration
-   */
+  /** Returns authentication from configuration */
   public Authentication getRequiredAuthentication() {
     if (awsConfiguration == null) {
       throw new InvalidApplicationConfigException("AWS configuration not initialized");
@@ -124,8 +122,8 @@ public class AwsCloudContextService implements CloudContextService {
   @Traced
   public Optional<AwsCloudContext> getAwsCloudContext(UUID workspaceUuid) {
     return workspaceDao
-      .getCloudContext(workspaceUuid, CloudPlatform.AWS)
-      .map(AwsCloudContext::deserialize);
+        .getCloudContext(workspaceUuid, CloudPlatform.AWS)
+        .map(AwsCloudContext::deserialize);
   }
 
   /**
@@ -137,8 +135,8 @@ public class AwsCloudContextService implements CloudContextService {
    */
   public AwsCloudContext getRequiredAwsCloudContext(UUID workspaceUuid) {
     return getAwsCloudContext(workspaceUuid)
-      .orElseThrow(
-        () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
+        .orElseThrow(
+            () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
   }
 
   /**
@@ -190,7 +188,7 @@ public class AwsCloudContextService implements CloudContextService {
    * Return the landing zone to for the given cloud context's region
    *
    * @param awsCloudContext {@link AwsCloudContext}
-   * @param region          {@link Region}
+   * @param region {@link Region}
    * @return AWS landing zone, if supported for the Cloud context region
    * @throws StaleConfigurationException StaleConfigurationException
    */
@@ -201,19 +199,19 @@ public class AwsCloudContextService implements CloudContextService {
   /**
    * Return the landing zone to for the given cloud context's region
    *
-   * @param environment     {@link Environment}
+   * @param environment {@link Environment}
    * @param awsCloudContext {@link AwsCloudContext}
-   * @param region          {@link Region}
+   * @param region {@link Region}
    * @return {@link LandingZone}, if supported for the Cloud context region
    * @throws StaleConfigurationException StaleConfigurationException
    */
   public static Optional<LandingZone> getLandingZone(
-    Environment environment, AwsCloudContext awsCloudContext, Region region) {
+      Environment environment, AwsCloudContext awsCloudContext, Region region) {
     AwsCloudContext awsCloudContextFromEnv = getCloudContext(environment);
     if (!awsCloudContext.equals(awsCloudContextFromEnv)) {
       throw new StaleConfigurationException(
-        String.format(
-          "AWS cloud context expected %s, actual %s", awsCloudContext, awsCloudContextFromEnv));
+          String.format(
+              "AWS cloud context expected %s, actual %s", awsCloudContext, awsCloudContextFromEnv));
     }
 
     return environment.getLandingZone(region);
