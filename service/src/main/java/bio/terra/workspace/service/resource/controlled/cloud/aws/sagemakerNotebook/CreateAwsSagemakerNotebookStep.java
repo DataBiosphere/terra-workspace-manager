@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
+import static bio.terra.workspace.common.utils.AwsUtils.notebookStatusSetCanStop;
+
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
@@ -109,7 +111,7 @@ public class CreateAwsSagemakerNotebookStep implements Step {
       NotebookInstanceStatus notebookStatus =
           AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
 
-      if (AwsUtils.notebookStatusSetCanStop.contains(notebookStatus)) {
+      if (notebookStatusSetCanStop.contains(notebookStatus)) {
         AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
         AwsUtils.waitForSageMakerNotebookStatus(
             credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
