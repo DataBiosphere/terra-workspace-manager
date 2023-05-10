@@ -3,7 +3,7 @@ package bio.terra.workspace.service.workspace.flight.gcp;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightDebugInfo;
@@ -11,6 +11,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
+import bio.terra.stairway.exception.MakeFlightException;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -29,7 +30,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateCustomGcpRolesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreatePetSaStep;
@@ -38,6 +38,7 @@ import bio.terra.workspace.service.workspace.flight.cloud.gcp.GrantWsmRoleAdminS
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.PullProjectFromPoolStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.SetProjectBillingStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.SyncSamGroupsStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.WaitForProjectPermissionsStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFinishStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextStartStep;
@@ -98,11 +99,15 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
     Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
 
+    FlightMap inputs =
+        WorkspaceFixtures.createCloudContextInputs(
+            workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
+
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateCloudContextFlight.class,
-            createInputParameters(workspaceUuid, userRequest),
+            inputs,
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
@@ -145,19 +150,21 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
 
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CreateCloudContextFlight.class,
-            createInputParameters(workspaceUuid, userRequest),
-            STAIRWAY_FLIGHT_TIMEOUT,
-            FlightDebugInfo.newBuilder().build());
+    FlightMap inputs =
+        WorkspaceFixtures.createCloudContextInputs(
+            workspaceUuid, userRequest, CloudPlatform.GCP, /*spendProfile=*/ null);
 
-    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
-    assertEquals(MissingSpendProfileException.class, flightState.getException().get().getClass());
+    assertThrows(
+        MakeFlightException.class,
+        () ->
+            StairwayTestUtils.blockUntilFlightCompletes(
+                jobService.getStairway(),
+                CreateCloudContextFlight.class,
+                inputs,
+                STAIRWAY_FLIGHT_TIMEOUT,
+                FlightDebugInfo.newBuilder().build()));
+
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
-    assertFalse(
-        flightState.getResultMap().get().containsKey(WorkspaceFlightMapKeys.GCP_PROJECT_ID));
   }
 
   @Test
@@ -168,14 +175,27 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
 
     // Submit a flight class that always errors.
-    Map<String, StepStatus> retrySteps = getStepNameToStepStatusMap();
+    Map<String, StepStatus> undoRetrySteps = getStepNameToStepStatusMap();
+    // Cause a failure on the penultimate step. Cannot fail after the final step,
+    // because it causes a dismal failure.
+    Map<String, StepStatus> doErrorStep =
+        Map.of(WaitForProjectPermissionsStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     FlightDebugInfo debugInfo =
-        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(doErrorStep)
+            .undoStepFailures(undoRetrySteps)
+            .build();
+
+    FlightMap inputs =
+        WorkspaceFixtures.createCloudContextInputs(
+            workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
+
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
             CreateCloudContextFlight.class,
-            createInputParameters(workspaceUuid, userRequest),
+            inputs,
             STAIRWAY_FLIGHT_TIMEOUT,
             debugInfo);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
@@ -217,13 +237,6 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
             .build();
     return workspaceService.createWorkspace(
         request, null, null, userAccessUtils.defaultUserAuthRequest());
-  }
-
-  /** Create the FlightMap input parameters required for the {@link CreateCloudContextFlight}. */
-  private FlightMap createInputParameters(
-      UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
-    return WorkspaceFixtures.createCloudContextInputs(
-        workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
   }
 
   /**

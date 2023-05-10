@@ -6,6 +6,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -49,16 +50,19 @@ public class CreateCloudContextFlight extends Flight {
             inputParameters, WorkspaceFlightMapKeys.CLOUD_PLATFORM, CloudPlatform.class);
     WsmResourceStateRule wsmResourceStateRule = appContext.getFeatureConfiguration().getStateRule();
     WorkspaceDao workspaceDao = appContext.getWorkspaceDao();
+    RetryRule cloudRetry = RetryRules.cloud();
 
     addStep(
         new CreateCloudContextStartStep(
-            workspaceUuid, workspaceDao, cloudPlatform, spendProfile, wsmResourceStateRule));
+            workspaceUuid, workspaceDao, cloudPlatform, spendProfile, wsmResourceStateRule),
+        cloudRetry);
 
     // Add the create steps for the appropriate cloud type
     CloudContextService cloudContextService = cloudPlatform.getCloudContextService();
     cloudContextService.addCreateCloudContextSteps(
         this, appContext, workspaceUuid, spendProfile, userRequest);
 
-    addStep(new CreateCloudContextFinishStep(workspaceUuid, workspaceDao, cloudPlatform));
+    addStep(
+        new CreateCloudContextFinishStep(workspaceUuid, workspaceDao, cloudPlatform), cloudRetry);
   }
 }

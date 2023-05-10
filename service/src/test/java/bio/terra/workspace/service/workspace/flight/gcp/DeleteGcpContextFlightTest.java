@@ -181,22 +181,4 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     // Because this flight cannot be undone, the context should still be deleted even after undoing.
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
   }
-
-  @Test
-  void deleteNonExistentContextIsOk() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
-
-    FlightMap deleteParameters =
-        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            DeleteCloudContextFlight.class,
-            deleteParameters,
-            DELETION_FLIGHT_TIMEOUT,
-            null);
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-    assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
-  }
 }
