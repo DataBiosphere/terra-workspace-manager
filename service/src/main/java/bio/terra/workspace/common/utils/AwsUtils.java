@@ -71,7 +71,6 @@ public class AwsUtils {
 
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
   private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
-
   private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
 
   private static final Set<NotebookInstanceStatus> startableNotebookStatusSet =
@@ -370,19 +369,22 @@ public class AwsUtils {
    * Check if a AWS storage object exists with given prefix as a folder
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param region {@link Region}
-   * @param bucketName bucket name
-   * @param folder folder name (key)
+   * @param storageResource {@link ControlledAwsS3StorageFolderResource}
    * @return True if the folder exists
    */
   public static boolean checkFolderExists(
       AwsCredentialsProvider awsCredentialsProvider,
-      Region region,
-      String bucketName,
-      String folder) {
+      ControlledAwsS3StorageFolderResource storageResource) {
+    String folder = storageResource.getPrefix();
+
     String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
     return CollectionUtils.isNotEmpty(
-        getS3ObjectKeysByPrefix(awsCredentialsProvider, region, bucketName, folderKey, 1));
+        getS3ObjectKeysByPrefix(
+            awsCredentialsProvider,
+            Region.of(storageResource.getRegion()),
+            storageResource.getBucketName(),
+            folderKey,
+            1));
   }
 
   /**
@@ -412,15 +414,15 @@ public class AwsUtils {
    * Delete AWS storage objects (as a folder) including all objects under it
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param region {@link Region}
-   * @param bucketName bucket name
-   * @param folder folder name (key)
+   * @param storageResource {@link ControlledAwsS3StorageFolderResource}
    */
   public static void deleteStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
-      Region region,
-      String bucketName,
-      String folder) {
+      ControlledAwsS3StorageFolderResource storageResource) {
+    String folder = storageResource.getPrefix();
+    Region region = Region.of(storageResource.getRegion());
+    String bucketName = storageResource.getBucketName();
+
     String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
     List<String> objectKeys =
         getS3ObjectKeysByPrefix(
@@ -437,7 +439,7 @@ public class AwsUtils {
    * @param key object (key)
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  public static void putS3Object(
+  private static void putS3Object(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -494,7 +496,7 @@ public class AwsUtils {
    * @param prefix common prefix
    * @param limit max count of results
    */
-  public static List<String> getS3ObjectKeysByPrefix(
+  private static List<String> getS3ObjectKeysByPrefix(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -546,7 +548,7 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param keys list of objects (keys)
    */
-  public static void deleteS3Objects(
+  private static void deleteS3Objects(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -768,6 +770,13 @@ public class AwsUtils {
     }
   }
 
+  /**
+   * Wait for a AWS sagemaker notebook status
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   * @param desiredStatus {@link NotebookInstanceStatus}
+   */
   public static void waitForSageMakerNotebookStatus(
       AwsCredentialsProvider awsCredentialsProvider,
       ControlledAwsSagemakerNotebookResource notebookResource,

@@ -9,7 +9,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 
 public class ValidateAwsS3StorageFolderCreateStep implements Step {
   private final ControlledAwsS3StorageFolderResource resource;
@@ -30,11 +29,7 @@ public class ValidateAwsS3StorageFolderCreateStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    if (AwsUtils.checkFolderExists(
-        credentialsProvider,
-        Region.of(resource.getRegion()),
-        resource.getBucketName(),
-        resource.getPrefix())) {
+    if (AwsUtils.checkFolderExists(credentialsProvider, resource)) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new ConflictException(

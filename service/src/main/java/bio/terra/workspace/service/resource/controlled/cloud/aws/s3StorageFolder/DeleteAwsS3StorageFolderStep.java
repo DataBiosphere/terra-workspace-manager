@@ -8,7 +8,6 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 
 public class DeleteAwsS3StorageFolderStep implements Step {
   private final ControlledAwsS3StorageFolderResource resource;
@@ -29,12 +28,7 @@ public class DeleteAwsS3StorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    AwsUtils.deleteStorageFolder(
-        credentialsProvider,
-        Region.of(resource.getRegion()),
-        resource.getBucketName(),
-        resource.getPrefix());
-
+    AwsUtils.deleteStorageFolder(credentialsProvider, resource);
     return StepResult.getStepResultSuccess();
   }
 
