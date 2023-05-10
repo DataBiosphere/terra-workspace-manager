@@ -20,7 +20,7 @@ public class TestUtils {
     if (StringUtils.contains(actual, expectedContains)) {
       return;
     }
-    logger.error("Actual '{}' does not contain '{}'", actual, expectedContains);
+    logger.error("Actual {} does not contain {}", actual, expectedContains);
     Assertions.fail("Actual does not contain expected");
   }
 }

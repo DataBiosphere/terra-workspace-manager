@@ -1,5 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
+import static bio.terra.workspace.common.utils.AwsUtils.notebookStatusSetCanDelete;
+
+import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -11,6 +16,7 @@ import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
 public class DeleteAwsSagemakerNotebookStep implements Step {
 
@@ -35,7 +41,30 @@ public class DeleteAwsSagemakerNotebookStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);
+    try {
+      NotebookInstanceStatus notebookStatus =
+          AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
+
+      if (notebookStatusSetCanDelete.contains(notebookStatus)) {
+        AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);
+        AwsUtils.waitForSageMakerNotebookStatus(
+            credentialsProvider, resource, NotebookInstanceStatus.DELETING);
+      } else if (notebookStatus == NotebookInstanceStatus.DELETING) {
+        AwsUtils.waitForSageMakerNotebookStatus(
+            credentialsProvider, resource, NotebookInstanceStatus.DELETING);
+      } else {
+        throw new ValidationException(
+            String.format(
+                "Expected notebook instance status in %s, but actual status is %s",
+                notebookStatusSetCanDelete, notebookStatus));
+      }
+
+    } catch (ApiException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+
+    } catch (NotFoundException e) {
+      logger.debug("No notebook instance {} to delete.", resource.getName());
+    }
 
     return StepResult.getStepResultSuccess();
   }
@@ -43,7 +72,7 @@ public class DeleteAwsSagemakerNotebookStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return new StepResult(
-        StepStatus.STEP_RESULT_FAILURE_FATAL,
+        flightContext.getResult().getStepStatus(),
         new InternalLogicException(
             String.format(
                 "Cannot undo delete of AWS SageMaker Notebook resource %s in workspace %s.",

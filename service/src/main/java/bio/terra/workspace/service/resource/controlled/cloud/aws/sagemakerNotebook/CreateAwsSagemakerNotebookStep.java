@@ -57,7 +57,7 @@ public class CreateAwsSagemakerNotebookStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        ControlledResourceKeys.CREATION_PARAMETERS,
+        ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
         ControlledResourceKeys.AWS_ENVIRONMENT_USER_ROLE_ARN,
         ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
         ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
@@ -106,15 +106,25 @@ public class CreateAwsSagemakerNotebookStep implements Step {
             awsCloudContextService.discoverEnvironment());
 
     try {
-      AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
-      AwsUtils.waitForSageMakerNotebookStatus(
-          credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+      NotebookInstanceStatus notebookStatus =
+          AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
+
+      if (AwsUtils.notebookStatusSetCanStop.contains(notebookStatus)) {
+        AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
+        AwsUtils.waitForSageMakerNotebookStatus(
+            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+      } else if (notebookStatus == NotebookInstanceStatus.STOPPING) {
+        AwsUtils.waitForSageMakerNotebookStatus(
+            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+      }
+
       AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);
       AwsUtils.waitForSageMakerNotebookStatus(
           credentialsProvider, resource, NotebookInstanceStatus.DELETING);
 
     } catch (ApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+
     } catch (NotFoundException e) {
       logger.debug("No notebook instance {} to delete.", resource.getName());
     }

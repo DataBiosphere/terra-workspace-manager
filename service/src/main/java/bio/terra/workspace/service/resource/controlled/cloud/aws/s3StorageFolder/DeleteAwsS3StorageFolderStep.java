@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolde
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
@@ -42,7 +41,7 @@ public class DeleteAwsS3StorageFolderStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return new StepResult(
-        StepStatus.STEP_RESULT_FAILURE_FATAL,
+        flightContext.getResult().getStepStatus(),
         new InternalLogicException(
             String.format(
                 "Cannot undo delete of AWS S3 Storage Folder resource %s in workspace %s.",

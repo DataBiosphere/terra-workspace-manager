@@ -311,6 +311,8 @@ workspace:
     sas-token-expiry-time-maximum-minutes-offset: 1440
   policy:
     base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
+  cli:
+    server-name: broad-dev
 feature:
   tps-enabled: true
   temporary-grant-enabled: true

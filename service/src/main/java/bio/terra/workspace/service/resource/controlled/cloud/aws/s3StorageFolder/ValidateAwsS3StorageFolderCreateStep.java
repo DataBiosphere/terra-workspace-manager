@@ -39,7 +39,7 @@ public class ValidateAwsS3StorageFolderCreateStep implements Step {
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new ConflictException(
               String.format(
-                  "Storage folder '%s/' already exists in bucket '%s'.",
+                  "Storage folder %s/ already exists in bucket %s.",
                   resource.getPrefix(), resource.getBucketName())));
     }
     return StepResult.getStepResultSuccess();
