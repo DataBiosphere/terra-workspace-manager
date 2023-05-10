@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
@@ -156,6 +157,43 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             .addParameter("instanceId", getInstanceId()));
   }
 
+  /**
+   * Special retry rule for the notebook permission sync. We are seeing very long propagation times
+   * in environments with Domain Restricted Sharing. This rule tries not to penalize non-DRS
+   * environments by running an initial phase of retries with the usual "cloud" interval of 10
+   * seconds. Then after a minute it switches to a longer interval. Currently set to wait 8 more
+   * minutes.
+   */
+  private static class LongSyncRetryRule implements RetryRule {
+    private static final int SHORT_INTERVAL_COUNT = 6;
+    private static final int SHORT_INTERVAL_SECONDS = 10;
+    private static final int LONG_INTERVAL_COUNT = 16;
+    private static final int LONG_INTERVAL_SECONDS = 30;
+    private int shortIntervalCounter;
+    private int longIntervalCounter;
+
+    @Override
+    public void initialize() {
+      shortIntervalCounter = 0;
+      longIntervalCounter = 0;
+    }
+
+    @Override
+    public boolean retrySleep() throws InterruptedException {
+      if (shortIntervalCounter < SHORT_INTERVAL_COUNT) {
+        shortIntervalCounter++;
+        TimeUnit.SECONDS.sleep(SHORT_INTERVAL_SECONDS);
+        return true;
+      }
+      if (longIntervalCounter < LONG_INTERVAL_COUNT) {
+        longIntervalCounter++;
+        TimeUnit.SECONDS.sleep(LONG_INTERVAL_SECONDS);
+        return true;
+      }
+      return false;
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void addCreateSteps(
@@ -167,6 +205,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     WorkspaceDao workspaceDao = flightBeanBag.getWorkspaceDao();
     String workspaceUserFacingId = workspaceDao.getWorkspace(getWorkspaceId()).getUserFacingId();
 
+    RetryRule longSyncRetryRule = new LongSyncRetryRule();
     RetryRule gcpRetryRule = RetryRules.cloud();
     RetryRule shortDatabaseRetryRule = RetryRules.shortDatabase();
     flight.addStep(
@@ -195,7 +234,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getCrlService(),
             this,
             userRequest),
-        gcpRetryRule);
+        longSyncRetryRule);
     flight.addStep(
         new UpdateNotebookResourceLocationAttributesStep(this, flightBeanBag.getResourceDao()),
         shortDatabaseRetryRule);
