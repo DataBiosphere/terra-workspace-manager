@@ -13,7 +13,6 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import java.util.Collection;
 import java.util.HashSet;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Tag;
 
 public class CreateAwsS3StorageFolderStep implements Step {
@@ -60,11 +59,7 @@ public class CreateAwsS3StorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    AwsUtils.deleteStorageFolder(
-        credentialsProvider,
-        Region.of(resource.getRegion()),
-        resource.getBucketName(),
-        resource.getPrefix());
+    AwsUtils.deleteStorageFolder(credentialsProvider, resource);
     return StepResult.getStepResultSuccess();
   }
 }

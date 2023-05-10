@@ -79,8 +79,7 @@ public class AwsUtilsTest extends BaseAwsConnectedTest {
         Assertions.fail(String.format("HeadBucket request failed: %s", exception), exception);
       }
 
-      logger.info(
-          "Confirmed access to bucket '{}' in AWS Region {}", bucketName, region.toString());
+      logger.info("Confirmed access to bucket {} in AWS Region {}", bucketName, region.toString());
     }
   }
 }

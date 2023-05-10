@@ -28,6 +28,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
@@ -129,13 +130,23 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   }
 
   private ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsResource(
-      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAwsResourceRequestBody body) {
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      WsmResourceType wsmResourceType,
+      ApiDeleteControlledAwsResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest,
-        workspaceUuid,
-        resourceUuid,
-        SamConstants.SamControlledResourceActions.DELETE_ACTION);
+    ControlledResource awsResource =
+        controlledResourceMetadataManager.validateControlledResourceAndAction(
+            userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
+
+    // sanity check that resource is of expected type
+    if (awsResource.getResourceType() != wsmResourceType) {
+      throw new ValidationException(
+          String.format(
+              "Delete requested on resource: %s, expected type: %s, actual type: %s",
+              awsResource.getResourceId(), wsmResourceType, awsResource.getResourceType()));
+    }
+
     ApiJobControl jobControl = body.getJobControl();
 
     logger.info(
@@ -176,7 +187,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AwsUtils.appendUserTags(tags, user);
     AwsUtils.appendPrincipalTags(tags, cloudContext, awsResource);
     AwsUtils.appendRoleTags(tags, accessScope);
-
     Credentials awsCredentials =
         AwsUtils.getAssumeUserRoleCredentials(
             awsCloudContextService.getRequiredAuthentication(),
@@ -256,7 +266,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .orElseThrow(
                 () -> {
                   throw new ValidationException(
-                      String.format("Unsupported AWS region: '%s'.", region));
+                      String.format("Unsupported AWS region: %s.", region));
                 });
 
     logger.info(
@@ -309,7 +319,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       UUID workspaceUuid,
       UUID resourceUuid,
       @Valid ApiDeleteControlledAwsResourceRequestBody body) {
-    return deleteAwsResource(workspaceUuid, resourceUuid, body);
+    return deleteAwsResource(
+        workspaceUuid, resourceUuid, WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER, body);
   }
 
   @Traced
@@ -327,14 +338,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       ApiAwsCredentialAccessScope accessScope,
       Integer durationSeconds) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    controlledResourceMetadataManager
-        .validateControlledResourceAndAction(
-            userRequest, workspaceUuid, resourceUuid, getSamAction(accessScope))
-        .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
-
     ControlledAwsS3StorageFolderResource resource =
-        controlledResourceService
-            .getControlledResource(workspaceUuid, resourceUuid)
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceUuid, getSamAction(accessScope))
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
     return getAwsResourceCredential(workspaceUuid, accessScope, durationSeconds, resource);
   }
@@ -390,7 +397,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         InstanceType.fromValue(body.getAwsSagemakerNotebook().getInstanceType());
     if (instanceType == null || instanceType == InstanceType.UNKNOWN_TO_SDK_VERSION) {
       throw new ValidationException(
-          String.format("Unsupported AWS Sagemaker Notebook InstanceType: '%s'.", instanceType));
+          String.format("Unsupported AWS Sagemaker Notebook InstanceType: %s.", instanceType));
     }
     String instanceName = body.getAwsSagemakerNotebook().getInstanceName();
     if (StringUtils.isEmpty(instanceName)) {
@@ -418,7 +425,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AwsCloudContextService.getLandingZone(environment, awsCloudContext, Region.of(region))
         .orElseThrow(
             () -> {
-              throw new ValidationException(String.format("Unsupported AWS region: '%s'.", region));
+              throw new ValidationException(String.format("Unsupported AWS region: %s.", region));
             });
 
     ControlledAwsSagemakerNotebookResource resource =
@@ -460,5 +467,54 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ApiCreateControlledAwsSagemakerNotebookResult result =
         getAwsSagemakerNotebookCreateResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsSagemakerNotebookResource> getAwsSagemakerNotebook(
+      UUID workspaceUuid, UUID resourceUuid) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsSagemakerNotebookResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceUuid,
+                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsSagemakerNotebook(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiDeleteControlledAwsResourceRequestBody body) {
+    return deleteAwsResource(
+        workspaceUuid, resourceUuid, WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK, body);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsSagemakerNotebookResult(
+      UUID workspaceUuid, String jobId) {
+    return getDeleteAwsResourceResult(workspaceUuid, jobId);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsCredential> getAwsSagemakerNotebookCredential(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      ApiAwsCredentialAccessScope accessScope,
+      Integer durationSeconds) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAwsSagemakerNotebookResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceUuid, getSamAction(accessScope))
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+    return getAwsResourceCredential(workspaceUuid, accessScope, durationSeconds, resource);
   }
 }

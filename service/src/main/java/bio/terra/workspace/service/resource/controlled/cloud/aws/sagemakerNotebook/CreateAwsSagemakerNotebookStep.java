@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
+import static bio.terra.workspace.common.utils.AwsUtils.notebookStatusSetCanStop;
+
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
@@ -57,7 +59,7 @@ public class CreateAwsSagemakerNotebookStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        ControlledResourceKeys.CREATION_PARAMETERS,
+        ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
         ControlledResourceKeys.AWS_ENVIRONMENT_USER_ROLE_ARN,
         ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
         ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
@@ -106,21 +108,29 @@ public class CreateAwsSagemakerNotebookStep implements Step {
             awsCloudContextService.discoverEnvironment());
 
     try {
+      NotebookInstanceStatus notebookStatus =
+          AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
 
-      AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
-      AwsUtils.waitForSageMakerNotebookStatus(
-          credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+      if (notebookStatusSetCanStop.contains(notebookStatus)) {
+        AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
+        AwsUtils.waitForSageMakerNotebookStatus(
+            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+      } else if (notebookStatus == NotebookInstanceStatus.STOPPING) {
+        AwsUtils.waitForSageMakerNotebookStatus(
+            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+      }
+
       AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);
       AwsUtils.waitForSageMakerNotebookStatus(
           credentialsProvider, resource, NotebookInstanceStatus.DELETING);
 
     } catch (ApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+
     } catch (NotFoundException e) {
       logger.debug("No notebook instance {} to delete.", resource.getName());
-      return StepResult.getStepResultSuccess();
     }
 
-    return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
+    return StepResult.getStepResultSuccess();
   }
 }

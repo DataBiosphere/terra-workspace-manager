@@ -1,20 +1,30 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
 
+import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
-public class DeleteAwsS3StorageFolderStep implements Step {
-  private final ControlledAwsS3StorageFolderResource resource;
+public class DeleteAwsSagemakerNotebookStep implements Step {
+
+  private static final Logger logger =
+      LoggerFactory.getLogger(DeleteAwsSagemakerNotebookStep.class);
+
+  private final ControlledAwsSagemakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
 
-  public DeleteAwsS3StorageFolderStep(
-      ControlledAwsS3StorageFolderResource resource,
+  public DeleteAwsSagemakerNotebookStep(
+      ControlledAwsSagemakerNotebookResource resource,
       AwsCloudContextService awsCloudContextService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
@@ -28,7 +38,18 @@ public class DeleteAwsS3StorageFolderStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    AwsUtils.deleteStorageFolder(credentialsProvider, resource);
+    try {
+      AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);
+      AwsUtils.waitForSageMakerNotebookStatus(
+          credentialsProvider, resource, NotebookInstanceStatus.DELETING);
+
+    } catch (ApiException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+
+    } catch (NotFoundException e) {
+      logger.debug("No notebook instance {} to delete.", resource.getName());
+    }
+
     return StepResult.getStepResultSuccess();
   }
 
@@ -38,7 +59,7 @@ public class DeleteAwsS3StorageFolderStep implements Step {
         flightContext.getResult().getStepStatus(),
         new InternalLogicException(
             String.format(
-                "Cannot undo delete of AWS S3 Storage Folder resource %s in workspace %s.",
+                "Cannot undo delete of AWS SageMaker Notebook resource %s in workspace %s.",
                 resource.getResourceId(), resource.getWorkspaceId())));
   }
 }

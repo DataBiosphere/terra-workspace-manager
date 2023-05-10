@@ -146,8 +146,18 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO(TERRA-312) add delete steps
-    throw new ApiException("addDeleteSteps NotImplemented");
+    RetryRule cloudRetry = RetryRules.cloud();
+    // Notebooks must be stopped before deletion. Expecting user to stop before attempting a delete
+    flight.addStep(
+        new ValidateAwsSagemakerNotebookDeleteStep(this, flightBeanBag.getAwsCloudContextService()),
+        cloudRetry);
+    flight.addStep(
+        new DeleteAwsSagemakerNotebookStep(this, flightBeanBag.getAwsCloudContextService()),
+        cloudRetry);
+    flight.addStep(
+        new WaitForAwsSagemakerNotebookStatusStep(
+            this, flightBeanBag.getAwsCloudContextService(), NotebookInstanceStatus.DELETING),
+        cloudRetry);
   }
 
   /** {@inheritDoc} */

@@ -123,7 +123,7 @@ paths:
       tags: [ ControlledAwsResource ]
       responses:
         '200':
-          $ref: '#/components/responses/GetControlledAwsS3StorageFolderCredentialResponse'
+          $ref: '#/components/responses/GetControlledAwsResourceCredentialResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -185,10 +185,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/AwsS3StorageFolderResource'
-
-    GetControlledAwsS3StorageFolderCredentialResponse:
-      description: Response to get AWS S3 Storage Folder resource credential.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AwsCredential'

@@ -71,6 +71,94 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/{resourceId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled AWS Sagemaker Notebook resource.
+      operationId: getAwsSagemakerNotebook
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsSagemakerNotebookResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled AWS Sagemaker Notebook resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
+      operationId: deleteAwsSagemakerNotebook
+      tags: [ ControlledAwsResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAwsResourceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/delete-result/{jobId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an AWS Sagemaker Notebook resource deletion job.
+      operationId: getDeleteAwsSagemakerNotebookResult
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAwsResourceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/aws/notebook/{resourceId}/credential:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/AwsCredentialAccessScope'
+    - $ref: '#/components/parameters/AwsCredentialDurationSeconds'
+    get:
+      summary: Get a credential to access this Sagemaker Notebook in the AWS CLI or SDK.
+      operationId: getAwsSagemakerNotebookCredential
+      tags: [ ControlledAwsResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/GetControlledAwsResourceCredentialResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   schemas:
     AwsSagemakerNotebookCreationParameters:
@@ -121,3 +209,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateControlledAwsSagemakerNotebookResult'
+
+    GetControlledAwsSagemakerNotebookResponse:
+      description: Response to get AWS Sagemaker Notebook resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsSagemakerNotebookResource'
