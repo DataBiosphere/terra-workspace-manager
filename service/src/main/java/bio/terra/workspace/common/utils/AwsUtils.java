@@ -807,8 +807,11 @@ public class AwsUtils {
       ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
           waiterResponse.matched();
       if (responseOrException.exception().isPresent()) {
-        throw new ApiException(
-            "Error polling notebook instance status", responseOrException.exception().get());
+        Throwable t = responseOrException.exception().get();
+        if (t instanceof SdkException e) {
+          checkException(e);
+          throw new ApiException("Error polling notebook instance status", e);
+        }
       }
 
     } catch (NotFoundException e) {
