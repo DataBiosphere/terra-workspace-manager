@@ -10,7 +10,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookCreationParameters;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -27,7 +27,7 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
@@ -609,14 +609,14 @@ public class ControlledResourceService {
   // AWS
 
   /**
-   * Starts a create controlled AWS Sagemaker Notebook instance resource job, returning the job id.
+   * Starts a create controlled AWS SageMaker Notebook instance resource job, returning the job id.
    *
    * <p>Data fields are required from AWS Environment, as well as the landing zone specific to the
    * resource's region. Hence, add the entire AWS environment to the job
    */
-  public String createAwsSagemakerNotebookInstance(
-      ControlledAwsSagemakerNotebookResource resource,
-      ApiAwsSagemakerNotebookCreationParameters creationParameters,
+  public String createAwsSageMakerNotebookInstance(
+      ControlledAwsSageMakerNotebookResource resource,
+      ApiAwsSageMakerNotebookCreationParameters creationParameters,
       Environment environment,
       @Nullable ControlledResourceIamRole privateResourceIamRole,
       @Nullable ApiJobControl jobControl,

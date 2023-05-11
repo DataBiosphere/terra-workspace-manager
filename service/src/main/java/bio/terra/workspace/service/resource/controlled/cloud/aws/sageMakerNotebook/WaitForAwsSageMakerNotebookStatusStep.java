@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -6,17 +6,16 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
-import java.util.*;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
-public class WaitForAwsSagemakerNotebookStatusStep implements Step {
-  private final ControlledAwsSagemakerNotebookResource resource;
+public class WaitForAwsSageMakerNotebookStatusStep implements Step {
+  private final ControlledAwsSageMakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
   private final NotebookInstanceStatus notebookStatus;
 
-  public WaitForAwsSagemakerNotebookStatusStep(
-      ControlledAwsSagemakerNotebookResource resource,
+  public WaitForAwsSageMakerNotebookStatusStep(
+      ControlledAwsSageMakerNotebookResource resource,
       AwsCloudContextService awsCloudContextService,
       NotebookInstanceStatus notebookStatus) {
     this.resource = resource;

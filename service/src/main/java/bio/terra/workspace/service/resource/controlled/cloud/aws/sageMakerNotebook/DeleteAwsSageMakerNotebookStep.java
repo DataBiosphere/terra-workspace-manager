@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
@@ -15,16 +15,16 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
-public class DeleteAwsSagemakerNotebookStep implements Step {
+public class DeleteAwsSageMakerNotebookStep implements Step {
 
   private static final Logger logger =
-      LoggerFactory.getLogger(DeleteAwsSagemakerNotebookStep.class);
+      LoggerFactory.getLogger(DeleteAwsSageMakerNotebookStep.class);
 
-  private final ControlledAwsSagemakerNotebookResource resource;
+  private final ControlledAwsSageMakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
 
-  public DeleteAwsSagemakerNotebookStep(
-      ControlledAwsSagemakerNotebookResource resource,
+  public DeleteAwsSageMakerNotebookStep(
+      ControlledAwsSageMakerNotebookResource resource,
       AwsCloudContextService awsCloudContextService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;

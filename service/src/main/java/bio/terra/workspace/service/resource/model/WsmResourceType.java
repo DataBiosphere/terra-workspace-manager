@@ -6,8 +6,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresourc
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.FlexibleResourceHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookHandler;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
@@ -178,8 +178,8 @@ public enum WsmResourceType {
       StewardshipType.CONTROLLED,
       "CONTROLLED_AWS_SAGEMAKER_NOTEBOOK",
       ApiResourceType.AWS_SAGEMAKER_NOTEBOOK,
-      ControlledAwsSagemakerNotebookResource.class,
-      ControlledAwsSagemakerNotebookHandler::getHandler,
+      ControlledAwsSageMakerNotebookResource.class,
+      ControlledAwsSageMakerNotebookHandler::getHandler,
       ActivityLogChangedTarget.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK),
 
   // FLEXIBLE

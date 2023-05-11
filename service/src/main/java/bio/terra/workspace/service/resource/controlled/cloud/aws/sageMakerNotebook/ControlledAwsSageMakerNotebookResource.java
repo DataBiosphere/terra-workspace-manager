@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
@@ -11,8 +11,8 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookAttributes;
-import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookResource;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookAttributes;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -31,12 +31,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
-public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
+public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private final String instanceName;
   private final String instanceType;
 
   @JsonCreator
-  public ControlledAwsSagemakerNotebookResource(
+  public ControlledAwsSageMakerNotebookResource(
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
@@ -48,7 +48,7 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
     validate();
   }
 
-  private ControlledAwsSagemakerNotebookResource(
+  private ControlledAwsSageMakerNotebookResource(
       ControlledResourceFields common, String instanceName, String instanceType) {
     super(common);
     this.instanceName = instanceName;
@@ -56,7 +56,7 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
     validate();
   }
 
-  public ControlledAwsSagemakerNotebookResource(
+  public ControlledAwsSageMakerNotebookResource(
       DbResource dbResource, String instanceName, String instanceType) {
     super(dbResource);
     this.instanceName = instanceName;
@@ -130,7 +130,7 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new CreateAwsSagemakerNotebookStep(
+        new CreateAwsSageMakerNotebookStep(
             this,
             flightBeanBag.getAwsCloudContextService(),
             userRequest,
@@ -138,7 +138,7 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
             flightBeanBag.getCliConfiguration()),
         cloudRetry);
     flight.addStep(
-        new WaitForAwsSagemakerNotebookStatusStep(
+        new WaitForAwsSageMakerNotebookStatusStep(
             this, flightBeanBag.getAwsCloudContextService(), NotebookInstanceStatus.IN_SERVICE),
         cloudRetry);
   }
@@ -149,13 +149,13 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
     RetryRule cloudRetry = RetryRules.cloud();
     // Notebooks must be stopped before deletion. Expecting user to stop before attempting a delete
     flight.addStep(
-        new ValidateAwsSagemakerNotebookDeleteStep(this, flightBeanBag.getAwsCloudContextService()),
+        new ValidateAwsSageMakerNotebookDeleteStep(this, flightBeanBag.getAwsCloudContextService()),
         cloudRetry);
     flight.addStep(
-        new DeleteAwsSagemakerNotebookStep(this, flightBeanBag.getAwsCloudContextService()),
+        new DeleteAwsSageMakerNotebookStep(this, flightBeanBag.getAwsCloudContextService()),
         cloudRetry);
     flight.addStep(
-        new WaitForAwsSagemakerNotebookStatusStep(
+        new WaitForAwsSageMakerNotebookStatusStep(
             this, flightBeanBag.getAwsCloudContextService(), NotebookInstanceStatus.DELETING),
         cloudRetry);
   }
@@ -163,18 +163,18 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO(TERRA-223) Add support for UpdateAwsSagemakerNotebook
+    // TODO(TERRA-223) Add support for UpdateAwsSageMakerNotebook
     throw new ApiException("addUpdateSteps NotImplemented");
   }
 
-  public ApiAwsSagemakerNotebookAttributes toApiAttributes() {
-    return new ApiAwsSagemakerNotebookAttributes()
+  public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
+    return new ApiAwsSageMakerNotebookAttributes()
         .instanceName(instanceName)
         .instanceType(instanceType);
   }
 
-  public ApiAwsSagemakerNotebookResource toApiResource() {
-    return new ApiAwsSagemakerNotebookResource()
+  public ApiAwsSageMakerNotebookResource toApiResource() {
+    return new ApiAwsSageMakerNotebookResource()
         .metadata(super.toApiMetadata())
         .attributes(toApiAttributes());
   }
@@ -182,13 +182,13 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAwsSagemakerNotebookAttributes(instanceName, instanceType));
+        new ControlledAwsSageMakerNotebookAttributes(instanceName, instanceType));
   }
 
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.awsSagemakerNotebook(toApiAttributes());
+    union.awsSageMakerNotebook(toApiAttributes());
     return union;
   }
 
@@ -202,7 +202,7 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
     }
     if ((instanceName == null) || (instanceType == null) || (getRegion() == null)) {
       throw new MissingRequiredFieldException(
-          "Missing required field for ControlledAwsSagemakerNotebookResource.");
+          "Missing required field for ControlledAwsSageMakerNotebookResource.");
     }
   }
 
@@ -226,8 +226,8 @@ public class ControlledAwsSagemakerNotebookResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAwsSagemakerNotebookResource build() {
-      return new ControlledAwsSagemakerNotebookResource(common, instanceName, instanceType);
+    public ControlledAwsSageMakerNotebookResource build() {
+      return new ControlledAwsSageMakerNotebookResource(common, instanceName, instanceType);
     }
   }
 }

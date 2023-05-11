@@ -14,7 +14,7 @@ public class AwsResourceValidationUtils {
       Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
 
   // https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateNotebookInstance.html#sagemaker-CreateNotebookInstance-request-NotebookInstanceName
-  protected static final Pattern sagemakerInstanceNamePattern =
+  protected static final Pattern sageMakerInstanceNamePattern =
       Pattern.compile("^[a-zA-Z0-9](-*[a-zA-Z0-9])*");
 
   /**
@@ -36,18 +36,18 @@ public class AwsResourceValidationUtils {
   }
 
   /**
-   * Validate AWS Sagemaker Notebook name.
+   * Validate AWS SageMaker Notebook name.
    *
    * @param instanceName prefix name
    * @throws InvalidNameException invalid instance name
    */
-  public static void validateAwsSagemakerNotebookName(String instanceName) {
+  public static void validateAwsSageMakerNotebookName(String instanceName) {
     int nameLength = instanceName.getBytes(StandardCharsets.UTF_8).length;
     if (nameLength < 1
         || nameLength > AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH
-        || !sagemakerInstanceNamePattern.matcher(instanceName).matches()) {
+        || !sageMakerInstanceNamePattern.matcher(instanceName).matches()) {
       throw new InvalidNameException(
-          "Sagemaker instance names must contain any sequence alphabets, numbers and dashes (dash may not be first or last character), of length 1-64");
+          "SageMaker instance names must contain any sequence alphabets, numbers and dashes (dash may not be first or last character), of length 1-64");
     }
   }
 
