@@ -602,7 +602,7 @@ public class AwsUtils {
   // TODO(TERRA-500) Move notebook functions below to CRL
 
   /**
-   * Create a AWS sageMaker notebook
+   * Create a AWS SageMaker Notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
@@ -658,18 +658,18 @@ public class AwsUtils {
               .sdkHttpResponse();
       if (!httpResponse.isSuccessful()) {
         throw new ApiException(
-            "Error creating sageMaker notebook, "
+            "Error creating AWS SageMaker Notebook, "
                 + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
       }
 
     } catch (SdkException e) {
       checkException(e);
-      throw new ApiException("Error creating sageMaker notebook,", e);
+      throw new ApiException("Error creating AWS SageMaker Notebook,", e);
     }
   }
 
   /**
-   * Stop a AWS sageMaker notebook
+   * Stop a AWS SageMaker Notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
@@ -703,7 +703,7 @@ public class AwsUtils {
   }
 
   /**
-   * Stop a AWS sageMaker notebook
+   * Stop a AWS SageMaker Notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
@@ -737,7 +737,7 @@ public class AwsUtils {
   }
 
   /**
-   * Delete a AWS sageMaker notebook
+   * Delete a AWS SageMaker Notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
@@ -771,7 +771,7 @@ public class AwsUtils {
   }
 
   /**
-   * Wait for a AWS sageMaker notebook status
+   * Wait for a AWS SageMaker Notebook status
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
@@ -831,7 +831,7 @@ public class AwsUtils {
 
     } catch (SdkException e) {
       checkException(e);
-      throw new ApiException("Error waiting for desired sageMaker notebook status,", e);
+      throw new ApiException("Error waiting for desired AWS SageMaker Notebook status,", e);
     }
   }
 

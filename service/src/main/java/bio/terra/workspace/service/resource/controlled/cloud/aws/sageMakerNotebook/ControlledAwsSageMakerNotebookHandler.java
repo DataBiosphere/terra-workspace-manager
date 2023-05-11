@@ -58,7 +58,7 @@ public class ControlledAwsSageMakerNotebookHandler implements WsmResourceHandler
     if (generatedName.length() == 0) {
       throw new BadRequestException(
           String.format(
-              "Cannot generate a valid sageMaker notebook name from %s, it must contain"
+              "Cannot generate a valid SageMaker Notebook name from %s, it must contain"
                   + " alphanumerical characters.",
               notebookName));
     }
