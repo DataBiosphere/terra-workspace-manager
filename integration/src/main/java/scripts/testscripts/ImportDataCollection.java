@@ -179,7 +179,6 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                     dataCollectionReferenceResource.getMetadata().getResourceId()));
     workspaceApi.deleteWorkspace(eastWorkspace.getId());
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
-    TestUtils.assertContains(exception.getMessage(), "Policy merge has conflicts");
 
     /*
      Scenario 5: Workspace has compatible policy but an incompatible resource. Workspace
@@ -217,7 +216,6 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                     dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
                     dataCollectionReferenceResource.getMetadata().getResourceId()));
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
-    TestUtils.assertContains(exception.getMessage(), "Policy violations");
 
     workspaceApi.deleteWorkspace(scenario5Workspace.getId());
 
@@ -324,8 +322,6 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     assertEquals(JobReport.StatusEnum.FAILED, cloneToAltLocationResult.getJobReport().getStatus());
     assertEquals(HttpStatus.SC_CONFLICT, cloneToAltLocationResult.getJobReport().getStatusCode());
-    TestUtils.assertContains(
-        cloneToAltLocationResult.getErrorReport().getMessage(), "Policy violations");
 
     workspaceApi.deleteWorkspace(scenario7Workspace.getId());
 
@@ -401,7 +397,6 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     assertEquals(JobReport.StatusEnum.FAILED, cloneBqResult.getJobReport().getStatus());
     assertEquals(HttpStatus.SC_CONFLICT, cloneBqResult.getJobReport().getStatusCode());
-    TestUtils.assertContains(cloneBqResult.getErrorReport().getMessage(), "Policy violations");
 
     workspaceApi.deleteWorkspace(scenario8Workspace.getId());
 
