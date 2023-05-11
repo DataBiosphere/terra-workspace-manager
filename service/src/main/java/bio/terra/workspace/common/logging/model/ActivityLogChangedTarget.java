@@ -31,7 +31,10 @@ public enum ActivityLogChangedTarget {
   USER,
   WORKSPACE,
   POLICIES,
-  CLOUD_CONTEXT;
+  CLOUD_CONTEXT,
+  GCP_CLOUD_CONTEXT,
+  AWS_CLOUD_CONTEXT,
+  AZURE_CLOUD_CONTEXT;
 
   private final boolean isResource;
 

@@ -5,6 +5,7 @@ import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.landingzone.library.LandingZoneMain;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import javax.sql.DataSource;
@@ -48,5 +49,8 @@ public final class StartupInitializer {
     // Fill in this method with any other initialization that needs to happen
     // between the point of having the entire application initialized and
     // the point of opening the port to start accepting REST requests.
+    // TODO: PF-2763 remove after 2023/05/26
+    WorkspaceDao workspaceDao = applicationContext.getBean(WorkspaceDao.class);
+    workspaceDao.backfillCloudContextSpendProfile();
   }
 }
