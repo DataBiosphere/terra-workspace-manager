@@ -13,7 +13,7 @@ import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
-import bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook.ControlledAwsSagemakerNotebookResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -124,10 +124,10 @@ public class AwsUtils {
           (ControlledAwsS3StorageFolderResource) awsResource;
       tags.add(Tag.builder().key("S3BucketID").value(resource.getBucketName()).build());
       tags.add(Tag.builder().key("TerraBucketID").value(resource.getPrefix()).build());
-    } else if (awsResource instanceof ControlledAwsSagemakerNotebookResource) {
-      ControlledAwsSagemakerNotebookResource resource =
-          (ControlledAwsSagemakerNotebookResource) awsResource;
-      // TODO(TERRA-550) Add sagemaker tags
+    } else if (awsResource instanceof ControlledAwsSageMakerNotebookResource) {
+      ControlledAwsSageMakerNotebookResource resource =
+          (ControlledAwsSageMakerNotebookResource) awsResource;
+      // TODO(TERRA-550) Add sageMaker tags
     }
   }
 
@@ -353,7 +353,7 @@ public class AwsUtils {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
 
-  private static SageMakerClient getSagemakerClient(
+  private static SageMakerClient getSageMakerClient(
       AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return SageMakerClient.builder()
         .region(region)
@@ -597,15 +597,15 @@ public class AwsUtils {
     }
   }
 
-  // AWS Sagemaker Notebook
+  // AWS SageMaker Notebook
 
   // TODO(TERRA-500) Move notebook functions below to CRL
 
   /**
-   * Create a AWS sagemaker notebook
+   * Create a AWS SageMaker Notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
    * @param userRoleArn User role {@link Arn}
    * @param kmsKeyArn {@link Arn} for the KmsKey in the landing zone (region)
    * @param notebookLifecycleConfigArn {@link Arn} for the notebookLifecycleConfig in the landing
@@ -614,15 +614,15 @@ public class AwsUtils {
    */
   public static void createSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
-      ControlledAwsSagemakerNotebookResource notebookResource,
+      ControlledAwsSageMakerNotebookResource notebookResource,
       Arn userRoleArn,
       Arn kmsKeyArn,
       Arn notebookLifecycleConfigArn,
       Collection<Tag> tags) {
     SageMakerClient sageMakerClient =
-        getSagemakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
+        getSageMakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
 
-    Set<software.amazon.awssdk.services.sagemaker.model.Tag> sagemakerTags =
+    Set<software.amazon.awssdk.services.sagemaker.model.Tag> sageMakerTags =
         tags.stream()
             .map(
                 stsTag ->
@@ -652,34 +652,34 @@ public class AwsUtils {
                       .instanceType(notebookResource.getInstanceType())
                       .roleArn(userRoleArn.toString())
                       .kmsKeyId(kmsKeyArn.resource().resource())
-                      .tags(sagemakerTags)
+                      .tags(sageMakerTags)
                       .lifecycleConfigName(policyName)
                       .build())
               .sdkHttpResponse();
       if (!httpResponse.isSuccessful()) {
         throw new ApiException(
-            "Error creating sagemaker notebook, "
+            "Error creating AWS SageMaker Notebook, "
                 + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
       }
 
     } catch (SdkException e) {
       checkException(e);
-      throw new ApiException("Error creating sagemaker notebook,", e);
+      throw new ApiException("Error creating AWS SageMaker Notebook,", e);
     }
   }
 
   /**
-   * Stop a AWS sagemaker notebook
+   * Stop a AWS SageMaker Notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
    * @return {@link NotebookInstanceStatus}
    */
   public static NotebookInstanceStatus getSageMakerNotebookStatus(
       AwsCredentialsProvider awsCredentialsProvider,
-      ControlledAwsSagemakerNotebookResource notebookResource) {
+      ControlledAwsSageMakerNotebookResource notebookResource) {
     SageMakerClient sageMakerClient =
-        getSagemakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
+        getSageMakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
     String notebookName = notebookResource.getInstanceName();
 
     try {
@@ -703,16 +703,16 @@ public class AwsUtils {
   }
 
   /**
-   * Stop a AWS sagemaker notebook
+   * Stop a AWS SageMaker Notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
    */
   public static void stopSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
-      ControlledAwsSagemakerNotebookResource notebookResource) {
+      ControlledAwsSageMakerNotebookResource notebookResource) {
     SageMakerClient sageMakerClient =
-        getSagemakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
+        getSageMakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
 
     logger.info("Stopping notebook instance {}", notebookResource.getInstanceName());
 
@@ -737,16 +737,16 @@ public class AwsUtils {
   }
 
   /**
-   * Delete a AWS sagemaker notebook
+   * Delete a AWS SageMaker Notebook
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
    */
   public static void deleteSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
-      ControlledAwsSagemakerNotebookResource notebookResource) {
+      ControlledAwsSageMakerNotebookResource notebookResource) {
     SageMakerClient sageMakerClient =
-        getSagemakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
+        getSageMakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
 
     logger.info("Deleting notebook instance {}", notebookResource.getInstanceName());
 
@@ -771,18 +771,18 @@ public class AwsUtils {
   }
 
   /**
-   * Wait for a AWS sagemaker notebook status
+   * Wait for a AWS SageMaker Notebook status
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
-   * @param notebookResource {@link ControlledAwsSagemakerNotebookResource}
+   * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
    * @param desiredStatus {@link NotebookInstanceStatus}
    */
   public static void waitForSageMakerNotebookStatus(
       AwsCredentialsProvider awsCredentialsProvider,
-      ControlledAwsSagemakerNotebookResource notebookResource,
+      ControlledAwsSageMakerNotebookResource notebookResource,
       NotebookInstanceStatus desiredStatus) {
     Region region = Region.of(notebookResource.getRegion());
-    SageMakerClient sageMakerClient = getSagemakerClient(awsCredentialsProvider, region);
+    SageMakerClient sageMakerClient = getSageMakerClient(awsCredentialsProvider, region);
 
     SageMakerWaiter sageMakerWaiter =
         SageMakerWaiter.builder()
@@ -831,7 +831,7 @@ public class AwsUtils {
 
     } catch (SdkException e) {
       checkException(e);
-      throw new ApiException("Error waiting for desired sagemaker notebook status,", e);
+      throw new ApiException("Error waiting for desired AWS SageMaker Notebook status,", e);
     }
   }
 

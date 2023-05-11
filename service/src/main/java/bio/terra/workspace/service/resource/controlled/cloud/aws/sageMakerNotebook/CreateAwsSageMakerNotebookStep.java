@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import static bio.terra.workspace.common.utils.AwsUtils.notebookStatusSetCanStop;
 
@@ -14,7 +14,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.generated.model.ApiAwsSagemakerNotebookCreationParameters;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
@@ -29,19 +29,19 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 import software.amazon.awssdk.services.sts.model.Tag;
 
-public class CreateAwsSagemakerNotebookStep implements Step {
+public class CreateAwsSageMakerNotebookStep implements Step {
 
   private static final Logger logger =
-      LoggerFactory.getLogger(CreateAwsSagemakerNotebookStep.class);
+      LoggerFactory.getLogger(CreateAwsSageMakerNotebookStep.class);
 
-  private final ControlledAwsSagemakerNotebookResource resource;
+  private final ControlledAwsSageMakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
   private final AuthenticatedUserRequest userRequest;
   private final SamService samService;
   private final CliConfiguration cliConfiguration;
 
-  public CreateAwsSagemakerNotebookStep(
-      ControlledAwsSagemakerNotebookResource resource,
+  public CreateAwsSageMakerNotebookStep(
+      ControlledAwsSageMakerNotebookResource resource,
       AwsCloudContextService awsCloudContextService,
       AuthenticatedUserRequest userRequest,
       SamService samService,
@@ -79,10 +79,10 @@ public class CreateAwsSagemakerNotebookStep implements Step {
     tags.add(Tag.builder().key("CliServerName").value(cliConfiguration.getServerName()).build());
 
     // TODO(TERRA-550): creationParameters may be used later
-    ApiAwsSagemakerNotebookCreationParameters creationParameters =
+    ApiAwsSageMakerNotebookCreationParameters creationParameters =
         inputParameters.get(
             ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
-            ApiAwsSagemakerNotebookCreationParameters.class);
+            ApiAwsSageMakerNotebookCreationParameters.class);
 
     AwsUtils.createSageMakerNotebook(
         credentialsProvider,

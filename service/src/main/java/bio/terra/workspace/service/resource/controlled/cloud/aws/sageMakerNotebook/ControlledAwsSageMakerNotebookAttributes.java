@@ -1,14 +1,14 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ControlledAwsSagemakerNotebookAttributes {
+public class ControlledAwsSageMakerNotebookAttributes {
   private final String instanceName;
   private final String instanceType;
 
   @JsonCreator
-  public ControlledAwsSagemakerNotebookAttributes(
+  public ControlledAwsSageMakerNotebookAttributes(
       @JsonProperty("instanceName") String instanceName,
       @JsonProperty("instanceType") String instanceType) {
     this.instanceName = instanceName;

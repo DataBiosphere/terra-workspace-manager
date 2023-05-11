@@ -3,8 +3,8 @@ paths:
     parameters:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Generate a cloud native controlled AWS Sagemaker Notebook instance name.
-      operationId: generateAwsSagemakerNotebookCloudName
+      summary: Generate a cloud native controlled AWS SageMaker Notebook instance name.
+      operationId: generateAwsSageMakerNotebookCloudName
       tags: [ ControlledAwsResource ]
       requestBody:
         required: true
@@ -27,21 +27,21 @@ paths:
     - $ref: '#/components/parameters/WorkspaceId'
     post:
       summary: |
-        Create a new controlled AWS Sagemaker Notebook instance resource. This 
+        Create a new controlled AWS SageMaker Notebook instance resource. This 
         is async, because the operation can take a few minutes.
-      operationId: createAwsSagemakerNotebook
+      operationId: createAwsSageMakerNotebook
       tags: [ControlledAwsResource]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateControlledAwsSagemakerNotebookRequestBody'
+              $ref: '#/components/schemas/CreateControlledAwsSageMakerNotebookRequestBody'
       responses:
         '200':
-          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+          $ref: '#/components/responses/CreateControlledAwsSageMakerNotebookResponse'
         '202':
-          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+          $ref: '#/components/responses/CreateControlledAwsSageMakerNotebookResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -54,14 +54,14 @@ paths:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/JobId'
     get:
-      summary: Retrieve information about an AWS Sagemaker Notebook instance resource creation job.
-      operationId: getCreateAwsSagemakerNotebookResult
+      summary: Retrieve information about an AWS SageMaker Notebook instance resource creation job.
+      operationId: getCreateAwsSageMakerNotebookResult
       tags: [ ControlledAwsResource ]
       responses:
         '200':
-          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+          $ref: '#/components/responses/CreateControlledAwsSageMakerNotebookResponse'
         '202':
-          $ref: '#/components/responses/CreateControlledAwsSagemakerNotebookResponse'
+          $ref: '#/components/responses/CreateControlledAwsSageMakerNotebookResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -76,12 +76,12 @@ paths:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/ResourceId'
     get:
-      summary: Get a controlled AWS Sagemaker Notebook resource.
-      operationId: getAwsSagemakerNotebook
+      summary: Get a controlled AWS SageMaker Notebook resource.
+      operationId: getAwsSageMakerNotebook
       tags: [ ControlledAwsResource ]
       responses:
         '200':
-          $ref: '#/components/responses/GetControlledAwsSagemakerNotebookResponse'
+          $ref: '#/components/responses/GetControlledAwsSageMakerNotebookResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -90,10 +90,10 @@ paths:
           $ref: '#/components/responses/ServerError'
     post:
       summary: |
-        Delete a controlled AWS Sagemaker Notebook resource. This is async, because the 
+        Delete a controlled AWS SageMaker Notebook resource. This is async, because the 
         operation can take a few minutes. OpenAPI does not support request body 
         in DELETE, but async state requires it. Hence this is a POST.
-      operationId: deleteAwsSagemakerNotebook
+      operationId: deleteAwsSageMakerNotebook
       tags: [ ControlledAwsResource ]
       requestBody:
         required: true
@@ -120,8 +120,8 @@ paths:
     - $ref: '#/components/parameters/WorkspaceId'
     - $ref: '#/components/parameters/JobId'
     get:
-      summary: Retrieve information about an AWS Sagemaker Notebook resource deletion job.
-      operationId: getDeleteAwsSagemakerNotebookResult
+      summary: Retrieve information about an AWS SageMaker Notebook resource deletion job.
+      operationId: getDeleteAwsSageMakerNotebookResult
       tags: [ ControlledAwsResource ]
       responses:
         '200':
@@ -144,8 +144,8 @@ paths:
     - $ref: '#/components/parameters/AwsCredentialAccessScope'
     - $ref: '#/components/parameters/AwsCredentialDurationSeconds'
     get:
-      summary: Get a credential to access this Sagemaker Notebook in the AWS CLI or SDK.
-      operationId: getAwsSagemakerNotebookCredential
+      summary: Get a credential to access this SageMaker Notebook in the AWS CLI or SDK.
+      operationId: getAwsSageMakerNotebookCredential
       tags: [ ControlledAwsResource ]
       responses:
         '200':
@@ -161,58 +161,58 @@ paths:
 
 components:
   schemas:
-    AwsSagemakerNotebookCreationParameters:
+    AwsSageMakerNotebookCreationParameters:
       description: >-
-        Sagemaker Notebook specific properties to be set on creation. These are a subset of the
-        values accepted by the AWS Sagemaker Notebook API.
+        SageMaker Notebook specific properties to be set on creation. These are a subset of the
+        values accepted by the AWS SageMaker Notebook API.
       type: object
       properties:
         instanceName:
-          description: A valid instance name per https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateNotebookInstance.html#sagemaker-CreateNotebookInstance-request-NotebookInstanceName
+          description: A valid instance name per https://docs.aws.amazon.com/sageMaker/latest/APIReference/API_CreateNotebookInstance.html#sageMaker-CreateNotebookInstance-request-NotebookInstanceName
           type: string
         instanceType:
-          description: A valid instance type per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html
+          description: A valid instance type per https://docs.aws.amazon.com/general/latest/gr/sageMaker.html
           type: string
           default: "ml.t2.medium"
         region:
-          description: A valid Sagemaker Notebook region per https://docs.aws.amazon.com/general/latest/gr/sagemaker.html.
+          description: A valid SageMaker Notebook region per https://docs.aws.amazon.com/general/latest/gr/sageMaker.html.
           type: string
           default: "us-east-1"
 
-    CreateControlledAwsSagemakerNotebookRequestBody:
-      description: Payload for requesting a new controlled AWS Sagemaker Notebook instance resource.
+    CreateControlledAwsSageMakerNotebookRequestBody:
+      description: Payload for requesting a new controlled AWS SageMaker Notebook instance resource.
       type: object
-      required: [ common, awsSagemakerNotebook, jobControl ]
+      required: [ common, awsSageMakerNotebook, jobControl ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
-        awsSagemakerNotebook:
-          $ref: '#/components/schemas/AwsSagemakerNotebookCreationParameters'
+        awsSageMakerNotebook:
+          $ref: '#/components/schemas/AwsSageMakerNotebookCreationParameters'
         jobControl:
           $ref: '#/components/schemas/JobControl'
 
-    CreateControlledAwsSagemakerNotebookResult:
-      description: Response Payload for requesting a new controlled AWS Sagemaker Notebook instance resource.
+    CreateControlledAwsSageMakerNotebookResult:
+      description: Response Payload for requesting a new controlled AWS SageMaker Notebook instance resource.
       type: object
       properties:
         jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
-        awsSagemakerNotebook:
-          $ref: '#/components/schemas/AwsSagemakerNotebookResource'
+        awsSageMakerNotebook:
+          $ref: '#/components/schemas/AwsSageMakerNotebookResource'
 
   responses:
-    CreateControlledAwsSagemakerNotebookResponse:
-      description: Response to create controlled AWS Sagemaker Notebook instance resource.
+    CreateControlledAwsSageMakerNotebookResponse:
+      description: Response to create controlled AWS SageMaker Notebook instance resource.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreateControlledAwsSagemakerNotebookResult'
+            $ref: '#/components/schemas/CreateControlledAwsSageMakerNotebookResult'
 
-    GetControlledAwsSagemakerNotebookResponse:
-      description: Response to get AWS Sagemaker Notebook resource.
+    GetControlledAwsSageMakerNotebookResponse:
+      description: Response to get AWS SageMaker Notebook resource.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/AwsSagemakerNotebookResource'
+            $ref: '#/components/schemas/AwsSageMakerNotebookResource'

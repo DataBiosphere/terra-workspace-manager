@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -8,7 +8,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceCons
 import liquibase.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
-public class ControlledAwsSagemakerNotebookHandlerTest extends BaseAwsUnitTest {
+public class ControlledAwsSageMakerNotebookHandlerTest extends BaseAwsUnitTest {
 
   @Test
   public void generateCloudName() {
@@ -18,31 +18,31 @@ public class ControlledAwsSagemakerNotebookHandlerTest extends BaseAwsUnitTest {
 
     assertEquals(
         generatedName,
-        ControlledAwsSagemakerNotebookHandler.getHandler()
+        ControlledAwsSageMakerNotebookHandler.getHandler()
             .generateCloudName(workspaceUserFacingId, resourceName),
         "resource name expected without changes");
 
     assertEquals(
         resourceName + "-a-b-" + workspaceUserFacingId,
-        ControlledAwsSagemakerNotebookHandler.getHandler()
+        ControlledAwsSageMakerNotebookHandler.getHandler()
             .generateCloudName("b_" + workspaceUserFacingId, resourceName + "_a"),
         "resource name expected with underscores replaced by dashes");
 
     assertEquals(
         generatedName,
-        ControlledAwsSagemakerNotebookHandler.getHandler()
+        ControlledAwsSageMakerNotebookHandler.getHandler()
             .generateCloudName(workspaceUserFacingId + "--", "--" + resourceName),
         "resource name expected with leading & trailing dashes removed");
 
     assertEquals(
         generatedName,
-        ControlledAwsSagemakerNotebookHandler.getHandler()
+        ControlledAwsSageMakerNotebookHandler.getHandler()
             .generateCloudName(workspaceUserFacingId, resourceName + ".!(){}^%`<>~#|@*+[]'\"\\"),
         "resource name expected with all non-alphanumeric characters & non-dashes removed");
 
     assertEquals(
         AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH,
-        ControlledAwsSagemakerNotebookHandler.getHandler()
+        ControlledAwsSageMakerNotebookHandler.getHandler()
             .generateCloudName(
                 workspaceUserFacingId,
                 StringUtil.repeat(
@@ -55,7 +55,7 @@ public class ControlledAwsSagemakerNotebookHandlerTest extends BaseAwsUnitTest {
             - workspaceUserFacingId.length()
             - 2;
     assertFalse(
-        ControlledAwsSagemakerNotebookHandler.getHandler()
+        ControlledAwsSageMakerNotebookHandler.getHandler()
             .generateCloudName(
                 workspaceUserFacingId + "-----", StringUtil.repeat("a", repeatLength))
             .endsWith("-"),

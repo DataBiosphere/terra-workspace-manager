@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import static bio.terra.workspace.common.utils.AwsUtils.notebookStatusSetCanDelete;
 
@@ -16,16 +16,16 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
-public class ValidateAwsSagemakerNotebookDeleteStep implements Step {
+public class ValidateAwsSageMakerNotebookDeleteStep implements Step {
 
   private static final Logger logger =
-      LoggerFactory.getLogger(ValidateAwsSagemakerNotebookDeleteStep.class);
+      LoggerFactory.getLogger(ValidateAwsSageMakerNotebookDeleteStep.class);
 
-  private final ControlledAwsSagemakerNotebookResource resource;
+  private final ControlledAwsSageMakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
 
-  public ValidateAwsSagemakerNotebookDeleteStep(
-      ControlledAwsSagemakerNotebookResource resource,
+  public ValidateAwsSageMakerNotebookDeleteStep(
+      ControlledAwsSageMakerNotebookResource resource,
       AwsCloudContextService awsCloudContextService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;

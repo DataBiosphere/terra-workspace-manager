@@ -50,8 +50,8 @@ components:
           $ref: '#/components/schemas/AzureBatchPoolAttributes'
         awsS3StorageFolder:
           $ref: '#/components/schemas/AwsS3StorageFolderAttributes'
-        awsSagemakerNotebook:
-          $ref: '#/components/schemas/AwsSagemakerNotebookAttributes'
+        awsSageMakerNotebook:
+          $ref: '#/components/schemas/AwsSageMakerNotebookAttributes'
         gitRepo:
           $ref: '#/components/schemas/GitRepoAttributes'
         terraWorkspace:
@@ -88,8 +88,8 @@ components:
           $ref: '#/components/schemas/AzureBatchPoolResource'
         awsS3StorageFolder:
           $ref: '#/components/schemas/AwsS3StorageFolderResource'
-        awsSagemakerNotebook:
-          $ref: '#/components/schemas/AwsSagemakerNotebookResource'
+        awsSageMakerNotebook:
+          $ref: '#/components/schemas/AwsSageMakerNotebookResource'
         gitRepo:
           $ref: '#/components/schemas/GitRepoResource'
         terraWorkspace:

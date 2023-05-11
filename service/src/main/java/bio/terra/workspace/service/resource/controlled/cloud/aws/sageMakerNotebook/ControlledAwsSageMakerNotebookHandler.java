@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.sagemakerNotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
@@ -10,13 +10,13 @@ import javax.ws.rs.BadRequestException;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
-public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler {
+public class ControlledAwsSageMakerNotebookHandler implements WsmResourceHandler {
 
-  private static ControlledAwsSagemakerNotebookHandler theHandler;
+  private static ControlledAwsSageMakerNotebookHandler theHandler;
 
-  public static ControlledAwsSagemakerNotebookHandler getHandler() {
+  public static ControlledAwsSageMakerNotebookHandler getHandler() {
     if (theHandler == null) {
-      theHandler = new ControlledAwsSagemakerNotebookHandler();
+      theHandler = new ControlledAwsSageMakerNotebookHandler();
     }
     return theHandler;
   }
@@ -24,16 +24,16 @@ public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler
   /** {@inheritDoc} */
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
-    ControlledAwsSagemakerNotebookAttributes attributes =
+    ControlledAwsSageMakerNotebookAttributes attributes =
         DbSerDes.fromJson(
-            dbResource.getAttributes(), ControlledAwsSagemakerNotebookAttributes.class);
+            dbResource.getAttributes(), ControlledAwsSageMakerNotebookAttributes.class);
 
-    return new ControlledAwsSagemakerNotebookResource(
+    return new ControlledAwsSageMakerNotebookResource(
         dbResource, attributes.getInstanceName(), attributes.getInstanceType());
   }
 
   /**
-   * Generate controlled AWS Sagemaker Notebook cloud name that meets the requirements for a valid
+   * Generate controlled AWS SageMaker Notebook cloud name that meets the requirements for a valid
    * name.
    *
    * <p>Alphanumeric characters and dashes can be safely used in valid names. Dashes may not be
@@ -58,7 +58,7 @@ public class ControlledAwsSagemakerNotebookHandler implements WsmResourceHandler
     if (generatedName.length() == 0) {
       throw new BadRequestException(
           String.format(
-              "Cannot generate a valid sagemaker notebook name from %s, it must contain"
+              "Cannot generate a valid SageMaker Notebook name from %s, it must contain"
                   + " alphanumerical characters.",
               notebookName));
     }
