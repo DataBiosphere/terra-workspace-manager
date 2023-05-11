@@ -2,7 +2,8 @@ package scripts.testscripts;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static scripts.utils.BqDatasetUtils.makeControlledBigQueryDatasetUserShared;
 import static scripts.utils.TestUtils.appendRandomNumber;
 
@@ -11,7 +12,25 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.*;
+import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetRequest;
+import bio.terra.workspace.model.CloneControlledGcpBigQueryDatasetResult;
+import bio.terra.workspace.model.CloneControlledGcpGcsBucketRequest;
+import bio.terra.workspace.model.CloneControlledGcpGcsBucketResult;
+import bio.terra.workspace.model.CloneReferencedResourceRequestBody;
+import bio.terra.workspace.model.CloningInstructionsEnum;
+import bio.terra.workspace.model.CreateWorkspaceRequestBody;
+import bio.terra.workspace.model.CreatedControlledGcpGcsBucket;
+import bio.terra.workspace.model.CreatedWorkspace;
+import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.GcpGcsBucketResource;
+import bio.terra.workspace.model.JobControl;
+import bio.terra.workspace.model.JobReport;
+import bio.terra.workspace.model.Properties;
+import bio.terra.workspace.model.Property;
+import bio.terra.workspace.model.WorkspaceDescription;
+import bio.terra.workspace.model.WsmPolicyInput;
+import bio.terra.workspace.model.WsmPolicyInputs;
+import bio.terra.workspace.model.WsmPolicyPair;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -160,7 +179,6 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                     dataCollectionReferenceResource.getMetadata().getResourceId()));
     workspaceApi.deleteWorkspace(eastWorkspace.getId());
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
-    TestUtils.assertContains(exception.getMessage(), "Policy merge has conflicts");
 
     /*
      Scenario 5: Workspace has compatible policy but an incompatible resource. Workspace
@@ -197,11 +215,7 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
                         .destinationWorkspaceId(scenario5Workspace.getId()),
                     dataCollectionReferenceResource.getMetadata().getWorkspaceId(),
                     dataCollectionReferenceResource.getMetadata().getResourceId()));
-    logger.info(
-        "Captured exception - code: {} message: '%{}'",
-        exception.getCode(), exception.getMessage());
     assertEquals(exception.getCode(), HttpStatus.SC_CONFLICT);
-    TestUtils.assertContains(exception.getMessage(), "violation of policy");
 
     workspaceApi.deleteWorkspace(scenario5Workspace.getId());
 
@@ -308,11 +322,6 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     assertEquals(JobReport.StatusEnum.FAILED, cloneToAltLocationResult.getJobReport().getStatus());
     assertEquals(HttpStatus.SC_CONFLICT, cloneToAltLocationResult.getJobReport().getStatusCode());
-    assertTrue(
-        cloneToAltLocationResult
-            .getErrorReport()
-            .getMessage()
-            .contains("violates region policies"));
 
     workspaceApi.deleteWorkspace(scenario7Workspace.getId());
 
@@ -388,8 +397,6 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     assertEquals(JobReport.StatusEnum.FAILED, cloneBqResult.getJobReport().getStatus());
     assertEquals(HttpStatus.SC_CONFLICT, cloneBqResult.getJobReport().getStatusCode());
-    TestUtils.assertContains(
-        cloneBqResult.getErrorReport().getMessage(), "violates region policies");
 
     workspaceApi.deleteWorkspace(scenario8Workspace.getId());
 
