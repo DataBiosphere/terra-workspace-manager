@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNoteb
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -15,8 +14,11 @@ import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookAttributes;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
@@ -32,6 +34,7 @@ import java.util.Optional;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
 public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
+  private static final String RESOURCE_DESCRIPTOR = "ControlledAwsSageMakerNotebook";
   private final String instanceName;
   private final String instanceType;
 
@@ -200,10 +203,14 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_SAGEMAKER_NOTEBOOK");
     }
-    if ((instanceName == null) || (instanceType == null) || (getRegion() == null)) {
-      throw new MissingRequiredFieldException(
-          "Missing required field for ControlledAwsSageMakerNotebookResource.");
+    if (!getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
+      throw new BadRequestException(
+          "Access scope must be private. Shared Sagemaker Notebook instances are not yet implemented.");
     }
+    ResourceValidationUtils.checkFieldNonNull(instanceName, "instanceName", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkFieldNonNull(instanceType, "instanceType", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkFieldNonNull(getRegion(), "region", RESOURCE_DESCRIPTOR);
+    AwsResourceValidationUtils.validateAwsSageMakerNotebookName(instanceName);
   }
 
   public static class Builder {
