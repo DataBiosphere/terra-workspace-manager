@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiAwsContext;
@@ -95,6 +96,25 @@ public class AwsCloudContext implements CloudContext {
         && Objects.equal(tenantAlias, that.tenantAlias)
         && Objects.equal(environmentAlias, that.environmentAlias)
         && Objects.equal(commonFields, that.commonFields);
+  }
+
+  /**
+   * Verifies that current cloud context is the same as the expected cloud context by compares only
+   * relevant fields
+   *
+   * @param expected {@link AwsCloudContext}
+   * @throws StaleConfigurationException StaleConfigurationException if they do not match
+   */
+  public void verifyCloudContext(AwsCloudContext expected) {
+    if ((this != expected)
+        && (!Objects.equal(majorVersion, expected.majorVersion)
+            || !Objects.equal(accountId, expected.accountId))) {
+      // Accounts may be moved across organizations: do not compare
+      // tenantAlias & environmentAlias may change: do not compare
+      throw new StaleConfigurationException(
+          String.format(
+              "AWS cloud context expected %s, actual %s", this.serialize(), this.serialize()));
+    }
   }
 
   @Override

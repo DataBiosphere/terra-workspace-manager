@@ -50,9 +50,7 @@ public class AwsCloudContextService implements CloudContextService {
   private final FeatureService featureService;
   private final ResourceDao resourceDao;
   private final ControlledResourceService controlledResourceService;
-
   private EnvironmentDiscovery environmentDiscovery;
-
   private static AwsCloudContextService theService;
 
   @Autowired
@@ -207,13 +205,7 @@ public class AwsCloudContextService implements CloudContextService {
    */
   public static Optional<LandingZone> getLandingZone(
       Environment environment, AwsCloudContext awsCloudContext, Region region) {
-    AwsCloudContext awsCloudContextFromEnv = getCloudContext(environment);
-    if (!awsCloudContext.equals(awsCloudContextFromEnv)) {
-      throw new StaleConfigurationException(
-          String.format(
-              "AWS cloud context expected %s, actual %s", awsCloudContext, awsCloudContextFromEnv));
-    }
-
+    awsCloudContext.verifyCloudContext(getCloudContext(environment));
     return environment.getLandingZone(region);
   }
 
