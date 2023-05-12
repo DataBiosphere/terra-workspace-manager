@@ -108,10 +108,9 @@ public class AwsCloudContext implements CloudContext {
   public void verifyCloudContext(AwsCloudContext expected) {
     if ((this != expected)
         && (!Objects.equal(majorVersion, expected.majorVersion)
-            || !Objects.equal(organizationId, expected.organizationId)
-            || !Objects.equal(accountId, expected.accountId)
-            || !Objects.equal(tenantAlias, expected.tenantAlias)
-            || !Objects.equal(environmentAlias, expected.environmentAlias))) {
+            || !Objects.equal(accountId, expected.accountId))) {
+      // Accounts may be moved across organizations: do not compare
+      // tenantAlias & environmentAlias may change: do not compare
       throw new StaleConfigurationException(
           String.format(
               "AWS cloud context expected %s, actual %s", this.serialize(), this.serialize()));
