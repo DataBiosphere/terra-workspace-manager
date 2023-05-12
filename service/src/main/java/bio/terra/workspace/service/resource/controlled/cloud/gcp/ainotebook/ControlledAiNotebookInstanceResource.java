@@ -56,7 +56,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
    */
   protected static final String NOTEBOOK_DISABLE_ROOT_METADATA_KEY = "notebook-disable-root";
 
-  protected static final String RESOURCE_DESCRIPTOR = "ControlledAiNotebookInstance";
+  private static final String RESOURCE_DESCRIPTOR = "ControlledAiNotebookInstance";
 
   /** Metadata keys that are reserved by terra. User cannot modify those. */
   public static final Set<String> RESERVED_METADATA_KEYS =

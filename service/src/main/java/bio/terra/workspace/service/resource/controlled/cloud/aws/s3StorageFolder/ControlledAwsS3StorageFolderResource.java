@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolde
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
-import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -15,6 +14,8 @@ import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderAttributes;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.*;
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 
 public class ControlledAwsS3StorageFolderResource extends ControlledResource {
+  private static final String RESOURCE_DESCRIPTOR = "ControlledAwsS3StorageFolder";
   private final String bucketName;
   private final String prefix;
 
@@ -185,10 +187,10 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_S3_STORAGE_FOLDER");
     }
-    if ((bucketName == null) || (prefix == null) || (getRegion() == null)) {
-      throw new MissingRequiredFieldException(
-          "Missing required field for ControlledAwsS3StorageFolderResource.");
-    }
+    ResourceValidationUtils.checkFieldNonNull(bucketName, "bucketName", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkFieldNonNull(prefix, "prefix", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkFieldNonNull(getRegion(), "region", RESOURCE_DESCRIPTOR);
+    AwsResourceValidationUtils.validateAwsS3StorageFolderName(prefix);
   }
 
   public static class Builder {
