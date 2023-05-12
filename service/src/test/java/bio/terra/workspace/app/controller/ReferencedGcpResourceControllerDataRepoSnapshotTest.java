@@ -60,7 +60,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotTest extends BaseCon
 
   private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
   private final String sourceInstanceName = TestUtils.appendRandomNumber("source-instance-name");
-  private final String sourceSnapshot = TestUtils.appendRandomNumber("source-snapshot");
+  private final String sourceSnapshot = UUID.randomUUID().toString();
   private ApiDataRepoSnapshotResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
