@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueDatasetId;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_GCP_RESOURCE_REGION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
@@ -72,7 +74,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   public void
       buildDestinationControlledBigQueryDataset_nameAndDescriptionIsNull_preserveSourceResourceNameAndDescription() {
     var sourceDataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
+        makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
     var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
     var cloneProjectName = "my-cloned-gcp-project";
 
@@ -103,7 +105,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   public void
       buildDestinationControlledBigQueryDataset_private_setPrivateResourceStateToInitializing() {
     ControlledBigQueryDatasetResource sourceDataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID)
+        makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID)
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .privateResourceState(PrivateResourceState.ACTIVE)

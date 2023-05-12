@@ -11,7 +11,9 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
@@ -60,15 +62,15 @@ public class GetAzureDiskStepTest extends BaseAzureConnectedTest {
   @Test
   public void getDisk_doesNotExist() throws InterruptedException {
     final ApiAzureDiskCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureDiskCreationParameters();
+        getAzureDiskCreationParameters();
 
     GetAzureDiskStep step =
         new GetAzureDiskStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureDisk(
+            getAzureDisk(
                 creationParameters.getName(),
-                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
+                DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     when(mockDisks.getByResourceGroup(
@@ -84,15 +86,15 @@ public class GetAzureDiskStepTest extends BaseAzureConnectedTest {
   @Test
   public void getDisk_alreadyExists() throws InterruptedException {
     final ApiAzureDiskCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureDiskCreationParameters();
+        getAzureDiskCreationParameters();
 
     GetAzureDiskStep step =
         new GetAzureDiskStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureDisk(
+            getAzureDisk(
                 creationParameters.getName(),
-                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
+                DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     when(mockDisks.getByResourceGroup(

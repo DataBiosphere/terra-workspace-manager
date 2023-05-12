@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
@@ -13,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -64,9 +65,9 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
     setupMockLandingZoneRegion(Region.US_SOUTH_CENTRAL);
 
     final ApiControlledResourceCommonFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
+        makeDefaultControlledResourceFieldsApi();
 
-    var creationParameters = ControlledResourceFixtures.getAzureVmCreationParameters().diskId(null);
+    var creationParameters = ControlledAzureResourceFixtures.getAzureVmCreationParameters().diskId(null);
     final ApiCreateControlledAzureVmRequestBody vmRequest =
         new ApiCreateControlledAzureVmRequestBody()
             .common(commonFields)

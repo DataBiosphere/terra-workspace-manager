@@ -6,12 +6,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultControlledAzureVmResourceBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getInvalidAzureVmCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultAzureDiskBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData;
 
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
@@ -86,11 +93,11 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParameters();
+        getAzureVmCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
     ControlledAzureVmResource resource =
-        ControlledResourceFixtures.makeDefaultControlledAzureVmResourceBuilder(
+        makeDefaultControlledAzureVmResourceBuilder(
                 creationParameters, workspaceUuid, diskResource.getResourceId())
             .build();
 
@@ -139,14 +146,14 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension();
+        getAzureVmCreationParametersWithCustomScriptExtension();
 
     // TODO: make this application-private resource once the POC supports it
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -206,13 +213,13 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getInvalidAzureVmCreationParameters();
+        getInvalidAzureVmCreationParameters();
 
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource vmResource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -292,14 +299,14 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData();
+        getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData();
 
     // TODO: make this application-private resource once the POC supports it
     final UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(resourceId)
                     .name(getAzureName("vm"))
@@ -406,11 +413,11 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   private ControlledAzureDiskResource createDisk(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
     final ApiAzureDiskCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureDiskCreationParameters();
+        getAzureDiskCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
     ControlledAzureDiskResource resource =
-        ControlledResourceFixtures.makeDefaultAzureDiskBuilder(creationParameters, workspaceUuid)
+        makeDefaultAzureDiskBuilder(creationParameters, workspaceUuid)
             .build();
 
     // Submit a Disk creation flight.

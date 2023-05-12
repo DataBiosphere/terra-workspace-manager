@@ -13,7 +13,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -69,7 +69,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     return new ControlledAzureStorageContainerResource.Builder()
         .storageContainerName(storageContainerName)
         .common(
-            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+            makeDefaultControlledResourceFieldsBuilder()
                 .resourceId(resourceId)
                 .workspaceUuid(workspaceId)
                 .cloningInstructions(CloningInstructions.COPY_DEFINITION)

@@ -11,7 +11,12 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledResourceFields
+import import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures
+import import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures
+import import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures
+
+
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;

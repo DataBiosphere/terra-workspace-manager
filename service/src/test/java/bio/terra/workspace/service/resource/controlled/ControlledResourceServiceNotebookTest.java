@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeNotebookCommonFieldsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -22,7 +24,6 @@ import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
@@ -180,7 +181,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
     cliConfiguration.setServerName(serverName);
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters()
+        defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
 
@@ -263,7 +264,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
     String name = "create-ai-notebook-instance-undo-name";
 
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters()
+        defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
@@ -358,7 +359,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
     var newDescription = "new description for update-ai-notebook-instance-do-name-NEW";
 
     var creationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters()
+        defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     var resource = makeNotebookTestResource(workspaceId, name, instanceId);
@@ -439,7 +440,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         "new description for update-ai-notebook-instance-do-name-and-description-only-NEW";
 
     var creationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters()
+        defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     var resource = makeNotebookTestResource(workspaceId, name, instanceId);
@@ -501,7 +502,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
     Map<String, String> prevCustomMetadata = AI_NOTEBOOK_PREV_PARAMETERS.getMetadata();
     var creationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters()
+        defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION)
             .metadata(prevCustomMetadata);
@@ -583,7 +584,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         "new description for update-ai-notebook-instance-undo-name-illegal-metadata-key-NEW";
 
     var creationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters()
+        defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     var resource = makeNotebookTestResource(workspaceId, name, instanceId);
@@ -650,7 +651,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
       UUID workspaceUuid, String name, String instanceId) {
 
     ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
+        makeNotebookCommonFieldsBuilder()
             .workspaceUuid(workspaceUuid)
             .name(name)
             .assignedUser(user.getEmail())
@@ -670,7 +671,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
     String instanceId = "create-ai-notebook-instance-shared";
 
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters()
+        defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =
@@ -743,7 +744,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
   private ControlledAiNotebookInstanceResource createDefaultPrivateAiNotebookInstance(
       String instanceId, UserAccessUtils.TestUser user) {
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
-        ControlledResourceFixtures.defaultNotebookCreationParameters()
+        defaultNotebookCreationParameters()
             .instanceId(instanceId)
             .location(DEFAULT_NOTEBOOK_LOCATION);
     ControlledAiNotebookInstanceResource resource =

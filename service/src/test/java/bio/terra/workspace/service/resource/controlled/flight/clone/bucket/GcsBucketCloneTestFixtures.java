@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
@@ -46,7 +46,7 @@ public class GcsBucketCloneTestFixtures {
       ControlledGcsBucketResource.builder()
           .bucketName(SOURCE_BUCKET_NAME)
           .common(
-              ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+              makeDefaultControlledResourceFieldsBuilder()
                   .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                   .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                   .iamRole(ControlledResourceIamRole.OWNER)

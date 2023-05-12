@@ -9,7 +9,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
@@ -47,7 +47,7 @@ public class CopyAzureStorageContainerBlobsStepUnitTest extends BaseAzureUnitTes
         WorkspaceFlightMapKeys.ControlledResourceKeys.PREFIXES_TO_CLONE, clonePrefixes);
 
     var destinationContainer =
-        ControlledResourceFixtures.getAzureStorageContainer("sc-" + UUID.randomUUID());
+        getAzureStorageContainer("sc-" + UUID.randomUUID());
     var workingMap = new FlightMap();
 
     workingMap.put(

@@ -14,7 +14,9 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -95,9 +97,9 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
         new CreateAzureDiskStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureDisk(
+            getAzureDisk(
                 creationParameters.getName(),
-                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
+                DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     final StepResult stepResult = createAzureDiskStep.doStep(mockFlightContext);
@@ -118,7 +120,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
     CreateDiskRequestData expected =
         CreateDiskRequestData.builder()
             .setName(creationParameters.getName())
-            .setRegion(Region.fromName(ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION))
+            .setRegion(Region.fromName(DEFAULT_AZURE_RESOURCE_REGION))
             .setSize(50)
             .setTenantId(mockAzureCloudContext.getAzureTenantId())
             .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
@@ -131,15 +133,15 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
   @Test
   public void createDisk_alreadyExists() throws InterruptedException {
     final ApiAzureDiskCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureDiskCreationParameters();
+        getAzureDiskCreationParameters();
 
     CreateAzureDiskStep createAzureDiskStep =
         new CreateAzureDiskStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureDisk(
+            getAzureDisk(
                 creationParameters.getName(),
-                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
+                DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     // Stub creation to throw Conflict exception.
@@ -154,15 +156,15 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
   @Test
   public void deleteDisk() throws InterruptedException {
     final ApiAzureDiskCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureDiskCreationParameters();
+        getAzureDiskCreationParameters();
 
     CreateAzureDiskStep createAzureDiskStep =
         new CreateAzureDiskStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureDisk(
+            getAzureDisk(
                 creationParameters.getName(),
-                ControlledResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION,
+                DEFAULT_AZURE_RESOURCE_REGION,
                 creationParameters.getSize()));
 
     final StepResult stepResult = createAzureDiskStep.undoStep(mockFlightContext);

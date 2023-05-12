@@ -3,6 +3,7 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,7 +13,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceBatchPoolFixtures;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserAssignedIdentity;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
@@ -60,7 +60,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
   @Test
   public void createBatchPool400WithInconsistentUAMI() throws Exception {
     final ApiControlledResourceCommonFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
+        makeDefaultControlledResourceFieldsApi();
 
     var creationParameters =
         ControlledResourceBatchPoolFixtures.createBatchPoolWithRequiredParameters();
@@ -105,7 +105,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
   @Test
   public void createBatchPoolWithRequiredParametersSuccess() throws Exception {
     final ApiControlledResourceCommonFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
+        makeDefaultControlledResourceFieldsApi();
 
     var creationParameters =
         ControlledResourceBatchPoolFixtures.createBatchPoolWithRequiredParameters();

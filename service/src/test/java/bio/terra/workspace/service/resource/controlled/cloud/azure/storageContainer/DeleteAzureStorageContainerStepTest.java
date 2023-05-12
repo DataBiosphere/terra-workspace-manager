@@ -16,7 +16,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
@@ -35,6 +34,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters;
+
 
 public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   @Mock private BlobContainers mockBlobContainers;
@@ -50,8 +52,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   @Captor ArgumentCaptor<String> containerNameCaptor;
 
   private final ApiAzureStorageContainerCreationParameters creationParameters =
-      ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
-  private final String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
+      getAzureStorageContainerCreationParameters();
   private ControlledAzureStorageContainerResource storageContainerResource;
   private DeleteAzureStorageContainerStep deleteAzureStorageContainerStep;
 
@@ -65,7 +66,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
 
   private void initDeleteValidationStep(Optional<UUID> storageAccountId) {
     storageContainerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(
+        getAzureStorageContainer(
             creationParameters.getStorageContainerName());
 
     deleteAzureStorageContainerStep =

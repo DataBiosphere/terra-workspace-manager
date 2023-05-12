@@ -1,7 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_NEW;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_PREV;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_NEW;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_PREV;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,7 +18,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbUpdater;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
@@ -48,7 +48,7 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   UpdateBigQueryDatasetStep updateBigQueryDatasetStep;
   Dataset mockExistingDataset = new Dataset();
   ControlledBigQueryDatasetResource baseDatasetResource =
-      ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(null)
+      makeDefaultControlledBqDatasetBuilder(null)
           .projectId(PROJECT_ID)
           .build();
   FlightMap workingMap = new FlightMap();

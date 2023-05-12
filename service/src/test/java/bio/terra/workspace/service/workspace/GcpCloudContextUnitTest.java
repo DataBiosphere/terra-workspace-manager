@@ -10,7 +10,8 @@ import static org.mockito.ArgumentMatchers.any;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -148,10 +149,10 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Create a controlled resource in the DB
     ControlledBigQueryDatasetResource bqDataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+        makeDefaultControlledBqDatasetBuilder(workspaceUuid)
             .projectId(projectId)
             .build();
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bqDataset);
+    insertControlledResourceRow(resourceDao, bqDataset);
 
     // Also create a reference pointing to the same "cloud" resource
     ReferencedBigQueryDatasetResource referencedDataset =

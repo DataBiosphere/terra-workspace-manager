@@ -15,6 +15,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -369,11 +370,11 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
   /**
    * Creates a user-shared controlled GCS bucket in the provided workspace, using the credentials of
    * the provided user. This uses the default bucket creation parameters from {@code
-   * ControlledResourceFixtures}.
+   * ControlledGcpResourceFixtures}.
    */
   private ControlledGcsBucketResource createDefaultSharedGcsBucket(UserAccessUtils.TestUser user) {
     ControlledGcsBucketResource originalResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 
     ControlledGcsBucketResource createdBucket =
         controlledResourceService
@@ -381,7 +382,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
                 originalResource,
                 null,
                 user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+                ControlledGcpResourceFixtures.getGoogleBucketCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertTrue(originalResource.partialEqual(createdBucket));
     return createdBucket;

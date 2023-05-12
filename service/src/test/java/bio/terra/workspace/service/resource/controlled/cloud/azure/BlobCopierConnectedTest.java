@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,7 +77,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     sourceContainer =
         new ControlledAzureStorageContainerResource.Builder()
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceId)
                     .resourceId(UUID.randomUUID())
                     .build())
@@ -88,7 +89,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     destContainer =
         new ControlledAzureStorageContainerResource.Builder()
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceId)
                     .resourceId(UUID.randomUUID())
                     .build())

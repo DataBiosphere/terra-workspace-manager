@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.app.controller.ResourceApiController;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
@@ -199,7 +199,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       var resource =
           ControlledGcsBucketResource.builder()
               .common(
-                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                  makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid)
                       .resourceId(resourceId)
                       .name(resourceName)
@@ -230,7 +230,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       var resource =
           ControlledBigQueryDatasetResource.builder()
               .common(
-                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                  makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid)
                       .resourceId(resourceId)
                       .name(resourceName)
@@ -262,7 +262,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
       var resource =
           ControlledAiNotebookInstanceResource.builder()
               .common(
-                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                  makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid)
                       .resourceId(resourceId)
                       .name(resourceName)

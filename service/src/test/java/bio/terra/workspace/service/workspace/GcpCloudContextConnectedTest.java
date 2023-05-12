@@ -15,7 +15,7 @@ import static org.mockito.Mockito.doReturn;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -297,7 +297,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .datasetId("my_awesome_dataset")
             .location("us-central1");
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(
+        makeDefaultControlledBqDatasetBuilder(
                 sourceWorkspace.getWorkspaceId())
             .projectId(projectId)
             .datasetName("my_awesome_dataset")

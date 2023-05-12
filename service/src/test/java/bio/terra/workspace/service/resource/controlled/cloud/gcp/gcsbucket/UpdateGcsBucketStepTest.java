@@ -1,7 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_1;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BUCKET_UPDATE_PARAMETERS_1;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BUCKET_UPDATE_PARAMETERS_2;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_1;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_2;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGoogleDateTime;
@@ -21,7 +22,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -83,7 +83,7 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
     doReturn(mockBuiltBucketCow).when(mockBuiltBucketCow).update();
     doReturn(mockBucketCowBuilder).when(mockBuiltBucketCow).toBuilder();
     final ControlledGcsBucketResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(null).build();
+        makeDefaultControlledGcsBucketBuilder(null).build();
     doReturn(PROJECT_ID)
         .when(mockGcpCloudContextService)
         .getRequiredGcpProject(bucketResource.getWorkspaceId());

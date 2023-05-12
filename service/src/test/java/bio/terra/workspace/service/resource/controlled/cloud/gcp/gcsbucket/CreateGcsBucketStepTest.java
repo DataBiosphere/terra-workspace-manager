@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getBucketResource;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.DEFAULT_REGION;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGoogleDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +26,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -91,7 +92,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
             mockCrlService,
-            ControlledResourceFixtures.getBucketResource(creationParameters.getName()),
+            getBucketResource(creationParameters.getName()),
             mockGcpCloudContextService);
 
     final FlightMap inputFlightMap = new FlightMap();
@@ -144,13 +145,13 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     final CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
             mockCrlService,
-            ControlledResourceFixtures.getBucketResource(bucketName),
+            getBucketResource(bucketName),
             mockGcpCloudContextService);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
-        ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
+        GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
     inputFlightMap.makeImmutable();
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
 
@@ -176,13 +177,13 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     final CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
             mockCrlService,
-            ControlledResourceFixtures.getBucketResource(bucketName),
+            getBucketResource(bucketName),
             mockGcpCloudContextService);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
-        ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
+        GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
     inputFlightMap.makeImmutable();
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
 
