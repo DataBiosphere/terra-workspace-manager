@@ -782,4 +782,19 @@ public class WorkspaceDao {
 
     return jdbcTemplate.query(sql, params, WORKSPACE_USER_PAIR_ROW_MAPPER);
   }
+
+  /**
+   * Temporary backfill of cloud context spend profile from workspace spend profile TODO: PF-2762
+   * remove this backfill.
+   */
+  @WriteTransaction
+  public void backfillCloudContextSpendProfile() {
+    String sql =
+        """
+      UPDATE cloud_context SET spend_profile =
+       (SELECT spend_profile FROM workspace WHERE workspace_id = cloud_context.workspace_id)
+      WHERE cloud_context.spend_profile IS NULL
+      """;
+    jdbcTemplate.update(sql, new MapSqlParameterSource());
+  }
 }
