@@ -40,7 +40,7 @@ public interface WsmResourceHandler {
    * @param resourceName resource name
    * @return cloud-native name
    */
-  default String generateCloudName(String workspaceUserFacingId, String resourceName) {
+  default String generateCloudName(@Nullable String workspaceUserFacingId, String resourceName) {
     throw new BadRequestException(
         "generateCloudName with workspaceUserFacingId and resourceName not supported");
   }

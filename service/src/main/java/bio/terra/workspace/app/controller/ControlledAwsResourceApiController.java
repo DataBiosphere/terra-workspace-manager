@@ -403,7 +403,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     if (StringUtils.isEmpty(instanceName)) {
       instanceName =
           ControlledAwsSageMakerNotebookHandler.getHandler()
-              .generateCloudName(workspaceUuid, body.getCommon().getName());
+              .generateCloudName(workspace.getUserFacingId(), body.getCommon().getName());
     }
     AwsResourceValidationUtils.validateAwsSageMakerNotebookName(instanceName);
 
