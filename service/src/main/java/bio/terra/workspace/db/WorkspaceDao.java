@@ -720,21 +720,22 @@ public class WorkspaceDao {
   }
 
   /**
-   * Retrieve all non-BROKEN, non-DELETING, GCP cloud contexts. This is only used for back-filling
-   * custom roles on GCP projects of existing workspaces. See AdminService.
+   * Retrieve all non-BROKEN, non-DELETING, non-CREATING GCP cloud contexts. This is only used for
+   * back-filling custom roles on GCP projects of existing workspaces. See AdminService.
    *
    * @return a map of workspace id to GCP serialized cloud context
    */
   public ImmutableMap<UUID, DbCloudContext> getWorkspaceIdToGcpCloudContextMap() {
     String sql =
         BASE_CLOUD_CONTEXT_SELECT_SQL
-            + "WHERE cloud_platform = :cloud_platform AND state != :broken AND state != :deleting";
+            + "WHERE cloud_platform = :cloud_platform AND state != :broken AND state != :deleting AND state != :creating";
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("cloud_platform", CloudPlatform.GCP.toSql())
             .addValue("broken", WsmResourceState.BROKEN.toDb())
-            .addValue("deleting", WsmResourceState.DELETING.toDb());
+            .addValue("deleting", WsmResourceState.DELETING.toDb())
+            .addValue("creating", WsmResourceState.CREATING.toDb());
 
     List<DbCloudContext> dbCloudContexts =
         jdbcTemplate.query(sql, params, CLOUD_CONTEXT_ROW_MAPPER);

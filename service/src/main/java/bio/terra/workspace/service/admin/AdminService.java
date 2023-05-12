@@ -14,7 +14,6 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -38,10 +37,11 @@ public class AdminService {
     Map<UUID, String> workspaceIdToGcpProjectIdMap = new HashMap<>();
     for (Map.Entry<UUID, DbCloudContext> cloudContext :
         workspaceDao.getWorkspaceIdToGcpCloudContextMap().entrySet()) {
+      // GcpCloudContext.deserialize will only return empty for contexts in the CREATING state,
+      // which are filtered out above in getWorkspaceIdToGcpCloudContextMap.
       workspaceIdToGcpProjectIdMap.put(
           cloudContext.getKey(),
-          Objects.requireNonNull(GcpCloudContext.deserialize(cloudContext.getValue()))
-              .getGcpProjectId());
+          GcpCloudContext.deserialize(cloudContext.getValue()).orElseThrow().getGcpProjectId());
     }
 
     if (workspaceIdToGcpProjectIdMap.isEmpty()) {

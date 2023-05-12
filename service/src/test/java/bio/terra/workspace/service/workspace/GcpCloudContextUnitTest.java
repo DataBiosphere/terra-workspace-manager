@@ -27,6 +27,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -66,7 +67,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Case 1: successful V2 deserialization
     DbCloudContext dbCloudContext = makeDbCloudContext(v2Json);
-    GcpCloudContext goodV2 = GcpCloudContext.deserialize(dbCloudContext);
+    GcpCloudContext goodV2 = GcpCloudContext.deserialize(dbCloudContext).get();
     assertEquals(goodV2.getGcpProjectId(), GCP_PROJECT_ID);
     assertEquals(goodV2.getSamPolicyOwner().orElse(null), POLICY_OWNER);
     assertEquals(goodV2.getSamPolicyWriter().orElse(null), POLICY_WRITER);
@@ -90,6 +91,37 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         SerializationException.class,
         () -> GcpCloudContext.deserialize(makeDbCloudContext(junkJson)),
         "Junk JSON should throw");
+  }
+
+  @Test
+  public void deserialize_creatingContext_isEmpty() {
+    UUID workspaceUuid = UUID.randomUUID();
+    var workspace =
+        new Workspace(
+            workspaceUuid,
+            "a-user-facing-id",
+            "deleteGcpContextDeletesControlledResources",
+            "description",
+            new SpendProfileId("spend-profile"),
+            Collections.emptyMap(),
+            WorkspaceStage.MC_WORKSPACE,
+            DEFAULT_USER_EMAIL,
+            null);
+    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
+    workspaceDao.createCloudContextStart(
+        workspaceUuid,
+        CloudPlatform.GCP,
+        new SpendProfileId("fake"),
+        /*flightId=*/ UUID.randomUUID().toString());
+    Optional<DbCloudContext> creatingContext =
+        workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP);
+    // After createCloudContextStart, a placeholder should exist in the DB.
+    assertTrue(creatingContext.isPresent());
+    Optional<GcpCloudContext> deserializedContext =
+        GcpCloudContext.deserialize(creatingContext.get());
+    // Deserializes to empty, as the placeholder value does not have context information.
+    assertTrue(deserializedContext.isEmpty());
+    workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
   @Test

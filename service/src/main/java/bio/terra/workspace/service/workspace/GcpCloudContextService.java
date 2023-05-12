@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.stairway.RetryRule;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -142,7 +143,11 @@ public class GcpCloudContextService implements CloudContextService {
 
   @Override
   public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
-    return GcpCloudContext.deserialize(dbCloudContext);
+    return GcpCloudContext.deserialize(dbCloudContext)
+        .orElseThrow(
+            () ->
+                new InternalLogicException(
+                    "Cannot call makeCloudContextFromDb on an unfinished GCP context"));
   }
 
   /**
@@ -155,7 +160,7 @@ public class GcpCloudContextService implements CloudContextService {
   public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceUuid) {
     return workspaceDao
         .getCloudContext(workspaceUuid, CloudPlatform.GCP)
-        .map(GcpCloudContext::deserialize);
+        .flatMap(GcpCloudContext::deserialize);
   }
 
   /**
