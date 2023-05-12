@@ -10,7 +10,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -49,7 +49,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
         workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.PROJECT_ID);
 
     ControlledGcsBucketResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     createResourceInDbStartStep storeGoogleBucketMetadataStep =
         new createResourceInDbStartStep(
             resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE, bucketResource);

@@ -14,7 +14,7 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -41,7 +41,7 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
   @BeforeEach
   public void setup() {
     resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(UUID.randomUUID()).build();
+        makeDefaultControlledGcsBucketBuilder(UUID.randomUUID()).build();
 
     findResourcesToCloneStep = new FindResourcesToCloneStep(mockResourceDao);
     doReturn(mockStairway).when(mockFlightContext).getStairway();

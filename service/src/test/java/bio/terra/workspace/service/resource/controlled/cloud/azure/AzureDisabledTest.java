@@ -12,7 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -84,13 +86,13 @@ public class AzureDisabledTest extends BaseConnectedTest {
     // because the resource ID would be duplicated, but we expect all "create resource" calls
     // to fail, so this is fine.
     final ApiControlledResourceCommonFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
+        makeDefaultControlledResourceFieldsApi();
 
     // Create disk
     final ApiCreateControlledAzureDiskRequestBody diskRequest =
         new ApiCreateControlledAzureDiskRequestBody()
             .common(commonFields)
-            .azureDisk(ControlledResourceFixtures.getAzureDiskCreationParameters());
+            .azureDisk(getAzureDiskCreationParameters());
     mockMvc
         .perform(
             addJsonContentType(
@@ -104,7 +106,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
     final ApiCreateControlledAzureVmRequestBody vmRequest =
         new ApiCreateControlledAzureVmRequestBody()
             .common(commonFields)
-            .azureVm(ControlledResourceFixtures.getAzureVmCreationParameters());
+            .azureVm(getAzureVmCreationParameters());
     mockMvc
         .perform(
             addJsonContentType(

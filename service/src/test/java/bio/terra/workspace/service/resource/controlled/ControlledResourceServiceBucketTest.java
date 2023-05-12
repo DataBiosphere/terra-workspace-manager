@@ -15,8 +15,9 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BUCKET_UPDATE_PARAMETERS_2;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
@@ -115,7 +116,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketDo_invalidBucketName_throwsBadRequestException() throws Exception {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId)
+        makeDefaultControlledGcsBucketBuilder(workspaceId)
             .bucketName("192.168.5.4")
             .build();
 
@@ -126,14 +127,14 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
                 resource,
                 null,
                 user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.getGoogleBucketCreationParameters()));
+                getGoogleBucketCreationParameters()));
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketUndo() throws Exception {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+        makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 
     // Test idempotency of bucket-specific undo steps by retrying them once. Fail at the end of
     // the flight to ensure undo steps work properly.
@@ -152,7 +153,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
                 resource,
                 null,
                 user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.getGoogleBucketCreationParameters()));
+                getGoogleBucketCreationParameters()));
 
     // Validate the bucket does not exist.
     StorageCow storageCow = crlService.createStorageCow(projectId);
@@ -167,7 +168,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
   @Test
   void cloneGcsBucketTwice_lineageAppends() throws InterruptedException {
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+        makeDefaultControlledGcsBucketBuilder(workspaceId).build();
     List<ResourceLineageEntry> expectedLineage = new ArrayList<>();
     // original bucket
     ControlledGcsBucketResource createdBucket =
@@ -176,7 +177,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
                 resource,
                 null,
                 user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.getGoogleBucketCreationParameters())
+                getGoogleBucketCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
     var destinationLocation = "US-EAST1";
@@ -301,7 +302,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
         user.getAuthenticatedRequest(),
         createdBucket,
         commonUpdateParameters,
-        ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2);
+        BUCKET_UPDATE_PARAMETERS_2);
 
     // check the properties stored in WSM were updated
     ControlledGcsBucketResource fetchedResource =
@@ -349,14 +350,14 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
                 user.getAuthenticatedRequest(),
                 createdBucket,
                 commonUpdateParameters,
-                ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2));
+                BUCKET_UPDATE_PARAMETERS_2));
 
     // check the properties stored on the cloud were not updated
     BucketInfo updatedBucket =
         crlService.createStorageCow(projectId).get(createdBucket.getBucketName()).getBucketInfo();
     ApiGcpGcsBucketUpdateParameters cloudParameters =
         GcsApiConversions.toUpdateParameters(updatedBucket);
-    assertNotEquals(ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_2, cloudParameters);
+    assertNotEquals(BUCKET_UPDATE_PARAMETERS_2, cloudParameters);
 
     // check the properties stored in WSM were not updated
     ControlledGcsBucketResource fetchedResource =
@@ -374,7 +375,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
    */
   private ControlledGcsBucketResource createDefaultSharedGcsBucket(UserAccessUtils.TestUser user) {
     ControlledGcsBucketResource originalResource =
-        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+        makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 
     ControlledGcsBucketResource createdBucket =
         controlledResourceService
@@ -382,7 +383,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
                 originalResource,
                 null,
                 user.getAuthenticatedRequest(),
-                ControlledGcpResourceFixtures.getGoogleBucketCreationParameters())
+                getGoogleBucketCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     assertTrue(originalResource.partialEqual(createdBucket));
     return createdBucket;

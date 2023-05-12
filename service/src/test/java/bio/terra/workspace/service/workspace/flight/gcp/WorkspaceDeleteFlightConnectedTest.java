@@ -11,11 +11,8 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledResourceFields
-import import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures
-import import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures
-import import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures
-
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultBigQueryDatasetCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -70,12 +67,12 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
 
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+        makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .build();
 
     var creationParameters =
-        ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
+        defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
     controlledResourceService
         .createControlledResourceSync(dataset, null, userRequest, creationParameters)
@@ -135,11 +132,11 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
 
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+        makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .build();
     var creationParameters =
-        ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
+        defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
     controlledResourceService
         .createControlledResourceSync(dataset, null, userRequest, creationParameters)

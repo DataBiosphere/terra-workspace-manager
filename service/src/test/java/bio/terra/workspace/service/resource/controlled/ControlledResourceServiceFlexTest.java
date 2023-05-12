@@ -9,7 +9,8 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultFlexResourceBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultFlexResourceCreationParameters;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.job.JobService;
@@ -85,14 +86,14 @@ public class ControlledResourceServiceFlexTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateFlexResourceUndo() throws Exception {
     ControlledFlexibleResource originalFlex =
-        ControlledResourceFixtures.makeDefaultFlexResourceBuilder(workspaceId).build();
+        makeDefaultFlexResourceBuilder(workspaceId).build();
     ControlledFlexibleResource createdFlex =
         controlledResourceService
             .createControlledResourceSync(
                 originalFlex,
                 null,
                 user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.defaultFlexResourceCreationParameters())
+                defaultFlexResourceCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     assertTrue(originalFlex.partialEqual(createdFlex));
 

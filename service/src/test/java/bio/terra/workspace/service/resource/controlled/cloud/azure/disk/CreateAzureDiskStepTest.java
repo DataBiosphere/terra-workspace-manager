@@ -91,7 +91,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
   @Test
   void createDisk() throws InterruptedException {
     final ApiAzureDiskCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureDiskCreationParameters();
+        getAzureDiskCreationParameters();
 
     var createAzureDiskStep =
         new CreateAzureDiskStep(

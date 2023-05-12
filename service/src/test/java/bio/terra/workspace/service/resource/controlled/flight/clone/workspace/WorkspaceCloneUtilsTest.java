@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueDatasetId;
@@ -14,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
@@ -42,7 +42,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledBigQueryDataset_cloneSucceeds() {
     var sourceDataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
+        makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
     var cloneDescription = "This is a cloned dataset";
     var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
@@ -107,7 +107,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     ControlledBigQueryDatasetResource sourceDataset =
         makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID)
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .privateResourceState(PrivateResourceState.ACTIVE)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .assignedUser("yuhuyoyo")
@@ -192,7 +192,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledGcsBucket_cloneSucceeds() {
     ControlledGcsBucketResource sourceBucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
+        makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
     var cloneDescription = "This is a cloned bucket";
     // Gcs bucket cloud instance id must be lower-case.
@@ -220,7 +220,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   public void
       buildDestinationControlledGcsBucket_nameAndDescriptionIsNull_preserveSourceResourceNameAndDescription() {
     ControlledGcsBucketResource sourceBucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
+        makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
     // Gcs bucket cloud instance id must be lower-case.
     var cloneBucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT);
 
@@ -246,9 +246,9 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledGcsBucket_private_setPrivateResourceStateToInitializing() {
     var sourceBucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
+        makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .privateResourceState(PrivateResourceState.ACTIVE)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .assignedUser("yuhuyoyo")
@@ -275,7 +275,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledGcsBucket_clearSomeProperties() {
     ControlledGcsBucketResource sourceBucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
+        makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
             .common(makeControlledResourceFieldsWithCustomProperties())
             .build();
     ControlledGcsBucketResource bucketToClone =

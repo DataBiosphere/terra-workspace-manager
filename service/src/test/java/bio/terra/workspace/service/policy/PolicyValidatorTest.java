@@ -19,7 +19,9 @@ import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getBucketResource;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -89,8 +91,8 @@ public class PolicyValidatorTest extends BaseUnitTest {
     var workspace =
         defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
-    var azureResource = ControlledResourceFixtures.getAzureStorageContainer("test");
-    var gcpResource = ControlledResourceFixtures.getBucketResource("test");
+    var azureResource = getAzureStorageContainer("test");
+    var gcpResource = getBucketResource("test");
 
     when(mockWorkspaceDao.listCloudPlatforms(workspace.workspaceId()))
         .thenReturn(List.of(CloudPlatform.AZURE, CloudPlatform.GCP));
@@ -120,10 +122,10 @@ public class PolicyValidatorTest extends BaseUnitTest {
     var workspace =
         defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
-    var azureResource = ControlledResourceFixtures.getAzureStorageContainer("test");
+    var azureResource = getAzureStorageContainer("test");
     var azureResourceWrongRegion =
-        ControlledResourceFixtures.getAzureDisk("test", "wrongRegion", 0);
-    var gcpResource = ControlledResourceFixtures.getBucketResource("test");
+        getAzureDisk("test", "wrongRegion", 0);
+    var gcpResource = getBucketResource("test");
 
     when(mockWorkspaceDao.listCloudPlatforms(workspace.workspaceId()))
         .thenReturn(List.of(CloudPlatform.AZURE, CloudPlatform.GCP));
