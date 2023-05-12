@@ -205,7 +205,7 @@ public class AwsCloudContextService implements CloudContextService {
    */
   public static Optional<LandingZone> getLandingZone(
       Environment environment, AwsCloudContext awsCloudContext, Region region) {
-    awsCloudContext.verilyCloudContext(getCloudContext(environment));
+    awsCloudContext.verifyCloudContext(getCloudContext(environment));
     return environment.getLandingZone(region);
   }
 

@@ -103,20 +103,20 @@ public class AwsCloudContext implements CloudContext {
    * relevant fields
    *
    * @param expected {@link AwsCloudContext}
-   * @throws StaleConfigurationException StaleConfigurationException if they are not the same
+   * @throws StaleConfigurationException StaleConfigurationException if they do not match
    */
-  public void verilyCloudContext(AwsCloudContext expected) {
-    if ((this == expected)
-        || (Objects.equal(majorVersion, expected.majorVersion)
-            && Objects.equal(organizationId, expected.organizationId)
-            && Objects.equal(accountId, expected.accountId)
-            && Objects.equal(tenantAlias, expected.tenantAlias)
-            && Objects.equal(environmentAlias, expected.environmentAlias))) {
-      return;
+  public void verifyCloudContext(AwsCloudContext expected) {
+    if ((this != expected)
+        && (!Objects.equal(majorVersion, expected.majorVersion)
+            || !Objects.equal(organizationId, expected.organizationId)
+            || !Objects.equal(accountId, expected.accountId)
+            || !Objects.equal(tenantAlias, expected.tenantAlias)
+            || !Objects.equal(environmentAlias, expected.environmentAlias))) {
+      throw new StaleConfigurationException(
+          String.format(
+              "AWS cloud context expected %s, actual %s", this.serialize(), this.serialize()));
     }
-    throw new StaleConfigurationException(
-        String.format(
-            "AWS cloud context expected %s, actual %s", this.serialize(), this.serialize()));
+    return;
   }
 
   @Override
