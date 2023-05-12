@@ -115,7 +115,6 @@ public class AwsCloudContext implements CloudContext {
           String.format(
               "AWS cloud context expected %s, actual %s", this.serialize(), this.serialize()));
     }
-    return;
   }
 
   @Override
