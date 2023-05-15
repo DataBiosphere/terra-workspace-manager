@@ -6,8 +6,13 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.mak
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.workspace.common.utils.AzureUtils;
+import bio.terra.workspace.common.utils.MapperUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
+import bio.terra.workspace.generated.model.ApiAzureBatchPoolCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureBatchPoolDeploymentConfiguration;
+import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineConfiguration;
+import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineImageReference;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
@@ -22,6 +27,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.Controll
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.azure.core.management.Region;
@@ -262,6 +268,32 @@ public class ControlledAzureResourceFixtures {
 
   // Azure Batch Pool
 
+  private static final String BATCH_POOL_ID = UUID.randomUUID().toString();
+  private static final String BATCH_POOL_VM_SIZE = "Standard_D2s_v3";
+  private static final String NODE_AGENT_SKU_ID = "batch.node.ubuntu 18.04";
+  private static final String IMAGE_REFERENCE_PUBLISHER = "canonical";
+  private static final String IMAGE_REFERENCE_OFFER = "ubuntuserver";
+  private static final String IMAGE_REFERENCE_SKU = "18.04-lts";
+
+  public static ApiAzureBatchPoolCreationParameters createBatchPoolWithRequiredParameters() {
+    var imageReference =
+        new ApiAzureBatchPoolVirtualMachineImageReference()
+            .offer(IMAGE_REFERENCE_OFFER)
+            .publisher(IMAGE_REFERENCE_PUBLISHER)
+            .sku(IMAGE_REFERENCE_SKU);
+    var virtualMachineConfiguration =
+        new ApiAzureBatchPoolVirtualMachineConfiguration()
+            .imageReference(imageReference)
+            .nodeAgentSkuId(NODE_AGENT_SKU_ID);
+    var deploymentConfiguration =
+        new ApiAzureBatchPoolDeploymentConfiguration()
+            .virtualMachineConfiguration(virtualMachineConfiguration);
+    return new ApiAzureBatchPoolCreationParameters()
+        .id(BATCH_POOL_ID)
+        .vmSize(BATCH_POOL_VM_SIZE)
+        .deploymentConfiguration(deploymentConfiguration);
+  }
+
   public static ControlledAzureBatchPoolResource.Builder getAzureBatchPoolResourceBuilder(
       UUID batchPoolId,
       String batchPoolDisplayName,
@@ -283,5 +315,17 @@ public class ControlledAzureResourceFixtures {
         .displayName(batchPoolDisplayName)
         .vmSize(vmSize)
         .deploymentConfiguration(deploymentConfiguration);
+  }
+
+  public static ControlledAzureBatchPoolResource createAzureBatchPoolResource(
+      ApiAzureBatchPoolCreationParameters creationParameters,
+      ControlledResourceFields commonFields) {
+    return ControlledAzureBatchPoolResource.builder()
+        .id(creationParameters.getId())
+        .vmSize(creationParameters.getVmSize())
+        .deploymentConfiguration(
+            MapperUtils.BatchPoolMapper.mapFrom(creationParameters.getDeploymentConfiguration()))
+        .common(commonFields)
+        .build();
   }
 }
