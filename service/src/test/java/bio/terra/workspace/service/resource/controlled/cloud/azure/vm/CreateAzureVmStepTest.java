@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVm;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -7,8 +9,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVm;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
 
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachineRequestData;
 import bio.terra.stairway.FlightContext;
@@ -305,8 +305,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        getAzureVmCreationParameters();
+    final ApiAzureVmCreationParameters creationParameters = getAzureVmCreationParameters();
 
     final FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
@@ -315,10 +314,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
     var createAzureVmStep =
         new CreateAzureVmStep(
-            mockAzureConfig,
-            mockCrlService,
-            getAzureVm(creationParameters),
-            mockResourceDao);
+            mockAzureConfig, mockCrlService, getAzureVm(creationParameters), mockResourceDao);
 
     final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
@@ -345,9 +341,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
             .setDisk(mockDisk)
             .setNetwork(mockNetwork)
             .setSubnetName(STUB_SUBNET_NAME)
-            .setImage(
-                AzureUtils.getVmImageData(
-                    getAzureVmCreationParameters().getVmImage()))
+            .setImage(AzureUtils.getVmImageData(getAzureVmCreationParameters().getVmImage()))
             .build();
 
     assertThat(requestDataOpt, equalTo(Optional.of(expected)));
@@ -355,8 +349,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm_alreadyExists() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        getAzureVmCreationParameters();
+    final ApiAzureVmCreationParameters creationParameters = getAzureVmCreationParameters();
 
     final FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
@@ -365,10 +358,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
     var createAzureVmStep =
         new CreateAzureVmStep(
-            mockAzureConfig,
-            mockCrlService,
-            getAzureVm(creationParameters),
-            mockResourceDao);
+            mockAzureConfig, mockCrlService, getAzureVm(creationParameters), mockResourceDao);
 
     // Stub creation to throw Conflict exception.
     when(mockVmStage12.create(any(Context.class))).thenThrow(mockException);
@@ -381,8 +371,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm_VmExtensionProvisioningError() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        getAzureVmCreationParameters();
+    final ApiAzureVmCreationParameters creationParameters = getAzureVmCreationParameters();
 
     final FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
@@ -391,10 +380,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
     var createAzureVmStep =
         new CreateAzureVmStep(
-            mockAzureConfig,
-            mockCrlService,
-            getAzureVm(creationParameters),
-            mockResourceDao);
+            mockAzureConfig, mockCrlService, getAzureVm(creationParameters), mockResourceDao);
 
     // throw a vm extension provisioning exception
     // azure sets the HTTP status code to 200 -- we want to make sure to set that here
@@ -416,8 +402,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm_ResourceNotFound() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        getAzureVmCreationParameters();
+    final ApiAzureVmCreationParameters creationParameters = getAzureVmCreationParameters();
 
     final FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
@@ -426,10 +411,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
     var createAzureVmStep =
         new CreateAzureVmStep(
-            mockAzureConfig,
-            mockCrlService,
-            getAzureVm(creationParameters),
-            mockResourceDao);
+            mockAzureConfig, mockCrlService, getAzureVm(creationParameters), mockResourceDao);
 
     // throw a not found exception
     var mockResponse = mock(HttpResponse.class);
@@ -448,8 +430,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm_generic4xxException() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        getAzureVmCreationParameters();
+    final ApiAzureVmCreationParameters creationParameters = getAzureVmCreationParameters();
 
     final FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
@@ -458,10 +439,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
     var createAzureVmStep =
         new CreateAzureVmStep(
-            mockAzureConfig,
-            mockCrlService,
-            getAzureVm(creationParameters),
-            mockResourceDao);
+            mockAzureConfig, mockCrlService, getAzureVm(creationParameters), mockResourceDao);
 
     // throw a 4xx
     var mockResponse = mock(HttpResponse.class);
@@ -478,15 +456,11 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void deleteVm() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        getAzureVmCreationParameters();
+    final ApiAzureVmCreationParameters creationParameters = getAzureVmCreationParameters();
 
     var createAzureVmStep =
         new CreateAzureVmStep(
-            mockAzureConfig,
-            mockCrlService,
-            getAzureVm(creationParameters),
-            mockResourceDao);
+            mockAzureConfig, mockCrlService, getAzureVm(creationParameters), mockResourceDao);
 
     final StepResult stepResult = createAzureVmStep.undoStep(mockFlightContext);
 

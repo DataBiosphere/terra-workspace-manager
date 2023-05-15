@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,8 +12,6 @@ import static org.mockito.ArgumentMatchers.any;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.common.BaseUnitTest;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -149,9 +149,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Create a controlled resource in the DB
     ControlledBigQueryDatasetResource bqDataset =
-        makeDefaultControlledBqDatasetBuilder(workspaceUuid)
-            .projectId(projectId)
-            .build();
+        makeDefaultControlledBqDatasetBuilder(workspaceUuid).projectId(projectId).build();
     insertControlledResourceRow(resourceDao, bqDataset);
 
     // Also create a reference pointing to the same "cloud" resource

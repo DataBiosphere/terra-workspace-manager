@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,9 +17,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -90,8 +90,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
 
   @Test
   void createDisk() throws InterruptedException {
-    final ApiAzureDiskCreationParameters creationParameters =
-        getAzureDiskCreationParameters();
+    final ApiAzureDiskCreationParameters creationParameters = getAzureDiskCreationParameters();
 
     var createAzureDiskStep =
         new CreateAzureDiskStep(
@@ -132,8 +131,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
 
   @Test
   public void createDisk_alreadyExists() throws InterruptedException {
-    final ApiAzureDiskCreationParameters creationParameters =
-        getAzureDiskCreationParameters();
+    final ApiAzureDiskCreationParameters creationParameters = getAzureDiskCreationParameters();
 
     CreateAzureDiskStep createAzureDiskStep =
         new CreateAzureDiskStep(
@@ -155,8 +153,7 @@ public class CreateAzureDiskStepTest extends BaseAzureUnitTest {
 
   @Test
   public void deleteDisk() throws InterruptedException {
-    final ApiAzureDiskCreationParameters creationParameters =
-        getAzureDiskCreationParameters();
+    final ApiAzureDiskCreationParameters creationParameters = getAzureDiskCreationParameters();
 
     CreateAzureDiskStep createAzureDiskStep =
         new CreateAzureDiskStep(

@@ -64,10 +64,10 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
     UUID workspaceId = UUID.randomUUID();
     setupMockLandingZoneRegion(Region.US_SOUTH_CENTRAL);
 
-    final ApiControlledResourceCommonFields commonFields =
-        makeDefaultControlledResourceFieldsApi();
+    final ApiControlledResourceCommonFields commonFields = makeDefaultControlledResourceFieldsApi();
 
-    var creationParameters = ControlledAzureResourceFixtures.getAzureVmCreationParameters().diskId(null);
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters().diskId(null);
     final ApiCreateControlledAzureVmRequestBody vmRequest =
         new ApiCreateControlledAzureVmRequestBody()
             .common(commonFields)

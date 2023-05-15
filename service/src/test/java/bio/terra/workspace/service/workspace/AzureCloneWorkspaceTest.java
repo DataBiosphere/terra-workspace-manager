@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueBucketName;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.uniqueStorageContainerName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,7 +65,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     final UUID containerResourceId = UUID.randomUUID();
-    final String storageContainerName = uniqueBucketName();
+    final String storageContainerName = uniqueStorageContainerName();
     ControlledAzureStorageContainerResource containerResource =
         ControlledAzureStorageContainerResource.builder()
             .common(

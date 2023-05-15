@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -51,8 +51,7 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
   public void createAzureDiskControlledResource() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    final ApiAzureDiskCreationParameters creationParameters =
-        getAzureDiskCreationParameters();
+    final ApiAzureDiskCreationParameters creationParameters = getAzureDiskCreationParameters();
 
     // TODO: make this application-private resource once the POC supports it
     final UUID resourceId = UUID.randomUUID();

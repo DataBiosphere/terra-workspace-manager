@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.policy;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getBucketResource;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
@@ -19,9 +22,6 @@ import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getBucketResource;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -123,8 +123,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
         defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
     var azureResource = getAzureStorageContainer("test");
-    var azureResourceWrongRegion =
-        getAzureDisk("test", "wrongRegion", 0);
+    var azureResourceWrongRegion = getAzureDisk("test", "wrongRegion", 0);
     var gcpResource = getBucketResource("test");
 
     when(mockWorkspaceDao.listCloudPlatforms(workspace.workspaceId()))

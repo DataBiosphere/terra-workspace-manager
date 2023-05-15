@@ -1,12 +1,14 @@
 package bio.terra.workspace.serdes;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueBucketName;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.StairwayMapper;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,18 +23,15 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
         MissingRequiredFieldException.class,
         () ->
             ControlledGcsBucketResource.builder()
-                .bucketName(ControlledResourceFixtures.uniqueBucketName())
-                .common(
-                    ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                        .workspaceUuid(null)
-                        .build())
+                .bucketName(uniqueBucketName())
+                .common(makeDefaultControlledResourceFieldsBuilder().workspaceUuid(null).build())
                 .build());
   }
 
   @Test
   public void testSerialization() throws JsonProcessingException {
     ControlledGcsBucketResource gcsBucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(null).build();
+        makeDefaultControlledGcsBucketBuilder(null).build();
 
     final ObjectMapper objectMapper = StairwayMapper.getObjectMapper();
     final String serialized = objectMapper.writeValueAsString(gcsBucketResource);

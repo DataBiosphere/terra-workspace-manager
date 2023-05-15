@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,9 +15,6 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder;
-
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -87,8 +86,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
       PrivateResourceState privateResourceState,
       AccessScopeType accessScopeType,
       ManagedByType managedByType) {
-    return makeDefaultAzureStorageContainerResourceBuilder(
-            /*workspaceId=*/ UUID.randomUUID())
+    return makeDefaultAzureStorageContainerResourceBuilder(/*workspaceId=*/ UUID.randomUUID())
         .common(
             makeDefaultControlledResourceFieldsBuilder()
                 .managedBy(managedByType)

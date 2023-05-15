@@ -3,7 +3,6 @@ package bio.terra.workspace.common.fixtures;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WORKSPACE_ID;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueBucketName;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.workspace.common.utils.AzureUtils;
@@ -38,12 +37,15 @@ import java.util.UUID;
 public class ControlledAzureResourceFixtures {
 
   public static final String AZURE_NAME_PREFIX = "az";
-  public static final String AZURE_DISK_NAME_PREFIX = "disk";
-  public static final String AZURE_VM_NAME_PREFIX = "vm";
   public static final String DEFAULT_AZURE_RESOURCE_REGION = Region.US_EAST2.name();
-  public static final String TEST_AZURE_STORAGE_ACCOUNT_NAME = "teststgacctdonotdelete";
 
-  private ControlledAzureResourceFixtures() {}
+  public static String uniqueAzureName(String resourcePrefix) {
+    return TestUtils.appendRandomNumber(AZURE_NAME_PREFIX + "-" + resourcePrefix);
+  }
+
+  // Azure Disk
+
+  public static final String AZURE_DISK_NAME_PREFIX = "disk";
 
   /** Construct a parameter object with a unique disk name to avoid unintended clashes. */
   public static ApiAzureDiskCreationParameters getAzureDiskCreationParameters() {
@@ -52,12 +54,90 @@ public class ControlledAzureResourceFixtures {
         .size(50);
   }
 
+  public static ControlledAzureDiskResource.Builder makeDefaultAzureDiskBuilder(
+      ApiAzureDiskCreationParameters creationParameters, UUID workspaceId) {
+    return ControlledAzureDiskResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("disk"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .build())
+        .diskName(creationParameters.getName())
+        .size(creationParameters.getSize());
+  }
+
+  public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
+    return ControlledAzureDiskResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
+        .diskName(diskName)
+        .size(size)
+        .build();
+  }
+
+  // Azure Storage
+
+  public static final String TEST_AZURE_STORAGE_ACCOUNT_NAME = "teststgacctdonotdelete";
+  public static final String STORAGE_CONTAINER_PREFIX = "my-container";
+
+  public static String uniqueStorageAccountName() {
+    return UUID.randomUUID().toString().toLowerCase().replace("-", "").substring(0, 23);
+  }
+
+  public static String uniqueStorageContainerName() {
+    return TestUtils.appendRandomNumber(STORAGE_CONTAINER_PREFIX);
+  }
+
   /** Construct a parameter object with a unique name to avoid unintended clashes. */
   public static ApiAzureStorageContainerCreationParameters
       getAzureStorageContainerCreationParameters() {
     return new ApiAzureStorageContainerCreationParameters()
-        .storageContainerName(uniqueBucketName());
+        .storageContainerName(uniqueStorageContainerName());
   }
+
+  public static ControlledAzureStorageContainerResource.Builder
+      makeDefaultAzureStorageContainerResourceBuilder(UUID workspaceId) {
+    return ControlledAzureStorageContainerResource.builder()
+        .common(makeDefaultControlledResourceFields(workspaceId))
+        .storageContainerName(TestUtils.appendRandomNumber("storageaccountfoo"));
+  }
+
+  public static ControlledAzureStorageContainerResource getAzureStorageContainer(
+      String storageContainerName) {
+    return ControlledAzureStorageContainerResource.builder()
+        .common(makeDefaultControlledResourceFields(WORKSPACE_ID))
+        .storageContainerName(storageContainerName)
+        .build();
+  }
+
+  public static ControlledAzureStorageContainerResource getAzureStorageContainer(
+      UUID workspaceUuid,
+      UUID containerResourceId,
+      String containerName,
+      String resourceName,
+      String resourceDescription) {
+    return ControlledAzureStorageContainerResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceUuid)
+                .resourceId(containerResourceId)
+                .name(resourceName)
+                .description(resourceDescription)
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region("eastus") // Needs to match the AzureControlledStorageContainerFlightTest
+                .build())
+        .storageContainerName(containerName)
+        .build();
+  }
+
+  // Azure VM
+
+  public static final String AZURE_VM_NAME_PREFIX = "vm";
 
   /** Construct a parameter object with a unique vm name to avoid unintended clashes. */
   public static ApiAzureVmCreationParameters getAzureVmCreationParameters() {
@@ -152,51 +232,35 @@ public class ControlledAzureResourceFixtures {
         .tags(tags);
   }
 
-  public static String uniqueAzureName(String resourcePrefix) {
-    return TestUtils.appendRandomNumber(AZURE_NAME_PREFIX + "-" + resourcePrefix);
-  }
-
-  public static String uniqueStorageAccountName() {
-    return UUID.randomUUID().toString().toLowerCase().replace("-", "").substring(0, 23);
-  }
-
-  public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
-    return ControlledAzureDiskResource.builder()
-        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
-        .diskName(diskName)
-        .size(size)
+  public static ControlledAzureVmResource getAzureVm(
+      ApiAzureVmCreationParameters creationParameters) {
+    return ControlledAzureVmResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().build())
+        .vmName(creationParameters.getName())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
+        .diskId(creationParameters.getDiskId())
         .build();
   }
 
-  public static ControlledAzureStorageContainerResource getAzureStorageContainer(
-      String storageContainerName) {
-    return ControlledAzureStorageContainerResource.builder()
-        .common(makeDefaultControlledResourceFields(WORKSPACE_ID))
-        .storageContainerName(storageContainerName)
-        .build();
-  }
-
-  public static ControlledAzureStorageContainerResource getAzureStorageContainer(
-      UUID workspaceUuid,
-      UUID containerResourceId,
-      String containerName,
-      String resourceName,
-      String resourceDescription) {
-    return ControlledAzureStorageContainerResource.builder()
+  public static ControlledAzureVmResource.Builder makeDefaultControlledAzureVmResourceBuilder(
+      ApiAzureVmCreationParameters creationParameters, UUID workspaceId, UUID diskResourceId) {
+    return ControlledAzureVmResource.builder()
         .common(
             makeDefaultControlledResourceFieldsBuilder()
-                .workspaceUuid(workspaceUuid)
-                .resourceId(containerResourceId)
-                .name(resourceName)
-                .description(resourceDescription)
-                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("vm"))
+                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                 .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .region("eastus") // Needs to match the AzureControlledStorageContainerFlightTest
                 .build())
-        .storageContainerName(containerName)
-        .build();
+        .vmName(creationParameters.getName())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
+        .diskId(diskResourceId);
   }
+
+  // Azure Batch Pool
 
   public static ControlledAzureBatchPoolResource.Builder getAzureBatchPoolResourceBuilder(
       UUID batchPoolId,
@@ -219,56 +283,5 @@ public class ControlledAzureResourceFixtures {
         .displayName(batchPoolDisplayName)
         .vmSize(vmSize)
         .deploymentConfiguration(deploymentConfiguration);
-  }
-
-  public static ControlledAzureVmResource getAzureVm(
-      ApiAzureVmCreationParameters creationParameters) {
-    return ControlledAzureVmResource.builder()
-        .common(makeDefaultControlledResourceFieldsBuilder().build())
-        .vmName(creationParameters.getName())
-        .vmSize(creationParameters.getVmSize())
-        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
-        .diskId(creationParameters.getDiskId())
-        .build();
-  }
-
-  public static ControlledAzureStorageContainerResource.Builder
-      makeDefaultAzureStorageContainerResourceBuilder(UUID workspaceId) {
-    return ControlledAzureStorageContainerResource.builder()
-        .common(makeDefaultControlledResourceFields(workspaceId))
-        .storageContainerName(TestUtils.appendRandomNumber("storageaccountfoo"));
-  }
-
-  public static ControlledAzureDiskResource.Builder makeDefaultAzureDiskBuilder(
-      ApiAzureDiskCreationParameters creationParameters, UUID workspaceId) {
-    return ControlledAzureDiskResource.builder()
-        .common(
-            makeDefaultControlledResourceFieldsBuilder()
-                .workspaceUuid(workspaceId)
-                .name(getAzureName("disk"))
-                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .region(DEFAULT_AZURE_RESOURCE_REGION)
-                .build())
-        .diskName(creationParameters.getName())
-        .size(creationParameters.getSize());
-  }
-
-  public static ControlledAzureVmResource.Builder makeDefaultControlledAzureVmResourceBuilder(
-      ApiAzureVmCreationParameters creationParameters, UUID workspaceId, UUID diskResourceId) {
-    return ControlledAzureVmResource.builder()
-        .common(
-            makeDefaultControlledResourceFieldsBuilder()
-                .workspaceUuid(workspaceId)
-                .name(getAzureName("vm"))
-                .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
-                .build())
-        .vmName(creationParameters.getName())
-        .vmSize(creationParameters.getVmSize())
-        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
-        .diskId(diskResourceId);
   }
 }

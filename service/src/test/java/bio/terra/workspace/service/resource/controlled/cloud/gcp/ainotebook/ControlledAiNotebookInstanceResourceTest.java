@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeNotebookCommonFieldsBuilder;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.DEFAULT_ZONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,8 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseUnitTest;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeNotebookCommonFieldsBuilder;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -34,9 +34,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   @Test
   public void validateSharedAccessThrows() {
     ControlledResourceFields commonFields =
-        makeNotebookCommonFieldsBuilder()
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .build();
+        makeNotebookCommonFieldsBuilder().accessScope(AccessScopeType.ACCESS_SCOPE_SHARED).build();
 
     assertThrows(
         BadRequestException.class,
@@ -51,8 +49,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
 
   @Test
   public void testFlightMapSerialization() {
-    ControlledAiNotebookInstanceResource resource =
-        makeDefaultAiNotebookInstance().build();
+    ControlledAiNotebookInstanceResource resource = makeDefaultAiNotebookInstance().build();
 
     // TODO: [PF-935] Create a public API on FlightMap or Stairway test fixture that explicitly
     // tests that a type serializes and deserializes to the correct result.  For now leverage the

@@ -1,10 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeControlledResourceFieldsBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueDatasetId;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueDatasetId;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_GCP_RESOURCE_REGION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
@@ -41,8 +41,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
 
   @Test
   public void buildDestinationControlledBigQueryDataset_cloneSucceeds() {
-    var sourceDataset =
-        makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
+    var sourceDataset = makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
     var cloneDescription = "This is a cloned dataset";
     var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
@@ -73,8 +72,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void
       buildDestinationControlledBigQueryDataset_nameAndDescriptionIsNull_preserveSourceResourceNameAndDescription() {
-    var sourceDataset =
-        makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
+    var sourceDataset = makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
     var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
     var cloneProjectName = "my-cloned-gcp-project";
 

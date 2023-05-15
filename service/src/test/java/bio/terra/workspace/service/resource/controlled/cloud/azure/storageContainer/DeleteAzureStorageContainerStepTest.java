@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -34,9 +36,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters;
-
 
 public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   @Mock private BlobContainers mockBlobContainers;
@@ -66,8 +65,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
 
   private void initDeleteValidationStep(Optional<UUID> storageAccountId) {
     storageContainerResource =
-        getAzureStorageContainer(
-            creationParameters.getStorageContainerName());
+        getAzureStorageContainer(creationParameters.getStorageContainerName());
 
     deleteAzureStorageContainerStep =
         new DeleteAzureStorageContainerStep(

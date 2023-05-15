@@ -48,9 +48,7 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   UpdateBigQueryDatasetStep updateBigQueryDatasetStep;
   Dataset mockExistingDataset = new Dataset();
   ControlledBigQueryDatasetResource baseDatasetResource =
-      makeDefaultControlledBqDatasetBuilder(null)
-          .projectId(PROJECT_ID)
-          .build();
+      makeDefaultControlledBqDatasetBuilder(null).projectId(PROJECT_ID).build();
   FlightMap workingMap = new FlightMap();
   DbUpdater dbUpdater;
 

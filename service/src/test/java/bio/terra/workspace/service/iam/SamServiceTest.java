@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.iam;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueBucketName;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -18,7 +21,6 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.common.BaseConnectedTest;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -374,7 +376,7 @@ class SamServiceTest extends BaseConnectedTest {
 
     // Create private resource assigned to the default user.
     ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+        makeDefaultControlledResourceFieldsBuilder()
             .workspaceUuid(workspaceUuid)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .assignedUser(userAccessUtils.getDefaultUserEmail())
@@ -383,7 +385,7 @@ class SamServiceTest extends BaseConnectedTest {
 
     ControlledResource bucketResource =
         ControlledGcsBucketResource.builder()
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .bucketName(uniqueBucketName())
             .common(commonFields)
             .build();
 

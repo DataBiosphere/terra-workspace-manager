@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BUCKET_UPDATE_PARAMETERS_2;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -15,9 +18,6 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BUCKET_UPDATE_PARAMETERS_2;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
@@ -116,9 +116,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGcsBucketDo_invalidBucketName_throwsBadRequestException() throws Exception {
     ControlledGcsBucketResource resource =
-        makeDefaultControlledGcsBucketBuilder(workspaceId)
-            .bucketName("192.168.5.4")
-            .build();
+        makeDefaultControlledGcsBucketBuilder(workspaceId).bucketName("192.168.5.4").build();
 
     assertThrows(
         BadRequestException.class,
@@ -174,10 +172,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
     ControlledGcsBucketResource createdBucket =
         controlledResourceService
             .createControlledResourceSync(
-                resource,
-                null,
-                user.getAuthenticatedRequest(),
-                getGoogleBucketCreationParameters())
+                resource, null, user.getAuthenticatedRequest(), getGoogleBucketCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
     var destinationLocation = "US-EAST1";

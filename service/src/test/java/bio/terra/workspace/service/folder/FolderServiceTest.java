@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.folder;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -12,7 +14,6 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -221,7 +222,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     String notebookJobId =
         controlledResourceService.createAiNotebookInstance(
             controlledAiNotebookInFooBarLoo,
-            ControlledResourceFixtures.defaultNotebookCreationParameters(),
+            defaultNotebookCreationParameters(),
             ControlledResourceIamRole.EDITOR,
             new ApiJobControl().id(UUID.randomUUID().toString()),
             "falseResultPath",
@@ -232,7 +233,7 @@ public class FolderServiceTest extends BaseConnectedTest {
         controlledBucket2InFooFoo,
         /*privateResourceIamRole=*/ null,
         userAccessUtils.secondUserAuthRequest(),
-        ControlledResourceFixtures.getGoogleBucketCreationParameters());
+        getGoogleBucketCreationParameters());
 
     referencedResourceService.createReferenceResource(
         referencedBucketInFooFoo, userAccessUtils.defaultUserAuthRequest());

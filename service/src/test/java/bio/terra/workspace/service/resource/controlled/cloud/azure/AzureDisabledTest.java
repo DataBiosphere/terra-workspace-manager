@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_DISK_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
@@ -12,9 +15,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -85,8 +85,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
     // We're re-using these common fields for multiple requests. Normally this would be a problem
     // because the resource ID would be duplicated, but we expect all "create resource" calls
     // to fail, so this is fine.
-    final ApiControlledResourceCommonFields commonFields =
-        makeDefaultControlledResourceFieldsApi();
+    final ApiControlledResourceCommonFields commonFields = makeDefaultControlledResourceFieldsApi();
 
     // Create disk
     final ApiCreateControlledAzureDiskRequestBody diskRequest =

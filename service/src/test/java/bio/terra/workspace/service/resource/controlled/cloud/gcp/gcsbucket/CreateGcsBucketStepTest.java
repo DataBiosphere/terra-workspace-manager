@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getBucketResource;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getBucketResource;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.DEFAULT_REGION;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGoogleDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -144,9 +144,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     final String bucketName = TestUtils.appendRandomNumber("pedro");
     final CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
-            mockCrlService,
-            getBucketResource(bucketName),
-            mockGcpCloudContextService);
+            mockCrlService, getBucketResource(bucketName), mockGcpCloudContextService);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
@@ -176,9 +174,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     final CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
-            mockCrlService,
-            getBucketResource(bucketName),
-            mockGcpCloudContextService);
+            mockCrlService, getBucketResource(bucketName), mockGcpCloudContextService);
 
     final FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(

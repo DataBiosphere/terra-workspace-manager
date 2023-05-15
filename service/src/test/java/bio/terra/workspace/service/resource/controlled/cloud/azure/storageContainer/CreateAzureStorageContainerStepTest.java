@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.uniqueStorageAccountName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,9 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.uniqueStorageAccountName;
 
 public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
 
@@ -70,8 +70,7 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
     return new CreateAzureStorageContainerStep(
         mockAzureConfig,
         mockCrlService,
-        getAzureStorageContainer(
-            creationParameters.getStorageContainerName()));
+        getAzureStorageContainer(creationParameters.getStorageContainerName()));
   }
 
   @Test
