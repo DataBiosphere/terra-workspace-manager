@@ -3,6 +3,7 @@ package bio.terra.workspace.common.fixtures;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 
 import bio.terra.stairway.FlightMap;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
@@ -63,6 +64,9 @@ public class WorkspaceFixtures {
         Collections.emptyMap(),
         WorkspaceStage.MC_WORKSPACE,
         DEFAULT_USER_EMAIL,
+        null,
+        null,
+        null,
         null);
   }
 
@@ -77,6 +81,18 @@ public class WorkspaceFixtures {
 
   public static Workspace buildMcWorkspace(@Nullable UUID workspaceUuid) {
     return buildWorkspace(workspaceUuid, WorkspaceStage.MC_WORKSPACE);
+  }
+
+  public static void createWorkspaceInDb(Workspace workspace, WorkspaceDao workspaceDao) {
+    var flightId = UUID.randomUUID().toString();
+    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ null, flightId);
+    workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId);
+  }
+
+  public static boolean deleteWorkspaceFromDb(UUID workspaceUuid, WorkspaceDao workspaceDao) {
+    var flightId = UUID.randomUUID().toString();
+    workspaceDao.deleteWorkspaceStart(workspaceUuid, flightId);
+    return workspaceDao.deleteWorkspaceSuccess(workspaceUuid, flightId);
   }
 
   /**
