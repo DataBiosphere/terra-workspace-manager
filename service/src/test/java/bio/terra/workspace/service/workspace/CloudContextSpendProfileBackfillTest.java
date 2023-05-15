@@ -23,18 +23,9 @@ public class CloudContextSpendProfileBackfillTest extends BaseUnitTest {
 
   @Test
   public void testBackfillQuery() {
-    UUID workspaceId = UUID.randomUUID();
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceId)
-            .userFacingId("a" + workspaceId)
-            .description("A")
-            .spendProfileId(WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
-            .build();
-
-    workspaceDao.createWorkspace(workspace, null);
+    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    UUID workspaceId = workspace.workspaceId();
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 
     String flightId = workspaceId.toString();
     workspaceDao.createCloudContextStart(
