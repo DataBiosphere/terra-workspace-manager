@@ -4,6 +4,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiGcpContext;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -80,12 +81,27 @@ public class GcpCloudContext implements CloudContext {
     return DbSerDes.toJson(dbContext);
   }
 
-  public static GcpCloudContext deserialize(DbCloudContext dbCloudContext) {
+  /**
+   * Deserialize a database entry into a GCP cloud context.
+   *
+   * <p>This can return an empty optional if the provided DB entry is in the CREATING state. These
+   * are placeholder entries used for state management, and do not have the context (policy groups,
+   * project ID) that callers would expect from a fully-completed GCP cloud context.
+   *
+   * @param dbCloudContext Entry from cloud_context DB describing a GCP cloud context
+   * @return Empty optional if dbCloudContext is in state CREATING. Otherwise, a deserialized
+   *     GcpCloudContext object.
+   */
+  public static Optional<GcpCloudContext> deserialize(DbCloudContext dbCloudContext) {
     // Sanity check the input
     if (dbCloudContext == null
         || dbCloudContext.getSpendProfile() == null
         || dbCloudContext.getCloudPlatform() != CloudPlatform.GCP) {
       throw new InternalLogicException("Invalid GCP cloud context state");
+    }
+
+    if (dbCloudContext.getState() == WsmResourceState.CREATING) {
+      return Optional.empty();
     }
 
     GcpCloudContextV2 v2Context =
@@ -104,17 +120,18 @@ public class GcpCloudContext implements CloudContext {
       throw new InvalidSerializedVersionException("Serialized version missing data");
     }
 
-    return new GcpCloudContext(
-        v2Context.gcpProjectId,
-        v2Context.samPolicyOwner,
-        v2Context.samPolicyWriter,
-        v2Context.samPolicyReader,
-        v2Context.samPolicyApplication,
-        new CloudContextCommonFields(
-            dbCloudContext.getSpendProfile(),
-            dbCloudContext.getState(),
-            dbCloudContext.getFlightId(),
-            dbCloudContext.getError()));
+    return Optional.of(
+        new GcpCloudContext(
+            v2Context.gcpProjectId,
+            v2Context.samPolicyOwner,
+            v2Context.samPolicyWriter,
+            v2Context.samPolicyReader,
+            v2Context.samPolicyApplication,
+            new CloudContextCommonFields(
+                dbCloudContext.getSpendProfile(),
+                dbCloudContext.getState(),
+                dbCloudContext.getFlightId(),
+                dbCloudContext.getError())));
   }
 
   public ApiGcpContext toApi() {

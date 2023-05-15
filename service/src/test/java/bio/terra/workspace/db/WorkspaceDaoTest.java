@@ -162,11 +162,11 @@ class WorkspaceDaoTest extends BaseUnitTest {
         new HashMap<>(workspaceDao.getWorkspaceIdToGcpCloudContextMap());
 
     GcpCloudContext context1 =
-        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace1));
+        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace1)).get();
     GcpCloudContext context2 =
-        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace2));
+        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace2)).get();
     GcpCloudContext context3 =
-        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace3));
+        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace3)).get();
 
     assertContext(project1, context1);
     assertContext(project2, context2);
