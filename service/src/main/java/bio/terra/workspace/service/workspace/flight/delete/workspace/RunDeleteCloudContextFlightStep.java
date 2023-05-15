@@ -60,7 +60,6 @@ public class RunDeleteCloudContextFlightStep implements Step {
           cloudPlatform,
           workspaceUuid,
           flightId);
-      return StepResult.getStepResultSuccess();
     } catch (DuplicateFlightIdException e) {
       // We will see duplicate id on a retry. Quietly continue.
     }

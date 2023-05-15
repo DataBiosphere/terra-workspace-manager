@@ -7,10 +7,14 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledDbResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledSamResourcesStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
@@ -37,6 +41,8 @@ public class WorkspaceDeleteFlight extends Flight {
     RetryRule dbRetryRule = RetryRules.shortDatabase();
 
     WorkspaceDao workspaceDao = appContext.getWorkspaceDao();
+    ResourceDao resourceDao = appContext.getResourceDao();
+    SamService samService = appContext.getSamService();
 
     addStep(new DeleteWorkspaceStartStep(workspaceUuid, workspaceDao), dbRetryRule);
 
@@ -46,6 +52,16 @@ public class WorkspaceDeleteFlight extends Flight {
       addStep(
           new RunDeleteCloudContextFlightStep(workspaceUuid, cloudPlatform, userRequest, flightId));
     }
+
+    // Delete all ANY controlled resources (right now, that means FlexResource). The only case
+    // has no cloud resource, so we delete Sam and Db resources.
+    addStep(
+        new DeleteControlledSamResourcesStep(
+            samService, resourceDao, workspaceUuid, CloudPlatform.ANY),
+        terraRetryRule);
+    addStep(
+        new DeleteControlledDbResourcesStep(resourceDao, workspaceUuid, CloudPlatform.ANY),
+        dbRetryRule);
 
     // Belt and suspenders: the delete cloud context flights should fail and cause this flight to
     // fail if there are any resources left. However, just to be sure...
