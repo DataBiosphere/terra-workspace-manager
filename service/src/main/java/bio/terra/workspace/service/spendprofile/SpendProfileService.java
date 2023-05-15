@@ -85,13 +85,13 @@ public class SpendProfileService {
     SpendProfile spend = null;
     if (spendProfiles.containsKey(spendProfileId)) {
       if (!SamRethrow.onInterrupted(
-              () ->
-                      samService.isAuthorized(
-                              userRequest,
-                              SamConstants.SamResource.SPEND_PROFILE,
-                              spendProfileId.getId(),
-                              SamConstants.SamSpendProfileAction.LINK),
-              "isAuthorized")) {
+          () ->
+              samService.isAuthorized(
+                  userRequest,
+                  SamConstants.SamResource.SPEND_PROFILE,
+                  spendProfileId.getId(),
+                  SamConstants.SamSpendProfileAction.LINK),
+          "isAuthorized")) {
         throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
       }
       spend = spendProfiles.get(spendProfileId);
