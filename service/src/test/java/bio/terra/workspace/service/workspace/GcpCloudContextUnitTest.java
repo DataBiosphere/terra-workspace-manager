@@ -108,6 +108,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
             DEFAULT_USER_EMAIL,
             null);
     workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
+
     workspaceDao.createCloudContextStart(
         workspaceUuid,
         CloudPlatform.GCP,
@@ -115,6 +116,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         /*flightId=*/ UUID.randomUUID().toString());
     Optional<DbCloudContext> creatingContext =
         workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP);
+
     // After createCloudContextStart, a placeholder should exist in the DB.
     assertTrue(creatingContext.isPresent());
     Optional<GcpCloudContext> deserializedContext =
