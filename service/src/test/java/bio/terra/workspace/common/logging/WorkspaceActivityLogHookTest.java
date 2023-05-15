@@ -675,6 +675,6 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     }
 
     @Override
-    public void setProgressMeter(String name, long v1, long v2) throws InterruptedException {}
+    public void setProgressMeter(String name, long v1, long v2) {}
   }
 }

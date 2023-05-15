@@ -667,7 +667,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createAiNotebookInstanceNoWriterRoleThrowsBadRequest() throws Exception {
+  void createAiNotebookInstanceNoWriterRoleThrowsBadRequest() {
     String instanceId = "create-ai-notebook-instance-shared";
 
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
@@ -698,7 +698,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteAiNotebookInstanceDo() throws Exception {
+  void deleteAiNotebookInstanceDo() {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do", user);
     InstanceName instanceName = resource.toInstanceName(projectId);
@@ -724,7 +724,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteAiNotebookInstanceUndoIsDismalFailure() throws Exception {
+  void deleteAiNotebookInstanceUndoIsDismalFailure() {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-undo", user);
 

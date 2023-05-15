@@ -84,7 +84,7 @@ public class ControlledResourceServiceFlexTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateFlexResourceUndo() throws Exception {
+  void updateFlexResourceUndo() {
     ControlledFlexibleResource originalFlex = makeDefaultFlexResourceBuilder(workspaceId).build();
     ControlledFlexibleResource createdFlex =
         controlledResourceService

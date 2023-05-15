@@ -150,7 +150,7 @@ public class GcpCloudUtils {
 
   /** Asserts table is populated as per populateBqTable(). */
   public void assertBucketHasNoFiles(
-      AuthenticatedUserRequest userRequest, String projectId, String bucketName) throws Exception {
+      AuthenticatedUserRequest userRequest, String projectId, String bucketName) {
     StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
     int numFiles = 0;
     for (BlobCow blob : storageCow.get(bucketName).list().iterateAll()) {

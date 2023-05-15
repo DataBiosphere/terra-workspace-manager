@@ -114,7 +114,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createGcsBucketDo_invalidBucketName_throwsBadRequestException() throws Exception {
+  void createGcsBucketDo_invalidBucketName_throwsBadRequestException() {
     ControlledGcsBucketResource resource =
         makeDefaultControlledGcsBucketBuilder(workspaceId).bucketName("192.168.5.4").build();
 
@@ -130,7 +130,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createGcsBucketUndo() throws Exception {
+  void createGcsBucketUndo() {
     ControlledGcsBucketResource resource =
         makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 
@@ -276,7 +276,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateGcsBucketDo() throws Exception {
+  void updateGcsBucketDo() {
     Workspace workspace = workspaceService.getWorkspace(workspaceId);
     ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
 
@@ -311,7 +311,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateGcsBucketUndo() throws Exception {
+  void updateGcsBucketUndo() {
     ControlledGcsBucketResource createdBucket = createDefaultSharedGcsBucket(user);
 
     Map<String, StepStatus> doErrorStep = new HashMap<>();

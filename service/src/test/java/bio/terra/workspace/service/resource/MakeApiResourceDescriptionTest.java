@@ -58,7 +58,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedBigQueryDatasetTest() throws Exception {
+  public void mapReferencedBigQueryDatasetTest() {
     String projectId = RandomStringUtils.randomAlphabetic(12);
     String datasetName = RandomStringUtils.randomAlphabetic(12);
 
@@ -86,7 +86,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedBigQueryDataTableTest() throws Exception {
+  public void mapReferencedBigQueryDataTableTest() {
     String projectId = RandomStringUtils.randomAlphabetic(12);
     String datasetName = RandomStringUtils.randomAlphabetic(12);
     String datatableName = RandomStringUtils.randomAlphabetic(12);
@@ -117,7 +117,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedDataRepoSnapshotTest() throws Exception {
+  public void mapReferencedDataRepoSnapshotTest() {
     String snapshotId = UUID.randomUUID().toString();
     String instanceName = RandomStringUtils.randomAlphabetic(5);
 
@@ -145,7 +145,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedGcsBucketTest() throws Exception {
+  public void mapReferencedGcsBucketTest() {
     String bucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
     var resource =
@@ -193,7 +193,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     }
 
     @Test
-    public void mapControlledGcsBucketTest() throws Exception {
+    public void mapControlledGcsBucketTest() {
       String bucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
       var resource =
@@ -223,7 +223,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     }
 
     @Test
-    public void mapControlledBigQueryDatasetTest() throws Exception {
+    public void mapControlledBigQueryDatasetTest() {
       String datasetName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
       String projectId = "my-project-id";
 
@@ -256,7 +256,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     }
 
     @Test
-    public void mapControlledAiNotebookInstanceTest() throws Exception {
+    public void mapControlledAiNotebookInstanceTest() {
       String instanceId = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
       var resource =
