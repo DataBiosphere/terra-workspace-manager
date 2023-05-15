@@ -98,6 +98,17 @@ public class SpendProfileService {
     } else if (bpmEnabled) {
       // profiles returned from BPM means we are auth'ed
       spend = getSpendProfileFromBpm(userRequest, spendProfileId);
+    } else {
+      if (!SamRethrow.onInterrupted(
+          () ->
+              samService.isAuthorized(
+                  userRequest,
+                  SamConstants.SamResource.SPEND_PROFILE,
+                  spendProfileId.getId(),
+                  SamConstants.SamSpendProfileAction.LINK),
+          "isAuthorized")) {
+        throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
+      }
     }
 
     if (spend == null) {
