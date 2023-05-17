@@ -9,7 +9,6 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.exception.CloudContextNotFoundException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbCloudContext;
-import bio.terra.workspace.db.model.DbWorkspace;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
@@ -58,36 +57,27 @@ public class WorkspaceDao {
   private static final String WORKSPACE_SELECT_SQL =
       """
           SELECT workspace_id, user_facing_id, display_name, description, spend_profile, properties,
-          workspace_stage, created_by_email, created_date, state, flight_id, error
+          workspace_stage, created_by_email, created_date
           FROM workspace
       """;
 
-  private static final RowMapper<DbWorkspace> WORKSPACE_ROW_MAPPER =
+  private static final RowMapper<Workspace> WORKSPACE_ROW_MAPPER =
       (rs, rowNum) ->
-          new DbWorkspace()
-              .workspaceId(UUID.fromString(rs.getString("workspace_id")))
-              .userFacingId(rs.getString("user_facing_id"))
-              .displayName(rs.getString("display_name"))
-              .description(rs.getString("description"))
-              .spendProfileId(
-                  Optional.ofNullable(rs.getString("spend_profile"))
-                      .map(SpendProfileId::new)
-                      .orElse(null))
-              .properties(
-                  Optional.ofNullable(rs.getString("properties"))
-                      .map(DbSerDes::jsonToProperties)
-                      .orElse(Collections.emptyMap()))
-              .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
-              .createdByEmail(rs.getString("created_by_email"))
-              .createdDate(
-                  OffsetDateTime.ofInstant(
-                      rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
-              .state(WsmResourceState.fromDb(rs.getString("state")))
-              .flightId(rs.getString("flight_id"))
-              .error(
-                  Optional.ofNullable(rs.getString("error"))
-                      .map(errorJson -> DbSerDes.fromJson(errorJson, ErrorReportException.class))
-                      .orElse(null));
+          new Workspace(
+              UUID.fromString(rs.getString("workspace_id")),
+              rs.getString("user_facing_id"),
+              rs.getString("display_name"),
+              rs.getString("description"),
+              Optional.ofNullable(rs.getString("spend_profile"))
+                  .map(SpendProfileId::new)
+                  .orElse(null),
+              Optional.ofNullable(rs.getString("properties"))
+                  .map(DbSerDes::jsonToProperties)
+                  .orElse(Collections.emptyMap()),
+              WorkspaceStage.valueOf(rs.getString("workspace_stage")),
+              rs.getString("created_by_email"),
+              OffsetDateTime.ofInstant(
+                  rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")));
 
   /** Base select query for reading a cloud context; no predicate */
   private static final String BASE_CLOUD_CONTEXT_SELECT_SQL =
@@ -132,27 +122,22 @@ public class WorkspaceDao {
   }
 
   /**
-   * Start creating a workspace. The method makes the state transition to CREATING, if necessary,
-   * and inserts the workspace row.
+   * Persists a workspace to DB. Returns ID of persisted workspace on success.
+   *
+   * @param workspace all properties of the workspace to create
+   * @return workspace id
    */
   @WriteTransaction
-  public UUID createWorkspaceStart(
-      Workspace workspace, @Nullable List<String> applicationIds, String flightId) {
-    UUID workspaceUuid = workspace.getWorkspaceId();
-    DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
-    if (stateDao.isResourceInState(dbWorkspace, WsmResourceState.CREATING, flightId)) {
-      return workspaceUuid; // It was a retry. We are done here
-    }
-
-    // Insert the workspace row
+  public UUID createWorkspace(Workspace workspace, @Nullable List<String> applicationIds) {
     final String sql =
         """
             INSERT INTO workspace (workspace_id, user_facing_id, display_name, description,
-            spend_profile, properties, workspace_stage, created_by_email, state, flight_id, error)
+            spend_profile, properties, workspace_stage, created_by_email)
             values (:workspace_id, :user_facing_id, :display_name, :description, :spend_profile,
-            cast(:properties AS jsonb), :workspace_stage, :created_by_email, :state, :flight_id, NULL)
+            cast(:properties AS jsonb), :workspace_stage, :created_by_email)
         """;
 
+    final UUID workspaceUuid = workspace.getWorkspaceId();
     // validateUserFacingId() is called in controller. Also call here to be safe (eg see bug
     // PF-1616).
     ControllerValidationUtils.validateUserFacingId(workspace.getUserFacingId());
@@ -170,10 +155,7 @@ public class WorkspaceDao {
             .addValue("workspace_stage", workspace.getWorkspaceStage().toString())
             // Only set created_by_email and don't need to set created_by_date; that is set by
             // defaultValueComputed
-            .addValue("created_by_email", workspace.createdByEmail())
-            .addValue("state", WsmResourceState.CREATING.toDb())
-            .addValue("flight_id", flightId);
-
+            .addValue("created_by_email", workspace.createdByEmail());
     try {
       jdbcTemplate.update(sql, params);
       logger.info("Inserted record for workspace {}", workspaceUuid);
@@ -213,113 +195,11 @@ public class WorkspaceDao {
   }
 
   /**
-   * Successful completion of a workspace create
-   *
-   * @param workspaceUuid workspace id
-   * @param flightId flight completing the workspace create
+   * @param workspaceUuid unique identifier of the workspace
+   * @return true on successful delete, false if there's nothing to delete
    */
   @WriteTransaction
-  public void createWorkspaceSuccess(UUID workspaceUuid, String flightId) {
-    DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
-    stateDao.updateState(
-        dbWorkspace,
-        flightId,
-        /*targetFlightId=*/ null,
-        WsmResourceState.READY,
-        /*exception=*/ null);
-  }
-
-  /**
-   * Failed completion of a create operation. How we handle this case depends on the state rule. The
-   * rule is a configuration parameter that is typically an input parameter to flights.
-   *
-   * <p>If the rule is DELETE_ON_FAILURE, then we delete the metadata.
-   *
-   * <p>If the rule is BROKEN_ON_FAILURE, we update the metadata to the BROKEN state and remember
-   * the exception causing the failure.
-   *
-   * @param workspaceUuid workspace uuid identifying the workspace
-   * @param flightId flight id doing the creation
-   * @param exception the exception for the failure
-   * @param resourceStateRule how to handle failures
-   */
-  @WriteTransaction
-  public void createWorkspaceFailure(
-      UUID workspaceUuid,
-      String flightId,
-      @Nullable Exception exception,
-      WsmResourceStateRule resourceStateRule) {
-
-    switch (resourceStateRule) {
-      case DELETE_ON_FAILURE -> deleteWorkspaceWorker(workspaceUuid);
-
-      case BROKEN_ON_FAILURE -> {
-        DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
-        stateDao.updateState(
-            dbWorkspace, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
-      }
-      default -> throw new InternalLogicException("Invalid switch case");
-    }
-  }
-
-  /**
-   * Start a workspace delete operation by marking the workspace row to be in the deleting state and
-   * recording the flight id
-   *
-   * @param workspaceUuid workspace of interest
-   * @param flightId flight id doing the delete operation
-   */
-  @WriteTransaction
-  public void deleteWorkspaceStart(UUID workspaceUuid, String flightId) {
-    DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
-    if (dbWorkspace == null) {
-      throw new WorkspaceNotFoundException("Workspace not found: " + workspaceUuid);
-    }
-    stateDao.updateState(
-        dbWorkspace,
-        /*expectedFlightId=*/ null,
-        flightId,
-        WsmResourceState.DELETING,
-        /*exception=*/ null);
-  }
-
-  /**
-   * Successful end state of a delete operation. The operation succeeded, so it is safe to delete
-   * the metadata
-   *
-   * @param workspaceUuid workspace of interest
-   * @param flightId flight id doing the delete operation
-   * @return true if the workspace row was deleted; false if it was not there.
-   */
-  @WriteTransaction
-  public boolean deleteWorkspaceSuccess(UUID workspaceUuid, String flightId) {
-    DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
-    if (!stateDao.isResourceInState(dbWorkspace, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
-      stateDao.updateState(
-          dbWorkspace, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
-      return deleteWorkspaceWorker(workspaceUuid);
-    }
-    return false;
-  }
-
-  /**
-   * Failure end state of a delete operation. The only way to get to this code is if a delete flight
-   * manages to UNDO without creating a dismal failure. That seems unlikely, but rather than assume
-   * it never happens, we allow this transition.
-   *
-   * @param workspaceUuid workspace of interest
-   * @param flightId flight id performing the delete
-   * @param exception that caused the failure
-   */
-  @WriteTransaction
-  public void deleteWorkspaceFailure(
-      UUID workspaceUuid, String flightId, @Nullable Exception exception) {
-    DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
-    stateDao.updateState(
-        dbWorkspace, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
-  }
-
-  private boolean deleteWorkspaceWorker(UUID workspaceUuid) {
+  public boolean deleteWorkspace(UUID workspaceUuid) {
     final String sql = "DELETE FROM workspace WHERE workspace_id = :id";
 
     MapSqlParameterSource params =
@@ -330,38 +210,28 @@ public class WorkspaceDao {
     if (deleted) {
       logger.info("Deleted record for workspace {}", workspaceUuid);
     } else {
-      logger.info("No record found  for delete workspace {}", workspaceUuid);
+      logger.info("No record found for delete workspace {}", workspaceUuid);
     }
 
     return deleted;
   }
 
-  /**
-   * Internal method to read a workspace row into the DbWorkspace (stateful) form
-   *
-   * @param uuid workspace id
-   * @return DbWorkspace or null if not found
-   */
-  private DbWorkspace getDbWorkspace(UUID uuid) {
+  @ReadTransaction
+  public Optional<Workspace> getWorkspaceIfExists(UUID uuid) {
     if (uuid == null) {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
     String sql = WORKSPACE_SELECT_SQL + " WHERE workspace_id = :id";
     MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", uuid.toString());
-    List<DbWorkspace> workspaces = jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
-    if (workspaces.size() == 0) {
-      logger.info("Workspace id {} not found", uuid);
-      return null;
-    } else if (workspaces.size() == 1) {
-      logger.info("Retrieved workspace record {}", workspaces.get(0));
-      return workspaces.get(0);
+    try {
+      Workspace result =
+          DataAccessUtils.requiredSingleResult(
+              jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER));
+      logger.info("Retrieved workspace record {}", result);
+      return Optional.of(result);
+    } catch (EmptyResultDataAccessException e) {
+      return Optional.empty();
     }
-    throw new InternalLogicException("Multiple rows for one database id");
-  }
-
-  @ReadTransaction
-  public Optional<Workspace> getWorkspaceIfExists(UUID uuid) {
-    return Optional.ofNullable(getDbWorkspace(uuid)).map(Workspace::makeFromDb);
   }
 
   /**
@@ -371,11 +241,11 @@ public class WorkspaceDao {
    * @return workspace value object
    */
   public Workspace getWorkspace(UUID uuid) {
-    DbWorkspace dbWorkspace = getDbWorkspace(uuid);
-    if (dbWorkspace == null) {
-      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", uuid));
-    }
-    return Workspace.makeFromDb(dbWorkspace);
+    return getWorkspaceIfExists(uuid)
+        .orElseThrow(
+            () ->
+                new WorkspaceNotFoundException(
+                    String.format("Workspace %s not found.", uuid.toString())));
   }
 
   /** Retrieves a workspace from database by userFacingId. */
@@ -386,13 +256,13 @@ public class WorkspaceDao {
     String sql = WORKSPACE_SELECT_SQL + " WHERE user_facing_id = :user_facing_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("user_facing_id", userFacingId);
-    DbWorkspace result;
+    Workspace result;
     try {
       result =
           DataAccessUtils.requiredSingleResult(
               jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER));
       logger.info("Retrieved workspace record {}", result);
-      return Workspace.makeFromDb(result);
+      return result;
     } catch (EmptyResultDataAccessException e) {
       throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", userFacingId));
     }
@@ -542,8 +412,7 @@ public class WorkspaceDao {
                 "workspace_ids", idList.stream().map(UUID::toString).collect(Collectors.toList()))
             .addValue("offset", offset)
             .addValue("limit", limit);
-    List<DbWorkspace> dbWorkspaces = jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
-    return dbWorkspaces.stream().map(Workspace::makeFromDb).toList();
+    return jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
   }
 
   /** List cloud platforms of all cloud contexts in a workspace. */

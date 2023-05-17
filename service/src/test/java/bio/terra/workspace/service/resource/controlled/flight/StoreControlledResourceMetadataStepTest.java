@@ -43,7 +43,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
         WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
 
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
         workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.PROJECT_ID);

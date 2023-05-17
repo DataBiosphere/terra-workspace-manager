@@ -14,7 +14,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.model.Folder;
@@ -144,6 +143,6 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
   @AfterEach
   public void clean_up() {
-    WorkspaceFixtures.deleteWorkspaceFromDb(SOURCE_WORKSPACE_ID, workspaceDao);
+    workspaceDao.deleteWorkspace(SOURCE_WORKSPACE_ID);
   }
 }

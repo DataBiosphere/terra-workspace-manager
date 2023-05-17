@@ -94,7 +94,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
         logger.warn("Failed to delete reference resource " + referencedResource.getResourceId());
       }
     }
-    WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
+    workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
   @Test

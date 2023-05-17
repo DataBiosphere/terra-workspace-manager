@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.model.DbResource;
@@ -69,7 +68,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   @AfterAll
   public void cleanUp() {
     WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
-    WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
+    workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
   @Test
@@ -251,6 +250,7 @@ public class ResourceDaoTest extends BaseUnitTest {
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
     assertTrue(listAfterDeletion.isEmpty());
     WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
+    workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
   private void assertPartialEqualList(
