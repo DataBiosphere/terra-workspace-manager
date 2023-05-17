@@ -636,8 +636,8 @@ public class ControlledResourceService {
             resource, privateResourceIamRole, jobControl, resultPath, userRequest);
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(
-        ControlledResourceKeys.AWS_ENVIRONMENT_USER_ROLE_ARN,
-        environment.getUserRoleArn().toString());
+        ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN,
+        environment.getNotebookRoleArn().toString());
     jobBuilder.addParameter(
         ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
         landingZone.getKmsKey().arn().toString());
