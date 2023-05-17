@@ -32,10 +32,8 @@ public class WorkspaceUnitTestUtils {
    * workspace id.
    */
   public static UUID createWorkspaceWithoutGcpContext(WorkspaceDao workspaceDao) {
-    String flightId = UUID.randomUUID().toString();
     Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
-    workspaceDao.createWorkspaceStart(workspace, /* applicationIds= */ null, flightId);
-    workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId);
+    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
     return workspace.getWorkspaceId();
   }
 

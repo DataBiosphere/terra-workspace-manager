@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,18 +12,21 @@ import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -92,14 +95,24 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
   @Test
   public void deserialize_creatingContext_isEmpty() {
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
-    UUID workspaceUuid = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    UUID workspaceUuid = UUID.randomUUID();
+    var workspace =
+        new Workspace(
+            workspaceUuid,
+            "a-user-facing-id",
+            "deleteGcpContextDeletesControlledResources",
+            "description",
+            new SpendProfileId("spend-profile"),
+            Collections.emptyMap(),
+            WorkspaceStage.MC_WORKSPACE,
+            DEFAULT_USER_EMAIL,
+            null);
+    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
 
     workspaceDao.createCloudContextStart(
         workspaceUuid,
         CloudPlatform.GCP,
-        DEFAULT_SPEND_PROFILE_ID,
+        new SpendProfileId("fake"),
         /*flightId=*/ UUID.randomUUID().toString());
     Optional<DbCloudContext> creatingContext =
         workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP);
@@ -110,14 +123,24 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
         GcpCloudContext.deserialize(creatingContext.get());
     // Deserializes to empty, as the placeholder value does not have context information.
     assertTrue(deserializedContext.isEmpty());
-    WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
+    workspaceDao.deleteWorkspace(workspaceUuid);
   }
 
   @Test
   public void deleteGcpContext_deletesControlledResourcesInDb() throws Exception {
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
-    UUID workspaceUuid = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    UUID workspaceUuid = UUID.randomUUID();
+    var workspace =
+        new Workspace(
+            workspaceUuid,
+            "my-user-facing-id",
+            "deleteGcpContextDeletesControlledResources",
+            "description",
+            new SpendProfileId("spend-profile"),
+            Collections.emptyMap(),
+            WorkspaceStage.MC_WORKSPACE,
+            DEFAULT_USER_EMAIL,
+            null);
+    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
 
     // Create a cloud context record in the DB
     String projectId = "fake-project-id";

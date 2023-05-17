@@ -25,11 +25,11 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledSamResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspaceAuthzStep;
-import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspaceFinishStep;
-import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspaceStartStep;
-import bio.terra.workspace.service.workspace.flight.delete.workspace.EnsureNoWorkspaceChildrenStep;
-import bio.terra.workspace.service.workspace.flight.delete.workspace.RunDeleteCloudContextFlightStep;
+import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspacePoliciesStep;
+import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspaceStateStep;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
@@ -91,13 +91,13 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
     deleteParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     Map<String, StepStatus> doFailures = new HashMap<>();
-    doFailures.put(DeleteWorkspaceStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(
-        RunDeleteCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        DeleteControlledSamResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteGcpProjectStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(
-        EnsureNoWorkspaceChildrenStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        DeleteWorkspacePoliciesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(DeleteWorkspaceFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    doFailures.put(DeleteWorkspaceStateStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
 
     FlightState flightState =

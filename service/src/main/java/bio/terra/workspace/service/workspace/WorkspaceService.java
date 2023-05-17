@@ -10,10 +10,13 @@ import bio.terra.policy.model.TpsPaoDescription;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
+import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -72,7 +75,10 @@ public class WorkspaceService {
   private final ApplicationDao applicationDao;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
+  private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
+  private final FeatureConfiguration features;
+  private final FeatureService featureService;
   private final ResourceDao resourceDao;
   private final WorkspaceActivityLogService workspaceActivityLogService;
   private final TpsApiDispatch tpsApiDispatch;
@@ -84,7 +90,10 @@ public class WorkspaceService {
       ApplicationDao applicationDao,
       WorkspaceDao workspaceDao,
       SamService samService,
+      BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
+      FeatureConfiguration features,
+      FeatureService featureService,
       ResourceDao resourceDao,
       WorkspaceActivityLogService workspaceActivityLogService,
       TpsApiDispatch tpsApiDispatch,
@@ -93,7 +102,10 @@ public class WorkspaceService {
     this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
+    this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
+    this.features = features;
+    this.featureService = featureService;
     this.resourceDao = resourceDao;
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.tpsApiDispatch = tpsApiDispatch;

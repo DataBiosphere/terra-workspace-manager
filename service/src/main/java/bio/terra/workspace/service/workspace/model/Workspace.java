@@ -1,9 +1,6 @@
 package bio.terra.workspace.service.workspace.model;
 
-import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.InternalServerErrorException;
-import bio.terra.workspace.db.model.DbWorkspace;
-import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
@@ -35,10 +32,7 @@ public record Workspace(
     Map<String, String> properties,
     WorkspaceStage workspaceStage,
     String createdByEmail,
-    OffsetDateTime createdDate,
-    WsmResourceState state,
-    String flightId,
-    ErrorReportException error) {
+    OffsetDateTime createdDate) {
 
   /** The globally unique identifier of this workspace */
   public UUID getWorkspaceId() {
@@ -129,9 +123,6 @@ public record Workspace(
     private WorkspaceStage workspaceStage;
     private String createdByEmail;
     private @Nullable OffsetDateTime createdDate;
-    private WsmResourceState state;
-    private @Nullable String flightId;
-    private @Nullable ErrorReportException error;
 
     public Builder workspaceId(UUID workspaceUuid) {
       this.workspaceId = workspaceUuid;
@@ -178,21 +169,6 @@ public record Workspace(
       return this;
     }
 
-    public Builder state(WsmResourceState state) {
-      this.state = state;
-      return this;
-    }
-
-    public Builder flightId(@Nullable String flightId) {
-      this.flightId = flightId;
-      return this;
-    }
-
-    public Builder error(@Nullable ErrorReportException error) {
-      this.error = error;
-      return this;
-    }
-
     public Workspace build() {
       // Always have a map, even if it is empty
       if (properties == null) {
@@ -214,36 +190,8 @@ public record Workspace(
           properties,
           workspaceStage,
           createdByEmail,
-          createdDate,
-          state,
-          flightId,
-          error);
+          createdDate);
     }
-  }
-
-  /**
-   * Make a workspace object from the database workspace object.
-   *
-   * @param dbWorkspace nullable database workspace object
-   * @return Workspace or null if not found
-   */
-  public static Workspace makeFromDb(@Nullable DbWorkspace dbWorkspace) {
-    return dbWorkspace == null
-        ? null
-        : Workspace.builder()
-            .workspaceId(dbWorkspace.getWorkspaceId())
-            .userFacingId(dbWorkspace.getUserFacingId())
-            .displayName(dbWorkspace.getDisplayName())
-            .description(dbWorkspace.getDescription())
-            .spendProfileId(dbWorkspace.getSpendProfileId())
-            .properties(dbWorkspace.getProperties())
-            .workspaceStage(dbWorkspace.getWorkspaceStage())
-            .createdByEmail(dbWorkspace.getCreatedByEmail())
-            .createdDate(dbWorkspace.getCreatedDate())
-            .state(dbWorkspace.getState())
-            .flightId(dbWorkspace.getFlightId())
-            .error(dbWorkspace.getError())
-            .build();
   }
 
   /**
