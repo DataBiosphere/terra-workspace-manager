@@ -920,8 +920,8 @@ public class WorkspaceDao {
 
   /**
    * Temporary backfill of cloud context spend profile from workspace spend profile
-   * <p>
-   * TODO: PF-2782 remove this backfill.
+   *
+   * <p>TODO: PF-2782 remove this backfill.
    */
   @WriteTransaction
   public void backfillCloudContextSpendProfile() {
@@ -936,16 +936,15 @@ public class WorkspaceDao {
 
   /**
    * Temporary backfill of workspace state
-   * <p>
-   * TODO: PF-2782 remove this backfill.
+   *
+   * <p>TODO: PF-2782 remove this backfill.
    */
   @WriteTransaction
   public void backfillWorkspaceState() {
     String sql =
-      """
+        """
     UPDATE workspace SET state = 'READY' WHERE state IS NULL AND flight_id IS NULL
     """;
     jdbcTemplate.update(sql, new MapSqlParameterSource());
   }
-
 }
