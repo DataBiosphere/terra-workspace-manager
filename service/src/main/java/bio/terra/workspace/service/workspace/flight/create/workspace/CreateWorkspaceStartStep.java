@@ -5,7 +5,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
-import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 
@@ -29,12 +28,7 @@ public class CreateWorkspaceStartStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    try {
-      workspaceDao.createWorkspaceStart(workspace, applicationIds, flightContext.getFlightId());
-    } catch (DuplicateCloudContextException e) {
-      // On a retry or restart, we may have already started the cloud context create,
-      // so we ignore the duplicate exception.
-    }
+    workspaceDao.createWorkspaceStart(workspace, applicationIds, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 

@@ -1,5 +1,12 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.common.BaseUnitTest;
@@ -17,19 +24,11 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
 public class GcpCloudContextUnitTest extends BaseUnitTest {
   private static final String GCP_PROJECT_ID = "terra-wsm-t-clean-berry-5152";
@@ -38,32 +37,29 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   private static final String POLICY_READER = "policy-reader";
   private static final String POLICY_APPLICATION = "policy-application";
 
-  @Autowired
-  private WorkspaceService workspaceService;
-  @Autowired
-  private WorkspaceDao workspaceDao;
-  @Autowired
-  private ResourceDao resourceDao;
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private WorkspaceDao workspaceDao;
+  @Autowired private ResourceDao resourceDao;
 
   private DbCloudContext makeDbCloudContext(String json) {
     return new DbCloudContext()
-      .cloudPlatform(CloudPlatform.GCP)
-      .spendProfile(WorkspaceUnitTestUtils.SPEND_PROFILE_ID)
-      .contextJson(json);
+        .cloudPlatform(CloudPlatform.GCP)
+        .spendProfile(WorkspaceUnitTestUtils.SPEND_PROFILE_ID)
+        .contextJson(json);
   }
 
   @Test
   void serdesTest() {
     final String v2Json =
-      String.format(
-        "{\"version\": 2, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
-        GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
+        String.format(
+            "{\"version\": 2, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
+            GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
     final String badV2Json =
-      String.format(
-        "{\"version\": 3, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
-        GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
+        String.format(
+            "{\"version\": 3, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
+            GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
     final String incompleteV2Json =
-      String.format("{\"version\": 2, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
+        String.format("{\"version\": 2, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
     final String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
 
     // Case 1: successful V2 deserialization
@@ -77,21 +73,21 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Case 2: bad V2 format
     assertThrows(
-      InvalidSerializedVersionException.class,
-      () -> GcpCloudContext.deserialize(makeDbCloudContext(badV2Json)),
-      "Bad V2 JSON should throw");
+        InvalidSerializedVersionException.class,
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(badV2Json)),
+        "Bad V2 JSON should throw");
 
     // Case 3: incomplete V2
     assertThrows(
-      InvalidSerializedVersionException.class,
-      () -> GcpCloudContext.deserialize(makeDbCloudContext(incompleteV2Json)),
-      "Incomplete V2 JSON should throw");
+        InvalidSerializedVersionException.class,
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(incompleteV2Json)),
+        "Incomplete V2 JSON should throw");
 
     // Case 4: junk input
     assertThrows(
-      SerializationException.class,
-      () -> GcpCloudContext.deserialize(makeDbCloudContext(junkJson)),
-      "Junk JSON should throw");
+        SerializationException.class,
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(junkJson)),
+        "Junk JSON should throw");
   }
 
   @Test
@@ -101,17 +97,17 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 
     workspaceDao.createCloudContextStart(
-      workspaceUuid,
-      CloudPlatform.GCP,
-      DEFAULT_SPEND_PROFILE_ID,
-      /*flightId=*/ UUID.randomUUID().toString());
+        workspaceUuid,
+        CloudPlatform.GCP,
+        DEFAULT_SPEND_PROFILE_ID,
+        /*flightId=*/ UUID.randomUUID().toString());
     Optional<DbCloudContext> creatingContext =
-      workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP);
+        workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP);
 
     // After createCloudContextStart, a placeholder should exist in the DB.
     assertTrue(creatingContext.isPresent());
     Optional<GcpCloudContext> deserializedContext =
-      GcpCloudContext.deserialize(creatingContext.get());
+        GcpCloudContext.deserialize(creatingContext.get());
     // Deserializes to empty, as the placeholder value does not have context information.
     assertTrue(deserializedContext.isEmpty());
     WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
@@ -129,15 +125,15 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
     // Create a controlled resource in the DB
     ControlledBigQueryDatasetResource bqDataset =
-      ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
-        .projectId(projectId)
-        .build();
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid)
+            .projectId(projectId)
+            .build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bqDataset);
 
     // Also create a reference pointing to the same "cloud" resource
     ReferencedBigQueryDatasetResource referencedDataset =
-      ReferenceResourceFixtures.makeReferencedBqDatasetResource(
-        workspaceUuid, projectId, bqDataset.getDatasetName());
+        ReferenceResourceFixtures.makeReferencedBqDatasetResource(
+            workspaceUuid, projectId, bqDataset.getDatasetName());
     resourceDao.createReferencedResource(referencedDataset);
 
     setupCrlMocks();
@@ -148,12 +144,12 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     // Verify the context and resource have both been deleted from the DB
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());
     assertThrows(
-      ResourceNotFoundException.class,
-      () -> resourceDao.getResource(workspaceUuid, bqDataset.getResourceId()));
+        ResourceNotFoundException.class,
+        () -> resourceDao.getResource(workspaceUuid, bqDataset.getResourceId()));
     // Verify the reference still exists, even though the underlying "cloud" resource was deleted
     var referenceFromDb =
-      (ReferencedBigQueryDatasetResource)
-        resourceDao.getResource(workspaceUuid, referencedDataset.getResourceId());
+        (ReferencedBigQueryDatasetResource)
+            resourceDao.getResource(workspaceUuid, referencedDataset.getResourceId());
     assertTrue(referencedDataset.partialEqual(referenceFromDb));
   }
 
@@ -161,10 +157,10 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   // TODO(PF-1872): this should use shared mock code from CRL.
   private void setupCrlMocks() throws Exception {
     CloudResourceManagerCow mockResourceManager =
-      Mockito.mock(CloudResourceManagerCow.class, Mockito.RETURNS_DEEP_STUBS);
+        Mockito.mock(CloudResourceManagerCow.class, Mockito.RETURNS_DEEP_STUBS);
     // Pretend the project is already being deleted.
     Mockito.when(mockResourceManager.projects().get(any()).execute())
-      .thenReturn(new Project().setState("DELETE_IN_PROGRESS"));
+        .thenReturn(new Project().setState("DELETE_IN_PROGRESS"));
     Mockito.when(mockCrlService().getCloudResourceManagerCow()).thenReturn(mockResourceManager);
   }
 }
