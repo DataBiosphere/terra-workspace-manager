@@ -52,5 +52,6 @@ public final class StartupInitializer {
     // TODO: PF-2763 remove after 2023/05/26
     WorkspaceDao workspaceDao = applicationContext.getBean(WorkspaceDao.class);
     workspaceDao.backfillCloudContextSpendProfile();
+    workspaceDao.backfillWorkspaceState();
   }
 }

@@ -20,6 +20,7 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceExcept
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
@@ -342,7 +343,9 @@ public class WorkspaceDao {
    * @param uuid workspace id
    * @return DbWorkspace or null if not found
    */
-  private DbWorkspace getDbWorkspace(UUID uuid) {
+  // TODO: PF-2782 Return this to private when WorkspaceStateBackfillTest is removed
+  @VisibleForTesting
+  public DbWorkspace getDbWorkspace(UUID uuid) {
     if (uuid == null) {
       throw new MissingRequiredFieldException("Valid workspace id is required");
     }
@@ -916,8 +919,9 @@ public class WorkspaceDao {
   }
 
   /**
-   * Temporary backfill of cloud context spend profile from workspace spend profile TODO: PF-2762
-   * remove this backfill.
+   * Temporary backfill of cloud context spend profile from workspace spend profile
+   * <p>
+   * TODO: PF-2782 remove this backfill.
    */
   @WriteTransaction
   public void backfillCloudContextSpendProfile() {
@@ -929,4 +933,19 @@ public class WorkspaceDao {
       """;
     jdbcTemplate.update(sql, new MapSqlParameterSource());
   }
+
+  /**
+   * Temporary backfill of workspace state
+   * <p>
+   * TODO: PF-2782 remove this backfill.
+   */
+  @WriteTransaction
+  public void backfillWorkspaceState() {
+    String sql =
+      """
+    UPDATE workspace SET state = 'READY' WHERE state IS NULL AND flight_id IS NULL
+    """;
+    jdbcTemplate.update(sql, new MapSqlParameterSource());
+  }
+
 }
