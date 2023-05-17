@@ -21,6 +21,7 @@ import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.AzureCloudContextFields;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
@@ -512,9 +513,12 @@ public class CrlService {
   }
 
   private AzureProfile getAzureProfile(AzureCloudContext azureCloudContext) {
+    // The cloud context may not be in the READY state, so for constructing the profile
+    // we directly access the context fields.
+    AzureCloudContextFields contextFields = azureCloudContext.getContextFields();
     return new AzureProfile(
-        azureCloudContext.getAzureTenantId(),
-        azureCloudContext.getAzureSubscriptionId(),
+        contextFields.getAzureTenantId(),
+        contextFields.getAzureSubscriptionId(),
         AzureEnvironment.AZURE);
   }
 

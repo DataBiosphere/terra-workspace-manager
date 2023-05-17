@@ -6,6 +6,7 @@ import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextNotReadyException;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import org.jetbrains.annotations.Nullable;
@@ -26,23 +27,26 @@ public class AzureCloudContext implements CloudContext {
     return contextFields;
   }
 
-  // HYPOTHESIS: everywhere we get this data, the context must be in the READY state
+  @JsonIgnore
   public String getAzureTenantId() {
     checkReady();
     return contextFields.getAzureTenantId();
   }
 
+  @JsonIgnore
   public String getAzureSubscriptionId() {
     checkReady();
     return contextFields.getAzureSubscriptionId();
   }
 
+  @JsonIgnore
   public String getAzureResourceGroupId() {
     checkReady();
     return contextFields.getAzureResourceGroupId();
   }
 
   @Override
+  @JsonIgnore
   public CloudPlatform getCloudPlatform() {
     return CloudPlatform.AZURE;
   }

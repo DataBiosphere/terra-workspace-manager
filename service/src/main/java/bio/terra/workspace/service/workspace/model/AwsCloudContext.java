@@ -8,6 +8,7 @@ import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextNotReadyException;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import javax.annotation.Nullable;
@@ -25,6 +26,7 @@ public class AwsCloudContext implements CloudContext {
   }
 
   @Override
+  @JsonIgnore
   public CloudPlatform getCloudPlatform() {
     return CloudPlatform.AWS;
   }
@@ -34,7 +36,7 @@ public class AwsCloudContext implements CloudContext {
     return commonFields;
   }
 
-  public AwsCloudContextFields getContextFields() {
+  public @Nullable AwsCloudContextFields getContextFields() {
     return contextFields;
   }
 
