@@ -4,6 +4,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
@@ -135,7 +136,8 @@ public class ControlledFlexibleResource extends ControlledResource {
 
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    flight.addStep(new UpdateControlledFlexibleResourceAttributesStep());
+    flight.addStep(
+        new UpdateControlledFlexibleResourceAttributesStep(), RetryRules.shortDatabase());
   }
 
   public ApiFlexibleResourceAttributes toApiAttributes() {

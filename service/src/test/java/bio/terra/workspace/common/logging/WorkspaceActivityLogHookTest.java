@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.logging;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
@@ -254,7 +254,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(buildMcWorkspace(workspaceUuid), /* applicationIds */ null);
+    createWorkspaceInDb(workspace, workspaceDao);
     FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
     hook.endFlight(
         new FakeFlightContext(
@@ -302,7 +302,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    workspaceDao.createWorkspace(buildMcWorkspace(workspaceUuid), /* applicationIds */ null);
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+
     var flightId = UUID.randomUUID().toString();
     var spendProfileId = new SpendProfileId("fake-spend-profile-id");
     workspaceDao.createCloudContextStart(

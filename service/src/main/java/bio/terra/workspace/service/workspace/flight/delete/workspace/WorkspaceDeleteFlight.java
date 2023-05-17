@@ -5,20 +5,23 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteControlledAwsResourcesStep;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteControlledAzureResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledDbResourcesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledSamResourcesStep;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
 
 // TODO(PF-555): There is a race condition if this flight runs at the same time as new controlled
-//  resource creation, which may leak resources in Sam. Workspace locking would solve this issue.
-//  NOTE: PF-2694 will address this issue.
+//  resource or cloud context creation, which may leak resources. Some form of shared lock would
+//  prevent this.
 public class WorkspaceDeleteFlight extends Flight {
 
   public WorkspaceDeleteFlight(FlightMap inputParameters, Object applicationContext) {
@@ -30,58 +33,47 @@ public class WorkspaceDeleteFlight extends Flight {
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
 
     UUID workspaceUuid =
-        UUID.fromString(inputParameters.get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+        UUID.fromString(
+            FlightUtils.getRequired(
+                inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
 
-    RetryRule cloudRetryRule = RetryRules.cloudLongRunning();
     RetryRule terraRetryRule = RetryRules.shortExponential();
+    RetryRule dbRetryRule = RetryRules.shortDatabase();
 
-    // TODO: PF-2694 These steps need to be reworked
+    WorkspaceDao workspaceDao = appContext.getWorkspaceDao();
+    ResourceDao resourceDao = appContext.getResourceDao();
+    SamService samService = appContext.getSamService();
 
-    // Delete resources before sam resources - In Azure & AWS, we need to explicitly delete the
-    // controlled resources as there is no containing object (like a GCP project) that we can delete
-    // which will also delete all resources
-    addStep(
-        new DeleteControlledAzureResourcesStep(
-            appContext.getResourceDao(),
-            appContext.getControlledResourceService(),
-            appContext.getSamService(),
-            workspaceUuid,
-            userRequest));
-    addStep(
-        new DeleteControlledAwsResourcesStep(
-            appContext.getResourceDao(),
-            appContext.getControlledResourceService(),
-            workspaceUuid,
-            userRequest));
-    // GCP handles the cleanup when we delete the containing project, and we cascade
-    // workspace deletion to resources in the DB, hence do not need to explicitly delete the
-    // actual cloud objects or entries in WSM DB
+    addStep(new DeleteWorkspaceStartStep(workspaceUuid, workspaceDao), dbRetryRule);
 
-    // Delete controlled resources from the Sam
+    // For each cloud context in the workspace, run the cloud context delete flight
+    for (CloudPlatform cloudPlatform : workspaceDao.listCloudPlatforms(workspaceUuid)) {
+      String flightId = UUID.randomUUID().toString();
+      addStep(
+          new RunDeleteCloudContextFlightStep(workspaceUuid, cloudPlatform, userRequest, flightId));
+    }
+
+    // Delete all ANY controlled resources (right now, that means FlexResource). The only case
+    // has no cloud resource, so we delete Sam and Db resources.
     addStep(
         new DeleteControlledSamResourcesStep(
-            appContext.getSamService(),
-            appContext.getResourceDao(),
-            workspaceUuid,
-            /* cloudPlatform= */ null),
+            samService, resourceDao, workspaceUuid, CloudPlatform.ANY),
+        terraRetryRule);
+    addStep(
+        new DeleteControlledDbResourcesStep(resourceDao, workspaceUuid, CloudPlatform.ANY),
+        dbRetryRule);
+
+    // Belt and suspenders: the delete cloud context flights should fail and cause this flight to
+    // fail if there are any resources left. However, just to be sure...
+    addStep(
+        new EnsureNoWorkspaceChildrenStep(appContext.getSamService(), userRequest, workspaceUuid),
         terraRetryRule);
 
-    addStep(
-        new DeleteGcpProjectStep(
-            appContext.getCrlService(), appContext.getGcpCloudContextService()),
-        cloudRetryRule);
-
-    addStep(
-        new EnsureNoWorkspaceChildrenStep(appContext.getSamService(), userRequest, workspaceUuid));
-
-    // TODO: PF-2694 When we add state to the workspace operations, we should change this
-    //  flight to run the cloud context deletes as separate flights with proper states and,
-    //  thus, proper concurrency control. This flight would harvest the results. I think
-    //  in the case of failure to delete a cloud context, we would fail this flight and
-    //  leave the workspace intact.
+    // Workspace-stage driven steps
     addAuthZSteps(appContext, inputParameters, userRequest, workspaceUuid, terraRetryRule);
-    addStep(
-        new DeleteWorkspaceStateStep(appContext.getWorkspaceDao(), workspaceUuid), terraRetryRule);
+
+    // Remove the workspace row
+    addStep(new DeleteWorkspaceFinishStep(workspaceUuid, workspaceDao), dbRetryRule);
   }
 
   /**
