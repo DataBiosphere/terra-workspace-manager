@@ -6,4 +6,8 @@ public class InvalidSerializedVersionException extends InternalServerErrorExcept
   public InvalidSerializedVersionException(String message) {
     super(message);
   }
+
+  public InvalidSerializedVersionException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

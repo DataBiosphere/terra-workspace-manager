@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace.flight.gcp;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -126,10 +127,10 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
     assertTrue(optionalCloudContext.isPresent(), "has cloud context");
     GcpCloudContext cloudContext = optionalCloudContext.get();
 
-    assertTrue(cloudContext.getSamPolicyOwner().isPresent(), "has owner policy");
-    assertTrue(cloudContext.getSamPolicyWriter().isPresent(), "has writer policy");
-    assertTrue(cloudContext.getSamPolicyReader().isPresent(), "has reader policy");
-    assertTrue(cloudContext.getSamPolicyApplication().isPresent(), "has application policy");
+    assertNotNull(cloudContext.getSamPolicyOwner(), "has owner policy");
+    assertNotNull(cloudContext.getSamPolicyWriter(), "has writer policy");
+    assertNotNull(cloudContext.getSamPolicyReader(), "has reader policy");
+    assertNotNull(cloudContext.getSamPolicyApplication(), "has application policy");
 
     Project project = crl.getCloudResourceManagerCow().projects().get(projectId).execute();
     assertEquals(projectId, project.getProjectId());

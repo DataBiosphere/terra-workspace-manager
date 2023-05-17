@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.stairway.RetryRule;
-import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -96,7 +95,8 @@ public class GcpCloudContextService implements CloudContextService {
     // one propagation case
     flight.addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
     flight.addStep(
-        new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, userRequest), shortRetry);
+        new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, spendProfile, userRequest),
+        shortRetry);
 
     flight.addStep(
         new GcpCloudSyncStep(
@@ -143,11 +143,7 @@ public class GcpCloudContextService implements CloudContextService {
 
   @Override
   public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
-    return GcpCloudContext.deserialize(dbCloudContext)
-        .orElseThrow(
-            () ->
-                new InternalLogicException(
-                    "Cannot call makeCloudContextFromDb on an unfinished GCP context"));
+    return GcpCloudContext.deserialize(dbCloudContext);
   }
 
   /**
@@ -160,30 +156,28 @@ public class GcpCloudContextService implements CloudContextService {
   public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceUuid) {
     return workspaceDao
         .getCloudContext(workspaceUuid, CloudPlatform.GCP)
-        .flatMap(GcpCloudContext::deserialize);
+        .map(GcpCloudContext::deserialize);
   }
 
   /**
-   * Retrieve the GCP cloud context. If it does not have the policies filled in, retrieve the
-   * policies from Sam, fill them in, and update the cloud context.
-   *
-   * <p>This is used during controlled resource create. Since the caller may not have permission to
-   * read the workspace policies, we use the WSM SA to query Sam.
+   * Retrieve the GCP cloud context. This is used during controlled resource create.
    *
    * @param workspaceUuid workspace identifier of the cloud context
    * @return GCP cloud context with all policies filled in.
    */
-  public GcpCloudContext getRequiredGcpCloudContext(
-      UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
-    return getGcpCloudContext(workspaceUuid)
-        .orElseThrow(
-            () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
+  public GcpCloudContext getRequiredGcpCloudContext(UUID workspaceUuid) {
+    GcpCloudContext cloudContext =
+        getGcpCloudContext(workspaceUuid)
+            .orElseThrow(
+                () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
+    cloudContext.checkReady();
+    return cloudContext;
   }
 
   /**
    * Helper method for looking up the GCP project ID for a given workspace ID, if one exists. Unlike
    * {@link #getRequiredGcpProject(UUID)}, this returns an empty Optional instead of throwing if the
-   * given workspace does not have a GCP cloud context. NOTE: no user auth validation
+   * given workspace does not have a GCP cloud context.
    *
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional GCP project from the cloud context
@@ -194,14 +188,13 @@ public class GcpCloudContextService implements CloudContextService {
 
   /**
    * Helper method used by other classes that require the GCP project to exist in the workspace. It
-   * throws if the project (GCP cloud context) is not set up. NOTE: no user auth validation
+   * throws if the project (GCP cloud context) is not set up.
    *
    * @param workspaceUuid unique workspace id
    * @return GCP project id
    */
   public String getRequiredGcpProject(UUID workspaceUuid) {
-    return getGcpProject(workspaceUuid)
-        .orElseThrow(
-            () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
+    GcpCloudContext cloudContext = getRequiredGcpCloudContext(workspaceUuid);
+    return cloudContext.getGcpProjectId();
   }
 }

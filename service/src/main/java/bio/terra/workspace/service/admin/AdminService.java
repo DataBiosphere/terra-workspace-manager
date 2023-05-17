@@ -10,7 +10,7 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,22 +26,26 @@ public class AdminService {
 
   private final JobService jobService;
   private final WorkspaceDao workspaceDao;
+  private final GcpCloudContextService gcpCloudContextService;
 
-  public AdminService(JobService jobService, WorkspaceDao workspaceDao) {
+  public AdminService(
+      JobService jobService,
+      WorkspaceDao workspaceDao,
+      GcpCloudContextService gcpCloudContextService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Nullable
   public String syncIamRoleForAllGcpProjects(AuthenticatedUserRequest userRequest, boolean wetRun) {
     Map<UUID, String> workspaceIdToGcpProjectIdMap = new HashMap<>();
-    for (Map.Entry<UUID, DbCloudContext> cloudContext :
+    for (Map.Entry<UUID, DbCloudContext> cloudContextEntry :
         workspaceDao.getWorkspaceIdToGcpCloudContextMap().entrySet()) {
-      // GcpCloudContext.deserialize will only return empty for contexts in the CREATING state,
-      // which are filtered out above in getWorkspaceIdToGcpCloudContextMap.
-      workspaceIdToGcpProjectIdMap.put(
-          cloudContext.getKey(),
-          GcpCloudContext.deserialize(cloudContext.getValue()).orElseThrow().getGcpProjectId());
+      // Cloud contexts that are broken or in the process of being created may not have project id.
+      gcpCloudContextService
+          .getGcpProject(cloudContextEntry.getKey())
+          .ifPresent(s -> workspaceIdToGcpProjectIdMap.put(cloudContextEntry.getKey(), s));
     }
 
     if (workspaceIdToGcpProjectIdMap.isEmpty()) {

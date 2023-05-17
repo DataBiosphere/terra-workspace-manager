@@ -5,10 +5,13 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.AzureCloudContextFields;
+import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import com.azure.resourcemanager.resources.ResourceManager;
 
 public class ValidateMRGStep implements Step {
@@ -27,10 +30,15 @@ public class ValidateMRGStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     AzureCloudContext azureCloudContext =
         new AzureCloudContext(
-            spendProfile.tenantId().toString(),
-            spendProfile.subscriptionId().toString(),
-            spendProfile.managedResourceGroupId(),
-            /*commonFields=*/ null);
+            new AzureCloudContextFields(
+                spendProfile.tenantId().toString(),
+                spendProfile.subscriptionId().toString(),
+                spendProfile.managedResourceGroupId()),
+            new CloudContextCommonFields(
+                spendProfile.id(),
+                WsmResourceState.CREATING,
+                flightContext.getFlightId(),
+                /*error=*/ null));
 
     try {
       ResourceManager resourceManager =

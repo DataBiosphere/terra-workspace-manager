@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import liquibase.repackaged.org.apache.commons.collections4.ListUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -102,13 +103,24 @@ public class AwsUtils {
   }
 
   public static <T extends ControlledResource> void appendResourceTags(
-      Collection<Tag> tags, AwsCloudContext awsCloudContext, T awsResource) {
-    if (awsCloudContext != null) {
-      tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
-      tags.add(Tag.builder().key("Tenant").value(awsCloudContext.getTenantAlias()).build());
-      tags.add(
-          Tag.builder().key("Environment").value(awsCloudContext.getEnvironmentAlias()).build());
-    }
+      Collection<Tag> tags, AwsCloudContext awsCloudContext, @Nullable T awsResource) {
+    awsCloudContext.checkReady();
+    tags.add(
+        Tag.builder()
+            .key("Version")
+            .value(awsCloudContext.getContextFields().getMajorVersion())
+            .build());
+    tags.add(
+        Tag.builder()
+            .key("Tenant")
+            .value(awsCloudContext.getContextFields().getTenantAlias())
+            .build());
+    tags.add(
+        Tag.builder()
+            .key("Environment")
+            .value(awsCloudContext.getContextFields().getEnvironmentAlias())
+            .build());
+
     if (awsResource != null) {
       tags.add(
           Tag.builder().key("WorkspaceId").value(awsResource.getWorkspaceId().toString()).build());
@@ -117,7 +129,11 @@ public class AwsUtils {
 
   public static <T extends ControlledResource> void appendPrincipalTags(
       Collection<Tag> tags, AwsCloudContext awsCloudContext, T awsResource) {
-    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
+    tags.add(
+        Tag.builder()
+            .key("Version")
+            .value(awsCloudContext.getContextFields().getMajorVersion())
+            .build());
 
     if (awsResource instanceof ControlledAwsS3StorageFolderResource) {
       ControlledAwsS3StorageFolderResource resource =

@@ -2,9 +2,12 @@ package bio.terra.workspace.unit;
 
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.GcpCloudContextFields;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
 
@@ -52,7 +55,10 @@ public class WorkspaceUnitTestUtils {
         workspaceUuid,
         CloudPlatform.GCP,
         new GcpCloudContext(
-                projectId, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION, null)
+                new GcpCloudContextFields(
+                    projectId, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
+                new CloudContextCommonFields(
+                    SPEND_PROFILE_ID, WsmResourceState.CREATING, flightId, /*error=*/ null))
             .serialize(),
         flightId);
   }

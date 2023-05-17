@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
@@ -11,6 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
@@ -26,6 +29,7 @@ import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
+import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
@@ -151,13 +155,37 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteWorkspaceWithGoogleContext() throws Exception {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+
     // Reach in and find the project id
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
 
     // Verify project exists
     workspaceConnectedTestUtils.assertProjectExist(projectId);
 
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    // Create a controlled resource
+    ApiGcpGcsBucketResource bucketResource = createControlledBucket();
+
+    // Delete the cloud context
+    mockMvcUtils.deleteGcpCloudContext(userRequest, workspaceId);
+
+    // Make sure the bucket gets deleted when we delete the cloud context
+    String errorResponseString =
+        mockMvc
+            .perform(
+                MockMvcUtils.addAuth(
+                    get(
+                        CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT.formatted(
+                            workspaceId, bucketResource.getMetadata().getResourceId())),
+                    userRequest))
+            .andExpect(status().isNotFound())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    ApiErrorReport errorReport = objectMapper.readValue(errorResponseString, ApiErrorReport.class);
+    assertEquals(HttpStatus.NOT_FOUND.value(), errorReport.getStatusCode());
+
+    mockMvcUtils.deleteWorkspace(userRequest, workspaceId);
     workspaceId = null;
 
     // Check that project is now being deleted.
@@ -172,21 +200,25 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
   }
 
+  private ApiGcpGcsBucketResource createControlledBucket() throws Exception {
+    // Add a bucket resource
+    String bucketName = "terra-test-" + UUID.randomUUID().toString().toLowerCase();
+    return mockMvcUtils
+        .createControlledGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            "bucket_1", /* resource name */
+            bucketName,
+            "us-west4",
+            ApiGcpGcsBucketDefaultStorageClass.STANDARD,
+            null) /* lifecycle */
+        .getGcpBucket();
+  }
+
   @Test
   public void cloneGcpWorkspace() throws Exception {
     // Add a bucket resource
-    String bucketName = "terra-test-" + UUID.randomUUID().toString().toLowerCase();
-    ApiGcpGcsBucketResource bucketResource =
-        mockMvcUtils
-            .createControlledGcsBucket(
-                userAccessUtils.defaultUserAuthRequest(),
-                workspaceId,
-                "bucket_1", /* resource name */
-                bucketName,
-                "us-west4",
-                ApiGcpGcsBucketDefaultStorageClass.STANDARD,
-                null) /* lifecycle */
-            .getGcpBucket();
+    ApiGcpGcsBucketResource bucketResource = createControlledBucket();
 
     // Enable an application
     Workspace sourceWorkspace = workspaceService.getWorkspace(workspaceId);

@@ -5,7 +5,7 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
@@ -20,36 +20,20 @@ public class CloudContextSpendProfileBackfillTest extends BaseUnitTest {
 
   @Test
   public void testBackfillQuery() {
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
-    UUID workspaceId = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
 
-    String flightId = workspaceId.toString();
-    workspaceDao.createCloudContextStart(
-        workspaceId, CloudPlatform.GCP, WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID, flightId);
-
-    GcpCloudContext cloudContext =
-        new GcpCloudContext(
-            "gcpProjectId",
-            "samPolicyOwner",
-            "samPolicyWriter",
-            "samPolicyReader",
-            "samPolicyApplication",
-            null);
-
-    workspaceDao.createCloudContextSuccess(
-        workspaceId, CloudPlatform.GCP, cloudContext.serialize(), flightId);
-
+    // Set spend profile to null and verity
     jdbcTemplate.update(
         "UPDATE cloud_context SET spend_profile = NULL", new MapSqlParameterSource());
-
     Optional<DbCloudContext> dbCloudContextOptional =
         workspaceDao.getCloudContext(workspaceId, CloudPlatform.GCP);
     DbCloudContext dbCloudContext = dbCloudContextOptional.orElseThrow();
     Assertions.assertNull(dbCloudContext.getSpendProfile());
 
+    // Run the backfill
     workspaceDao.backfillCloudContextSpendProfile();
 
+    // Verify that it backfilled
     dbCloudContextOptional = workspaceDao.getCloudContext(workspaceId, CloudPlatform.GCP);
     dbCloudContext = dbCloudContextOptional.orElseThrow();
     Assertions.assertNotNull(dbCloudContext.getSpendProfile());

@@ -10,8 +10,12 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.GcpCloudContextFields;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -23,12 +27,17 @@ public class SyncSamGroupsStep implements Step {
 
   private final SamService samService;
   private final UUID workspaceUuid;
+  private final SpendProfile spendProfile;
   private final AuthenticatedUserRequest userRequest;
 
   public SyncSamGroupsStep(
-      SamService samService, UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+      SamService samService,
+      UUID workspaceUuid,
+      SpendProfile spendProfile,
+      AuthenticatedUserRequest userRequest) {
     this.samService = samService;
     this.workspaceUuid = workspaceUuid;
+    this.spendProfile = spendProfile;
     this.userRequest = userRequest;
   }
 
@@ -63,12 +72,17 @@ public class SyncSamGroupsStep implements Step {
     String projectId = flightContext.getWorkingMap().get(GCP_PROJECT_ID, String.class);
     GcpCloudContext context =
         new GcpCloudContext(
-            projectId,
-            workspaceRoleGroupMap.get(WsmIamRole.OWNER),
-            workspaceRoleGroupMap.get(WsmIamRole.WRITER),
-            workspaceRoleGroupMap.get(WsmIamRole.READER),
-            workspaceRoleGroupMap.get(WsmIamRole.APPLICATION),
-            /*commonField=*/ null);
+            new GcpCloudContextFields(
+                projectId,
+                workspaceRoleGroupMap.get(WsmIamRole.OWNER),
+                workspaceRoleGroupMap.get(WsmIamRole.WRITER),
+                workspaceRoleGroupMap.get(WsmIamRole.READER),
+                workspaceRoleGroupMap.get(WsmIamRole.APPLICATION)),
+            new CloudContextCommonFields(
+                spendProfile.id(),
+                WsmResourceState.CREATING,
+                flightContext.getFlightId(),
+                /*error=*/ null));
 
     workingMap.put(WorkspaceFlightMapKeys.CLOUD_CONTEXT, context);
 

@@ -1,44 +1,45 @@
 package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiAzureContext;
-import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
+import bio.terra.workspace.service.workspace.exceptions.CloudContextNotReadyException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import org.jetbrains.annotations.Nullable;
 
 public class AzureCloudContext implements CloudContext {
-  private final String azureTenantId;
-  private final String azureSubscriptionId;
-  private final String azureResourceGroupId;
-  private final @Nullable CloudContextCommonFields commonFields;
+  private final AzureCloudContextFields contextFields;
+  private final CloudContextCommonFields commonFields;
 
   @JsonCreator
   public AzureCloudContext(
-      @JsonProperty("azureTenantId") String azureTenantId,
-      @JsonProperty("azureSubscriptionId") String azureSubscriptionId,
-      @JsonProperty("azureResourceGroupId") String azureResourceGroupId,
-      @JsonProperty("commonFields") @Nullable CloudContextCommonFields commonFields) {
-    this.azureTenantId = azureTenantId;
-    this.azureSubscriptionId = azureSubscriptionId;
-    this.azureResourceGroupId = azureResourceGroupId;
+      @JsonProperty("contextFields") @Nullable AzureCloudContextFields contextFields,
+      @JsonProperty("commonFields") CloudContextCommonFields commonFields) {
+    this.contextFields = contextFields;
     this.commonFields = commonFields;
   }
 
+  public AzureCloudContextFields getContextFields() {
+    return contextFields;
+  }
+
+  // HYPOTHESIS: everywhere we get this data, the context must be in the READY state
   public String getAzureTenantId() {
-    return azureTenantId;
+    checkReady();
+    return contextFields.getAzureTenantId();
   }
 
   public String getAzureSubscriptionId() {
-    return azureSubscriptionId;
+    checkReady();
+    return contextFields.getAzureSubscriptionId();
   }
 
   public String getAzureResourceGroupId() {
-    return azureResourceGroupId;
+    checkReady();
+    return contextFields.getAzureResourceGroupId();
   }
 
   @Override
@@ -61,76 +62,64 @@ public class AzureCloudContext implements CloudContext {
     return (T) this;
   }
 
+  // TODO: PF-2770 include the common fields in the API return
   public ApiAzureContext toApi() {
-    return new ApiAzureContext()
-        .tenantId(azureTenantId)
-        .subscriptionId(azureSubscriptionId)
-        .resourceGroupId(azureResourceGroupId);
+    return (contextFields == null ? null : contextFields.toApi());
+  }
+
+  /**
+   * Test if the cloud context is ready to be used by operations. It must be in the ready state and
+   * the context fields must be populated.
+   *
+   * @return true if the context is in the READY state; false otherwise
+   */
+  public boolean isReady() {
+    return (commonFields.state().equals(WsmResourceState.READY) && contextFields != null);
+  }
+
+  /** Throw exception is the cloud context is not ready. */
+  public void checkReady() {
+    if (!isReady()) {
+      throw new CloudContextNotReadyException(
+          "Cloud context is not ready. Wait for the context to be ready and try again.");
+    }
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof AzureCloudContext that)) return false;
-    return Objects.equal(azureTenantId, that.azureTenantId)
-        && Objects.equal(azureSubscriptionId, that.azureSubscriptionId)
-        && Objects.equal(azureResourceGroupId, that.azureResourceGroupId)
+    return Objects.equal(contextFields, that.contextFields)
         && Objects.equal(commonFields, that.commonFields);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(azureTenantId, azureSubscriptionId, azureResourceGroupId, commonFields);
+    return Objects.hashCode(contextFields, commonFields);
   }
 
   // -- serdes for the AzureCloudContext --
 
   @Override
   public String serialize() {
-    AzureCloudContextV100 dbContext =
-        AzureCloudContextV100.from(azureTenantId, azureSubscriptionId, azureResourceGroupId);
-    return DbSerDes.toJson(dbContext);
+    if (contextFields == null) {
+      throw new InternalLogicException("Cannot serialize without context fields filled in");
+    }
+    return contextFields.serialize();
   }
 
   public static AzureCloudContext deserialize(DbCloudContext dbCloudContext) {
-    AzureCloudContextV100 result =
-        DbSerDes.fromJson(dbCloudContext.getContextJson(), AzureCloudContextV100.class);
-    if (result.version != AzureCloudContextV100.AZURE_CLOUD_CONTEXT_DB_VERSION) {
-      throw new InvalidSerializedVersionException("Invalid serialized version");
-    }
+    AzureCloudContextFields contextFields =
+        (dbCloudContext.getContextJson() == null
+            ? null
+            : AzureCloudContextFields.deserialize(dbCloudContext.getContextJson()));
+
     return new AzureCloudContext(
-        result.azureTenantId,
-        result.azureSubscriptionId,
-        result.azureResourceGroupId,
+        contextFields,
         new CloudContextCommonFields(
             dbCloudContext.getSpendProfile(),
             dbCloudContext.getState(),
             dbCloudContext.getFlightId(),
             dbCloudContext.getError()));
-  }
-
-  @VisibleForTesting
-  public static class AzureCloudContextV100 {
-    /**
-     * Format version for serialized form of Azure cloud context - deliberately chosen to be
-     * different from the GCP cloud context version.
-     */
-    public static final long AZURE_CLOUD_CONTEXT_DB_VERSION = 100;
-
-    /** Version marker to store in the db so that we can update the format later if we need to. */
-    @JsonProperty public final long version = AZURE_CLOUD_CONTEXT_DB_VERSION;
-
-    @JsonProperty public String azureTenantId;
-    @JsonProperty public String azureSubscriptionId;
-    @JsonProperty public String azureResourceGroupId;
-
-    public static AzureCloudContextV100 from(
-        String tenantId, String subscriptionId, String resourceGroupId) {
-      AzureCloudContextV100 result = new AzureCloudContextV100();
-      result.azureTenantId = tenantId;
-      result.azureSubscriptionId = subscriptionId;
-      result.azureResourceGroupId = resourceGroupId;
-      return result;
-    }
   }
 }
