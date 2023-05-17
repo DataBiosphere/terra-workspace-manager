@@ -106,7 +106,8 @@ public class AzureCloudContextService implements CloudContextService {
   }
 
   /**
-   * Retrieve the optional Azure cloud context
+   * Retrieve the optional Azure cloud context for the given workspace The returned cloud context
+   * may be in an intermediate state (creating, deleting, updating, broken)
    *
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional Azure cloud context
@@ -118,9 +119,18 @@ public class AzureCloudContextService implements CloudContextService {
         .map(AzureCloudContext::deserialize);
   }
 
+  /**
+   * Retrieve the required AWS cloud context in the READY state for a given workspace
+   *
+   * @param workspaceUuid workspace id
+   * @return AzureCloudContext
+   */
   public AzureCloudContext getRequiredAzureCloudContext(UUID workspaceUuid) {
-    return getAzureCloudContext(workspaceUuid)
-        .orElseThrow(
-            () -> new CloudContextRequiredException("Operation requires Azure cloud context"));
+    AzureCloudContext cloudContext =
+        getAzureCloudContext(workspaceUuid)
+            .orElseThrow(
+                () -> new CloudContextRequiredException("Operation requires Azure cloud context"));
+    cloudContext.checkReady();
+    return cloudContext;
   }
 }
