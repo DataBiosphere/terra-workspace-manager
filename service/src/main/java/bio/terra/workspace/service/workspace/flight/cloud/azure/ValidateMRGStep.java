@@ -43,7 +43,10 @@ public class ValidateMRGStep implements Step {
     try {
       ResourceManager resourceManager =
           crlService.getResourceManager(azureCloudContext, azureConfig);
-      resourceManager.resourceGroups().getByName(azureCloudContext.getAzureResourceGroupId());
+      // On the create path, read through the context fields, since the context is not yet in
+      // the READY state.
+      String resourceGroupId = azureCloudContext.getContextFields().getAzureResourceGroupId();
+      resourceManager.resourceGroups().getByName(resourceGroupId);
     } catch (Exception azureError) {
       throw new CloudContextRequiredException("Invalid Azure cloud context", azureError);
     }
