@@ -562,6 +562,11 @@ public class WorkspaceService {
       TpsPaoDescription sourcePaoId,
       TpsUpdateMode tpsUpdateMode,
       AuthenticatedUserRequest userRequest) {
+    logger.info(
+        "Linking workspace policies {} to {} for {}",
+        workspaceId,
+        sourcePaoId.getObjectId(),
+        userRequest.getEmail());
 
     tpsApiDispatch.createPaoIfNotExist(
         sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType());
@@ -583,15 +588,74 @@ public class WorkspaceService {
     } else {
       var updateResult =
           tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), tpsUpdateMode);
-      if (updateResult.isUpdateApplied()) {
+      if (Boolean.TRUE.equals(updateResult.isUpdateApplied())) {
         workspaceActivityLogService.writeActivity(
             userRequest,
             workspaceId,
             OperationType.UPDATE,
             workspaceId.toString(),
             ActivityLogChangedTarget.POLICIES);
+        logger.info(
+            "Finished linking workspace policies {} to {} for {}",
+            workspaceId,
+            sourcePaoId.getObjectId(),
+            userRequest.getEmail());
+      } else {
+        logger.warn(
+            "Failed linking workspace policies {} to {} for {}",
+            workspaceId,
+            sourcePaoId.getObjectId(),
+            userRequest.getEmail());
       }
       return updateResult;
+    }
+  }
+
+  @Traced
+  public TpsPaoUpdateResult updatePolicy(
+      UUID workspaceUuid,
+      TpsPolicyInputs addAttributes,
+      TpsPolicyInputs removeAttributes,
+      TpsUpdateMode updateMode,
+      AuthenticatedUserRequest userRequest) {
+    logger.info("Updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
+
+    var dryRun =
+        tpsApiDispatch.updatePao(
+            workspaceUuid, addAttributes, removeAttributes, TpsUpdateMode.DRY_RUN);
+
+    if (!dryRun.getConflicts().isEmpty() && updateMode != TpsUpdateMode.DRY_RUN) {
+      throw new PolicyConflictException(
+          "Workspace policies conflict with policy updates", dryRun.getConflicts());
+    }
+
+    policyValidator.validateWorkspaceConformsToPolicy(
+        getWorkspace(workspaceUuid), dryRun.getResultingPao(), userRequest);
+
+    if (updateMode == TpsUpdateMode.DRY_RUN) {
+      return dryRun;
+    } else {
+      var result =
+          tpsApiDispatch.updatePao(workspaceUuid, addAttributes, removeAttributes, updateMode);
+
+      if (Boolean.TRUE.equals(result.isUpdateApplied())) {
+        workspaceActivityLogService.writeActivity(
+            userRequest,
+            workspaceUuid,
+            OperationType.UPDATE,
+            workspaceUuid.toString(),
+            ActivityLogChangedTarget.POLICIES);
+        logger.info(
+            "Finished updating workspace policies {} for {}",
+            workspaceUuid,
+            userRequest.getEmail());
+      } else {
+        logger.warn(
+            "Workspace policies update failed to apply to {} for {}",
+            workspaceUuid,
+            userRequest.getEmail());
+      }
+      return result;
     }
   }
 }
