@@ -60,7 +60,7 @@ public class CreateAwsSageMakerNotebookStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
-        ControlledResourceKeys.AWS_ENVIRONMENT_USER_ROLE_ARN,
+        ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN,
         ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
         ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
 
@@ -89,7 +89,7 @@ public class CreateAwsSageMakerNotebookStep implements Step {
         resource,
         Arn.fromString(
             inputParameters.get(
-                ControlledResourceKeys.AWS_ENVIRONMENT_USER_ROLE_ARN, String.class)),
+                ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN, String.class)),
         Arn.fromString(
             inputParameters.get(ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN, String.class)),
         Arn.fromString(
