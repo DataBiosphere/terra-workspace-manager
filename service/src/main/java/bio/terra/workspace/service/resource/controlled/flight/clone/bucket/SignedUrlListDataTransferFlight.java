@@ -19,11 +19,14 @@ public class SignedUrlListDataTransferFlight extends Flight {
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
 
     RetryRule cloudRetry = RetryRules.cloud();
-    addStep(new RetrieveDataTransferMetadataStep(flightBeanBag.getStoragetransfer(), flightBeanBag.getGcpCloudContextService(), null));
+    addStep(
+        new RetrieveDataTransferMetadataStep(
+            flightBeanBag.getStoragetransfer(), flightBeanBag.getGcpCloudContextService(), null));
     addStep(new SetBucketRolesStep(flightBeanBag.getBucketCloneRolesService()), cloudRetry);
     addStep(new TransferSignedUrlsToGcsBucketStep(flightBeanBag.getStoragetransfer()), cloudRetry);
     addStep(new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()), cloudRetry);
     addStep(
         new DeleteStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()), cloudRetry);
     addStep(new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesService()), cloudRetry);
-}}
+  }
+}

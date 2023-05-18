@@ -50,7 +50,8 @@ public class BucketCloneRolesService {
     final @Nullable StorageTransferInput sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, StorageTransferInput.class);
     final @Nullable StorageTransferInput destinationInputs =
-        workingMap.get(ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, StorageTransferInput.class);
+        workingMap.get(
+            ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, StorageTransferInput.class);
     final @Nullable String transferServiceSAEmail =
         workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
 

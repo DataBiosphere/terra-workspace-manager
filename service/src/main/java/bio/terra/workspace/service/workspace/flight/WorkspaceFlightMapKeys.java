@@ -53,8 +53,10 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
 
     public static final String SIGNED_URL_LIST = "signedUrlList";
-    public static final String DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST = "destinationBucketNameForSignedUrlList";
-    public static final String DESTINATION_STORAGE_TRANSFER_INPUTS = "destinationStorageTransferInputs";
+    public static final String DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST =
+        "destinationBucketNameForSignedUrlList";
+    public static final String DESTINATION_STORAGE_TRANSFER_INPUTS =
+        "destinationStorageTransferInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
     public static final String DESTINATION_REFERENCED_RESOURCE = "destinationReferencedResource";
     public static final String DESTINATION_WORKSPACE_ID = "destinationWorkspaceId";

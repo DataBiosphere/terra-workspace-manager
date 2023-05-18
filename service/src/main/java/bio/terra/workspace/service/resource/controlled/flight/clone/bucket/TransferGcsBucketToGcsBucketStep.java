@@ -1,7 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
-import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.StorageTransferServiceUtils.createTransferSpecForSourceBucket;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.StorageTransferServiceUtils.createTransferJob;
+import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.StorageTransferServiceUtils.createTransferSpecForSourceBucket;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -55,7 +56,8 @@ public final class TransferGcsBucketToGcsBucketStep implements Step {
     StorageTransferInput sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, StorageTransferInput.class);
     StorageTransferInput destinationInputs =
-        workingMap.get(ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, StorageTransferInput.class);
+        workingMap.get(
+            ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, StorageTransferInput.class);
     logger.info(
         "Starting data copy from source bucket \n\t{}\nto destination\n\t{}",
         sourceInputs,
@@ -99,7 +101,8 @@ public final class TransferGcsBucketToGcsBucketStep implements Step {
     try {
       createTransferJob(
           storagetransfer,
-          createTransferSpecForSourceBucket(sourceInputs.getBucketName(), destinationInputs.getBucketName()),
+          createTransferSpecForSourceBucket(
+              sourceInputs.getBucketName(), destinationInputs.getBucketName()),
           transferJobName,
           controlPlaneProjectId);
     } catch (IOException e) {
@@ -119,6 +122,7 @@ public final class TransferGcsBucketToGcsBucketStep implements Step {
     String controlPlaneProjectId =
         workingMap.get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
     // A failure to delete will result in a DISMAL_FAILURE of the flight.
-    return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext.getFlightId(), transferJobName, controlPlaneProjectId, storagetransfer);
+    return StorageTransferServiceUtils.deleteTransferJobStepImpl(
+        flightContext.getFlightId(), transferJobName, controlPlaneProjectId, storagetransfer);
   }
 }

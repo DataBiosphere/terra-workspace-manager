@@ -80,8 +80,7 @@ public enum ActivityFlight {
 
   SIGNED_URL_LIST_DATA_TRANSFER_FLIGHT(
       SignedUrlListDataTransferFlight.class.getName(),
-      ActivityLogChangedTarget.CONTROLLED_GCP_GCS_BUCKET
-  ),
+      ActivityLogChangedTarget.CONTROLLED_GCP_GCS_BUCKET),
 
   // AZURE
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(

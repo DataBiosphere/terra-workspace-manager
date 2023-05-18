@@ -1,4 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
+
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.StorageTransferServiceUtils.getStorageTransferServiceSAEmail;
 
 import bio.terra.stairway.FlightContext;
@@ -30,13 +31,16 @@ public class RetrieveDataTransferMetadataStep implements Step {
   private final Storagetransfer storagetransfer;
   private final GcpCloudContextService gcpCloudContextService;
   private final ControlledGcsBucketResource sourceBucket;
+
   public RetrieveDataTransferMetadataStep(
-      Storagetransfer storagetransfer, GcpCloudContextService gcpCloudContextService,
+      Storagetransfer storagetransfer,
+      GcpCloudContextService gcpCloudContextService,
       @Nullable ControlledGcsBucketResource sourceBucket) {
     this.storagetransfer = storagetransfer;
     this.gcpCloudContextService = gcpCloudContextService;
     this.sourceBucket = sourceBucket;
   }
+
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightMap workingMap = context.getWorkingMap();
@@ -46,7 +50,8 @@ public class RetrieveDataTransferMetadataStep implements Step {
 
     String storageTransferServiceSAEmail;
     try {
-      storageTransferServiceSAEmail = getStorageTransferServiceSAEmail(storagetransfer, controlPlaneProjectId);
+      storageTransferServiceSAEmail =
+          getStorageTransferServiceSAEmail(storagetransfer, controlPlaneProjectId);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
@@ -84,8 +89,9 @@ public class RetrieveDataTransferMetadataStep implements Step {
     String bucketName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
-            /*inputKey=*/ControlledResourceKeys.DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST, /*workingKey=*/ControlledResourceKeys.DESTINATION_BUCKET_NAME, String.class
-        );
+            /*inputKey=*/ ControlledResourceKeys.DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST,
+            /*workingKey=*/ ControlledResourceKeys.DESTINATION_BUCKET_NAME,
+            String.class);
     return new StorageTransferInput(
         workspaceUuid, projectId, bucketName, DESTINATION_BUCKET_ROLE_NAMES);
   }

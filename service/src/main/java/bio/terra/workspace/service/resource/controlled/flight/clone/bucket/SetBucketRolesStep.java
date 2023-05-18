@@ -6,13 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.api.services.storagetransfer.v1.Storagetransfer;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Give the Storage Transfer Service SA the appropriate roles on the source and destination (sink)
@@ -29,8 +23,7 @@ public class SetBucketRolesStep implements Step {
 
   private final BucketCloneRolesService bucketCloneRolesService;
 
-  public SetBucketRolesStep(
-      BucketCloneRolesService bucketCloneRolesService) {
+  public SetBucketRolesStep(BucketCloneRolesService bucketCloneRolesService) {
     this.bucketCloneRolesService = bucketCloneRolesService;
   }
 
@@ -46,11 +39,14 @@ public class SetBucketRolesStep implements Step {
         ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS,
         ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL);
 
+    var storageTransferServiceSAEmail =
+        workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
 
-    var storageTransferServiceSAEmail = workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
-
-    StorageTransferInput sourceInputs = workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, StorageTransferInput.class);
-    StorageTransferInput destinationInputs = workingMap.get(ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, StorageTransferInput.class);
+    StorageTransferInput sourceInputs =
+        workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, StorageTransferInput.class);
+    StorageTransferInput destinationInputs =
+        workingMap.get(
+            ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, StorageTransferInput.class);
 
     // Apply source and destination bucket roles
     if (sourceInputs != null) {

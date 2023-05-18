@@ -25,8 +25,7 @@ public final class StorageTransferServiceUtils {
   public static final String APPLICATION_NAME = "terra-workspace-manager";
   private static final String DELETED_STATUS = "DELETED";
 
-  @VisibleForTesting
-  public static final String ENABLED_STATUS = "ENABLED";
+  @VisibleForTesting public static final String ENABLED_STATUS = "ENABLED";
 
   @VisibleForTesting
   public static final String TRANSFER_JOB_DESCRIPTION = "Terra Workspace Manager Clone GCS Bucket";
@@ -70,13 +69,12 @@ public final class StorageTransferServiceUtils {
     }
   }
 
-  /**
-   * A reusable step implementation for deleting a storage transfer job.
-   */
+  /** A reusable step implementation for deleting a storage transfer job. */
   public static StepResult deleteTransferJobStepImpl(
       String flightId,
       @Nullable String transferJobName,
-      String controlPlaneProjectId, Storagetransfer storagetransfer) {
+      String controlPlaneProjectId,
+      Storagetransfer storagetransfer) {
 
     TransferJob transferJob;
     try {
@@ -97,7 +95,8 @@ public final class StorageTransferServiceUtils {
       return StepResult.getStepResultSuccess();
     }
     try {
-      transferJobName = Optional.ofNullable(transferJobName).orElse(createTransferJobName(flightId));
+      transferJobName =
+          Optional.ofNullable(transferJobName).orElse(createTransferJobName(flightId));
       deleteTransferJob(storagetransfer, transferJobName, controlPlaneProjectId);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
@@ -125,9 +124,7 @@ public final class StorageTransferServiceUtils {
     return "transferJobs/wsm-" + flightId;
   }
 
-  /**
-   * Create a one-time transfer job starting now.
-   */
+  /** Create a one-time transfer job starting now. */
   public static void createTransferJob(
       Storagetransfer storagetransfer,
       TransferSpec transferSpec,
@@ -169,18 +166,16 @@ public final class StorageTransferServiceUtils {
     // Since our start and end days are the same, we get Run Once Now behavior.
     return new Schedule().setScheduleStartDate(runDate).setScheduleEndDate(runDate);
   }
-  /**
-   * Create transfer spec from gcs bucket to gcs bucket.
-   */
-  public static TransferSpec createTransferSpecForSourceBucket(String sourceBucketName, String destinationBucketName) {
+  /** Create transfer spec from gcs bucket to gcs bucket. */
+  public static TransferSpec createTransferSpecForSourceBucket(
+      String sourceBucketName, String destinationBucketName) {
     return createTransferSpecCommon(destinationBucketName)
         .setGcsDataSource(new GcsData().setBucketName(sourceBucketName));
   }
 
-  /**
-   * Create transfer spec from signed url list to gcs bucket.
-   */
-  public static TransferSpec createTransferSpecForSignedUrl(String url, String destinationBucketName) {
+  /** Create transfer spec from signed url list to gcs bucket. */
+  public static TransferSpec createTransferSpecForSignedUrl(
+      String url, String destinationBucketName) {
     var spec = createTransferSpecCommon(destinationBucketName);
     spec.setHttpDataSource(new HttpData().setListUrl(url));
     return spec;
@@ -195,10 +190,9 @@ public final class StorageTransferServiceUtils {
                 .setOverwriteObjectsAlreadyExistingInSink(false));
   }
 
-  /**
-   * Get the storage transfer service account from the control plane project.
-   */
-  public static String getStorageTransferServiceSAEmail(Storagetransfer storagetransfer, String controlPlaneProjectId) throws IOException {
+  /** Get the storage transfer service account from the control plane project. */
+  public static String getStorageTransferServiceSAEmail(
+      Storagetransfer storagetransfer, String controlPlaneProjectId) throws IOException {
     // Get the service account in the control plane project used by the transfer service to
     // perform the actual data transfer. It's named for and scoped to the project.
     return storagetransfer

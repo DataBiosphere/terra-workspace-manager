@@ -706,7 +706,11 @@ public class ControlledResourceService {
     return jobBuilder.submitAndWait(ControlledFlexibleResource.class);
   }
 
-  public String transferSignedUrlListToGcsBucket(AuthenticatedUserRequest userRequest, UUID workspaceId, ControlledGcsBucketResource destinationBucket, String signedUrlList) {
+  public String transferSignedUrlListToGcsBucket(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      ControlledGcsBucketResource destinationBucket,
+      String signedUrlList) {
     JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -717,7 +721,9 @@ public class ControlledResourceService {
             .workspaceId(workspaceId.toString())
             .operationType(OperationType.DATA_TRANSFER)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, workspaceId)
-            .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST, destinationBucket.getBucketName())
+            .addParameter(
+                ControlledResourceKeys.DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST,
+                destinationBucket.getBucketName())
             .addParameter(ControlledResourceKeys.SIGNED_URL_LIST, signedUrlList)
             .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 

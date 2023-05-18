@@ -32,7 +32,8 @@ public class DeleteStorageTransferServiceJobStep implements Step {
         workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME, String.class);
     String controlPlaneProjectId =
         workingMap.get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
-    return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext.getFlightId(), transferJobName, controlPlaneProjectId, storagetransfer);
+    return StorageTransferServiceUtils.deleteTransferJobStepImpl(
+        flightContext.getFlightId(), transferJobName, controlPlaneProjectId, storagetransfer);
   }
 
   // Nothing to undo

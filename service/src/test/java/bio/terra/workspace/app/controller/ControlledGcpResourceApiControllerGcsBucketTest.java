@@ -12,7 +12,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -24,7 +23,6 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
-import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
@@ -45,7 +43,6 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
-import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -55,7 +52,6 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
@@ -109,7 +105,8 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
               LifecycleAction.newDeleteAction(),
               LifecycleCondition.newBuilder().setAge(3).build()));
 
-  private static final String URL_LIST ="https://raw.githubusercontent.com/yuhuyoyo/test-repo/main/helloworld.tsv";
+  private static final String URL_LIST =
+      "https://raw.githubusercontent.com/yuhuyoyo/test-repo/main/helloworld.tsv";
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
@@ -290,7 +287,8 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     AuthenticatedUserRequest defaultUserRequest =
         userAccessUtils.defaultUser().getAuthenticatedRequest();
 
-    ApiLoadSignedUrlListResult result = loadSignedUrlList(defaultUserRequest, sourceBucket.getMetadata().getResourceId());
+    ApiLoadSignedUrlListResult result =
+        loadSignedUrlList(defaultUserRequest, sourceBucket.getMetadata().getResourceId());
 
     assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
     cloudUtils.assertBucketFiles(
@@ -309,22 +307,19 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
 
   @Test
   public void loadSignedUrlList_403() throws Exception {
-    AuthenticatedUserRequest thirdUserAuthRequest =
-        userAccessUtils.thirdUserAuthRequest();
+    AuthenticatedUserRequest thirdUserAuthRequest = userAccessUtils.thirdUserAuthRequest();
 
-    // Second user only have READ access.
+    // Third user has no access.
     loadSignedUrlListExpectError(
         thirdUserAuthRequest, sourceBucket.getMetadata().getResourceId(), HttpStatus.SC_FORBIDDEN);
   }
 
   @Test
   public void loadSignedUrlList_404() throws Exception {
-    AuthenticatedUserRequest secondUserAuthRequest =
-        userAccessUtils.secondUserAuthRequest();
+    AuthenticatedUserRequest secondUserAuthRequest = userAccessUtils.secondUserAuthRequest();
 
-    // Second user only have READ access.
     loadSignedUrlListExpectError(
-        secondUserAuthRequest, UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
+        secondUserAuthRequest, /*bucketId=*/ UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
   }
 
   @Test
@@ -856,19 +851,21 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     assertEquals(expectedBucketName, actualBucket.getAttributes().getBucketName());
   }
 
-  private void loadSignedUrlListExpectError(AuthenticatedUserRequest userRequest, UUID bucketId, int httpStatus)
-      throws Exception {
+  private void loadSignedUrlListExpectError(
+      AuthenticatedUserRequest userRequest, UUID bucketId, int httpStatus) throws Exception {
     ApiLoadSignedUrlListRequestBody requestBody =
-        new ApiLoadSignedUrlListRequestBody()
-            .urlList(URL_LIST);
-    mockMvcUtils.postExpect(userRequest, objectMapper.writeValueAsString(requestBody), String.format(LOAD_SIGNED_URL_LIST_PATH_FORMAT, workspaceId, bucketId), httpStatus);
+        new ApiLoadSignedUrlListRequestBody().urlList(URL_LIST);
+    mockMvcUtils.postExpect(
+        userRequest,
+        objectMapper.writeValueAsString(requestBody),
+        String.format(LOAD_SIGNED_URL_LIST_PATH_FORMAT, workspaceId, bucketId),
+        httpStatus);
   }
 
-  private ApiLoadSignedUrlListResult loadSignedUrlList(AuthenticatedUserRequest userRequest, UUID bucketId)
-      throws Exception {
+  private ApiLoadSignedUrlListResult loadSignedUrlList(
+      AuthenticatedUserRequest userRequest, UUID bucketId) throws Exception {
     ApiLoadSignedUrlListRequestBody requestBody =
-        new ApiLoadSignedUrlListRequestBody()
-            .urlList(URL_LIST);
+        new ApiLoadSignedUrlListRequestBody().urlList(URL_LIST);
     var serializedResponse =
         mockMvcUtils.getSerializedResponseForPost(
             userRequest,
@@ -878,17 +875,21 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
-      result = getLoadSignedUrlListResult(userRequest, workspaceId, sourceBucket.getMetadata().getResourceId(), jobId);
+      result =
+          getLoadSignedUrlListResult(
+              userRequest, workspaceId, sourceBucket.getMetadata().getResourceId(), jobId);
     }
     assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
     return result;
   }
 
-  private ApiLoadSignedUrlListResult getLoadSignedUrlListResult(AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String jobId)
+  private ApiLoadSignedUrlListResult getLoadSignedUrlListResult(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String jobId)
       throws Exception {
     String serializedResponse =
         mockMvcUtils.getSerializedResponseForGetJobResult(
-            userRequest, String.format(LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT, workspaceId, resourceId, jobId));
+            userRequest,
+            String.format(LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT, workspaceId, resourceId, jobId));
     return objectMapper.readValue(serializedResponse, ApiLoadSignedUrlListResult.class);
   }
 }

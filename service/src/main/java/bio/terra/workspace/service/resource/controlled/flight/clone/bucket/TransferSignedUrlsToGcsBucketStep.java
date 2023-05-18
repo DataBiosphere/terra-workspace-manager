@@ -20,11 +20,14 @@ import org.slf4j.LoggerFactory;
 
 public class TransferSignedUrlsToGcsBucketStep implements Step {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TransferSignedUrlsToGcsBucketStep.class);
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(TransferSignedUrlsToGcsBucketStep.class);
   private final Storagetransfer storagetransfer;
+
   public TransferSignedUrlsToGcsBucketStep(Storagetransfer storageTransfer) {
     this.storagetransfer = storageTransfer;
   }
+
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightMap workingMap = context.getWorkingMap();
@@ -33,9 +36,7 @@ public class TransferSignedUrlsToGcsBucketStep implements Step {
         ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID,
         ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL);
     FlightUtils.validateRequiredEntries(
-        context.getInputParameters(),
-        ControlledResourceKeys.SIGNED_URL_LIST
-    );
+        context.getInputParameters(), ControlledResourceKeys.SIGNED_URL_LIST);
 
     String transferJobName =
         StorageTransferServiceUtils.createTransferJobName(context.getFlightId());
@@ -51,7 +52,9 @@ public class TransferSignedUrlsToGcsBucketStep implements Step {
         context.getInputParameters().get(ControlledResourceKeys.SIGNED_URL_LIST, String.class);
 
     var destinationBucketName =
-        context.getInputParameters().get(ControlledResourceKeys.DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST, String.class);
+        context
+            .getInputParameters()
+            .get(ControlledResourceKeys.DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST, String.class);
 
     // Look up the transfer job by name. If it's found, it means we are restarting this step and
     // the job either has an operation in progress or completed (possibly failed).
@@ -82,7 +85,7 @@ public class TransferSignedUrlsToGcsBucketStep implements Step {
     try {
       createTransferJob(
           storagetransfer,
-          createTransferSpecForSignedUrl(signedUrlList, destinationBucketName) ,
+          createTransferSpecForSignedUrl(signedUrlList, destinationBucketName),
           transferJobName,
           controlPlaneProjectId);
     } catch (IOException e) {
