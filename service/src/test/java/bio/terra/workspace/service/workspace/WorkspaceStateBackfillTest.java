@@ -30,7 +30,6 @@ public class WorkspaceStateBackfillTest extends BaseUnitTest {
     workspaceDao.backfillWorkspaceState();
 
     dbWorkspace = workspaceDao.getDbWorkspace(workspaceId);
-    Assertions.assertNotNull(dbWorkspace.getState());
     Assertions.assertEquals(WsmResourceState.READY, dbWorkspace.getState());
   }
 }
