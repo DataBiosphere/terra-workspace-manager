@@ -28,7 +28,8 @@ public final class StorageTransferServiceUtils {
   @VisibleForTesting public static final String ENABLED_STATUS = "ENABLED";
 
   @VisibleForTesting
-  public static final String TRANSFER_JOB_DESCRIPTION = "Terra Workspace Manager Clone GCS Bucket";
+  public static final String TRANSFER_JOB_DESCRIPTION =
+      "Terra Workspace Manager Storage Transfer Job";
 
   private StorageTransferServiceUtils() {}
 

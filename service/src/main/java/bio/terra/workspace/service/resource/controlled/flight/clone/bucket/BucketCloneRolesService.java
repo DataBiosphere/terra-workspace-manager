@@ -13,7 +13,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,12 +46,12 @@ public class BucketCloneRolesService {
    * bucket details from the working map along with the correct project ID and remove the roles.
    */
   public void removeAllAddedBucketRoles(FlightMap workingMap) throws InterruptedException {
-    final @Nullable StorageTransferInput sourceInputs =
+    StorageTransferInput sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, StorageTransferInput.class);
-    final @Nullable StorageTransferInput destinationInputs =
+    StorageTransferInput destinationInputs =
         workingMap.get(
             ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, StorageTransferInput.class);
-    final @Nullable String transferServiceSAEmail =
+    String transferServiceSAEmail =
         workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
 
     if (!Strings.isNullOrEmpty(transferServiceSAEmail)) {

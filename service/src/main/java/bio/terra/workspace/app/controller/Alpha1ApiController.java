@@ -78,6 +78,7 @@ public class Alpha1ApiController implements Alpha1Api {
   @Override
   public ResponseEntity<ApiLoadSignedUrlListResult> loadSignedUrlList(
       UUID workspaceId, UUID resourceId, ApiLoadSignedUrlListRequestBody body) {
+    features.alpha1EnabledCheck();
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledGcsBucketResource bucket =
         controlledResourceMetadataManager
@@ -91,22 +92,23 @@ public class Alpha1ApiController implements Alpha1Api {
     return ResponseEntity.ok(fetchApiLoadSignedUrlListResult(jobId));
   }
 
+  @Traced
+  @Override
+  public ResponseEntity<ApiLoadSignedUrlListResult> fetchLoadSignedUrlListResult(
+      UUID workspaceId, UUID resourceId, String jobId) {
+    features.alpha1EnabledCheck();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
+    return ResponseEntity.ok(fetchApiLoadSignedUrlListResult(jobId));
+  }
+
   private ApiLoadSignedUrlListResult fetchApiLoadSignedUrlListResult(String jobId) {
     JobApiUtils.AsyncJobResult<Void> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
     return new ApiLoadSignedUrlListResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());
-  }
-
-  @Traced
-  @Override
-  public ResponseEntity<ApiLoadSignedUrlListResult> fetchLoadSignedUrlListResult(
-      UUID workspaceId, UUID resourceId, String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
-    return ResponseEntity.ok(fetchApiLoadSignedUrlListResult(jobId));
   }
 
   @Traced

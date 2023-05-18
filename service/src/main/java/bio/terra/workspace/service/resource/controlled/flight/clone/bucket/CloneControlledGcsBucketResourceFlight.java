@@ -163,7 +163,8 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
           new RetrieveDataTransferMetadataStep(
               flightBeanBag.getStoragetransfer(),
               flightBeanBag.getGcpCloudContextService(),
-              sourceBucket));
+              sourceBucket),
+          RetryRules.shortDatabase());
       addStep(new SetBucketRolesStep(flightBeanBag.getBucketCloneRolesService()), cloudRetry);
       addStep(new TransferGcsBucketToGcsBucketStep(flightBeanBag.getStoragetransfer()), cloudRetry);
       addStep(new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()), cloudRetry);

@@ -12,7 +12,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
  * Give the Storage Transfer Service SA the appropriate roles on the source and destination (sink)
  * buckets to allow a transfer job to be created.
  *
- * <p>Preconditions: Destination bucket is created. Working map contains DESTINATION_WORKSPACE_ID.
+ * <p>Preconditions: Destination bucket is created.
  *
  * <p>Post conditions: Working map updated with SOURCE_CLONE_INPUTS, DESTINATION_CLONE_INPUTS,
  * CONTROL_PLANE_PROJECT_ID, and STORAGE_TRANSFER_SERVICE_SA_EMAIL. IAM roles are added to both the
@@ -31,8 +31,6 @@ public class SetBucketRolesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(
-        flightContext.getInputParameters(), ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
     // Validate the outputs, so we fail fast if one goes missing.
     FlightUtils.validateRequiredEntries(
         workingMap,

@@ -21,6 +21,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
+/**
+ * Retrieves metadata needed for the data transfer job in the following step. Destination bucket
+ * (sink), storage transfer service account, optional source bucket {@link StorageTransferInput} are
+ * stored in the working map.
+ */
 public class RetrieveDataTransferMetadataStep implements Step {
 
   private static final List<String> SOURCE_BUCKET_ROLE_NAMES =
@@ -30,7 +35,8 @@ public class RetrieveDataTransferMetadataStep implements Step {
       Stream.of("roles/storage.legacyBucketWriter").collect(Collectors.toList());
   private final Storagetransfer storagetransfer;
   private final GcpCloudContextService gcpCloudContextService;
-  private final ControlledGcsBucketResource sourceBucket;
+  // Only set when the source is also a terra-managed gcs bucket (in the case of cloning).
+  private final @Nullable ControlledGcsBucketResource sourceBucket;
 
   public RetrieveDataTransferMetadataStep(
       Storagetransfer storagetransfer,
@@ -59,6 +65,8 @@ public class RetrieveDataTransferMetadataStep implements Step {
         ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, storageTransferServiceSAEmail);
 
     // Destination bucket (sink)
+    FlightUtils.validateRequiredEntries(
+        context.getInputParameters(), ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
     StorageTransferInput destinationInputs = getDestinationInputs(context);
     workingMap.put(ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, destinationInputs);
     // If the source is a gcs bucket, retrieve the metadata of the source bucket.
@@ -76,11 +84,6 @@ public class RetrieveDataTransferMetadataStep implements Step {
   }
 
   private StorageTransferInput getDestinationInputs(FlightContext flightContext) {
-    // Not to be confused with the destination bucket name in the input parameters, which was
-    // processed
-    // in a previous step. This is the effective destination bucket name that was either
-    // user-supplied
-    // or generated randomly.
     UUID workspaceUuid =
         flightContext
             .getInputParameters()

@@ -7,7 +7,6 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 
 public class SignedUrlListDataTransferFlight extends Flight {
-
   /**
    * All subclasses must provide a constructor with this signature.
    *
@@ -21,7 +20,8 @@ public class SignedUrlListDataTransferFlight extends Flight {
     RetryRule cloudRetry = RetryRules.cloud();
     addStep(
         new RetrieveDataTransferMetadataStep(
-            flightBeanBag.getStoragetransfer(), flightBeanBag.getGcpCloudContextService(), null));
+            flightBeanBag.getStoragetransfer(), flightBeanBag.getGcpCloudContextService(), null),
+        RetryRules.shortDatabase());
     addStep(new SetBucketRolesStep(flightBeanBag.getBucketCloneRolesService()), cloudRetry);
     addStep(new TransferSignedUrlsToGcsBucketStep(flightBeanBag.getStoragetransfer()), cloudRetry);
     addStep(new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()), cloudRetry);

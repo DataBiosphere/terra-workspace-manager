@@ -97,6 +97,13 @@ public class TransferSignedUrlsToGcsBucketStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    return null;
+    FlightMap workingMap = context.getWorkingMap();
+    String transferJobName =
+        workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME, String.class);
+    String controlPlaneProjectId =
+        workingMap.get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
+    // A failure to delete will result in a DISMAL_FAILURE of the flight.
+    return StorageTransferServiceUtils.deleteTransferJobStepImpl(
+        context.getFlightId(), transferJobName, controlPlaneProjectId, storagetransfer);
   }
 }
