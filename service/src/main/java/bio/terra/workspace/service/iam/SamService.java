@@ -52,7 +52,6 @@ import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEn
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
-import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
