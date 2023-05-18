@@ -50,6 +50,10 @@ public enum WsmResourceState {
   }
 
   public static WsmResourceState fromDb(String dbString) {
+    // TODO: PF-2782 after the backfill is done, we can disallow nulls here again.
+    if (dbString == null) {
+      return null;
+    }
     for (var state : WsmResourceState.values()) {
       if (state.dbString.equals(dbString)) {
         if (state == NOT_EXISTS) {
