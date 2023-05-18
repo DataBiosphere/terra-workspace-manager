@@ -607,10 +607,10 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.WRITER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessUtils.noBillingUser().getEmail());
 
     mockMvcUtils.updatePoliciesExpect(
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessUtils.noBillingAccessUserAuthRequest(),
         workspace.getId(),
         HttpStatus.SC_FORBIDDEN,
         buildWsmRegionPolicyInput("asiapacific"),
