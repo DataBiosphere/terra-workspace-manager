@@ -31,12 +31,12 @@ public class BucketCloneRolesService {
     this.crlService = crlService;
   }
 
-  public void addBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail)
+  public void addBucketRoles(StorageTransferInput inputs, String transferServiceSAEmail)
       throws InterruptedException {
     addOrRemoveBucketIdentities(BucketPolicyIdentityOperation.ADD, inputs, transferServiceSAEmail);
   }
 
-  public void removeBucketRoles(BucketCloneInputs inputs, String transferServiceSAEmail)
+  public void removeBucketRoles(StorageTransferInput inputs, String transferServiceSAEmail)
       throws InterruptedException {
     addOrRemoveBucketIdentities(
         BucketPolicyIdentityOperation.REMOVE, inputs, transferServiceSAEmail);
@@ -47,10 +47,10 @@ public class BucketCloneRolesService {
    * bucket details from the working map along with the correct project ID and remove the roles.
    */
   public void removeAllAddedBucketRoles(FlightMap workingMap) throws InterruptedException {
-    final @Nullable BucketCloneInputs sourceInputs =
-        workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, BucketCloneInputs.class);
-    final @Nullable BucketCloneInputs destinationInputs =
-        workingMap.get(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, BucketCloneInputs.class);
+    final @Nullable StorageTransferInput sourceInputs =
+        workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, StorageTransferInput.class);
+    final @Nullable StorageTransferInput destinationInputs =
+        workingMap.get(ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, StorageTransferInput.class);
     final @Nullable String transferServiceSAEmail =
         workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
 
@@ -80,7 +80,7 @@ public class BucketCloneRolesService {
    */
   private void addOrRemoveBucketIdentities(
       BucketPolicyIdentityOperation operation,
-      BucketCloneInputs inputs,
+      StorageTransferInput inputs,
       String transferServiceSAEmail)
       throws InterruptedException {
     List<String> roles = inputs.getRoleNames();

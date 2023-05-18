@@ -49,11 +49,11 @@ public class CompleteTransferOperationStep implements Step {
         ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME,
         ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID);
     try {
-      final String transferJobName =
+      String transferJobName =
           flightContext
               .getWorkingMap()
               .get(ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME, String.class);
-      final String controlPlaneProjectId =
+      String controlPlaneProjectId =
           flightContext
               .getWorkingMap()
               .get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
@@ -62,9 +62,9 @@ public class CompleteTransferOperationStep implements Step {
       // for completion of the first transfer operation. The trick is going to be setting up a
       // polling interval that's appropriate for a wide range of bucket sizes. Everything from
       // milliseconds to hours. The transfer operation won't exist until it starts.
-      final String operationName = getLatestOperationName(transferJobName, controlPlaneProjectId);
+      String operationName = getLatestOperationName(transferJobName, controlPlaneProjectId);
 
-      final StepResult operationResult = getTransferOperationResult(transferJobName, operationName);
+      StepResult operationResult = getTransferOperationResult(transferJobName, operationName);
 
       if (StepStatus.STEP_RESULT_FAILURE_FATAL == operationResult.getStepStatus()) {
         return operationResult;
@@ -72,14 +72,6 @@ public class CompleteTransferOperationStep implements Step {
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
-
-    final var apiBucketResult =
-        flightContext
-            .getWorkingMap()
-            .get(
-                ControlledResourceKeys.CLONE_DEFINITION_RESULT,
-                ApiClonedControlledGcpGcsBucket.class);
-    FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
 
     return StepResult.getStepResultSuccess();
   }

@@ -148,6 +148,18 @@ public class GcpCloudUtils {
     assertEquals(GCS_FILE_CONTENTS, actualContents);
   }
 
+  public void assertBucketFiles(
+      GoogleCredentials userCredential,
+      String projectId,
+      String bucketName,
+      String fileName,
+      String fileContent) {
+    Storage storageClient = getGcpStorageClient(userCredential, projectId);
+    String actualContents =
+        new String(storageClient.readAllBytes(bucketName, fileName), StandardCharsets.UTF_8);
+    assertEquals(fileContent, actualContents);
+  }
+
   /** Asserts table is populated as per populateBqTable(). */
   public void assertBucketHasNoFiles(
       AuthenticatedUserRequest userRequest, String projectId, String bucketName) throws Exception {

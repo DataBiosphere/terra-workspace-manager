@@ -1,9 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 
 /**
@@ -16,7 +18,6 @@ import com.google.api.services.storagetransfer.v1.Storagetransfer;
  * <p>Post conditions; STS Job no longer exists.
  */
 public class DeleteStorageTransferServiceJobStep implements Step {
-
   private final Storagetransfer storagetransfer;
 
   public DeleteStorageTransferServiceJobStep(Storagetransfer storagetransfer) {
@@ -26,7 +27,12 @@ public class DeleteStorageTransferServiceJobStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext, storagetransfer);
+    FlightMap workingMap = flightContext.getWorkingMap();
+    String transferJobName =
+        workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME, String.class);
+    String controlPlaneProjectId =
+        workingMap.get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
+    return StorageTransferServiceUtils.deleteTransferJobStepImpl(flightContext.getFlightId(), transferJobName, controlPlaneProjectId, storagetransfer);
   }
 
   // Nothing to undo

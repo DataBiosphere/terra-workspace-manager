@@ -61,11 +61,11 @@ public class GcsBucketCloneTestFixtures {
   public static final List<String> DESTINATION_ROLE_NAMES =
       Stream.of("roles/storage.legacyBucketWriter").collect(Collectors.toList());
   public static final String STORAGE_TRANSFER_SERVICE_SA_EMAIL = "sts@google.biz";
-  public static final BucketCloneInputs SOURCE_BUCKET_CLONE_INPUTS =
-      new BucketCloneInputs(
+  public static final StorageTransferInput SOURCE_BUCKET_CLONE_INPUTS =
+      new StorageTransferInput(
           SOURCE_WORKSPACE_ID, SOURCE_PROJECT_ID, SOURCE_BUCKET_NAME, SOURCE_ROLE_NAMES);
-  public static final BucketCloneInputs DESTINATION_BUCKET_CLONE_INPUTS =
-      new BucketCloneInputs(
+  public static final StorageTransferInput DESTINATION_BUCKET_CLONE_INPUTS =
+      new StorageTransferInput(
           DESTINATION_WORKSPACE_ID,
           DESTINATION_PROJECT_ID,
           DESTINATION_BUCKET_NAME,

@@ -72,7 +72,7 @@ public class BucketCloneRolesComponentTest extends BaseUnitTest {
   public void testRemoveAllAddedBucketRoles() throws InterruptedException {
     final FlightMap flightMap = new FlightMap();
     flightMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, SOURCE_BUCKET_CLONE_INPUTS);
-    flightMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, DESTINATION_BUCKET_CLONE_INPUTS);
+    flightMap.put(ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, DESTINATION_BUCKET_CLONE_INPUTS);
     flightMap.put(
         ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL,
         STORAGE_TRANSFER_SERVICE_SA_EMAIL);
