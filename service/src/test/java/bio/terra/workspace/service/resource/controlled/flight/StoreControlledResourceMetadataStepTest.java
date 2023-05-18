@@ -15,7 +15,7 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.flight.create.createResourceInDbStartStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateResourceInDbStartStep;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -50,8 +50,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
 
     ControlledGcsBucketResource bucketResource =
         ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
-    createResourceInDbStartStep storeGoogleBucketMetadataStep =
-        new createResourceInDbStartStep(
+    CreateResourceInDbStartStep storeGoogleBucketMetadataStep =
+        new CreateResourceInDbStartStep(
             resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE, bucketResource);
 
     final FlightMap inputFlightMap = new FlightMap();

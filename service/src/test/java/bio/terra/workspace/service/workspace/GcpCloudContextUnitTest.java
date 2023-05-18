@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
@@ -18,11 +18,8 @@ import bio.terra.workspace.service.workspace.exceptions.CloudContextNotReadyExce
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -94,25 +91,14 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
   @Test
   public void deserialize_creatingContext_valid() {
-    UUID workspaceUuid = UUID.randomUUID();
-    var workspace =
-        new Workspace(
-            workspaceUuid,
-            "a-user-facing-id",
-            "deleteGcpContextDeletesControlledResources",
-            "description",
-            new SpendProfileId("spend-profile"),
-            Collections.emptyMap(),
-            WorkspaceStage.MC_WORKSPACE,
-            DEFAULT_USER_EMAIL,
-            null);
-    workspaceDao.createWorkspace(workspace, /* applicationIds= */ null);
+    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    UUID workspaceUuid = workspace.workspaceId();
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+
+    String flightId = UUID.randomUUID().toString();
 
     workspaceDao.createCloudContextStart(
-        workspaceUuid,
-        CloudPlatform.GCP,
-        new SpendProfileId("fake"),
-        /*flightId=*/ UUID.randomUUID().toString());
+        workspaceUuid, CloudPlatform.GCP, new SpendProfileId("fake"), flightId);
     Optional<DbCloudContext> creatingContext =
         workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP);
 
@@ -122,7 +108,8 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     assertNull(cloudContext.getContextFields());
     assertThrows(CloudContextNotReadyException.class, cloudContext::checkReady);
 
-    workspaceDao.deleteWorkspace(workspaceUuid);
+    workspaceDao.createWorkspaceSuccess(workspaceUuid, flightId);
+    WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
   }
 
   // Set up mocks for interacting with GCP to delete a project.
