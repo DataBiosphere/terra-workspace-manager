@@ -1056,8 +1056,7 @@ public class SamService {
     // No access token needed since this is an unauthenticated API.
     StatusApi statusApi = new StatusApi(getApiClient(null));
     try {
-      SystemStatus samStatus = statusApi.getSystemStatus();
-      return samStatus.getOk();
+      return statusApi.getSystemStatus().getOk();
     } catch (ApiException e) {
       //  If any exception was thrown during the status check, return that the system is not OK.
       return false;
