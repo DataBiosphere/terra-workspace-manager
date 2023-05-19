@@ -108,24 +108,16 @@ public class WorkspaceService {
       @Nullable List<String> applications,
       AuthenticatedUserRequest userRequest) {
     return createWorkspaceWorker(
-        workspace,
-        policies,
-        applications,
-        /*sourceWorkspaceUuid=*/ null,
-        CloningInstructions.COPY_NOTHING,
-        userRequest);
+        workspace, policies, applications, /*sourceWorkspaceUuid=*/ userRequest);
   }
 
   @Traced
-  public UUID createWorkspaceForClone(
+  private UUID createWorkspaceForClone(
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
-      UUID sourceWorkspaceId,
-      CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
-    return createWorkspaceWorker(
-        workspace, policies, applications, sourceWorkspaceId, cloningInstructions, userRequest);
+    return createWorkspaceWorker(workspace, policies, applications, userRequest);
   }
 
   /**
@@ -136,9 +128,6 @@ public class WorkspaceService {
    * @param workspace object describing the workspace to create
    * @param policies nullable initial policies to set on the workspace
    * @param applications nullable applications to enable
-   * @param sourceWorkspaceUuid nullable source workspace id if doing create-for-clone
-   * @param cloningInstructions COPY_NOTHING for a new create; COPY_REFERENCE or LINK_REFERENCE for
-   *     a clone
    * @param userRequest identity of the creator
    * @return id of the new workspace
    */
@@ -146,8 +135,6 @@ public class WorkspaceService {
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
-      @Nullable UUID sourceWorkspaceUuid,
-      CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
     // Before launching the flight, confirm the workspace does not already exist. This isn't perfect
     // if two requests come in at nearly the same time, but it prevents launching a flight when a
@@ -172,10 +159,7 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
-            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications)
-            .addParameter(
-                WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
-            .addParameter(SOURCE_WORKSPACE_ID, sourceWorkspaceUuid);
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
 
     workspace
         .getSpendProfileId()
@@ -425,13 +409,7 @@ public class WorkspaceService {
             : CloningInstructions.COPY_REFERENCE;
 
     // Create the destination workspace synchronously first.
-    createWorkspaceForClone(
-        destinationWorkspace,
-        additionalPolicies,
-        applicationIds,
-        workspaceUuid,
-        cloningInstructions,
-        userRequest);
+    createWorkspaceForClone(destinationWorkspace, additionalPolicies, applicationIds, userRequest);
 
     // Remaining steps are an async flight.
     return jobService
@@ -450,6 +428,7 @@ public class WorkspaceService {
             SOURCE_WORKSPACE_ID, sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
         .addParameter(SPEND_PROFILE, spendProfile)
+        .addParameter(WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
         .submit();
   }
 
