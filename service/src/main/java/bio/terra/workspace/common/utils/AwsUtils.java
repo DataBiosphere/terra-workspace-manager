@@ -104,21 +104,9 @@ public class AwsUtils {
 
   public static <T extends ControlledResource> void appendResourceTags(
       Collection<Tag> tags, AwsCloudContext awsCloudContext, @Nullable T awsResource) {
-    tags.add(
-        Tag.builder()
-            .key("Version")
-            .value(awsCloudContext.getContextFields().getMajorVersion())
-            .build());
-    tags.add(
-        Tag.builder()
-            .key("Tenant")
-            .value(awsCloudContext.getContextFields().getTenantAlias())
-            .build());
-    tags.add(
-        Tag.builder()
-            .key("Environment")
-            .value(awsCloudContext.getContextFields().getEnvironmentAlias())
-            .build());
+    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
+    tags.add(Tag.builder().key("Tenant").value(awsCloudContext.getTenantAlias()).build());
+    tags.add(Tag.builder().key("Environment").value(awsCloudContext.getEnvironmentAlias()).build());
 
     if (awsResource != null) {
       tags.add(
@@ -128,11 +116,7 @@ public class AwsUtils {
 
   public static <T extends ControlledResource> void appendPrincipalTags(
       Collection<Tag> tags, AwsCloudContext awsCloudContext, T awsResource) {
-    tags.add(
-        Tag.builder()
-            .key("Version")
-            .value(awsCloudContext.getContextFields().getMajorVersion())
-            .build());
+    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
 
     if (awsResource instanceof ControlledAwsS3StorageFolderResource) {
       ControlledAwsS3StorageFolderResource resource =

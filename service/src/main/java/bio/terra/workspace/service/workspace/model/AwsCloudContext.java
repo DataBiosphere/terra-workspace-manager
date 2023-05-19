@@ -24,6 +24,31 @@ public class AwsCloudContext implements CloudContext {
     this.commonFields = commonFields;
   }
 
+  @JsonIgnore
+  public String getMajorVersion() {
+    return contextFields.getMajorVersion();
+  }
+
+  @JsonIgnore
+  public String getOrganizationId() {
+    return contextFields.getOrganizationId();
+  }
+
+  @JsonIgnore
+  public String getAccountId() {
+    return contextFields.getAccountId();
+  }
+
+  @JsonIgnore
+  public String getTenantAlias() {
+    return contextFields.getTenantAlias();
+  }
+
+  @JsonIgnore
+  public String getEnvironmentAlias() {
+    return contextFields.getEnvironmentAlias();
+  }
+
   @Override
   @JsonIgnore
   public CloudPlatform getCloudPlatform() {

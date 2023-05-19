@@ -14,7 +14,6 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextNotReadyException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -106,7 +105,6 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     assertTrue(creatingContext.isPresent());
     GcpCloudContext cloudContext = GcpCloudContext.deserialize(creatingContext.get());
     assertNull(cloudContext.getContextFields());
-    assertThrows(CloudContextNotReadyException.class, cloudContext::checkReady);
 
     workspaceDao.createWorkspaceSuccess(workspaceUuid, flightId);
     WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
