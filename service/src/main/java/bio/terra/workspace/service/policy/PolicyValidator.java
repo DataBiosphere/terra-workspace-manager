@@ -40,6 +40,10 @@ public class PolicyValidator {
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var validationErrors = new ArrayList<String>();
 
+    if (policies == null) {
+      return;
+    }
+
     validationErrors.addAll(
         validateWorkspaceConformsToRegionPolicy(workspace, policies, userRequest));
     validationErrors.addAll(

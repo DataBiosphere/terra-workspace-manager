@@ -602,6 +602,22 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   @Test
+  public void updatePolicies_requesterIsWriter_throws() throws Exception {
+    mockMvcUtils.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.WRITER,
+        userAccessUtils.noBillingUser().getEmail());
+
+    mockMvcUtils.updatePoliciesExpect(
+        userAccessUtils.noBillingAccessUserAuthRequest(),
+        workspace.getId(),
+        HttpStatus.SC_FORBIDDEN,
+        buildWsmRegionPolicyInput("asiapacific"),
+        ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT);
+  }
+
+  @Test
   public void workspaceOwnerCannotAbandonWorkspace() throws Exception {
     // Default user should be the only workspace owner, and so should not be able to remove
     // themselves.
