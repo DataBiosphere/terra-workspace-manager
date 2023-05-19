@@ -3,8 +3,6 @@ package bio.terra.workspace.service.workspace.model;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiAzureContext;
-import bio.terra.workspace.service.resource.model.WsmResourceState;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextNotReadyException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,19 +27,16 @@ public class AzureCloudContext implements CloudContext {
 
   @JsonIgnore
   public String getAzureTenantId() {
-    checkReady();
     return contextFields.getAzureTenantId();
   }
 
   @JsonIgnore
   public String getAzureSubscriptionId() {
-    checkReady();
     return contextFields.getAzureSubscriptionId();
   }
 
   @JsonIgnore
   public String getAzureResourceGroupId() {
-    checkReady();
     return contextFields.getAzureResourceGroupId();
   }
 
@@ -69,24 +64,6 @@ public class AzureCloudContext implements CloudContext {
   // TODO: PF-2770 include the common fields in the API return
   public ApiAzureContext toApi() {
     return (contextFields == null ? null : contextFields.toApi());
-  }
-
-  /**
-   * Test if the cloud context is ready to be used by operations. It must be in the ready state and
-   * the context fields must be populated.
-   *
-   * @return true if the context is in the READY state; false otherwise
-   */
-  public boolean isReady() {
-    return (commonFields.state().equals(WsmResourceState.READY) && contextFields != null);
-  }
-
-  /** Throw exception is the cloud context is not ready. */
-  public void checkReady() {
-    if (!isReady()) {
-      throw new CloudContextNotReadyException(
-          "Cloud context is not ready. Wait for the context to be ready and try again.");
-    }
   }
 
   @Override

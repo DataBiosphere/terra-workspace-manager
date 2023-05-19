@@ -170,14 +170,13 @@ public class GcpCloudContextService implements CloudContextService {
         getGcpCloudContext(workspaceUuid)
             .orElseThrow(
                 () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
-    cloudContext.checkReady();
     return cloudContext;
   }
 
   /**
    * Helper method for looking up the GCP project ID for a given workspace ID, if one exists. Unlike
-   * {@link #getRequiredGcpProject(UUID)}, this returns an empty Optional instead of throwing if the
-   * given workspace does not have a GCP cloud context.
+   * {@link #getRequiredGcpProject}, this returns an empty Optional instead of throwing if the given
+   * workspace does not have a GCP cloud context.
    *
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional GCP project from the cloud context

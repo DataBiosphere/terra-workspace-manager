@@ -125,7 +125,6 @@ public class AzureCloudContextService implements CloudContextService {
         getAzureCloudContext(workspaceUuid)
             .orElseThrow(
                 () -> new CloudContextRequiredException("Operation requires Azure cloud context"));
-    cloudContext.checkReady();
     return cloudContext;
   }
 }

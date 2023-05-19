@@ -142,7 +142,6 @@ public class AwsCloudContextService implements CloudContextService {
         getAwsCloudContext(workspaceUuid)
             .orElseThrow(
                 () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
-    cloudContext.checkReady();
     return cloudContext;
   }
 

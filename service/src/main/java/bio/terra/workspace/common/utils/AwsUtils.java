@@ -104,7 +104,6 @@ public class AwsUtils {
 
   public static <T extends ControlledResource> void appendResourceTags(
       Collection<Tag> tags, AwsCloudContext awsCloudContext, @Nullable T awsResource) {
-    awsCloudContext.checkReady();
     tags.add(
         Tag.builder()
             .key("Version")

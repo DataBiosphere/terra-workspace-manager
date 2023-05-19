@@ -5,8 +5,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiAwsContext;
-import bio.terra.workspace.service.resource.model.WsmResourceState;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextNotReadyException;
+import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -56,24 +55,6 @@ public class AwsCloudContext implements CloudContext {
   }
 
   /**
-   * Test if the cloud context is ready to be used by operations. It must be in the ready state and
-   * the context fields must be populated.
-   *
-   * @return true if the context is in the READY state; false otherwise
-   */
-  public boolean isReady() {
-    return (commonFields.state().equals(WsmResourceState.READY) && contextFields != null);
-  }
-
-  /** Throw exception is the cloud context is not ready. */
-  public void checkReady() {
-    if (!isReady()) {
-      throw new CloudContextNotReadyException(
-          "Cloud context is not ready. Wait for the context to be ready and try again.");
-    }
-  }
-
-  /**
    * Verifies that current cloud context is the same as the expected cloud context by compares only
    * relevant fields
    *
@@ -81,7 +62,10 @@ public class AwsCloudContext implements CloudContext {
    * @throws StaleConfigurationException StaleConfigurationException if they do not match
    */
   public void verifyCloudContext(Environment environment) {
-    checkReady();
+    if (contextFields == null) {
+      throw new InvalidCloudContextStateException(
+          "Cloud context is not in a valid state. Wait and try again.");
+    }
     contextFields.verifyCloudContext(environment);
   }
 
