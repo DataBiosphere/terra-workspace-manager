@@ -95,7 +95,12 @@ readonly TERRA_INSTALL_PATH="${USER_HOME_LOCAL_BIN}/terra"
 readonly TERRA_GIT_REPOS_DIR="${USER_HOME_DIR}/repos"
 
 readonly TERRA_BOOT_SCRIPT="${USER_TERRA_CONFIG_DIR}/instance-boot.sh"
-readonly TERRA_BOOT_SERVICE="/etc/systemd/system/terra-instance-boot.service"
+readonly TERRA_BOOT_SERVICE_NAME="terra-instance-boot.service"
+readonly TERRA_BOOT_SERVICE="/etc/systemd/system/${TERRA_BOOT_SERVICE_NAME}"
+
+readonly TERRA_SSH_AGENT_SCRIPT="${USER_TERRA_CONFIG_DIR}/ssh-agent-start.sh"
+readonly TERRA_SSH_AGENT_SERVICE_NAME="terra-ssh-agent.service"
+readonly TERRA_SSH_AGENT_SERVICE="/etc/systemd/system/${TERRA_SSH_AGENT_SERVICE_NAME}"
 
 # Location of gitignore configuration file for users
 readonly GIT_IGNORE="${USER_HOME_DIR}/gitignore_global"
@@ -233,6 +238,7 @@ ${RUN_AS_JUPYTER_USER} "mv '${JAVA_DIRNAME}' '${USER_HOME_LOCAL_SHARE}'"
 
 # Create a soft link in ~/.local/bin to the java runtime
 ln -s "${USER_HOME_LOCAL_SHARE}/${JAVA_DIRNAME}/bin/java" "${USER_HOME_LOCAL_BIN}"
+chown --no-dereference ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/java"
 
 # Clean up
 popd
@@ -389,37 +395,84 @@ EOF
 
 echo "Setting up git integration..."
 
-# Set ssh-agent launch command in .bash_profile so everytime
-# user starts a shell, we start the ssh-agent.
-cat << 'EOF' >> "${USER_BASH_PROFILE}"
+# Create a script for starting the ssh-agent
+
+cat << 'EOF' >>"${TERRA_SSH_AGENT_SCRIPT}"
+#!/bin/bash
+
+set -o nounset
+
+mkdir -p ~/.ssh-agent
+
+readonly SOCKET_FILE=~/.ssh-agent/ssh-socket
+readonly ENVIRONMENT_FILE=~/.ssh-agent/environment
 
 # Start a new ssh-agent if one is not already running.
 # If the ssh-agent is already running, but we don't have the environment
 # variables (SSH_AUTH_SOCK and SSH_AGENT_PID), then we look for them in
-# a file ~/.ssh-agent.
+# a file ~/.ssh-agent/environment.
 #
 # If we can't connect to the ssh-agent, it'll return ENOENT (no entity).
 ssh-add -l &>/dev/null
 if [[ "$?" == 2 ]]; then
-  # If a .ssh-agent file already exists, then it has the environment
+  # If a .ssh-agent/environment file already exists, then it has the environment
   # variables we need: SSH_AUTH_SOCK and SSH_AGENT_PID
-  if [[ -e ~/.ssh-agent ]]; then
-    eval "$(<~/.ssh-agent)" >/dev/null
+  if [[ -e "${ENVIRONMENT_FILE}" ]]; then
+    eval "$(<"${ENVIRONMENT_FILE}")" >/dev/null
   fi
 
   # Try again to connect to the agent to list keys
   ssh-add -l &>/dev/null
   if [[ "$?" == 2 ]]; then
     # Start the ssh-agent, writing connection variables to ~/.ssh-agent
-    (umask 066; ssh-agent > ~/.ssh-agent)
+    rm -f "${SOCKET_FILE}"
+    (umask 066; ssh-agent -a "${SOCKET_FILE}" > "${ENVIRONMENT_FILE}")
 
     # Set the variables in the environment
-    eval "$(<~/.ssh-agent)" >/dev/null
+    eval "$(<"${ENVIRONMENT_FILE}")" >/dev/null
   fi
 fi
 
 # Add ssh keys (if any)
 ssh-add -q
+
+# This script is intended to be run as a daemon process.
+# Block until the ssh-agent goes away.
+while [[ -e /proc/"${SSH_AGENT_PID}" ]]; do
+  sleep 10s
+done
+echo "SSH agent ${SSH_AGENT_PID} has exited."
+EOF
+chmod +x "${TERRA_SSH_AGENT_SCRIPT}"
+chown ${JUPYTER_USER}:${JUPYTER_USER} "${TERRA_SSH_AGENT_SCRIPT}"
+
+# Create a systemd service to run the boot script on system boot
+cat << EOF >"${TERRA_SSH_AGENT_SERVICE}"
+[Unit]
+Description=Run an SSH agent for the Jupyter user
+
+[Service]
+ExecStart=${TERRA_SSH_AGENT_SCRIPT}
+User=${JUPYTER_USER}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Enable and start the startup service
+systemctl daemon-reload
+systemctl enable "${TERRA_SSH_AGENT_SERVICE_NAME}"
+systemctl start "${TERRA_SSH_AGENT_SERVICE_NAME}"
+
+# Set ssh-agent launch command in .bash_profile so everytime
+# user starts a shell, we start the ssh-agent.
+cat << EOF >> "${USER_BASH_PROFILE}"
+
+# Get the ssh-agent environment variables
+if [[ -f ~/.ssh-agent/environment ]]; then
+  eval "\$(<~/.ssh-agent/environment)" >/dev/null
+fi
 EOF
 
 # Create the user SSH directory 
@@ -463,8 +516,10 @@ cat << EOF >"${TERRA_BOOT_SCRIPT}"
 #!/bin/bash
 # This script is run on instance boot to configure the instance for terra.
 
-# Mount terra workspace resources
+# Pick up environment from the .bash_profile
 source "${USER_BASH_PROFILE}"
+
+# Mount terra workspace resources
 "${USER_HOME_LOCAL_BIN}/terra" resource mount
 EOF
 chmod +x "${TERRA_BOOT_SCRIPT}"
@@ -487,8 +542,8 @@ EOF
 
 # Enable and start the startup service
 systemctl daemon-reload
-systemctl enable terra-instance-boot.service
-systemctl start terra-instance-boot.service
+systemctl enable "${TERRA_BOOT_SERVICE_NAME}"
+systemctl start "${TERRA_BOOT_SERVICE_NAME}"
 
 # Setup gitignore to avoid accidental checkin of data.
 
@@ -516,6 +571,9 @@ cat << EOF >> "${USER_BASH_PROFILE}"
 
 ### END: Terra-specific customizations ###
 EOF
+
+# Make sure the .bash_profile is owned by the jupyter user
+chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASH_PROFILE}"
 
 # Download cromshell and install it
 ####################################
