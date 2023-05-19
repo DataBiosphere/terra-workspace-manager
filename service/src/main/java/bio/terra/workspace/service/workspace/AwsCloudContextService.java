@@ -117,8 +117,7 @@ public class AwsCloudContextService implements CloudContextService {
   }
 
   /**
-   * Retrieve the optional AWS cloud context for given workspace. The returned cloud context may be
-   * in an intermediate state (creating, deleting, updating, broken).
+   * Retrieve the optional AWS cloud context for given workspace.
    *
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional {@link AwsCloudContext}
@@ -131,7 +130,7 @@ public class AwsCloudContextService implements CloudContextService {
   }
 
   /**
-   * Retrieve the required AWS cloud context in the READY state for given workspace
+   * Retrieve the required AWS cloud context
    *
    * @param workspaceUuid workspace identifier of the cloud context
    * @return {@link AwsCloudContext}
