@@ -180,7 +180,7 @@ landingzone:
     terminate-timeout: 30s
     tracing-enabled: true
     retention-check-interval: 1d
-    completed-flight-retention: 7d
+    completed-flight-retention: 90d
   sam:
     base-path: ${env.urls.sam}
     landing-zone-resource-users:
