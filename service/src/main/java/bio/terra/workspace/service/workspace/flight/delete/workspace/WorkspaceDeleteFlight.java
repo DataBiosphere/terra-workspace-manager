@@ -50,7 +50,8 @@ public class WorkspaceDeleteFlight extends Flight {
     for (CloudPlatform cloudPlatform : workspaceDao.listCloudPlatforms(workspaceUuid)) {
       String flightId = UUID.randomUUID().toString();
       addStep(
-          new RunDeleteCloudContextFlightStep(workspaceUuid, cloudPlatform, userRequest, flightId));
+          new RunDeleteCloudContextFlightStep(workspaceUuid, cloudPlatform, userRequest, flightId),
+          dbRetryRule);
     }
 
     // Delete all ANY controlled resources (right now, that means FlexResource). The only case
