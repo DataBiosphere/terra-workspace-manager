@@ -9,8 +9,8 @@ import bio.terra.workspace.generated.model.ApiEnumerateJobsResult;
 import bio.terra.workspace.generated.model.ApiEnumeratedJob;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobStateFilter;
-import bio.terra.workspace.generated.model.ApiLoadSignedUrlListRequestBody;
-import bio.terra.workspace.generated.model.ApiLoadSignedUrlListResult;
+import bio.terra.workspace.generated.model.ApiLoadUrlListRequestBody;
+import bio.terra.workspace.generated.model.ApiLoadUrlListResult;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -76,8 +76,8 @@ public class Alpha1ApiController implements Alpha1Api {
 
   @Traced
   @Override
-  public ResponseEntity<ApiLoadSignedUrlListResult> loadSignedUrlList(
-      UUID workspaceId, UUID resourceId, ApiLoadSignedUrlListRequestBody body) {
+  public ResponseEntity<ApiLoadUrlListResult> loadUrlList(
+      UUID workspaceId, UUID resourceId, ApiLoadUrlListRequestBody body) {
     features.alpha1EnabledCheck();
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledGcsBucketResource bucket =
@@ -86,7 +86,7 @@ public class Alpha1ApiController implements Alpha1Api {
                 userRequest, workspaceId, resourceId, SamControlledResourceActions.WRITE_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     String jobId =
-        controlledResourceService.transferSignedUrlListToGcsBucket(
+        controlledResourceService.transferUrlListToGcsBucket(
             userRequest, workspaceId, bucket, body.getUrlList());
 
     return ResponseEntity.ok(fetchApiLoadSignedUrlListResult(jobId));
@@ -94,7 +94,7 @@ public class Alpha1ApiController implements Alpha1Api {
 
   @Traced
   @Override
-  public ResponseEntity<ApiLoadSignedUrlListResult> fetchLoadSignedUrlListResult(
+  public ResponseEntity<ApiLoadUrlListResult> fetchLoadUrlListResult(
       UUID workspaceId, UUID resourceId, String jobId) {
     features.alpha1EnabledCheck();
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -103,10 +103,10 @@ public class Alpha1ApiController implements Alpha1Api {
     return ResponseEntity.ok(fetchApiLoadSignedUrlListResult(jobId));
   }
 
-  private ApiLoadSignedUrlListResult fetchApiLoadSignedUrlListResult(String jobId) {
+  private ApiLoadUrlListResult fetchApiLoadSignedUrlListResult(String jobId) {
     JobApiUtils.AsyncJobResult<Void> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
-    return new ApiLoadSignedUrlListResult()
+    return new ApiLoadUrlListResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());
   }

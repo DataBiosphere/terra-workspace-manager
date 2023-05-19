@@ -706,7 +706,7 @@ public class ControlledResourceService {
     return jobBuilder.submitAndWait(ControlledFlexibleResource.class);
   }
 
-  public String transferSignedUrlListToGcsBucket(
+  public String transferUrlListToGcsBucket(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       ControlledGcsBucketResource destinationBucket,
@@ -716,7 +716,7 @@ public class ControlledResourceService {
             .newJob()
             .description("Transfer signed url lists to a gcs bucket")
             .flightClass(SignedUrlListDataTransferFlight.class)
-            .resourceType(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE)
+            .resourceType(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET)
             .resource(destinationBucket)
             .workspaceId(workspaceId.toString())
             .operationType(OperationType.DATA_TRANSFER)

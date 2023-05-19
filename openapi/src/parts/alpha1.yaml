@@ -9,22 +9,22 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/ResourceId'
     post:
-      operationId: loadSignedUrlList
+      operationId: loadUrlList
       tags: [ Alpha1 ]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoadSignedUrlListRequestBody'
+              $ref: '#/components/schemas/LoadUrlListRequestBody'
       summary: |
         Use storage transfer service to transfer files from signed urls list to
         GCS bucket.
       responses:
         '200':
-          $ref: '#/components/responses/LoadSignedUrlListResponse'
+          $ref: '#/components/responses/LoadUrlListResponse'
         '202':
-          $ref: '#/components/responses/LoadSignedUrlListResponse'
+          $ref: '#/components/responses/LoadUrlListResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -37,14 +37,14 @@ paths:
     - $ref: '#/components/parameters/ResourceId'
     - $ref: '#/components/parameters/JobId'
     get:
-      operationId: fetchLoadSignedUrlListResult
+      operationId: fetchLoadUrlListResult
       tags: [ Alpha1 ]
       summary: Get the result of load signed url list.
       responses:
         '200':
-          $ref: '#/components/responses/LoadSignedUrlListResponse'
+          $ref: '#/components/responses/LoadUrlListResponse'
         '202':
-          $ref: '#/components/responses/LoadSignedUrlListResponse'
+          $ref: '#/components/responses/LoadUrlListResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -83,7 +83,7 @@ paths:
 
 components:
   schemas:
-    LoadSignedUrlListRequestBody:
+    LoadUrlListRequestBody:
       description: |
         Request to load signed urls files to a gcs bucket.
       type: object
@@ -93,7 +93,7 @@ components:
         urlList:
           description: url (http or https only) to the tsv file that contains the list of files.
           type: string
-    LoadSignedUrlListResult:
+    LoadUrlListResult:
       description: >-
         Response for loading signed url lists to gcs bucket.
       type: object
@@ -183,11 +183,11 @@ components:
         $ref: '#/components/schemas/Name'
 
   responses:
-    LoadSignedUrlListResponse:
-      description: Response to start a storage data transfer from a signed url list to a gcs bucket
+    LoadUrlListResponse:
+      description: Response to start a storage data transfer from a url list to a gcs bucket
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/LoadSignedUrlListResult'
+            $ref: '#/components/schemas/LoadUrlListResult'
 
 
