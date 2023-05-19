@@ -543,9 +543,18 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     retrySteps.put(CreateWorkspaceStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CreateWorkspacePoliciesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+    retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+
+    Map<String, StepStatus> triggerFailureStep = new HashMap<>();
+    triggerFailureStep.put(
+        CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     // The finish step is not undoable, so we make the failure at the penultimate step.
-    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).build();
+    FlightDebugInfo debugInfo =
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(triggerFailureStep)
+            .undoStepFailures(retrySteps)
+            .build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
     // Service methods which wait for a flight to complete will throw an

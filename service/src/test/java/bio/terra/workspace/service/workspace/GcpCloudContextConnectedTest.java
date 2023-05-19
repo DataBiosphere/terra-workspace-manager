@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
@@ -266,6 +267,9 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   }
 
   @Test
+  @Disabled("PF-2259 - this test needs rewriting")
+  // TODO(PF-2259): This test is not testing the undo of CloneGcpWorkspaceFlight. It is
+  //  testing the undo of WorkspaceCreateFlight. It needs to be re
   public void cloneGcpWorkspaceUndoSteps() {
     Workspace sourceWorkspace = workspaceService.getWorkspace(workspaceId);
     // Enable an application
@@ -332,10 +336,11 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
         LaunchCloneAllResourcesFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         AwaitCloneAllResourcesFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    // TODO(PF-2259): Since the test is actually setting debug for the create workspace flight
+    //  lastStepFailure(true) will always cause a dismal failure.
     FlightDebugInfo debugInfo =
         FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
-    // TODO(PF-2259): This test is not actually testing the undo of CloneGcpWorkspaceFlight. It is
-    // testing the undo of WorkspaceCreateFlight.
+
     jobService.setFlightDebugInfoForTest(debugInfo);
 
     assertThrows(
