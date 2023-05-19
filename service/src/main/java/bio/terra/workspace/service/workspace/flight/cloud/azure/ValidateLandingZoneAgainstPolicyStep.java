@@ -52,7 +52,7 @@ public class ValidateLandingZoneAgainstPolicyStep implements Step {
         CloudPlatform.AZURE);
 
     var landingZone = landingZoneApiDispatch.getAzureLandingZone(bearerToken, landingZoneId);
-    var validationErrors = policyValidator.validateLandingSupportsProtectedData(landingZone);
+    var validationErrors = policyValidator.validateLandingZoneSupportsProtectedData(landingZone);
     if (!validationErrors.isEmpty()) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL, new PolicyConflictException(validationErrors));

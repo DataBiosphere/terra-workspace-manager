@@ -89,7 +89,7 @@ public class PolicyValidator {
         switch (cloudPlatform) {
           case AZURE -> {
             var landingZone = landingZoneApiDispatch.getLandingZone(userRequest, workspace);
-            validationErrors.addAll(validateLandingSupportsProtectedData(landingZone));
+            validationErrors.addAll(validateLandingZoneSupportsProtectedData(landingZone));
           }
 
           default -> validationErrors.add("Protected data policy only supported on Azure");
@@ -99,7 +99,7 @@ public class PolicyValidator {
     return validationErrors;
   }
 
-  public List<String> validateLandingSupportsProtectedData(ApiAzureLandingZone landingZone) {
+  public List<String> validateLandingZoneSupportsProtectedData(ApiAzureLandingZone landingZone) {
     var validationErrors = new ArrayList<String>();
     if (!azureConfiguration
         .getProtectedDataLandingZoneDefs()

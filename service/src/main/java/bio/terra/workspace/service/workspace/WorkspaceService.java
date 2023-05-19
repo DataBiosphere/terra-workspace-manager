@@ -107,8 +107,7 @@ public class WorkspaceService {
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
       AuthenticatedUserRequest userRequest) {
-    return createWorkspaceWorker(
-        workspace, policies, applications, /*sourceWorkspaceUuid=*/ userRequest);
+    return createWorkspaceWorker(workspace, policies, applications, userRequest);
   }
 
   @Traced
