@@ -76,6 +76,10 @@ readonly USER_SSH_DIR="${USER_HOME_DIR}/.ssh"
 readonly USER_BASH_PROFILE="${USER_HOME_DIR}/.bash_profile"
 readonly POST_STARTUP_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.txt"
 
+# When JupyterLab is provided by a Docker container, the default Deep Learning images
+# pick up jupyter_notebook_config.py provided by the host VM.
+readonly CONTAINER_NOTEBOOK_CONFIG="/opt/deeplearning/jupyter/jupyter_notebook_config.py"
+
 # Variables relevant for 3rd party software that gets installed
 readonly REQ_JAVA_VERSION=17
 readonly JAVA_INSTALL_PATH="${USER_HOME_LOCAL_BIN}/java"
@@ -195,11 +199,24 @@ cat << EOF >> "${USER_BASH_PROFILE}"
 ### BEGIN: Terra-specific customizations ###
 
 # Prepend "${USER_HOME_LOCAL_BIN}" (if not already in the path)
-[[ ":${PATH}:" != *":${USER_HOME_LOCAL_BIN}:"* ]] && \
-  export PATH="${USER_HOME_LOCAL_BIN}":"${PATH}"
+if [[ ":\${PATH}:" != *":${USER_HOME_LOCAL_BIN}:"* ]]; then 
+  export PATH="${USER_HOME_LOCAL_BIN}":"\${PATH}"
+fi
 EOF
 
-echo "Installing common packages via pip..."
+# Update the PATH for container JupyterLab
+if [[ -n "${INSTANCE_CONTAINER}" ]]; then
+
+cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
+
+### BEGIN: Terra-specific customizations ###
+
+import os
+
+os.environ['PATH'] = "${USER_HOME_LOCAL_BIN}:" + os.environ['PATH']
+EOF
+
+fi
 
 # Install common packages. Use pip instead of conda because conda is slow.
 /opt/conda/bin/pip install \
@@ -253,11 +270,18 @@ chown --no-dereference ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/j
 popd
 rmdir ${JAVA_INSTALL_TMP}
 
-# The DeepLearning Docker images don't have SSH client software installed by default
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
+  # The DeepLearning Docker images don't have SSH client software installed by default
   echo "Copying SSH client tools to ${USER_HOME_LOCAL_BIN}"
   cp "$(which ssh)" "${USER_HOME_LOCAL_BIN}"
   cp "$(which ssh-add)" "${USER_HOME_LOCAL_BIN}"
+  chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/ssh"
+  chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/ssh-add"
+
+  # The DeepLearning Docker images don't have less installed by default
+  echo "Copying less to ${USER_HOME_LOCAL_BIN}"
+  cp "$(which less)" "${USER_HOME_LOCAL_BIN}"
+  chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/less"
 fi
 
 # Download Nextflow and install it
@@ -322,8 +346,6 @@ if [[ -n "${TERRA_WORKSPACE}" ]]; then
   ${RUN_AS_JUPYTER_USER} "terra workspace set --id='${TERRA_WORKSPACE}'"
 fi
 
-echo "Adding Terra environment variables to .bash_profile ..."
-
 # Set variables into the .bash_profile such that they are available
 # to terminals, notebooks, and other tools
 #
@@ -364,6 +386,8 @@ readonly PET_SA_EMAIL="$(
 # GOOGLE_SERVICE_ACCOUNT_EMAIL is the pet service account for the Terra user
 # and is specific to the GCP project backing the workspace.
 
+echo "Adding Terra environment variables to .bash_profile ..."
+
 cat << EOF >> "${USER_BASH_PROFILE}"
 
 # Set up a few legacy Terra-specific convenience variables
@@ -376,6 +400,30 @@ export TERRA_USER_EMAIL='${OWNER_EMAIL}'
 export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'
 export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'
 EOF
+
+# Make the environment variables available to notebooks in container JupyterLab
+if [[ -n "${INSTANCE_CONTAINER}" ]]; then
+
+echo "Adding Terra environment variables to jupyter_notebook_config.py ..."
+
+cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
+
+import os
+
+# Set up a few legacy Terra-specific convenience variables
+os.environ['OWNER_EMAIL']='${OWNER_EMAIL}'
+os.environ['GOOGLE_PROJECT']='${GOOGLE_PROJECT}'
+os.environ['PET_SA_EMAIL']='${PET_SA_EMAIL}'
+
+# Set up a few Terra-specific convenience variables
+os.environ['TERRA_USER_EMAIL']='${OWNER_EMAIL}'
+os.environ['GOOGLE_CLOUD_PROJECT']='${GOOGLE_PROJECT}'
+os.environ['GOOGLE_SERVICE_ACCOUNT_EMAIL']='${PET_SA_EMAIL}'
+EOF
+
+fi
+
+echo "Installing common packages via pip..."
 
 #################
 # bash completion
@@ -587,6 +635,17 @@ cat << EOF >> "${USER_BASH_PROFILE}"
 
 ### END: Terra-specific customizations ###
 EOF
+
+
+if [[ -n "${INSTANCE_CONTAINER}" ]]; then
+
+# Indicate the end of Terra customizations of the jupyter_notebook_config.py
+cat << EOF >> "${USER_BASH_PROFILE}"
+
+### END: Terra-specific customizations ###
+EOF
+
+fi
 
 # Make sure the .bash_profile is owned by the jupyter user
 chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASH_PROFILE}"
