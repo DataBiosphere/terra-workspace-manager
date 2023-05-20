@@ -218,6 +218,8 @@ EOF
 
 fi
 
+echo "Installing common packages via pip..."
+
 # Install common packages. Use pip instead of conda because conda is slow.
 /opt/conda/bin/pip install \
   dsub \
@@ -423,8 +425,6 @@ EOF
 
 fi
 
-echo "Installing common packages via pip..."
-
 #################
 # bash completion
 #################
@@ -485,7 +485,15 @@ ${RUN_AS_JUPYTER_USER} "mkdir -p '${TERRA_GIT_REPOS_DIR}'"
 # integration test will ensure that everything in script worked.
 ${RUN_AS_JUPYTER_USER} "cd '${TERRA_GIT_REPOS_DIR}' && terra git clone --all"
 
-# Create a script for starting the ssh-agent
+# Create a script for starting the ssh-agent, which will be run as a daemon
+# process on boot.
+#
+# The ssh-agent information is deposited into the jupyter user's HOME directory
+# (under ~/.ssh-agent), including the socket file and the environment variables
+# that clients need.
+#
+# Writing to the HOME directory allows for the ssh-agent socket to be accessible
+# from inside Docker containers that have mounted the Jupyter user's HOME directory.
 
 cat << 'EOF' >>"${TERRA_SSH_AGENT_SCRIPT}"
 #!/bin/bash
