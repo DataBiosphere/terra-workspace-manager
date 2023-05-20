@@ -169,6 +169,16 @@ trap 'exit_handler $? $LINENO $BASH_COMMAND' EXIT
 # Let the UI know the script has started
 set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 
+echo "Determining JupyterLab environment (jupyter.service or docker)"
+
+readonly INSTANCE_CONTAINER="$(get_metadata_value instance/attributes/container)"
+
+if [[ -n "${INSTANCE_CONTAINER}" ]]; then
+  echo "Custom container detected: ${INSTANCE_CONTAINER}."
+else
+  echo "Non-containerized Jupyter experienced detected."
+fi
+
 echo "Resynchronizing apt package index..."
 
 # The apt package index may not be clean when we run; resynchronize
@@ -189,7 +199,6 @@ cat << EOF >> "${USER_BASH_PROFILE}"
   export PATH="${USER_HOME_LOCAL_BIN}":"${PATH}"
 EOF
 
-# Download cromshell and install it
 echo "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
@@ -243,6 +252,13 @@ chown --no-dereference ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/j
 # Clean up
 popd
 rmdir ${JAVA_INSTALL_TMP}
+
+# The DeepLearning Docker images don't have SSH client software installed by default
+if [[ -n "${INSTANCE_CONTAINER}" ]]; then
+  echo "Copying SSH client tools to ${USER_HOME_LOCAL_BIN}"
+  cp "$(which ssh)" "${USER_HOME_LOCAL_BIN}"
+  cp "$(which ssh-add)" "${USER_HOME_LOCAL_BIN}"
+fi
 
 # Download Nextflow and install it
 echo "Installing Nextflow ..."
@@ -395,6 +411,32 @@ EOF
 
 echo "Setting up git integration..."
 
+# Create the user SSH directory 
+${RUN_AS_JUPYTER_USER} "mkdir -p ${USER_SSH_DIR} --mode 0700"
+
+# Get the user's SSH key from Terra, and if set, write it to the user's .ssh directory
+${RUN_AS_JUPYTER_USER} "\
+  install --mode 0600 /dev/null '${USER_SSH_DIR}/id_rsa.tmp' && \
+  terra user ssh-key get --include-private-key --format=JSON >> '${USER_SSH_DIR}/id_rsa.tmp' || true"
+if [[ -s "${USER_SSH_DIR}/id_rsa.tmp" ]]; then
+  ${RUN_AS_JUPYTER_USER} "\
+    install --mode 0600 /dev/null '${USER_SSH_DIR}/id_rsa' && \
+    jq -r '.privateSshKey' '${USER_SSH_DIR}/id_rsa.tmp' > '${USER_SSH_DIR}/id_rsa'"
+fi
+rm -f "${USER_SSH_DIR}/id_rsa.tmp"
+
+# Set the github known_hosts
+${RUN_AS_JUPYTER_USER} "ssh-keyscan -H github.com >> '${USER_SSH_DIR}/known_hosts'"
+
+# Create git repos directory
+${RUN_AS_JUPYTER_USER} "mkdir -p '${TERRA_GIT_REPOS_DIR}'"
+
+# Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
+# to the git references, the corresponding git repo cloning will be skipped.
+# Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
+# integration test will ensure that everything in script worked.
+${RUN_AS_JUPYTER_USER} "cd '${TERRA_GIT_REPOS_DIR}' && terra git clone --all"
+
 # Create a script for starting the ssh-agent
 
 cat << 'EOF' >>"${TERRA_SSH_AGENT_SCRIPT}"
@@ -475,32 +517,6 @@ if [[ -f ~/.ssh-agent/environment ]]; then
 fi
 EOF
 
-# Create the user SSH directory 
-${RUN_AS_JUPYTER_USER} "mkdir -p ${USER_SSH_DIR} --mode 0700"
-
-# Get the user's SSH key from Terra, and if set, write it to the user's .ssh directory
-${RUN_AS_JUPYTER_USER} "\
-  install --mode 0600 /dev/null '${USER_SSH_DIR}/id_rsa.tmp' && \
-  terra user ssh-key get --include-private-key --format=JSON >> '${USER_SSH_DIR}/id_rsa.tmp' || true"
-if [[ -s "${USER_SSH_DIR}/id_rsa.tmp" ]]; then
-  ${RUN_AS_JUPYTER_USER} "\
-    install --mode 0600 /dev/null '${USER_SSH_DIR}/id_rsa' && \
-    jq -r '.privateSshKey' '${USER_SSH_DIR}/id_rsa.tmp' > '${USER_SSH_DIR}/id_rsa'"
-fi
-rm -f "${USER_SSH_DIR}/id_rsa.tmp"
-
-# Set the github known_hosts
-${RUN_AS_JUPYTER_USER} "ssh-keyscan -H github.com >> '${USER_SSH_DIR}/known_hosts'"
-
-# Create git repos directory
-${RUN_AS_JUPYTER_USER} "mkdir -p '${TERRA_GIT_REPOS_DIR}'"
-
-# Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
-# to the git references, the corresponding git repo cloning will be skipped.
-# Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
-# integration test will ensure that everything in script worked.
-${RUN_AS_JUPYTER_USER} "cd '${TERRA_GIT_REPOS_DIR}' && terra git clone --all"
-
 #############################
 # Setup instance boot service
 #############################
@@ -575,16 +591,14 @@ EOF
 # Make sure the .bash_profile is owned by the jupyter user
 chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASH_PROFILE}"
 
-# Download cromshell and install it
 ####################################
-# Restart kernel so environment variables are picked up in Jupyter environment. See PF-2178.
+# Restart JupyterLab or Docker so environment variables are picked up in Jupyter environment. See PF-2178.
 ####################################
-readonly INSTANCE_CONTAINER="$(get_metadata_value instance/attributes/container)"
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-  echo "Custom container detected: ${INSTANCE_CONTAINER}. Restarting Docker service..."
+  echo "Restarting Docker service..."
   systemctl restart docker.service
 else
-  echo "Non-containerized Jupyter experienced detected. Restarting Jupyter service..."
+  echo "Restarting Jupyter service..."
   systemctl restart jupyter.service
 fi
 
