@@ -221,7 +221,7 @@ fi
 echo "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
-/opt/conda/bin/pip install \
+/opt/conda/bin/pip --user install \
   dsub \
   nbdime \
   nbstripout \
@@ -643,7 +643,6 @@ cat << EOF >> "${USER_BASH_PROFILE}"
 
 ### END: Terra-specific customizations ###
 EOF
-
 
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
 
