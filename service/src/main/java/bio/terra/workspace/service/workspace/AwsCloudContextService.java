@@ -6,6 +6,7 @@ import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration.Authentication;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.utils.AwsUtils;
@@ -47,6 +48,7 @@ import software.amazon.awssdk.regions.Region;
 public class AwsCloudContextService implements CloudContextService {
   private final AwsConfiguration awsConfiguration;
   private final WorkspaceDao workspaceDao;
+  private final FeatureConfiguration featureConfiguration;
   private final FeatureService featureService;
   private final ResourceDao resourceDao;
   private final ControlledResourceService controlledResourceService;
@@ -56,12 +58,14 @@ public class AwsCloudContextService implements CloudContextService {
   @Autowired
   public AwsCloudContextService(
       WorkspaceDao workspaceDao,
+      FeatureConfiguration featureConfiguration,
       FeatureService featureService,
       AwsConfiguration awsConfiguration,
       ResourceDao resourceDao,
       ControlledResourceService controlledResourceService) {
     this.awsConfiguration = awsConfiguration;
     this.workspaceDao = workspaceDao;
+    this.featureConfiguration = featureConfiguration;
     this.featureService = featureService;
     this.resourceDao = resourceDao;
     this.controlledResourceService = controlledResourceService;
@@ -170,7 +174,7 @@ public class AwsCloudContextService implements CloudContextService {
    */
   public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
-      featureService.awsEnabledCheck();
+      featureConfiguration.awsEnabledCheck();
       initializeEnvironmentDiscovery();
 
       if (this.environmentDiscovery == null) {
