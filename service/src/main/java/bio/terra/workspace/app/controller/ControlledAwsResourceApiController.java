@@ -227,7 +227,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreatedControlledAwsS3StorageFolder> createAwsS3StorageFolder(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsS3StorageFolderRequestBody body) {
-    featureService.awsEnabledCheck();
+    features.awsEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
@@ -382,7 +382,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreateControlledAwsSageMakerNotebookResult> createAwsSageMakerNotebook(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsSageMakerNotebookRequestBody body) {
-    featureService.awsEnabledCheck();
+    features.awsEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
