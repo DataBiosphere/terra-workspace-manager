@@ -187,6 +187,25 @@ landingzone:
       - workspace-dev@broad-dsde-dev.iam.gserviceaccount.com
       - leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
   bpm.base-path: ${env.urls.bpm}
+  protected-data:
+    long-term-storage-table-names:
+      - Alert
+      - AlertEvidence
+      - AlertInfo
+      - Anomalies
+      - CommonSecurityLog
+      - ContainerLog
+      - ContainerLogV2
+      - ContainerNodeInventory
+      - ContainerServiceLog
+      - InsightsMetrics
+      - Operation
+      - SecurityAlert
+      - SecurityIncident
+      - SentinelHealth
+      - StorageBlobLogs
+      - Syslog
+
 
 # Feature flags
 # The general rule is that feature flags should be set here in their production setting
