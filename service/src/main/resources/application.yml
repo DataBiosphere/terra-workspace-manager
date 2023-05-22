@@ -198,7 +198,6 @@ landingzone:
       - ContainerLogV2
       - ContainerNodeInventory
       - ContainerServiceLog
-      - InsightsMetrics
       - Operation
       - SecurityAlert
       - SecurityIncident
