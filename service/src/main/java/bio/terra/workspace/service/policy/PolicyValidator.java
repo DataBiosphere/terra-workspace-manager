@@ -107,7 +107,8 @@ public class PolicyValidator {
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var groups = TpsUtilities.getGroupConstraintsFromInputs(policies.getEffectiveAttributes());
     var currentPao = tpsApiDispatch.getPao((workspace.getWorkspaceId()));
-    var existingGroups = TpsUtilities.getGroupConstraintsFromInputs(currentPao.getEffectiveAttributes());
+    var existingGroups =
+        TpsUtilities.getGroupConstraintsFromInputs(currentPao.getEffectiveAttributes());
 
     if (!groups.isEmpty()) {
       if (groups.containsAll(existingGroups) && existingGroups.containsAll(groups)) {
