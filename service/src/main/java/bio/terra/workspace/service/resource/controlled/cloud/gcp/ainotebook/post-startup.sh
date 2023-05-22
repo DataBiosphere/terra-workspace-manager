@@ -54,7 +54,7 @@ readonly JUPYTER_USER="jupyter"
 #
 # This is intentionally not a Bash function, as that can suppress error propagation.
 # This is intentionally not a Bash alias as they are not supported in shell scripts.
-readonly RUN_AS_JUPYTER_USER="sudo -u "${JUPYTER_USER}" bash -l -c"
+readonly RUN_AS_JUPYTER_USER="sudo -u ${JUPYTER_USER} bash -l -c"
 
 # Startup script status is propagated out to VM guest attributes
 readonly STATUS_ATTRIBUTE="startup_script/status"
@@ -221,7 +221,7 @@ fi
 echo "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
-/opt/conda/bin/pip --user install \
+/opt/conda/bin/pip install --user \
   dsub \
   nbdime \
   nbstripout \
@@ -315,7 +315,7 @@ apt-get -y install mailutils
 ${RUN_AS_JUPYTER_USER} "\
   curl -Os https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell && \
   chmod +x cromshell && \
-  mv cromshell "${CROMSHELL_INSTALL_PATH}""
+  mv cromshell '${CROMSHELL_INSTALL_PATH}'"
 
 # Install & configure the Terra CLI
 echo "Installing the Terra CLI ..."
