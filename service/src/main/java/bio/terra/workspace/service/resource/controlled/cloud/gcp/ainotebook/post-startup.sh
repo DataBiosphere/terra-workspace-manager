@@ -221,17 +221,17 @@ fi
 echo "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
-/opt/conda/bin/pip install \
+${RUN_AS_JUPYTER_USER} "pip install --user \
   dsub \
   nbdime \
   nbstripout \
   pandas_gbq \
   pre-commit \
   pylint \
-  pytest
+  pytest"
 
 # Install nbstripout for the jupyter user in all git repositories.
-${RUN_AS_JUPYTER_USER} "/opt/conda/bin/nbstripout --install --global"
+${RUN_AS_JUPYTER_USER} "nbstripout --install --global"
 
 ###########################################################
 # The Terra CLI requires Java 17 or higher
