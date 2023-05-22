@@ -55,6 +55,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WorkspaceDao {
+  private static final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
+
   /** SQL query for reading a workspace */
   private static final String WORKSPACE_SELECT_SQL =
       """
@@ -85,10 +87,7 @@ public class WorkspaceDao {
                       rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
               .state(WsmResourceState.fromDb(rs.getString("state")))
               .flightId(rs.getString("flight_id"))
-              .error(
-                  Optional.ofNullable(rs.getString("error"))
-                      .map(errorJson -> DbSerDes.fromJson(errorJson, ErrorReportException.class))
-                      .orElse(null));
+              .error(StateDao.deserializeException(rs.getString("error")));
 
   /** Base select query for reading a cloud context; no predicate */
   private static final String BASE_CLOUD_CONTEXT_SELECT_SQL =
@@ -119,7 +118,6 @@ public class WorkspaceDao {
                       .map(errorJson -> DbSerDes.fromJson(errorJson, ErrorReportException.class))
                       .orElse(null));
 
-  private static final Logger logger = LoggerFactory.getLogger(WorkspaceDao.class);
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final ApplicationDao applicationDao;
   private final StateDao stateDao;
@@ -308,16 +306,16 @@ public class WorkspaceDao {
    * manages to UNDO without creating a dismal failure. That seems unlikely, but rather than assume
    * it never happens, we allow this transition.
    *
+   * <p>We do not record the failing exception on the delete path.
+   *
    * @param workspaceUuid workspace of interest
    * @param flightId flight id performing the delete
-   * @param exception that caused the failure
    */
   @WriteTransaction
-  public void deleteWorkspaceFailure(
-      UUID workspaceUuid, String flightId, @Nullable Exception exception) {
+  public void deleteWorkspaceFailure(UUID workspaceUuid, String flightId) {
     DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
     stateDao.updateState(
-        dbWorkspace, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
+        dbWorkspace, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, null);
   }
 
   private boolean deleteWorkspaceWorker(UUID workspaceUuid) {
@@ -552,7 +550,7 @@ public class WorkspaceDao {
   /** List cloud platforms of all cloud contexts in a workspace. */
   @ReadTransaction
   public List<CloudPlatform> listCloudPlatforms(UUID workspaceUuid) {
-    String sql = "SELECT cloud_platform FROM cloud_context" + " WHERE workspace_id = :workspace_id";
+    String sql = "SELECT cloud_platform FROM cloud_context WHERE workspace_id = :workspace_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("workspace_id", workspaceUuid.toString());
     return jdbcTemplate.query(

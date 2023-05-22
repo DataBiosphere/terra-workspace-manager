@@ -42,10 +42,7 @@ public class DeleteWorkspaceStartStep implements Step {
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_STATE_CHANGED, Boolean.class);
     if (TRUE.equals(resourceStateChanged)) {
-      workspaceDao.deleteWorkspaceFailure(
-          workspaceUuid,
-          flightContext.getFlightId(),
-          flightContext.getResult().getException().orElse(null));
+      workspaceDao.deleteWorkspaceFailure(workspaceUuid, flightContext.getFlightId());
     }
     return StepResult.getStepResultSuccess();
   }
