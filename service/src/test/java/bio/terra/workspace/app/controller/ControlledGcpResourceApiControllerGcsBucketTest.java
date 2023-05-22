@@ -866,7 +866,8 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
 
   private void loadSignedUrlListExpectError(
       AuthenticatedUserRequest userRequest, UUID bucketId, int httpStatus) throws Exception {
-    ApiLoadUrlListRequestBody requestBody = new ApiLoadUrlListRequestBody().manifestFileUrl(URL_LIST);
+    ApiLoadUrlListRequestBody requestBody =
+        new ApiLoadUrlListRequestBody().manifestFileUrl(URL_LIST);
     mockMvcUtils.postExpect(
         userRequest,
         objectMapper.writeValueAsString(requestBody),

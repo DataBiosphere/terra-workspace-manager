@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.StorageTransferServiceUtils.createTransferJob;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.StorageTransferServiceUtils.createTransferSpecForSignedUrl;
+import static bio.terra.workspace.service.resource.controlled.flight.clone.bucket.StorageTransferServiceUtils.storageTransferJobExists;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -11,9 +12,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
-import com.google.api.services.storagetransfer.v1.model.TransferJob;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,15 +58,9 @@ public class TransferSignedUrlsToGcsBucketStep implements Step {
     // Look up the transfer job by name. If it's found, it means we are restarting this step and
     // the job either has an operation in progress or completed (possibly failed).
     try {
-      TransferJob existingTransferJob =
-          storagetransfer.transferJobs().get(transferJobName, controlPlaneProjectId).execute();
-      if (null != existingTransferJob) {
-        LOGGER.info(
-            "Transfer Job {} already exists. Nothing more for this step to do.", transferJobName);
+      if (storageTransferJobExists(storagetransfer, transferJobName, controlPlaneProjectId)) {
         return StepResult.getStepResultSuccess();
       }
-    } catch (GoogleJsonResponseException e) {
-      LOGGER.info("No pre-existing transfer job named {} found.", transferJobName);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }

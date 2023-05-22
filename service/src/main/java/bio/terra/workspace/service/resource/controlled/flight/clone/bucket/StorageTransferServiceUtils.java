@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import com.google.api.services.storagetransfer.v1.model.Date;
 import com.google.api.services.storagetransfer.v1.model.GcsData;
@@ -201,5 +202,25 @@ public final class StorageTransferServiceUtils {
         .get(controlPlaneProjectId)
         .execute()
         .getAccountEmail();
+  }
+
+  /**
+   * Return true if there is already a storage transfer job of the given name in the control plane.
+   */
+  public static boolean storageTransferJobExists(
+      Storagetransfer storagetransfer, String transferJobName, String controlPlaneProjectId)
+      throws IOException {
+    try {
+      TransferJob existingTransferJob =
+          storagetransfer.transferJobs().get(transferJobName, controlPlaneProjectId).execute();
+      if (existingTransferJob != null) {
+        logger.info(
+            "Transfer Job {} already exists. Nothing more for this step to do.", transferJobName);
+        return true;
+      }
+    } catch (GoogleJsonResponseException e) {
+      logger.info("No pre-existing transfer job named {} found.", transferJobName);
+    }
+    return false;
   }
 }
