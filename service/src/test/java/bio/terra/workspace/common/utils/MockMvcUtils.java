@@ -657,6 +657,18 @@ public class MockMvcUtils {
       @Nullable List<ApiWsmPolicyInput> policiesToAdd,
       @Nullable List<ApiWsmPolicyInput> policiesToRemove)
       throws Exception {
+    return updatePoliciesExpectStatus(
+        userRequest, workspaceId, policiesToAdd, policiesToRemove, HttpStatus.SC_OK);
+  }
+
+  public ApiWsmPolicyUpdateResult updatePoliciesExpectStatus(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable List<ApiWsmPolicyInput> policiesToAdd,
+      @Nullable List<ApiWsmPolicyInput> policiesToRemove,
+      int httpStatus)
+      throws Exception {
+
     ApiWsmPolicyUpdateRequest requestBody =
         new ApiWsmPolicyUpdateRequest().updateMode(ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
     if (policiesToAdd != null) {
@@ -675,7 +687,7 @@ public class MockMvcUtils {
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsString(requestBody)),
                     userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
+            .andExpect(status().is(httpStatus))
             .andReturn()
             .getResponse()
             .getContentAsString();
