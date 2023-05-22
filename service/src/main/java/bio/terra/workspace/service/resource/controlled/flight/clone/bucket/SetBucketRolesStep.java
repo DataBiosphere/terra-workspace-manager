@@ -15,10 +15,11 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
  *
  * <p>Preconditions: Destination bucket is created.
  *
- * <p>Post conditions: Working map updated with SOURCE_CLONE_INPUTS, DESTINATION_CLONE_INPUTS,
- * CONTROL_PLANE_PROJECT_ID, and STORAGE_TRANSFER_SERVICE_SA_EMAIL. IAM roles are added to both the
- * source and destination buckets in GCS that will allow the transfer service SA the necessary
- * access to create a Storage Transfer Service Job.
+ * <p>Post conditions: Working map updated with SOURCE_CLONE_INPUTS,
+ * DESTINATION_STORAGE_TRANSFER_INPUTS, CONTROL_PLANE_PROJECT_ID, and
+ * STORAGE_TRANSFER_SERVICE_SA_EMAIL. IAM roles are added to both the source and destination buckets
+ * in GCS that will allow the transfer service SA the necessary access to create a Storage Transfer
+ * Service Job.
  */
 public class SetBucketRolesStep implements Step {
 
