@@ -221,7 +221,7 @@ fi
 echo "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
-/opt/conda/bin/pip install --user \
+/opt/conda/bin/pip install \
   dsub \
   nbdime \
   nbstripout \
