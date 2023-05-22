@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.GcsBucketUtils.waitForProjectAccess;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
@@ -140,10 +141,8 @@ public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnect
     projectId2 = workspace2.getGcpContext().getProjectId();
 
     // Wait for 2nd user to have permission
-    GcpCloudUtils.waitForProjectAccess(
-        userAccessUtils.secondUser().getGoogleCredentials(), projectId);
-    GcpCloudUtils.waitForProjectAccess(
-        userAccessUtils.secondUser().getGoogleCredentials(), projectId2);
+    waitForProjectAccess(userAccessUtils.secondUser().getGoogleCredentials(), projectId);
+    waitForProjectAccess(userAccessUtils.secondUser().getGoogleCredentials(), projectId2);
 
     // Note to resource authors: Set all request fields (to non-default values).
     // It is easier to make two dataset and do clone both directions than to

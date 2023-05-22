@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.GcsBucketUtils.addFileToBucket;
+
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
@@ -82,7 +84,7 @@ public class TempGrantTest extends BaseConnectedTest {
                 null,
                 null)
             .getGcpBucket();
-    cloudUtils.addFileToBucket(
+    addFileToBucket(
         userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
 
     // So I can end the test and run cleanup when I'm done debugging

@@ -98,8 +98,7 @@ public class Alpha1ApiController implements Alpha1Api {
       UUID workspaceId, UUID resourceId, String jobId) {
     features.alpha1EnabledCheck();
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    controlledResourceMetadataManager.validateControlledResourceAndAction(
-        userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
+    jobService.verifyUserAccess(jobId, userRequest);
     return ResponseEntity.ok(fetchApiLoadSignedUrlListResult(jobId));
   }
 

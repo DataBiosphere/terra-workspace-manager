@@ -1,11 +1,12 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.bucket;
 
+import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
 /**
@@ -31,20 +32,18 @@ public class SetBucketRolesStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap workingMap = flightContext.getWorkingMap();
-    // Validate the outputs, so we fail fast if one goes missing.
-    FlightUtils.validateRequiredEntries(
-        workingMap,
-        ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS,
-        ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL);
 
     var storageTransferServiceSAEmail =
-        workingMap.get(ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
+        getRequired(
+            workingMap, ControlledResourceKeys.STORAGE_TRANSFER_SERVICE_SA_EMAIL, String.class);
 
     StorageTransferInput sourceInputs =
         workingMap.get(ControlledResourceKeys.SOURCE_CLONE_INPUTS, StorageTransferInput.class);
     StorageTransferInput destinationInputs =
-        workingMap.get(
-            ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, StorageTransferInput.class);
+        getRequired(
+            workingMap,
+            ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS,
+            StorageTransferInput.class);
 
     // Apply source and destination bucket roles
     if (sourceInputs != null) {
