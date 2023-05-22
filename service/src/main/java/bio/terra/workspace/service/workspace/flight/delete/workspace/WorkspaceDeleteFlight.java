@@ -7,6 +7,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.db.NotificationsDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -43,6 +44,8 @@ public class WorkspaceDeleteFlight extends Flight {
     WorkspaceDao workspaceDao = appContext.getWorkspaceDao();
     ResourceDao resourceDao = appContext.getResourceDao();
     SamService samService = appContext.getSamService();
+    NotificationsDao notificationsDao = appContext.getNotificationsDao();
+    String deletingUserId = samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
 
     addStep(new DeleteWorkspaceStartStep(workspaceUuid, workspaceDao), dbRetryRule);
 
@@ -74,7 +77,10 @@ public class WorkspaceDeleteFlight extends Flight {
     addAuthZSteps(appContext, inputParameters, userRequest, workspaceUuid, terraRetryRule);
 
     // Remove the workspace row
-    addStep(new DeleteWorkspaceFinishStep(workspaceUuid, workspaceDao), dbRetryRule);
+    addStep(
+        new DeleteWorkspaceFinishStep(
+            workspaceUuid, workspaceDao, notificationsDao, deletingUserId),
+        dbRetryRule);
   }
 
   /**

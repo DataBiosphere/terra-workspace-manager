@@ -6,6 +6,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.db.NotificationsDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -14,19 +15,28 @@ import org.slf4j.LoggerFactory;
 /** A step for deleting the metadata that WSM stores for a controlled resource. */
 public class DeleteWorkspaceFinishStep implements Step {
   private final UUID workspaceUuid;
+  private final NotificationsDao notificationsDao;
+  private final String deletingUserId;
   private final WorkspaceDao workspaceDao;
 
   private final Logger logger = LoggerFactory.getLogger(DeleteWorkspaceFinishStep.class);
 
-  public DeleteWorkspaceFinishStep(UUID workspaceUuid, WorkspaceDao workspaceDao) {
+  public DeleteWorkspaceFinishStep(
+      UUID workspaceUuid,
+      WorkspaceDao workspaceDao,
+      NotificationsDao notificationsDao,
+      String deletingUserId) {
     this.workspaceDao = workspaceDao;
     this.workspaceUuid = workspaceUuid;
+    this.notificationsDao = notificationsDao;
+    this.deletingUserId = deletingUserId;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     workspaceDao.deleteWorkspaceSuccess(workspaceUuid, flightContext.getFlightId());
+    notificationsDao.notifyWorkspaceDeletion(workspaceUuid, deletingUserId);
     return StepResult.getStepResultSuccess();
   }
 

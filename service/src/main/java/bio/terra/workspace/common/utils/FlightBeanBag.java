@@ -9,6 +9,7 @@ import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.GrantDao;
+import bio.terra.workspace.db.NotificationsDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
@@ -79,6 +80,7 @@ public class FlightBeanBag {
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
   private final LandingZoneBatchAccountFinder landingZoneBatchAccountFinder;
+  private final NotificationsDao notificationsDao;
 
   @Lazy
   @Autowired
@@ -115,7 +117,8 @@ public class FlightBeanBag {
       StorageAccountKeyProvider storageAccountKeyProvider,
       LandingZoneApiDispatch landingZoneApiDispatch,
       WorkspaceActivityLogService workspaceActivityLogService,
-      LandingZoneBatchAccountFinder landingZoneBatchAccountFinder) {
+      LandingZoneBatchAccountFinder landingZoneBatchAccountFinder,
+      NotificationsDao notificationsDao) {
     this.applicationDao = applicationDao;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
@@ -149,6 +152,7 @@ public class FlightBeanBag {
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.landingZoneBatchAccountFinder = landingZoneBatchAccountFinder;
+    this.notificationsDao = notificationsDao;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -285,5 +289,9 @@ public class FlightBeanBag {
 
   public WorkspaceActivityLogService getWorkspaceActivityLogService() {
     return workspaceActivityLogService;
+  }
+
+  public NotificationsDao getNotificationsDao() {
+    return notificationsDao;
   }
 }
