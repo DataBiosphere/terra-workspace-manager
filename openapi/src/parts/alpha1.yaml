@@ -88,8 +88,10 @@ components:
         Request to load signed urls files to a gcs bucket.
       type: object
       properties:
-        urlList:
-          description: url (http or https only) to the tsv file that contains the list of files.
+        manifestFileUrl:
+          description: |
+            public url (http or https only) to the tsv file that contains the 
+            list of files.
           type: string
     LoadUrlListResult:
       description: >-

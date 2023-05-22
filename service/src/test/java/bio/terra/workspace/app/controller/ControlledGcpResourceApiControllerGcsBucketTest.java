@@ -866,7 +866,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
 
   private void loadSignedUrlListExpectError(
       AuthenticatedUserRequest userRequest, UUID bucketId, int httpStatus) throws Exception {
-    ApiLoadUrlListRequestBody requestBody = new ApiLoadUrlListRequestBody().urlList(URL_LIST);
+    ApiLoadUrlListRequestBody requestBody = new ApiLoadUrlListRequestBody().manifestFileUrl(URL_LIST);
     mockMvcUtils.postExpect(
         userRequest,
         objectMapper.writeValueAsString(requestBody),
@@ -877,7 +877,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
   private ApiLoadUrlListResult loadSignedUrlList(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID bucketId, String url)
       throws Exception {
-    ApiLoadUrlListRequestBody requestBody = new ApiLoadUrlListRequestBody().urlList(url);
+    ApiLoadUrlListRequestBody requestBody = new ApiLoadUrlListRequestBody().manifestFileUrl(url);
     var serializedResponse =
         mockMvcUtils.getSerializedResponseForPost(
             userRequest,
