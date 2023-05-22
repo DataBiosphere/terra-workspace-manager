@@ -114,7 +114,7 @@ public class StateDao {
   }
 
   @VisibleForTesting
-  public String normalizeException(Exception exception) {
+  public static String normalizeException(@Nullable Exception exception) {
     // Normalize any exception into a serialized error report
     if (exception == null) {
       return null;

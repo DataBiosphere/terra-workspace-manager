@@ -48,21 +48,23 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   @MockBean private PolicyValidator mockPolicyValidator;
   @MockBean private WorkspaceActivityLogService mockWorkspaceActivityLogService;
 
-  @Autowired private StateDao stateDao;
   @Autowired private WorkspaceService workspaceService;
 
   @Test
-  void testErrorSerdes() throws Exception {
+  void testErrorSerdes_errorReportExceptionWorks() {
     // Normal case exercising the exception serdes code
     var fex =
         new ForbiddenException(
             "User mnemosyne.ninetynine@gmail.com is not authorized to perform action delete on controlled-application-private-workspace-resource ef5ee667-48f1-4407-8ca1-0efe109591c7");
-    String errorJson = stateDao.normalizeException(fex);
+    String errorJson = StateDao.normalizeException(fex);
 
     var ex = StateDao.deserializeException(errorJson);
     assertEquals(fex.getStatusCode(), ex.getStatusCode());
     assertTrue(StringUtils.contains(ex.getMessage(), fex.getMessage()));
+  }
 
+  @Test
+  void testErrorSerdes_junkExceptionWorks() {
     // Case where junk is in the exception
     var exrex = StateDao.deserializeException("bad bad bad");
     assertTrue(exrex instanceof SerializationException);

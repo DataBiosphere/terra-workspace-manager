@@ -32,7 +32,6 @@ public class MakeFlightIdsStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     Map<CloudPlatform, String> flightIds = new HashMap<>();
 
-    // For each cloud context in the workspace, run the cloud context delete flight
     for (CloudPlatform cloudPlatform : workspaceDao.listCloudPlatforms(workspaceUuid)) {
       String flightId = UUID.randomUUID().toString();
       flightIds.put(cloudPlatform, flightId);

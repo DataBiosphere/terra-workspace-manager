@@ -11,10 +11,10 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -106,13 +106,9 @@ public class RunDeleteCloudContextFlightStep implements Step {
   }
 
   private String getFlightId(FlightContext context, CloudPlatform cloudPlatform) {
-    // Retrieve our flight id
     Map<CloudPlatform, String> flightIds =
-        context.getWorkingMap().get(WorkspaceFlightMapKeys.FLIGHT_IDS, new TypeReference<>() {});
-    if (flightIds == null) {
-      throw new MissingRequiredFieldsException(
-          "Missing required flight map key: " + WorkspaceFlightMapKeys.FLIGHT_IDS);
-    }
+        FlightUtils.getRequired(
+            context.getWorkingMap(), WorkspaceFlightMapKeys.FLIGHT_IDS, new TypeReference<>() {});
 
     String flightId = flightIds.get(cloudPlatform);
     if (flightId == null) {
