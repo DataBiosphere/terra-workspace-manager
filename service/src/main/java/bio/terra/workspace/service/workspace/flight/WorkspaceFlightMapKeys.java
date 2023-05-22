@@ -22,6 +22,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String PET_SA_CREDENTIALS = "petSaCredentials";
   public static final String CLOUD_PLATFORM = "cloudPlatform";
   public static final String CLOUD_CONTEXT = "cloudContext";
+  public static final String FLIGHT_IDS = "flightIds";
 
   private WorkspaceFlightMapKeys() {}
 

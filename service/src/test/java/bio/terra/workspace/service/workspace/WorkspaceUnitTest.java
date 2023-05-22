@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,6 +12,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.exception.SerializationException;
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoConflict;
@@ -21,6 +24,7 @@ import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.db.StateDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.PolicyValidator;
@@ -31,16 +35,38 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class WorkspaceUnitTest extends BaseUnitTest {
+  private static final Logger logger = LoggerFactory.getLogger(WorkspaceUnitTest.class);
   @MockBean private WorkspaceDao mockWorkspaceDao;
   @MockBean private PolicyValidator mockPolicyValidator;
   @MockBean private WorkspaceActivityLogService mockWorkspaceActivityLogService;
 
+  @Autowired private StateDao stateDao;
   @Autowired private WorkspaceService workspaceService;
+
+  @Test
+  void testErrorSerdes() throws Exception {
+    // Normal case exercising the exception serdes code
+    var fex =
+        new ForbiddenException(
+            "User mnemosyne.ninetynine@gmail.com is not authorized to perform action delete on controlled-application-private-workspace-resource ef5ee667-48f1-4407-8ca1-0efe109591c7");
+    String errorJson = stateDao.normalizeException(fex);
+
+    var ex = StateDao.deserializeException(errorJson);
+    assertEquals(fex.getStatusCode(), ex.getStatusCode());
+    assertTrue(StringUtils.contains(ex.getMessage(), fex.getMessage()));
+
+    // Case where junk is in the exception
+    var exrex = StateDao.deserializeException("bad bad bad");
+    assertTrue(exrex instanceof SerializationException);
+  }
 
   @Test
   void workspaceRequiredFields() {

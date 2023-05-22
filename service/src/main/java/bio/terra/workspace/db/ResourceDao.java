@@ -7,7 +7,6 @@ import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
-import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.model.DbResource;
@@ -116,14 +115,9 @@ public class ResourceDao {
                   OffsetDateTime.ofInstant(
                       rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
               .createdByEmail(rs.getString("created_by_email"))
-              // TODO(PF-2290): throw if resource is controlled resource and the region is null once
-              // we backfill the existing resource rows with regions.
               .region(rs.getString("region"))
               .state(WsmResourceState.fromDb(rs.getString("state")))
-              .error(
-                  Optional.ofNullable(rs.getString("error"))
-                      .map(errorJson -> DbSerDes.fromJson(errorJson, ErrorReportException.class))
-                      .orElse(null))
+              .error(StateDao.deserializeException(rs.getString("error")))
               .flightId(rs.getString("flight_id"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;

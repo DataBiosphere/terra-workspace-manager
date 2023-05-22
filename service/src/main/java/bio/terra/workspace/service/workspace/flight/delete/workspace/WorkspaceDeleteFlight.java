@@ -46,11 +46,12 @@ public class WorkspaceDeleteFlight extends Flight {
 
     addStep(new DeleteWorkspaceStartStep(workspaceUuid, workspaceDao), dbRetryRule);
 
+    addStep(new MakeFlightIdsStep(workspaceUuid, workspaceDao));
+
     // For each cloud context in the workspace, run the cloud context delete flight
     for (CloudPlatform cloudPlatform : workspaceDao.listCloudPlatforms(workspaceUuid)) {
-      String flightId = UUID.randomUUID().toString();
       addStep(
-          new RunDeleteCloudContextFlightStep(workspaceUuid, cloudPlatform, userRequest, flightId),
+          new RunDeleteCloudContextFlightStep(workspaceUuid, cloudPlatform, userRequest),
           dbRetryRule);
     }
 

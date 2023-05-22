@@ -1,10 +1,13 @@
 package bio.terra.workspace.db;
 
 import bio.terra.common.exception.ErrorReportException;
+import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.db.exception.GeneralErrorReportException;
 import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.model.DbStateful;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
+import com.google.common.annotations.VisibleForTesting;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -74,25 +77,14 @@ public class StateDao {
               targetFlightId));
     }
 
-    // Normalize any exception into a serialized error report
-    String errorReport;
-    if (exception == null) {
-      errorReport = null;
-    } else if (exception instanceof ErrorReportException ex) {
-      errorReport = DbSerDes.toJson(ex);
-    } else {
-      errorReport =
-          DbSerDes.toJson(
-              new InternalLogicException(
-                  (exception.getMessage() == null ? "<no message>" : exception.getMessage())));
-    }
+    String errorReport = normalizeException(exception);
 
     var params =
         new MapSqlParameterSource()
             .addValue("new_state", targetState.toDb())
             .addValue("new_flight_id", targetFlightId)
             .addValue("expected_flight_id", expectedFlightId)
-            .addValue("error", DbSerDes.toJson(errorReport));
+            .addValue("error", errorReport);
 
     String predicate = dbStateful.makeSqlRowPredicate(params);
 
@@ -119,6 +111,51 @@ public class StateDao {
         targetState,
         targetFlightId,
         errorReport);
+  }
+
+  @VisibleForTesting
+  public String normalizeException(Exception exception) {
+    // Normalize any exception into a serialized error report
+    if (exception == null) {
+      return null;
+    }
+
+    // Construct message text that includes the exception class
+    var message =
+        String.format(
+            "[%s] %s",
+            exception.getClass().getName(),
+            (exception.getMessage() == null ? "<no message>" : exception.getMessage()));
+
+    GeneralErrorReportException genx;
+    if (exception instanceof ErrorReportException ex) {
+      genx =
+          new GeneralErrorReportException(
+              message, ex.getCause(), ex.getCauses(), ex.getStatusCode());
+    } else {
+      logger.error(
+          "Exception is not an ErrorReportException. Only the message will be preserved.",
+          exception);
+      genx = new GeneralErrorReportException(message);
+    }
+
+    return DbSerDes.toJson(genx);
+  }
+
+  // Ensure deserialization does not break error retrieval
+  public static ErrorReportException deserializeException(String errorJson) {
+    ErrorReportException error = null;
+    if (errorJson != null) {
+      try {
+        error = DbSerDes.fromJson(errorJson, GeneralErrorReportException.class);
+      } catch (SerializationException e) {
+        logger.error(
+            "A exception that is not ErrorReportException class stored in the error column. JSON string is: {}",
+            errorJson);
+        error = e;
+      }
+    }
+    return error;
   }
 
   /**
