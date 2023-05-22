@@ -10,6 +10,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.PolicyValidator;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -51,11 +52,14 @@ public class ValidateLandingZoneAgainstPolicyStep implements Step {
         landingZoneApiDispatch.getAzureLandingZoneRegion(bearerToken, landingZoneId),
         CloudPlatform.AZURE);
 
-    var landingZone = landingZoneApiDispatch.getAzureLandingZone(bearerToken, landingZoneId);
-    var validationErrors = policyValidator.validateLandingZoneSupportsProtectedData(landingZone);
-    if (!validationErrors.isEmpty()) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL, new PolicyConflictException(validationErrors));
+    var policies = tpsApiDispatch.getPao(workspaceUuid);
+    if (TpsUtilities.containsProtectedDataPolicy(policies.getEffectiveAttributes())) {
+      var landingZone = landingZoneApiDispatch.getAzureLandingZone(bearerToken, landingZoneId);
+      var validationErrors = policyValidator.validateLandingZoneSupportsProtectedData(landingZone);
+      if (!validationErrors.isEmpty()) {
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL, new PolicyConflictException(validationErrors));
+      }
     }
 
     return StepResult.getStepResultSuccess();
