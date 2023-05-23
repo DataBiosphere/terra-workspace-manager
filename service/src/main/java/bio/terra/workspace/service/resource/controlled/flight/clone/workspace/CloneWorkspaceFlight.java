@@ -7,8 +7,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -17,7 +15,6 @@ import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,8 +23,10 @@ public class CloneWorkspaceFlight extends Flight {
 
   public CloneWorkspaceFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
+    // NOTE: MergePolicyAttributesStep is not part of this flight,
+    // it happens during workspace creation so auth domains can be added to workspace
+
     // Flight Plan
-    // * Merge Policy Attributes
     // * Clone all folders in the workspace
     // * Build a list of resources to clone and attach the updated cloned folder id
     // * Create job IDs for future sub-flights and a couple other things
@@ -52,30 +51,8 @@ public class CloneWorkspaceFlight extends Flight {
     var spendProfile =
         FlightUtils.getRequired(
             inputParameters, WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
-    var cloningInstructions =
-        FlightUtils.getRequired(
-            inputParameters,
-            WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
-            CloningInstructions.class);
 
     Workspace sourceWorkspace = flightBeanBag.getWorkspaceDao().getWorkspace(sourceWorkspaceId);
-
-    // If TPS is enabled, clone the policy attributes
-    // We do not support policies on RAWLS stage workspaces
-    // this needs to happen before cloud contexts are created because they may be limited by policy
-    if (flightBeanBag.getFeatureConfiguration().isTpsEnabled()
-        && sourceWorkspace.getWorkspaceStage() != WorkspaceStage.RAWLS_WORKSPACE) {
-      var destinationWorkspace =
-          FlightUtils.getRequired(
-              inputParameters, JobMapKeys.REQUEST.getKeyName(), Workspace.class);
-      addStep(
-          new MergePolicyAttributesStep(
-              sourceWorkspaceId,
-              destinationWorkspace.getWorkspaceId(),
-              cloningInstructions,
-              flightBeanBag.getTpsApiDispatch()),
-          cloudRetryRule);
-    }
 
     addStep(
         new CloneAllFoldersStep(flightBeanBag.getSamService(), flightBeanBag.getFolderDao()),

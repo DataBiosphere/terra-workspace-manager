@@ -10,11 +10,14 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
+import java.util.UUID;
 
 public class WorkspaceCreateFlight extends Flight {
 
@@ -33,6 +36,14 @@ public class WorkspaceCreateFlight extends Flight {
         inputParameters.get(WorkspaceFlightMapKeys.POLICIES, TpsPolicyInputs.class);
     List<String> applicationIds =
         inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_IDS, new TypeReference<>() {});
+    CloningInstructions cloningInstructions =
+        FlightUtils.getRequired(
+            inputParameters,
+            WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
+            CloningInstructions.class);
+    UUID sourceWorkspaceUuid =
+        inputParameters.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
 
     RetryRule serviceRetryRule = RetryRules.shortExponential();
     RetryRule dbRetryRule = RetryRules.shortDatabase();
@@ -51,6 +62,19 @@ public class WorkspaceCreateFlight extends Flight {
               new CreateWorkspacePoliciesStep(
                   workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
               serviceRetryRule);
+          // If we're cloning, we need to copy the policies from the source workspace.
+          // This is here instead of in the CloneWorkspaceFlight because we need to do it before
+          // we create the workspace in Sam in case there are auth domains.
+          // COPY_NOTHING is used when not cloning
+          if (cloningInstructions != CloningInstructions.COPY_NOTHING) {
+            addStep(
+                new MergePolicyAttributesStep(
+                    sourceWorkspaceUuid,
+                    workspace.workspaceId(),
+                    cloningInstructions,
+                    appContext.getTpsApiDispatch()),
+                serviceRetryRule);
+          }
         }
         addStep(
             new CreateWorkspaceAuthzStep(
