@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.cloud.gcp;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.landingzone.stairway.flight.utils.FlightUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -60,18 +61,17 @@ public class DeleteGcpProjectStep implements Step {
       return StepResult.getStepResultSuccess();
     }
     // Do not attempt to undo project deletions.
-    // TODO: investigate recovering projects if this happens often and recovery works as a "undo."
-    String projectId = cloudContext.get().getGcpProjectId();
-    logger.error("Unable to undo deletion of project [{}]", projectId);
+    logger.error("Unable to undo deletion of project");
     return flightContext.getResult();
   }
 
   private Optional<GcpCloudContext> getContext(FlightContext flightContext) {
     UUID workspaceUuid =
         UUID.fromString(
-            flightContext
-                .getInputParameters()
-                .get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+            FlightUtils.getRequired(
+                flightContext.getInputParameters(),
+                WorkspaceFlightMapKeys.WORKSPACE_ID,
+                String.class));
     return gcpCloudContextService.getGcpCloudContext(workspaceUuid);
   }
 }

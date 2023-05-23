@@ -56,17 +56,16 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputParameters = flightContext.getInputParameters();
-    FlightUtils.validateRequiredEntries(
-        inputParameters, ControlledResourceKeys.DESTINATION_DATASET_NAME);
-
     UUID destinationWorkspaceId =
-        inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+        FlightUtils.getRequired(
+            inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     String destinationProjectId =
-        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
+        gcpCloudContextService.getRequiredReadyGcpProject(destinationWorkspaceId);
 
     String destinationDatasetId =
-        inputParameters.get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class);
+        FlightUtils.getRequired(
+            inputParameters, ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class);
 
     Map<String, Value> params = new HashMap<>();
     String sourceDatasetId = sourceDataset.getDatasetName();
@@ -89,8 +88,7 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
           SamRethrow.onInterrupted(
               () ->
                   samService.getOrCreatePetSaEmail(
-                      gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId),
-                      userRequest.getRequiredToken()),
+                      destinationProjectId, userRequest.getRequiredToken()),
               "CopyBigQueryDatasetDifferentRegionStep");
 
       TransferConfig config =

@@ -12,6 +12,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.storage.Storage;
@@ -51,7 +52,15 @@ public class CreateGcsBucketStep implements Step {
     ApiGcpGcsBucketCreationParameters creationParameters =
         inputParameters.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiGcpGcsBucketCreationParameters.class);
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+    // Although the ready check is done in the controller, there is a chance this step will
+    // fail because the cloud context is not ready. We do not want the undo to fail trying
+    // to get the project id if that is the case. We store the project id in the working map.
+    // If it is present, then the undo can use it. If not, the undo assumes that we failed
+    // getting the project id and does not attempt to delete the bucket.
+    // TODO: PF-2799 replace API creation parameters of the bucket with a structure
+    //  that includes the project id. Stop looking it up constantly.
+    String projectId = gcpCloudContextService.getRequiredReadyGcpProject(resource.getWorkspaceId());
+    flightContext.getWorkingMap().put(WorkspaceFlightMapKeys.GCP_PROJECT_ID, projectId);
 
     BucketInfo.Builder bucketInfoBuilder =
         BucketInfo.newBuilder(resource.getBucketName())
@@ -160,15 +169,20 @@ public class CreateGcsBucketStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
-    // WSM should only attempt to delete the buckets it created, so it does nothing if the bucket
-    // exists outside the current project. We can guarantee another flight did not create this
-    // bucket because uniqueness within the project is already verified in WSM's DB earlier in this
-    // flight.
-    Optional<Bucket> existingBucket = getBucket(resource.getBucketName());
-    if (existingBucket.isPresent() && bucketInProject(existingBucket.get(), projectId)) {
-      final StorageCow storageCow = crlService.createStorageCow(projectId);
-      storageCow.delete(resource.getBucketName());
+    // Only attempt the bucket delete if we successfully retrieved the project id in the Do().
+    String projectId =
+        flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
+    if (projectId != null) {
+      // WSM should only attempt to delete the buckets it created, so it does nothing if the bucket
+      // exists outside the current project. We can guarantee another flight did not create this
+      // bucket because uniqueness within the project is already verified in WSM's DB earlier in
+      // this
+      // flight.
+      Optional<Bucket> existingBucket = getBucket(resource.getBucketName());
+      if (existingBucket.isPresent() && bucketInProject(existingBucket.get(), projectId)) {
+        final StorageCow storageCow = crlService.createStorageCow(projectId);
+        storageCow.delete(resource.getBucketName());
+      }
     }
     return StepResult.getStepResultSuccess();
   }

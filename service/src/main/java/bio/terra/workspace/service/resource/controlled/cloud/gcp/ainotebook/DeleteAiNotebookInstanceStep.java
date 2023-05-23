@@ -41,7 +41,7 @@ public class DeleteAiNotebookInstanceStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
 
-    InstanceName instanceName = resource.toInstanceName(gcpCloudContext.getGcpProjectId());
+    InstanceName instanceName = resource.toInstanceName();
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
       Optional<Operation> rawOperation = deleteIfFound(instanceName, notebooks);

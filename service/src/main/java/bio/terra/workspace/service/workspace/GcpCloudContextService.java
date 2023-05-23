@@ -7,8 +7,10 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateCustomGcpRolesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreatePetSaStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledDbResourcesStep;
@@ -166,10 +168,23 @@ public class GcpCloudContextService implements CloudContextService {
    * @return GCP cloud context with all policies filled in.
    */
   public GcpCloudContext getRequiredGcpCloudContext(UUID workspaceUuid) {
-    GcpCloudContext cloudContext =
-        getGcpCloudContext(workspaceUuid)
-            .orElseThrow(
-                () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
+    return getGcpCloudContext(workspaceUuid)
+        .orElseThrow(
+            () -> new CloudContextRequiredException("Operation requires GCP cloud context"));
+  }
+
+  /**
+   * Retrieve the GCP cloud context that is in the READY state.
+   *
+   * @param workspaceUuid workspace identifier of the cloud context
+   * @return GCP cloud context with all policies filled in.
+   */
+  public GcpCloudContext getRequiredReadyGcpCloudContext(UUID workspaceUuid) {
+    GcpCloudContext cloudContext = getRequiredGcpCloudContext(workspaceUuid);
+    if (cloudContext.getCommonFields() == null
+        || cloudContext.getCommonFields().state() != WsmResourceState.READY) {
+      throw new InvalidCloudContextStateException("GCP cloud context is busy. Try again later.");
+    }
     return cloudContext;
   }
 
@@ -194,6 +209,18 @@ public class GcpCloudContextService implements CloudContextService {
    */
   public String getRequiredGcpProject(UUID workspaceUuid) {
     GcpCloudContext cloudContext = getRequiredGcpCloudContext(workspaceUuid);
+    return cloudContext.getGcpProjectId();
+  }
+
+  /**
+   * Helper method used by other classes that require the GCP project to exist and be in the READY
+   * state in the workspace. It throws if the project (GCP cloud context) is not set up and READY.
+   *
+   * @param workspaceUuid unique workspace id
+   * @return GCP project id
+   */
+  public String getRequiredReadyGcpProject(UUID workspaceUuid) {
+    GcpCloudContext cloudContext = getRequiredReadyGcpCloudContext(workspaceUuid);
     return cloudContext.getGcpProjectId();
   }
 }

@@ -301,7 +301,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @Test
   @Disabled("PF-2259 - this test needs rewriting")
   // TODO(PF-2259): This test is not testing the undo of CloneGcpWorkspaceFlight. It is
-  //  testing the undo of WorkspaceCreateFlight. It needs to be re
+  //  testing the undo of WorkspaceCreateFlight. It needs to be rewritten.
   public void cloneGcpWorkspaceUndoSteps() {
     Workspace sourceWorkspace = workspaceService.getWorkspace(workspaceId);
     // Enable an application

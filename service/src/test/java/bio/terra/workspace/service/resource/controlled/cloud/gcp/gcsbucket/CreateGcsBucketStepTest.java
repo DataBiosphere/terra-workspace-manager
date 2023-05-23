@@ -72,6 +72,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     doReturn(mockStorageCow).when(mockCrlService).createStorageCow(any(String.class));
     doReturn(mockStorageClient).when(mockCrlService).createWsmSaNakedStorageClient();
     when(mockGcpCloudContextService.getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
+    when(mockGcpCloudContextService.getRequiredReadyGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
     when(mockStorageCow.create(bucketInfoCaptor.capture())).thenReturn(mockBucketCow);
 
     when(mockStorageClient.buckets()).thenReturn(mockBuckets);
@@ -94,11 +95,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             ControlledResourceFixtures.getBucketResource(creationParameters.getName()),
             mockGcpCloudContextService);
 
-    final FlightMap inputFlightMap = new FlightMap();
-    inputFlightMap.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    inputFlightMap.makeImmutable();
-    doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
+    setupFlightContextMock(creationParameters);
 
     final StepResult stepResult = createGcsBucketStep.doStep(mockFlightContext);
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -146,13 +143,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
             mockCrlService,
             ControlledResourceFixtures.getBucketResource(bucketName),
             mockGcpCloudContextService);
-
-    final FlightMap inputFlightMap = new FlightMap();
-    inputFlightMap.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
-        ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
-    inputFlightMap.makeImmutable();
-    doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
+    setupFlightContextMock(ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
 
     final StepResult stepResult = createGcsBucketStep.doStep(mockFlightContext);
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -172,20 +163,24 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
     // A bad bucket name that fails to be caught by the WSM validation.
     final String bucketName = TestUtils.appendRandomNumber("bad-bucket-name");
-
-    final CreateGcsBucketStep createGcsBucketStep =
+    CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
             mockCrlService,
             ControlledResourceFixtures.getBucketResource(bucketName),
             mockGcpCloudContextService);
+    setupFlightContextMock(ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
 
-    final FlightMap inputFlightMap = new FlightMap();
+    assertThrows(BadRequestException.class, () -> createGcsBucketStep.doStep(mockFlightContext));
+  }
+
+  private void setupFlightContextMock(ApiGcpGcsBucketCreationParameters creationParameters) {
+    FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS,
-        ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
+        WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     inputFlightMap.makeImmutable();
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
 
-    assertThrows(BadRequestException.class, () -> createGcsBucketStep.doStep(mockFlightContext));
+    FlightMap workingMap = new FlightMap();
+    doReturn(workingMap).when(mockFlightContext).getWorkingMap();
   }
 }

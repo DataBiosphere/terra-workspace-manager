@@ -52,7 +52,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   protected static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
   /**
    * When notebook has a custom image, disable root access and requires user to log in as Jupyter.
-   * https://github.com/hashicorp/terraform-provider-google/issues/7900#issuecomment-1067097275.
+   * <a
+   * href="https://github.com/hashicorp/terraform-provider-google/issues/7900#issuecomment-1067097275">...</a>.
    */
   protected static final String NOTEBOOK_DISABLE_ROOT_METADATA_KEY = "notebook-disable-root";
 
@@ -260,27 +261,22 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     RetryRule gcpRetry = RetryRules.cloud();
     flight.addStep(
         new RetrieveAiNotebookResourceAttributesStep(
-            aiNotebookResource,
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService()),
+            aiNotebookResource, flightBeanBag.getCrlService()),
         gcpRetry);
 
     // Update the AI notebook's attributes.
     flight.addStep(
-        new UpdateAiNotebookAttributesStep(
-            aiNotebookResource,
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService()),
+        new UpdateAiNotebookAttributesStep(aiNotebookResource, flightBeanBag.getCrlService()),
         gcpRetry);
   }
 
-  public InstanceName toInstanceName(String workspaceProjectId) {
-    return toInstanceName(workspaceProjectId, getLocation());
+  public InstanceName toInstanceName() {
+    return toInstanceName(getLocation());
   }
 
-  public InstanceName toInstanceName(String workspaceProjectId, String requestedLocation) {
+  public InstanceName toInstanceName(String requestedLocation) {
     return InstanceName.builder()
-        .projectId(workspaceProjectId)
+        .projectId(getProjectId())
         .location(requestedLocation)
         .instanceId(instanceId)
         .build();

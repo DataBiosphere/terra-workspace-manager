@@ -109,7 +109,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     String requestedLocation =
         FlightUtils.getRequired(
             flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
-    InstanceName instanceName = resource.toInstanceName(projectId, requestedLocation);
+    InstanceName instanceName = resource.toInstanceName(requestedLocation);
 
     Instance instance =
         createInstanceModel(
@@ -275,8 +275,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     String requestedLocation =
         FlightUtils.getRequired(
             flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
-    InstanceName instanceName =
-        resource.toInstanceName(gcpCloudContext.getGcpProjectId(), requestedLocation);
+    InstanceName instanceName = resource.toInstanceName(requestedLocation);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {

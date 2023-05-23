@@ -247,12 +247,13 @@ public class RevokeStep implements Step {
   private void revokeResourceNotebook(
       ControlledAiNotebookInstanceResource notebookResource, GrantData grantData)
       throws IOException {
-    String gcpProjectId = gcpCloudContextService.getRequiredGcpProject(grantData.workspaceId());
-    logger.info("Revoke notebook {} in project {}", notebookResource.getName(), gcpProjectId);
+    logger.info(
+        "Revoke notebook {} in project {}",
+        notebookResource.getName(),
+        notebookResource.getProjectId());
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
-    InstanceName instanceName =
-        notebookResource.toInstanceName(gcpProjectId, notebookResource.getLocation());
+    InstanceName instanceName = notebookResource.toInstanceName(notebookResource.getLocation());
 
     com.google.api.services.notebooks.v1.model.Policy policy =
         notebooks.instances().getIamPolicy(instanceName).execute();

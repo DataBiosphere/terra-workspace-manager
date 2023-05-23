@@ -153,7 +153,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
             flightBeanBag.getControlledResourceService(),
             flightBeanBag.getCrlService(),
             this,
-            flightBeanBag.getGcpCloudContextService(),
             userRequest),
         cloudRetry);
   }

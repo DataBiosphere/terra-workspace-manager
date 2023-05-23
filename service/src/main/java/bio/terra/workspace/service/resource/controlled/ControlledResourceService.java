@@ -455,8 +455,7 @@ public class ControlledResourceService {
         SamRethrow.onInterrupted(
             () ->
                 samService.getOrCreatePetSaEmail(
-                    gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
-                    userRequest.getRequiredToken()),
+                    resource.getProjectId(), userRequest.getRequiredToken()),
             "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
