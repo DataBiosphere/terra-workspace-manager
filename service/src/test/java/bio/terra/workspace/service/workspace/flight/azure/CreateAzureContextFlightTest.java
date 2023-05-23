@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace.flight.azure;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
@@ -12,14 +13,18 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.resource.controlled.exception.RegionNotAllowedException;
+import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -49,6 +54,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private JobService jobService;
   @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private AzureConfiguration azureConfiguration;
 
   @MockBean private LandingZoneApiDispatch landingZoneApiDispatchMock;
   private final Region landingZoneRegion = Region.FRANCE_CENTRAL;
@@ -61,11 +67,10 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
 
   private void initLandingZoneApiDispatchMock() {
     var landingZoneId = UUID.randomUUID();
-    Mockito.when(landingZoneApiDispatchMock.getLandingZoneId(Mockito.any(), Mockito.any()))
+    when(landingZoneApiDispatchMock.getLandingZoneId(Mockito.any(), Mockito.any()))
         .thenReturn(landingZoneId);
-    Mockito.when(
-            landingZoneApiDispatchMock.getAzureLandingZoneRegion(
-                Mockito.any(), Mockito.eq(landingZoneId)))
+    when(landingZoneApiDispatchMock.getAzureLandingZoneRegion(
+            Mockito.any(), Mockito.eq(landingZoneId)))
         .thenReturn(landingZoneRegion.name());
   }
 
@@ -149,6 +154,64 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
                         new TpsPolicyPair()
                             .key(PolicyFixtures.REGION)
                             .value("azure." + policyRegion)));
+
+    workspaceService.createWorkspace(
+        workspace, policies, null, userAccessUtils.defaultUserAuthRequest());
+
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    String jobId = UUID.randomUUID().toString();
+    workspaceService.createCloudContext(
+        workspace,
+        CloudPlatform.AZURE,
+        azureTestUtils.getSpendProfile(),
+        jobId,
+        userRequest,
+        /* resultPath */ null);
+
+    // Wait for the job to complete
+    return StairwayTestUtils.pollUntilComplete(
+        jobId, jobService.getStairway(), Duration.ofSeconds(1), STAIRWAY_FLIGHT_TIMEOUT);
+  }
+
+  @Test
+  void protectedDataPolicyConflict() throws Exception {
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(null)
+            .spendProfileId(azureTestUtils.getSpendProfileId())
+            .build();
+    FlightState flightState = createWorkspaceForProtectedDataTest(workspace, "not protected data");
+    assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
+    assertTrue(flightState.getException().isPresent());
+    assertTrue(
+        flightState.getException().stream().allMatch(e -> e instanceof PolicyConflictException));
+    // There should be no cloud context created.
+    assertTrue(azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isEmpty());
+  }
+
+  @Test
+  void protectedDataPolicyNoConflict() throws Exception {
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(null)
+            .spendProfileId(azureTestUtils.getSpendProfileId())
+            .build();
+    FlightState flightState =
+        createWorkspaceForProtectedDataTest(
+            workspace, azureConfiguration.getProtectedDataLandingZoneDefs().get(0));
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+  }
+
+  @NotNull
+  private FlightState createWorkspaceForProtectedDataTest(
+      Workspace workspace, String landingZoneDefinition) throws InterruptedException {
+    when(landingZoneApiDispatchMock.getAzureLandingZone(Mockito.any(), Mockito.any()))
+        .thenReturn(new ApiAzureLandingZone().definition(landingZoneDefinition));
+
+    var policies =
+        new TpsPolicyInputs()
+            .addInputsItem(
+                new TpsPolicyInput()
+                    .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME)
+                    .namespace(TpsUtilities.TERRA_NAMESPACE));
 
     workspaceService.createWorkspace(
         workspace, policies, null, userAccessUtils.defaultUserAuthRequest());

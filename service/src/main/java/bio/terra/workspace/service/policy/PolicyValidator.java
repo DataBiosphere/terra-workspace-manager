@@ -5,6 +5,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
@@ -87,18 +88,25 @@ public class PolicyValidator {
       for (var cloudPlatform : workspaceDao.listCloudPlatforms(workspace.workspaceId())) {
         switch (cloudPlatform) {
           case AZURE -> {
-            var lzDefinition =
-                landingZoneApiDispatch.getLandingZone(userRequest, workspace).getDefinition();
-            if (!azureConfiguration.getProtectedDataLandingZoneDefs().contains(lzDefinition)) {
-              validationErrors.add(
-                  "Workspace landing zone type [%s] does not support protected data"
-                      .formatted(lzDefinition));
-            }
+            var landingZone = landingZoneApiDispatch.getLandingZone(userRequest, workspace);
+            validationErrors.addAll(validateLandingZoneSupportsProtectedData(landingZone));
           }
 
           default -> validationErrors.add("Protected data policy only supported on Azure");
         }
       }
+    }
+    return validationErrors;
+  }
+
+  public List<String> validateLandingZoneSupportsProtectedData(ApiAzureLandingZone landingZone) {
+    var validationErrors = new ArrayList<String>();
+    if (!azureConfiguration
+        .getProtectedDataLandingZoneDefs()
+        .contains(landingZone.getDefinition())) {
+      validationErrors.add(
+          "Workspace landing zone type [%s] does not support protected data"
+              .formatted(landingZone.getDefinition()));
     }
     return validationErrors;
   }

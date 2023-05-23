@@ -62,6 +62,10 @@ public class WorkspaceCreateFlight extends Flight {
               new CreateWorkspacePoliciesStep(
                   workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
               serviceRetryRule);
+          // If we're cloning, we need to copy the policies from the source workspace.
+          // This is here instead of in the CloneWorkspaceFlight because we need to do it before
+          // we create the workspace in Sam in case there are auth domains.
+          // COPY_NOTHING is used when not cloning
           if (cloningInstructions != CloningInstructions.COPY_NOTHING) {
             addStep(
                 new MergePolicyAttributesStep(
