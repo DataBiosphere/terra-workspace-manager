@@ -59,6 +59,12 @@ public class ControlledResourceMetadataManager {
    * <p>Throws ForbiddenException if the user is not permitted to perform the specified action on
    * the resource in question.
    *
+   * <p>Throws ResourceIsBusyException if the user attempts an update or delete operation, while the
+   * resource is being created, updated, or deleted.
+   *
+   * <p>Throws ResourceStateConflictException if the resource is broken and the user attempts an
+   * update operation. The only valid operations are read and delete.
+   *
    * @param userRequest the user's authenticated request
    * @param workspaceUuid id of the workspace this resource exists in
    * @param resourceId id of the resource in question
@@ -73,20 +79,21 @@ public class ControlledResourceMetadataManager {
     ControlledResource controlledResource = resource.castToControlledResource();
     String samName = controlledResource.getCategory().getSamResourceName();
 
-    // Every case exits the validation
+    if (StringUtils.equals(action, SamControlledResourceActions.READ_ACTION)) {
+      checkResourceAuthz(userRequest, samName, resourceId, action);
+      return controlledResource;
+    }
+
+    // For non-read cases, test the resource state
     switch (controlledResource.getState()) {
       case READY:
         // Primary success case: check auth and return the resource
-        SamRethrow.onInterrupted(
-            () -> samService.checkAuthz(userRequest, samName, resourceId.toString(), action),
-            "checkAuthz");
+        checkResourceAuthz(userRequest, samName, resourceId, action);
         return controlledResource;
 
       case CREATING, DELETING, UPDATING:
         // Check forbidden before throwing the busy resource error
-        SamRethrow.onInterrupted(
-            () -> samService.checkAuthz(userRequest, samName, resourceId.toString(), action),
-            "checkAuthz");
+        checkResourceAuthz(userRequest, samName, resourceId, action);
         throw new ResourceIsBusyException(
             "Another operation is running on the resource; try again later");
 
@@ -112,7 +119,7 @@ public class ControlledResourceMetadataManager {
                     + "can delete a broken application resource");
           }
         } else {
-          // Broken user resource. The Sam resource for this resource will not exist.
+          // Broken user resource. The Sam resource for this resource may not exist.
           // Either it failed to get created or we undid it on the way out of the
           // flight. So we base the authz check on the user's permission on the workspace.
           SamRethrow.onInterrupted(
@@ -129,6 +136,13 @@ public class ControlledResourceMetadataManager {
       default:
         throw new InternalLogicException("Unexpected case: " + controlledResource.getState());
     }
+  }
+
+  private void checkResourceAuthz(
+      AuthenticatedUserRequest userRequest, String samName, UUID resourceId, String action) {
+    SamRethrow.onInterrupted(
+        () -> samService.checkAuthz(userRequest, samName, resourceId.toString(), action),
+        "checkAuthz");
   }
 
   /**
