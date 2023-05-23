@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -38,7 +38,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @Disabled("Until we get the postgres connection leaks addressed")
 @Tag("connected")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class AzureDisabledTest extends BaseConnectedTest {
+public class AzureDisabledTest extends BaseAzureConnectedTest {
   @Autowired private MockMvc mockMvc;
 
   @Autowired private UserAccessUtils userAccessUtils;

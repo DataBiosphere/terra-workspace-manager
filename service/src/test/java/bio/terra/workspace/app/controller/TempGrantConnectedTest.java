@@ -31,8 +31,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @Disabled("Only for manually testing temporary grants. Do not automate.")
 @Tag("connected")
-public class TempGrantTest extends BaseConnectedTest {
-  private static final Logger logger = LoggerFactory.getLogger(TempGrantTest.class);
+public class TempGrantConnectedTest extends BaseConnectedTest {
+  private static final Logger logger = LoggerFactory.getLogger(TempGrantConnectedTest.class);
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;

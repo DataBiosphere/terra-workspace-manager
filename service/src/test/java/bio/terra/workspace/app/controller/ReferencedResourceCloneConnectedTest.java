@@ -47,8 +47,9 @@ import org.springframework.test.web.servlet.MockMvc;
  * instructions: COPY_REFERENCE vs LINK_REFERENCE.
  */
 @Tag("connectedPlus")
-public class ReferencedResourceCloneTest extends BaseConnectedTest {
-  private static final Logger logger = LoggerFactory.getLogger(ReferencedResourceCloneTest.class);
+public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
+  private static final Logger logger =
+      LoggerFactory.getLogger(ReferencedResourceCloneConnectedTest.class);
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
