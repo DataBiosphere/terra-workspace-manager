@@ -160,15 +160,15 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
 
     if (CloningInstructions.COPY_RESOURCE == resolvedCloningInstructions) {
       addStep(
-          new SetBucketRolesStep(
-              sourceBucket,
+          new RetrieveDataTransferMetadataStep(
+              flightBeanBag.getStoragetransfer(),
               flightBeanBag.getGcpCloudContextService(),
-              flightBeanBag.getBucketCloneRolesService(),
-              flightBeanBag.getStoragetransfer()),
-          cloudRetry);
-      addStep(
-          new CreateStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()), cloudRetry);
+              sourceBucket),
+          RetryRules.shortDatabase());
+      addStep(new SetBucketRolesStep(flightBeanBag.getBucketCloneRolesService()), cloudRetry);
+      addStep(new TransferGcsBucketToGcsBucketStep(flightBeanBag.getStoragetransfer()), cloudRetry);
       addStep(new CompleteTransferOperationStep(flightBeanBag.getStoragetransfer()), cloudRetry);
+      addStep(new SetCloneDestinationGcsBucketResponseStep());
       addStep(
           new DeleteStorageTransferServiceJobStep(flightBeanBag.getStoragetransfer()), cloudRetry);
       addStep(new RemoveBucketRolesStep(flightBeanBag.getBucketCloneRolesService()), cloudRetry);

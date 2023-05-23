@@ -78,7 +78,7 @@ public class CreateTableCopyJobsStep implements Step {
     workingMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, sourceInputs);
 
     final DatasetCloneInputs destinationInputs = getDestinationInputs(flightContext);
-    workingMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, destinationInputs);
+    workingMap.put(ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, destinationInputs);
 
     final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     // TODO(jaycarlton):  remove usage of this client when it's all in CRL PF-942

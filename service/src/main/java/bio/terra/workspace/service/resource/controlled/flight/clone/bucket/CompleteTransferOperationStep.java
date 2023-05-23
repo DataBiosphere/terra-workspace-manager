@@ -6,7 +6,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.service.resource.controlled.exception.StorageTransferServiceTimeoutException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
@@ -17,7 +16,6 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 /**
  * Find the most recently started transfer operation for the flight's Storage Transfer job and wait
@@ -49,11 +47,11 @@ public class CompleteTransferOperationStep implements Step {
         ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME,
         ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID);
     try {
-      final String transferJobName =
+      String transferJobName =
           flightContext
               .getWorkingMap()
               .get(ControlledResourceKeys.STORAGE_TRANSFER_JOB_NAME, String.class);
-      final String controlPlaneProjectId =
+      String controlPlaneProjectId =
           flightContext
               .getWorkingMap()
               .get(ControlledResourceKeys.CONTROL_PLANE_PROJECT_ID, String.class);
@@ -62,9 +60,9 @@ public class CompleteTransferOperationStep implements Step {
       // for completion of the first transfer operation. The trick is going to be setting up a
       // polling interval that's appropriate for a wide range of bucket sizes. Everything from
       // milliseconds to hours. The transfer operation won't exist until it starts.
-      final String operationName = getLatestOperationName(transferJobName, controlPlaneProjectId);
+      String operationName = getLatestOperationName(transferJobName, controlPlaneProjectId);
 
-      final StepResult operationResult = getTransferOperationResult(transferJobName, operationName);
+      StepResult operationResult = getTransferOperationResult(transferJobName, operationName);
 
       if (StepStatus.STEP_RESULT_FAILURE_FATAL == operationResult.getStepStatus()) {
         return operationResult;
@@ -72,14 +70,6 @@ public class CompleteTransferOperationStep implements Step {
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
-
-    final var apiBucketResult =
-        flightContext
-            .getWorkingMap()
-            .get(
-                ControlledResourceKeys.CLONE_DEFINITION_RESULT,
-                ApiClonedControlledGcpGcsBucket.class);
-    FlightUtils.setResponse(flightContext, apiBucketResult, HttpStatus.OK);
 
     return StepResult.getStepResultSuccess();
   }

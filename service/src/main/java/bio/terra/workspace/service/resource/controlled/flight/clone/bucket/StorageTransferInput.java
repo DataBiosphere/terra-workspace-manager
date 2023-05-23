@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.UUID;
 
-class BucketCloneInputs {
+class StorageTransferInput {
 
   private final UUID workspaceUuid;
   private final String projectId;
@@ -13,7 +13,7 @@ class BucketCloneInputs {
   private final List<String> roleNames;
 
   @JsonCreator
-  public BucketCloneInputs(
+  public StorageTransferInput(
       @JsonProperty("workspaceId") UUID workspaceUuid,
       @JsonProperty("projectId") String projectId,
       @JsonProperty("bucketName") String bucketName,

@@ -4,6 +4,52 @@
 ## may change without notice.
 
 paths:
+  /api/workspaces/alpha1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}/load:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      operationId: loadUrlList
+      tags: [ Alpha1 ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoadUrlListRequestBody'
+      summary: |
+        Use storage transfer service to transfer files from signed urls list to
+        GCS bucket.
+      responses:
+        '200':
+          $ref: '#/components/responses/LoadUrlListResponse'
+        '202':
+          $ref: '#/components/responses/LoadUrlListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/workspaces/alpha1/{workspaceId}/resources/controlled/gcp/buckets/{resourceId}/load/result/{jobId}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    - $ref: '#/components/parameters/ResourceId'
+    - $ref: '#/components/parameters/JobId'
+    get:
+      operationId: fetchLoadUrlListResult
+      tags: [ Alpha1 ]
+      summary: Get the result of load signed url list.
+      responses:
+        '200':
+          $ref: '#/components/responses/LoadUrlListResponse'
+        '202':
+          $ref: '#/components/responses/LoadUrlListResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/alpha1/{workspaceId}/jobs:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -37,6 +83,25 @@ paths:
 
 components:
   schemas:
+    LoadUrlListRequestBody:
+      description: |
+        Request to load signed urls files to a gcs bucket.
+      type: object
+      properties:
+        manifestFileUrl:
+          description: |
+            public url (http or https only) to the tsv file that contains the 
+            list of files.
+          type: string
+    LoadUrlListResult:
+      description: >-
+        Response for loading signed url lists to gcs bucket.
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
     EnumeratedJob:
       description: |
         One job returned by the enumerate jobs request. The jobReport is always present.
@@ -90,7 +155,7 @@ components:
     OperationType:
       type: string
       description: Types of job operations
-      enum: [ 'APPLICATION_DISABLED', 'APPLICATION_ENABLED', 'CLONE', 'CREATE', 'DELETE', 'GRANT_WORKSPACE_ROLE', 'REMOVE_WORKSPACE_ROLE', 'SYSTEM_CLEANUP','UPDATE', 'ADMIN_UPDATE', 'UNKNOWN' ]
+      enum: [ 'APPLICATION_DISABLED', 'APPLICATION_ENABLED', 'CLONE', 'CREATE', 'DELETE', 'GRANT_WORKSPACE_ROLE', 'REMOVE_WORKSPACE_ROLE', 'SYSTEM_CLEANUP','UPDATE', 'ADMIN_UPDATE', 'DATA_TRANSFER', 'UNKNOWN' ]
 
   parameters:
     PageToken:
@@ -116,4 +181,13 @@ components:
       required: false
       schema:
         $ref: '#/components/schemas/Name'
+
+  responses:
+    LoadUrlListResponse:
+      description: Response to start a storage data transfer from a url list to a gcs bucket
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LoadUrlListResult'
+
 
