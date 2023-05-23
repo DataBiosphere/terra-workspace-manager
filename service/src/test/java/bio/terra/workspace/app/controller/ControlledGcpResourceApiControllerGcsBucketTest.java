@@ -63,6 +63,7 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.common.collect.ImmutableList;
+import java.net.URL;
 import java.util.List;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -107,8 +108,8 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
               LifecycleAction.newDeleteAction(),
               LifecycleCondition.newBuilder().setAge(3).build()));
 
-  private static final String URL_LIST =
-      "https://raw.githubusercontent.com/yuhuyoyo/test-repo/main/helloworld.tsv";
+  private static final String FILE_2 = "helloworld.txt";
+  private static final String FILE_2_CONTENT = "hello world";
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
@@ -134,6 +135,8 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
   private final String source2ResourceName = TestUtils.appendRandomNumber("source-resource-name");
   private final String source2BucketName = TestUtils.appendRandomNumber("source-bucket-name");
   private ApiGcpGcsBucketResource source2Bucket;
+
+  private URL manifestUrl;
 
   // See here for how to skip workspace creation for local runs:
   // https://github.com/DataBiosphere/terra-workspace-manager#for-local-runs-skip-workspacecontext-creation
@@ -223,8 +226,21 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
                 STORAGE_CLASS,
                 LIFECYCLE_API)
             .getGcpBucket();
+    // Add two files to bucket2 and create a public url of the manifest tsv file of the two files.
     addFileToBucket(
         userAccessUtils.defaultUser().getGoogleCredentials(), projectId2, source2BucketName);
+    addFileToBucket(
+        userAccessUtils.defaultUser().getGoogleCredentials(),
+        projectId2,
+        source2BucketName,
+        FILE_2,
+        FILE_2_CONTENT);
+    manifestUrl =
+        buildSignedUrlListObject(
+            userAccessUtils.defaultUser().getGoogleCredentials(),
+            projectId2,
+            source2BucketName,
+            List.of(FILE_2, GCS_FILE_NAME));
   }
 
   /**
@@ -244,7 +260,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     AuthenticatedUserRequest defaultUserRequest =
         userAccessUtils.defaultUser().getAuthenticatedRequest();
     mockMvcUtils.deleteWorkspace(defaultUserRequest, workspaceId);
-    // mockMvcUtils.deleteWorkspace(defaultUserRequest, workspaceId2);
+    mockMvcUtils.deleteWorkspace(defaultUserRequest, workspaceId2);
   }
 
   @Test
@@ -283,35 +299,21 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
   public void loadSignedUrlList_succeedsAndFileLoadedIntoBucket() throws Exception {
     AuthenticatedUserRequest defaultUserRequest =
         userAccessUtils.defaultUser().getAuthenticatedRequest();
-    String file2 = "helloworld.txt";
-    String file2Content = "hello world";
-    addFileToBucket(
-        userAccessUtils.defaultUser().getGoogleCredentials(),
-        projectId2,
-        source2BucketName,
-        file2,
-        file2Content);
-    var url =
-        buildSignedUrlListObject(
-            userAccessUtils.defaultUser().getGoogleCredentials(),
-            projectId2,
-            source2BucketName,
-            List.of(file2, GCS_FILE_NAME));
 
     ApiLoadUrlListResult result =
         loadSignedUrlList(
             defaultUserRequest,
             sourceBucket.getMetadata().getWorkspaceId(),
             sourceBucket.getMetadata().getResourceId(),
-            url.toString());
+            manifestUrl.toString());
 
     assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
     GcsBucketUtils.assertBucketFiles(
         userAccessUtils.defaultUser().getGoogleCredentials(),
         projectId,
         sourceBucketName,
-        String.format("storage.googleapis.com/%s/%s", source2BucketName, file2),
-        file2Content);
+        String.format("storage.googleapis.com/%s/%s", source2BucketName, FILE_2),
+        FILE_2_CONTENT);
     GcsBucketUtils.assertBucketFiles(
         userAccessUtils.defaultUser().getGoogleCredentials(),
         projectId,
@@ -326,7 +328,10 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
 
     // Third user has no access to sourceBucket.
     loadSignedUrlListExpectError(
-        thirdUserAuthRequest, sourceBucket.getMetadata().getResourceId(), HttpStatus.SC_FORBIDDEN);
+        thirdUserAuthRequest,
+        sourceBucket.getMetadata().getResourceId(),
+        HttpStatus.SC_FORBIDDEN,
+        manifestUrl.toString());
   }
 
   @Test
@@ -334,7 +339,10 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
     AuthenticatedUserRequest secondUserAuthRequest = userAccessUtils.secondUserAuthRequest();
 
     loadSignedUrlListExpectError(
-        secondUserAuthRequest, /*bucketId=*/ UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
+        secondUserAuthRequest,
+        /*bucketId=*/ UUID.randomUUID(),
+        HttpStatus.SC_NOT_FOUND,
+        manifestUrl.toString());
   }
 
   @Test
@@ -865,9 +873,9 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
   }
 
   private void loadSignedUrlListExpectError(
-      AuthenticatedUserRequest userRequest, UUID bucketId, int httpStatus) throws Exception {
-    ApiLoadUrlListRequestBody requestBody =
-        new ApiLoadUrlListRequestBody().manifestFileUrl(URL_LIST);
+      AuthenticatedUserRequest userRequest, UUID bucketId, int httpStatus, String url)
+      throws Exception {
+    ApiLoadUrlListRequestBody requestBody = new ApiLoadUrlListRequestBody().manifestFileUrl(url);
     mockMvcUtils.postExpect(
         userRequest,
         objectMapper.writeValueAsString(requestBody),
