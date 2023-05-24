@@ -24,7 +24,7 @@ env:
     exportEnabled: ${CLOUD_TRACE_ENABLED:false}
     samplingRate: ${SAMPLING_PROBABILITY:0}
   urls: # While we've traditionally thought of these as env specific and ok to hardcode, with kubernetes they may change
-    sam: ${SAM_ADDRESS:https://sam.dsde-dev.broadinstitute.org/}
+    sam: ${SAM_ADDRESS:https://terra-devel-sam.api.verily.com/}
     terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
     bpm: ${BPM_ADDRESS:https://bpm.dsde-dev.broadinstitute.org/}
     tps: ${TPS_ADDRESS:https://tps.dsde-dev.broadinstitute.org/}

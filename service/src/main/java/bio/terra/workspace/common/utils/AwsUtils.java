@@ -58,6 +58,7 @@ import software.amazon.awssdk.services.sagemaker.model.DeleteNotebookInstanceReq
 import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceResponse;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
+import software.amazon.awssdk.services.sagemaker.model.StartNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.model.StopNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 import software.amazon.awssdk.services.sts.StsClient;
@@ -74,8 +75,11 @@ public class AwsUtils {
   private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
   private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
 
-  private static final Set<NotebookInstanceStatus> startableNotebookStatusSet =
-      Set.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED);
+  public static final Set<NotebookInstanceStatus> notebookStatusSetCanStart =
+      Set.of(
+          NotebookInstanceStatus.STOPPING,
+          NotebookInstanceStatus.STOPPED,
+          NotebookInstanceStatus.FAILED);
   public static final Set<NotebookInstanceStatus> notebookStatusSetCanStop =
       Set.of(
           NotebookInstanceStatus.PENDING,
@@ -668,7 +672,7 @@ public class AwsUtils {
   }
 
   /**
-   * Stop a AWS SageMaker Notebook
+   * Get a AWS SageMaker Notebook status
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
@@ -698,6 +702,40 @@ public class AwsUtils {
     } catch (SdkException e) {
       checkException(e);
       throw new ApiException("Error getting notebook instance", e);
+    }
+  }
+
+  /**
+   * Start a AWS SageMaker Notebook
+   *
+   * @param awsCredentialsProvider {@link AwsCredentialsProvider}
+   * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
+   */
+  public static void startSageMakerNotebook(
+      AwsCredentialsProvider awsCredentialsProvider,
+      ControlledAwsSageMakerNotebookResource notebookResource) {
+    SageMakerClient sageMakerClient =
+        getSageMakerClient(awsCredentialsProvider, Region.of(notebookResource.getRegion()));
+
+    logger.info("Starting notebook instance {}", notebookResource.getInstanceName());
+
+    try {
+      SdkHttpResponse httpResponse =
+          sageMakerClient
+              .startNotebookInstance(
+                  StartNotebookInstanceRequest.builder()
+                      .notebookInstanceName(notebookResource.getInstanceName())
+                      .build())
+              .sdkHttpResponse();
+      if (!httpResponse.isSuccessful()) {
+        throw new ApiException(
+            "Error starting notebook instance, "
+                + httpResponse.statusText().orElse(String.valueOf(httpResponse.statusCode())));
+      }
+
+    } catch (SdkException e) {
+      checkException(e);
+      throw new ApiException("Error starting notebook instance", e);
     }
   }
 

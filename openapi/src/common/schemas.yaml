@@ -349,6 +349,3 @@ components:
         forceDelete:
           description: Perform prerequisites and force delete
           type: boolean
-        recursive:
-          description: Perform recursive deletion
-          type: boolean

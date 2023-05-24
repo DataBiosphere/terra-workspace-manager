@@ -97,6 +97,9 @@ public class CreateAwsSageMakerNotebookStep implements Step {
                 ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN,
                 String.class)),
         tags);
+    AwsUtils.waitForSageMakerNotebookStatus(
+        credentialsProvider, resource, NotebookInstanceStatus.IN_SERVICE);
+
     return StepResult.getStepResultSuccess();
   }
 
@@ -115,6 +118,7 @@ public class CreateAwsSageMakerNotebookStep implements Step {
         AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
         AwsUtils.waitForSageMakerNotebookStatus(
             credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+
       } else if (notebookStatus == NotebookInstanceStatus.STOPPING) {
         AwsUtils.waitForSageMakerNotebookStatus(
             credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
