@@ -373,17 +373,33 @@ public class WorkspaceService {
   /** Delete an existing workspace by ID. */
   @Traced
   public void deleteWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
-    JobBuilder deleteJob =
-        jobService
-            .newJob()
-            .description("Delete workspace " + workspace.getWorkspaceId())
-            .flightClass(WorkspaceDeleteFlight.class)
-            .operationType(OperationType.DELETE)
-            .workspaceId(workspace.getWorkspaceId().toString())
-            .userRequest(userRequest)
-            .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
+    JobBuilder deleteJob = buildDeleteWorkspaceJob(workspace, userRequest, UUID.randomUUID().toString(), null);
     deleteJob.submitAndWait();
+  }
+
+  /** Async delete of an existing workspace */
+  @Traced
+  public void deleteWorkspaceAsync(Workspace workspace, AuthenticatedUserRequest userRequest, String jobId, @Nullable String resultPath) {
+    JobBuilder deleteJob = buildDeleteWorkspaceJob(workspace, userRequest, jobId, resultPath);
+    deleteJob.submit();
+  }
+
+  private JobBuilder buildDeleteWorkspaceJob(
+    Workspace workspace,
+    AuthenticatedUserRequest userRequest,
+    String jobId,
+    @Nullable String resultPath) {
+    return jobService
+      .newJob()
+      .jobId(jobId)
+      .description("Delete workspace " + workspace.getWorkspaceId())
+      .flightClass(WorkspaceDeleteFlight.class)
+      .operationType(OperationType.DELETE)
+      .workspaceId(workspace.getWorkspaceId().toString())
+      .userRequest(userRequest)
+      .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+      .addParameter(
+        WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
   }
 
   /**
@@ -493,19 +509,38 @@ public class WorkspaceService {
   @Traced
   public void deleteCloudContext(
       Workspace workspace, CloudPlatform cloudPlatform, AuthenticatedUserRequest userRequest) {
-    jobService
-        .newJob()
-        .description(
-            String.format(
-                "Delete %s cloud context for workspace: name: '%s' id: '%s'  ",
-                cloudPlatform, workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
-        .flightClass(DeleteCloudContextFlight.class)
-        .userRequest(userRequest)
-        .operationType(OperationType.DELETE)
-        .workspaceId(workspace.getWorkspaceId().toString())
-        .addParameter(CLOUD_PLATFORM, cloudPlatform)
-        .submitAndWait();
+    var jobBuilder = buildDeleteCloudContextJob(workspace, cloudPlatform, userRequest, UUID.randomUUID().toString(), null);
+    jobBuilder.submitAndWait();
   }
+
+  @Traced
+  public void deleteCloudContextAsync(
+    Workspace workspace, CloudPlatform cloudPlatform, AuthenticatedUserRequest userRequest, String jobId, @Nullable String resultPath) {
+    var jobBuilder = buildDeleteCloudContextJob(workspace, cloudPlatform, userRequest, UUID.randomUUID().toString(), resultPath);
+    jobBuilder.submit();
+  }
+
+  private JobBuilder buildDeleteCloudContextJob(
+    Workspace workspace,
+    CloudPlatform cloudPlatform,
+    AuthenticatedUserRequest userRequest,
+    String jobId,
+    @Nullable String resultPath) {
+    return jobService
+      .newJob()
+      .jobId(jobId)
+      .description(
+        String.format(
+          "Delete %s cloud context for workspace: name: '%s' id: '%s'  ",
+          cloudPlatform, workspace.getDisplayName().orElse(""), workspace.getWorkspaceId()))
+      .flightClass(DeleteCloudContextFlight.class)
+      .userRequest(userRequest)
+      .operationType(OperationType.DELETE)
+      .workspaceId(workspace.getWorkspaceId().toString())
+      .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+      .addParameter(CLOUD_PLATFORM, cloudPlatform);
+  }
+
 
   /**
    * Remove a workspace role from a user. This will also remove a user from their private resources

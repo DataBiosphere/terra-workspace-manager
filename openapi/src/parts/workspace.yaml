@@ -88,7 +88,10 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
-      summary: Delete a Workspace.
+      deprecated: true
+      summary: |
+        Delete a Workspace.
+        Deprecated in favor of the async V2 version.
       operationId: deleteWorkspace
       tags: [ Workspace ]
       responses:
@@ -390,6 +393,102 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2:
+    post:
+      summary: Create a new Workspace and a new cloud context asynchronously
+      operationId: createWorkspaceV2
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceV2Request'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '202':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/NotFound'
+
+  /api/workspaces/v2/result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to create a workspace.
+      operationId: getCreateWorkspaceV2Result
+      tags: [ Workspace ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '202':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/{workspaceId}/delete:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: |
+        Deletes a workspace and all of its cloud contexts and data.
+        This async delete requires a body, but that is not allowed on standard
+        delete method, so this is done as a POST and labeled as delete in the path.
+      operationId: deleteWorkspaceV2
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteWorkspaceV2Request'
+      responses:
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/{workspaceId}/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: |
+        Gets the result of an async workspace delete.
+      operationId: getDeleteWorkspaceV2Result
+      tags: [ Workspace ]
+      responses:
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   parameters:
     WsmPolicyDepth:
@@ -407,6 +506,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneWorkspaceResult'
+
+    CreateWorkspaceV2Response:
+      description: Description of a workspace
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateWorkspaceV2Result'
 
   schemas:
     ClonedWorkspace:
@@ -555,6 +661,62 @@ components:
           items:
             type: string
 
+    CreateWorkspaceV2Request:
+      type: object
+      required: [ id, jobControl ]
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        userFacingId:
+          $ref: '#/components/schemas/UserFacingId'
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
+        policies:
+          $ref: '#/components/schemas/WsmPolicyInputs'
+        stage:
+          $ref: '#/components/schemas/WorkspaceStageModel'
+        properties:
+          $ref: '#/components/schemas/Properties'
+        applicationIds:
+          description: List of application ids to enable for this workspace
+          type: array
+          items:
+            type: string
+        cloudPlatform:
+          description: Optional cloud platform for the cloud context to create within the workspace
+          $ref: '#/components/schemas/CloudPlatform'
+        spendProfile:
+          description: ID of the spend profile for the cloud context, if any
+          type: string
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    CreateWorkspaceV2Result:
+      description: Result of an asynchronous workspace create
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        workspace:
+          $ref: '#/components/schemas/WorkspaceDescription'
+
+    DeleteWorkspaceV2Request:
+      type: object
+      required: [ jobControl ]
+      description: |
+        Request body for asynchronously deleting a workspace.
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
     GrantRoleRequestBody:
       description: The body for a request to grant a role to a single user.
       type: object
@@ -635,7 +797,8 @@ components:
             returned.
           $ref: '#/components/schemas/IamRole'
         spendProfile:
-          description: ID of provided spend profile
+          deprecated: true
+          description: ID of provided spend profile. DEPRECATED. Use spend profile in the cloud context
           type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'

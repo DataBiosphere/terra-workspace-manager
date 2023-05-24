@@ -55,7 +55,10 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/CloudContext'
     delete:
-      summary: Deletes a cloud context and all of its data from a workspace.
+      deprecated: true
+      summary: |
+        Deletes a cloud context and all of its data from a workspace.
+        Deprecated in favor of the async V2 version.
       operationId: deleteCloudContext
       tags: [Workspace]
       responses:
@@ -67,6 +70,58 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+
+
+  /api/workspaces/v2/{workspaceId}/cloudcontexts/{cloudContext}/delete:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/CloudContext'
+    post:
+      summary: |
+        Deletes a cloud context and all of its data from a workspace.
+        This async delete requires a body, but that is not allowed on standard
+        delete method, so this is done as a POST and labeled as delete in the path.
+      operationId: deleteCloudContextV2
+      tags: [Workspace]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteCloudContextV2Request'
+      responses:
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/{workspaceId}/cloudcontexts/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: |
+        Gets the result of an async cloud context delete.
+      operationId: getDeleteCloudContextV2Result
+      tags: [ Workspace ]
+      responses:
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 
 components:
   schemas:
@@ -147,8 +202,24 @@ components:
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
 
+    DeleteCloudContextV2Request:
+      type: object
+      required: [jobControl]
+      description: |
+        Request body for asynchronously deleting a cloud context for a workspace.
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
   responses:
     CreateCloudContextResultResponse:
+      description: Job is complete (succeeded or failed)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateCloudContextResult'
+
+    DeleteCloudContextResultResponse:
       description: Job is complete (succeeded or failed)
       content:
         application/json:

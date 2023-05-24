@@ -32,11 +32,16 @@ import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Request;
+import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiDeleteCloudContextV2Request;
+import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
@@ -118,6 +123,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final TpsApiDispatch tpsApiDispatch;
   private final ResourceDao resourceDao;
   private final SpendProfileService spendProfileService;
+  private final WorkspaceV2Api workspaceV2Api;
 
   @Autowired
   public WorkspaceApiController(
@@ -136,7 +142,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       ResourceDao resourceDao,
-      SpendProfileService spendProfileService) {
+      SpendProfileService spendProfileService,
+      WorkspaceV2Api workspaceV2Api) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -154,9 +161,42 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.resourceDao = resourceDao;
     this.spendProfileService = spendProfileService;
+    this.workspaceV2Api = workspaceV2Api;
+  }
+
+  // For the WorkspaceV2 interfaces, dispatch to a separate module for the implementation
+  @Override
+  public ResponseEntity<ApiCreateWorkspaceV2Result> createWorkspaceV2(ApiCreateWorkspaceV2Request body) {
+    return workspaceV2Api.createWorkspaceV2(body);
+  }
+
+  @Override
+  public ResponseEntity<ApiJobResult> deleteCloudContextV2(UUID workspaceId, ApiCloudPlatform cloudContext, ApiDeleteCloudContextV2Request body) {
+    return workspaceV2Api.deleteCloudContextV2(workspaceId, cloudContext, body);
+  }
+
+  @Override
+  public ResponseEntity<ApiJobResult> deleteWorkspaceV2(UUID workspaceId, ApiDeleteWorkspaceV2Request body) {
+    return workspaceV2Api.deleteWorkspaceV2(workspaceId, body);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreateWorkspaceV2Result> getCreateWorkspaceV2Result(String jobId) {
+    return workspaceV2Api.getCreateWorkspaceV2Result(jobId);
+  }
+
+  @Override
+  public ResponseEntity<ApiJobResult> getDeleteCloudContextV2Result(UUID workspaceId, String jobId) {
+    return workspaceV2Api.getDeleteCloudContextV2Result(workspaceId, jobId);
+  }
+
+  @Override
+  public ResponseEntity<ApiJobResult> getDeleteWorkspaceV2Result(UUID workspaceId, String jobId) {
+    return workspaceV2Api.getDeleteWorkspaceV2Result(workspaceId, jobId);
   }
 
   @Traced
+  @Deprecated
   @Override
   public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
       @RequestBody ApiCreateWorkspaceRequestBody body) {
@@ -432,6 +472,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Traced
+  @Deprecated
   @Override
   public ResponseEntity<Void> deleteWorkspace(@PathVariable("workspaceId") UUID uuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -629,6 +670,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   @Traced
+  @Deprecated
   @Override
   public ResponseEntity<Void> deleteCloudContext(UUID uuid, ApiCloudPlatform cloudPlatform) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -645,7 +687,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<Void> enablePet(UUID workspaceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // TODO(PF-1007): This would be a nice use for an authorized workspace ID.
     // Validate that the user is a workspace member, as enablePetServiceAccountImpersonation does
     // not authenticate.
     workspaceService.validateMcWorkspaceAndAction(
