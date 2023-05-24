@@ -12,7 +12,6 @@ import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookAttributes;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookResource;
-import bio.terra.workspace.generated.model.ApiDeleteOptions;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
@@ -147,13 +146,11 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
-    ApiDeleteOptions deleteOptions =
-        flight
-            .getInputParameters()
-            .get(ControlledResourceKeys.DELETE_OPTIONS, ApiDeleteOptions.class);
+    boolean forceDelete =
+        flight.getInputParameters().get(ControlledResourceKeys.FORCE_DELETE, Boolean.class);
 
     // Notebooks must be stopped before deletion. If requested, stop instance before delete attempt
-    if (deleteOptions != null && deleteOptions.isForceDelete()) {
+    if (forceDelete) {
       flight.addStep(
           new StopAwsSageMakerNotebookStep(this, flightBeanBag.getAwsCloudContextService(), true),
           cloudRetry);

@@ -48,7 +48,7 @@ public class DeleteControlledAwsResourcesStep implements Step {
     // Delete all resources
     for (ControlledResource resource : controlledResourceList) {
       controlledResourceService.deleteControlledResourceSync(
-          workspaceUuid, resource.getResourceId(), userRequest);
+          workspaceUuid, resource.getResourceId(), true, userRequest);
     }
 
     return StepResult.getStepResultSuccess();

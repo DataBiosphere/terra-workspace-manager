@@ -75,19 +75,6 @@ public class AwsUtils {
   private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
   private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
 
-  public static final Set<NotebookInstanceStatus> notebookStatusSetCanStart =
-      Set.of(
-          NotebookInstanceStatus.STOPPING,
-          NotebookInstanceStatus.STOPPED,
-          NotebookInstanceStatus.FAILED);
-  public static final Set<NotebookInstanceStatus> notebookStatusSetCanStop =
-      Set.of(
-          NotebookInstanceStatus.PENDING,
-          NotebookInstanceStatus.IN_SERVICE,
-          NotebookInstanceStatus.UPDATING);
-  public static final Set<NotebookInstanceStatus> notebookStatusSetCanDelete =
-      Set.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED);
-
   /**
    * Truncate a passed string for use as an STS session name
    *

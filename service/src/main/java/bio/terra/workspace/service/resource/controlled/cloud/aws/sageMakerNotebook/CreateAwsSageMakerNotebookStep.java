@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
-import static bio.terra.workspace.common.utils.AwsUtils.notebookStatusSetCanStop;
-
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
@@ -114,14 +112,18 @@ public class CreateAwsSageMakerNotebookStep implements Step {
       NotebookInstanceStatus notebookStatus =
           AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
 
-      if (notebookStatusSetCanStop.contains(notebookStatus)) {
-        AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
-        AwsUtils.waitForSageMakerNotebookStatus(
+      switch (notebookStatus) {
+        case IN_SERVICE -> {
+          AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
+          AwsUtils.waitForSageMakerNotebookStatus(
+              credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+        }
+        case STOPPING -> AwsUtils.waitForSageMakerNotebookStatus(
             credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
-
-      } else if (notebookStatus == NotebookInstanceStatus.STOPPING) {
-        AwsUtils.waitForSageMakerNotebookStatus(
-            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+        case PENDING, UPDATING, UNKNOWN_TO_SDK_VERSION -> throw new ApiException(
+            String.format(
+                "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
+                resource.getResourceId(), notebookStatus));
       }
 
       AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);

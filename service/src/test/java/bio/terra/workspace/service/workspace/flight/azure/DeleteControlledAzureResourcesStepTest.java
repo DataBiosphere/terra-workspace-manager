@@ -101,9 +101,9 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
     // Step is expected to fail and no resources should be deleted
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
     verify(mockControlledResourceService, never())
-        .deleteControlledResourceSync(any(), any(), any());
+        .deleteControlledResourceSync(any(), any(), any(), any());
     verify(mockControlledResourceService, never())
-        .deleteControlledResourceAsync(any(), any(), any(), any(), any());
+        .deleteControlledResourceAsync(any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -169,8 +169,8 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
 
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
     verify(mockControlledResourceService)
-        .deleteControlledResourceSync(workspaceId, deleteMe.getResourceId(), userRequest);
+        .deleteControlledResourceSync(workspaceId, deleteMe.getResourceId(), false, userRequest);
     verify(mockControlledResourceService)
-        .deleteControlledResourceSync(workspaceId, deleteMeToo.getResourceId(), userRequest);
+        .deleteControlledResourceSync(workspaceId, deleteMeToo.getResourceId(), false, userRequest);
   }
 }

@@ -24,8 +24,6 @@ components:
       properties:
         jobControl:
           $ref: '#/components/schemas/JobControl'
-        deleteOptions:
-          $ref: '#/components/schemas/DeleteOptions'
 
     DeleteControlledAwsResourceResult:
       type: object

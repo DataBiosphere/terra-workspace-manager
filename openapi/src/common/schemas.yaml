@@ -342,10 +342,3 @@ components:
       items:
         uniqueItems: true
         type: string
-
-    DeleteOptions:
-      type: object
-      properties:
-        forceDelete:
-          description: Perform prerequisites and force delete
-          type: boolean

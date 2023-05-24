@@ -1,8 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
-import static bio.terra.workspace.common.utils.AwsUtils.notebookStatusSetCanStart;
-import static bio.terra.workspace.common.utils.AwsUtils.notebookStatusSetCanStop;
-
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.stairway.FlightContext;
@@ -46,25 +43,30 @@ public class StopAwsSageMakerNotebookStep implements Step {
       NotebookInstanceStatus notebookStatus =
           AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
 
-      if (notebookStatusSetCanStop.contains(notebookStatus)) {
-        AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
-        AwsUtils.waitForSageMakerNotebookStatus(
-            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
-
-      } else if (notebookStatus == NotebookInstanceStatus.STOPPING) {
-        AwsUtils.waitForSageMakerNotebookStatus(
-            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
-
-      } else if (notebookStatus != NotebookInstanceStatus.STOPPED) {
-        if (!resourceDeletion) {
-          throw new ApiException(
-              String.format(
-                  "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
-                  resource.getResourceId(), notebookStatus));
+      switch (notebookStatus) {
+        case IN_SERVICE -> {
+          AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
+          AwsUtils.waitForSageMakerNotebookStatus(
+              credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
         }
-        // else: already deleted
+        case STOPPING -> AwsUtils.waitForSageMakerNotebookStatus(
+            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+        case DELETING -> {
+          if (!resourceDeletion) {
+            throw new ApiException(
+                String.format(
+                    "AWS SageMaker Notebook resource %s, being deleted.",
+                    resource.getResourceId(), notebookStatus));
+          }
+          // else: being deleted
+        }
+        case PENDING, UPDATING, UNKNOWN_TO_SDK_VERSION -> throw new ApiException(
+            String.format(
+                "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
+                resource.getResourceId(), notebookStatus));
+        case STOPPED, FAILED -> {
+        } // already stopped
       }
-      // else: already stopped
 
     } catch (ApiException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
@@ -90,23 +92,22 @@ public class StopAwsSageMakerNotebookStep implements Step {
       NotebookInstanceStatus notebookStatus =
           AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
 
-      if (notebookStatusSetCanStart.contains(notebookStatus)) {
-        AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
-        AwsUtils.waitForSageMakerNotebookStatus(
-            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
-
-      } else if (notebookStatus == NotebookInstanceStatus.PENDING
-          || notebookStatus == NotebookInstanceStatus.UPDATING) {
-        AwsUtils.waitForSageMakerNotebookStatus(
+      switch (notebookStatus) {
+        case STOPPED, FAILED -> {
+          AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
+          AwsUtils.waitForSageMakerNotebookStatus(
+              credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+        }
+        case PENDING, UPDATING -> AwsUtils.waitForSageMakerNotebookStatus(
             credentialsProvider, resource, NotebookInstanceStatus.IN_SERVICE);
 
-      } else if (notebookStatus != NotebookInstanceStatus.IN_SERVICE) {
-        throw new ApiException(
+        case STOPPING, DELETING, UNKNOWN_TO_SDK_VERSION -> throw new ApiException(
             String.format(
                 "Cannot start AWS SageMaker Notebook resource %s, status %s.",
                 resource.getResourceId(), notebookStatus));
+        case IN_SERVICE -> {
+        } // already started
       }
-      // else: already started
 
     } catch (ApiException | NotFoundException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);

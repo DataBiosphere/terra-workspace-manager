@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
-import static bio.terra.workspace.common.utils.AwsUtils.notebookStatusSetCanDelete;
-
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.stairway.FlightContext;
@@ -43,15 +41,17 @@ public class ValidateAwsSageMakerNotebookDeleteStep implements Step {
       NotebookInstanceStatus notebookStatus =
           AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
 
-      if (!notebookStatusSetCanDelete.contains(notebookStatus)
-          && (notebookStatus != NotebookInstanceStatus.DELETING)) {
-        // TODO(TERRA-560) Store this as a Validation exception in Step result
-        logger.error(
-            "Expected notebook instance {} status in {}, but actual status is {}",
-            resource.getResourceId(),
-            notebookStatusSetCanDelete,
-            notebookStatus);
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+      switch (notebookStatus) {
+        case STOPPED, FAILED, DELETING -> {
+        } // can delete
+        default -> { // all other cases
+          // TODO(TERRA-560) Store this as a Validation exception in Step result
+          logger.error(
+              String.format(
+                  "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
+                  resource.getResourceId(), notebookStatus));
+          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+        }
       }
 
     } catch (ApiException e) {

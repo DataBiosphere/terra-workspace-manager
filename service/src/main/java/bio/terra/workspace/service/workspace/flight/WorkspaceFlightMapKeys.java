@@ -80,7 +80,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
 
     // Deletion keys
-    public static final String DELETE_OPTIONS = "deleteOptions";
+    public static final String FORCE_DELETE = "forceDelete";
 
     // GCP
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
