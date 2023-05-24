@@ -1,9 +1,8 @@
 package bio.terra.workspace.app.controller.shared;
 
 import bio.terra.workspace.generated.model.ApiJobReport;
-import org.springframework.http.HttpStatus;
-
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
 
 public class ControllerUtils {
 
@@ -19,12 +18,14 @@ public class ControllerUtils {
    * @param resultWord the path component identifying the result
    * @return a string with the result endpoint URL
    */
-  public static String getAsyncResultEndpoint(HttpServletRequest request, String jobId, String resultWord) {
+  public static String getAsyncResultEndpoint(
+      HttpServletRequest request, String jobId, String resultWord) {
     return String.format("%s/%s/%s", request.getServletPath(), resultWord, jobId);
   }
 
   /**
    * Version of getAsyncResultEndpoint with defaulted resultWord
+   *
    * @param jobId
    * @return a string with the result endpoint URL
    */
@@ -39,7 +40,8 @@ public class ControllerUtils {
    * response or error report bodies.
    */
   public static HttpStatus getAsyncResponseCode(ApiJobReport jobReport) {
-    return jobReport.getStatus() == ApiJobReport.StatusEnum.RUNNING ? HttpStatus.ACCEPTED : HttpStatus.OK;
+    return jobReport.getStatus() == ApiJobReport.StatusEnum.RUNNING
+        ? HttpStatus.ACCEPTED
+        : HttpStatus.OK;
   }
-
 }

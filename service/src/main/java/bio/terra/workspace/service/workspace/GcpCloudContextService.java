@@ -88,7 +88,7 @@ public class GcpCloudContextService implements CloudContextService {
 
     // Configure the project for WSM
     flight.addStep(
-        new SetProjectBillingStep(crl.getCloudBillingClientCow(), spendProfile), cloudRetry);
+        new SetProjectBillingStep(crl, spendProfile), cloudRetry);
     flight.addStep(new GrantWsmRoleAdminStep(crl), shortRetry);
     flight.addStep(
         new CreateCustomGcpRolesStep(gcpCloudSyncRoleMapping, crl.getIamCow()), shortRetry);

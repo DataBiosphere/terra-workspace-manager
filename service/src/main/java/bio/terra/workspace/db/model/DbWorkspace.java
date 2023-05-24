@@ -161,18 +161,18 @@ public class DbWorkspace implements DbStateful {
   @Override
   public String toString() {
     return new StringJoiner(", ", DbWorkspace.class.getSimpleName() + "[", "]")
-      .add("workspaceId=" + workspaceId)
-      .add("userFacingId='" + userFacingId + "'")
-      .add("displayName='" + displayName + "'")
-      .add("description='" + description + "'")
-      .add("spendProfileId=" + spendProfileId)
-      .add("properties=" + properties)
-      .add("workspaceStage=" + workspaceStage)
-      .add("createdByEmail='" + createdByEmail + "'")
-      .add("createdDate=" + createdDate)
-      .add("state=" + state)
-      .add("flightId='" + flightId + "'")
-      .add("error=" + error)
-      .toString();
+        .add("workspaceId=" + workspaceId)
+        .add("userFacingId='" + userFacingId + "'")
+        .add("displayName='" + displayName + "'")
+        .add("description='" + description + "'")
+        .add("spendProfileId=" + spendProfileId)
+        .add("properties=" + properties)
+        .add("workspaceStage=" + workspaceStage)
+        .add("createdByEmail='" + createdByEmail + "'")
+        .add("createdDate=" + createdDate)
+        .add("state=" + state)
+        .add("flightId='" + flightId + "'")
+        .add("error=" + error)
+        .toString();
   }
 }

@@ -9,7 +9,6 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -30,14 +29,13 @@ import org.springframework.http.HttpStatus;
 /**
  * Super class for controllers containing common code.
  *
- * <p>NOTE: I started to migrate this to a separate ControllerUtils class rather than
- * use the class hierarchy. Using a super class was based on an incorrect understanding
- * of hot HttpServletRequest is handled; it is not necessary. I only did as much of
- * this refactoring as I needed for the workspace/v2 work, leaving the rest of it for
- * later.
+ * <p>NOTE: I started to migrate this to a separate ControllerUtils class rather than use the class
+ * hierarchy. Using a super class was based on an incorrect understanding of hot HttpServletRequest
+ * is handled; it is not necessary. I only did as much of this refactoring as I needed for the
+ * workspace/v2 work, leaving the rest of it for later.
  *
- * <p>Making it a separate utility class lets us decompose controller modules (which are
- * getting large) into smaller pieces.
+ * <p>Making it a separate utility class lets us decompose controller modules (which are getting
+ * large) into smaller pieces.
  */
 public class ControllerBase {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
