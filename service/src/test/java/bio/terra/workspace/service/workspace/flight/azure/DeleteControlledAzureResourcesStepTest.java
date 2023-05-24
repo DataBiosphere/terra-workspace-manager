@@ -169,8 +169,8 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
 
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
     verify(mockControlledResourceService)
-        .deleteControlledResourceSync(workspaceId, deleteMe.getResourceId(), false, userRequest);
+        .deleteControlledResourceSync(workspaceId, deleteMe.getResourceId(), userRequest);
     verify(mockControlledResourceService)
-        .deleteControlledResourceSync(workspaceId, deleteMeToo.getResourceId(), false, userRequest);
+        .deleteControlledResourceSync(workspaceId, deleteMeToo.getResourceId(), userRequest);
   }
 }
