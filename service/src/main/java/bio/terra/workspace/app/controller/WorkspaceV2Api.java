@@ -1,8 +1,11 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
+
+import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.app.controller.shared.ControllerUtils;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.app.controller.shared.WorkspaceApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -10,14 +13,23 @@ import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
 import bio.terra.workspace.generated.model.ApiDeleteCloudContextV2Request;
 import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobResult;
+import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -36,6 +48,8 @@ public class WorkspaceV2Api {
   private final JobApiUtils jobApiUtils;
   private final JobService jobService;
   private final HttpServletRequest request;
+  private final SamService samService;
+  private final WorkspaceApiUtils workspaceApiUtils;
   private final WorkspaceService workspaceService;
 
   public WorkspaceV2Api(
@@ -43,17 +57,104 @@ public class WorkspaceV2Api {
       JobApiUtils jobApiUtils,
       JobService jobService,
       HttpServletRequest request,
+      SamService samService,
+      WorkspaceApiUtils workspaceApiUtils,
       WorkspaceService workspaceService) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.jobApiUtils = jobApiUtils;
     this.jobService = jobService;
     this.request = request;
+    this.samService = samService;
+    this.workspaceApiUtils = workspaceApiUtils;
     this.workspaceService = workspaceService;
   }
 
   public ResponseEntity<ApiCreateWorkspaceV2Result> createWorkspaceV2(
       ApiCreateWorkspaceV2Request body) {
-    throw new FeatureNotSupportedException("Not implemented yet");
+    AuthenticatedUserRequest userRequest = authenticatedUserRequestFactory.from(request);
+    logger.info(
+        "Creating workspace {} and {} cloud context for {} subject {}",
+        body.getId(),
+        (body.getCloudPlatform() == null ? "no" : body.getCloudPlatform()),
+        userRequest.getEmail(),
+        userRequest.getSubjectId());
+    String jobId = body.getJobControl().getId();
+
+    // If we are creating a cloud context (cloudPlatform is present),
+    // then the spend profile must be valid and the user must have
+    // permission to link to it.
+    CloudPlatform cloudPlatform = null;
+    SpendProfile spendProfile = null;
+    SpendProfileId spendProfileId = null;
+    ApiCloudPlatform apiCloudPlatform = body.getCloudPlatform();
+    if (apiCloudPlatform != null) {
+      ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
+      cloudPlatform = CloudPlatform.fromApiCloudPlatform(apiCloudPlatform);
+      spendProfile =
+          workspaceApiUtils.validateSpendProfilePermission(userRequest, body.getSpendProfile());
+      if (spendProfile == null) {
+        throw new MissingRequiredFieldsException(
+            "To create a cloud context you must provide both cloudPlatform and spendProfile");
+      }
+      spendProfileId = spendProfile.id();
+    }
+
+    TpsPolicyInputs policies =
+        workspaceApiUtils.validateAndConvertPolicies(body.getPolicies(), body.getStage());
+    // WSM requires a userFacingId. Create one, if it is not provided.
+    WorkspaceStage workspaceStage = WorkspaceApiUtils.getStageFromApiStage(body.getStage());
+    String userFacingId =
+        Optional.ofNullable(body.getUserFacingId()).orElse(body.getId().toString());
+    ControllerValidationUtils.validateUserFacingId(userFacingId);
+
+    Workspace workspace =
+        Workspace.builder()
+            .workspaceId(body.getId())
+            .userFacingId(userFacingId)
+            .displayName(body.getDisplayName())
+            .description(body.getDescription())
+            .spendProfileId(spendProfileId)
+            .workspaceStage(workspaceStage)
+            .properties(convertApiPropertyToMap(body.getProperties()))
+            .createdByEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
+            .build();
+
+    workspaceService.createWorkspaceV2(
+        workspace,
+        policies,
+        /*applications=*/ null,
+        cloudPlatform,
+        spendProfile,
+        jobId,
+        userRequest);
+
+    ApiCreateWorkspaceV2Result result = fetchCreateWorkspaceV2Result(jobId);
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ApiCreateWorkspaceV2Result fetchCreateWorkspaceV2Result(String jobId) {
+    JobApiUtils.AsyncJobResult<Workspace> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, Workspace.class);
+
+    ApiWorkspaceDescription apiWorkspace = null;
+    Workspace workspace = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      workspace = jobResult.getResult();
+      apiWorkspace = workspaceApiUtils.buildWorkspaceDescription(workspace, WsmIamRole.OWNER);
+    }
+
+    return new ApiCreateWorkspaceV2Result()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .workspace(apiWorkspace);
+  }
+
+  public ResponseEntity<ApiCreateWorkspaceV2Result> getCreateWorkspaceV2Result(String jobId) {
+    // No access control on this because it has no containing access-controlled resource
+    ApiCreateWorkspaceV2Result result = fetchCreateWorkspaceV2Result(jobId);
+    return new ResponseEntity<>(
+        result, ControllerUtils.getAsyncResponseCode(result.getJobReport()));
   }
 
   public ResponseEntity<ApiJobResult> deleteCloudContextV2(
@@ -96,10 +197,6 @@ public class WorkspaceV2Api {
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(
         response, ControllerUtils.getAsyncResponseCode(response.getJobReport()));
-  }
-
-  public ResponseEntity<ApiCreateWorkspaceV2Result> getCreateWorkspaceV2Result(String jobId) {
-    throw new FeatureNotSupportedException("Not implemented yet");
   }
 
   public ResponseEntity<ApiJobResult> getDeleteCloudContextV2Result(

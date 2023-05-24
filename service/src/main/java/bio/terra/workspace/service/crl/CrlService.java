@@ -532,19 +532,18 @@ public class CrlService {
   }
 
   /**
-   * Set the billing account on a GCP project. The main purpose of this method
-   * is to allow mocking the setting for unit tests.
+   * Set the billing account on a GCP project. The main purpose of this method is to allow mocking
+   * the setting for unit tests.
    *
    * @param projectId project id string
    * @param billingAccountId billing account id
    */
   public void updateGcpProjectBilling(String projectId, String billingAccountId) {
     ProjectBillingInfo setBilling =
-      ProjectBillingInfo.newBuilder()
-        .setBillingAccountName("billingAccounts/" + billingAccountId)
-        .build();
+        ProjectBillingInfo.newBuilder()
+            .setBillingAccountName("billingAccounts/" + billingAccountId)
+            .build();
 
     getCloudBillingClientCow().updateProjectBillingInfo("projects/" + projectId, setBilling);
   }
-
 }

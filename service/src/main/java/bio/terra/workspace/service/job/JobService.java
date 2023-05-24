@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.job;
 
 import bio.terra.common.db.DataSourceInitializer;
+import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
@@ -46,11 +47,14 @@ import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -60,6 +64,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JobService {
+  private static final int METADATA_ROW_WAIT_SECONDS = 1;
+  private static final Duration METADATA_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
 
   private final JobConfiguration jobConfig;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
@@ -494,5 +500,40 @@ public class JobService {
       this.exception = exception;
       return this;
     }
+  }
+
+  /**
+   * For async workspace or resource creation, we do not want to return to the caller until the
+   * metadata row is in the database and, thus, visible to enumeration. This method waits for either
+   * the row to show up (the expected success case) or the job to complete (the expected error
+   * case). If one of those doesn't happen in the retry window, we throw SERVICE_UNAVAILABLE. The
+   * theory is for it not to complete, either WSM is so busy that it cannot schedule the flight or
+   * something bad has happened. Either way, SERVICE_UNAVAILABLE seems like a reasonable response.
+   *
+   * <p>There is no race condition between the two checks. For either termination test, we will make
+   * the async return to the client. That path returns the current job state. If the job is
+   * complete, the client calls the result endpoint and gets the full result.
+   *
+   * @param jobId id of the create flight.
+   * @param metadataPredicate to decide if the metadata row is there
+   */
+  public void waitForMetadataOrJob(String jobId, Supplier<Boolean> metadataPredicate) {
+    Instant exitTime = Instant.now().plus(METADATA_ROW_MAX_WAIT_TIME);
+    try {
+      while (Instant.now().isBefore(exitTime)) {
+        if (metadataPredicate.get()) {
+          return;
+        }
+        FlightState flightState = getStairway().getFlightState(jobId);
+        if (flightState.getCompleted().isPresent()) {
+          return;
+        }
+        TimeUnit.SECONDS.sleep(METADATA_ROW_WAIT_SECONDS);
+      }
+    } catch (InterruptedException e) {
+      // fall through to throw
+    }
+
+    throw new ServiceUnavailableException("Failed to make prompt progress on resource");
   }
 }

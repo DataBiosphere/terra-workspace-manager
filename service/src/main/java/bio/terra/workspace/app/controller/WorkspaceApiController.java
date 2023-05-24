@@ -1,7 +1,6 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
-import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
@@ -15,13 +14,11 @@ import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.app.controller.shared.WorkspaceApiUtils;
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.generated.model.ApiAzureContext;
@@ -43,7 +40,6 @@ import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
-import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
@@ -51,9 +47,7 @@ import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
-import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
@@ -77,12 +71,8 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
-import bio.terra.workspace.service.workspace.AwsCloudContextService;
-import bio.terra.workspace.service.workspace.AzureCloudContextService;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
-import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContext;
@@ -94,7 +84,6 @@ import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -116,14 +105,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceApiController.class);
   private final WorkspaceService workspaceService;
   private final WorkspaceActivityLogService workspaceActivityLogService;
-  private final GcpCloudContextService gcpCloudContextService;
-  private final AzureCloudContextService azureCloudContextService;
-  private final AwsCloudContextService awsCloudContextService;
   private final PetSaService petSaService;
   private final TpsApiDispatch tpsApiDispatch;
   private final ResourceDao resourceDao;
   private final SpendProfileService spendProfileService;
   private final WorkspaceV2Api workspaceV2Api;
+  private final WorkspaceApiUtils workspaceApiUtils;
 
   @Autowired
   public WorkspaceApiController(
@@ -136,14 +123,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       JobApiUtils jobApiUtils,
       WorkspaceService workspaceService,
       WorkspaceActivityLogService workspaceActivityLogService,
-      GcpCloudContextService gcpCloudContextService,
-      AzureCloudContextService azureCloudContextService,
-      AwsCloudContextService awsCloudContextService,
       PetSaService petSaService,
       TpsApiDispatch tpsApiDispatch,
       ResourceDao resourceDao,
       SpendProfileService spendProfileService,
-      WorkspaceV2Api workspaceV2Api) {
+      WorkspaceV2Api workspaceV2Api,
+      WorkspaceApiUtils workspaceApiUtils) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -153,15 +138,13 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         jobService,
         jobApiUtils);
     this.workspaceService = workspaceService;
-    this.gcpCloudContextService = gcpCloudContextService;
-    this.azureCloudContextService = azureCloudContextService;
-    this.awsCloudContextService = awsCloudContextService;
     this.petSaService = petSaService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.resourceDao = resourceDao;
     this.spendProfileService = spendProfileService;
     this.workspaceV2Api = workspaceV2Api;
+    this.workspaceApiUtils = workspaceApiUtils;
   }
 
   // For the WorkspaceV2 interfaces, dispatch to a separate module for the implementation
@@ -205,54 +188,24 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiCreatedWorkspace> createWorkspace(
       @RequestBody ApiCreateWorkspaceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    logger.info(
+        "Creating workspace {} for {} subject {}",
+        body.getId(),
+        userRequest.getEmail(),
+        userRequest.getSubjectId());
 
-    try {
-      workspaceService.getWorkspace(body.getId());
-      return new ResponseEntity<>(HttpStatus.CONFLICT);
-    } catch (WorkspaceNotFoundException ex) {
-      logger.info(
-          "Creating workspace {} for {} subject {}",
-          body.getId(),
-          userRequest.getEmail(),
-          userRequest.getSubjectId());
-    }
+    SpendProfile spendProfile =
+        workspaceApiUtils.validateSpendProfilePermission(userRequest, body.getSpendProfile());
+    SpendProfileId spendProfileId = (spendProfile == null) ? null : spendProfile.id();
 
-    // Unlike other operations, there's no Sam permission required to create a workspace. As long as
-    // a user is enabled, they can call this endpoint.
+    TpsPolicyInputs policies =
+        workspaceApiUtils.validateAndConvertPolicies(body.getPolicies(), body.getStage());
+    WorkspaceStage workspaceStage = WorkspaceApiUtils.getStageFromApiStage(body.getStage());
 
-    // Existing client libraries should not need to know about the stage, as they won't use any of
-    // the features it gates. If stage isn't specified in a create request, we default to
-    // RAWLS_WORKSPACE.
-    ApiWorkspaceStageModel requestStage = body.getStage();
-    requestStage = (requestStage == null ? ApiWorkspaceStageModel.RAWLS_WORKSPACE : requestStage);
-    WorkspaceStage internalStage = WorkspaceStage.fromApiModel(requestStage);
-    Optional<SpendProfileId> spendProfileId =
-        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
-    // Validate that the caller has access to the spend profile, if it is provided
-    spendProfileId.ifPresent(
-        profileId ->
-            spendProfileService.authorizeLinking(
-                profileId, features.isBpmGcpEnabled(), userRequest));
-
-    // ET uses userFacingId; CWB doesn't. Schema enforces that userFacingId must be set. CWB doesn't
-    // pass userFacingId in request, so use id.
+    // WSM requires a userFacingId. Create one, if it is not provided.
     String userFacingId =
         Optional.ofNullable(body.getUserFacingId()).orElse(body.getId().toString());
     ControllerValidationUtils.validateUserFacingId(userFacingId);
-
-    // Validate that this workspace can have policies attached, if necessary.
-    TpsPolicyInputs policies = null;
-    if (body.getPolicies() != null) {
-      if (!features.isTpsEnabled()) {
-        throw new FeatureNotSupportedException(
-            "TPS is not enabled on this instance of Workspace Manager, do not specify the policy field of a CreateWorkspace request.");
-      }
-      if (body.getStage() == ApiWorkspaceStageModel.RAWLS_WORKSPACE) {
-        throw new StageDisabledException(
-            "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
-      }
-      policies = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getPolicies());
-    }
 
     Workspace workspace =
         Workspace.builder()
@@ -260,8 +213,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .userFacingId(userFacingId)
             .displayName(body.getDisplayName())
             .description(body.getDescription())
-            .spendProfileId(spendProfileId.orElse(null))
-            .workspaceStage(internalStage)
+            .spendProfileId(spendProfileId)
+            .workspaceStage(workspaceStage)
             .properties(convertApiPropertyToMap(body.getProperties()))
             .createdByEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
             .build();
@@ -299,85 +252,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                 workspacesAndHighestRoles.stream()
                     .map(
                         workspaceAndHighestRole ->
-                            buildWorkspaceDescription(
+                            workspaceApiUtils.buildWorkspaceDescription(
                                 workspaceAndHighestRole.workspace(),
                                 workspaceAndHighestRole.highestRole(),
                                 workspaceAndHighestRole.missingAuthDomains()))
                     .toList());
     return new ResponseEntity<>(response, HttpStatus.OK);
-  }
-
-  @Traced
-  private ApiWorkspaceDescription buildWorkspaceDescription(
-      Workspace workspace, WsmIamRole highestRole) {
-    return buildWorkspaceDescription(
-        workspace, highestRole, /*missingAuthDomains=*/ Collections.emptyList());
-  }
-
-  @Traced
-  private ApiWorkspaceDescription buildWorkspaceDescription(
-      Workspace workspace, WsmIamRole highestRole, List<String> missingAuthDomains) {
-    UUID workspaceUuid = workspace.getWorkspaceId();
-    ApiGcpContext gcpContext =
-        gcpCloudContextService
-            .getGcpCloudContext(workspaceUuid)
-            .map(GcpCloudContext::toApi)
-            .orElse(null);
-
-    ApiAzureContext azureContext =
-        azureCloudContextService
-            .getAzureCloudContext(workspaceUuid)
-            .map(AzureCloudContext::toApi)
-            .orElse(null);
-
-    ApiAwsContext awsContext =
-        awsCloudContextService
-            .getAwsCloudContext(workspaceUuid)
-            .map(AwsCloudContext::toApi)
-            .orElse(null);
-
-    List<ApiWsmPolicyInput> workspacePolicies = null;
-    if (features.isTpsEnabled()) {
-      tpsApiDispatch.createPaoIfNotExist(workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE);
-      TpsPaoGetResult workspacePao = tpsApiDispatch.getPao(workspaceUuid);
-      workspacePolicies = TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(workspacePao);
-    }
-
-    // When we have another cloud context, we will need to do a similar retrieval for it.
-    var lastChangeDetailsOptional =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
-
-    if (highestRole == WsmIamRole.DISCOVERER) {
-      workspace = Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace);
-    }
-
-    // Convert the property map to API format
-    ApiProperties apiProperties = convertMapToApiProperties(workspace.getProperties());
-
-    return new ApiWorkspaceDescription()
-        .id(workspaceUuid)
-        .userFacingId(workspace.getUserFacingId())
-        .displayName(workspace.getDisplayName().orElse(null))
-        .description(workspace.getDescription().orElse(null))
-        .highestRole(highestRole.toApiModel())
-        .properties(apiProperties)
-        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
-        .stage(workspace.getWorkspaceStage().toApiModel())
-        .gcpContext(gcpContext)
-        .azureContext(azureContext)
-        .awsContext(awsContext)
-        .createdDate(workspace.createdDate())
-        .createdBy(workspace.createdByEmail())
-        .lastUpdatedDate(
-            lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::changeDate)
-                .orElse(workspace.createdDate()))
-        .lastUpdatedBy(
-            lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::actorEmail)
-                .orElse(workspace.createdByEmail()))
-        .policies(workspacePolicies)
-        .missingAuthDomains(missingAuthDomains);
   }
 
   @Traced
@@ -394,7 +274,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     Workspace workspace = workspaceService.validateWorkspaceAndAction(userRequest, uuid, samAction);
 
     WsmIamRole highestRole = workspaceService.getHighestRole(uuid, userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
+    ApiWorkspaceDescription desc =
+        workspaceApiUtils.buildWorkspaceDescription(workspace, highestRole);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -418,7 +299,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             userFacingId, userRequest, WsmIamRole.fromApiModel(minimumHighestRole));
     WsmIamRole highestRole =
         workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
+    ApiWorkspaceDescription desc =
+        workspaceApiUtils.buildWorkspaceDescription(workspace, highestRole);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -446,7 +328,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             body.getDescription(),
             userRequest);
     WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
-    ApiWorkspaceDescription desc = buildWorkspaceDescription(workspace, highestRole);
+    ApiWorkspaceDescription desc =
+        workspaceApiUtils.buildWorkspaceDescription(workspace, highestRole);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);

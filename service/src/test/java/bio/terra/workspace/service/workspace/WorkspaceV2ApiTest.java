@@ -14,27 +14,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 // Test the WorkspaceV2 endpoints
 @Tag("connected")
 public class WorkspaceV2ApiTest extends BaseConnectedTest {
-  @Autowired
-  MockMvcUtils mockMvcUtils;
-  @Autowired
-  MvcWorkspaceApi mvcWorkspaceApi;
-  @Autowired
-  UserAccessUtils userAccessUtils;
+  @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MvcWorkspaceApi mvcWorkspaceApi;
+  @Autowired UserAccessUtils userAccessUtils;
 
   @Test
   public void testAsyncDeleteWorkspace() throws Exception {
     AuthenticatedUserRequest defaultUserRequest =
-      userAccessUtils.defaultUser().getAuthenticatedRequest();
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(defaultUserRequest);
+        userAccessUtils.defaultUser().getAuthenticatedRequest();
+    ApiCreatedWorkspace workspace =
+        mockMvcUtils.createWorkspaceWithoutCloudContext(defaultUserRequest);
     mvcWorkspaceApi.deleteWorkspaceAndWait(defaultUserRequest, workspace.getId());
   }
 
   @Test
   public void testAsyncDeleteGcpCloudContext() throws Exception {
     AuthenticatedUserRequest defaultUserRequest =
-      userAccessUtils.defaultUser().getAuthenticatedRequest();
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithCloudContext(defaultUserRequest);
-    mvcWorkspaceApi.deleteCloudContextAndWait(defaultUserRequest, workspace.getId(), CloudPlatform.GCP);
+        userAccessUtils.defaultUser().getAuthenticatedRequest();
+    ApiCreatedWorkspace workspace =
+        mockMvcUtils.createWorkspaceWithCloudContext(defaultUserRequest);
+    mvcWorkspaceApi.deleteCloudContextAndWait(
+        defaultUserRequest, workspace.getId(), CloudPlatform.GCP);
     mvcWorkspaceApi.deleteWorkspaceAndWait(defaultUserRequest, workspace.getId());
   }
 }
