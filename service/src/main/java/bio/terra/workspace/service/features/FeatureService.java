@@ -23,4 +23,8 @@ public class FeatureService {
       throw new FeatureNotSupportedException("AWS feature are not enabled");
     }
   }
+
+  public boolean stackdriverExporterEnabled() {
+    return flagsmithService.isFeatureEnabled("terra__wsm_stackdriver_exporter_enabled").orElse(false);
+  }
 }
