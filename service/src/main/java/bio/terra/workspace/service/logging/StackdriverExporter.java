@@ -14,10 +14,12 @@ public class StackdriverExporter {
   private static final Logger logger = LoggerFactory.getLogger(StackdriverExporter.class);
 
   private final FeatureService featureService;
+
   @Autowired
   public StackdriverExporter(FeatureService featureService) {
     this.featureService = featureService;
   }
+
   public void initialize() {
     if (!featureService.stackdriverExporterEnabled()) {
       logger.info("Stackdriver exporter is not enabled, skip initializing.");

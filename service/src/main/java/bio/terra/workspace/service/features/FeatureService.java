@@ -25,6 +25,8 @@ public class FeatureService {
   }
 
   public boolean stackdriverExporterEnabled() {
-    return flagsmithService.isFeatureEnabled("terra__wsm_stackdriver_exporter_enabled").orElse(false);
+    return flagsmithService
+        .isFeatureEnabled("terra__wsm_stackdriver_exporter_enabled")
+        .orElse(false);
   }
 }
