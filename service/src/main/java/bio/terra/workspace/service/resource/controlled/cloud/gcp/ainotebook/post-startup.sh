@@ -78,6 +78,8 @@ readonly POST_STARTUP_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.
 
 # When JupyterLab is provided by a Docker container, the default Deep Learning images
 # pick up jupyter_notebook_config.py provided by the host VM.
+# See https://jupyter-notebook.readthedocs.io/en/stable/config.html for details of
+# the notebook server options supported.
 readonly CONTAINER_NOTEBOOK_CONFIG="/opt/deeplearning/jupyter/jupyter_notebook_config.py"
 
 # Variables relevant for 3rd party software that gets installed
