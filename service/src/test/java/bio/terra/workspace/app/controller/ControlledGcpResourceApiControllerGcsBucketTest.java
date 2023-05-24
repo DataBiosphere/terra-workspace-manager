@@ -323,6 +323,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
   }
 
   @Test
+  @EnabledIf(expression = "${feature.alpha1-enabled}", loadContext = true)
   public void loadSignedUrlList_403() throws Exception {
     AuthenticatedUserRequest thirdUserAuthRequest = userAccessUtils.thirdUserAuthRequest();
 
@@ -335,6 +336,7 @@ public class ControlledGcpResourceApiControllerGcsBucketTest extends BaseConnect
   }
 
   @Test
+  @EnabledIf(expression = "${feature.alpha1-enabled}", loadContext = true)
   public void loadSignedUrlList_404() throws Exception {
     AuthenticatedUserRequest secondUserAuthRequest = userAccessUtils.secondUserAuthRequest();
 
