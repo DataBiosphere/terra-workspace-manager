@@ -11,10 +11,10 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,17 +27,13 @@ import org.springframework.http.HttpStatus;
 public class UpdateAiNotebookAttributesStep implements Step {
   private final ControlledAiNotebookInstanceResource resource;
   private final CrlService crlService;
-  private final GcpCloudContextService cloudContextService;
 
   private final Logger logger = LoggerFactory.getLogger(UpdateAiNotebookAttributesStep.class);
 
   UpdateAiNotebookAttributesStep(
-      ControlledAiNotebookInstanceResource resource,
-      CrlService crlService,
-      GcpCloudContextService gcpCloudContextService) {
+      ControlledAiNotebookInstanceResource resource, CrlService crlService) {
     this.resource = resource;
     this.crlService = crlService;
-    this.cloudContextService = gcpCloudContextService;
   }
 
   @Override
@@ -57,28 +53,27 @@ public class UpdateAiNotebookAttributesStep implements Step {
       }
       sanitizedMetadata.put(entrySet.getKey(), entrySet.getValue());
     }
-    return updateAiNotebook(
-        sanitizedMetadata, cloudContextService.getRequiredGcpProject(resource.getWorkspaceId()));
+    return updateAiNotebook(sanitizedMetadata);
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     final FlightMap workingMap = context.getWorkingMap();
     final ApiGcpAiNotebookUpdateParameters prevParameters =
-        workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
-    var projectId = cloudContextService.getRequiredGcpProject(resource.getWorkspaceId());
+        FlightUtils.getRequired(
+            workingMap, PREVIOUS_UPDATE_PARAMETERS, ApiGcpAiNotebookUpdateParameters.class);
     try {
       var currentMetadata =
           crlService
               .getAIPlatformNotebooksCow()
               .instances()
-              .get(resource.toInstanceName(projectId))
+              .get(resource.toInstanceName())
               .execute()
               .getMetadata();
       // reset the new key entry to "" value because the gcp api does not allow deleting
       // metadata item so we can't simply undo the add.
       currentMetadata.replaceAll((k, v) -> prevParameters.getMetadata().getOrDefault(k, ""));
-      return updateAiNotebook(currentMetadata, projectId);
+      return updateAiNotebook(currentMetadata);
     } catch (GoogleJsonResponseException e) {
       if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
           || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
@@ -90,8 +85,8 @@ public class UpdateAiNotebookAttributesStep implements Step {
     }
   }
 
-  private StepResult updateAiNotebook(Map<String, String> metadataToUpdate, String projectId) {
-    InstanceName instanceName = resource.toInstanceName(projectId);
+  private StepResult updateAiNotebook(Map<String, String> metadataToUpdate) {
+    InstanceName instanceName = resource.toInstanceName();
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
       notebooks.instances().updateMetadataItems(instanceName, metadataToUpdate).execute();

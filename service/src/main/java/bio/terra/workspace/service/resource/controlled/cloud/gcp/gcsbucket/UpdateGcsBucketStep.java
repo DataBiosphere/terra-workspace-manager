@@ -16,6 +16,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.StorageClass;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -48,8 +49,18 @@ public class UpdateGcsBucketStep implements Step {
     final FlightMap inputParameters = flightContext.getInputParameters();
     final ApiGcpGcsBucketUpdateParameters updateParameters =
         inputParameters.get(UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
+    // Although the ready check is done in the controller, there is a chance this step will
+    // fail because the cloud context is not ready. We do not want the undo to fail trying
+    // to get the project id if that is the case. We store the project id in the working map.
+    // If it is present, then the undo can use it. If not, the undo assumes that we failed
+    // getting the project id and does not attempt to delete the bucket.
+    // TODO: PF-2799 replace API update parameters of the bucket with a structure
+    //  that includes the project id. Stop looking it up constantly.
+    String projectId =
+        gcpCloudContextService.getRequiredReadyGcpProject(bucketResource.getWorkspaceId());
+    flightContext.getWorkingMap().put(WorkspaceFlightMapKeys.GCP_PROJECT_ID, projectId);
 
-    return updateBucket(updateParameters);
+    return updateBucket(updateParameters, projectId);
   }
 
   // Restore the previous values of the update parameters
@@ -58,21 +69,26 @@ public class UpdateGcsBucketStep implements Step {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final ApiGcpGcsBucketUpdateParameters previousUpdateParameters =
         workingMap.get(PREVIOUS_UPDATE_PARAMETERS, ApiGcpGcsBucketUpdateParameters.class);
-
-    return updateBucket(previousUpdateParameters);
+    // Only attempt to undo the bucket update if we successfully retrieved the project id in the
+    // Do().
+    String projectId =
+        flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
+    if (projectId != null) {
+      return updateBucket(previousUpdateParameters, projectId);
+    }
+    return StepResult.getStepResultSuccess();
   }
 
-  private StepResult updateBucket(@Nullable ApiGcpGcsBucketUpdateParameters updateParameters) {
+  private StepResult updateBucket(
+      @Nullable ApiGcpGcsBucketUpdateParameters updateParameters, String projectId) {
     if (updateParameters == null) {
       // nothing to change
       logger.info("No update parameters supplied, so no changes to make.");
       return StepResult.getStepResultSuccess();
     }
-    final String projectId =
-        gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceId());
-    final StorageCow storageCow = crlService.createStorageCow(projectId);
+    StorageCow storageCow = crlService.createStorageCow(projectId);
 
-    final BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
+    BucketCow existingBucketCow = storageCow.get(bucketResource.getBucketName());
     if (existingBucketCow == null) {
       IllegalStateException isEx =
           new IllegalStateException(

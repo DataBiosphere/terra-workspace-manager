@@ -59,7 +59,7 @@ public class CreateControlledResourceFlight extends Flight {
     // Store the resource metadata in the WSM database. Doing this first means concurrent
     // conflicting resources with the same name or resource attributes can be prevented.
     addStep(
-        new createResourceInDbStartStep(
+        new CreateResourceInDbStartStep(
             flightBeanBag.getResourceDao(), resourceStateRule, resource),
         dbRetryRule);
 

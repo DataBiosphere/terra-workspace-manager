@@ -39,8 +39,7 @@ public class GetGcpCloudContextStep implements Step {
               JobMapKeys.AUTH_USER_INFO.getKeyName(),
               AuthenticatedUserRequest.class);
       workingMap.put(
-          GCP_CLOUD_CONTEXT,
-          gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid, userRequest));
+          GCP_CLOUD_CONTEXT, gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid));
     }
 
     return StepResult.getStepResultSuccess();

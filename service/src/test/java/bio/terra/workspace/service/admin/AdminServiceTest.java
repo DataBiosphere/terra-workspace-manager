@@ -80,7 +80,7 @@ public class AdminServiceTest extends BaseConnectedTest {
             .getWorkspaceId());
     projectIds =
         workspaceDao.getWorkspaceIdToGcpCloudContextMap().values().stream()
-            .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).get().getGcpProjectId())
+            .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
             .toList();
   }
 

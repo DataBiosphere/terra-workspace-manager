@@ -147,9 +147,9 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
     user = userAccessUtils.defaultUser();
     workspaceId =
         workspaceUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithGcpContext(user.getAuthenticatedRequest())
             .getWorkspaceId();
-    projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
+    projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceId);
   }
 
   /**
@@ -175,8 +175,6 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
     String workspaceUserFacingId = workspaceService.getWorkspace(workspaceId).getUserFacingId();
     var instanceId = "create-ai-notebook-instance-do";
     var serverName = "verily-autopush";
-    int retryWaitSeconds = 30;
-    int retryCount = 30;
 
     cliConfiguration.setServerName(serverName);
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
@@ -218,8 +216,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
             controlledResourceService.getControlledResource(
                 workspaceId, resource.getResourceId())));
 
-    InstanceName instanceName =
-        resource.toInstanceName(gcpCloudContextService.getRequiredGcpProject(workspaceId));
+    InstanceName instanceName = resource.toInstanceName();
     Instance instance =
         crlService.getAIPlatformNotebooksCow().instances().get(instanceName).execute();
 
@@ -315,7 +312,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
     assertEquals(
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    assertNotFound(resource.toInstanceName(projectId), crlService.getAIPlatformNotebooksCow());
+    assertNotFound(resource.toInstanceName(), crlService.getAIPlatformNotebooksCow());
     assertThrows(
         ResourceNotFoundException.class,
         () ->
@@ -383,7 +380,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         crlService
             .getAIPlatformNotebooksCow()
             .instances()
-            .get(fetchedInstance.toInstanceName(projectId))
+            .get(fetchedInstance.toInstanceName())
             .execute();
     var metadata = instanceFromCloud.getMetadata();
 
@@ -413,7 +410,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         crlService
             .getAIPlatformNotebooksCow()
             .instances()
-            .get(updatedInstance.toInstanceName(projectId))
+            .get(updatedInstance.toInstanceName())
             .execute();
     // Merge metadata from AI_NOTEBOOK_UPDATE_PARAMETERS to metadata.
     AI_NOTEBOOK_UPDATE_PARAMETERS
@@ -464,7 +461,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         crlService
             .getAIPlatformNotebooksCow()
             .instances()
-            .get(fetchedInstance.toInstanceName(projectId))
+            .get(fetchedInstance.toInstanceName())
             .execute();
     var metadata = instanceFromCloud.getMetadata();
 
@@ -561,7 +558,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         crlService
             .getAIPlatformNotebooksCow()
             .instances()
-            .get(updatedInstance.toInstanceName(projectId))
+            .get(updatedInstance.toInstanceName())
             .execute();
     Map<String, String> metadataToUpdate = AI_NOTEBOOK_UPDATE_PARAMETERS.getMetadata();
     Map<String, String> currentCloudInstanceMetadata = instanceFromCloud.getMetadata();
@@ -607,7 +604,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         crlService
             .getAIPlatformNotebooksCow()
             .instances()
-            .get(fetchedInstance.toInstanceName(projectId))
+            .get(fetchedInstance.toInstanceName())
             .execute();
 
     Map<String, String> illegalMetadataToUpdate = new HashMap<>();
@@ -635,7 +632,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         crlService
             .getAIPlatformNotebooksCow()
             .instances()
-            .get(updatedInstance.toInstanceName(projectId))
+            .get(updatedInstance.toInstanceName())
             .execute();
     Map<String, String> currentCloudInstanceMetadata = instanceFromCloud.getMetadata();
     Map<String, String> prevCloudInstanceMetadata = prevInstanceFromCloud.getMetadata();
@@ -660,7 +657,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         .common(commonFields)
         .instanceId(instanceId)
         .location(DEFAULT_NOTEBOOK_LOCATION)
-        .projectId("my-project-id")
+        .projectId(projectId)
         .build();
   }
 
@@ -700,7 +697,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
   void deleteAiNotebookInstanceDo() throws Exception {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do", user);
-    InstanceName instanceName = resource.toInstanceName(projectId);
+    InstanceName instanceName = resource.toInstanceName();
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
 

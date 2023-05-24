@@ -88,7 +88,7 @@ public class RetrieveDataTransferMetadataStep implements Step {
         flightContext
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
+    String projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceUuid);
     String bucketName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
@@ -101,7 +101,7 @@ public class RetrieveDataTransferMetadataStep implements Step {
 
   private StorageTransferInput getSourceInputs(ControlledGcsBucketResource sourceBucket) {
     String sourceProjectId =
-        gcpCloudContextService.getRequiredGcpProject(sourceBucket.getWorkspaceId());
+        gcpCloudContextService.getRequiredReadyGcpProject(sourceBucket.getWorkspaceId());
     String sourceBucketName = sourceBucket.getBucketName();
     return new StorageTransferInput(
         sourceBucket.getWorkspaceId(), sourceProjectId, sourceBucketName, SOURCE_BUCKET_ROLE_NAMES);

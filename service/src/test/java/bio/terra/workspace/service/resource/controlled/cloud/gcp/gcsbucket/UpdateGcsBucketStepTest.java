@@ -87,6 +87,12 @@ public class UpdateGcsBucketStepTest extends BaseUnitTest {
     doReturn(PROJECT_ID)
         .when(mockGcpCloudContextService)
         .getRequiredGcpProject(bucketResource.getWorkspaceId());
+    doReturn(PROJECT_ID)
+        .when(mockGcpCloudContextService)
+        .getRequiredReadyGcpProject(bucketResource.getWorkspaceId());
+    FlightMap workkingMap = new FlightMap();
+    workingMap.put(WorkspaceFlightMapKeys.GCP_PROJECT_ID, PROJECT_ID);
+    doReturn(workingMap).when(mockFlightContext).getWorkingMap();
 
     updateGcsBucketStep =
         new UpdateGcsBucketStep(bucketResource, mockCrlService, mockGcpCloudContextService);

@@ -16,7 +16,9 @@ import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteControlledAwsResourcesStep;
@@ -24,7 +26,9 @@ import bio.terra.workspace.service.workspace.flight.cloud.aws.MakeAwsCloudContex
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
 import bio.terra.workspace.service.workspace.model.CloudContext;
+import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -84,7 +88,8 @@ public class AwsCloudContextService implements CloudContextService {
       UUID workspaceUuid,
       SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
-    flight.addStep(new MakeAwsCloudContextStep(appContext.getAwsCloudContextService()));
+    flight.addStep(
+        new MakeAwsCloudContextStep(appContext.getAwsCloudContextService(), spendProfile.id()));
   }
 
   @Override
@@ -112,7 +117,7 @@ public class AwsCloudContextService implements CloudContextService {
   }
 
   /**
-   * Retrieve the optional AWS cloud context for given workspace
+   * Retrieve the optional AWS cloud context for given workspace.
    *
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional {@link AwsCloudContext}
@@ -125,25 +130,28 @@ public class AwsCloudContextService implements CloudContextService {
   }
 
   /**
-   * Retrieve the required AWS cloud context for given workspace
+   * Retrieve the required AWS cloud context
    *
    * @param workspaceUuid workspace identifier of the cloud context
    * @return {@link AwsCloudContext}
    * @throws CloudContextRequiredException CloudContextRequiredException
    */
   public AwsCloudContext getRequiredAwsCloudContext(UUID workspaceUuid) {
-    return getAwsCloudContext(workspaceUuid)
-        .orElseThrow(
-            () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
+    AwsCloudContext cloudContext =
+        getAwsCloudContext(workspaceUuid)
+            .orElseThrow(
+                () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
+    return cloudContext;
   }
 
   /**
-   * Return a new AWS cloud context for discovered environment
+   * Return a new AWS cloud context for discovered environment. The context is set to the CREATING
+   * state.
    *
    * @return AWS cloud context {@link AwsCloudContext}
    */
-  public AwsCloudContext getCloudContext() {
-    return getCloudContext(discoverEnvironment());
+  public AwsCloudContext createCloudContext(String flightId, SpendProfileId spendProfileId) {
+    return createCloudContext(flightId, spendProfileId, discoverEnvironment());
   }
 
   /**
@@ -152,15 +160,18 @@ public class AwsCloudContextService implements CloudContextService {
    * @param environment {@link Environment}
    * @return {@link AwsCloudContext}
    */
-  public static AwsCloudContext getCloudContext(Environment environment) {
+  private static AwsCloudContext createCloudContext(
+      String flightId, SpendProfileId spendProfileId, Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
-        metadata.getMajorVersion(),
-        metadata.getOrganizationId(),
-        metadata.getAccountId(),
-        metadata.getTenantAlias(),
-        metadata.getEnvironmentAlias(),
-        /*commonFields=*/ null);
+        new AwsCloudContextFields(
+            metadata.getMajorVersion(),
+            metadata.getOrganizationId(),
+            metadata.getAccountId(),
+            metadata.getTenantAlias(),
+            metadata.getEnvironmentAlias()),
+        new CloudContextCommonFields(
+            spendProfileId, WsmResourceState.CREATING, flightId, /*error=*/ null));
   }
 
   /**
@@ -205,7 +216,7 @@ public class AwsCloudContextService implements CloudContextService {
    */
   public static Optional<LandingZone> getLandingZone(
       Environment environment, AwsCloudContext awsCloudContext, Region region) {
-    awsCloudContext.verifyCloudContext(getCloudContext(environment));
+    awsCloudContext.verifyCloudContext(environment);
     return environment.getLandingZone(region);
   }
 

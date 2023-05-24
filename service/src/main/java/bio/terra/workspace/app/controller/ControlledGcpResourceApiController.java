@@ -399,7 +399,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 Optional.ofNullable(body.getDataset().getDatasetId())
                     .orElse(body.getCommon().getName()));
 
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
+    String projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
             .datasetName(datasetName)
@@ -513,7 +513,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             resourceLocation,
             userRequest,
             WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
+    String projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceUuid);
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()

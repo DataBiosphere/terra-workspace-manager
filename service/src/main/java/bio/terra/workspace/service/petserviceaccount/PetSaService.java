@@ -11,7 +11,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.iam.v1.model.Policy;
 import com.google.api.services.iam.v1.model.SetIamPolicyRequest;
@@ -98,7 +97,7 @@ public class PetSaService {
       String userToEnableEmail,
       AuthenticatedUserRequest userReq,
       @Nullable String eTag) {
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
+    String projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceUuid);
     Optional<ServiceAccountName> maybePetSaName =
         getUserPetSa(projectId, userToEnableEmail, userReq);
     // If the pet SA does not exist and no eTag is specified, create the pet SA and continue.
@@ -106,10 +105,7 @@ public class PetSaService {
       if (eTag == null) {
         String saEmail =
             SamRethrow.onInterrupted(
-                () ->
-                    samService.getOrCreatePetSaEmail(
-                        gcpCloudContextService.getRequiredGcpProject(workspaceUuid),
-                        userReq.getRequiredToken()),
+                () -> samService.getOrCreatePetSaEmail(projectId, userReq.getRequiredToken()),
                 "enablePet");
         maybePetSaName =
             Optional.of(ServiceAccountName.builder().projectId(projectId).email(saEmail).build());
@@ -212,7 +208,7 @@ public class PetSaService {
             () -> samService.getProxyGroupEmail(userToDisableEmail, userRequest.getRequiredToken()),
             "disablePet");
 
-    String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
+    String projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceUuid);
     try {
       Optional<ServiceAccountName> userToDisablePetSA =
           getUserPetSa(projectId, userToDisableEmail, userRequest);
@@ -305,8 +301,7 @@ public class PetSaService {
   public Optional<AuthenticatedUserRequest> getWorkspacePetCredentials(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
     return gcpCloudContextService
-        .getGcpCloudContext(workspaceUuid)
-        .map(GcpCloudContext::getGcpProjectId)
+        .getGcpProject(workspaceUuid)
         .map(
             projectId ->
                 SamRethrow.onInterrupted(

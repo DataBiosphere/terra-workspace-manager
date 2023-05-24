@@ -76,7 +76,7 @@ public class ControlledResourceService {
   private static final int RESOURCE_ROW_WAIT_SECONDS = 1;
   private static final Duration RESOURCE_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
   private static final Supplier<InternalLogicException> BAD_STATE =
-      () -> new InternalLogicException("Invalid sync mapping or bad context");
+      () -> new InternalLogicException("Invalid cloud context");
 
   private final JobService jobService;
   private final ResourceDao resourceDao;
@@ -455,8 +455,7 @@ public class ControlledResourceService {
         SamRethrow.onInterrupted(
             () ->
                 samService.getOrCreatePetSaEmail(
-                    gcpCloudContextService.getRequiredGcpProject(resource.getWorkspaceId()),
-                    userRequest.getRequiredToken()),
+                    resource.getProjectId(), userRequest.getRequiredToken()),
             "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
@@ -487,11 +486,10 @@ public class ControlledResourceService {
 
         case WORKSPACE:
           switch (syncMapping.getWorkspaceRole().orElseThrow(BAD_STATE)) {
-            case OWNER -> policyGroup = cloudContext.getSamPolicyOwner().orElseThrow(BAD_STATE);
-            case WRITER -> policyGroup = cloudContext.getSamPolicyWriter().orElseThrow(BAD_STATE);
-            case READER -> policyGroup = cloudContext.getSamPolicyReader().orElseThrow(BAD_STATE);
-            case APPLICATION -> policyGroup =
-                cloudContext.getSamPolicyApplication().orElseThrow(BAD_STATE);
+            case OWNER -> policyGroup = cloudContext.getSamPolicyOwner();
+            case WRITER -> policyGroup = cloudContext.getSamPolicyWriter();
+            case READER -> policyGroup = cloudContext.getSamPolicyReader();
+            case APPLICATION -> policyGroup = cloudContext.getSamPolicyApplication();
             default -> {
             }
           }

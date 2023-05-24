@@ -1,70 +1,67 @@
 package bio.terra.workspace.service.workspace.model;
 
-import bio.terra.common.exception.SerializationException;
+import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
-import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiAwsContext;
-import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
+import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import javax.annotation.Nullable;
 
 public class AwsCloudContext implements CloudContext {
-  private final String majorVersion;
-  private final String organizationId;
-  private final String accountId;
-  private final String tenantAlias;
-  private final String environmentAlias;
-  private final @Nullable CloudContextCommonFields commonFields;
+  private final @Nullable AwsCloudContextFields contextFields;
+  private final CloudContextCommonFields commonFields;
 
   @JsonCreator
   public AwsCloudContext(
-      @JsonProperty("majorVersion") String majorVersion,
-      @JsonProperty("organizationId") String organizationId,
-      @JsonProperty("accountId") String accountId,
-      @JsonProperty("tenantAlias") String tenantAlias,
-      @JsonProperty("environmentAlias") String environmentAlias,
+      @JsonProperty("contextFields") @Nullable AwsCloudContextFields contextFields,
       @JsonProperty("commonFields") CloudContextCommonFields commonFields) {
-    this.majorVersion = majorVersion;
-    this.organizationId = organizationId;
-    this.accountId = accountId;
-    this.tenantAlias = tenantAlias;
-    this.environmentAlias = environmentAlias;
+    this.contextFields = contextFields;
     this.commonFields = commonFields;
   }
 
+  @JsonIgnore
   public String getMajorVersion() {
-    return majorVersion;
+    return contextFields.getMajorVersion();
   }
 
+  @JsonIgnore
   public String getOrganizationId() {
-    return organizationId;
+    return contextFields.getOrganizationId();
   }
 
+  @JsonIgnore
   public String getAccountId() {
-    return accountId;
+    return contextFields.getAccountId();
   }
 
+  @JsonIgnore
   public String getTenantAlias() {
-    return tenantAlias;
+    return contextFields.getTenantAlias();
   }
 
+  @JsonIgnore
   public String getEnvironmentAlias() {
-    return environmentAlias;
+    return contextFields.getEnvironmentAlias();
   }
 
   @Override
+  @JsonIgnore
   public CloudPlatform getCloudPlatform() {
     return CloudPlatform.AWS;
   }
 
   @Override
-  public @Nullable CloudContextCommonFields getCommonFields() {
+  public CloudContextCommonFields getCommonFields() {
     return commonFields;
+  }
+
+  public @Nullable AwsCloudContextFields getContextFields() {
+    return contextFields;
   }
 
   @Override
@@ -77,124 +74,59 @@ public class AwsCloudContext implements CloudContext {
     return (T) this;
   }
 
+  // TODO: PF-2770 include the common fields in the API return
   public ApiAwsContext toApi() {
-    return new ApiAwsContext()
-        .majorVersion(majorVersion)
-        .organizationId(organizationId)
-        .accountId(accountId)
-        .tenantAlias(tenantAlias)
-        .environmentAlias(environmentAlias);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof AwsCloudContext that)) return false;
-    return Objects.equal(majorVersion, that.majorVersion)
-        && Objects.equal(organizationId, that.organizationId)
-        && Objects.equal(accountId, that.accountId)
-        && Objects.equal(tenantAlias, that.tenantAlias)
-        && Objects.equal(environmentAlias, that.environmentAlias)
-        && Objects.equal(commonFields, that.commonFields);
+    return (contextFields == null ? null : contextFields.toApi());
   }
 
   /**
    * Verifies that current cloud context is the same as the expected cloud context by compares only
    * relevant fields
    *
-   * @param expected {@link AwsCloudContext}
+   * @param environment expected environment
    * @throws StaleConfigurationException StaleConfigurationException if they do not match
    */
-  public void verifyCloudContext(AwsCloudContext expected) {
-    if ((this != expected)
-        && (!Objects.equal(majorVersion, expected.majorVersion)
-            || !Objects.equal(accountId, expected.accountId))) {
-      // Accounts may be moved across organizations: do not compare
-      // tenantAlias & environmentAlias may change: do not compare
-      throw new StaleConfigurationException(
-          String.format(
-              "AWS cloud context expected %s, actual %s", this.serialize(), this.serialize()));
+  public void verifyCloudContext(Environment environment) {
+    if (contextFields == null) {
+      throw new InvalidCloudContextStateException(
+          "Cloud context is not in a valid state. Wait and try again.");
     }
+    contextFields.verifyCloudContext(environment);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof AwsCloudContext that)) return false;
+    return Objects.equal(contextFields, that.contextFields)
+        && Objects.equal(commonFields, that.commonFields);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(
-        majorVersion, organizationId, accountId, tenantAlias, environmentAlias, commonFields);
+    return Objects.hashCode(contextFields, commonFields);
   }
 
+  @Override
   public String serialize() {
-    AwsCloudContextV1 dbContext = new AwsCloudContextV1(this);
-    return DbSerDes.toJson(dbContext);
+    if (contextFields == null) {
+      throw new InternalLogicException("Cannot serialize without context fields filled in");
+    }
+    return contextFields.serialize();
   }
 
   public static AwsCloudContext deserialize(DbCloudContext dbCloudContext) {
-    try {
-      AwsCloudContextV1 dbContext =
-          DbSerDes.fromJson(dbCloudContext.getContextJson(), AwsCloudContextV1.class);
-      dbContext.validateVersion();
+    AwsCloudContextFields contextFields =
+        (dbCloudContext.getContextJson() == null
+            ? null
+            : AwsCloudContextFields.deserialize(dbCloudContext.getContextJson()));
 
-      return new AwsCloudContext(
-          dbContext.majorVersion,
-          dbContext.organizationId,
-          dbContext.accountId,
-          dbContext.tenantAlias,
-          dbContext.environmentAlias,
-          new CloudContextCommonFields(
-              dbCloudContext.getSpendProfile(),
-              dbCloudContext.getState(),
-              dbCloudContext.getFlightId(),
-              dbCloudContext.getError()));
-
-    } catch (SerializationException e) {
-      throw new InvalidSerializedVersionException("Invalid serialized version: " + e);
-    }
-  }
-
-  /** Mask AWS version numbers so as not to collide with Azure and GCP version numbers */
-  public static final long AWS_CLOUD_CONTEXT_DB_VERSION_MASK = 0x100;
-
-  @VisibleForTesting
-  public static class AwsCloudContextV1 {
-    private static final long AWS_CLOUD_CONTEXT_DB_VERSION = 1;
-
-    public long version;
-    public String majorVersion;
-    public String organizationId;
-    public String accountId;
-    public String tenantAlias;
-    public String environmentAlias;
-
-    @JsonCreator
-    public AwsCloudContextV1(
-        @JsonProperty("version") long version,
-        @JsonProperty("majorVersion") String majorVersion,
-        @JsonProperty("organizationId") String organizationId,
-        @JsonProperty("accountId") String accountId,
-        @JsonProperty("tenantAlias") String tenantAlias,
-        @JsonProperty("environmentAlias") String environmentAlias) {
-      this.version = version;
-      this.majorVersion = majorVersion;
-      this.organizationId = organizationId;
-      this.accountId = accountId;
-      this.tenantAlias = tenantAlias;
-      this.environmentAlias = environmentAlias;
-    }
-
-    public AwsCloudContextV1(AwsCloudContext awsCloudContext) {
-      this.version = AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK;
-      this.majorVersion = awsCloudContext.majorVersion;
-      this.organizationId = awsCloudContext.organizationId;
-      this.accountId = awsCloudContext.accountId;
-      this.tenantAlias = awsCloudContext.tenantAlias;
-      this.environmentAlias = awsCloudContext.environmentAlias;
-    }
-
-    public void validateVersion() {
-      if (this.version != (AWS_CLOUD_CONTEXT_DB_VERSION | AWS_CLOUD_CONTEXT_DB_VERSION_MASK)) {
-        throw new InvalidSerializedVersionException(
-            "Invalid serialized version of AwsCloudContextV1");
-      }
-    }
+    return new AwsCloudContext(
+        contextFields,
+        new CloudContextCommonFields(
+            dbCloudContext.getSpendProfile(),
+            dbCloudContext.getState(),
+            dbCloudContext.getFlightId(),
+            dbCloudContext.getError()));
   }
 }

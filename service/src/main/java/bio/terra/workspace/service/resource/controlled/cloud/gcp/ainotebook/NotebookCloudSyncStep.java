@@ -59,8 +59,7 @@ public class NotebookCloudSyncStep implements Step {
     String requestedLocation =
         FlightUtils.getRequired(
             flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
-    InstanceName instanceName =
-        resource.toInstanceName(cloudContext.getGcpProjectId(), requestedLocation);
+    InstanceName instanceName = resource.toInstanceName(requestedLocation);
     try {
       Policy policy = notebooks.instances().getIamPolicy(instanceName).execute();
       // Duplicating bindings is harmless (e.g. on retry). GCP de-duplicates.

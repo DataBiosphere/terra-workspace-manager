@@ -13,6 +13,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -20,6 +21,8 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.AzureCloudContextFields;
+import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -117,10 +120,12 @@ public class AzureTestUtils {
 
   public AzureCloudContext getAzureCloudContext() {
     return new AzureCloudContext(
-        azureTestConfiguration.getTenantId(),
-        azureTestConfiguration.getSubscriptionId(),
-        azureTestConfiguration.getManagedResourceGroupId(),
-        /* commonFields= */ null);
+        new AzureCloudContextFields(
+            azureTestConfiguration.getTenantId(),
+            azureTestConfiguration.getSubscriptionId(),
+            azureTestConfiguration.getManagedResourceGroupId()),
+        new CloudContextCommonFields(
+            getSpendProfileId(), WsmResourceState.READY, /*flightId=*/ null, /*error=*/ null));
   }
 
   public SpendProfileId getSpendProfileId() {
