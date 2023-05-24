@@ -13,6 +13,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.generated.model.ApiDeleteOptions;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.grant.GrantService;
@@ -54,7 +55,6 @@ import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -196,7 +196,7 @@ public class ControlledResourceService {
       UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
-            UUID.randomUUID().toString(), workspaceUuid, resourceId, null, userRequest);
+            UUID.randomUUID().toString(), workspaceUuid, resourceId, null, null, userRequest);
     // Delete flight does not produce a result, so the resultClass parameter here is never used.
     deleteJob.submitAndWait(Void.class);
   }
@@ -211,11 +211,25 @@ public class ControlledResourceService {
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
+    return commonDeletionJobBuilder(
+            jobControl.getId(), workspaceUuid, resourceId, null, resultPath, userRequest)
+        .submit();
+  }
 
-    JobBuilder deleteJob =
-        commonDeletionJobBuilder(
-            jobControl.getId(), workspaceUuid, resourceId, resultPath, userRequest);
-    return deleteJob.submit();
+  /**
+   * Asynchronously delete a controlled resource. Returns the ID of the flight running the delete
+   * job.
+   */
+  public String deleteControlledResourceAsync(
+      ApiJobControl jobControl,
+      UUID workspaceUuid,
+      UUID resourceId,
+      ApiDeleteOptions deleteOptions,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    return commonDeletionJobBuilder(
+            jobControl.getId(), workspaceUuid, resourceId, deleteOptions, resultPath, userRequest)
+        .submit();
   }
 
   /**
@@ -226,13 +240,12 @@ public class ControlledResourceService {
       String jobId,
       UUID workspaceUuid,
       UUID resourceId,
+      ApiDeleteOptions deleteOptions,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
-    final String jobDescription = "Delete controlled resource; id: " + resourceId;
+    String jobDescription = "Delete controlled resource; id: " + resourceId;
 
-    List<WsmResource> resourceToDelete = new ArrayList<>();
-    resourceToDelete.add(resource);
     return jobService
         .newJob()
         .description(jobDescription)
@@ -246,8 +259,9 @@ public class ControlledResourceService {
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceUuid.toString())
+        .addParameter(ControlledResourceKeys.DELETE_OPTIONS, deleteOptions)
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
-        .addParameter(ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
+        .addParameter(ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, List.of(resource));
   }
 
   /**
