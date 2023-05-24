@@ -42,6 +42,7 @@ dependencies {
 
   // Opencensus utilities for various HTTP clients
   implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
+  implementation group: 'io.opencensus', name: 'opencensus-exporter-stats-stackdriver', version: '0.31.1'
 
   // Get stairway via TCL
   implementation("bio.terra:terra-common-lib:0.0.88-SNAPSHOT") {
