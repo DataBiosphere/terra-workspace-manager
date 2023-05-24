@@ -106,7 +106,7 @@ public class StopAwsSageMakerNotebookStep implements Step {
                 "Cannot start AWS SageMaker Notebook resource %s, status %s.",
                 resource.getResourceId(), notebookStatus));
       }
-      // else: started
+      // else: already started
 
     } catch (ApiException | NotFoundException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
