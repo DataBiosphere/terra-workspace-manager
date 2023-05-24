@@ -151,7 +151,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
                 ControlledBigQueryDatasetResource.class);
     if (clonedDataset != null) {
       controlledResourceService.deleteControlledResourceSync(
-          clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), false, userRequest);
+          clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

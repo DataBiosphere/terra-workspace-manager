@@ -260,7 +260,6 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
             new ApiJobControl().id(UUID.randomUUID().toString()),
             workspaceId,
             createdBucket.getResourceId(),
-            false,
             "fake result path",
             user.getAuthenticatedRequest());
     jobService.waitForJob(jobId);

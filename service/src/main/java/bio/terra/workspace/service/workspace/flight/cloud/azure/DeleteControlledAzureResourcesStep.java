@@ -56,7 +56,7 @@ public class DeleteControlledAzureResourcesStep implements Step {
 
     for (ControlledResource vm : partitionedResources.get(true)) {
       controlledResourceService.deleteControlledResourceSync(
-          workspaceUuid, vm.getResourceId(), false, userRequest);
+          workspaceUuid, vm.getResourceId(), userRequest);
     }
 
     return partitionedResources.get(false);
@@ -99,7 +99,7 @@ public class DeleteControlledAzureResourcesStep implements Step {
     // Delete all remaining resources
     for (ControlledResource resource : controlledResourceList) {
       controlledResourceService.deleteControlledResourceSync(
-          workspaceUuid, resource.getResourceId(), false, userRequest);
+          workspaceUuid, resource.getResourceId(), userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

@@ -176,7 +176,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
         resourceUuid.toString(),
         workspaceUuid.toString());
     controlledResourceService.deleteControlledResourceSync(
-        workspaceUuid, resourceUuid, false, userRequest);
+        workspaceUuid, resourceUuid, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 

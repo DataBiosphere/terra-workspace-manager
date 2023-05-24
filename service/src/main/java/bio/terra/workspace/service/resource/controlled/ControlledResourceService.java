@@ -193,6 +193,12 @@ public class ControlledResourceService {
 
   /** Synchronously delete a controlled resource. */
   public void deleteControlledResourceSync(
+      UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
+    deleteControlledResourceSync(workspaceUuid, resourceId, false, userRequest);
+  }
+
+  /** Synchronously delete a controlled resource. */
+  public void deleteControlledResourceSync(
       UUID workspaceUuid,
       UUID resourceId,
       boolean forceDelete,
@@ -214,6 +220,20 @@ public class ControlledResourceService {
    * job.
    */
   public String deleteControlledResourceAsync(
+      ApiJobControl jobControl,
+      UUID workspaceUuid,
+      UUID resourceId,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    return deleteControlledResourceAsync(
+        jobControl, workspaceUuid, resourceId, false, resultPath, userRequest);
+  }
+
+  /**
+   * Asynchronously delete a controlled resource. Returns the ID of the flight running the delete
+   * job.
+   */
+  private String deleteControlledResourceAsync(
       ApiJobControl jobControl,
       UUID workspaceUuid,
       UUID resourceId,

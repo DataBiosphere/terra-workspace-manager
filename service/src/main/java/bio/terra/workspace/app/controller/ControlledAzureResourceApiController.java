@@ -352,7 +352,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         workspaceUuid.toString());
 
     controlledResourceService.deleteControlledResourceSync(
-        workspaceUuid, resourceUuid, false, userRequest);
+        workspaceUuid, resourceUuid, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -453,7 +453,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             jobControl,
             workspaceUuid,
             resourceUuid,
-            false,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getJobDeleteResult(jobId);
