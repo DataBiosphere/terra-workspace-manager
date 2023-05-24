@@ -414,10 +414,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       @PathVariable("workspaceId") UUID workspaceUuid,
       @RequestBody ApiWsmPolicyUpdateRequest body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
 
     workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
+        userRequest, workspaceUuid, SamWorkspaceAction.OWN);
 
     features.tpsEnabledCheck();
     TpsPolicyInputs adds = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAddAttributes());
@@ -425,23 +424,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getRemoveAttributes());
     TpsUpdateMode updateMode = TpsApiConversionUtils.tpsFromApiTpsUpdateMode(body.getUpdateMode());
 
-    TpsPaoUpdateResult result = tpsApiDispatch.updatePao(workspaceUuid, adds, removes, updateMode);
-
-    if (Boolean.TRUE.equals(result.isUpdateApplied())) {
-      workspaceActivityLogService.writeActivity(
-          userRequest,
-          workspaceUuid,
-          OperationType.UPDATE,
-          workspaceUuid.toString(),
-          ActivityLogChangedTarget.POLICIES);
-      logger.info(
-          "Finished updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
-    } else {
-      logger.warn(
-          "Workspace policies update failed to apply to {} for {}",
-          workspaceUuid,
-          userRequest.getEmail());
-    }
+    var result =
+        workspaceService.updatePolicy(workspaceUuid, adds, removes, updateMode, userRequest);
 
     ApiWsmPolicyUpdateResult apiResult = TpsApiConversionUtils.apiFromTpsUpdateResult(result);
     return new ResponseEntity<>(apiResult, HttpStatus.OK);

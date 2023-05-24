@@ -31,8 +31,10 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebo
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SignedUrlListDataTransferFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.flexibleresource.CloneControlledFlexibleResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -636,8 +638,8 @@ public class ControlledResourceService {
             resource, privateResourceIamRole, jobControl, resultPath, userRequest);
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(
-        ControlledResourceKeys.AWS_ENVIRONMENT_USER_ROLE_ARN,
-        environment.getUserRoleArn().toString());
+        ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN,
+        environment.getNotebookRoleArn().toString());
     jobBuilder.addParameter(
         ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
         landingZone.getKmsKey().arn().toString());
@@ -702,5 +704,29 @@ public class ControlledResourceService {
             .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     return jobBuilder.submitAndWait(ControlledFlexibleResource.class);
+  }
+
+  public String transferUrlListToGcsBucket(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      ControlledGcsBucketResource destinationBucket,
+      String signedUrlList) {
+    JobBuilder jobBuilder =
+        jobService
+            .newJob()
+            .description("Transfer signed url lists to a gcs bucket")
+            .flightClass(SignedUrlListDataTransferFlight.class)
+            .resourceType(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET)
+            .resource(destinationBucket)
+            .workspaceId(workspaceId.toString())
+            .operationType(OperationType.DATA_TRANSFER)
+            .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, workspaceId)
+            .addParameter(
+                ControlledResourceKeys.DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST,
+                destinationBucket.getBucketName())
+            .addParameter(ControlledResourceKeys.SIGNED_URL_LIST, signedUrlList)
+            .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+
+    return jobBuilder.submit();
   }
 }

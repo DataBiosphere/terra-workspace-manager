@@ -22,6 +22,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String PET_SA_CREDENTIALS = "petSaCredentials";
   public static final String CLOUD_PLATFORM = "cloudPlatform";
   public static final String CLOUD_CONTEXT = "cloudContext";
+  public static final String FLIGHT_IDS = "flightIds";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -51,7 +52,12 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
-    public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
+
+    public static final String SIGNED_URL_LIST = "signedUrlList";
+    public static final String DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST =
+        "destinationBucketNameForSignedUrlList";
+    public static final String DESTINATION_STORAGE_TRANSFER_INPUTS =
+        "destinationStorageTransferInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
     public static final String DESTINATION_REFERENCED_RESOURCE = "destinationReferencedResource";
     public static final String DESTINATION_WORKSPACE_ID = "destinationWorkspaceId";
@@ -85,6 +91,7 @@ public final class WorkspaceFlightMapKeys {
     // AWS
     public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
     public static final String AWS_ENVIRONMENT_USER_ROLE_ARN = "awsEnvironmentUserRoleArn";
+    public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN = "awsEnvironmentNotebookRoleArn";
     public static final String AWS_LANDING_ZONE_KMS_KEY_ARN = "awsLandingZoneKmsKeyArn";
     public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
         "awsLandingZoneNotebookLifecycleConfigArn";

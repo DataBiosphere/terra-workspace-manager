@@ -6,6 +6,7 @@ import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SignedUrlListDataTransferFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.flexibleresource.CloneControlledFlexibleResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllResourcesFlight;
@@ -76,6 +77,10 @@ public enum ActivityFlight {
   CONTROLLED_BQ_DATASET_CLONE_FLIGHT(
       CloneControlledGcpBigQueryDatasetResourceFlight.class.getName(),
       ActivityLogChangedTarget.CONTROLLED_GCP_BIG_QUERY_DATASET),
+
+  SIGNED_URL_LIST_DATA_TRANSFER_FLIGHT(
+      SignedUrlListDataTransferFlight.class.getName(),
+      ActivityLogChangedTarget.CONTROLLED_GCP_GCS_BUCKET),
 
   // AZURE
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(

@@ -5,6 +5,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
@@ -39,6 +40,10 @@ public class PolicyValidator {
   public void validateWorkspaceConformsToPolicy(
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var validationErrors = new ArrayList<String>();
+
+    if (policies == null) {
+      return;
+    }
 
     validationErrors.addAll(
         validateWorkspaceConformsToRegionPolicy(workspace, policies, userRequest));
@@ -83,13 +88,8 @@ public class PolicyValidator {
       for (var cloudPlatform : workspaceDao.listCloudPlatforms(workspace.workspaceId())) {
         switch (cloudPlatform) {
           case AZURE -> {
-            var lzDefinition =
-                landingZoneApiDispatch.getLandingZone(userRequest, workspace).getDefinition();
-            if (!azureConfiguration.getProtectedDataLandingZoneDefs().contains(lzDefinition)) {
-              validationErrors.add(
-                  "Workspace landing zone type [%s] does not support protected data"
-                      .formatted(lzDefinition));
-            }
+            var landingZone = landingZoneApiDispatch.getLandingZone(userRequest, workspace);
+            validationErrors.addAll(validateLandingZoneSupportsProtectedData(landingZone));
           }
 
           default -> validationErrors.add("Protected data policy only supported on Azure");
@@ -99,10 +99,32 @@ public class PolicyValidator {
     return validationErrors;
   }
 
+  public List<String> validateLandingZoneSupportsProtectedData(ApiAzureLandingZone landingZone) {
+    var validationErrors = new ArrayList<String>();
+    if (!azureConfiguration
+        .getProtectedDataLandingZoneDefs()
+        .contains(landingZone.getDefinition())) {
+      validationErrors.add(
+          "Workspace landing zone type [%s] does not support protected data"
+              .formatted(landingZone.getDefinition()));
+    }
+    return validationErrors;
+  }
+
   public List<String> validateWorkspaceConformsToGroupPolicy(
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var groups = TpsUtilities.getGroupConstraintsFromInputs(policies.getEffectiveAttributes());
+    var currentPao = tpsApiDispatch.getPao((workspace.getWorkspaceId()));
+    var existingGroups =
+        (currentPao == null)
+            ? new ArrayList<String>()
+            : TpsUtilities.getGroupConstraintsFromInputs(currentPao.getEffectiveAttributes());
+
     if (!groups.isEmpty()) {
+      if (groups.containsAll(existingGroups) && existingGroups.containsAll(groups)) {
+        // groups have not changed.
+        return List.of();
+      }
       return List.of("policies with group constraints not yet supported for this api call");
     } else {
       return List.of();

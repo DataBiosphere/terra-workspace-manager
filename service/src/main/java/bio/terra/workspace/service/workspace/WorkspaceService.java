@@ -10,13 +10,10 @@ import bio.terra.policy.model.TpsPaoDescription;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
-import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
-import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -75,10 +72,7 @@ public class WorkspaceService {
   private final ApplicationDao applicationDao;
   private final WorkspaceDao workspaceDao;
   private final SamService samService;
-  private final BufferServiceConfiguration bufferServiceConfiguration;
   private final StageService stageService;
-  private final FeatureConfiguration features;
-  private final FeatureService featureService;
   private final ResourceDao resourceDao;
   private final WorkspaceActivityLogService workspaceActivityLogService;
   private final TpsApiDispatch tpsApiDispatch;
@@ -90,10 +84,7 @@ public class WorkspaceService {
       ApplicationDao applicationDao,
       WorkspaceDao workspaceDao,
       SamService samService,
-      BufferServiceConfiguration bufferServiceConfiguration,
       StageService stageService,
-      FeatureConfiguration features,
-      FeatureService featureService,
       ResourceDao resourceDao,
       WorkspaceActivityLogService workspaceActivityLogService,
       TpsApiDispatch tpsApiDispatch,
@@ -102,10 +93,7 @@ public class WorkspaceService {
     this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
     this.samService = samService;
-    this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.stageService = stageService;
-    this.features = features;
-    this.featureService = featureService;
     this.resourceDao = resourceDao;
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.tpsApiDispatch = tpsApiDispatch;
@@ -562,6 +550,11 @@ public class WorkspaceService {
       TpsPaoDescription sourcePaoId,
       TpsUpdateMode tpsUpdateMode,
       AuthenticatedUserRequest userRequest) {
+    logger.info(
+        "Linking workspace policies {} to {} for {}",
+        workspaceId,
+        sourcePaoId.getObjectId(),
+        userRequest.getEmail());
 
     tpsApiDispatch.createPaoIfNotExist(
         sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType());
@@ -583,15 +576,74 @@ public class WorkspaceService {
     } else {
       var updateResult =
           tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), tpsUpdateMode);
-      if (updateResult.isUpdateApplied()) {
+      if (Boolean.TRUE.equals(updateResult.isUpdateApplied())) {
         workspaceActivityLogService.writeActivity(
             userRequest,
             workspaceId,
             OperationType.UPDATE,
             workspaceId.toString(),
             ActivityLogChangedTarget.POLICIES);
+        logger.info(
+            "Finished linking workspace policies {} to {} for {}",
+            workspaceId,
+            sourcePaoId.getObjectId(),
+            userRequest.getEmail());
+      } else {
+        logger.warn(
+            "Failed linking workspace policies {} to {} for {}",
+            workspaceId,
+            sourcePaoId.getObjectId(),
+            userRequest.getEmail());
       }
       return updateResult;
+    }
+  }
+
+  @Traced
+  public TpsPaoUpdateResult updatePolicy(
+      UUID workspaceUuid,
+      TpsPolicyInputs addAttributes,
+      TpsPolicyInputs removeAttributes,
+      TpsUpdateMode updateMode,
+      AuthenticatedUserRequest userRequest) {
+    logger.info("Updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
+
+    var dryRun =
+        tpsApiDispatch.updatePao(
+            workspaceUuid, addAttributes, removeAttributes, TpsUpdateMode.DRY_RUN);
+
+    if (!dryRun.getConflicts().isEmpty() && updateMode != TpsUpdateMode.DRY_RUN) {
+      throw new PolicyConflictException(
+          "Workspace policies conflict with policy updates", dryRun.getConflicts());
+    }
+
+    policyValidator.validateWorkspaceConformsToPolicy(
+        getWorkspace(workspaceUuid), dryRun.getResultingPao(), userRequest);
+
+    if (updateMode == TpsUpdateMode.DRY_RUN) {
+      return dryRun;
+    } else {
+      var result =
+          tpsApiDispatch.updatePao(workspaceUuid, addAttributes, removeAttributes, updateMode);
+
+      if (Boolean.TRUE.equals(result.isUpdateApplied())) {
+        workspaceActivityLogService.writeActivity(
+            userRequest,
+            workspaceUuid,
+            OperationType.UPDATE,
+            workspaceUuid.toString(),
+            ActivityLogChangedTarget.POLICIES);
+        logger.info(
+            "Finished updating workspace policies {} for {}",
+            workspaceUuid,
+            userRequest.getEmail());
+      } else {
+        logger.warn(
+            "Workspace policies update failed to apply to {} for {}",
+            workspaceUuid,
+            userRequest.getEmail());
+      }
+      return result;
     }
   }
 }

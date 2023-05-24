@@ -5,10 +5,11 @@ import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.policy.PolicyValidator;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteControlledAzureResourcesStep;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateLandingZoneRegionAgainstPolicyStep;
+import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateLandingZoneAgainstPolicyStep;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateMRGStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
@@ -37,15 +38,18 @@ public class AzureCloudContextService implements CloudContextService {
   private final WorkspaceDao workspaceDao;
   private final FeatureConfiguration featureConfiguration;
   private final WorkspaceService workspaceService;
+  private final PolicyValidator policyValidator;
 
   @Autowired
   public AzureCloudContextService(
       WorkspaceDao workspaceDao,
       FeatureConfiguration featureConfiguration,
-      WorkspaceService workspaceService) {
+      WorkspaceService workspaceService,
+      PolicyValidator policyValidator) {
     this.workspaceDao = workspaceDao;
     this.featureConfiguration = featureConfiguration;
     this.workspaceService = workspaceService;
+    this.policyValidator = policyValidator;
   }
 
   // Set up static accessor for use by CloudPlatform
@@ -67,12 +71,13 @@ public class AzureCloudContextService implements CloudContextService {
       AuthenticatedUserRequest userRequest) {
     if (featureConfiguration.isTpsEnabled()) {
       flight.addStep(
-          new ValidateLandingZoneRegionAgainstPolicyStep(
+          new ValidateLandingZoneAgainstPolicyStep(
               appContext.getLandingZoneApiDispatch(),
               userRequest,
               appContext.getTpsApiDispatch(),
               workspaceUuid,
-              workspaceService));
+              workspaceService,
+              policyValidator));
     }
 
     // validate the MRG

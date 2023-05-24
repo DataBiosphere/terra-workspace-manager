@@ -52,7 +52,6 @@ import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEn
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
-import org.broadinstitute.dsde.workbench.client.sam.model.SystemStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -1056,9 +1055,8 @@ public class SamService {
     // No access token needed since this is an unauthenticated API.
     StatusApi statusApi = new StatusApi(getApiClient(null));
     try {
-      SystemStatus samStatus = SamRetry.retry(statusApi::getSystemStatus);
-      return samStatus.getOk();
-    } catch (ApiException | InterruptedException e) {
+      return statusApi.getSystemStatus().getOk();
+    } catch (ApiException e) {
       //  If any exception was thrown during the status check, return that the system is not OK.
       return false;
     }

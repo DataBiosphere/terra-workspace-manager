@@ -2,13 +2,10 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
@@ -23,18 +20,9 @@ public class CloudContextSpendProfileBackfillTest extends BaseUnitTest {
 
   @Test
   public void testBackfillQuery() {
-    UUID workspaceId = UUID.randomUUID();
-    Workspace workspace =
-        Workspace.builder()
-            .workspaceId(workspaceId)
-            .userFacingId("a" + workspaceId)
-            .description("A")
-            .spendProfileId(WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID)
-            .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-            .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
-            .build();
-
-    workspaceDao.createWorkspace(workspace, null);
+    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    UUID workspaceId = workspace.workspaceId();
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 
     String flightId = workspaceId.toString();
     workspaceDao.createCloudContextStart(

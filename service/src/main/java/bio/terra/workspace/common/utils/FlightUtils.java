@@ -11,6 +11,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -101,15 +102,6 @@ public final class FlightUtils {
     }
   }
 
-  /**
-   * Validate that all common entries are present in the flight map
-   *
-   * @param flightMap input parameters
-   */
-  public static void validateCommonEntries(FlightMap flightMap) {
-    validateRequiredEntries(flightMap, COMMON_FLIGHT_INPUTS.keySet().toArray(new String[0]));
-  }
-
   public static FlightMap getResultMapRequired(FlightState flightState) {
     return flightState
         .getResultMap()
@@ -144,16 +136,6 @@ public final class FlightUtils {
   }
 
   /**
-   * Copy the parameters common to all WSM flights
-   *
-   * @param source source flight map
-   * @param dest destination flight map
-   */
-  public static void copyCommonParams(FlightMap source, FlightMap dest) {
-    COMMON_FLIGHT_INPUTS.forEach((key, clazz) -> dest.put(key, source.get(key, clazz)));
-  }
-
-  /**
    * Get a value from one of the flight maps and check that it is not null. If it is null, throw.
    *
    * @param flightMap input or working map
@@ -164,6 +146,23 @@ public final class FlightUtils {
    */
   public static <T> T getRequired(FlightMap flightMap, String key, Class<T> tClass) {
     var value = flightMap.get(key, tClass);
+    if (value == null) {
+      throw new MissingRequiredFieldsException("Missing required flight map key: " + key);
+    }
+    return value;
+  }
+
+  /**
+   * Get a value from one of the flight maps and check that it is not null. If it is null, throw.
+   *
+   * @param flightMap input or working map
+   * @param key string key to lookup in the map
+   * @param typeReference Jackson type reference
+   * @param <T> generic
+   * @return T
+   */
+  public static <T> T getRequired(FlightMap flightMap, String key, TypeReference<T> typeReference) {
+    var value = flightMap.get(key, typeReference);
     if (value == null) {
       throw new MissingRequiredFieldsException("Missing required flight map key: " + key);
     }

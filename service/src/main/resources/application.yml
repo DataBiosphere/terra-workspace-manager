@@ -180,13 +180,31 @@ landingzone:
     terminate-timeout: 30s
     tracing-enabled: true
     retention-check-interval: 1d
-    completed-flight-retention: 7d
+    completed-flight-retention: 90d
   sam:
     base-path: ${env.urls.sam}
     landing-zone-resource-users:
       - workspace-dev@broad-dsde-dev.iam.gserviceaccount.com
       - leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
   bpm.base-path: ${env.urls.bpm}
+  protected-data:
+    long-term-storage-table-names:
+      - Alert
+      - AlertEvidence
+      - AlertInfo
+      - Anomalies
+      - CommonSecurityLog
+      - ContainerLog
+      - ContainerLogV2
+      - ContainerNodeInventory
+      - ContainerServiceLog
+      - Operation
+      - SecurityAlert
+      - SecurityIncident
+      - SentinelHealth
+      - StorageBlobLogs
+      - Syslog
+
 
 # Feature flags
 # The general rule is that feature flags should be set here in their production setting

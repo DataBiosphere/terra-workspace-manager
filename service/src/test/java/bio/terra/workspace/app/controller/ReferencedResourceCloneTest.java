@@ -400,11 +400,12 @@ public class ReferencedResourceCloneTest extends BaseConnectedTest {
     try {
       // Update the source workspace policy
       ApiWsmPolicyUpdateResult result =
-          mockMvcUtils.updatePolicies(
+          mockMvcUtils.updatePoliciesExpectStatus(
               userAccessUtils.defaultUserAuthRequest(),
               sourceWorkspaceId,
               /*policiesToAdd*/ locationsToAdd,
-              /*policiesToRemove*/ locationsToRemove);
+              /*policiesToRemove*/ locationsToRemove,
+              HttpStatus.SC_CONFLICT);
       assertFalse(result.isUpdateApplied());
       assertFalse(
           result.getConflicts().stream()

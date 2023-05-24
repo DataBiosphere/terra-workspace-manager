@@ -134,11 +134,11 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CompleteTransferOperationStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CreateStorageTransferServiceJobStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.RemoveBucketRolesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetBucketRolesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketInWorkingMapStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketResponseStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.TransferGcsBucketToGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CompleteTableCopyJobsStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CreateTableCopyJobsStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetInWorkingMapStep;
@@ -321,6 +321,11 @@ public class MockMvcUtils {
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
   public static final String POLICY_V1_GET_REGION_INFO_PATH = "/api/policies/v1/getLocationInfo";
 
+  public static final String LOAD_SIGNED_URL_LIST_PATH_FORMAT =
+      "/api/workspaces/alpha1/%s/resources/controlled/gcp/buckets/%s/load";
+
+  public static final String LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT =
+      "/api/workspaces/alpha1/%s/resources/controlled/gcp/buckets/%s/load/result/%s";
   public static final String DEFAULT_USER_EMAIL = "fake@gmail.com";
   public static final String DEFAULT_USER_SUBJECT_ID = "subjectId123456";
   // Only use this if you are mocking SAM. If you're using real SAM,
@@ -657,6 +662,18 @@ public class MockMvcUtils {
       @Nullable List<ApiWsmPolicyInput> policiesToAdd,
       @Nullable List<ApiWsmPolicyInput> policiesToRemove)
       throws Exception {
+    return updatePoliciesExpectStatus(
+        userRequest, workspaceId, policiesToAdd, policiesToRemove, HttpStatus.SC_OK);
+  }
+
+  public ApiWsmPolicyUpdateResult updatePoliciesExpectStatus(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable List<ApiWsmPolicyInput> policiesToAdd,
+      @Nullable List<ApiWsmPolicyInput> policiesToRemove,
+      int httpStatus)
+      throws Exception {
+
     ApiWsmPolicyUpdateRequest requestBody =
         new ApiWsmPolicyUpdateRequest().updateMode(ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
     if (policiesToAdd != null) {
@@ -675,7 +692,7 @@ public class MockMvcUtils {
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsString(requestBody)),
                     userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
+            .andExpect(status().is(httpStatus))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -1365,7 +1382,7 @@ public class MockMvcUtils {
             CreateReferenceMetadataStep.class,
             SetReferencedDestinationGcsBucketResponseStep.class,
             SetBucketRolesStep.class,
-            CreateStorageTransferServiceJobStep.class,
+            TransferGcsBucketToGcsBucketStep.class,
             CompleteTransferOperationStep.class,
             // TODO(PF-2271): Uncomment after PF-2271 is fixed
             // DeleteStorageTransferServiceJobStep.class,
@@ -2648,6 +2665,16 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
+  public String getSerializedResponseForGetJobResult(
+      AuthenticatedUserRequest userRequest, String path) throws Exception {
+    return mockMvc
+        .perform(addAuth(get(path), userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
   private String getSerializedResponseForGetJobResult_error(
       AuthenticatedUserRequest userRequest, String path, UUID workspaceId, String jobId)
       throws Exception {
@@ -2658,7 +2685,7 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
-  private String getSerializedResponseForPost(
+  public String getSerializedResponseForPost(
       AuthenticatedUserRequest userRequest, String path, String request) throws Exception {
     return mockMvc
         .perform(

@@ -56,8 +56,9 @@ import bio.terra.workspace.service.workspace.exceptions.DuplicateUserFacingIdExc
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.flight.create.workspace.CheckSamWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceAuthzStep;
+import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceFinishStep;
 import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspacePoliciesStep;
-import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceStep;
+import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceStartStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -504,10 +505,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void createMcWorkspaceDoSteps() {
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateWorkspaceStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CreateWorkspacePoliciesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(CreateWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
@@ -522,9 +524,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     // Ensure the auth check in CheckSamWorkspaceAuthzStep always succeeds.
     doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(CreateWorkspaceStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CheckSamWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(CreateWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
@@ -537,12 +540,21 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
     // Retry undo steps once and fail at the end of the flight.
     Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CreateWorkspacePoliciesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(CreateWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+    retrySteps.put(CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+
+    Map<String, StepStatus> triggerFailureStep = new HashMap<>();
+    triggerFailureStep.put(
+        CreateWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
+    // The finish step is not undoable, so we make the failure at the penultimate step.
     FlightDebugInfo debugInfo =
-        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(triggerFailureStep)
+            .undoStepFailures(retrySteps)
+            .build();
     jobService.setFlightDebugInfoForTest(debugInfo);
 
     // Service methods which wait for a flight to complete will throw an

@@ -12,6 +12,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -24,6 +25,7 @@ public class WorkspaceCreateFlight extends Flight {
     super(inputParameters, applicationContext);
 
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
+    WsmResourceStateRule wsmResourceStateRule = appContext.getFeatureConfiguration().getStateRule();
 
     // get data from inputs that steps need
     AuthenticatedUserRequest userRequest =
@@ -44,6 +46,12 @@ public class WorkspaceCreateFlight extends Flight {
             WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
 
     RetryRule serviceRetryRule = RetryRules.shortExponential();
+    RetryRule dbRetryRule = RetryRules.shortDatabase();
+
+    addStep(
+        new CreateWorkspaceStartStep(
+            workspace, appContext.getWorkspaceDao(), wsmResourceStateRule, applicationIds),
+        dbRetryRule);
 
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
@@ -54,6 +62,10 @@ public class WorkspaceCreateFlight extends Flight {
               new CreateWorkspacePoliciesStep(
                   workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
               serviceRetryRule);
+          // If we're cloning, we need to copy the policies from the source workspace.
+          // This is here instead of in the CloneWorkspaceFlight because we need to do it before
+          // we create the workspace in Sam in case there are auth domains.
+          // COPY_NOTHING is used when not cloning
           if (cloningInstructions != CloningInstructions.COPY_NOTHING) {
             addStep(
                 new MergePolicyAttributesStep(
@@ -80,7 +92,7 @@ public class WorkspaceCreateFlight extends Flight {
           "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
     }
     addStep(
-        new CreateWorkspaceStep(workspace, applicationIds, appContext.getWorkspaceDao()),
-        RetryRules.shortDatabase());
+        new CreateWorkspaceFinishStep(workspace.workspaceId(), appContext.getWorkspaceDao()),
+        dbRetryRule);
   }
 }
