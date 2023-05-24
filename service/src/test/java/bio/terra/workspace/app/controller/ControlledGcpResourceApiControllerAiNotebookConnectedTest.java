@@ -41,7 +41,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @Tag("connectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
-public class ControlledGcpResourceApiControllerAiNotebookTest extends BaseConnectedTest {
+public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired UserAccessUtils userAccessUtils;

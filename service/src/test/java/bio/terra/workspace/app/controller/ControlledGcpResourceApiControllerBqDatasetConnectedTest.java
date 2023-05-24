@@ -65,9 +65,9 @@ import org.springframework.test.web.servlet.MockMvc;
 // time creating and deleting GCP contexts.
 @Tag("connectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
-public class ControlledGcpResourceApiControllerBqDatasetTest extends BaseConnectedTest {
+public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends BaseConnectedTest {
   private static final Logger logger =
-      LoggerFactory.getLogger(ControlledGcpResourceApiControllerBqDatasetTest.class);
+      LoggerFactory.getLogger(ControlledGcpResourceApiControllerBqDatasetConnectedTest.class);
 
   // GCP default is us-central1. Use something different, so we know this is copied to clone
   // correctly.

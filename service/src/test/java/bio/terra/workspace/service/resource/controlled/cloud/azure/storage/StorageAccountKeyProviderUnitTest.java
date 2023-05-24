@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -23,7 +23,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 
-public class StorageAccountKeyProviderUnitTest extends BaseUnitTest {
+public class StorageAccountKeyProviderUnitTest extends BaseAzureUnitTest {
 
   @Test
   public void getStorageAccountKey() {

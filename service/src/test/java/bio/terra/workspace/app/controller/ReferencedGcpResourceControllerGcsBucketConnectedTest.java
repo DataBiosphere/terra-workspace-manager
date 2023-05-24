@@ -47,9 +47,9 @@ import org.springframework.test.web.servlet.MockMvc;
 // time creating and deleting GCP contexts.
 @Tag("connectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
-public class ReferencedGcpResourceControllerGcsBucketTest extends BaseConnectedTest {
+public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseConnectedTest {
   private static final Logger logger =
-      LoggerFactory.getLogger(ReferencedGcpResourceControllerGcsBucketTest.class);
+      LoggerFactory.getLogger(ReferencedGcpResourceControllerGcsBucketConnectedTest.class);
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
