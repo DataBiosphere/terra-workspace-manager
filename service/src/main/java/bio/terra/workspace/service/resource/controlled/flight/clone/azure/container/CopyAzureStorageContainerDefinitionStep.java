@@ -162,7 +162,7 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
     try {
       if (clonedContainer != null) {
         controlledResourceService.deleteControlledResourceSync(
-            clonedContainer.getWorkspaceId(), clonedContainer.getResourceId(), userRequest);
+            clonedContainer.getWorkspaceId(), clonedContainer.getResourceId(), false, userRequest);
       }
     } catch (ResourceNotFoundException e) {
       logger.info(
