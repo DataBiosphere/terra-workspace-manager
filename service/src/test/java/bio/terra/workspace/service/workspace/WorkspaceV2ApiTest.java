@@ -4,9 +4,10 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.MvcWorkspaceApi;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
+import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,22 +20,23 @@ public class WorkspaceV2ApiTest extends BaseConnectedTest {
   @Autowired UserAccessUtils userAccessUtils;
 
   @Test
-  public void testAsyncDeleteWorkspace() throws Exception {
-    AuthenticatedUserRequest defaultUserRequest =
-        userAccessUtils.defaultUser().getAuthenticatedRequest();
-    ApiCreatedWorkspace workspace =
-        mockMvcUtils.createWorkspaceWithoutCloudContext(defaultUserRequest);
-    mvcWorkspaceApi.deleteWorkspaceAndWait(defaultUserRequest, workspace.getId());
+  public void testAsyncCreateDeleteWorkspace_noCloudContext() throws Exception {
+    createDeleteOperation(null);
   }
 
   @Test
-  public void testAsyncDeleteGcpCloudContext() throws Exception {
+  public void testAsyncCreateDeleteWorkspace_withCloudContext() throws Exception {
+    createDeleteOperation(ApiCloudPlatform.GCP);
+  }
+
+  private void createDeleteOperation(ApiCloudPlatform cloudPlatform) throws Exception {
     AuthenticatedUserRequest defaultUserRequest =
         userAccessUtils.defaultUser().getAuthenticatedRequest();
-    ApiCreatedWorkspace workspace =
-        mockMvcUtils.createWorkspaceWithCloudContext(defaultUserRequest);
-    mvcWorkspaceApi.deleteCloudContextAndWait(
-        defaultUserRequest, workspace.getId(), CloudPlatform.GCP);
+    // Create the workspace with no cloud context
+    ApiCreateWorkspaceV2Result result =
+        mvcWorkspaceApi.createWorkspaceAndWait(defaultUserRequest, cloudPlatform);
+    ApiWorkspaceDescription workspace = result.getWorkspace();
+
     mvcWorkspaceApi.deleteWorkspaceAndWait(defaultUserRequest, workspace.getId());
   }
 }

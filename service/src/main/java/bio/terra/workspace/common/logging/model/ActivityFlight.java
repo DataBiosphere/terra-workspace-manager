@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferen
 import bio.terra.workspace.service.workspace.flight.application.ApplicationAbleFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
+import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceV2Flight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
@@ -33,6 +34,8 @@ public enum ActivityFlight {
       WorkspaceCreateFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
   WORKSPACE_DELETE_FLIGHT(
       WorkspaceDeleteFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
+  WORKSPACE_CREATE_V2_FLIGHT(
+      CreateWorkspaceV2Flight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
 
   // Cloud context
   CLOUD_CONTEXT_CREATE_FLIGHT(

@@ -134,13 +134,13 @@ public class WorkspaceV2Api {
   }
 
   private ApiCreateWorkspaceV2Result fetchCreateWorkspaceV2Result(String jobId) {
-    JobApiUtils.AsyncJobResult<Workspace> jobResult =
-        jobApiUtils.retrieveAsyncJobResult(jobId, Workspace.class);
+    JobApiUtils.AsyncJobResult<UUID> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, UUID.class);
 
     ApiWorkspaceDescription apiWorkspace = null;
-    Workspace workspace = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
-      workspace = jobResult.getResult();
+      UUID workspaceUuid = jobResult.getResult();
+      Workspace workspace = workspaceService.getWorkspace(workspaceUuid);
       apiWorkspace = workspaceApiUtils.buildWorkspaceDescription(workspace, WsmIamRole.OWNER);
     }
 

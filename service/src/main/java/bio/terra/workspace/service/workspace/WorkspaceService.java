@@ -142,6 +142,7 @@ public class WorkspaceService {
     JobBuilder createJob =
         jobService
             .newJob()
+            .jobId(jobId)
             .description(
                 String.format(
                     "Create workspace name: '%s' id: '%s' and %s cloud context",
@@ -167,6 +168,8 @@ public class WorkspaceService {
           .addParameter(
               WorkspaceFlightMapKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, UUID.randomUUID().toString());
     }
+
+    createJob.submit();
 
     // Wait for the metadata row to show up or the flight to fail
     jobService.waitForMetadataOrJob(
