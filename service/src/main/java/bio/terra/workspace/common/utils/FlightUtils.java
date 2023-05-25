@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.common.stairway.TracingHook;
+import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -36,7 +36,7 @@ public final class FlightUtils {
           String.class,
           MdcHook.MDC_FLIGHT_MAP_KEY,
           Object.class,
-          TracingHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
+          MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
           Object.class);
 
   private FlightUtils() {}
