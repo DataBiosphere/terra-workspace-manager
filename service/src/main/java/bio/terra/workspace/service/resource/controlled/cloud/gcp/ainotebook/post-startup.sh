@@ -228,6 +228,7 @@ ${RUN_AS_JUPYTER_USER} "pip install --user \
   nbdime \
   nbstripout \
   pandas_gbq \
+  plotnine \
   pre-commit \
   pylint \
   pytest"
