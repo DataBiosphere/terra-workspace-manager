@@ -3,7 +3,7 @@ package bio.terra.workspace.service.job;
 import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.stairway.StairwayComponent;
-import bio.terra.common.stairway.TracingHook;
+import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightEnumeration;
@@ -158,7 +158,7 @@ public class JobService {
             .dataSource(DataSourceInitializer.initializeDataSource(stairwayDatabaseConfiguration))
             .context(flightBeanBag)
             .addHook(mdcHook)
-            .addHook(new TracingHook())
+            .addHook(new MonitoringHook())
             .addHook(workspaceActivityLogHook)
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
