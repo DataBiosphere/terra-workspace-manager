@@ -79,6 +79,9 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
 
+    // Deletion keys
+    public static final String FORCE_DELETE = "forceDelete";
+
     // GCP
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
     public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";

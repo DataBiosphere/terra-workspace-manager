@@ -27,11 +27,11 @@ import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
-import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
 public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   private static final String RESOURCE_DESCRIPTOR = "ControlledAwsSageMakerNotebook";
@@ -140,26 +140,29 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getCliConfiguration()),
         cloudRetry);
-    flight.addStep(
-        new WaitForAwsSageMakerNotebookStatusStep(
-            this, flightBeanBag.getAwsCloudContextService(), NotebookInstanceStatus.IN_SERVICE),
-        cloudRetry);
   }
 
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
-    // Notebooks must be stopped before deletion. Expecting user to stop before attempting a delete
-    flight.addStep(
-        new ValidateAwsSageMakerNotebookDeleteStep(this, flightBeanBag.getAwsCloudContextService()),
-        cloudRetry);
+    boolean forceDelete =
+        flight.getInputParameters().get(ControlledResourceKeys.FORCE_DELETE, Boolean.class);
+
+    // Notebooks must be stopped before deletion. If requested, stop instance before delete attempt
+    if (forceDelete) {
+      flight.addStep(
+          new StopAwsSageMakerNotebookStep(this, flightBeanBag.getAwsCloudContextService(), true),
+          cloudRetry);
+    } else {
+      flight.addStep(
+          new ValidateAwsSageMakerNotebookDeleteStep(
+              this, flightBeanBag.getAwsCloudContextService()),
+          cloudRetry);
+    }
+
     flight.addStep(
         new DeleteAwsSageMakerNotebookStep(this, flightBeanBag.getAwsCloudContextService()),
-        cloudRetry);
-    flight.addStep(
-        new WaitForAwsSageMakerNotebookStatusStep(
-            this, flightBeanBag.getAwsCloudContextService(), NotebookInstanceStatus.DELETING),
         cloudRetry);
   }
 
