@@ -193,6 +193,7 @@ landingzone:
       - AlertEvidence
       - AlertInfo
       - Anomalies
+      - AppTraces
       - CommonSecurityLog
       - ContainerLog
       - ContainerLogV2
