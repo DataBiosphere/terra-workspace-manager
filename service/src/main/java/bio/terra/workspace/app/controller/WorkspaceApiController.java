@@ -148,35 +148,41 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   }
 
   // For the WorkspaceV2 interfaces, dispatch to a separate module for the implementation
+  @Traced
   @Override
   public ResponseEntity<ApiCreateWorkspaceV2Result> createWorkspaceV2(
       ApiCreateWorkspaceV2Request body) {
     return workspaceV2Api.createWorkspaceV2(body);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiJobResult> deleteCloudContextV2(
       UUID workspaceId, ApiCloudPlatform cloudContext, ApiDeleteCloudContextV2Request body) {
     return workspaceV2Api.deleteCloudContextV2(workspaceId, cloudContext, body);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiJobResult> deleteWorkspaceV2(
       UUID workspaceId, ApiDeleteWorkspaceV2Request body) {
     return workspaceV2Api.deleteWorkspaceV2(workspaceId, body);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreateWorkspaceV2Result> getCreateWorkspaceV2Result(String jobId) {
     return workspaceV2Api.getCreateWorkspaceV2Result(jobId);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiJobResult> getDeleteCloudContextV2Result(
       UUID workspaceId, String jobId) {
     return workspaceV2Api.getDeleteCloudContextV2Result(workspaceId, jobId);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiJobResult> getDeleteWorkspaceV2Result(UUID workspaceId, String jobId) {
     return workspaceV2Api.getDeleteWorkspaceV2Result(workspaceId, jobId);

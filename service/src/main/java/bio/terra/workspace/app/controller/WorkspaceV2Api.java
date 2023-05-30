@@ -15,12 +15,10 @@ import bio.terra.workspace.generated.model.ApiDeleteCloudContextV2Request;
 import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobResult;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -88,7 +86,7 @@ public class WorkspaceV2Api {
     SpendProfileId spendProfileId = null;
     ApiCloudPlatform apiCloudPlatform = body.getCloudPlatform();
     if (apiCloudPlatform != null) {
-      ControllerValidationUtils.validateCloudPlatform(body.getCloudPlatform());
+      ControllerValidationUtils.validateCloudPlatform(apiCloudPlatform);
       cloudPlatform = CloudPlatform.fromApiCloudPlatform(apiCloudPlatform);
       spendProfile =
           workspaceApiUtils.validateSpendProfilePermission(userRequest, body.getSpendProfile());
@@ -122,7 +120,7 @@ public class WorkspaceV2Api {
     workspaceService.createWorkspaceV2(
         workspace,
         policies,
-        /*applications=*/ null,
+        body.getApplicationIds(),
         cloudPlatform,
         spendProfile,
         jobId,
@@ -137,17 +135,15 @@ public class WorkspaceV2Api {
     JobApiUtils.AsyncJobResult<UUID> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, UUID.class);
 
-    ApiWorkspaceDescription apiWorkspace = null;
+    UUID workspaceUuid = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
-      UUID workspaceUuid = jobResult.getResult();
-      Workspace workspace = workspaceService.getWorkspace(workspaceUuid);
-      apiWorkspace = workspaceApiUtils.buildWorkspaceDescription(workspace, WsmIamRole.OWNER);
+      workspaceUuid = jobResult.getResult();
     }
 
     return new ApiCreateWorkspaceV2Result()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
-        .workspace(apiWorkspace);
+        .workspaceId(workspaceUuid);
   }
 
   public ResponseEntity<ApiCreateWorkspaceV2Result> getCreateWorkspaceV2Result(String jobId) {
@@ -165,7 +161,7 @@ public class WorkspaceV2Api {
 
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.DELETE);
 
     workspaceService.deleteCloudContextAsync(
         workspace,
@@ -185,7 +181,7 @@ public class WorkspaceV2Api {
     String jobId = body.getJobControl().getId();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.DELETE);
 
     logger.info("Starting delete of workspace {} for {}", workspaceId, userRequest.getEmail());
     workspaceService.deleteWorkspaceAsync(

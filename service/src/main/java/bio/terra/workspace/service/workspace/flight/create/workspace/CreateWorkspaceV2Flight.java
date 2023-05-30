@@ -28,7 +28,10 @@ public class CreateWorkspaceV2Flight extends Flight {
 
     // get data from inputs that steps need
     AuthenticatedUserRequest userRequest =
-        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+        FlightUtils.getRequired(
+            inputParameters,
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
     Workspace workspace =
         FlightUtils.getRequired(inputParameters, JobMapKeys.REQUEST.getKeyName(), Workspace.class);
     TpsPolicyInputs policyInputs =

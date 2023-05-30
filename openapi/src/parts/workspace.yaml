@@ -705,8 +705,9 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
-        workspace:
-          $ref: '#/components/schemas/WorkspaceDescription'
+        workspaceId:
+          type: string
+          format: uuid
 
     DeleteWorkspaceV2Request:
       type: object

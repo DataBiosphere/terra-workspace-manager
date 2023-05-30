@@ -6,8 +6,8 @@ import bio.terra.workspace.common.utils.MvcWorkspaceApi;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +35,8 @@ public class WorkspaceV2ApiTest extends BaseConnectedTest {
     // Create the workspace with no cloud context
     ApiCreateWorkspaceV2Result result =
         mvcWorkspaceApi.createWorkspaceAndWait(defaultUserRequest, cloudPlatform);
-    ApiWorkspaceDescription workspace = result.getWorkspace();
+    UUID workspaceUuid = result.getWorkspaceId();
 
-    mvcWorkspaceApi.deleteWorkspaceAndWait(defaultUserRequest, workspace.getId());
+    mvcWorkspaceApi.deleteWorkspaceAndWait(defaultUserRequest, workspaceUuid);
   }
 }

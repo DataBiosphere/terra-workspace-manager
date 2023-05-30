@@ -531,6 +531,7 @@ public class JobService {
         TimeUnit.SECONDS.sleep(METADATA_ROW_WAIT_SECONDS);
       }
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       // fall through to throw
     }
 

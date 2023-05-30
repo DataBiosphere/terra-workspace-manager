@@ -218,10 +218,3 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateCloudContextResult'
-
-    DeleteCloudContextResultResponse:
-      description: Job is complete (succeeded or failed)
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CreateCloudContextResult'
