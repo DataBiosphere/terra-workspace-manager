@@ -67,7 +67,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
     var keyProvider = mock(StorageAccountKeyProvider.class);
     var cred = new StorageSharedKeyCredential("fake", "fake");
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
-    when(mockSamService().getSamUser(eq(userRequest)))
+    when(mockSamService().getSamUser(userRequest))
         .thenReturn(new SamUser("example@example.com", "123ABC", new BearerToken("token")));
     when(mockSamService().getWsmServiceAccountToken()).thenReturn("wsm-token");
     azureStorageAccessService =
