@@ -182,7 +182,7 @@ public class AzureStorageAccessService {
       SasTokenOptions sasTokenOptions) {
     features.azureEnabledCheck();
 
-    var samUser= samService.getSamUser(userRequest);
+    var samUser = samService.getSamUser(userRequest);
     logger.info(
         "User {} [sub={}] requesting SAS token for Azure storage container {} in workspace {}",
         samUser.getEmail(),
