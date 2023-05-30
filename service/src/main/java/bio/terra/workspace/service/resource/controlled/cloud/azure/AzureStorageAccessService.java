@@ -182,12 +182,11 @@ public class AzureStorageAccessService {
       SasTokenOptions sasTokenOptions) {
     features.azureEnabledCheck();
 
-    var userEmail =
-        SamRethrow.onInterrupted(
-            () -> samService.getUserEmailFromSam(userRequest), "getUserEmailFromSam");
+    var samUser = samService.getSamUser(userRequest);
     logger.info(
-        "User {} requesting SAS token for Azure storage container {} in workspace {}",
-        userEmail,
+        "User {} [SubjectId={}] requesting SAS token for Azure storage container {} in workspace {}",
+        samUser.getEmail(),
+        samUser.getSubjectId(),
         storageContainerUuid.toString(),
         workspaceUuid.toString());
 
@@ -214,6 +213,7 @@ public class AzureStorageAccessService {
     BlobServiceSasSignatureValues sasValues =
         new BlobServiceSasSignatureValues(sasTokenOptions.expiryTime(), blobContainerSasPermission)
             .setStartTime(sasTokenOptions.startTime())
+            .setContentDisposition(samUser.getSubjectId())
             .setProtocol(SasProtocol.HTTPS_ONLY);
 
     if (sasTokenOptions.ipRange() != null) {
@@ -241,9 +241,10 @@ public class AzureStorageAccessService {
             .toUpperCase();
 
     logger.info(
-        "SAS token with expiry time of {} generated for user {} on container {} in workspace {} [sha256 = {}]",
+        "SAS token with expiry time of {} generated for user {} [SubjectId={}] on container {} in workspace {} [sha256 = {}]",
         sasTokenOptions.expiryTime(),
-        userEmail,
+        samUser.getEmail(),
+        samUser.getSubjectId(),
         storageContainerUuid,
         workspaceUuid,
         sha256hex);

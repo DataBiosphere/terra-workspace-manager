@@ -10,6 +10,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
@@ -65,8 +67,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
     var keyProvider = mock(StorageAccountKeyProvider.class);
     var cred = new StorageSharedKeyCredential("fake", "fake");
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
-    when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(eq(userRequest)))
-        .thenReturn(userRequest.getEmail());
+    when(mockSamService().getSamUser(userRequest))
+        .thenReturn(new SamUser("example@example.com", "123ABC", new BearerToken("token")));
     when(mockSamService().getWsmServiceAccountToken()).thenReturn("wsm-token");
     azureStorageAccessService =
         new AzureStorageAccessService(
@@ -115,6 +117,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
     Pattern signedContainerResourceRegex = Pattern.compile("sr=c&");
     Pattern signedBlobResourceRegex = Pattern.compile("sr=b&");
     Pattern permissionsRegex = Pattern.compile("sp=" + expectedPermissions.toString() + "&");
+    Pattern contentDispositionRegex = Pattern.compile("rscd=" + "123ABC");
 
     assertThat("SAS is https", protocolRegex.matcher(sas).find());
     assertThat("SAS validity starts today", startTimeRegex.matcher(sas).find());
@@ -126,6 +129,9 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
           "SAS is for a container resource", signedContainerResourceRegex.matcher(sas).find());
     }
     assertThat("SAS grants correct permissions", permissionsRegex.matcher(sas).find());
+    assertThat(
+        "SAS contains user subject ID in content dispostion query parameter",
+        contentDispositionRegex.matcher(sas).find());
   }
 
   @Test
@@ -482,7 +488,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
                 null));
 
     assertEquals(
-        "9FFE137AEB017B2BBF4E9DD724EEC987A4BE60321C0E54B279F8C558031DDE8B", result.sha256());
+        "AA2137EFE8AC6FE96478DDAA844D917A4472005E3DE3984BF0C6FF641D293AB3", result.sha256());
   }
 
   @Test
