@@ -1,6 +1,5 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
