@@ -121,6 +121,14 @@ exec >> "${POST_STARTUP_OUTPUT_FILE}"
 exec 2>&1
 
 #######################################
+# Emit a message with a timestamp
+#######################################
+function emit() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') $*"
+}
+readonly -f emit
+
+#######################################
 # Retrieve a value from the GCE metadata server or return nothing.
 # See https://cloud.google.com/compute/docs/storing-retrieving-metadata
 # Arguments:
@@ -175,17 +183,17 @@ trap 'exit_handler $? $LINENO $BASH_COMMAND' EXIT
 # Let the UI know the script has started
 set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 
-echo "Determining JupyterLab environment (jupyter.service or docker)"
+emit "Determining JupyterLab environment (jupyter.service or docker)"
 
 readonly INSTANCE_CONTAINER="$(get_metadata_value instance/attributes/container)"
 
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-  echo "Custom container detected: ${INSTANCE_CONTAINER}."
+  emit "Custom container detected: ${INSTANCE_CONTAINER}."
 else
-  echo "Non-containerized Jupyter experienced detected."
+  emit "Non-containerized Jupyter experienced detected."
 fi
 
-echo "Resynchronizing apt package index..."
+emit "Resynchronizing apt package index..."
 
 # The apt package index may not be clean when we run; resynchronize
 apt-get update
@@ -220,7 +228,7 @@ EOF
 
 fi
 
-echo "Installing common packages via pip..."
+emit "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
 ${RUN_AS_JUPYTER_USER} "pip install --user \
@@ -248,7 +256,7 @@ ${RUN_AS_JUPYTER_USER} "nbstripout --install --global"
 # We pick up the right version by putting ~/.local/bin
 # into the PATH.
 #########################################################
-echo "Installing Java JDK ..."
+emit "Installing Java JDK ..."
 
 # Set up a known clean directory for downloading the TAR and unzipping it.
 ${RUN_AS_JUPYTER_USER} "mkdir -p '${JAVA_INSTALL_TMP}'"
@@ -276,27 +284,27 @@ rmdir ${JAVA_INSTALL_TMP}
 
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
   # The DeepLearning Docker images don't have SSH client software installed by default
-  echo "Copying SSH client tools to ${USER_HOME_LOCAL_BIN}"
+  emit "Copying SSH client tools to ${USER_HOME_LOCAL_BIN}"
   cp "$(which ssh)" "${USER_HOME_LOCAL_BIN}"
   cp "$(which ssh-add)" "${USER_HOME_LOCAL_BIN}"
   chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/ssh"
   chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/ssh-add"
 
   # The DeepLearning Docker images don't have less installed by default
-  echo "Copying less to ${USER_HOME_LOCAL_BIN}"
+  emit "Copying less to ${USER_HOME_LOCAL_BIN}"
   cp "$(which less)" "${USER_HOME_LOCAL_BIN}"
   chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/less"
 fi
 
 # Download Nextflow and install it
-echo "Installing Nextflow ..."
+emit "Installing Nextflow ..."
 
 ${RUN_AS_JUPYTER_USER} "\
   curl -s https://get.nextflow.io | bash && \
   mv nextflow '${NEXTFLOW_INSTALL_PATH}'"
 
 # Download Cromwell and install it
-echo "Installing Cromwell ..."
+emit "Installing Cromwell ..."
 
 ${RUN_AS_JUPYTER_USER} "\
   curl -LO 'https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar' && \
@@ -311,7 +319,7 @@ export CROMWELL_JAR="${CROMWELL_INSTALL_JAR}"
 EOF
 
 # Download cromshell and install it
-echo "Installing Cromshell ..."
+emit "Installing Cromshell ..."
 
 apt-get -y install mailutils
 ${RUN_AS_JUPYTER_USER} "\
@@ -320,7 +328,7 @@ ${RUN_AS_JUPYTER_USER} "\
   mv cromshell '${CROMSHELL_INSTALL_PATH}'"
 
 # Install & configure the Terra CLI
-echo "Installing the Terra CLI ..."
+emit "Installing the Terra CLI ..."
 
 ${RUN_AS_JUPYTER_USER} "\
   curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash && \
@@ -390,7 +398,7 @@ readonly PET_SA_EMAIL="$(
 # GOOGLE_SERVICE_ACCOUNT_EMAIL is the pet service account for the Terra user
 # and is specific to the GCP project backing the workspace.
 
-echo "Adding Terra environment variables to .bash_profile ..."
+emit "Adding Terra environment variables to .bash_profile ..."
 
 cat << EOF >> "${USER_BASH_PROFILE}"
 
@@ -408,7 +416,7 @@ EOF
 # Make the environment variables available to notebooks in container JupyterLab
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
 
-echo "Adding Terra environment variables to jupyter_notebook_config.py ..."
+emit "Adding Terra environment variables to jupyter_notebook_config.py ..."
 
 cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
 
@@ -436,7 +444,7 @@ fi
 # If we need it system-wide, we can install it there, but otherwise, let's
 # keep changes localized to the JUPYTER_USER.
 #
-echo "Configuring bash completion for the VM..."
+emit "Configuring bash completion for the VM..."
 
 cat << 'EOF' >> "${USER_BASH_PROFILE}"
 
@@ -459,7 +467,7 @@ EOF
 # git setup
 ###############
 
-echo "Setting up git integration..."
+emit "Setting up git integration..."
 
 # Create the user SSH directory 
 ${RUN_AS_JUPYTER_USER} "mkdir -p ${USER_SSH_DIR} --mode 0700"
@@ -583,7 +591,7 @@ EOF
 #    directories to be mounted. We run the startup service after
 #    jupyter.service to meet this requirement.
 
-echo "Setting up Terra boot script and service..."
+emit "Setting up Terra boot script and service..."
 
 # Create the boot script
 cat << EOF >"${TERRA_BOOT_SCRIPT}"
@@ -663,10 +671,10 @@ chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASH_PROFILE}"
 # Restart JupyterLab or Docker so environment variables are picked up in Jupyter environment. See PF-2178.
 ####################################
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-  echo "Restarting Docker service..."
+  emit "Restarting Docker service..."
   systemctl restart docker.service
 else
-  echo "Restarting Jupyter service..."
+  emit "Restarting Jupyter service..."
   systemctl restart jupyter.service
 fi
 
@@ -676,76 +684,76 @@ fi
 
 # Test java (existence and version)
 
-echo "--  Checking if installed Java version is ${REQ_JAVA_VERSION} or higher"
+emit "--  Checking if installed Java version is ${REQ_JAVA_VERSION} or higher"
 
 # Get the current major version of Java: "11.0.12" => "11"
 readonly INSTALLED_JAVA_VERSION="$(${RUN_AS_JUPYTER_USER} "${JAVA_INSTALL_PATH} -version" 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')"
 if [[ "${INSTALLED_JAVA_VERSION}" -lt ${REQ_JAVA_VERSION} ]]; then
-  >&2 echo "ERROR: Java version detected (${INSTALLED_JAVA_VERSION}) is less than required (${REQ_JAVA_VERSION})"
+  >&2 emit "ERROR: Java version detected (${INSTALLED_JAVA_VERSION}) is less than required (${REQ_JAVA_VERSION})"
   exit 1
 fi
 
-echo "SUCCESS: Java installed and version detected as ${INSTALLED_JAVA_VERSION}"
+emit "SUCCESS: Java installed and version detected as ${INSTALLED_JAVA_VERSION}"
 
 # Test nextflow
-echo "--  Checking if Nextflow is properly installed"
+emit "--  Checking if Nextflow is properly installed"
 
 readonly INSTALLED_NEXTFLOW_VERSION="$(${RUN_AS_JUPYTER_USER} "${NEXTFLOW_INSTALL_PATH} -v" | sed -e 's#nextflow version \(.*\)#\1#')"
 
-echo "SUCCESS: Nextflow installed and version detected as ${INSTALLED_NEXTFLOW_VERSION}"
+emit "SUCCESS: Nextflow installed and version detected as ${INSTALLED_NEXTFLOW_VERSION}"
 
 # Test Cromwell
-echo "--  Checking if installed Cromwell version is ${CROMWELL_LATEST_VERSION}"
+emit "--  Checking if installed Cromwell version is ${CROMWELL_LATEST_VERSION}"
 
 readonly INSTALLED_CROMWELL_VERSION="$(${RUN_AS_JUPYTER_USER} "java -jar ${CROMWELL_INSTALL_JAR} --version" | sed -e 's#cromwell \(.*\)#\1#')"
 if [[ "${INSTALLED_CROMWELL_VERSION}" -ne ${CROMWELL_LATEST_VERSION} ]]; then
-  >&2 echo "ERROR: Cromwell version detected (${INSTALLED_CROMWELL_VERSION}) is not equal to expected (${CROMWELL_LATEST_VERSION})"
+  >&2 emit "ERROR: Cromwell version detected (${INSTALLED_CROMWELL_VERSION}) is not equal to expected (${CROMWELL_LATEST_VERSION})"
   exit 1
 fi
 
-echo "SUCCESS: Cromwell installed and version detected as ${INSTALLED_CROMWELL_VERSION}"
+emit "SUCCESS: Cromwell installed and version detected as ${INSTALLED_CROMWELL_VERSION}"
 
 # Test Cromshell
-echo "--  Checking if Cromshell is properly installed"
+emit "--  Checking if Cromshell is properly installed"
 
 if [[ ! -e "${CROMSHELL_INSTALL_PATH}" ]]; then
-  >&2 echo "ERROR: Cromshell not found at ${CROMSHELL_INSTALL_PATH}"
+  >&2 emit "ERROR: Cromshell not found at ${CROMSHELL_INSTALL_PATH}"
   exit 1
 fi
 if [[ ! -x "${CROMSHELL_INSTALL_PATH}" ]]; then
-  >&2 echo "ERROR: Cromshell not executable at ${CROMSHELL_INSTALL_PATH}"
+  >&2 emit "ERROR: Cromshell not executable at ${CROMSHELL_INSTALL_PATH}"
   exit 1
 fi
 
-echo "SUCCESS: Cromshell installed"
+emit "SUCCESS: Cromshell installed"
 
 # Test Terra
-echo "--  Checking if Terra CLI is properly installed"
+emit "--  Checking if Terra CLI is properly installed"
 
 if [[ ! -e "${TERRA_INSTALL_PATH}" ]]; then
-  >&2 echo "ERROR: Terra CLI not found at ${TERRA_INSTALL_PATH}"
+  >&2 emit "ERROR: Terra CLI not found at ${TERRA_INSTALL_PATH}"
   exit 1
 fi
 
 readonly INSTALLED_TERRA_VERSION="$(${RUN_AS_JUPYTER_USER} "${TERRA_INSTALL_PATH} version")"
 
 if [[ -z "${INSTALLED_TERRA_VERSION}" ]]; then
-  >&2 echo "ERROR: Terra CLI did not execute or did not return a version number"
+  >&2 emit "ERROR: Terra CLI did not execute or did not return a version number"
   exit 1
 fi
 
-echo "SUCCESS: Terra CLI installed and version detected as ${INSTALLED_TERRA_VERSION}"
+emit "SUCCESS: Terra CLI installed and version detected as ${INSTALLED_TERRA_VERSION}"
 
 # SSH
-echo "--  Checking if .ssh directory is properly set up"
+emit "--  Checking if .ssh directory is properly set up"
 
 if [[ ! -e "${USER_SSH_DIR}" ]]; then
-  >&2 echo "ERROR: user SSH directory does not exist"
+  >&2 emit "ERROR: user SSH directory does not exist"
   exit 1
 fi
 readonly SSH_DIR_MODE="$(stat -c "%a %G %U" "${USER_SSH_DIR}")"
 if [[ "${SSH_DIR_MODE}" != "700 jupyter jupyter" ]]; then
-  >&2 echo "ERROR: user SSH directory permissions are incorrect: ${SSH_DIR_MODE}"
+  >&2 emit "ERROR: user SSH directory permissions are incorrect: ${SSH_DIR_MODE}"
   exit 1
 fi
 
@@ -754,23 +762,23 @@ fi
 if [[ -e "${USER_SSH_DIR}/id_rsa" ]]; then
   readonly SSH_KEY_FILE_MODE="$(stat -c "%a %G %U" "${USER_SSH_DIR}/id_rsa")"
   if [[ "${SSH_KEY_FILE_MODE}" != "600 jupyter jupyter" ]]; then
-    >&2 echo "ERROR: user SSH key file permissions are incorrect: ${SSH_DIR_MODE}/id_rsa"
+    >&2 emit "ERROR: user SSH key file permissions are incorrect: ${SSH_DIR_MODE}/id_rsa"
     exit 1
   fi
 fi
 
 
 # GIT_IGNORE
-echo "--  Checking if gitignore is properly installed"
+emit "--  Checking if gitignore is properly installed"
 
 readonly INSTALLED_GITIGNORE="$(${RUN_AS_JUPYTER_USER} "git config --global core.excludesfile")"
 
 if [[ "${INSTALLED_GITIGNORE}" != "${GIT_IGNORE}" ]]; then
-  >&2 echo "ERROR: gitignore not set up at ${GIT_IGNORE}"
+  >&2 emit "ERROR: gitignore not set up at ${GIT_IGNORE}"
   exit 1
 fi
 
-echo "SUCCESS: Gitignore installed at ${INSTALLED_GITIGNORE}"
+emit "SUCCESS: Gitignore installed at ${INSTALLED_GITIGNORE}"
 
 # This block is for test only. If the notebook execute successfully down to
 # here, we knows that the script executed successfully.
