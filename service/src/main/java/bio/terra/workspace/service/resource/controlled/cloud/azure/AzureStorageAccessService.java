@@ -184,7 +184,7 @@ public class AzureStorageAccessService {
 
     var samUser = samService.getSamUser(userRequest);
     logger.info(
-        "User {} [sub={}] requesting SAS token for Azure storage container {} in workspace {}",
+        "User {} [SubjectId={}] requesting SAS token for Azure storage container {} in workspace {}",
         samUser.getEmail(),
         samUser.getSubjectId(),
         storageContainerUuid.toString(),
@@ -241,7 +241,7 @@ public class AzureStorageAccessService {
             .toUpperCase();
 
     logger.info(
-        "SAS token with expiry time of {} generated for user {} [sub={}] on container {} in workspace {} [sha256 = {}]",
+        "SAS token with expiry time of {} generated for user {} [SubjectId={}] on container {} in workspace {} [sha256 = {}]",
         sasTokenOptions.expiryTime(),
         samUser.getEmail(),
         samUser.getSubjectId(),
