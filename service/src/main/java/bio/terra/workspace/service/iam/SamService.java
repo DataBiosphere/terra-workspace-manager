@@ -1081,8 +1081,8 @@ public class SamService {
   }
 
   /**
-   * Builds a policy list with a single provided owner and empty reader, writer, project-owner, and application
-   * policies.
+   * Builds a policy list with a single provided owner and empty reader, writer, project-owner, and
+   * application policies.
    *
    * <p>This is a helper function for building the policy section of a request to create a workspace
    * resource in Sam. The provided user is granted the OWNER role and empty policies for reader,
