@@ -42,6 +42,13 @@ public enum WsmIamRole {
       return roleToCheck == WsmIamRole.APPLICATION || roleToCheck == WsmIamRole.OWNER;
     }
   },
+  // Role for billing project owner so that owners of billing projects are able to view workspaces using the project.
+  // This role is used for display purposes but does not confer additional actions, use in conjunction with owner role.
+  PROJECT_OWNER("project-owner", SamWorkspaceAction.OWN, ApiIamRole.PROJECT_OWNER) {
+    public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
+      return roleToCheck == WsmIamRole.APPLICATION || roleToCheck == WsmIamRole.PROJECT_OWNER;
+    }
+  },
   // The manager role is given to WSM's SA on all Sam workspace objects for admin control. Users
   // are never given this role.
   MANAGER("manager", null, null) {

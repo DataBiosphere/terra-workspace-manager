@@ -729,7 +729,7 @@ components:
     IamRole:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
-      enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER']
+      enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER', 'PROJECT_OWNER']
 
     MergeCheckRequest:
       description: Request with a workspace id
