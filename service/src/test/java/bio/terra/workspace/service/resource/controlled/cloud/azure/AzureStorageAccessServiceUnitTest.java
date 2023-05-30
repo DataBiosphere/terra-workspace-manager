@@ -129,7 +129,9 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
           "SAS is for a container resource", signedContainerResourceRegex.matcher(sas).find());
     }
     assertThat("SAS grants correct permissions", permissionsRegex.matcher(sas).find());
-    assertThat("SAS contains user subject ID in content dispostion query parameter", contentDispositionRegex.matcher(sas).find());
+    assertThat(
+        "SAS contains user subject ID in content dispostion query parameter",
+        contentDispositionRegex.matcher(sas).find());
   }
 
   @Test
