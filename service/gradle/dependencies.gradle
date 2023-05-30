@@ -45,7 +45,7 @@ dependencies {
   implementation group: 'io.opencensus', name: 'opencensus-exporter-stats-stackdriver', version: '0.31.1'
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.0.89-SNAPSHOT") {
+  implementation("bio.terra:terra-common-lib:0.0.91-SNAPSHOT") {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-df5a43a"
