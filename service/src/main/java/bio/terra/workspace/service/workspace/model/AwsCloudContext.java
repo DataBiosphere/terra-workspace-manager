@@ -74,9 +74,13 @@ public class AwsCloudContext implements CloudContext {
     return (T) this;
   }
 
-  // TODO: PF-2770 include the common fields in the API return
   public ApiAwsContext toApi() {
-    return (contextFields == null ? null : contextFields.toApi());
+    var awsContext = new ApiAwsContext();
+    awsContext.operationState(commonFields.toApi());
+    if (contextFields != null) {
+      contextFields.toApi(awsContext);
+    }
+    return awsContext;
   }
 
   /**

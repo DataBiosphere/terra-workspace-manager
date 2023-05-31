@@ -4,6 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertA
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoConflict;
@@ -34,12 +35,15 @@ import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDeleteCloudContextV2Request;
 import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
+import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
+import bio.terra.workspace.generated.model.ApiOperationState;
+import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
@@ -48,6 +52,7 @@ import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyMergeCheckResult;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
@@ -84,6 +89,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -264,6 +270,92 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                                 workspaceAndHighestRole.missingAuthDomains()))
                     .toList());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Traced
+  private ApiWorkspaceDescription buildWorkspaceDescription(
+      Workspace workspace, WsmIamRole highestRole) {
+    return buildWorkspaceDescription(
+        workspace, highestRole, /*missingAuthDomains=*/ Collections.emptyList());
+  }
+
+  @Traced
+  private ApiWorkspaceDescription buildWorkspaceDescription(
+      Workspace workspace, WsmIamRole highestRole, List<String> missingAuthDomains) {
+    UUID workspaceUuid = workspace.getWorkspaceId();
+    ApiGcpContext gcpContext =
+        gcpCloudContextService
+            .getGcpCloudContext(workspaceUuid)
+            .map(GcpCloudContext::toApi)
+            .orElse(null);
+
+    ApiAzureContext azureContext =
+        azureCloudContextService
+            .getAzureCloudContext(workspaceUuid)
+            .map(AzureCloudContext::toApi)
+            .orElse(null);
+
+    ApiAwsContext awsContext =
+        awsCloudContextService
+            .getAwsCloudContext(workspaceUuid)
+            .map(AwsCloudContext::toApi)
+            .orElse(null);
+
+    List<ApiWsmPolicyInput> workspacePolicies = null;
+    if (features.isTpsEnabled()) {
+      tpsApiDispatch.createPaoIfNotExist(workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+      TpsPaoGetResult workspacePao = tpsApiDispatch.getPao(workspaceUuid);
+      workspacePolicies = TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(workspacePao);
+    }
+
+    // When we have another cloud context, we will need to do a similar retrieval for it.
+    var lastChangeDetailsOptional =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
+
+    if (highestRole == WsmIamRole.DISCOVERER) {
+      workspace = Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace);
+    }
+
+    // Convert the property map to API format
+    ApiProperties apiProperties = convertMapToApiProperties(workspace.getProperties());
+
+    // Construct the operation state
+    var opstate =
+        new ApiOperationState().jobId(workspace.flightId()).state(workspace.state().toApi());
+    ErrorReportException exception = workspace.error();
+    if (exception != null) {
+      opstate.errorReport(
+          new ApiErrorReport()
+              .message(exception.getMessage())
+              .statusCode(exception.getStatusCode().value())
+              .causes(exception.getCauses()));
+    }
+
+    return new ApiWorkspaceDescription()
+        .id(workspaceUuid)
+        .userFacingId(workspace.getUserFacingId())
+        .displayName(workspace.getDisplayName().orElse(null))
+        .description(workspace.getDescription().orElse(null))
+        .highestRole(highestRole.toApiModel())
+        .properties(apiProperties)
+        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
+        .stage(workspace.getWorkspaceStage().toApiModel())
+        .gcpContext(gcpContext)
+        .azureContext(azureContext)
+        .awsContext(awsContext)
+        .createdDate(workspace.createdDate())
+        .createdBy(workspace.createdByEmail())
+        .lastUpdatedDate(
+            lastChangeDetailsOptional
+                .map(ActivityLogChangeDetails::changeDate)
+                .orElse(workspace.createdDate()))
+        .lastUpdatedBy(
+            lastChangeDetailsOptional
+                .map(ActivityLogChangeDetails::actorEmail)
+                .orElse(workspace.createdByEmail()))
+        .policies(workspacePolicies)
+        .missingAuthDomains(missingAuthDomains)
+        .operationState(opstate);
   }
 
   @Traced
