@@ -58,7 +58,7 @@ dependencies {
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.12-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.97-SNAPSHOT') {
+  implementation ('bio.terra:terra-landing-zone-service:0.0.100-SNAPSHOT') {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
 
