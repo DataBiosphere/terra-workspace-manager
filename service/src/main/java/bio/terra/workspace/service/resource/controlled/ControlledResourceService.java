@@ -194,9 +194,23 @@ public class ControlledResourceService {
   /** Synchronously delete a controlled resource. */
   public void deleteControlledResourceSync(
       UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
+    deleteControlledResourceSync(workspaceUuid, resourceId, false, userRequest);
+  }
+
+  /** Synchronously delete a controlled resource. */
+  public void deleteControlledResourceSync(
+      UUID workspaceUuid,
+      UUID resourceId,
+      boolean forceDelete,
+      AuthenticatedUserRequest userRequest) {
     JobBuilder deleteJob =
         commonDeletionJobBuilder(
-            UUID.randomUUID().toString(), workspaceUuid, resourceId, null, userRequest);
+            UUID.randomUUID().toString(),
+            workspaceUuid,
+            resourceId,
+            forceDelete,
+            null,
+            userRequest);
     // Delete flight does not produce a result, so the resultClass parameter here is never used.
     deleteJob.submitAndWait(Void.class);
   }
@@ -211,11 +225,24 @@ public class ControlledResourceService {
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
+    return deleteControlledResourceAsync(
+        jobControl, workspaceUuid, resourceId, false, resultPath, userRequest);
+  }
 
-    JobBuilder deleteJob =
-        commonDeletionJobBuilder(
-            jobControl.getId(), workspaceUuid, resourceId, resultPath, userRequest);
-    return deleteJob.submit();
+  /**
+   * Asynchronously delete a controlled resource. Returns the ID of the flight running the delete
+   * job.
+   */
+  private String deleteControlledResourceAsync(
+      ApiJobControl jobControl,
+      UUID workspaceUuid,
+      UUID resourceId,
+      boolean forceDelete,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+    return commonDeletionJobBuilder(
+            jobControl.getId(), workspaceUuid, resourceId, forceDelete, resultPath, userRequest)
+        .submit();
   }
 
   /**
@@ -226,10 +253,11 @@ public class ControlledResourceService {
       String jobId,
       UUID workspaceUuid,
       UUID resourceId,
+      boolean forceDelete,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
-    final String jobDescription = "Delete controlled resource; id: " + resourceId;
+    String jobDescription = "Delete controlled resource; id: " + resourceId;
 
     List<WsmResource> resourceToDelete = new ArrayList<>();
     resourceToDelete.add(resource);
@@ -246,6 +274,7 @@ public class ControlledResourceService {
         .resourceName(resource.getName())
         .stewardshipType(resource.getStewardshipType())
         .workspaceId(workspaceUuid.toString())
+        .addParameter(ControlledResourceKeys.FORCE_DELETE, forceDelete)
         .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
         .addParameter(ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
   }

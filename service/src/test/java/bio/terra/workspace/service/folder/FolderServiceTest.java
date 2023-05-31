@@ -41,6 +41,7 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
 import java.time.Duration;
 import java.util.HashMap;
@@ -74,8 +75,10 @@ public class FolderServiceTest extends BaseConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private ReferencedResourceService referencedResourceService;
   @Autowired private SamService samService;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
 
   private UUID workspaceId;
+  private String projectId;
   // foo/
   private Folder fooFolder;
   // foo/bar/
@@ -97,6 +100,8 @@ public class FolderServiceTest extends BaseConnectedTest {
         workspaceConnectedTestUtils
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId();
+    projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceId);
+
     samService.grantWorkspaceRole(
         workspaceId,
         userAccessUtils.defaultUserAuthRequest(),
@@ -122,7 +127,7 @@ public class FolderServiceTest extends BaseConnectedTest {
                     .properties(
                         Map.of(ResourceProperties.FOLDER_ID_KEY, FOO_BAR_LOO_FOLDER_ID.toString()))
                     .build())
-            .projectId("my-gcp-project")
+            .projectId(projectId)
             .instanceId(TestUtils.appendRandomNumber("my-ai-notebook-instance"))
             .location("us-east1-b")
             .build();
@@ -138,7 +143,7 @@ public class FolderServiceTest extends BaseConnectedTest {
         ReferencedBigQueryDataTableResource.builder()
             .wsmResourceFields(
                 createWsmResourceCommonFieldsWithFolderId(workspaceId, FOO_FOLDER_ID))
-            .projectId("my-gcp-project")
+            .projectId(projectId)
             .datasetId("my_special_dataset")
             .dataTableId("my_secret_table")
             .build();
@@ -260,7 +265,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     referencedResourceService.createReferenceResource(
         ReferencedBigQueryDataTableResource.builder()
             .wsmResourceFields(createWsmResourceCommonFieldsWithFolderId(workspaceId, fooFolderId))
-            .projectId("my-gcp-project")
+            .projectId(projectId)
             .datasetId("my_special_dataset")
             .dataTableId("my_secret_table")
             .build(),

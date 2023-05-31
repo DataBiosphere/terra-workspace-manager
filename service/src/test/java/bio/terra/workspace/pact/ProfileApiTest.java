@@ -81,9 +81,8 @@ public class ProfileApiTest {
     return builder
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
-        .pathFromProviderState(
-            "/api/profiles/v1/${profileId}",
-            String.format("/api/profiles/v1/%s", dummyAzureProfileId))
+        // there's no state set on this pact, so this id won't exist in bpm
+        .path(String.format("/api/profiles/v1/%s", dummyAzureProfileId))
         .willRespondWith()
         .status(403)
         .toPact();
