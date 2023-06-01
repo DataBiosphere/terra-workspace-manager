@@ -28,6 +28,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
@@ -130,9 +131,10 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
   public ResponseEntity<Void> updateResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<ApiProperty> properties) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
     validatePropertiesUpdateRequestBody(properties);
     Map<String, String> propertiesMap = convertApiPropertyToMap(properties);
     ResourceValidationUtils.validateProperties(propertiesMap);
@@ -147,8 +149,10 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
       UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     validatePropertiesDeleteRequestBody(propertyKeys);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
     resourceService.deleteResourceProperties(workspaceUuid, resourceUuid, propertyKeys);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

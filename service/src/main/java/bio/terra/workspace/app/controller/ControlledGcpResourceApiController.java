@@ -60,8 +60,10 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.CloudContext;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.google.common.base.Strings;
@@ -84,7 +86,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
   private final WsmResourceService wsmResourceService;
-  private final GcpCloudContextService gcpCloudContextService;
 
   @Autowired
   public ControlledGcpResourceApiController(
@@ -98,8 +99,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       ControlledResourceService controlledResourceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       WorkspaceService workspaceService,
-      WsmResourceService wsmResourceService,
-      GcpCloudContextService gcpCloudContextService) {
+      WsmResourceService wsmResourceService) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -112,7 +112,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceMetadataManager,
         workspaceService);
     this.wsmResourceService = wsmResourceService;
-    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Traced
@@ -123,6 +122,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
+    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.GCP);
     String resourceLocation = getResourceLocation(workspace, body.getGcsBucket().getLocation());
     ControlledResourceFields commonFields =
         toCommonFields(
@@ -170,9 +170,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiDeleteControlledGcpGcsBucketResult> deleteBucket(
       UUID workspaceUuid, UUID resourceUuid, @Valid ApiDeleteControlledGcpGcsBucketRequest body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
     final ApiJobControl jobControl = body.getJobControl();
     logger.info(
         "deleteBucket workspace {} resource {}", workspaceUuid.toString(), resourceUuid.toString());
@@ -244,6 +245,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
     ApiGcpGcsBucketUpdateParameters updateParameters = body.getUpdateParameters();
     CommonUpdateParameters commonUpdateParameters =
         new CommonUpdateParameters()
@@ -275,11 +277,15 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     }
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
     // This technically duplicates the first step of the flight as the clone flight is re-used for
     // cloneWorkspace, but this also saves us from launching and failing a flight if the user does
     // not have access to the resource.
     controlledResourceMetadataManager.validateCloneAction(
         userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+    workspaceService.validateWorkspaceAndContextState(
+        body.getDestinationWorkspaceId(), CloudPlatform.GCP);
 
     final String jobId =
         controlledResourceService.cloneGcsBucket(
@@ -357,6 +363,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+
     ApiGcpBigQueryDatasetUpdateParameters updateParameters = body.getUpdateParameters();
     CommonUpdateParameters commonUpdateParameters =
         new CommonUpdateParameters()
@@ -382,6 +390,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
+    CloudContext cloudContext =
+        workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.GCP);
+    GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
     String resourceLocation = getResourceLocation(workspace, body.getDataset().getLocation());
     ControlledResourceFields commonFields =
         toCommonFields(
@@ -399,11 +410,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                 Optional.ofNullable(body.getDataset().getDatasetId())
                     .orElse(body.getCommon().getName()));
 
-    String projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceUuid);
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
             .datasetName(datasetName)
-            .projectId(projectId)
+            .projectId(gcpCloudContext.getGcpProjectId())
             .defaultPartitionLifetime(dataset.getDefaultPartitionLifetime())
             .defaultTableLifetime(dataset.getDefaultTableLifetime())
             .common(commonFields)
@@ -428,6 +438,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+
     logger.info(
         "Deleting controlled BQ dataset resource {} in workspace {}",
         resourceUuid.toString(),
@@ -456,6 +468,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     // not have access to the resource.
     controlledResourceMetadataManager.validateCloneAction(
         userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+    workspaceService.validateWorkspaceAndContextState(
+        body.getDestinationWorkspaceId(), CloudPlatform.GCP);
 
     final String jobId =
         controlledResourceService.cloneBigQueryDataset(
@@ -500,6 +515,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
+    CloudContext cloudContext =
+        workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.GCP);
+    GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
     String resourceLocation =
         getResourceLocation(workspace, body.getAiNotebookInstance().getLocation());
     ControlledResourceFields commonFields =
@@ -513,13 +531,12 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             resourceLocation,
             userRequest,
             WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
-    String projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceUuid);
 
     ControlledAiNotebookInstanceResource resource =
         ControlledAiNotebookInstanceResource.builder()
             .common(commonFields)
             .location(resourceLocation)
-            .projectId(projectId)
+            .projectId(gcpCloudContext.getGcpProjectId())
             .instanceId(
                 Optional.ofNullable(body.getAiNotebookInstance().getInstanceId())
                     .orElse(
@@ -566,6 +583,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+
     CommonUpdateParameters commonUpdateParameters =
         new CommonUpdateParameters()
             .setName(requestBody.getName())
@@ -614,6 +633,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+
     ApiJobControl jobControl = body.getJobControl();
     logger.info(
         "deleteAiNotebookInstance workspace {} resource {}",

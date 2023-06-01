@@ -28,6 +28,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Optional;
@@ -74,8 +75,10 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   public ResponseEntity<ApiFolder> createFolder(
       UUID workspaceUuid, ApiCreateFolderRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
     var folderId = UUID.randomUUID();
     Folder folder =
         folderService.createFolder(
@@ -104,8 +107,11 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   public ResponseEntity<ApiFolder> updateFolder(
       UUID workspaceUuid, UUID folderId, ApiUpdateFolderRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
+
     Folder folder =
         folderService.updateFolder(
             workspaceUuid,
@@ -157,8 +163,10 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     // If requester is writer and folder has private resources (not owned by requester), requester
     // won't have permission to delete private resources. That access control check is done in
     // folderService#deleteFolder.
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
 
     String jobId = folderService.deleteFolder(workspaceUuid, folderId, userRequest);
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
@@ -180,8 +188,10 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   public ResponseEntity<Void> updateFolderProperties(
       UUID workspaceUuid, UUID folderUuid, List<ApiProperty> properties) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
 
     validatePropertiesUpdateRequestBody(properties);
 
@@ -202,8 +212,11 @@ public class FolderApiController extends ControllerBase implements FolderApi {
       UUID workspaceUuid, UUID folderUuid, List<String> propertyKeys) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     validatePropertiesDeleteRequestBody(propertyKeys);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
+
     folderService.deleteFolderProperties(workspaceUuid, folderUuid, propertyKeys);
     workspaceActivityLogService.writeActivity(
         userRequest,

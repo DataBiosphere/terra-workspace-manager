@@ -47,6 +47,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.google.common.base.Strings;
@@ -138,6 +139,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ControlledResource awsResource =
         controlledResourceMetadataManager.validateControlledResourceAndAction(
             userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AWS);
 
     // sanity check that resource is of expected type
     if (awsResource.getResourceType() != wsmResourceType) {
@@ -237,6 +239,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             ControllerValidationUtils.samCreateAction(
                 AccessScopeType.fromApi(body.getCommon().getAccessScope()),
                 ManagedByType.fromApi(body.getCommon().getManagedBy())));
+    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AWS);
 
     String folderName = body.getAwsS3StorageFolder().getFolderName();
     if (StringUtils.isEmpty(folderName)) {
@@ -392,6 +395,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             ControllerValidationUtils.samCreateAction(
                 AccessScopeType.fromApi(body.getCommon().getAccessScope()),
                 ManagedByType.fromApi(body.getCommon().getManagedBy())));
+    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AWS);
 
     InstanceType instanceType =
         InstanceType.fromValue(body.getAwsSageMakerNotebook().getInstanceType());

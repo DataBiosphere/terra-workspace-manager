@@ -10,10 +10,12 @@ import bio.terra.policy.model.TpsPaoDescription;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
@@ -29,8 +31,12 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
+import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
@@ -39,7 +45,11 @@ import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorks
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
+import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
@@ -260,6 +270,7 @@ public class WorkspaceService {
             samService.checkAuthz(
                 userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
         "checkAuthz");
+
     return workspace;
   }
 
@@ -274,6 +285,78 @@ public class WorkspaceService {
     Workspace workspace = validateWorkspaceAndAction(userRequest, workspaceUuid, action);
     stageService.assertMcWorkspace(workspace, action);
     return workspace;
+  }
+
+  public void validateWorkspaceState(UUID workspaceUuid) {
+    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
+    validateWorkspaceState(workspace);
+  }
+
+  /**
+   * Test that the workspace is in a ready state. This is designed to be used right after
+   * validateWorkspaceAndAction
+   *
+   * @param workspace object describing the workspace, including its current state
+   */
+  public void validateWorkspaceState(Workspace workspace) {
+    if (workspace.state() != WsmResourceState.READY) {
+      throw new InvalidCloudContextStateException(
+          String.format(
+              "Workspace is busy %s. Try again later.", workspace.state().toApi().toString()));
+    }
+  }
+
+  /**
+   * Variant of validation that takes a workspace uuid, retrieves the workspace, and then does the
+   * regular validation. Designed for use in resource operations that do not test workspace
+   * permissions.
+   *
+   * @param workspaceUuid id of the workspace to validate
+   * @param cloudPlatform cloud platform for cloud context to validate
+   * @return cloud context object for the platform
+   */
+  public CloudContext validateWorkspaceAndContextState(
+      UUID workspaceUuid, CloudPlatform cloudPlatform) {
+    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
+    return validateWorkspaceAndContextState(workspace, cloudPlatform);
+  }
+
+  /**
+   * Test that the workspace and cloud context are in a ready state. This is designed to be used
+   * right after validateWorkspaceAndAction for cases where we want to validate that the workspace
+   * and cloud context are in the READY state.
+   *
+   * <p>NOTE: this is not perfect concurrency control. We could add share locks on the workspace and
+   * cloud context to achieve that. We've decided not to add that complexity. We expect this check
+   * to cover the practical usage.
+   *
+   * @param workspace object describing the workspace, including its current state
+   * @param cloudPlatform cloud platform for cloud context to validate
+   * @return cloud context object for the platform
+   */
+  public CloudContext validateWorkspaceAndContextState(
+      Workspace workspace, CloudPlatform cloudPlatform) {
+    validateWorkspaceState(workspace);
+    Optional<DbCloudContext> optionalDbCloudContext =
+        workspaceDao.getCloudContext(workspace.workspaceId(), cloudPlatform);
+    if (optionalDbCloudContext.isEmpty()) {
+      throw new CloudContextRequiredException(
+          String.format(
+              "Operation requires %s cloud context", cloudPlatform.toApiModel().toString()));
+    }
+    if (optionalDbCloudContext.get().getState() != WsmResourceState.READY) {
+      throw new InvalidCloudContextStateException(
+          String.format(
+              "%s cloud context is busy %s. Try again later.",
+              cloudPlatform.toApiModel().toString(), workspace.state().toApi().toString()));
+    }
+
+    return switch (cloudPlatform) {
+      case AWS -> AwsCloudContext.deserialize(optionalDbCloudContext.get());
+      case AZURE -> AzureCloudContext.deserialize(optionalDbCloudContext.get());
+      case GCP -> GcpCloudContext.deserialize(optionalDbCloudContext.get());
+      default -> throw new InternalLogicException("Invalid cloud platform " + cloudPlatform);
+    };
   }
 
   /**
