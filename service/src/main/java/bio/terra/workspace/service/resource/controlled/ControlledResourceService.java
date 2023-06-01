@@ -3,8 +3,6 @@ package bio.terra.workspace.service.resource.controlled;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.ServiceUnavailableException;
-import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
@@ -53,12 +51,10 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import com.google.cloud.Policy;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -279,42 +275,6 @@ public class ControlledResourceService {
         .addParameter(ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
   }
 
-  /**
-   * For async resource creation, we do not want to return to the caller until the resource row is
-   * in the database and, thus, visible to enumeration. This method waits for either the row to show
-   * up (the expected success case) or the job to complete (the expected error case). If one of
-   * those doesn't happen in the retry window, we throw SERVICE_UNAVAILABLE. The theory is for it
-   * not to complete, either WSM is so busy that it cannot schedule the flight or something bad has
-   * happened. Either way, SERVICE_UNAVAILABLE seems like a reasonable response.
-   *
-   * <p>There is no race condition between the two checks. For either termination test, we will make
-   * the async return to the client. That path returns the current job state. If the job is
-   * complete, the client calls the result endpoint and gets the full result.
-   *
-   * @param workspaceUuid workspace of the resource create
-   * @param resourceId id of resource being created
-   * @param jobId id of the create flight.
-   */
-  private void waitForResourceOrJob(UUID workspaceUuid, UUID resourceId, String jobId) {
-    Instant exitTime = Instant.now().plus(RESOURCE_ROW_MAX_WAIT_TIME);
-    try {
-      while (Instant.now().isBefore(exitTime)) {
-        if (resourceDao.resourceExists(workspaceUuid, resourceId)) {
-          return;
-        }
-        FlightState flightState = jobService.getStairway().getFlightState(jobId);
-        if (flightState.getCompleted().isPresent()) {
-          return;
-        }
-        TimeUnit.SECONDS.sleep(RESOURCE_ROW_WAIT_SECONDS);
-      }
-    } catch (InterruptedException e) {
-      // fall through to throw
-    }
-
-    throw new ServiceUnavailableException("Failed to make prompt progress on resource");
-  }
-
   // GCP
 
   /**
@@ -489,7 +449,10 @@ public class ControlledResourceService {
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
     String jobId = jobBuilder.submit();
-    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    jobService.waitForMetadataOrJob(
+        jobId,
+        () -> resourceDao.resourceExists(resource.getWorkspaceId(), resource.getResourceId()));
+
     return jobId;
   }
 
@@ -579,7 +542,9 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
 
     String jobId = jobBuilder.submit();
-    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    jobService.waitForMetadataOrJob(
+        jobId,
+        () -> resourceDao.resourceExists(resource.getWorkspaceId(), resource.getResourceId()));
     return jobId;
   }
 
@@ -681,7 +646,9 @@ public class ControlledResourceService {
                     lifecycleConfiguration.arn().toString()));
 
     String jobId = jobBuilder.submit();
-    waitForResourceOrJob(resource.getWorkspaceId(), resource.getResourceId(), jobId);
+    jobService.waitForMetadataOrJob(
+        jobId,
+        () -> resourceDao.resourceExists(resource.getWorkspaceId(), resource.getResourceId()));
     return jobId;
   }
 

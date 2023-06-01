@@ -1,43 +1,38 @@
 package bio.terra.workspace.common.utils;
 
-import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
+import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
+import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /** Common methods for building flights */
 public final class FlightUtils {
+  private static final Logger logger = LoggerFactory.getLogger(FlightUtils.class);
 
   public static final int FLIGHT_POLL_SECONDS = 1;
   public static final int FLIGHT_POLL_CYCLES = 360;
 
-  public static final Map<String, Class<?>> COMMON_FLIGHT_INPUTS =
-      Map.of(
-          JobMapKeys.AUTH_USER_INFO.getKeyName(),
-          AuthenticatedUserRequest.class,
-          JobMapKeys.REQUEST.getKeyName(),
-          Workspace.class,
-          JobMapKeys.SUBJECT_ID.getKeyName(),
-          String.class,
-          MdcHook.MDC_FLIGHT_MAP_KEY,
-          Object.class,
-          MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
-          Object.class);
+  // Parameters for waiting for subflight completion
+  private static final Duration SUBFLIGHT_TOTAL_DURATION = Duration.ofHours(1);
+  private static final Duration SUBFLIGHT_INITIAL_SLEEP = Duration.ofSeconds(10);
+  private static final double SUBFLIGHT_FACTOR_INCREASE = 0.7;
+  private static final Duration SUBFLIGHT_MAX_SLEEP = Duration.ofMinutes(2);
 
   private FlightUtils() {}
 
@@ -200,5 +195,49 @@ public final class FlightUtils {
       }
     } while (Instant.now().isBefore(endTime));
     throw new FlightWaitTimedOutException("Timed out waiting for flight to complete.");
+  }
+
+  /**
+   * Utility method to wait for a subflight to complete. It is intended to be used in steps that
+   * launch and then wait for flights. The StepReturn reflects the success or failure of the
+   * subflight.
+   *
+   * @param stairway stairway instance
+   * @param flightId flight id to wait for
+   * @return StepResult
+   */
+  public static StepResult waitForSubflightCompletion(Stairway stairway, String flightId) {
+    try {
+      FlightState flightState =
+          RetryUtils.getWithRetry(
+              FlightUtils::flightComplete,
+              () -> stairway.getFlightState(flightId),
+              SUBFLIGHT_TOTAL_DURATION,
+              SUBFLIGHT_INITIAL_SLEEP,
+              SUBFLIGHT_FACTOR_INCREASE,
+              SUBFLIGHT_MAX_SLEEP);
+
+      if (flightState.getFlightStatus() == FlightStatus.SUCCESS) {
+        return StepResult.getStepResultSuccess();
+      }
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          flightState
+              .getException()
+              .orElse(new RuntimeException("Flight failed with an empty exception")));
+
+    } catch (Exception e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    }
+  }
+
+  private static boolean flightComplete(FlightState flightState) {
+    logger.info(
+        "Testing flight {} completion; state is {}",
+        flightState.getFlightId(),
+        flightState.getFlightStatus());
+    return (flightState.getFlightStatus() == FlightStatus.ERROR
+        || flightState.getFlightStatus() == FlightStatus.FATAL
+        || flightState.getFlightStatus() == FlightStatus.SUCCESS);
   }
 }

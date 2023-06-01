@@ -31,11 +31,11 @@ import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.stage.StageService;
-import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
+import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceV2Flight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
@@ -128,6 +128,54 @@ public class WorkspaceService {
         workspace, policies, applications, sourceWorkspaceId, cloningInstructions, userRequest);
   }
 
+  @Traced
+  public void createWorkspaceV2(
+      Workspace workspace,
+      @Nullable TpsPolicyInputs policies,
+      @Nullable List<String> applications,
+      @Nullable CloudPlatform cloudPlatform,
+      @Nullable SpendProfile spendProfile,
+      String jobId,
+      AuthenticatedUserRequest userRequest) {
+
+    UUID workspaceUuid = workspace.getWorkspaceId();
+    JobBuilder createJob =
+        jobService
+            .newJob()
+            .jobId(jobId)
+            .description(
+                String.format(
+                    "Create workspace name: '%s' id: '%s' and %s cloud context",
+                    workspace.getDisplayName().orElse(""),
+                    workspaceUuid,
+                    (cloudPlatform == null ? "no" : cloudPlatform.toSql())))
+            .flightClass(CreateWorkspaceV2Flight.class)
+            .request(workspace)
+            .userRequest(userRequest)
+            .workspaceId(workspaceUuid.toString())
+            .operationType(OperationType.CREATE)
+            .addParameter(
+                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
+            .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
+
+    // Add the cloud context params if we are making a cloud context
+    // We mint a flight id here, so it is reliably constant for the inner cloud context flight
+    if (cloudPlatform != null) {
+      createJob
+          .addParameter(CLOUD_PLATFORM, cloudPlatform)
+          .addParameter(SPEND_PROFILE, spendProfile)
+          .addParameter(
+              WorkspaceFlightMapKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, UUID.randomUUID().toString());
+    }
+
+    createJob.submit();
+
+    // Wait for the metadata row to show up or the flight to fail
+    jobService.waitForMetadataOrJob(
+        jobId, () -> Optional.ofNullable(workspaceDao.getDbWorkspace(workspaceUuid)).isPresent());
+  }
+
   /**
    * Shared method for creating a workspace. It handles both the standalone create workspace and the
    * create-for-clone. When we create for clone, we have a source workspace and we merge or link
@@ -149,12 +197,6 @@ public class WorkspaceService {
       @Nullable UUID sourceWorkspaceUuid,
       CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
-    // Before launching the flight, confirm the workspace does not already exist. This isn't perfect
-    // if two requests come in at nearly the same time, but it prevents launching a flight when a
-    // workspace already exists.
-    if (workspaceDao.getWorkspaceIfExists(workspace.getWorkspaceId()).isPresent()) {
-      throw new DuplicateWorkspaceException("Provided workspace ID is already in use");
-    }
 
     String workspaceUuid = workspace.getWorkspaceId().toString();
     JobBuilder createJob =
@@ -374,16 +416,36 @@ public class WorkspaceService {
   @Traced
   public void deleteWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
     JobBuilder deleteJob =
-        jobService
-            .newJob()
-            .description("Delete workspace " + workspace.getWorkspaceId())
-            .flightClass(WorkspaceDeleteFlight.class)
-            .operationType(OperationType.DELETE)
-            .workspaceId(workspace.getWorkspaceId().toString())
-            .userRequest(userRequest)
-            .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
+        buildDeleteWorkspaceJob(workspace, userRequest, UUID.randomUUID().toString(), null);
     deleteJob.submitAndWait();
+  }
+
+  /** Async delete of an existing workspace */
+  @Traced
+  public void deleteWorkspaceAsync(
+      Workspace workspace,
+      AuthenticatedUserRequest userRequest,
+      String jobId,
+      @Nullable String resultPath) {
+    JobBuilder deleteJob = buildDeleteWorkspaceJob(workspace, userRequest, jobId, resultPath);
+    deleteJob.submit();
+  }
+
+  private JobBuilder buildDeleteWorkspaceJob(
+      Workspace workspace,
+      AuthenticatedUserRequest userRequest,
+      String jobId,
+      @Nullable String resultPath) {
+    return jobService
+        .newJob()
+        .jobId(jobId)
+        .description("Delete workspace " + workspace.getWorkspaceId())
+        .flightClass(WorkspaceDeleteFlight.class)
+        .operationType(OperationType.DELETE)
+        .workspaceId(workspace.getWorkspaceId().toString())
+        .userRequest(userRequest)
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name());
   }
 
   /**
@@ -493,8 +555,33 @@ public class WorkspaceService {
   @Traced
   public void deleteCloudContext(
       Workspace workspace, CloudPlatform cloudPlatform, AuthenticatedUserRequest userRequest) {
-    jobService
+    var jobBuilder =
+        buildDeleteCloudContextJob(
+            workspace, cloudPlatform, userRequest, UUID.randomUUID().toString(), null);
+    jobBuilder.submitAndWait();
+  }
+
+  @Traced
+  public void deleteCloudContextAsync(
+      Workspace workspace,
+      CloudPlatform cloudPlatform,
+      AuthenticatedUserRequest userRequest,
+      String jobId,
+      @Nullable String resultPath) {
+    var jobBuilder =
+        buildDeleteCloudContextJob(workspace, cloudPlatform, userRequest, jobId, resultPath);
+    jobBuilder.submit();
+  }
+
+  private JobBuilder buildDeleteCloudContextJob(
+      Workspace workspace,
+      CloudPlatform cloudPlatform,
+      AuthenticatedUserRequest userRequest,
+      String jobId,
+      @Nullable String resultPath) {
+    return jobService
         .newJob()
+        .jobId(jobId)
         .description(
             String.format(
                 "Delete %s cloud context for workspace: name: '%s' id: '%s'  ",
@@ -503,8 +590,8 @@ public class WorkspaceService {
         .userRequest(userRequest)
         .operationType(OperationType.DELETE)
         .workspaceId(workspace.getWorkspaceId().toString())
-        .addParameter(CLOUD_PLATFORM, cloudPlatform)
-        .submitAndWait();
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), resultPath)
+        .addParameter(CLOUD_PLATFORM, cloudPlatform);
   }
 
   /**
