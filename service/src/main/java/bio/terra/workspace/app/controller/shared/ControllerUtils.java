@@ -7,8 +7,8 @@ import org.springframework.http.HttpStatus;
 public class ControllerUtils {
 
   /**
-   * Returns the result endpoint corresponding to an async request, prefixed with a / character. The
-   * endpoint is used to build a ApiJobReport. This method generates a result endpoint with the form
+   * Returns the result endpoint corresponding to an async request. The endpoint is used to build a
+   * ApiJobReport. This method generates a result endpoint with the form
    * {servletpath}/{resultWord}/{jobId} relative to the async endpoint.
    *
    * <p>Sometimes we have more than one async endpoint with the same prefix, so need to distinguish

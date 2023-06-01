@@ -99,8 +99,8 @@ public class WorkspaceV2Api {
 
     TpsPolicyInputs policies =
         workspaceApiUtils.validateAndConvertPolicies(body.getPolicies(), body.getStage());
-    // WSM requires a userFacingId. Create one, if it is not provided.
     WorkspaceStage workspaceStage = WorkspaceApiUtils.getStageFromApiStage(body.getStage());
+    // WSM requires a userFacingId. Create one, if it is not provided.
     String userFacingId =
         Optional.ofNullable(body.getUserFacingId()).orElse(body.getId().toString());
     ControllerValidationUtils.validateUserFacingId(userFacingId);

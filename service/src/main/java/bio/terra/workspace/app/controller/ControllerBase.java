@@ -30,7 +30,7 @@ import org.springframework.http.HttpStatus;
  * Super class for controllers containing common code.
  *
  * <p>NOTE: I started to migrate this to a separate ControllerUtils class rather than use the class
- * hierarchy. Using a super class was based on an incorrect understanding of ho2 HttpServletRequest
+ * hierarchy. Using a super class was based on an incorrect understanding of how HttpServletRequest
  * is handled; it is not necessary. I only did as much of this refactoring as I needed for the
  * workspace/v2 work, leaving the rest of it for later.
  *

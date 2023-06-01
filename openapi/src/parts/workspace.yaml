@@ -415,7 +415,7 @@ paths:
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/ServerError'
 
   /api/workspaces/v2/result/{jobId}:
     parameters:
