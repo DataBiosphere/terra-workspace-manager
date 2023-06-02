@@ -657,7 +657,7 @@ EOF
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
 
 # Indicate the end of Terra customizations of the jupyter_notebook_config.py
-cat << EOF >> "${USER_BASH_PROFILE}"
+cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
 
 ### END: Terra-specific customizations ###
 EOF
