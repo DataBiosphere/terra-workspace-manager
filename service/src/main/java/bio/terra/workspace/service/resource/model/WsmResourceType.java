@@ -10,8 +10,12 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebo
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmHandler;
@@ -131,6 +135,22 @@ public enum WsmResourceType {
       ActivityLogChangedTarget.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
 
   // AZURE
+  CONTROLLED_AZURE_MANAGED_IDENTITY(
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_MANAGED_IDENTITY",
+      ApiResourceType.AZURE_MANAGED_IDENTITY,
+      ControlledAzureManagedIdentityResource.class,
+      ControlledAzureManagedIdentityHandler::getHandler,
+      ActivityLogChangedTarget.CONTROLLED_AZURE_MANAGED_IDENTITY),
+  CONTROLLED_AZURE_DATABASE(
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_DATABASE",
+      ApiResourceType.AZURE_DATABASE,
+      ControlledAzureDatabaseResource.class,
+      ControlledAzureDatabaseHandler::getHandler,
+      ActivityLogChangedTarget.CONTROLLED_AZURE_DATABASE),
   CONTROLLED_AZURE_DISK(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,

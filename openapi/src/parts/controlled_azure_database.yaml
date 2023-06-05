@@ -1,0 +1,130 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/databases:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Database
+      operationId: createAzureDatabase
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureDatabaseRequestBody'
+      responses:
+        '200':
+          description: Response to create controlled Azure database
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedControlledAzureDatabase'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/databases/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Database resource
+      operationId: getAzureDatabase
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          description: Response to get database
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureDatabaseResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled Azure Database resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
+      operationId: deleteAzureDatabase
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/databases/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure database deletion job.
+      operationId: getDeleteAzureDatabaseResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AzureDatabaseCreationParameters:
+      description: >-
+        Database-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name, owner ]
+      properties:
+        name:
+          description: A valid database name
+          type: string
+          pattern: ^[a-zA-Z][a-zA-Z0-9_]{0,31}$
+        owner:
+          description: Resource id of an azure managed identity in this workspace to be the owner of the database
+          type: string
+          format: uuid
+
+    CreatedControlledAzureDatabase:
+      description: Response payload for requesting a new Azure database
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureDatabase:
+          $ref: '#/components/schemas/AzureDatabaseResource'
+
+    CreateControlledAzureDatabaseRequestBody:
+      description: Payload for requesting a new controlled Azure Database resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureDatabase:
+          $ref: '#/components/schemas/AzureDatabaseCreationParameters'

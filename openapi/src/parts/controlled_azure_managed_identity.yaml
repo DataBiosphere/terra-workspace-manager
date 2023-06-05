@@ -1,0 +1,126 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/managedIdentities:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure ManagedIdentity
+      operationId: createAzureManagedIdentity
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureManagedIdentityRequestBody'
+      responses:
+        '200':
+          description: Response to create controlled Azure managedIdentity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedControlledAzureManagedIdentity'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/managedIdentities/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure ManagedIdentity resource
+      operationId: getAzureManagedIdentity
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          description: Response to get managedIdentity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureManagedIdentityResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled Azure ManagedIdentity resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
+      operationId: deleteAzureManagedIdentity
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/managedIdentities/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure managedIdentity deletion job.
+      operationId: getDeleteAzureManagedIdentityResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AzureManagedIdentityCreationParameters:
+      description: >-
+        ManagedIdentity-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name ]
+      properties:
+        name:
+          description: A valid managed identity name
+          type: string
+          pattern: ^[a-zA-Z0-9][-a-zA-Z0-9_]{2,127}$
+
+    CreatedControlledAzureManagedIdentity:
+      description: Response payload for requesting a new Azure Managed Identity
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureManagedIdentity:
+          $ref: '#/components/schemas/AzureManagedIdentityResource'
+
+    CreateControlledAzureManagedIdentityRequestBody:
+      description: Payload for requesting a new controlled Azure Managed Identity resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureManagedIdentity:
+          $ref: '#/components/schemas/AzureManagedIdentityCreationParameters'

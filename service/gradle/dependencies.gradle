@@ -20,7 +20,8 @@ dependencies {
 
   // Azure dependencies
   implementation 'com.azure:azure-storage-blob:12.21.1'
-  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: '2.24.0'
+  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: '2.27.0'
+  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-containerservice', version: '2.27.0'
 
   // AWS dependencies
   implementation platform('software.amazon.awssdk:bom:2.20.22')
@@ -87,6 +88,8 @@ dependencies {
   implementation group: "org.springframework.boot", name: "spring-boot-starter-validation"
   implementation group: "org.springframework.retry", name: "spring-retry"
   implementation group: "org.springframework.security", name: "spring-security-oauth2-jose"
+
+  implementation group: "io.kubernetes", name: "client-java", version: "18.0.0"
 
   // OpenAPI (swagger) deps
   implementation gradle.librarySwaggerAnnotations

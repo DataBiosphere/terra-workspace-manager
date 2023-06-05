@@ -1,0 +1,21 @@
+components:
+  schemas:
+    AzureManagedIdentityAttributes:
+      description: >-
+        ManagedIdentity properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        managedIdentityName:
+          description: Name of created managedIdentity (not the resource name).
+          type: string
+
+    AzureManagedIdentityResource:
+      type: object
+      description: Description of an Azure managedIdentity
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureManagedIdentityAttributes'

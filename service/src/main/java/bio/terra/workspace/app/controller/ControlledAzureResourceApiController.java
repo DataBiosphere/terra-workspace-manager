@@ -14,19 +14,25 @@ import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
+import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
+import bio.terra.workspace.generated.model.ApiAzureManagedIdentityResource;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContainer;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureDatabaseRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureManagedIdentityRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContainerRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedAzureStorageContainerSasToken;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureBatchPool;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDatabase;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureManagedIdentity;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorageContainer;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVmResult;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceRequest;
@@ -48,7 +54,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasPermissionsHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
@@ -573,5 +581,111 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .container(containerResult);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureDatabase> createAzureDatabase(UUID workspaceId,
+      ApiCreateControlledAzureDatabaseRequestBody body) {
+    return ControlledAzureResourceApi.super.createAzureDatabase(workspaceId, body);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureManagedIdentity> createAzureManagedIdentity(
+      UUID workspaceUuid, ApiCreateControlledAzureManagedIdentityRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            landingZoneApiDispatch.getLandingZoneRegion(
+                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+
+    var resource =
+        ControlledAzureManagedIdentityResource.builder()
+            .common(commonFields)
+            .managedIdentityName(body.getAzureManagedIdentity().getName())
+            .build();
+
+    final ControlledAzureManagedIdentityResource createdManagedIdentity =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureManagedIdentity())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
+
+    var response =
+        new ApiCreatedControlledAzureManagedIdentity()
+            .resourceId(createdManagedIdentity.getResourceId())
+            .azureManagedIdentity(createdManagedIdentity.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDatabase(
+      UUID workspaceId, UUID resourceId, ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceId, resourceId, body, "Azure Database");
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureManagedIdentity(
+      UUID workspaceId, UUID resourceId, ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceId, resourceId, body, "Azure Managed Identity");
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAzureDatabaseResource> getAzureDatabase(UUID workspaceId,
+      UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    features.azureEnabledCheck();
+    final ControlledAzureDatabaseResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAzureManagedIdentityResource> getAzureManagedIdentity(UUID workspaceId,
+      UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    features.azureEnabledCheck();
+    final ControlledAzureManagedIdentityResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureDatabaseResult(
+      UUID workspaceId, String jobId) {
+    features.azureEnabledCheck();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    return getJobDeleteResult(jobId);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureManagedIdentityResult(
+      UUID workspaceId, String jobId) {
+    features.azureEnabledCheck();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    return getJobDeleteResult(jobId);
   }
 }
