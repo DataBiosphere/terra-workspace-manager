@@ -228,18 +228,32 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/cloudcontexts/GCP";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/result/%s";
-  public static final String CREATE_AZURE_IP_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/ip";
   public static final String CREATE_AZURE_DISK_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/disks";
-  public static final String CREATE_AZURE_NETWORK_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/network";
   public static final String CREATE_AZURE_VM_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
   public static final String CREATE_AZURE_SAS_TOKEN_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/getSasToken";
   public static final String CREATE_AZURE_BATCH_POOL_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/batchpool";
+  public static final String CREATE_AZURE_STORAGE_CONTAINERS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer";
+  public static final String AZURE_BATCH_POOL_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/batchpool/%s";
+  public static final String AZURE_DISK_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/disks/%s";
+  public static final String AZURE_STORAGE_CONTAINER_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s";
+  public static final String AZURE_VM_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/vm/%s";
+  public static final String CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder";
+  public static final String AWS_STORAGE_FOLDERS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder/%s";
+  public static final String CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/aws/notebook";
+  public static final String AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/aws/notebook/%s";
   public static final String GET_REFERENCED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
@@ -260,6 +274,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/%s/properties";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances";
+  public static final String CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/%s";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/create-result/%s";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
@@ -819,7 +835,7 @@ public class MockMvcUtils {
             serializedResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
+      TimeUnit.SECONDS.sleep(5);
       result = getAiNotebookInstanceResult(userRequest, workspaceId, jobId);
     }
     assertEquals(jobStatus, result.getJobReport().getStatus());
@@ -2311,7 +2327,7 @@ public class MockMvcUtils {
    * Expect a code when updating, and return the serialized API resource if expected code is
    * successful.
    */
-  private <T> T updateResource(
+  public <T> T updateResource(
       Class<T> classType,
       String pathFormat,
       UUID workspaceId,
@@ -2720,7 +2736,22 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
-  /** Posts http request and expect error thrown. */
+  /** Patch http request and expect error thrown. */
+  public void patchExpect(
+      AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
+      throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                patch(api)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is(httpStatus));
+  }
+
   public void postExpect(
       AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
       throws Exception {

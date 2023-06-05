@@ -4,6 +4,10 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.AzureCloudContextFields;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -25,7 +29,7 @@ public class WorkspaceUnitTestUtils {
    * workspace id.
    */
   public static UUID createWorkspaceWithGcpContext(WorkspaceDao workspaceDao) {
-    UUID workspaceId = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceId = createWorkspaceWithoutCloudContext(workspaceDao);
     createGcpCloudContextInDatabase(workspaceDao, workspaceId, PROJECT_ID);
     return workspaceId;
   }
@@ -34,12 +38,49 @@ public class WorkspaceUnitTestUtils {
    * Creates a workspaces without a cloud context and stores it in the database. Returns the
    * workspace id.
    */
-  public static UUID createWorkspaceWithoutGcpContext(WorkspaceDao workspaceDao) {
+  public static UUID createWorkspaceWithoutCloudContext(WorkspaceDao workspaceDao) {
     String flightId = UUID.randomUUID().toString();
     Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     workspaceDao.createWorkspaceStart(workspace, /* applicationIds= */ null, flightId);
     workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId);
     return workspace.getWorkspaceId();
+  }
+
+  public static void createAzureCloudContextInDatabase(
+      WorkspaceDao workspaceDao, UUID workspaceUuid, SpendProfileId billingProfileId) {
+    String flightId = UUID.randomUUID().toString();
+    workspaceDao.createCloudContextStart(
+        workspaceUuid, CloudPlatform.AZURE, billingProfileId, flightId);
+    workspaceDao.createCloudContextSuccess(
+        workspaceUuid,
+        CloudPlatform.AZURE,
+        new AzureCloudContext(
+                new AzureCloudContextFields("fake-tenant", "fake-subscription", "fake-mrg"),
+                new CloudContextCommonFields(
+                    billingProfileId, WsmResourceState.CREATING, flightId, null))
+            .serialize(),
+        flightId);
+  }
+
+  public static void createAwsCloudContextInDatabase(
+      WorkspaceDao workspaceDao, UUID workspaceUuid, SpendProfileId billingProfileId) {
+    String flightId = UUID.randomUUID().toString();
+    workspaceDao.createCloudContextStart(
+        workspaceUuid, CloudPlatform.AWS, billingProfileId, flightId);
+    workspaceDao.createCloudContextSuccess(
+        workspaceUuid,
+        CloudPlatform.AWS,
+        new AwsCloudContext(
+                new AwsCloudContextFields(
+                    "majorversion",
+                    "fake-org-id",
+                    "fake-account-id",
+                    "fake-env-alias",
+                    "fake-env-alias"),
+                new CloudContextCommonFields(
+                    billingProfileId, WsmResourceState.CREATING, flightId, null))
+            .serialize(),
+        flightId);
   }
 
   /**

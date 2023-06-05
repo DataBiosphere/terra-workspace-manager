@@ -308,8 +308,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, ApiCreateControlledAzureBatchPoolRequestBody body) {
     features.azureEnabledCheck();
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    final ControlledResourceFields commonFields =
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),

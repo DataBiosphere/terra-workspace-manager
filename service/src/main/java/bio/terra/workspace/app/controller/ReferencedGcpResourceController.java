@@ -759,7 +759,6 @@ public class ReferencedGcpResourceController extends ControllerBase
             userRequest, workspaceUuid, body.getDestinationWorkspaceId());
     workspaceService.validateWorkspaceState(workspace);
     workspaceService.validateWorkspaceState(body.getDestinationWorkspaceId());
-
     // Do this after permission check. If both permission check and this fail, it's better to show
     // permission check error.
     if (body.getCloningInstructions() != null) {
@@ -827,7 +826,6 @@ public class ReferencedGcpResourceController extends ControllerBase
             userRequest, workspaceUuid, body.getDestinationWorkspaceId());
     workspaceService.validateWorkspaceState(workspace);
     workspaceService.validateWorkspaceState(body.getDestinationWorkspaceId());
-
     // Do this after permission check. If both permission check and this fail, it's better to show
     // permission check error.
     if (body.getCloningInstructions() != null) {
@@ -893,6 +891,8 @@ public class ReferencedGcpResourceController extends ControllerBase
     // and write access to the destination workspace.
     workspaceService.validateCloneReferenceAction(
         userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+    workspaceService.validateWorkspaceState(workspaceUuid);
+    workspaceService.validateWorkspaceState(body.getDestinationWorkspaceId());
     // Do this after permission check. If both permission check and this fail, it's better to show
     // permission check error.
     if (body.getCloningInstructions() != null) {
@@ -951,11 +951,14 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<ApiGitRepoResource> createGitRepoReference(
       UUID workspaceUuid, @Valid ApiCreateGitRepoReferenceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
+    workspaceService.validateWorkspaceState(workspace);
+
     // Construct a ReferencedGitRepoResource object from the API input
     validationUtils.validateGitRepoUri(body.getGitrepo().getGitRepoUrl());
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
     ReferencedGitRepoResource resource =
         ReferencedGitRepoResource.builder()
             .wsmResourceFields(
@@ -1009,6 +1012,8 @@ public class ReferencedGcpResourceController extends ControllerBase
     ReferencedResource resource =
         referencedResourceService.validateReferencedResourceAndAction(
             userRequest, workspaceUuid, resourceUuid, SamWorkspaceAction.UPDATE_REFERENCE);
+    workspaceService.validateWorkspaceState(workspaceUuid);
+
     String gitRepoUrl = body.getGitRepoUrl();
     if (gitRepoUrl != null) {
       validationUtils.validateGitRepoUri(gitRepoUrl);
@@ -1032,8 +1037,11 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<Void> deleteGitRepoReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    workspaceService.validateWorkspaceState(workspace);
+
     referencedResourceService.deleteReferenceResourceForResourceType(
         workspaceUuid, resourceUuid, WsmResourceType.REFERENCED_ANY_GIT_REPO, userRequest);
     return new ResponseEntity<>(HttpStatus.OK);
@@ -1048,6 +1056,8 @@ public class ReferencedGcpResourceController extends ControllerBase
     // and write access to the destination workspace.
     workspaceService.validateCloneReferenceAction(
         userRequest, workspaceUuid, body.getDestinationWorkspaceId());
+    workspaceService.validateWorkspaceState(workspaceUuid);
+    workspaceService.validateWorkspaceState(body.getDestinationWorkspaceId());
     // Do this after permission check. If both permission check and this fail, it's better to show
     // permission check error.
     if (body.getCloningInstructions() != null) {
@@ -1106,8 +1116,10 @@ public class ReferencedGcpResourceController extends ControllerBase
   public ResponseEntity<ApiTerraWorkspaceResource> createTerraWorkspaceReference(
       UUID workspaceUuid, @Valid ApiCreateTerraWorkspaceReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.CREATE_REFERENCE);
+    workspaceService.validateWorkspaceState(workspace);
     UUID referencedWorkspaceId = body.getReferencedWorkspace().getReferencedWorkspaceId();
 
     // Will throw if the referenced workspace does not exist or workspace id is null.
@@ -1164,8 +1176,9 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<Void> deleteTerraWorkspaceReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     referencedResourceService.deleteReferenceResourceForResourceType(
         workspaceUuid, resourceUuid, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE, userRequest);
     return new ResponseEntity<>(HttpStatus.OK);
