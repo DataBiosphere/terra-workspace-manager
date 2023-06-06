@@ -207,9 +207,9 @@ emit "Determining JupyterLab environment (jupyter.service or docker)"
 readonly INSTANCE_CONTAINER="$(get_metadata_value instance/attributes/container)"
 
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-  emit "Custom container detected: ${INSTANCE_CONTAINER}."
+  emit "Custom container for JupyterLab detected: ${INSTANCE_CONTAINER}."
 else
-  emit "Non-containerized Jupyter experienced detected."
+  emit "Non-containerized JupyterLab detected."
 fi
 
 emit "Resynchronizing apt package index..."
@@ -322,7 +322,7 @@ if [[ -n "${INSTANCE_CONTAINER}" ]]; then
   chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/ssh-add"
 
   # The DeepLearning Docker images don't have less installed by default
-  emit "Copying less to ${USER_HOME_LOCAL_BIN}"
+  emit "Copying 'less' to ${USER_HOME_LOCAL_BIN}"
   cp "$(which less)" "${USER_HOME_LOCAL_BIN}"
   chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/less"
 fi
