@@ -79,8 +79,10 @@ readonly USER_HOME_LOCAL_SHARE="${USER_HOME_DIR}/.local/share"
 readonly USER_TERRA_CONFIG_DIR="${USER_HOME_DIR}/.terra"
 readonly USER_SSH_DIR="${USER_HOME_DIR}/.ssh"
 
-# When a user opens a Terminal in JupyerLab, documented behavior is to create
+# When a user opens a Terminal in JupyerLab, documented behavior
+# (https://github.com/jupyterlab/jupyterlab/issues/1733) is to create
 # an interactive non-login shell, which sources the ~/.bashrc.
+#
 # This is the behavior observed when JupyterLab is provided by a Docker image
 # from a DeepLearning Docker image.
 # However JupyterLab Terminals on Vertex AI Workbench instances (non Dockerized)
@@ -685,8 +687,9 @@ EOF
 
 fi
 
-# Make sure the .bashrc is owned by the jupyter user
+# Make sure the ~/.bashrc and ~/.bash_profile owned by the jupyter user
 chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASHRC}"
+chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASH_PROFILE}"
 
 ####################################
 # Restart JupyterLab or Docker so environment variables are picked up in Jupyter environment. See PF-2178.
