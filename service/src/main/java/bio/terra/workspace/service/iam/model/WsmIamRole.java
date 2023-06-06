@@ -53,7 +53,8 @@ public enum WsmIamRole {
       throw new InternalServerErrorException("Unexpected workspace MANAGER role");
     }
   },
-  // Role for billing project owner so that owners of billing projects are able to view and manage/delete workspaces
+  // Role for billing project owner so that owners of billing projects are able to view and
+  // manage/delete workspaces
   // using the project.
   PROJECT_OWNER("project-owner", SamWorkspaceAction.OWN, ApiIamRole.PROJECT_OWNER) {
     public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {

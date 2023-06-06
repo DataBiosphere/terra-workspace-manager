@@ -263,7 +263,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     assertEquals(
-        WsmIamRole.PROJECT_OWNER, workspaceService.getHighestRole(request.getWorkspaceId(), USER_REQUEST));
+        WsmIamRole.PROJECT_OWNER,
+        workspaceService.getHighestRole(request.getWorkspaceId(), USER_REQUEST));
   }
 
   @Test
