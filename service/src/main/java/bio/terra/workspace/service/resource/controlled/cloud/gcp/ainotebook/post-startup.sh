@@ -687,7 +687,7 @@ EOF
 
 fi
 
-# Make sure the ~/.bashrc and ~/.bash_profile owned by the jupyter user
+# Make sure the ~/.bashrc and ~/.bash_profile are owned by the jupyter user
 chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASHRC}"
 chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASH_PROFILE}"
 
