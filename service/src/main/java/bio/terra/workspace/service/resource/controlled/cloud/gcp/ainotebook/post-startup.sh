@@ -25,9 +25,15 @@
 #   Copy this file to a GCS bucket:
 #   - gsutil cp service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh gs://MYBUCKET
 #
-#   Create a new VM:
+#   Create a new VM (JupyterLab provided by JupyterLab service):
 #   - terra resource create gcp-notebook \
 #       --name="test_post_startup" \
+#       --post-startup-script=gs://MYBUCKET/post-startup.sh
+#
+#   Create a new VM (JupyterLab provided by Docker image):
+#   - terra resource create gcp-notebook \
+#       --name="test_post_startup" \
+#       --container-repository gcr.io/deeplearning-platform-release/pytorch-gpu \
 #       --post-startup-script=gs://MYBUCKET/post-startup.sh
 #
 #   To test a new command in this script, be sure to run with "sudo" in a JupyterLab Terminal.
@@ -50,7 +56,7 @@ readonly JUPYTER_USER="jupyter"
 
 # Create an alias for cases when we need to run a shell command as the jupyter user.
 # Note that we deliberately use "bash -l" instead of "sh" in order to get bash (instead of dash)
-# and to pick up changes to the .bash_profile.
+# and to pick up changes to the .bashrc.
 #
 # This is intentionally not a Bash function, as that can suppress error propagation.
 # This is intentionally not a Bash alias as they are not supported in shell scripts.
@@ -73,7 +79,20 @@ readonly USER_HOME_LOCAL_SHARE="${USER_HOME_DIR}/.local/share"
 readonly USER_TERRA_CONFIG_DIR="${USER_HOME_DIR}/.terra"
 readonly USER_SSH_DIR="${USER_HOME_DIR}/.ssh"
 
+# When a user opens a Terminal in JupyerLab, documented behavior
+# (https://github.com/jupyterlab/jupyterlab/issues/1733) is to create
+# an interactive non-login shell, which sources the ~/.bashrc.
+#
+# This is the behavior observed when JupyterLab is provided by a Docker image
+# from a DeepLearning Docker image.
+# However JupyterLab Terminals on Vertex AI Workbench instances (non Dockerized)
+# open a login shell, which sources the ~/.bash_profile.
+#
+# For consistency across these two environments, this startup script writes 
+# to the ~/.bashrc, and has the ~/.bash_profile source the ~/.bashrc
+readonly USER_BASHRC="${USER_HOME_DIR}/.bashrc"
 readonly USER_BASH_PROFILE="${USER_HOME_DIR}/.bash_profile"
+
 readonly POST_STARTUP_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.txt"
 
 # When JupyterLab is provided by a Docker container, the default Deep Learning images
@@ -195,8 +214,19 @@ ${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_BASH_COMPLETION_DIR}'"
 ${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_HOME_LOCAL_BIN}'"
 ${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_HOME_LOCAL_SHARE}'"
 
-# Indicate the start of Terra customizations of the ~/.bash_profile
+# As described above, have the ~/.bash_profile source the ~/.bashrc
 cat << EOF >> "${USER_BASH_PROFILE}"
+
+### BEGIN: Terra-specific customizations ###
+if [[ -e ~/.bashrc ]]; then
+  source ~/.bashrc
+fi
+### END: Terra-specific customizations ###
+
+EOF
+
+# Indicate the start of Terra customizations of the ~/.bashrc
+cat << EOF >> "${USER_BASHRC}"
 
 ### BEGIN: Terra-specific customizations ###
 
@@ -304,8 +334,8 @@ ${RUN_AS_JUPYTER_USER} "\
   mkdir -p '${CROMWELL_INSTALL_DIR}' && \
   mv 'cromwell-${CROMWELL_LATEST_VERSION}.jar' '${CROMWELL_INSTALL_DIR}'"
 
-# Set a variable for the user in the bash_profile
-cat << EOF >> "${USER_BASH_PROFILE}"
+# Set a variable for the user in the ~/.bashrc
+cat << EOF >> "${USER_BASHRC}"
 
 # Set a convenience variable pointing to the version-specific Cromwell JAR file
 export CROMWELL_JAR="${CROMWELL_INSTALL_JAR}"
@@ -351,7 +381,7 @@ if [[ -n "${TERRA_WORKSPACE}" ]]; then
   ${RUN_AS_JUPYTER_USER} "terra workspace set --id='${TERRA_WORKSPACE}'"
 fi
 
-# Set variables into the .bash_profile such that they are available
+# Set variables into the ~/.bashrc such that they are available
 # to terminals, notebooks, and other tools
 #
 # We have new-style variables (eg GOOGLE_CLOUD_PROJECT) which are set here
@@ -391,9 +421,9 @@ readonly PET_SA_EMAIL="$(
 # GOOGLE_SERVICE_ACCOUNT_EMAIL is the pet service account for the Terra user
 # and is specific to the GCP project backing the workspace.
 
-echo "Adding Terra environment variables to .bash_profile ..."
+echo "Adding Terra environment variables to ~/.bashrc ..."
 
-cat << EOF >> "${USER_BASH_PROFILE}"
+cat << EOF >> "${USER_BASHRC}"
 
 # Set up a few legacy Terra-specific convenience variables
 export OWNER_EMAIL='${OWNER_EMAIL}'
@@ -439,7 +469,7 @@ fi
 #
 echo "Configuring bash completion for the VM..."
 
-cat << 'EOF' >> "${USER_BASH_PROFILE}"
+cat << 'EOF' >> "${USER_BASHRC}"
 
 # Source available global bash tab completion scripts
 if [[ -d /etc/bash_completion.d ]]; then
@@ -566,9 +596,9 @@ systemctl daemon-reload
 systemctl enable "${TERRA_SSH_AGENT_SERVICE_NAME}"
 systemctl start "${TERRA_SSH_AGENT_SERVICE_NAME}"
 
-# Set ssh-agent launch command in .bash_profile so everytime
+# Set ssh-agent launch command in ~/.bashrc so everytime
 # user starts a shell, we start the ssh-agent.
-cat << EOF >> "${USER_BASH_PROFILE}"
+cat << EOF >> "${USER_BASHRC}"
 
 # Get the ssh-agent environment variables
 if [[ -f ~/.ssh-agent/environment ]]; then
@@ -591,8 +621,8 @@ cat << EOF >"${TERRA_BOOT_SCRIPT}"
 #!/bin/bash
 # This script is run on instance boot to configure the instance for terra.
 
-# Pick up environment from the .bash_profile
-source "${USER_BASH_PROFILE}"
+# Pick up environment from the ~/.bashrc
+source "${USER_BASHRC}"
 
 # Mount terra workspace resources
 "${USER_HOME_LOCAL_BIN}/terra" resource mount
@@ -641,8 +671,8 @@ EOF
 
 ${RUN_AS_JUPYTER_USER} "git config --global core.excludesfile '${GIT_IGNORE}'"
 
-# Indicate the end of Terra customizations of the ~/.bash_profile
-cat << EOF >> "${USER_BASH_PROFILE}"
+# Indicate the end of Terra customizations of the ~/.bashrc
+cat << EOF >> "${USER_BASHRC}"
 
 ### END: Terra-specific customizations ###
 EOF
@@ -650,14 +680,15 @@ EOF
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
 
 # Indicate the end of Terra customizations of the jupyter_notebook_config.py
-cat << EOF >> "${USER_BASH_PROFILE}"
+cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG=}"
 
 ### END: Terra-specific customizations ###
 EOF
 
 fi
 
-# Make sure the .bash_profile is owned by the jupyter user
+# Make sure the ~/.bashrc and ~/.bash_profile are owned by the jupyter user
+chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASHRC}"
 chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASH_PROFILE}"
 
 ####################################
