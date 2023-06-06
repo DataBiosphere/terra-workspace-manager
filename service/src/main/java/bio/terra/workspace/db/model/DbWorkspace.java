@@ -6,6 +6,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.time.OffsetDateTime;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -155,5 +156,23 @@ public class DbWorkspace implements DbStateful {
   public DbWorkspace error(ErrorReportException error) {
     this.error = error;
     return this;
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", DbWorkspace.class.getSimpleName() + "[", "]")
+        .add("workspaceId=" + workspaceId)
+        .add("userFacingId='" + userFacingId + "'")
+        .add("displayName='" + displayName + "'")
+        .add("description='" + description + "'")
+        .add("spendProfileId=" + spendProfileId)
+        .add("properties=" + properties)
+        .add("workspaceStage=" + workspaceStage)
+        .add("createdByEmail='" + createdByEmail + "'")
+        .add("createdDate=" + createdDate)
+        .add("state=" + state)
+        .add("flightId='" + flightId + "'")
+        .add("error=" + error)
+        .toString();
   }
 }

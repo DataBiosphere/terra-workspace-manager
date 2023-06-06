@@ -3,12 +3,12 @@ package bio.terra.workspace.app.controller;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.ControllerUtils;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -27,8 +27,15 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 
 /**
- * Super class for controllers containing common code. The code in here requires the @Autowired
- * beans from the @Controller classes, so it is better as a superclass rather than static methods.
+ * Super class for controllers containing common code.
+ *
+ * <p>NOTE: I started to migrate this to a separate ControllerUtils class rather than use the class
+ * hierarchy. Using a super class was based on an incorrect understanding of how HttpServletRequest
+ * is handled; it is not necessary. I only did as much of this refactoring as I needed for the
+ * workspace/v2 work, leaving the rest of it for later.
+ *
+ * <p>Making it a separate utility class lets us decompose controller modules (which are getting
+ * large) into smaller pieces.
  */
 public class ControllerBase {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
@@ -77,7 +84,7 @@ public class ControllerBase {
    * @return a string with the result endpoint URL
    */
   public String getAsyncResultEndpoint(String jobId, String resultWord) {
-    return String.format("%s/%s/%s", request.getServletPath(), resultWord, jobId);
+    return ControllerUtils.getAsyncResultEndpoint(request, resultWord, jobId);
   }
 
   /**
@@ -98,7 +105,7 @@ public class ControllerBase {
    * response or error report bodies.
    */
   public static HttpStatus getAsyncResponseCode(ApiJobReport jobReport) {
-    return jobReport.getStatus() == StatusEnum.RUNNING ? HttpStatus.ACCEPTED : HttpStatus.OK;
+    return ControllerUtils.getAsyncResponseCode(jobReport);
   }
 
   /**

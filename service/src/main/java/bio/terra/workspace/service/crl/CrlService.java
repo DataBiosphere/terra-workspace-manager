@@ -41,6 +41,7 @@ import com.google.api.services.storage.StorageScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.billing.v1.ProjectBillingInfo;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
@@ -530,7 +531,19 @@ public class CrlService {
     }
   }
 
-  public boolean canCreateAzureIp(String ipName, AuthenticatedUserRequest userRequest) {
-    return true; // TODO: check azure acls?
+  /**
+   * Set the billing account on a GCP project. The main purpose of this method is to allow mocking
+   * the setting for unit tests.
+   *
+   * @param projectId project id string
+   * @param billingAccountId billing account id
+   */
+  public void updateGcpProjectBilling(String projectId, String billingAccountId) {
+    ProjectBillingInfo setBilling =
+        ProjectBillingInfo.newBuilder()
+            .setBillingAccountName("billingAccounts/" + billingAccountId)
+            .build();
+
+    getCloudBillingClientCow().updateProjectBillingInfo("projects/" + projectId, setBilling);
   }
 }

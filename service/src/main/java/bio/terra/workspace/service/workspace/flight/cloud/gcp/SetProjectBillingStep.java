@@ -1,22 +1,21 @@
 package bio.terra.workspace.service.workspace.flight.cloud.gcp;
 
-import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import com.google.cloud.billing.v1.ProjectBillingInfo;
 
 /** A {@link Step} to set the billing account on the Google project. */
 public class SetProjectBillingStep implements Step {
-  private final CloudBillingClientCow billingClient;
+  private final CrlService crlService;
   private final SpendProfile spendProfile;
 
-  public SetProjectBillingStep(CloudBillingClientCow billingClient, SpendProfile spendProfile) {
-    this.billingClient = billingClient;
+  public SetProjectBillingStep(CrlService crlService, SpendProfile spendProfile) {
+    this.crlService = crlService;
     this.spendProfile = spendProfile;
   }
 
@@ -26,11 +25,7 @@ public class SetProjectBillingStep implements Step {
     var projectId =
         FlightUtils.getRequired(workingMap, WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
-    ProjectBillingInfo setBilling =
-        ProjectBillingInfo.newBuilder()
-            .setBillingAccountName("billingAccounts/" + spendProfile.billingAccountId())
-            .build();
-    billingClient.updateProjectBillingInfo("projects/" + projectId, setBilling);
+    crlService.updateGcpProjectBilling(projectId, spendProfile.billingAccountId());
     return StepResult.getStepResultSuccess();
   }
 

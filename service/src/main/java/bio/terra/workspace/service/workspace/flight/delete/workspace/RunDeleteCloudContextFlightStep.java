@@ -2,17 +2,13 @@ package bio.terra.workspace.service.workspace.flight.delete.workspace;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.FlightState;
-import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -65,44 +61,13 @@ public class RunDeleteCloudContextFlightStep implements Step {
       // We will see duplicate id on a retry. Quietly continue.
     }
 
-    try {
-      FlightState flightState =
-          RetryUtils.getWithRetry(
-              this::flightComplete,
-              () -> stairway.getFlightState(flightId),
-              TOTAL_DURATION,
-              INITIAL_SLEEP,
-              FACTOR_INCREASE,
-              MAX_SLEEP);
-
-      if (flightState.getFlightStatus() == FlightStatus.SUCCESS) {
-        return StepResult.getStepResultSuccess();
-      }
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          flightState
-              .getException()
-              .orElse(
-                  new RuntimeException(
-                      "DeleteCloudContext flight failed with an empty exception")));
-
-    } catch (Exception e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-    }
+    return FlightUtils.waitForSubflightCompletion(stairway, flightId);
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     // We cannot undo the flight, but it undoes itself, so no undoing here.
     return StepResult.getStepResultSuccess();
-  }
-
-  private boolean flightComplete(FlightState flightState) {
-    logger.info(
-        "Delete {} cloud context state is {}", cloudPlatform, flightState.getFlightStatus());
-    return (flightState.getFlightStatus() == FlightStatus.ERROR
-        || flightState.getFlightStatus() == FlightStatus.FATAL
-        || flightState.getFlightStatus() == FlightStatus.SUCCESS);
   }
 
   private String getFlightId(FlightContext context, CloudPlatform cloudPlatform) {

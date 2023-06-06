@@ -138,7 +138,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   }
 
   @Test
-  public void createWorkspace_duplicateUuid_throws409() throws Exception {
+  public void createWorkspace_duplicateUuid_throws400() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     mockMvcUtils.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST, workspaceId, /*stageModel=*/ null, /*policies=*/ null, HttpStatus.SC_OK);
@@ -147,7 +147,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         workspaceId,
         /*stageModel=*/ null,
         /*policies=*/ null,
-        HttpStatus.SC_CONFLICT);
+        HttpStatus.SC_BAD_REQUEST);
   }
 
   @Test
