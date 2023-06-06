@@ -255,6 +255,18 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   }
 
   @Test
+  void getHighestRole_project_owner() {
+    when(mockSamService.listRequesterRoles(any(), any(), any()))
+        .thenReturn(ImmutableList.of(WsmIamRole.OWNER, WsmIamRole.PROJECT_OWNER));
+
+    Workspace request = WorkspaceFixtures.buildMcWorkspace();
+    workspaceService.createWorkspace(request, null, null, USER_REQUEST);
+
+    assertEquals(
+        WsmIamRole.PROJECT_OWNER, workspaceService.getHighestRole(request.getWorkspaceId(), USER_REQUEST));
+  }
+
+  @Test
   void testWorkspaceStagePersists() {
     Workspace mcWorkspaceRequest = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(mcWorkspaceRequest, null, null, USER_REQUEST);
