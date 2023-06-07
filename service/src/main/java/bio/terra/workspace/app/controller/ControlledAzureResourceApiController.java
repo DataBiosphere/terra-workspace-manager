@@ -508,9 +508,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       throw new ValidationException(
           "Copying azure storage containers by reference is not supported");
     }
-    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
     workspaceService.validateWorkspaceAndContextState(
-        body.getDestinationWorkspaceId(), CloudPlatform.GCP);
+        body.getDestinationWorkspaceId(), CloudPlatform.AZURE);
 
     var jobId =
         controlledResourceService.cloneAzureContainer(

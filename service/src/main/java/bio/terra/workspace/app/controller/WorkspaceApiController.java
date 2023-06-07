@@ -323,12 +323,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     if (body.getUserFacingId() != null) {
       ControllerValidationUtils.validateUserFacingId(body.getUserFacingId());
     }
-    Workspace testWorkspace =
+    Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-    workspaceService.validateWorkspaceState(testWorkspace);
+    workspaceService.validateWorkspaceState(workspace);
 
-    Workspace workspace =
+    workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
             body.getUserFacingId(),
