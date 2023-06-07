@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.iam;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueBucketName;
 import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -349,7 +351,7 @@ class SamServiceTest extends BaseConnectedTest {
         userAccessUtils.getSecondUserEmail());
 
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     // Workspace reader should have read access on a user-shared resource via inheritance
@@ -383,7 +385,7 @@ class SamServiceTest extends BaseConnectedTest {
 
     ControlledResource bucketResource =
         ControlledGcsBucketResource.builder()
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .bucketName(uniqueBucketName())
             .common(commonFields)
             .build();
 
@@ -414,7 +416,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void duplicateResourceCreateIgnored() throws Exception {
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
     // This duplicate call should complete without throwing.
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
@@ -425,7 +427,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void duplicateResourceDeleteIgnored() throws Exception {
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());

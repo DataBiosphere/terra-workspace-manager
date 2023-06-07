@@ -1,5 +1,7 @@
 package bio.terra.workspace.serdes;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueBucketName;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -21,7 +23,7 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
         MissingRequiredFieldException.class,
         () ->
             ControlledGcsBucketResource.builder()
-                .bucketName(ControlledResourceFixtures.uniqueBucketName())
+                .bucketName(uniqueBucketName())
                 .common(
                     ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                         .workspaceUuid(null)
@@ -32,7 +34,7 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
   @Test
   public void testSerialization() throws JsonProcessingException {
     ControlledGcsBucketResource gcsBucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(null).build();
+        makeDefaultControlledGcsBucketBuilder(null).build();
 
     final ObjectMapper objectMapper = StairwayMapper.getObjectMapper();
     final String serialized = objectMapper.writeValueAsString(gcsBucketResource);

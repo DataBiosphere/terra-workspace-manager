@@ -6,6 +6,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import java.util.UUID;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+
 
 public class ControlledAwsResourceFixtures {
 
@@ -14,8 +16,7 @@ public class ControlledAwsResourceFixtures {
   public static ControlledAwsS3StorageFolderResource makeDefaultAwsS3StorageFolderResource(
       UUID workspaceUuid) {
     return ControlledAwsS3StorageFolderResource.builder()
-        .common(
-            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+        .common( makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
                 .build())
         .bucketName("foo")
@@ -28,8 +29,7 @@ public class ControlledAwsResourceFixtures {
   public static ControlledAwsSageMakerNotebookResource makeDefaultAwsSagemakerNotebookResource(
       UUID workspaceUuid) {
     return ControlledAwsSageMakerNotebookResource.builder()
-        .common(
-            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+        .common( makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
                 .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                 .build())

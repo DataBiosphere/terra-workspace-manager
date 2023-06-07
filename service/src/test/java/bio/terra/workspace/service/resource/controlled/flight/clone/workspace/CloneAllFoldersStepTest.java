@@ -48,7 +48,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
   private static final String DEFAULT_USER_EMAIL = "foo@gmail.com";
 
   @BeforeEach
-  public void setup() throws InterruptedException {
+  public void setup() {
 
     SOURCE_WORKSPACE_ID = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
 

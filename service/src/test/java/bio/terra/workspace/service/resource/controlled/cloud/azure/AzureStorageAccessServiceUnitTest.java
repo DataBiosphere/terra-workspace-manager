@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,7 +17,6 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -63,7 +64,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
   private AzureStorageAccessService azureStorageAccessService;
 
   @BeforeEach
-  public void setup() throws InterruptedException {
+  public void setup() {
     var keyProvider = mock(StorageAccountKeyProvider.class);
     var cred = new StorageSharedKeyCredential("fake", "fake");
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);
@@ -87,10 +88,9 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
       PrivateResourceState privateResourceState,
       AccessScopeType accessScopeType,
       ManagedByType managedByType) {
-    return ControlledResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(
-            /*workspaceId=*/ UUID.randomUUID())
+    return makeDefaultAzureStorageContainerResourceBuilder(/*workspaceId=*/ UUID.randomUUID())
         .common(
-            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+            makeDefaultControlledResourceFieldsBuilder()
                 .managedBy(managedByType)
                 .accessScope(accessScopeType)
                 .privateResourceState(privateResourceState)

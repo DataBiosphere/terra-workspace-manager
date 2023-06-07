@@ -1,8 +1,8 @@
 package bio.terra.workspace.common.utils;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
 import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
@@ -25,8 +25,8 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
+import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -1751,7 +1751,7 @@ public class MockMvcUtils {
     ApiCreateDataRepoSnapshotReferenceRequestBody request =
         new ApiCreateDataRepoSnapshotReferenceRequestBody()
             .metadata(
-                makeDefaultReferencedResourceFieldsApi()
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
                     .name(resourceName)
                     .cloningInstructions(cloningInstructions))
             .snapshot(creationParameters);
@@ -1857,7 +1857,9 @@ public class MockMvcUtils {
         new ApiGcpBigQueryDatasetAttributes().projectId(projectId).datasetId(datasetName);
     ApiCreateGcpBigQueryDatasetReferenceRequestBody request =
         new ApiCreateGcpBigQueryDatasetReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .dataset(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -1960,7 +1962,9 @@ public class MockMvcUtils {
             .dataTableId(tableId);
     ApiCreateGcpBigQueryDataTableReferenceRequestBody request =
         new ApiCreateGcpBigQueryDataTableReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .dataTable(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2068,7 +2072,9 @@ public class MockMvcUtils {
         new ApiGcpGcsBucketAttributes().bucketName(bucketName);
     ApiCreateGcpGcsBucketReferenceRequestBody request =
         new ApiCreateGcpGcsBucketReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .bucket(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2169,7 +2175,9 @@ public class MockMvcUtils {
         new ApiGcpGcsObjectAttributes().bucketName(bucketName).fileName(fileName);
     ApiCreateGcpGcsObjectReferenceRequestBody request =
         new ApiCreateGcpGcsObjectReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .file(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2272,7 +2280,9 @@ public class MockMvcUtils {
     ApiGitRepoAttributes creationParameters = new ApiGitRepoAttributes().gitRepoUrl(gitRepoUrl);
     ApiCreateGitRepoReferenceRequestBody request =
         new ApiCreateGitRepoReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .gitrepo(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2488,8 +2498,7 @@ public class MockMvcUtils {
     assertFalse(actualMetadata.getLastUpdatedDate().isBefore(actualMetadata.getCreatedDate()));
 
     assertEquals(
-        PropertiesUtils.convertMapToApiProperties(
-            ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES),
+        PropertiesUtils.convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES),
         actualMetadata.getProperties());
   }
 

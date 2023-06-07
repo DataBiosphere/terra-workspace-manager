@@ -1,17 +1,18 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_EMPTY;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BUCKET_UPDATE_PARAMETERS_1;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BUCKET_UPDATE_PARAMETERS_EMPTY;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GCS_BUCKET_INFO_1;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GCS_DELETE_ACTION;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GCS_LIFECYCLE_CONDITION_1;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GCS_LIFECYCLE_RULE_1;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GCS_SET_STORAGE_CLASS_ACTION;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.WSM_LIFECYCLE_RULE_CONDITION_1;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueBucketName;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DATE_TIME_1;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DATE_TIME_2;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_BUCKET_INFO_1;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_DELETE_ACTION;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_LIFECYCLE_CONDITION_1;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_LIFECYCLE_RULE_1;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCS_SET_STORAGE_CLASS_ACTION;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_1;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_2;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WSM_LIFECYCLE_RULE_CONDITION_1;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueBucketName;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.getStorageClass;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toBucketInfo;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGcsApi;
@@ -31,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycleRule;
@@ -76,8 +76,7 @@ public class GcsApiConversionsTest extends BaseUnitTest {
   @Test
   public void testToBucketInfo() {
     final String bucketName = uniqueBucketName();
-    final BucketInfo bucketInfo1 =
-        toBucketInfo(bucketName, ControlledResourceFixtures.BUCKET_UPDATE_PARAMETERS_1);
+    final BucketInfo bucketInfo1 = toBucketInfo(bucketName, BUCKET_UPDATE_PARAMETERS_1);
     assertEquals(bucketName, bucketInfo1.getName());
     assertEquals(StorageClass.STANDARD, bucketInfo1.getStorageClass());
     assertThat(bucketInfo1.getLifecycleRules(), hasSize(2));

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -7,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.app.controller.ResourceApiController;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
@@ -58,7 +58,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedBigQueryDatasetTest() throws Exception {
+  public void mapReferencedBigQueryDatasetTest() {
     String projectId = RandomStringUtils.randomAlphabetic(12);
     String datasetName = RandomStringUtils.randomAlphabetic(12);
 
@@ -86,7 +86,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedBigQueryDataTableTest() throws Exception {
+  public void mapReferencedBigQueryDataTableTest() {
     String projectId = RandomStringUtils.randomAlphabetic(12);
     String datasetName = RandomStringUtils.randomAlphabetic(12);
     String datatableName = RandomStringUtils.randomAlphabetic(12);
@@ -117,7 +117,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedDataRepoSnapshotTest() throws Exception {
+  public void mapReferencedDataRepoSnapshotTest() {
     String snapshotId = UUID.randomUUID().toString();
     String instanceName = RandomStringUtils.randomAlphabetic(5);
 
@@ -145,7 +145,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   }
 
   @Test
-  public void mapReferencedGcsBucketTest() throws Exception {
+  public void mapReferencedGcsBucketTest() {
     String bucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
     var resource =
@@ -193,13 +193,13 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     }
 
     @Test
-    public void mapControlledGcsBucketTest() throws Exception {
+    public void mapControlledGcsBucketTest() {
       String bucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
       var resource =
           ControlledGcsBucketResource.builder()
               .common(
-                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                  makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid)
                       .resourceId(resourceId)
                       .name(resourceName)
@@ -223,14 +223,14 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     }
 
     @Test
-    public void mapControlledBigQueryDatasetTest() throws Exception {
+    public void mapControlledBigQueryDatasetTest() {
       String datasetName = RandomStringUtils.randomAlphabetic(5).toLowerCase();
       String projectId = "my-project-id";
 
       var resource =
           ControlledBigQueryDatasetResource.builder()
               .common(
-                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                  makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid)
                       .resourceId(resourceId)
                       .name(resourceName)
@@ -256,13 +256,13 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     }
 
     @Test
-    public void mapControlledAiNotebookInstanceTest() throws Exception {
+    public void mapControlledAiNotebookInstanceTest() {
       String instanceId = RandomStringUtils.randomAlphabetic(5).toLowerCase();
 
       var resource =
           ControlledAiNotebookInstanceResource.builder()
               .common(
-                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                  makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid)
                       .resourceId(resourceId)
                       .name(resourceName)

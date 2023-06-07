@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,7 +11,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -49,7 +49,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
         workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.PROJECT_ID);
 
     ControlledGcsBucketResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     CreateResourceInDbStartStep storeGoogleBucketMetadataStep =
         new CreateResourceInDbStartStep(
             resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE, bucketResource);

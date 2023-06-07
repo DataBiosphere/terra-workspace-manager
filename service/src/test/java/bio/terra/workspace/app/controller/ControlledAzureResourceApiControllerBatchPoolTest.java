@@ -1,5 +1,8 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.createAzureBatchPoolResource;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.createAzureBatchPoolWithRequiredParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
@@ -11,8 +14,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceBatchPoolFixtures;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserAssignedIdentity;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
@@ -36,7 +37,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
   @Autowired ControlledAzureResourceApiController controller;
 
   @BeforeEach
-  void setUp() throws InterruptedException {
+  void setUp() {
     when(mockSamService()
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);
@@ -59,11 +60,9 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
   @Test
   public void createBatchPool400WithInconsistentUAMI() throws Exception {
-    final ApiControlledResourceCommonFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
+    final ApiControlledResourceCommonFields commonFields = makeDefaultControlledResourceFieldsApi();
 
-    var creationParameters =
-        ControlledResourceBatchPoolFixtures.createBatchPoolWithRequiredParameters();
+    var creationParameters = createAzureBatchPoolWithRequiredParameters();
     // name and clientId are mutually exclusive
     creationParameters.userAssignedIdentities(
         List.of(
@@ -76,7 +75,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
     UUID workspaceId = UUID.randomUUID();
     ControlledAzureBatchPoolResource resource =
-        ControlledResourceBatchPoolFixtures.createAzureBatchPoolResource(
+        createAzureBatchPoolResource(
             creationParameters,
             controller.toCommonFields(
                 workspaceId,
@@ -104,11 +103,9 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
   @Test
   public void createBatchPoolWithRequiredParametersSuccess() throws Exception {
-    final ApiControlledResourceCommonFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
+    final ApiControlledResourceCommonFields commonFields = makeDefaultControlledResourceFieldsApi();
 
-    var creationParameters =
-        ControlledResourceBatchPoolFixtures.createBatchPoolWithRequiredParameters();
+    var creationParameters = createAzureBatchPoolWithRequiredParameters();
 
     final ApiCreateControlledAzureBatchPoolRequestBody batchPoolRequest =
         new ApiCreateControlledAzureBatchPoolRequestBody()
@@ -118,7 +115,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
     UUID workspaceId = UUID.randomUUID();
     ControlledAzureBatchPoolResource resource =
-        ControlledResourceBatchPoolFixtures.createAzureBatchPoolResource(
+        createAzureBatchPoolResource(
             creationParameters,
             controller.toCommonFields(
                 workspaceId,

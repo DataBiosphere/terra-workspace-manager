@@ -1,12 +1,12 @@
 package bio.terra.workspace.common;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
@@ -58,7 +58,9 @@ public class BaseAzureUnitTest extends BaseUnitTestMocks {
 
   public void setupMockLandingZoneRegion(Region region) {
     when(mockWorkspaceService().getWorkspace(any()))
-        .thenReturn(createDefaultMcWorkspace(new SpendProfileId(UUID.randomUUID().toString())));
+        .thenReturn(
+            WorkspaceFixtures.createDefaultMcWorkspace(
+                new SpendProfileId(UUID.randomUUID().toString())));
     when(mockLandingZoneService().getLandingZonesByBillingProfile(any(), any()))
         .thenReturn(
             List.of(

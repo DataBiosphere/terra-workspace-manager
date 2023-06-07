@@ -1,6 +1,10 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT;
@@ -14,7 +18,6 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -140,19 +143,16 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
 
     // Create the resources in the database
     // GCP-Controlled Notebook
-    var notebookResource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid).build();
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
+    var notebookResource = makeDefaultAiNotebookInstance(workspaceUuid).build();
+    insertControlledResourceRow(resourceDao, notebookResource);
 
     // GCP-Controlled BigQuery
-    var bqResource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bqResource);
+    var bqResource = makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+    insertControlledResourceRow(resourceDao, bqResource);
 
     // GCP-Controlled Bucket
-    var bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bucketResource);
+    var bucketResource = makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+    insertControlledResourceRow(resourceDao, bucketResource);
 
     // Set cloud context info deleting state
     var flightId = UUID.randomUUID().toString();

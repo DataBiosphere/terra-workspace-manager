@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -17,7 +18,6 @@ import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;

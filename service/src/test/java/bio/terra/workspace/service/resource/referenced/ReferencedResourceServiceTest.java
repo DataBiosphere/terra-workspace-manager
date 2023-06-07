@@ -446,7 +446,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
   class GcpBucketReference {
 
     @BeforeEach
-    void setup() throws Exception {
+    void setup() {
       // Make the Verify step always succeed
       doReturn(true).when(mockCrlService()).canReadGcsBucket(any(), any());
       doReturn(true).when(mockCrlService()).canReadGcsObject(any(), any(), any());
@@ -633,7 +633,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     private static final String DATA_TABLE_NAME = "testbq datatablename";
 
     @BeforeEach
-    void setup() throws Exception {
+    void setup() {
       // Make the Verify step always succeed
       doReturn(true).when(mockCrlService()).canReadBigQueryDataset(any(), any(), any());
       doReturn(true).when(mockCrlService()).canReadBigQueryDataTable(any(), any(), any(), any());

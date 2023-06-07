@@ -36,6 +36,9 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultFlexResourceBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultFlexResourceCreationParameters;
+
 
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
@@ -83,16 +86,14 @@ public class ControlledResourceServiceFlexTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void updateFlexResourceUndo() throws Exception {
-    ControlledFlexibleResource originalFlex =
-        ControlledResourceFixtures.makeDefaultFlexResourceBuilder(workspaceId).build();
+  void updateFlexResourceUndo() {
+    ControlledFlexibleResource originalFlex = makeDefaultFlexResourceBuilder(workspaceId).build();
     ControlledFlexibleResource createdFlex =
         controlledResourceService
             .createControlledResourceSync(
                 originalFlex,
                 null,
-                user.getAuthenticatedRequest(),
-                ControlledResourceFixtures.defaultFlexResourceCreationParameters())
+                user.getAuthenticatedRequest(), defaultFlexResourceCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     assertTrue(originalFlex.partialEqual(createdFlex));
 

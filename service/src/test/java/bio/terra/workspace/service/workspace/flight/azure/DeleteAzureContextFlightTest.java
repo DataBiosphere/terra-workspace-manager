@@ -1,11 +1,12 @@
 package bio.terra.workspace.service.workspace.flight.azure;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -101,13 +102,13 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
   private UUID createAzureResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
       throws Exception {
-    var creationParameters = ControlledResourceFixtures.getAzureDiskCreationParameters();
+    var creationParameters = getAzureDiskCreationParameters();
 
     final UUID id = UUID.randomUUID();
     var azureResource =
         ControlledAzureDiskResource.builder()
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceUuid)
                     .resourceId(id)
                     .name("wsm-test-" + id)

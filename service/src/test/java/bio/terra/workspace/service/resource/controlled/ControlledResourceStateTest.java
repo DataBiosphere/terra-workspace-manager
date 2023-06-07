@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -11,7 +12,6 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -25,7 +25,6 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -44,7 +43,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
   @BeforeEach
-  public void setup() throws IOException {
+  public void setup() {
     when(mockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
   }
 
@@ -63,13 +62,13 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
     assertNull(dbResource);
   }
 
-  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule) throws Exception {
+  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule) {
     when(mockFeatureConfiguration().getStateRule()).thenReturn(rule);
 
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
 
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+        makeDefaultControlledGcsBucketBuilder(workspaceId).build();
     ApiGcpGcsBucketCreationParameters creationParameters = getGoogleBucketCreationParameters();
 
     // Inject an error

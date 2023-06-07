@@ -1,5 +1,7 @@
 package bio.terra.workspace.app.controller;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
@@ -13,7 +15,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -37,7 +38,7 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
   @Autowired ControlledAzureResourceApiController controller;
 
   @BeforeEach
-  void setUp() throws InterruptedException {
+  void setUp() {
     when(mockSamService()
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);
@@ -63,10 +64,9 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
     UUID workspaceId = UUID.randomUUID();
     setupMockLandingZoneRegion(Region.US_SOUTH_CENTRAL);
 
-    final ApiControlledResourceCommonFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
+    final ApiControlledResourceCommonFields commonFields = makeDefaultControlledResourceFieldsApi();
 
-    var creationParameters = ControlledResourceFixtures.getAzureVmCreationParameters().diskId(null);
+    var creationParameters = getAzureVmCreationParameters().diskId(null);
     final ApiCreateControlledAzureVmRequestBody vmRequest =
         new ApiCreateControlledAzureVmRequestBody()
             .common(commonFields)
