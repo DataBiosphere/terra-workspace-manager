@@ -1,9 +1,9 @@
 package bio.terra.workspace.common.utils;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
@@ -58,7 +58,7 @@ public class MvcWorkspaceApi {
         new ApiCreateWorkspaceV2Request()
             .id(UUID.randomUUID())
             .cloudPlatform(cloudPlatform)
-            .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE)
+            .spendProfile(DEFAULT_SPEND_PROFILE)
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .jobControl(new ApiJobControl().id(jobId));
 

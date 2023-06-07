@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
+
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbWorkspace;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
@@ -18,9 +20,9 @@ public class WorkspaceStateBackfillTest extends BaseUnitTest {
 
   @Test
   public void testBackfillQuery() {
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    var workspace = createDefaultMcWorkspace();
     UUID workspaceId = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
 
     jdbcTemplate.update("UPDATE workspace SET state = NULL", new MapSqlParameterSource());
 

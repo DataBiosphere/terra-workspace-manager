@@ -1,5 +1,9 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteWorkspaceFromDb;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_APPLICATION;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_OWNER;
@@ -18,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbCloudContext;
@@ -74,7 +77,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @AfterEach
   void tearDown() {
     try {
-      WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
+      deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
     } catch (WorkspaceNotFoundException e) {
       // this is just fine for these tests
     }
@@ -83,10 +86,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   void verifyCreatedWorkspaceExists() {
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
-            .spendProfileId(spendProfileId)
-            .build();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+        defaultWorkspaceBuilder(workspaceUuid).spendProfileId(spendProfileId).build();
+    createWorkspaceInDb(workspace, workspaceDao);
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
@@ -102,16 +103,14 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   void createAndDeleteWorkspace() {
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
-            .spendProfileId(spendProfileId)
-            .build();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+        defaultWorkspaceBuilder(workspaceUuid).spendProfileId(spendProfileId).build();
+    createWorkspaceInDb(workspace, workspaceDao);
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
     assertEquals(workspaceUuid.toString(), queryOutput.get("workspace_id"));
-    assertTrue(WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao));
+    assertTrue(deleteWorkspaceFromDb(workspaceUuid, workspaceDao));
 
     // Assert the object no longer exists after deletion
     assertThrows(
@@ -121,7 +120,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   void createAndGetRawlsWorkspace() {
     Workspace createdWorkspace = defaultRawlsWorkspace(workspaceUuid);
-    WorkspaceFixtures.createWorkspaceInDb(createdWorkspace, workspaceDao);
+    createWorkspaceInDb(createdWorkspace, workspaceDao);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
 
     assertEquals(workspace.workspaceId(), createdWorkspace.workspaceId());
@@ -137,7 +136,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   void getWorkspacesFromList() {
     Workspace realWorkspace = defaultRawlsWorkspace(workspaceUuid);
-    WorkspaceFixtures.createWorkspaceInDb(realWorkspace, workspaceDao);
+    createWorkspaceInDb(realWorkspace, workspaceDao);
     UUID fakeWorkspaceId = UUID.randomUUID();
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
@@ -189,10 +188,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   void offsetSkipsWorkspaceInList() {
     Workspace firstWorkspace = defaultRawlsWorkspace(workspaceUuid);
-    WorkspaceFixtures.createWorkspaceInDb(firstWorkspace, workspaceDao);
-    Workspace secondWorkspace =
-        WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
-    WorkspaceFixtures.createWorkspaceInDb(secondWorkspace, workspaceDao);
+    createWorkspaceInDb(firstWorkspace, workspaceDao);
+    Workspace secondWorkspace = buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
+    createWorkspaceInDb(secondWorkspace, workspaceDao);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
@@ -205,10 +203,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   void listWorkspaceLimitEnforced() {
     Workspace firstWorkspace = defaultRawlsWorkspace(workspaceUuid);
-    WorkspaceFixtures.createWorkspaceInDb(firstWorkspace, workspaceDao);
-    Workspace secondWorkspace =
-        WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
-    WorkspaceFixtures.createWorkspaceInDb(secondWorkspace, workspaceDao);
+    createWorkspaceInDb(firstWorkspace, workspaceDao);
+    Workspace secondWorkspace = buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
+    createWorkspaceInDb(secondWorkspace, workspaceDao);
     List<Workspace> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
@@ -229,10 +226,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
         };
 
     Workspace initalWorkspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
-            .properties(propertyGenerate)
-            .build();
-    WorkspaceFixtures.createWorkspaceInDb(initalWorkspace, workspaceDao);
+        defaultWorkspaceBuilder(workspaceUuid).properties(propertyGenerate).build();
+    createWorkspaceInDb(initalWorkspace, workspaceDao);
     Map<String, String> propertyUpdate = Map.of("foo", "updateBar", "tal", "lass");
     workspaceDao.updateWorkspaceProperties(workspaceUuid, propertyUpdate);
     propertyGenerate.putAll(propertyUpdate);
@@ -255,11 +250,10 @@ class WorkspaceDaoTest extends BaseUnitTest {
   @Test
   void duplicateWorkspaceFails() {
     Workspace workspace = defaultRawlsWorkspace(workspaceUuid);
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
 
     assertThrows(
-        DuplicateWorkspaceException.class,
-        () -> WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao));
+        DuplicateWorkspaceException.class, () -> createWorkspaceInDb(workspace, workspaceDao));
   }
 
   @Test
@@ -267,10 +261,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Map<String, String> propertyGenerate = Map.of("foo", "bar", "xyz", "pqn");
 
     Workspace initalWorkspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
-            .properties(propertyGenerate)
-            .build();
-    WorkspaceFixtures.createWorkspaceInDb(initalWorkspace, workspaceDao);
+        defaultWorkspaceBuilder(workspaceUuid).properties(propertyGenerate).build();
+    createWorkspaceInDb(initalWorkspace, workspaceDao);
     List<String> propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyUpdate);
 
@@ -284,7 +276,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     @BeforeEach
     void setUp() {
-      WorkspaceFixtures.createWorkspaceInDb(defaultRawlsWorkspace(workspaceUuid), workspaceDao);
+      createWorkspaceInDb(defaultRawlsWorkspace(workspaceUuid), workspaceDao);
     }
 
     @Test
@@ -352,7 +344,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     void deleteWorkspaceWithCloudContext() {
       WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
           workspaceDao, workspaceUuid, PROJECT_ID);
-      assertTrue(WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao));
+      assertTrue(deleteWorkspaceFromDb(workspaceUuid, workspaceDao));
       assertThrows(
           WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceUuid));
 
@@ -361,7 +353,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   private Workspace defaultRawlsWorkspace(UUID workspaceUuid) {
-    return WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
+    return buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
   }
 
   private GcpCloudContext makeCloudContext() {

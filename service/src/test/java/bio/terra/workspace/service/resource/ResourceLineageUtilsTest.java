@@ -1,10 +1,10 @@
 package bio.terra.workspace.service.resource;
 
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -32,9 +32,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
             .wsmResourceFields(
-                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(randomId)
-                    .resourceLineage(null)
-                    .build())
+                makeDefaultWsmResourceFieldBuilder(randomId).resourceLineage(null).build())
             .instanceName("terra")
             .snapshotId("polaroid")
             .build();
@@ -83,9 +81,7 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
             .wsmResourceFields(
-                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(randomId)
-                    .resourceLineage(lineage)
-                    .build())
+                makeDefaultWsmResourceFieldBuilder(randomId).resourceLineage(lineage).build())
             .instanceName("terra")
             .snapshotId("polaroid")
             .build();

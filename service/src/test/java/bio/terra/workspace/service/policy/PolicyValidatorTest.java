@@ -3,6 +3,8 @@ package bio.terra.workspace.service.policy;
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getBucketResource;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,7 +23,6 @@ import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
@@ -53,7 +54,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   void validateWorkspaceConformsToPolicy() {
     // should not throw exception
     policyValidator.validateWorkspaceConformsToPolicy(
-        WorkspaceFixtures.buildMcWorkspace(), new TpsPaoGetResult(), userRequest);
+        buildMcWorkspace(), new TpsPaoGetResult(), userRequest);
   }
 
   @Test
@@ -79,7 +80,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
             PolicyConflictException.class,
             () ->
                 mockPolicyValidator.validateWorkspaceConformsToPolicy(
-                    WorkspaceFixtures.buildMcWorkspace(), new TpsPaoGetResult(), userRequest));
+                    buildMcWorkspace(), new TpsPaoGetResult(), userRequest));
 
     assertIterableEquals(List.of(regionError, protectedError, groupError), exception.getCauses());
   }
@@ -88,9 +89,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   void validateWorkspaceConformsToRegionPolicy_valid() {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-            .spendProfileId(spendProfileId)
-            .build();
+        defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
     var azureResource = getAzureStorageContainer("test");
     var gcpResource = getBucketResource("test");
@@ -121,9 +120,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   void validateWorkspaceConformsToRegionPolicy_invalidResources() {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-            .spendProfileId(spendProfileId)
-            .build();
+        defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
     var azureResource = getAzureStorageContainer("test");
     var azureResourceWrongRegion = getAzureDisk("test", "wrongRegion", 0);
@@ -155,9 +152,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   void validateWorkspaceConformsToRegionPolicy_invalidLandingZone() {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-            .spendProfileId(spendProfileId)
-            .build();
+        defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
 
     when(mockWorkspaceDao.listCloudPlatforms(workspace.workspaceId()))
@@ -179,9 +174,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   void validateWorkspaceConformsToProtectedDataPolicy_valid() {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-            .spendProfileId(spendProfileId)
-            .build();
+        defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
 
     var protectedDataPolicy =
@@ -210,9 +203,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   void validateWorkspaceConformsToProtectedDataPolicy_invalid() {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-            .spendProfileId(spendProfileId)
-            .build();
+        defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
 
     var protectedDataPolicy =
@@ -239,9 +230,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   void validateWorkspaceConformsToProtectedDataPolicy_notAzure() {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-            .spendProfileId(spendProfileId)
-            .build();
+        defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
 
     var protectedDataPolicy =
@@ -264,9 +253,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   void validateWorkspaceConformsToProtectedDataPolicy_noPolicy() {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-            .spendProfileId(spendProfileId)
-            .build();
+        defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     var userRequest = new AuthenticatedUserRequest("email", "id", Optional.of("token"));
 
     var protectedDataPolicy =

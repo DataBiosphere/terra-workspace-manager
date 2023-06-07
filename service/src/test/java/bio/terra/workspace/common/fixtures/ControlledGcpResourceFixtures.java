@@ -9,6 +9,7 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RES
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_ID;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_NAME;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -214,7 +215,7 @@ public class ControlledGcpResourceFixtures {
   public static ControlledGcsBucketResource.Builder makeDefaultControlledGcsBucketBuilder(
       @Nullable UUID workspaceUuid) {
     return new ControlledGcsBucketResource.Builder()
-        .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid))
+        .common(makeDefaultControlledResourceFields(workspaceUuid))
         .bucketName(uniqueBucketName());
   }
 
@@ -284,7 +285,7 @@ public class ControlledGcpResourceFixtures {
   public static ControlledBigQueryDatasetResource.Builder makeDefaultControlledBqDatasetBuilder(
       @Nullable UUID workspaceUuid) {
     return new ControlledBigQueryDatasetResource.Builder()
-        .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid))
+        .common(makeDefaultControlledResourceFields(workspaceUuid))
         .projectId("my_project")
         .datasetName(uniqueDatasetId())
         .defaultTableLifetime(DEFAULT_CREATED_BIG_QUERY_TABLE_LIFETIME)

@@ -2,6 +2,8 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.fixtures.PolicyFixtures.IOWA_REGION;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.getUserFacingId;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -177,7 +178,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     workspaceSetup(ApiCloningInstructionsEnum.REFERENCE);
     ApiCloneWorkspaceRequest request =
         new ApiCloneWorkspaceRequest()
-            .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE)
+            .spendProfile(DEFAULT_SPEND_PROFILE)
             .additionalPolicies(
                 new ApiWsmPolicyInputs().addInputsItem(makeRegionPolicyInput("asiapacific")));
 
@@ -283,7 +284,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
         new ApiCreateWorkspaceRequestBody()
             .id(sourceWorkspaceId)
             .displayName("clone source")
-            .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
+            .userFacingId(getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
             .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));
@@ -296,7 +297,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
         new ApiCreateWorkspaceRequestBody()
             .id(destinationWorkspaceId)
             .displayName("clone destination")
-            .userFacingId(WorkspaceFixtures.getUserFacingId(destinationWorkspaceId))
+            .userFacingId(getUserFacingId(destinationWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
             .policies(null);
@@ -350,7 +351,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
         new ApiCreateWorkspaceRequestBody()
             .id(sourceWorkspaceId)
             .displayName("clone source")
-            .userFacingId(WorkspaceFixtures.getUserFacingId(sourceWorkspaceId))
+            .userFacingId(getUserFacingId(sourceWorkspaceId))
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .spendProfile("wm-default-spend-profile")
             .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -10,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.RawDaoTestFixture;
@@ -128,9 +128,9 @@ public class ApplicationServiceTest extends BaseUnitTest {
     appService.processApp(NORM_APP, dbAppMap);
 
     // Create two workspaces
-    workspace = WorkspaceFixtures.buildMcWorkspace();
+    workspace = buildMcWorkspace();
     workspaceService.createWorkspace(workspace, null, null, USER_REQUEST);
-    workspace2 = WorkspaceFixtures.buildMcWorkspace();
+    workspace2 = buildMcWorkspace();
     workspaceService.createWorkspace(workspace2, null, null, USER_REQUEST);
   }
 
@@ -164,7 +164,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
         ApplicationNotFoundException.class,
         () -> appService.enableWorkspaceApplication(USER_REQUEST, workspace, UNKNOWN_ID));
 
-    Workspace fakeWorkspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace fakeWorkspace = buildMcWorkspace();
     // This calls a service method, rather than a controller method, so it does not hit the authz
     // check. Instead, we validate that inserting this into the DB violates constraints.
     assertThrows(

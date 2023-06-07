@@ -5,6 +5,7 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRI
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_NAME;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.getUserFacingId;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
@@ -30,7 +31,6 @@ import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -175,8 +175,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiWorkspaceDescription getWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
     assertEquals(WORKSPACE_NAME, getWorkspace.getDisplayName());
-    assertEquals(
-        WorkspaceFixtures.getUserFacingId(workspace.getId()), getWorkspace.getUserFacingId());
+    assertEquals(getUserFacingId(workspace.getId()), getWorkspace.getUserFacingId());
     assertEquals(ApiWorkspaceStageModel.MC_WORKSPACE, getWorkspace.getStage());
     assertEquals(USER_REQUEST.getEmail(), getWorkspace.getCreatedBy());
     assertNotNull(getWorkspace.getCreatedDate());

@@ -6,7 +6,10 @@ import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeNotebookCommonFieldsBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultFlexResourceBuilder;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteWorkspaceFromDb;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_SUBJECT_ID;
 import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithGcpContext;
@@ -18,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.model.DbResource;
@@ -72,7 +74,7 @@ public class ResourceDaoTest extends BaseUnitTest {
   @AfterAll
   public void cleanUp() {
     WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
-    WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
+    deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
   }
 
   @Test
@@ -340,7 +342,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     String projectId2 = "projectId2";
     final ControlledBigQueryDatasetResource initialResource =
         ControlledBigQueryDatasetResource.builder()
-            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid))
+            .common(makeDefaultControlledResourceFields(workspaceUuid))
             .projectId(projectId1)
             .datasetName(datasetName1)
             .build();
@@ -353,7 +355,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       // even with the same Dataset ID.
       final ControlledBigQueryDatasetResource uniqueResource =
           ControlledBigQueryDatasetResource.builder()
-              .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId2))
+              .common(makeDefaultControlledResourceFields(workspaceId2))
               .datasetName(datasetName1)
               .projectId(projectId2)
               .build();
@@ -362,7 +364,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       // This is in the same workspace as initialResource, so it should be a conflict.
       final ControlledBigQueryDatasetResource duplicatingResource =
           ControlledBigQueryDatasetResource.builder()
-              .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceUuid))
+              .common(makeDefaultControlledResourceFields(workspaceUuid))
               .projectId(projectId1)
               .datasetName(datasetName1)
               .build();
@@ -527,7 +529,7 @@ public class ResourceDaoTest extends BaseUnitTest {
                 .region("us-central1"),
             bucketName);
 
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, originalResource);
+    insertControlledResourceRow(resourceDao, originalResource);
 
     ControlledGcsBucketResource bucket =
         resourceDao
@@ -546,7 +548,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       ControlledBigQueryDatasetResource dataset =
           makeDefaultControlledBqDatasetBuilder(workspaceUuid)
               .common(
-                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                  makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid)
                       .region(null)
                       .build())
@@ -554,7 +556,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       ControlledGcsBucketResource bucket =
           makeDefaultControlledGcsBucketBuilder(workspaceUuid2)
               .common(
-                  ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                  makeDefaultControlledResourceFieldsBuilder()
                       .workspaceUuid(workspaceUuid2)
                       .region(null)
                       .build())

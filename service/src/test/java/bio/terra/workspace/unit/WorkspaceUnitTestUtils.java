@@ -1,6 +1,7 @@
 package bio.terra.workspace.unit;
 
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -40,7 +41,7 @@ public class WorkspaceUnitTestUtils {
    */
   public static UUID createWorkspaceWithoutCloudContext(WorkspaceDao workspaceDao) {
     String flightId = UUID.randomUUID().toString();
-    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    Workspace workspace = createDefaultMcWorkspace();
     workspaceDao.createWorkspaceStart(workspace, /* applicationIds= */ null, flightId);
     workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId);
     return workspace.getWorkspaceId();

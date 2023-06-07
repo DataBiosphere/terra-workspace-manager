@@ -1,5 +1,16 @@
 package bio.terra.workspace.service.resource.statetests;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultFlexResourceBuilder;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotResource;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeGitRepoResource;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeReferencedBqDataTableResource;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeReferencedBqDatasetResource;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeReferencedGcsBucketResource;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeReferencedGcsObjectResource;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT;
@@ -16,10 +27,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultFlexResourceBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -78,14 +85,13 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
-    refMetadata =
-        ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi().name(RESOURCE_NAME);
+    refMetadata = makeDefaultReferencedResourceFieldsApi().name(RESOURCE_NAME);
   }
 
   @Test
   void testNoContextResourceCreateValidation() throws Exception {
     // Fake up a CREATING workspace
-    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    Workspace workspace = createDefaultMcWorkspace();
     var flightId = UUID.randomUUID().toString();
     workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ null, flightId);
 
@@ -102,9 +108,7 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     // ANY-Referenced Data Repo Snapshot
     ApiCreateDataRepoSnapshotReferenceRequestBody tdrRequest =
         new ApiCreateDataRepoSnapshotReferenceRequestBody()
-            .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
-                    .name(RESOURCE_NAME))
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(RESOURCE_NAME))
             .snapshot(
                 new ApiDataRepoSnapshotAttributes()
                     .instanceName("terra")
@@ -118,9 +122,7 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     // ANY-Referenced Git Repo
     var gitRequest =
         new ApiCreateGitRepoReferenceRequestBody()
-            .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
-                    .name(RESOURCE_NAME))
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(RESOURCE_NAME))
             .gitrepo(new ApiGitRepoAttributes().gitRepoUrl("fake-url"));
     mockMvcUtils.postExpect(
         USER_REQUEST,
@@ -183,45 +185,39 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
   @Test
   void testNoContextResourceModifyValidation() throws Exception {
     // Fake up a workspace
-    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    Workspace workspace = createDefaultMcWorkspace();
     UUID workspaceUuid = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
 
     // Create fake no-context resources
 
     // ANY-Controlled Flexible
-    var flexResource =makeDefaultFlexResourceBuilder(workspaceUuid).build();
-   insertControlledResourceRow(resourceDao, flexResource);
+    var flexResource = makeDefaultFlexResourceBuilder(workspaceUuid).build();
+    insertControlledResourceRow(resourceDao, flexResource);
 
     // ANY-Referenced Data Repo Snapshot
-    var tdrResource = ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
+    var tdrResource = makeDataRepoSnapshotResource(workspaceUuid);
     referencedResourceService.createReferenceResource(tdrResource, USER_REQUEST);
 
     // ANY-Referenced Git Repo
-    var gitResource = ReferenceResourceFixtures.makeGitRepoResource(workspaceUuid, "fake-url");
+    var gitResource = makeGitRepoResource(workspaceUuid, "fake-url");
     referencedResourceService.createReferenceResource(gitResource, USER_REQUEST);
 
     // GCP-Referenced BQ dataset
-    var bqResource =
-        ReferenceResourceFixtures.makeReferencedBqDatasetResource(
-            workspaceUuid, "fake-project", "fakedataset");
+    var bqResource = makeReferencedBqDatasetResource(workspaceUuid, "fake-project", "fakedataset");
     referencedResourceService.createReferenceResource(bqResource, USER_REQUEST);
 
     // GCP-Referenced BQ data table
     var bqTable =
-        ReferenceResourceFixtures.makeReferencedBqDataTableResource(
-            workspaceUuid, "fake-project", "fakedataset", "fakefile");
+        makeReferencedBqDataTableResource(workspaceUuid, "fake-project", "fakedataset", "fakefile");
     referencedResourceService.createReferenceResource(bqTable, USER_REQUEST);
 
     // GCP-Referenced Bucket
-    var gcsBucket =
-        ReferenceResourceFixtures.makeReferencedGcsBucketResource(workspaceUuid, "fake-bucket");
+    var gcsBucket = makeReferencedGcsBucketResource(workspaceUuid, "fake-bucket");
     referencedResourceService.createReferenceResource(gcsBucket, USER_REQUEST);
 
     // GCP-Referenced Bucket Object
-    var gcsObject =
-        ReferenceResourceFixtures.makeReferencedGcsObjectResource(
-            workspaceUuid, "fake-bucket", "fake-file");
+    var gcsObject = makeReferencedGcsObjectResource(workspaceUuid, "fake-bucket", "fake-file");
     referencedResourceService.createReferenceResource(gcsObject, USER_REQUEST);
 
     // Set workspace into deleting state

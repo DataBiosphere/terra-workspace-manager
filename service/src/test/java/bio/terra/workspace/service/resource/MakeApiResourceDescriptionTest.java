@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -8,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.app.controller.ResourceApiController;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
@@ -65,7 +65,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     var resource =
         ReferencedBigQueryDatasetResource.builder()
             .wsmResourceFields(
-                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                makeDefaultWsmResourceFieldBuilder(workspaceUuid)
                     .resourceId(resourceId)
                     .name(resourceName)
                     .description(description)
@@ -94,7 +94,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     var resource =
         ReferencedBigQueryDataTableResource.builder()
             .wsmResourceFields(
-                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                makeDefaultWsmResourceFieldBuilder(workspaceUuid)
                     .resourceId(resourceId)
                     .name(resourceName)
                     .description(description)
@@ -124,7 +124,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
             .wsmResourceFields(
-                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                makeDefaultWsmResourceFieldBuilder(workspaceUuid)
                     .resourceId(resourceId)
                     .name(resourceName)
                     .description(description)
@@ -151,7 +151,7 @@ public class MakeApiResourceDescriptionTest extends BaseUnitTest {
     var resource =
         ReferencedGcsBucketResource.builder()
             .wsmResourceFields(
-                ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+                makeDefaultWsmResourceFieldBuilder(workspaceUuid)
                     .resourceId(resourceId)
                     .name(resourceName)
                     .description(description)

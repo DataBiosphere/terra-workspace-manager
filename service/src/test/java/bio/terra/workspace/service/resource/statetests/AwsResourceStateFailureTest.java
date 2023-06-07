@@ -4,6 +4,8 @@ import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_STORAGE_FOLDERS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
@@ -11,8 +13,8 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_STORAGE_F
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -75,9 +77,9 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
   @Test
   void testAwsContextResourceCreateValidation() throws Exception {
     // Fake up a READY workspace
-    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace(billingProfileId);
+    Workspace workspace = createDefaultMcWorkspace(billingProfileId);
     UUID workspaceUuid = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
     // Fake up a CREATING cloud context
     var createContextFlightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(
@@ -112,9 +114,9 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
   @Test
   void testAwsResourceModifyValidation() throws Exception {
     // Fake up a READY workspace and a READY cloud context
-    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace(billingProfileId);
+    Workspace workspace = createDefaultMcWorkspace(billingProfileId);
     UUID workspaceUuid = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
     WorkspaceUnitTestUtils.createAwsCloudContextInDatabase(
         workspaceDao, workspaceUuid, billingProfileId);
 

@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeReferencedBqDatasetResource;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -18,8 +20,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -240,7 +240,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
 
     workspaceId2 = UUID.randomUUID();
     Workspace destinationWorkspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceId2)
+        defaultWorkspaceBuilder(workspaceId2)
             .userFacingId("dest-user-facing-id")
             .displayName("Destination Workspace")
             .description("Copied from source")
@@ -324,7 +324,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     ReferencedBigQueryDatasetResource datasetReference =
         referenceResourceService
             .createReferenceResource(
-                ReferenceResourceFixtures.makeReferencedBqDatasetResource(
+                makeReferencedBqDatasetResource(
                     sourceWorkspace.getWorkspaceId(), "my-project", "fake_dataset"),
                 userAccessUtils.defaultUserAuthRequest())
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
@@ -347,7 +347,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
 
     workspaceId2 = UUID.randomUUID();
     Workspace destinationWorkspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceId2)
+        defaultWorkspaceBuilder(workspaceId2)
             .userFacingId("dest-user-facing-id")
             .displayName("Destination Workspace")
             .description("Copied from source")

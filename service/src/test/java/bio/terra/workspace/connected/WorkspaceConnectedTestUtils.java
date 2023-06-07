@@ -1,10 +1,10 @@
 package bio.terra.workspace.connected;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
@@ -55,9 +55,7 @@ public class WorkspaceConnectedTestUtils {
   public Workspace createWorkspace(AuthenticatedUserRequest userRequest) {
     UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
-            .spendProfileId(spendUtils.defaultSpendId())
-            .build();
+        defaultWorkspaceBuilder(workspaceUuid).spendProfileId(spendUtils.defaultSpendId()).build();
     workspaceService.createWorkspace(workspace, null, null, userRequest);
 
     return workspaceService.getWorkspace(workspaceUuid);

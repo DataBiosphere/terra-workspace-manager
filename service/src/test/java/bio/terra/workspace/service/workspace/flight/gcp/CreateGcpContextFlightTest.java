@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createCloudContextInputs;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,7 +17,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.MakeFlightException;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.crl.CrlService;
@@ -101,7 +102,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build();
 
     FlightMap inputs =
-        WorkspaceFixtures.createCloudContextInputs(
+        createCloudContextInputs(
             workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
 
     FlightState flightState =
@@ -151,7 +152,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
 
     FlightMap inputs =
-        WorkspaceFixtures.createCloudContextInputs(
+        createCloudContextInputs(
             workspaceUuid, userRequest, CloudPlatform.GCP, /*spendProfile=*/ null);
 
     assertThrows(
@@ -188,7 +189,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
             .build();
 
     FlightMap inputs =
-        WorkspaceFixtures.createCloudContextInputs(
+        createCloudContextInputs(
             workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
 
     FlightState flightState =
@@ -232,9 +233,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
    */
   private UUID createWorkspace(@Nullable SpendProfileId spendProfileId) {
     Workspace request =
-        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-            .spendProfileId(spendProfileId)
-            .build();
+        defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     return workspaceService.createWorkspace(
         request, null, null, userAccessUtils.defaultUserAuthRequest());
   }

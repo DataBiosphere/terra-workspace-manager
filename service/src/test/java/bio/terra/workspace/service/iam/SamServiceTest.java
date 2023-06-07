@@ -2,6 +2,10 @@ package bio.terra.workspace.service.iam;
 
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueBucketName;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotResource;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildWorkspace;
 import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -20,9 +24,6 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
@@ -126,7 +127,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void addedWriterCanWrite() throws Exception {
     ReferencedDataRepoSnapshotResource requestResource =
-        ReferenceResourceFixtures.makeDataRepoSnapshotResource(workspaceUuid);
+        makeDataRepoSnapshotResource(workspaceUuid);
     ApiCreateDataRepoSnapshotReferenceRequestBody referenceRequest =
         new ApiCreateDataRepoSnapshotReferenceRequestBody()
             .metadata(
@@ -230,8 +231,7 @@ class SamServiceTest extends BaseConnectedTest {
     // RAWLS_WORKSPACEs do not own their own Sam resources, so we need to manage them separately.
     samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceUuid, new ArrayList<>());
 
-    Workspace rawlsWorkspace =
-        WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
+    Workspace rawlsWorkspace = buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
     workspaceService.createWorkspace(rawlsWorkspace, null, null, defaultUserRequest());
     ApiGrantRoleRequestBody request =
         new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
@@ -376,7 +376,7 @@ class SamServiceTest extends BaseConnectedTest {
 
     // Create private resource assigned to the default user.
     ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+        makeDefaultControlledResourceFieldsBuilder()
             .workspaceUuid(workspaceUuid)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .assignedUser(userAccessUtils.getDefaultUserEmail())
@@ -470,7 +470,7 @@ class SamServiceTest extends BaseConnectedTest {
   }
 
   private Workspace createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace workspace = buildMcWorkspace();
     workspaceService.createWorkspace(workspace, null, null, userRequest);
     return workspace;
   }

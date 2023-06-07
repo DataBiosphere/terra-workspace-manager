@@ -6,6 +6,9 @@ import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
@@ -18,7 +21,6 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -85,14 +87,14 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
   @Test
   void testGcpContextResourceCreateValidation() throws Exception {
     // Fake up a READY workspace
-    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    Workspace workspace = createDefaultMcWorkspace();
+    createWorkspaceInDb(workspace, workspaceDao);
     // Fake up a CREATING cloud context
     var createContextFlightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(
         workspace.getWorkspaceId(),
         CloudPlatform.GCP,
-        WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+        DEFAULT_SPEND_PROFILE_ID,
         createContextFlightId);
 
     // GCP-Controlled Notebook

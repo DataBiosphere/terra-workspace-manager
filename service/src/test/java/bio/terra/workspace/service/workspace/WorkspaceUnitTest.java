@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,7 +23,6 @@ import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.StateDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -86,7 +86,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
 
   @Test
   void linkPolicies_dryRun() {
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace workspace = buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
     final UUID sourceId = UUID.randomUUID();
@@ -108,7 +108,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
 
   @Test
   void linkPolicies_policyConflict() {
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace workspace = buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
     final UUID sourceId = UUID.randomUUID();
@@ -139,7 +139,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
 
   @Test
   void linkPolicies_workspaceConflict() {
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace workspace = buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
     final UUID sourceId = UUID.randomUUID();
@@ -164,7 +164,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
 
   @Test
   void linkPolicies_applied() {
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace workspace = buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
     final UUID sourceId = UUID.randomUUID();
@@ -196,7 +196,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
 
   @Test
   void updatePolicies_dryRun() {
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace workspace = buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
     when(mockTpsApiDispatch()
@@ -216,7 +216,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
 
   @Test
   void updatePolicies_policyConflict() {
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace workspace = buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
     when(mockTpsApiDispatch()
@@ -245,7 +245,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
 
   @Test
   void updatePolicies_workspaceConflict() {
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace workspace = buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
     when(mockTpsApiDispatch()
@@ -268,7 +268,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
 
   @Test
   void updatePolicies_applied() {
-    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    Workspace workspace = buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
     when(mockTpsApiDispatch()

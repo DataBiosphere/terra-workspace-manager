@@ -2,12 +2,13 @@ package bio.terra.workspace.service.workspace.flight.azure;
 
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteCloudContextInputs;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
@@ -68,10 +69,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     // Create a new workspace at the start of each test.
     workspaceUuid = UUID.randomUUID();
     SpendProfileId spendProfileId = initSpendProfileMock();
-    workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
-            .spendProfileId(spendProfileId)
-            .build();
+    workspace = defaultWorkspaceBuilder(workspaceUuid).spendProfileId(spendProfileId).build();
     workspaceService.createWorkspace(
         workspace, null, null, userAccessUtils.defaultUserAuthRequest());
   }
@@ -142,7 +140,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
     // Delete the azure context.
     FlightMap deleteParameters =
-        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
+        deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
 
     // Force each retryable step to be retried once to ensure proper behavior.
     Map<String, StepStatus> doFailures = new HashMap<>();
@@ -174,7 +172,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
     // Delete the azure context.
     FlightMap deleteParameters =
-        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
+        deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
 
     // Fail at the end of the flight to verify it can't be undone.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
@@ -199,7 +197,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
     // Delete the non-existent azure context.
     FlightMap deleteParameters =
-        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
+        deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
@@ -219,8 +217,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     // create new workspace so delete at end of test won't interfere with @AfterEach teardown
     UUID uuid = UUID.randomUUID();
     SpendProfileId spendProfileId = initSpendProfileMock();
-    Workspace request =
-        WorkspaceFixtures.defaultWorkspaceBuilder(uuid).spendProfileId(spendProfileId).build();
+    Workspace request = defaultWorkspaceBuilder(uuid).spendProfileId(spendProfileId).build();
     UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, null, null, userRequest);
 
     createAzureContext(mcWorkspaceUuid, userRequest);
@@ -228,7 +225,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
     // Run the delete flight, retrying every retryable step once
     FlightMap deleteParameters =
-        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
+        deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
 
     // TODO: PF-2694 - the structure of the workspace delete probably needs to change,
     //  so this test needs to change. Populate the proper workspace delete steps below.

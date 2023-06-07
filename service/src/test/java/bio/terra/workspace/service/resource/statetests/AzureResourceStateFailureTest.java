@@ -10,6 +10,8 @@ import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixture
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_BATCH_POOL_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_DISK_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_STORAGE_CONTAINER_PATH_FORMAT;
@@ -25,7 +27,6 @@ import static org.mockito.Mockito.when;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -99,9 +100,9 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
   @Test
   void testAzureContextResourceCreateValidation() throws Exception {
     // Fake up a READY workspace
-    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace(billingProfileId);
+    Workspace workspace = createDefaultMcWorkspace(billingProfileId);
     UUID workspaceUuid = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
     // Fake up a CREATING cloud context
     var createContextFlightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(
@@ -156,9 +157,9 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
   @Test
   void testAzureResourceModifyValidation() throws Exception {
     // Fake up a READY workspace and a READY cloud context
-    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace(billingProfileId);
+    Workspace workspace = createDefaultMcWorkspace(billingProfileId);
     UUID workspaceUuid = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
     WorkspaceUnitTestUtils.createAzureCloudContextInDatabase(
         workspaceDao, workspaceUuid, billingProfileId);
 

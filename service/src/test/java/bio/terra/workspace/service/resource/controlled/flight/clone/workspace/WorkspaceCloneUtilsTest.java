@@ -3,6 +3,9 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueDatasetId;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotResource;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_GCP_RESOURCE_REGION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
@@ -13,8 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -104,7 +105,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     ControlledBigQueryDatasetResource sourceDataset =
         makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID)
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .privateResourceState(PrivateResourceState.ACTIVE)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .assignedUser("yuhuyoyo")
@@ -245,7 +246,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     var sourceBucket =
         makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .privateResourceState(PrivateResourceState.ACTIVE)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .assignedUser("yuhuyoyo")
@@ -294,7 +295,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   }
 
   private static ControlledResourceFields makeControlledResourceFieldsWithCustomProperties() {
-    return ControlledResourceFixtures.makeControlledResourceFieldsBuilder(WORKSPACE_ID)
+    return makeControlledResourceFieldsBuilder(WORKSPACE_ID)
         .properties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString(), "foo", "bar"))
         .build();
   }
@@ -302,7 +303,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationReferencedResource_attributesCopied() {
     ReferencedDataRepoSnapshotResource referencedResource =
-        ReferenceResourceFixtures.makeDataRepoSnapshotResource(WORKSPACE_ID);
+        makeDataRepoSnapshotResource(WORKSPACE_ID);
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
     var cloneDescription = "This is a cloned data repo snapshot referenced resource";
 
@@ -325,7 +326,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationReferencedResource_clearSomeProperties() {
     ReferencedDataRepoSnapshotResource referencedResource =
-        ReferenceResourceFixtures.makeDataRepoSnapshotResource(WORKSPACE_ID);
+        makeDataRepoSnapshotResource(WORKSPACE_ID);
     referencedResource =
         referencedResource.toBuilder()
             .wsmResourceFields(
@@ -352,7 +353,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationReferencedResource_cloneToSameWorkspace_notClearProperties() {
     ReferencedDataRepoSnapshotResource referencedResource =
-        ReferenceResourceFixtures.makeDataRepoSnapshotResource(WORKSPACE_ID);
+        makeDataRepoSnapshotResource(WORKSPACE_ID);
     referencedResource =
         referencedResource.toBuilder()
             .wsmResourceFields(
