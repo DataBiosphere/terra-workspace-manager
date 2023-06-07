@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,7 +12,6 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -76,7 +76,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     sourceContainer =
         new ControlledAzureStorageContainerResource.Builder()
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceId)
                     .resourceId(UUID.randomUUID())
                     .build())
@@ -88,7 +88,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     destContainer =
         new ControlledAzureStorageContainerResource.Builder()
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceId)
                     .resourceId(UUID.randomUUID())
                     .build())
@@ -188,12 +188,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
 
   private static String[] generateFilenames(int numberOfFiles) {
     return Stream.range(0, numberOfFiles)
-        .map(
-            idx -> {
-              var fileId = UUID.randomUUID();
-              var blobName = idx + "/it-blob-" + fileId;
-              return blobName;
-            })
+        .map(idx -> idx + "/it-blob-" + UUID.randomUUID())
         .collect(Collectors.toList())
         .toArray(new String[0]);
   }

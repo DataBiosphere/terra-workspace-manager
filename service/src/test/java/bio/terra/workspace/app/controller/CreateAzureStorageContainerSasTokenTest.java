@@ -36,7 +36,7 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
       ArgumentCaptor.forClass(SasTokenOptions.class);
 
   @BeforeEach
-  public void setup() throws Exception {
+  public void setup() {
     workspaceId = UUID.randomUUID();
     storageContainerId = UUID.randomUUID();
 

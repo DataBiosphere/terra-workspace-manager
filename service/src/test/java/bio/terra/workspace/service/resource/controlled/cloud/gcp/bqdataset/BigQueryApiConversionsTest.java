@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_WITHOUT_EXPIRATION;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_WITH_EXPIRATION;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BQ_DATASET_WITHOUT_EXPIRATION;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BQ_DATASET_WITH_EXPIRATION;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.BigQueryApiConversions.fromBqExpirationTime;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.BigQueryApiConversions.toBqExpirationTime;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.BigQueryApiConversions.toUpdateParameters;

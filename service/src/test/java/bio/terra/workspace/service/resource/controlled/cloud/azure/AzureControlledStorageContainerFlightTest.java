@@ -1,13 +1,14 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.uniqueStorageContainerName;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -61,9 +62,9 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
     // Submit a storage container creation flight and then verify the resource exists in the
     // workspace.
     final UUID sharedContainerResourceId = UUID.randomUUID();
-    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
+    final String storageContainerName = uniqueStorageContainerName();
     ControlledAzureStorageContainerResource sharedContainerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(
+        getAzureStorageContainer(
             workspaceUuid,
             sharedContainerResourceId,
             storageContainerName,

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureBatchPoolResourceBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,7 +15,6 @@ import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneNotFoundException;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
@@ -123,7 +123,7 @@ public class LandingZoneBatchAccountFinderTest extends BaseAzureConnectedTest {
   }
 
   private ControlledAzureBatchPoolResource buildDefaultResource() {
-    return ControlledResourceFixtures.getAzureBatchPoolResourceBuilder(
+    return getAzureBatchPoolResourceBuilder(
             UUID.randomUUID(),
             "displayName",
             "Standard_D2s_v3",

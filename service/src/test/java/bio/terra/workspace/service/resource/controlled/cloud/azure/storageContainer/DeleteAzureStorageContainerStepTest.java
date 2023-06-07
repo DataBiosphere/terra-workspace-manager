@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.uniqueStorageAccountName;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -16,7 +19,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
@@ -50,8 +52,8 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   @Captor ArgumentCaptor<String> containerNameCaptor;
 
   private final ApiAzureStorageContainerCreationParameters creationParameters =
-      ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
-  private final String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
+      getAzureStorageContainerCreationParameters();
+  private final String storageAccountName = uniqueStorageAccountName();
   private ControlledAzureStorageContainerResource storageContainerResource;
   private DeleteAzureStorageContainerStep deleteAzureStorageContainerStep;
 
@@ -65,8 +67,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
 
   private void initDeleteValidationStep(Optional<UUID> storageAccountId) {
     storageContainerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(
-            creationParameters.getStorageContainerName());
+        getAzureStorageContainer(creationParameters.getStorageContainerName());
 
     deleteAzureStorageContainerStep =
         new DeleteAzureStorageContainerStep(

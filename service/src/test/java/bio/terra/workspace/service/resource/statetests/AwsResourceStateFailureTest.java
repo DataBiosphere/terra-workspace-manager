@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.statetests;
 
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_STORAGE_FOLDERS_PATH_FORMAT;
@@ -8,9 +11,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_STORAGE_F
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -119,14 +120,12 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
 
     // Create the resources in the database
     // AWS-Storage
-    var storageResource =
-        ControlledResourceFixtures.makeDefaultAwsS3StorageFolderResource(workspaceUuid);
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, storageResource);
+    var storageResource = makeDefaultAwsS3StorageFolderResource(workspaceUuid);
+    insertControlledResourceRow(resourceDao, storageResource);
 
     // AWS-Notebook
-    var notebookResource =
-        ControlledResourceFixtures.makeDefaultAwsSagemakerNotebookResource(workspaceUuid);
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
+    var notebookResource = makeDefaultAwsSagemakerNotebookResource(workspaceUuid);
+    insertControlledResourceRow(resourceDao, notebookResource);
 
     // Set cloud context info deleting state
     var flightId = UUID.randomUUID().toString();

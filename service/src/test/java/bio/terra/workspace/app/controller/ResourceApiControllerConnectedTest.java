@@ -54,7 +54,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
   private UUID workspaceId;
 
   @BeforeAll
-  public void setUp() throws Exception {
+  public void setUp() {
     workspaceId =
         connectedTestUtils
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())

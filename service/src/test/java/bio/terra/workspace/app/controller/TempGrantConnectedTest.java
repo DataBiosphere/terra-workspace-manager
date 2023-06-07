@@ -50,7 +50,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   private boolean timeToFinish;
 
   @Before
-  public void startup() throws Exception {
+  public void startup() {
     timeToFinish = false;
   }
 

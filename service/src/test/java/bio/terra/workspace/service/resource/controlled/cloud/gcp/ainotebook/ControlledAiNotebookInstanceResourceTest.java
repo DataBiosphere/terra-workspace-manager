@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeNotebookCommonFieldsBuilder;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.DEFAULT_ZONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -18,13 +19,13 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   @Test
   public void validateOk() {
     // will throw if anything is amiss.
-    ControlledResourceFixtures.makeDefaultAiNotebookInstance().build().validate();
+    makeDefaultAiNotebookInstance().build().validate();
   }
 
   @Test
   public void resourceWithNullLocation_validatesOkAndSetsDefaultLocation() {
     ControlledAiNotebookInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance().location(null).build();
+        makeDefaultAiNotebookInstance().location(null).build();
 
     resource.validate();
     assertEquals(DEFAULT_ZONE, resource.getLocation());
@@ -33,9 +34,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   @Test
   public void validateSharedAccessThrows() {
     ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeNotebookCommonFieldsBuilder()
-            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-            .build();
+        makeNotebookCommonFieldsBuilder().accessScope(AccessScopeType.ACCESS_SCOPE_SHARED).build();
 
     assertThrows(
         BadRequestException.class,
@@ -50,8 +49,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
 
   @Test
   public void testFlightMapSerialization() {
-    ControlledAiNotebookInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance().build();
+    ControlledAiNotebookInstanceResource resource = makeDefaultAiNotebookInstance().build();
 
     // TODO: [PF-935] Create a public API on FlightMap or Stairway test fixture that explicitly
     // tests that a type serializes and deserializes to the correct result.  For now leverage the
@@ -67,7 +65,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   @Test
   public void toApiResource() {
     ControlledAiNotebookInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance()
+        makeDefaultAiNotebookInstance()
             .instanceId("my-instance-id")
             .location("us-east1-b")
             .projectId("my-project-id")

@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.privateresource;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueBucketName;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -8,7 +10,6 @@ import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.PrivateResourceCleanupConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ApplicationDao;
@@ -99,7 +100,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
    * Delete workspace. Doing this outside of test bodies ensures cleanup runs even if tests fail.
    */
   @AfterEach
-  private void cleanup() {
+  public void cleanup() {
     workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
     deleteGroup(groupName, ownerGroupApi);
   }
@@ -121,7 +122,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
         "grantWorkspaceRole");
     // Create private bucket as second user.
     ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+        makeDefaultControlledResourceFieldsBuilder()
             .workspaceUuid(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
@@ -130,7 +131,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
             .common(commonFields)
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .bucketName(uniqueBucketName())
             .build();
     ApiGcpGcsBucketCreationParameters creationParameters =
         new ApiGcpGcsBucketCreationParameters().location("us-central1");
@@ -221,7 +222,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
 
     // Create application private bucket assigned to second user.
     ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+        makeDefaultControlledResourceFieldsBuilder()
             .workspaceUuid(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_APPLICATION)
@@ -232,7 +233,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
             .common(commonFields)
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .bucketName(uniqueBucketName())
             .build();
 
     ApiGcpGcsBucketCreationParameters creationParameters =

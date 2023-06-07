@@ -1,5 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.uniqueStorageAccountName;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.STORAGE_ACCOUNT_NAME;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,11 +12,9 @@ import static org.mockito.Mockito.*;
 
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data.CreateStorageContainerRequestData;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.core.util.Context;
@@ -34,9 +36,9 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
   @Mock private BlobContainer.DefinitionStages.WithCreate mockCreateStage;
   @Mock private BlobContainer mockStorageContainer;
 
-  private final String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
+  private final String storageAccountName = uniqueStorageAccountName();
   final ApiAzureStorageContainerCreationParameters creationParameters =
-      ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
+      getAzureStorageContainerCreationParameters();
   private final ArgumentCaptor<Context> contextCaptor = ArgumentCaptor.forClass(Context.class);
   private final ManagementException containerNotFoundException =
       new ManagementException(
@@ -60,16 +62,13 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
   }
 
   private CreateAzureStorageContainerStep createCreateAzureStorageContainerStep() {
-    when(mockFlightContext
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.ControlledResourceKeys.STORAGE_ACCOUNT_NAME, String.class))
+    when(mockFlightContext.getWorkingMap().get(STORAGE_ACCOUNT_NAME, String.class))
         .thenReturn(storageAccountName);
 
     return new CreateAzureStorageContainerStep(
         mockAzureConfig,
         mockCrlService,
-        ControlledResourceFixtures.getAzureStorageContainer(
-            creationParameters.getStorageContainerName()));
+        getAzureStorageContainer(creationParameters.getStorageContainerName()));
   }
 
   @Test

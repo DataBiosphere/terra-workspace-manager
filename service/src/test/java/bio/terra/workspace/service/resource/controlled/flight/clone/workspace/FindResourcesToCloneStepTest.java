@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,7 +15,6 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -40,8 +40,7 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
 
   @BeforeEach
   public void setup() {
-    resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(UUID.randomUUID()).build();
+    resource = makeDefaultControlledGcsBucketBuilder(UUID.randomUUID()).build();
 
     findResourcesToCloneStep = new FindResourcesToCloneStep(mockResourceDao);
     doReturn(mockStairway).when(mockFlightContext).getStairway();
