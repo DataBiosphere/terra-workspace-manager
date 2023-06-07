@@ -1,9 +1,9 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WORKSPACE_ID;
-import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.MapperUtils;
@@ -65,7 +65,8 @@ public class ControlledAzureResourceFixtures {
   public static ControlledAzureDiskResource.Builder makeDefaultAzureDiskBuilder(
       ApiAzureDiskCreationParameters creationParameters, UUID workspaceId) {
     return ControlledAzureDiskResource.builder()
-        .common( makeDefaultControlledResourceFieldsBuilder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceId)
                 .name(getAzureName("disk"))
                 .cloningInstructions(CloningInstructions.COPY_RESOURCE)
@@ -79,9 +80,7 @@ public class ControlledAzureResourceFixtures {
 
   public static ControlledAzureDiskResource getAzureDisk(String diskName, String region, int size) {
     return ControlledAzureDiskResource.builder()
-        .common( makeDefaultControlledResourceFieldsBuilder()
-                .region(region)
-                .build())
+        .common(makeDefaultControlledResourceFieldsBuilder().region(region).build())
         .diskName(diskName)
         .size(size)
         .build();
@@ -110,14 +109,14 @@ public class ControlledAzureResourceFixtures {
   public static ControlledAzureStorageContainerResource.Builder
       makeDefaultAzureStorageContainerResourceBuilder(UUID workspaceId) {
     return ControlledAzureStorageContainerResource.builder()
-        .common( makeDefaultControlledResourceFields(workspaceId))
+        .common(makeDefaultControlledResourceFields(workspaceId))
         .storageContainerName(TestUtils.appendRandomNumber("storageaccountfoo"));
   }
 
   public static ControlledAzureStorageContainerResource getAzureStorageContainer(
       String storageContainerName) {
     return ControlledAzureStorageContainerResource.builder()
-        .common( makeDefaultControlledResourceFields(WORKSPACE_ID))
+        .common(makeDefaultControlledResourceFields(WORKSPACE_ID))
         .storageContainerName(storageContainerName)
         .build();
   }
@@ -129,7 +128,8 @@ public class ControlledAzureResourceFixtures {
       String resourceName,
       String resourceDescription) {
     return ControlledAzureStorageContainerResource.builder()
-        .common( makeDefaultControlledResourceFieldsBuilder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
                 .resourceId(containerResourceId)
                 .name(resourceName)
@@ -243,9 +243,7 @@ public class ControlledAzureResourceFixtures {
   public static ControlledAzureVmResource makeAzureVm(UUID workspaceUuid) {
     ApiAzureVmCreationParameters creationParameters = getAzureVmCreationParameters();
     return ControlledAzureVmResource.builder()
-        .common( makeDefaultControlledResourceFieldsBuilder()
-                .workspaceUuid(workspaceUuid)
-                .build())
+        .common(makeDefaultControlledResourceFieldsBuilder().workspaceUuid(workspaceUuid).build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
@@ -267,7 +265,8 @@ public class ControlledAzureResourceFixtures {
   public static ControlledAzureVmResource.Builder makeDefaultControlledAzureVmResourceBuilder(
       ApiAzureVmCreationParameters creationParameters, UUID workspaceId, UUID diskResourceId) {
     return ControlledAzureVmResource.builder()
-        .common( makeDefaultControlledResourceFieldsBuilder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceId)
                 .name(getAzureName("vm"))
                 .cloningInstructions(CloningInstructions.COPY_RESOURCE)
@@ -315,7 +314,8 @@ public class ControlledAzureResourceFixtures {
       DeploymentConfiguration deploymentConfiguration,
       String resourceDescription) {
     return ControlledAzureBatchPoolResource.builder()
-        .common( makeDefaultControlledResourceFieldsBuilder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(WORKSPACE_ID)
                 .resourceId(batchPoolId)
                 .name(batchPoolDisplayName)
@@ -346,7 +346,8 @@ public class ControlledAzureResourceFixtures {
       UUID workspaceUuid) {
     UUID resourceId = UUID.randomUUID();
     return ControlledAzureBatchPoolResource.builder()
-        .common( makeDefaultControlledResourceFieldsBuilder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
                 .resourceId(resourceId)
                 .name("displayName")

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled;
 
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueDatasetId;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,7 +15,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -585,7 +585,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
             .defaultPartitionLifetime(initialDefaultPartitionLifetime);
     ControlledBigQueryDatasetResource resource =
         ControlledBigQueryDatasetResource.builder()
-            .common(ControlledResourceFixtures.makeDefaultControlledResourceFields(workspaceId))
+            .common(makeDefaultControlledResourceFields(workspaceId))
             .projectId(projectId)
             .datasetName(datasetId)
             .defaultTableLifetime(initialDefaultTableLifetime)

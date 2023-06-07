@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.flight;
 
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,7 +13,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -41,9 +42,8 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     // Generate a fake workspace and cloud context so that the
     // database insert will pass FK constraints.
     UUID workspaceUuid = UUID.randomUUID();
-    Workspace workspace =
-        WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    Workspace workspace = buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
+    createWorkspaceInDb(workspace, workspaceDao);
 
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
         workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.PROJECT_ID);

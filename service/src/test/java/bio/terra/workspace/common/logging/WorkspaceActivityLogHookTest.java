@@ -4,6 +4,8 @@ import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
@@ -28,7 +30,6 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.FolderDao;
@@ -251,12 +252,12 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   @Test
   void deleteWorkspaceFlightFails_workspaceStillExist_NotLogChangeDetails()
       throws InterruptedException {
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    var workspace = createDefaultMcWorkspace();
     var workspaceUuid = workspace.getWorkspaceId();
     var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
     FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
     hook.endFlight(
         new FakeFlightContext(
@@ -299,12 +300,12 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     String fakeCloudContextJson =
         "{\"version\": 2, \"gcpProjectId\": \"terra-wsm-t-clean-berry-5152\", \"samPolicyOwner\": \"policy-owner\", \"samPolicyReader\": \"policy-reader\", \"samPolicyWriter\": \"policy-writer\", \"samPolicyApplication\": \"policy-application\"}";
 
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    var workspace = createDefaultMcWorkspace();
     var workspaceUuid = workspace.getWorkspaceId();
     var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
 
     var flightId = UUID.randomUUID().toString();
     var spendProfileId = new SpendProfileId("fake-spend-profile-id");

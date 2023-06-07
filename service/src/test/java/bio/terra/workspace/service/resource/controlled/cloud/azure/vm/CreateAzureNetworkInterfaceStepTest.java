@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,7 +13,6 @@ import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpo
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
@@ -113,8 +113,7 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
                         .resourceParentId(networkId.toString()))));
 
     when(resource.getWorkspaceId()).thenReturn(workspaceId);
-    when(mockWorkspaceService.getWorkspace(workspaceId))
-        .thenReturn(WorkspaceFixtures.buildMcWorkspace(workspaceId));
+    when(mockWorkspaceService.getWorkspace(workspaceId)).thenReturn(buildMcWorkspace(workspaceId));
     when(landingZoneApiDispatch.getLandingZoneId(
             eq(bearerToken), argThat(a -> a.getWorkspaceId().equals(workspaceId))))
         .thenReturn(lzId);

@@ -2,6 +2,8 @@ package bio.terra.workspace.service.folder;
 
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -13,8 +15,6 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -120,7 +120,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     controlledAiNotebookInFooBarLoo =
         ControlledAiNotebookInstanceResource.builder()
             .common(
-                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceId)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .managedBy(ManagedByType.MANAGED_BY_USER)
@@ -309,7 +309,7 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   private static ControlledResourceFields createControlledResourceCommonFieldWithFolderId(
       UUID workspaceId, UUID folderId) {
-    return ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+    return makeDefaultControlledResourceFieldsBuilder()
         .workspaceUuid(workspaceId)
         .properties(Map.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
         .build();
@@ -318,7 +318,7 @@ public class FolderServiceTest extends BaseConnectedTest {
   private static WsmResourceFields createWsmResourceCommonFieldsWithFolderId(
       UUID workspaceId, UUID folderId) {
 
-    return ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder(workspaceId)
+    return makeDefaultWsmResourceFieldBuilder(workspaceId)
         .properties(Map.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
         .build();
   }

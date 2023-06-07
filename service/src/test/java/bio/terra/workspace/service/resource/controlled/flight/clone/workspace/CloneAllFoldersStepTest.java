@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteWorkspaceFromDb;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE_ID;
 import static com.google.common.collect.MoreCollectors.onlyElement;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -14,7 +15,6 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.model.Folder;
@@ -144,6 +144,6 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
   @AfterEach
   public void clean_up() {
-    WorkspaceFixtures.deleteWorkspaceFromDb(SOURCE_WORKSPACE_ID, workspaceDao);
+    deleteWorkspaceFromDb(SOURCE_WORKSPACE_ID, workspaceDao);
   }
 }

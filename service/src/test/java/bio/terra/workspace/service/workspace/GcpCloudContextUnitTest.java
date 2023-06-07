@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteWorkspaceFromDb;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,7 +11,6 @@ import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
@@ -90,9 +92,9 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
   @Test
   public void deserialize_creatingContext_valid() {
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    var workspace = createDefaultMcWorkspace();
     UUID workspaceUuid = workspace.workspaceId();
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    createWorkspaceInDb(workspace, workspaceDao);
 
     String flightId = UUID.randomUUID().toString();
 
@@ -107,7 +109,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     assertNull(cloudContext.getContextFields());
 
     workspaceDao.createWorkspaceSuccess(workspaceUuid, flightId);
-    WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
+    deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
   }
 
   // Set up mocks for interacting with GCP to delete a project.

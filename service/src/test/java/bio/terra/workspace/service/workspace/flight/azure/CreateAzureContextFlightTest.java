@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.azure;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,7 +18,6 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -118,9 +118,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Test
   void regionPolicyConflict() throws Exception {
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(null)
-            .spendProfileId(azureTestUtils.getSpendProfileId())
-            .build();
+        defaultWorkspaceBuilder(null).spendProfileId(azureTestUtils.getSpendProfileId()).build();
     FlightState flightState =
         createWorkspaceForRegionTest(workspace, Region.SOUTHAFRICA_NORTH.name());
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
@@ -134,9 +132,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Test
   void regionPolicyNoConflict() throws Exception {
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(null)
-            .spendProfileId(azureTestUtils.getSpendProfileId())
-            .build();
+        defaultWorkspaceBuilder(null).spendProfileId(azureTestUtils.getSpendProfileId()).build();
     FlightState flightState = createWorkspaceForRegionTest(workspace, landingZoneRegion.name());
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
   }
@@ -176,9 +172,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Test
   void protectedDataPolicyConflict() throws Exception {
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(null)
-            .spendProfileId(azureTestUtils.getSpendProfileId())
-            .build();
+        defaultWorkspaceBuilder(null).spendProfileId(azureTestUtils.getSpendProfileId()).build();
     FlightState flightState = createWorkspaceForProtectedDataTest(workspace, "not protected data");
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertTrue(flightState.getException().isPresent());
@@ -191,9 +185,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Test
   void protectedDataPolicyNoConflict() throws Exception {
     Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(null)
-            .spendProfileId(azureTestUtils.getSpendProfileId())
-            .build();
+        defaultWorkspaceBuilder(null).spendProfileId(azureTestUtils.getSpendProfileId()).build();
     FlightState flightState =
         createWorkspaceForProtectedDataTest(
             workspace, azureConfiguration.getProtectedDataLandingZoneDefs().get(0));

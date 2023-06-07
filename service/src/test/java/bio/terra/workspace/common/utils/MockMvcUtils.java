@@ -3,6 +3,8 @@ package bio.terra.workspace.common.utils;
 import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceRequestBody;
 import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
@@ -26,8 +28,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.model.ApiAccessScope;
@@ -449,8 +449,7 @@ public class MockMvcUtils {
 
   public ApiCreatedWorkspace createWorkspaceWithPolicy(
       AuthenticatedUserRequest userRequest, ApiWsmPolicyInputs policy) throws Exception {
-    ApiCreateWorkspaceRequestBody request =
-        WorkspaceFixtures.createWorkspaceRequestBody().policies(policy);
+    ApiCreateWorkspaceRequestBody request = createWorkspaceRequestBody().policies(policy);
 
     String serializedResponse =
         mockMvc
@@ -476,8 +475,7 @@ public class MockMvcUtils {
       @Nullable AuthenticatedUserRequest userRequest, ApiWorkspaceStageModel stageModel)
       throws Exception {
 
-    ApiCreateWorkspaceRequestBody request =
-        WorkspaceFixtures.createWorkspaceRequestBody(stageModel);
+    ApiCreateWorkspaceRequestBody request = createWorkspaceRequestBody(stageModel);
     String serializedResponse =
         getSerializedResponseForPost(
             userRequest, WORKSPACES_V1_PATH, objectMapper.writeValueAsString(request));
@@ -500,8 +498,7 @@ public class MockMvcUtils {
       @Nullable ApiWsmPolicyInputs policyInputs,
       int expectedCode)
       throws Exception {
-    ApiCreateWorkspaceRequestBody request =
-        WorkspaceFixtures.createWorkspaceRequestBody().id(workspaceId);
+    ApiCreateWorkspaceRequestBody request = createWorkspaceRequestBody().id(workspaceId);
     if (stageModel != null) {
       request.stage(stageModel);
     }
@@ -1751,7 +1748,7 @@ public class MockMvcUtils {
     ApiCreateDataRepoSnapshotReferenceRequestBody request =
         new ApiCreateDataRepoSnapshotReferenceRequestBody()
             .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                makeDefaultReferencedResourceFieldsApi()
                     .name(resourceName)
                     .cloningInstructions(cloningInstructions))
             .snapshot(creationParameters);
@@ -1857,9 +1854,7 @@ public class MockMvcUtils {
         new ApiGcpBigQueryDatasetAttributes().projectId(projectId).datasetId(datasetName);
     ApiCreateGcpBigQueryDatasetReferenceRequestBody request =
         new ApiCreateGcpBigQueryDatasetReferenceRequestBody()
-            .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
-                    .name(resourceName))
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
             .dataset(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -1962,9 +1957,7 @@ public class MockMvcUtils {
             .dataTableId(tableId);
     ApiCreateGcpBigQueryDataTableReferenceRequestBody request =
         new ApiCreateGcpBigQueryDataTableReferenceRequestBody()
-            .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
-                    .name(resourceName))
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
             .dataTable(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2072,9 +2065,7 @@ public class MockMvcUtils {
         new ApiGcpGcsBucketAttributes().bucketName(bucketName);
     ApiCreateGcpGcsBucketReferenceRequestBody request =
         new ApiCreateGcpGcsBucketReferenceRequestBody()
-            .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
-                    .name(resourceName))
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
             .bucket(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2175,9 +2166,7 @@ public class MockMvcUtils {
         new ApiGcpGcsObjectAttributes().bucketName(bucketName).fileName(fileName);
     ApiCreateGcpGcsObjectReferenceRequestBody request =
         new ApiCreateGcpGcsObjectReferenceRequestBody()
-            .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
-                    .name(resourceName))
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
             .file(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2280,9 +2269,7 @@ public class MockMvcUtils {
     ApiGitRepoAttributes creationParameters = new ApiGitRepoAttributes().gitRepoUrl(gitRepoUrl);
     ApiCreateGitRepoReferenceRequestBody request =
         new ApiCreateGitRepoReferenceRequestBody()
-            .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
-                    .name(resourceName))
+            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
             .gitrepo(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(

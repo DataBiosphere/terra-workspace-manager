@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData;
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getInvalidAzureVmCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultAzureDiskBuilder;
 import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultControlledAzureVmResourceBuilder;
@@ -296,8 +297,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     final ApiAzureVmCreationParameters creationParameters =
-        ControlledAzureResourceFixtures
-            .getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData();
+        getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData();
 
     // TODO: make this application-private resource once the POC supports it
     final UUID resourceId = UUID.randomUUID();

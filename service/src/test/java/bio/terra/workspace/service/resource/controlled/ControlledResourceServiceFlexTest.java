@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultFlexResourceCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultFlexResourceBuilder;
 import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_NOTHING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,7 +11,6 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.job.JobService;
@@ -36,9 +37,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultFlexResourceBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultFlexResourceCreationParameters;
-
 
 // Per-class lifecycle on this test to allow a shared workspace object across tests, which saves
 // time creating and deleting GCP contexts.
@@ -93,7 +91,8 @@ public class ControlledResourceServiceFlexTest extends BaseConnectedTest {
             .createControlledResourceSync(
                 originalFlex,
                 null,
-                user.getAuthenticatedRequest(), defaultFlexResourceCreationParameters())
+                user.getAuthenticatedRequest(),
+                defaultFlexResourceCreationParameters())
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     assertTrue(originalFlex.partialEqual(createdFlex));
 

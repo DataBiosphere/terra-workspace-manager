@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createCloudContextInputs;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteCloudContextInputs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,7 +15,6 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -67,10 +69,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   public void setup() {
     // Create a new workspace at the start of each test.
     UUID uuid = UUID.randomUUID();
-    workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(uuid)
-            .spendProfileId(spendUtils.defaultSpendId())
-            .build();
+    workspace = defaultWorkspaceBuilder(uuid).spendProfileId(spendUtils.defaultSpendId()).build();
     workspaceUuid =
         workspaceService.createWorkspace(
             workspace, null, null, userAccessUtils.defaultUserAuthRequest());
@@ -86,7 +85,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   void deleteContextDo() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     FlightMap createParameters =
-        WorkspaceFixtures.createCloudContextInputs(
+        createCloudContextInputs(
             workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
 
     // Create the google context.
@@ -110,7 +109,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
 
     // Delete the GCP context.
     FlightMap deleteParameters =
-        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
+        deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
 
     // Force each step to be retried once to ensure proper behavior.
     Map<String, StepStatus> doFailures = new HashMap<>();
@@ -149,7 +148,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   void deleteContextUndo() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     FlightMap createParameters =
-        WorkspaceFixtures.createCloudContextInputs(
+        createCloudContextInputs(
             workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
 
     // Create the GCP context.
@@ -164,7 +163,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
 
     // Delete the GCP context.
     FlightMap deleteParameters =
-        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
+        deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.GCP);
 
     // Fail at the end of the flight to verify it can't be undone.
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().lastStepFailure(true).build();
