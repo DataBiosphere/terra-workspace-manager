@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledFlexibleResourceApi;
 import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceResult;
@@ -29,6 +30,7 @@ import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.Optional;
 import java.util.UUID;
@@ -83,7 +85,11 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
   @Override
   public ResponseEntity<ApiCreatedControlledFlexibleResource> createFlexibleResource(
       UUID workspaceUuid, @Valid ApiCreateControlledFlexibleResourceRequestBody body) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
+    workspaceService.validateWorkspaceState(workspace);
 
     ControlledResourceFields commonFields =
         toCommonFields(
@@ -138,6 +144,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
                 resourceUuid,
                 SamConstants.SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
+    workspaceService.validateWorkspaceState(workspaceUuid);
 
     // The update parameter for flexible resource is the decoded string form
     // of the base64 byte input.
@@ -171,6 +178,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
         workspaceUuid,
         resourceUuid,
         SamConstants.SamControlledResourceActions.DELETE_ACTION);
+    workspaceService.validateWorkspaceState(workspaceUuid);
     logger.info(
         "Deleting controlled flexible resource {} in workspace {}",
         resourceUuid.toString(),
@@ -208,6 +216,8 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     // It's preferable to throw a permission error first.
     controlledResourceMetadataManager.validateCloneAction(
         userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid);
+    workspaceService.validateWorkspaceState(workspaceUuid);
+    workspaceService.validateWorkspaceState(body.getDestinationWorkspaceId());
 
     if (body.getCloningInstructions() != null) {
       ResourceValidationUtils.validateCloningInstructions(

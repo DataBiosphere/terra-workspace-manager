@@ -152,9 +152,9 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void getWorkspaceToCloudContextMap_getAllGcpCloudContexts() {
-    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
-    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
-    UUID workspace3 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
+    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
+    UUID workspace3 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
 
     String project1 = "gcp-project-1";
     String project2 = "gcp-project-2";

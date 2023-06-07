@@ -110,14 +110,14 @@ class JobServiceTest extends BaseUnitTest {
     // The fids list should be in exactly the same order as the database ordered by submit time.
 
     List<String> jobIds1 = new ArrayList<>();
-    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
     for (int i = 0; i < 3; i++) {
       String jobId = runFlight(workspace1, makeDescription(i));
       jobIds1.add(jobId);
     }
 
     List<String> jobIds2 = new ArrayList<>();
-    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
 
     for (int i = 0; i < 4; i++) {
       String jobId = runFlight(workspace2, makeDescription(i));

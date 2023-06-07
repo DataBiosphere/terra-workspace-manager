@@ -133,6 +133,8 @@ components:
         projectId:
           description: The ID of the GCP project associated with the workspace.
           type: string
+        operationState:
+          $ref: '#/components/schemas/OperationState'
 
     AzureContext:
       type: object
@@ -147,6 +149,8 @@ components:
         resourceGroupId:
           description: The ID of the Azure resource group associated with the workspace.
           type: string
+        operationState:
+          $ref: '#/components/schemas/OperationState'
 
     AwsContext:
       type: object
@@ -167,6 +171,8 @@ components:
         environmentAlias:
           description: The name of the Terra environment associated with the workspace.
           type: string
+        operationState:
+          $ref: '#/components/schemas/OperationState'
 
     CreateCloudContextRequest:
       type: object

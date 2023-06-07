@@ -323,10 +323,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     if (body.getUserFacingId() != null) {
       ControllerValidationUtils.validateUserFacingId(body.getUserFacingId());
     }
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-
     Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
+
+    workspace =
         workspaceService.updateWorkspace(
             workspaceUuid,
             body.getUserFacingId(),
@@ -348,8 +350,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       @RequestBody ApiWsmPolicyUpdateRequest body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
-    workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.OWN);
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.OWN);
+    workspaceService.validateWorkspaceState(workspace);
 
     features.tpsEnabledCheck();
     TpsPolicyInputs adds = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAddAttributes());
@@ -372,6 +376,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     logger.info("Deleting workspace {} for {}", uuid, userRequest.getEmail());
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.DELETE);
+    workspaceService.validateWorkspaceState(workspace);
     workspaceService.deleteWorkspace(workspace, userRequest);
     logger.info("Deleted workspace {} for {}", uuid, userRequest.getEmail());
 
@@ -383,15 +388,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<Void> deleteWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<String> propertyKeys) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
+    workspaceService.validateWorkspaceState(workspace);
     validatePropertiesDeleteRequestBody(propertyKeys);
     logger.info("Deleting the properties in workspace {}", workspaceUuid);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.DELETE);
     workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, userRequest);
     logger.info("Deleted the properties in workspace {}", workspaceUuid);
-
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -400,8 +404,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<Void> updateWorkspaceProperties(
       @PathVariable("workspaceId") UUID workspaceUuid, @RequestBody List<ApiProperty> properties) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
     validatePropertiesUpdateRequestBody(properties);
     Map<String, String> propertyMap = convertApiPropertyToMap(properties);
     logger.info("Updating the properties {} in workspace {}", propertyMap, workspaceUuid);
@@ -414,7 +420,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Traced
   @Override
   public ResponseEntity<Void> grantRole(
-      @PathVariable("workspaceId") UUID uuid,
+      @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("role") ApiIamRole role,
       @RequestBody ApiGrantRoleRequestBody body) {
     ControllerValidationUtils.validateEmail(body.getMemberEmail());
@@ -422,15 +428,19 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       throw new InvalidRoleException(
           "Users cannot grant role APPLICATION. Use application registration instead.");
     }
+    workspaceService.validateWorkspaceState(workspaceUuid);
     // No additional authz check as this is just a wrapper around a Sam endpoint.
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
-                uuid, getAuthenticatedInfo(), WsmIamRole.fromApiModel(role), body.getMemberEmail()),
+                workspaceUuid,
+                getAuthenticatedInfo(),
+                WsmIamRole.fromApiModel(role),
+                body.getMemberEmail()),
         "grantWorkspaceRole");
     workspaceActivityLogService.writeActivity(
         getAuthenticatedInfo(),
-        uuid,
+        workspaceUuid,
         OperationType.GRANT_WORKSPACE_ROLE,
         body.getMemberEmail(),
         ActivityLogChangedTarget.USER);
@@ -440,7 +450,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Traced
   @Override
   public ResponseEntity<Void> removeRole(
-      @PathVariable("workspaceId") UUID uuid,
+      @PathVariable("workspaceId") UUID workspaceUuid,
       @PathVariable("role") ApiIamRole role,
       @PathVariable("memberEmail") String memberEmail) {
     ControllerValidationUtils.validateEmail(memberEmail);
@@ -450,7 +460,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.OWN);
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.OWN);
+    workspaceService.validateWorkspaceState(workspace);
     workspaceService.removeWorkspaceRoleFromUser(
         workspace, WsmIamRole.fromApiModel(role), memberEmail, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -484,6 +496,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Authorize creation of context in the workspace
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
 
     // TODO: PF-2694 REST API part
     //  When we make the REST API changes, the spend profile will come with the create cloud context
@@ -570,7 +583,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(userRequest, uuid, SamWorkspaceAction.WRITE);
-
+    workspaceService.validateWorkspaceState(workspace);
     workspaceService.deleteCloudContext(
         workspace, CloudPlatform.fromApiCloudPlatform(cloudPlatform), userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -611,6 +624,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     final Workspace sourceWorkspace =
         workspaceService.validateWorkspaceAndAction(
             petRequest, workspaceUuid, SamWorkspaceAction.READ);
+    workspaceService.validateWorkspaceState(sourceWorkspace);
 
     // TODO: PF-2694 REST API part
     //  When we make the REST API changes, the spend profile will come with the source cloud context

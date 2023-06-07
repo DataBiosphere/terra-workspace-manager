@@ -317,6 +317,7 @@ public class AzureStorageAccessService {
       UUID workspaceUuid, UUID storageContainerUuid, AuthenticatedUserRequest userRequest) {
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
     // storage container and storage account resource
+    // TODO: PF-2823 Access control checks should be done in the controller layer
     final ControlledAzureStorageContainerResource storageContainerResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(

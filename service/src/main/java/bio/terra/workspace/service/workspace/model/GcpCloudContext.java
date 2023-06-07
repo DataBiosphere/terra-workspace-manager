@@ -71,9 +71,13 @@ public class GcpCloudContext implements CloudContext {
     return (T) this;
   }
 
-  // TODO: PF-2770 include the common fields in the API return
   public ApiGcpContext toApi() {
-    return (contextFields == null ? null : contextFields.toApi());
+    var gcpContext = new ApiGcpContext();
+    gcpContext.operationState(commonFields.toApi());
+    if (contextFields != null) {
+      contextFields.toApi(gcpContext);
+    }
+    return gcpContext;
   }
 
   @Override

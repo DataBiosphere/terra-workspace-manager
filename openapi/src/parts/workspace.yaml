@@ -837,6 +837,8 @@ components:
           description: The auth domains that the user is missing for this workspace
           items:
             type: string
+        operationState:
+          $ref: '#/components/schemas/OperationState'
 
     WorkspaceDescriptionList:
       type: object

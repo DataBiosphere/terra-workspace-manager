@@ -61,9 +61,13 @@ public class AzureCloudContext implements CloudContext {
     return (T) this;
   }
 
-  // TODO: PF-2770 include the common fields in the API return
   public ApiAzureContext toApi() {
-    return (contextFields == null ? null : contextFields.toApi());
+    var azureContext = new ApiAzureContext();
+    azureContext.operationState(commonFields.toApi());
+    if (contextFields != null) {
+      contextFields.toApi(azureContext);
+    }
+    return azureContext;
   }
 
   @Override

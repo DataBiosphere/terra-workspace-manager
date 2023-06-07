@@ -2,6 +2,7 @@ package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
+import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2_MEDIUM;
 
 import bio.terra.stairway.ShortUUID;
 import bio.terra.workspace.common.utils.AzureUtils;
@@ -10,6 +11,8 @@ import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
+import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
@@ -27,6 +30,8 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
+import com.azure.resourcemanager.batch.models.ImageReference;
+import com.azure.resourcemanager.batch.models.VirtualMachineConfiguration;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.bigquery.model.Dataset;
@@ -360,10 +365,50 @@ public class ControlledResourceFixtures {
         .deploymentConfiguration(deploymentConfiguration);
   }
 
+  public static ControlledAzureBatchPoolResource makeDefaultAzureBatchPoolResource(
+      UUID workspaceUuid) {
+    UUID resourceId = UUID.randomUUID();
+    return ControlledAzureBatchPoolResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceUuid)
+                .resourceId(resourceId)
+                .name("displayName")
+                .description("description")
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .build())
+        .id(resourceId.toString())
+        .displayName("displayName2")
+        .vmSize("Standard_D2s_v3")
+        .deploymentConfiguration(
+            new DeploymentConfiguration()
+                .withVirtualMachineConfiguration(
+                    new VirtualMachineConfiguration()
+                        .withImageReference(
+                            new ImageReference()
+                                .withOffer("ubuntuserver")
+                                .withSku("18.04-lts")
+                                .withPublisher("canonical"))))
+        .build();
+  }
+
   public static ControlledAzureVmResource getAzureVm(
       ApiAzureVmCreationParameters creationParameters) {
     return ControlledAzureVmResource.builder()
         .common(makeDefaultControlledResourceFieldsBuilder().build())
+        .vmName(creationParameters.getName())
+        .vmSize(creationParameters.getVmSize())
+        .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
+        .diskId(creationParameters.getDiskId())
+        .build();
+  }
+
+  public static ControlledAzureVmResource makeAzureVm(UUID workspaceUuid) {
+    ApiAzureVmCreationParameters creationParameters = getAzureVmCreationParameters();
+    return ControlledAzureVmResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().workspaceUuid(workspaceUuid).build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
@@ -668,5 +713,27 @@ public class ControlledResourceFixtures {
     String fakeFlightId = UUID.randomUUID().toString();
     resourceDao.createResourceStart(resource, fakeFlightId);
     resourceDao.createResourceSuccess(resource, fakeFlightId);
+  }
+
+  public static ControlledAwsS3StorageFolderResource makeDefaultAwsS3StorageFolderResource(
+      UUID workspaceUuid) {
+    return ControlledAwsS3StorageFolderResource.builder()
+        .common(makeDefaultControlledResourceFieldsBuilder().workspaceUuid(workspaceUuid).build())
+        .bucketName("foo")
+        .prefix("bar")
+        .build();
+  }
+
+  public static ControlledAwsSageMakerNotebookResource makeDefaultAwsSagemakerNotebookResource(
+      UUID workspaceUuid) {
+    return ControlledAwsSageMakerNotebookResource.builder()
+        .common(
+            makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceUuid)
+                .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+                .build())
+        .instanceType(ML_T2_MEDIUM.toString())
+        .instanceName("foo")
+        .build();
   }
 }
