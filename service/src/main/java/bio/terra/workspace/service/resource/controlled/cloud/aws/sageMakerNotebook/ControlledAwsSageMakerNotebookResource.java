@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
-import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.stairway.RetryRule;
@@ -169,8 +168,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO(TERRA-223) Add support for UpdateAwsSageMakerNotebook
-    throw new ApiException("addUpdateSteps NotImplemented");
+    // TODO(TERRA-223) Add support for updating cloud metadata for sagemaker notebooks
   }
 
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {
