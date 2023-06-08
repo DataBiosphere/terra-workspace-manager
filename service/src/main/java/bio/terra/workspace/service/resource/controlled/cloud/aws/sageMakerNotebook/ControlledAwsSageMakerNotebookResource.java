@@ -131,15 +131,15 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       String petSaEmail,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
-    RetryRule cloudRetry = RetryRules.cloud();
-    flight.addStep(
-        new CreateAwsSageMakerNotebookStep(
-            this,
-            flightBeanBag.getAwsCloudContextService(),
-            userRequest,
-            flightBeanBag.getSamService(),
-            flightBeanBag.getCliConfiguration()),
-        cloudRetry);
+    // RetryRule cloudRetry = RetryRules.cloud();
+    // flight.addStep(
+    //     new CreateAwsSageMakerNotebookStep(
+    //         this,
+    //         flightBeanBag.getAwsCloudContextService(),
+    //         userRequest,
+    //         flightBeanBag.getSamService(),
+    //         flightBeanBag.getCliConfiguration()),
+    //     cloudRetry);
   }
 
   /** {@inheritDoc} */
@@ -169,8 +169,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO(TERRA-223) Add support for UpdateAwsSageMakerNotebook
-    throw new ApiException("addUpdateSteps NotImplemented");
+    // TODO(TERRA-223) Add support for updating cloud metadata for sagemaker notebooks
   }
 
   public ApiAwsSageMakerNotebookAttributes toApiAttributes() {

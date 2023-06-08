@@ -24,6 +24,7 @@ import bio.terra.workspace.generated.model.ApiGenerateAwsResourceCloudNameReques
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiUpdateControlledAwsS3StorageFolderRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledAwsSageMakerNotebookRequestBody;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -342,7 +343,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 userRequest,
                 workspaceUuid,
                 resourceUuid,
-                SamConstants.SamControlledResourceActions.READ_ACTION)
+                SamConstants.SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
 
     CommonUpdateParameters commonUpdateParameters =
@@ -529,6 +530,41 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 SamConstants.SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsSageMakerNotebookResource> updateAwsSageMakerNotebook(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiUpdateControlledAwsSageMakerNotebookRequestBody body) {
+    logger.info(
+        "Updating AWS SageMaker Notebook resourceId {} workspaceUuid {}",
+        resourceUuid,
+        workspaceUuid);
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AWS);
+
+    ControlledAwsSageMakerNotebookResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceUuid,
+                SamConstants.SamControlledResourceActions.EDIT_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
+    CommonUpdateParameters commonUpdateParameters =
+        new CommonUpdateParameters().setName(body.getName()).setDescription(body.getDescription());
+
+    wsmResourceService.updateResource(userRequest, resource, commonUpdateParameters, null);
+
+    ControlledAwsSageMakerNotebookResource updatedResource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
+
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced
