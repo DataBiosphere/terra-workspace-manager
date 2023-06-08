@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
-import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.stairway.RetryRule;

@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
-import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.stairway.RetryRule;
@@ -131,15 +130,15 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       String petSaEmail,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
-    // RetryRule cloudRetry = RetryRules.cloud();
-    // flight.addStep(
-    //     new CreateAwsSageMakerNotebookStep(
-    //         this,
-    //         flightBeanBag.getAwsCloudContextService(),
-    //         userRequest,
-    //         flightBeanBag.getSamService(),
-    //         flightBeanBag.getCliConfiguration()),
-    //     cloudRetry);
+    RetryRule cloudRetry = RetryRules.cloud();
+    flight.addStep(
+        new CreateAwsSageMakerNotebookStep(
+            this,
+            flightBeanBag.getAwsCloudContextService(),
+            userRequest,
+            flightBeanBag.getSamService(),
+            flightBeanBag.getCliConfiguration()),
+        cloudRetry);
   }
 
   /** {@inheritDoc} */
