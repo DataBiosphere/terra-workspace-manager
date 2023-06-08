@@ -19,7 +19,6 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
@@ -38,6 +37,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.Updat
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.flight.UpdateFinishStep;
 import bio.terra.workspace.service.resource.flight.UpdateStartStep;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -182,8 +182,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
     // clone bucket once
     String jobId =
         controlledResourceService.cloneGcsBucket(
-            workspaceId,
-            createdBucket.getResourceId(),
+            createdBucket,
             workspaceId, // copy back into same workspace
             UUID.randomUUID(),
             new ApiJobControl().id(UUID.randomUUID().toString()),
@@ -192,7 +191,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
             "A bucket cloned individually into the same workspace.",
             "cloned-bucket-" + UUID.randomUUID().toString().toLowerCase(),
             destinationLocation,
-            ApiCloningInstructionsEnum.RESOURCE);
+            CloningInstructions.COPY_RESOURCE);
 
     jobService.waitForJob(jobId);
     FlightState flightState = stairwayComponent.get().getFlightState(jobId);
@@ -214,8 +213,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
     // clone twice.
     String jobId2 =
         controlledResourceService.cloneGcsBucket(
-            workspaceId,
-            firstClonedBucketResourceId,
+            firstClonedBucket,
             workspaceId, // copy back into same workspace
             UUID.randomUUID(),
             new ApiJobControl().id(UUID.randomUUID().toString()),
@@ -224,7 +222,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
             "A bucket cloned individually into the same workspace.",
             "second-cloned-bucket-" + UUID.randomUUID().toString().toLowerCase(),
             destinationLocation,
-            ApiCloningInstructionsEnum.RESOURCE);
+            CloningInstructions.COPY_RESOURCE);
 
     jobService.waitForJob(jobId2);
     FlightState flightState2 = stairwayComponent.get().getFlightState(jobId2);

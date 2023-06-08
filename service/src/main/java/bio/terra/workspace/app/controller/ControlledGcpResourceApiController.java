@@ -45,6 +45,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -268,29 +269,30 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiCloneControlledGcpGcsBucketResult> cloneGcsBucket(
       UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneControlledGcpGcsBucketRequest body) {
     logger.info("Cloning GCS bucket resourceId {} workspaceUuid {}", resourceUuid, workspaceUuid);
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledGcsBucketResource resource =
+        controlledResourceMetadataManager
+            .validateCloneAction(
+                userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    CloningInstructions cloningInstructions =
+        resource.computeCloningInstructions(body.getCloningInstructions());
+    ResourceValidationUtils.validateCloningInstructions(
+        StewardshipType.CONTROLLED, cloningInstructions);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+    workspaceService.validateCloneWorkspaceAndContextState(
+        body.getDestinationWorkspaceId(), CloudPlatform.GCP, cloningInstructions);
 
-    if (CloningInstructions.isReferenceClone(body.getCloningInstructions())
+    if (cloningInstructions.isReferenceClone()
         && (!StringUtils.isEmpty(body.getBucketName())
             || !StringUtils.isEmpty(body.getLocation()))) {
       throw new ValidationException(
           "Cannot set bucket or location when cloning a controlled bucket with COPY_REFERENCE or LINK_REFERENCE");
     }
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    // This technically duplicates the first step of the flight as the clone flight is re-used for
-    // cloneWorkspace, but this also saves us from launching and failing a flight if the user does
-    // not have access to the resource.
-    controlledResourceMetadataManager.validateCloneAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid);
-    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
-    workspaceService.validateWorkspaceAndContextState(
-        body.getDestinationWorkspaceId(), CloudPlatform.GCP);
-
-    final String jobId =
+    String jobId =
         controlledResourceService.cloneGcsBucket(
-            workspaceUuid,
-            resourceUuid,
+            resource,
             body.getDestinationWorkspaceId(),
             UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
             body.getJobControl(),
@@ -299,7 +301,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             body.getDescription(),
             body.getBucketName(),
             body.getLocation(),
-            body.getCloningInstructions());
+            cloningInstructions);
     final ApiCloneControlledGcpGcsBucketResult result = fetchCloneGcsBucketResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
@@ -454,6 +456,19 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       UUID workspaceUuid,
       UUID resourceUuid,
       @Valid ApiCloneControlledGcpBigQueryDatasetRequest body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledBigQueryDatasetResource resource =
+        controlledResourceMetadataManager
+            .validateCloneAction(
+                userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
+    CloningInstructions cloningInstructions =
+        resource.computeCloningInstructions(body.getCloningInstructions());
+    ResourceValidationUtils.validateCloningInstructions(
+        StewardshipType.CONTROLLED, cloningInstructions);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+    workspaceService.validateCloneWorkspaceAndContextState(
+        body.getDestinationWorkspaceId(), CloudPlatform.GCP, cloningInstructions);
 
     if (CloningInstructions.isReferenceClone(body.getCloningInstructions())
         && (!StringUtils.isEmpty(body.getDestinationDatasetName())
@@ -462,20 +477,9 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
           "Cannot set destination dataset name or location when cloning controlled dataset with COPY_REFERENCE or LINK_REFERENCE");
     }
 
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    // This technically duplicates the first step of the flight as the clone flight is re-used for
-    // cloneWorkspace, but this also saves us from launching and failing a flight if the user does
-    // not have access to the resource.
-    controlledResourceMetadataManager.validateCloneAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid);
-    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
-    workspaceService.validateWorkspaceAndContextState(
-        body.getDestinationWorkspaceId(), CloudPlatform.GCP);
-
-    final String jobId =
+    String jobId =
         controlledResourceService.cloneBigQueryDataset(
-            workspaceUuid,
-            resourceUuid,
+            resource,
             body.getDestinationWorkspaceId(),
             UUID.randomUUID(), // resourceId is not pre-allocated for individual clone endpoints
             body.getJobControl(),
@@ -484,9 +488,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             body.getDescription(),
             body.getDestinationDatasetName(),
             body.getLocation(),
-            body.getCloningInstructions());
-    final ApiCloneControlledGcpBigQueryDatasetResult result =
-        fetchCloneBigQueryDatasetResult(jobId);
+            cloningInstructions);
+    ApiCloneControlledGcpBigQueryDatasetResult result = fetchCloneBigQueryDatasetResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 

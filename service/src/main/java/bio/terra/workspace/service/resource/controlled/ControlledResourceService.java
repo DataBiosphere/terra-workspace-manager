@@ -10,7 +10,6 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.grant.GrantService;
@@ -26,9 +25,11 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMapping.SyncMapping;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
@@ -280,8 +281,7 @@ public class ControlledResourceService {
   /**
    * Clone a GCS Bucket to another workspace.
    *
-   * @param sourceWorkspaceId - workspace ID fo source bucket
-   * @param sourceResourceId - resource ID of source bucket
+   * @param sourceBucketResource - source bucket resource
    * @param destinationWorkspaceId - workspace ID to clone into
    * @param jobControl - job service control structure
    * @param userRequest - incoming request
@@ -293,13 +293,11 @@ public class ControlledResourceService {
    *     be generated
    * @param destinationLocation - location string for the destination bucket. If null, the source
    *     bucket's location will be used.
-   * @param cloningInstructionsOverride - cloning instructions for this operation. If null, the
-   *     source bucket's cloning instructions will be honored.
+   * @param cloningInstructions - cloning instructions for this operation.
    * @return - Job ID of submitted flight
    */
   public String cloneGcsBucket(
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
+      ControlledGcsBucketResource sourceBucketResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       ApiJobControl jobControl,
@@ -308,12 +306,9 @@ public class ControlledResourceService {
       @Nullable String destinationDescription,
       @Nullable String destinationBucketName,
       @Nullable String destinationLocation,
-      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    final ControlledResource sourceBucketResource =
-        getControlledResource(sourceWorkspaceId, sourceResourceId);
+      CloningInstructions cloningInstructions) {
 
-    // Write access to the target workspace will be established in the create flight
-    final String jobDescription =
+    String jobDescription =
         String.format(
             "Clone controlled resource %s; id %s; name %s",
             sourceBucketResource.getResourceType(),
@@ -323,7 +318,7 @@ public class ControlledResourceService {
     // If TPS is enabled, then we want to merge policies when cloning a bucket
     boolean mergePolicies = features.isTpsEnabled();
 
-    final JobBuilder jobBuilder =
+    JobBuilder jobBuilder =
         jobService
             .newJob()
             .description(jobDescription)
@@ -331,7 +326,7 @@ public class ControlledResourceService {
             .flightClass(CloneControlledGcsBucketResourceFlight.class)
             .resource(sourceBucketResource)
             .userRequest(userRequest)
-            .workspaceId(sourceWorkspaceId.toString())
+            .workspaceId(sourceBucketResource.getWorkspaceId().toString())
             .operationType(OperationType.CLONE)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
@@ -340,19 +335,14 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
-            .addParameter(
-                ResourceKeys.CLONING_INSTRUCTIONS,
-                Optional.ofNullable(cloningInstructionsOverride)
-                    .map(CloningInstructions::fromApiModel)
-                    .orElse(sourceBucketResource.getCloningInstructions()));
+            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
     return jobBuilder.submit();
   }
 
   /**
    * Make a clone of a BigQuery dataset
    *
-   * @param sourceWorkspaceId - workspace ID of original dataset
-   * @param sourceResourceId - resource ID of original dataset
+   * @param sourceDatasetResource - resource ID of original dataset
    * @param destinationWorkspaceId - destination (sink) workspace ID
    * @param jobControl - job control structure (should already have ID)
    * @param userRequest - request object for this call
@@ -362,12 +352,10 @@ public class ControlledResourceService {
    * @param destinationDatasetName - name for new resource. Can equal source name. If null, a random
    *     name will be generated
    * @param destinationLocation - location override. Uses source location if null
-   * @param cloningInstructionsOverride - Cloning instructions for this clone operation, overriding
-   *     any existing instructions. Existing instructions are used if null.
+   * @param cloningInstructions - Cloning instructions for this clone operation
    */
   public String cloneBigQueryDataset(
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
+      ControlledBigQueryDatasetResource sourceDatasetResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       ApiJobControl jobControl,
@@ -376,11 +364,7 @@ public class ControlledResourceService {
       @Nullable String destinationDescription,
       @Nullable String destinationDatasetName,
       @Nullable String destinationLocation,
-      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    final ControlledResource sourceDatasetResource =
-        getControlledResource(sourceWorkspaceId, sourceResourceId);
-    // Authorization check is handled as the first flight step rather than before the flight, as
-    // this flight is re-used for cloneWorkspace.
+      CloningInstructions cloningInstructions) {
 
     // Write access to the target workspace will be established in the create flight
     final String jobDescription =
@@ -393,7 +377,7 @@ public class ControlledResourceService {
     // If TPS is enabled, then we want to merge policies when cloning a bucket
     boolean mergePolicies = features.isTpsEnabled();
 
-    final JobBuilder jobBuilder =
+    JobBuilder jobBuilder =
         jobService
             .newJob()
             .description(jobDescription)
@@ -402,10 +386,9 @@ public class ControlledResourceService {
             .resource(sourceDatasetResource)
             .userRequest(userRequest)
             .operationType(OperationType.CLONE)
-            // TODO: fix resource name key for this case
             .resourceType(sourceDatasetResource.getResourceType())
             .stewardshipType(sourceDatasetResource.getStewardshipType())
-            .workspaceId(sourceWorkspaceId.toString())
+            .workspaceId(sourceDatasetResource.getWorkspaceId().toString())
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
@@ -413,12 +396,7 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
-            .addParameter(
-                ResourceKeys.CLONING_INSTRUCTIONS,
-                // compute effective cloning instructions
-                Optional.ofNullable(cloningInstructionsOverride)
-                    .map(CloningInstructions::fromApiModel)
-                    .orElse(sourceDatasetResource.getCloningInstructions()));
+            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
     return jobBuilder.submit();
   }
 
@@ -549,8 +527,7 @@ public class ControlledResourceService {
   }
 
   public String cloneAzureContainer(
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
+      ControlledAzureStorageContainerResource sourceContainer,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       ApiJobControl jobControl,
@@ -558,10 +535,8 @@ public class ControlledResourceService {
       @Nullable String destinationResourceName,
       @Nullable String destinationDescription,
       @Nullable String destinationContainerName,
-      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride,
+      CloningInstructions cloningInstructions,
       @Nullable List<String> prefixesToClone) {
-    final ControlledResource sourceContainer =
-        getControlledResource(sourceWorkspaceId, sourceResourceId);
 
     // Write access to the target workspace will be established in the create flight
     final String jobDescription =
@@ -582,7 +557,7 @@ public class ControlledResourceService {
             .flightClass(CloneControlledAzureStorageContainerResourceFlight.class)
             .resource(sourceContainer)
             .userRequest(userRequest)
-            .workspaceId(sourceWorkspaceId.toString())
+            .workspaceId(sourceContainer.getWorkspaceId().toString())
             .operationType(OperationType.CLONE)
             .addParameter(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId)
             .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
@@ -591,11 +566,7 @@ public class ControlledResourceService {
             .addParameter(
                 ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destinationContainerName)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
-            .addParameter(
-                ResourceKeys.CLONING_INSTRUCTIONS,
-                Optional.ofNullable(cloningInstructionsOverride)
-                    .map(CloningInstructions::fromApiModel)
-                    .orElse(sourceContainer.getCloningInstructions()))
+            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
             .addParameter(ControlledResourceKeys.PREFIXES_TO_CLONE, prefixesToClone);
     return jobBuilder.submit();
   }
@@ -655,26 +626,18 @@ public class ControlledResourceService {
   // Flexible
 
   public ControlledFlexibleResource cloneFlexResource(
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
+      ControlledFlexibleResource sourceFlexResource,
       UUID destinationWorkspaceId,
       UUID destinationResourceId,
       AuthenticatedUserRequest userRequest,
       @Nullable String destinationResourceName,
       @Nullable String destinationDescription,
-      @Nullable ApiCloningInstructionsEnum cloningInstructionsOverride) {
-    final ControlledResource sourceFlexResource =
-        getControlledResource(sourceWorkspaceId, sourceResourceId);
+      CloningInstructions cloningInstructions) {
 
     final String jobDescription =
         String.format(
             "Clone controlled flex resource id %s; name %s",
-            sourceResourceId, sourceFlexResource.getName());
-
-    final CloningInstructions effectiveCloningInstructions =
-        Optional.ofNullable(cloningInstructionsOverride)
-            .map(CloningInstructions::fromApiModel)
-            .orElse(sourceFlexResource.getCloningInstructions());
+            sourceFlexResource.getResourceId(), sourceFlexResource.getName());
 
     // If TPS is enabled, then we want to merge policies when cloning a flex resource.
     boolean mergePolicies = features.isTpsEnabled();
@@ -692,7 +655,7 @@ public class ControlledResourceService {
             .addParameter(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId)
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
-            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, effectiveCloningInstructions)
+            .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
             .addParameter(ResourceKeys.RESOURCE, sourceFlexResource)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);

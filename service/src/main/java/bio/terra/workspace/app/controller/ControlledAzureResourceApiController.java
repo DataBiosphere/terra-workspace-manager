@@ -53,6 +53,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.Controlled
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -500,22 +501,27 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   public ResponseEntity<ApiCloneControlledAzureStorageContainerResult> cloneAzureStorageContainer(
       UUID workspaceUuid, UUID resourceUuid, ApiCloneControlledAzureStorageContainerRequest body) {
     features.azureEnabledCheck();
-
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    controlledResourceMetadataManager.validateCloneAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid);
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledAzureStorageContainerResource resource =
+        controlledResourceMetadataManager
+            .validateCloneAction(
+                userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    CloningInstructions cloningInstructions =
+        resource.computeCloningInstructions(body.getCloningInstructions());
+    ResourceValidationUtils.validateCloningInstructions(
+        StewardshipType.CONTROLLED, cloningInstructions);
     if (CloningInstructions.isReferenceClone(body.getCloningInstructions())) {
       throw new ValidationException(
           "Copying azure storage containers by reference is not supported");
     }
     workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
-    workspaceService.validateWorkspaceAndContextState(
-        body.getDestinationWorkspaceId(), CloudPlatform.AZURE);
+    workspaceService.validateCloneWorkspaceAndContextState(
+        body.getDestinationWorkspaceId(), CloudPlatform.AZURE, cloningInstructions);
 
     var jobId =
         controlledResourceService.cloneAzureContainer(
-            workspaceUuid,
-            resourceUuid,
+            resource,
             body.getDestinationWorkspaceId(),
             UUID.randomUUID(),
             body.getJobControl(),
@@ -523,11 +529,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             body.getName(),
             body.getDescription(),
             body.getName(),
-            body.getCloningInstructions(),
+            cloningInstructions,
             body.getPrefixesToClone());
 
-    final ApiCloneControlledAzureStorageContainerResult result =
-        fetchCloneAzureContainerResult(jobId);
+    ApiCloneControlledAzureStorageContainerResult result = fetchCloneAzureContainerResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 

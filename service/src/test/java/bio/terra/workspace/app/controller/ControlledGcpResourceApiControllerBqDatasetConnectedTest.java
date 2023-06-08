@@ -318,6 +318,23 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
   }
 
   @Test
+  public void clone_requestContainsInvalidField_throws400() throws Exception {
+    mockMvcUtils.cloneControlledBqDatasetAsync(
+        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        /*sourceWorkspaceId=*/ workspaceId,
+        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        /*destWorkspaceId=*/ workspaceId2,
+        ApiCloningInstructionsEnum.REFERENCE,
+        /*destResourceName=*/ null,
+        /*destDatasetName=*/ "invalidDatabaseNameSet",
+        /*destLocation=*/ null,
+        /*defaultTableLifetime=*/ null,
+        /*defaultPartitionLifetime=*/ null,
+        List.of(HttpStatus.SC_BAD_REQUEST),
+        /*shouldUndo=*/ false);
+  }
+
+  @Test
   public void clone_userWithWriteAccessOnDestWorkspace_succeeds() throws Exception {
     var destResourceName = TestUtils.appendRandomNumber("clonedbq");
     AuthenticatedUserRequest userRequest = userAccessUtils.secondUser().getAuthenticatedRequest();

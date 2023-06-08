@@ -359,6 +359,27 @@ public class WorkspaceService {
   }
 
   /**
+   * Validate the workspace state and possibly the cloud context of the target of a clone. If the
+   * cloud platform is ANY or we are not creating a new controlled resource, then we do not require
+   * a target cloud context.
+   *
+   * @param workspaceUuid target workspace
+   * @param cloudPlatform cloud platform
+   * @param cloningInstructions cloniing instructions
+   */
+  public void validateCloneWorkspaceAndContextState(
+      UUID workspaceUuid, CloudPlatform cloudPlatform, CloningInstructions cloningInstructions) {
+    // If we do not require a target cloud context, just check the workspace
+    if (cloudPlatform == CloudPlatform.ANY
+        || (cloningInstructions != CloningInstructions.COPY_DEFINITION
+            && cloningInstructions != CloningInstructions.COPY_RESOURCE)) {
+      validateWorkspaceState(workspaceUuid);
+    } else {
+      validateWorkspaceAndContextState(workspaceUuid, cloudPlatform);
+    }
+  }
+
+  /**
    * A special case of {@code validateWorkspaceAndAction} for clone operations.
    *
    * <p>Unlike most other operations, cloning requires two authz checks: read access to the source

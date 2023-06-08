@@ -12,6 +12,7 @@ import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
@@ -344,6 +345,13 @@ public abstract class WsmResource {
       throw new InvalidMetadataException("Resource is not a controlled resource");
     }
     return (ControlledResource) this;
+  }
+
+  public CloningInstructions computeCloningInstructions(
+      @Nullable ApiCloningInstructionsEnum apiCloningInstructions) {
+    return Optional.ofNullable(apiCloningInstructions)
+        .map(CloningInstructions::fromApiModel)
+        .orElse(getCloningInstructions());
   }
 
   @Override
