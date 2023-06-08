@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureBatchPoolResourceBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureBatchPoolResourceBuilder;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 

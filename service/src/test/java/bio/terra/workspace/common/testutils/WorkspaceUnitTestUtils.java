@@ -1,6 +1,6 @@
-package bio.terra.workspace.unit;
+package bio.terra.workspace.common.testutils;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createDefaultMcWorkspace;
 
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.model.WsmResourceState;

@@ -1,10 +1,10 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.common.testutils;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceRequestBody;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.testfixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createWorkspaceRequestBody;
 import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
@@ -26,10 +26,9 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.testfixtures.PolicyFixtures;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceResult;
@@ -357,7 +356,8 @@ public class MockMvcUtils {
   private static final List<Integer> JOB_SUCCESS_CODES =
       List.of(HttpStatus.SC_OK, HttpStatus.SC_ACCEPTED);
 
-  // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
+  // Do not Autowire UserAccessTestUtils. UserAccessTestUtils are for connected tests and not unit
+  // tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;

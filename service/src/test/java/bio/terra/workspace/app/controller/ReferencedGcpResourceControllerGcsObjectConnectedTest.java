@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,10 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.common.utils.TestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testfixtures.PolicyFixtures;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.TestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
@@ -52,7 +52,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
   @Autowired FeatureConfiguration features;
 
   private UUID workspaceId;
@@ -69,18 +69,18 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   public void setup() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithCloudContext(userAccessTestUtils.defaultUserAuthRequest())
             .getId();
     workspaceId2 =
         mockMvcUtils
             .createWorkspaceWithPolicy(
-                userAccessUtils.defaultUserAuthRequest(),
+                userAccessTestUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
 
     sourceResource =
         mockMvcUtils.createReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResourceName,
             sourceBucketName,
@@ -89,8 +89,8 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.deleteWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test
@@ -106,13 +106,13 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         sourceResource.getMetadata().getDescription(),
         sourceResource.getAttributes().getBucketName(),
         sourceResource.getAttributes().getFileName(),
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        /*expectedCreatedBy=*/ userAccessTestUtils.getDefaultUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessTestUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiGcpGcsObjectResource gotResource =
         mockMvcUtils.getReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
     assertEquals(sourceResource, gotResource);
@@ -121,10 +121,10 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   @Test
   public void update() throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.WRITER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     var newName = TestUtils.appendRandomNumber("newgcsobjectname");
     var newBucketName = TestUtils.appendRandomNumber("newgcsbucketname");
@@ -140,14 +140,14 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
             newBucketName,
             newObjectName,
             newCloningInstruction,
-            userAccessUtils.secondUserAuthRequest());
+            userAccessTestUtils.secondUserAuthRequest());
 
     // Assert resource returned by get
     // Update the sourceResource to the updated one as all the tests are sharing
     // the same resource.
     ApiGcpGcsObjectResource getResource =
         mockMvcUtils.getReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
     assertEquals(updatedResource, getResource);
@@ -159,13 +159,13 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         newDescription,
         newBucketName,
         newObjectName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
+        /*expectedCreatedBy=*/ userAccessTestUtils.getDefaultUserEmail(),
+        /*expectedLastUpdatedBy=*/ userAccessTestUtils.getSecondUserEmail());
     mockMvcUtils.removeRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.WRITER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     mockMvcUtils.updateReferencedGcsObject(
         workspaceId,
         sourceResource.getMetadata().getResourceId(),
@@ -174,13 +174,13 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         sourceBucketName,
         sourceFileName,
         ApiCloningInstructionsEnum.NOTHING,
-        userAccessUtils.defaultUserAuthRequest());
+        userAccessTestUtils.defaultUserAuthRequest());
   }
 
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
     mockMvcUtils.cloneReferencedGcsObject(
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
@@ -192,18 +192,18 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     mockMvcUtils.cloneReferencedGcsObject(
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
@@ -212,33 +212,33 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         HttpStatus.SC_FORBIDDEN);
 
     mockMvcUtils.removeRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     mockMvcUtils.removeRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
   }
 
   @Test
   public void clone_secondUserHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.WRITER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     ApiGcpGcsObjectResource clonedResource =
         mockMvcUtils.cloneReferencedGcsObject(
-            userAccessUtils.secondUserAuthRequest(),
+            userAccessTestUtils.secondUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
@@ -253,20 +253,20 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         sourceResourceName,
         sourceBucketName,
         sourceFileName,
-        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
-        userAccessUtils.secondUserAuthRequest());
+        /*expectedCreatedBy=*/ userAccessTestUtils.getSecondUserEmail(),
+        userAccessTestUtils.secondUserAuthRequest());
     mockMvcUtils.removeRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     mockMvcUtils.removeRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.WRITER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     mockMvcUtils.deleteGcsObject(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId2,
         clonedResource.getMetadata().getResourceId());
   }
@@ -276,7 +276,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpGcsObjectResource clonedResource =
         mockMvcUtils.cloneReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
@@ -288,7 +288,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
     mockMvcUtils.assertNoResourceWithName(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId, destResourceName);
+        userAccessTestUtils.defaultUserAuthRequest(), workspaceId, destResourceName);
   }
 
   @Test
@@ -297,7 +297,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpGcsObjectResource clonedResource =
         mockMvcUtils.cloneReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
@@ -313,13 +313,13 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         destResourceName,
         sourceBucketName,
         sourceFileName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        userAccessUtils.defaultUserAuthRequest());
+        /*expectedCreatedBy=*/ userAccessTestUtils.getDefaultUserEmail(),
+        userAccessTestUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpGcsObjectResource gotResource =
         mockMvcUtils.getReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
     assertEquals(clonedResource, gotResource);
@@ -331,7 +331,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpGcsObjectResource clonedResource =
         mockMvcUtils.cloneReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId2,
@@ -347,13 +347,13 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         destResourceName,
         sourceBucketName,
         sourceFileName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        userAccessUtils.defaultUserAuthRequest());
+        /*expectedCreatedBy=*/ userAccessTestUtils.getDefaultUserEmail(),
+        userAccessTestUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
     final ApiGcpGcsObjectResource gotResource =
         mockMvcUtils.getReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
     assertEquals(clonedResource, gotResource);
@@ -370,17 +370,17 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
     }
 
     // Clean up policies from previous runs, if any exist
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.deletePolicies(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deletePolicies(userAccessTestUtils.defaultUserAuthRequest(), workspaceId2);
 
     // Add broader region policy to destination, narrow policy on source.
     mockMvcUtils.updatePolicies(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
         /*policiesToRemove=*/ null);
     mockMvcUtils.updatePolicies(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId2,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
         /*policiesToRemove=*/ null);
@@ -388,7 +388,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     mockMvcUtils.cloneReferencedGcsObject(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
@@ -397,15 +397,15 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
 
     // Assert dest workspace policy is reduced to the narrower region.
     ApiWorkspaceDescription destWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId2);
     assertThat(
         destWorkspace.getPolicies(),
         containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA, PolicyFixtures.GROUP_POLICY_DEFAULT));
     assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
 
     // Clean up: Delete policies
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.deletePolicies(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deletePolicies(userAccessTestUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   private void assertGcsObject(

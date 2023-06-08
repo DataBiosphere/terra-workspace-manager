@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,8 +11,8 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
@@ -45,7 +45,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   @Autowired private AzureStorageAccessService azureStorageAccessService;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private CrlService crlService;
   @Autowired private AzureConfiguration azureConfig;
   @Autowired private AzureCloudContextService azureCloudContextService;
@@ -59,7 +59,8 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   @BeforeEach
   void setup() throws InterruptedException {
     Workspace workspace =
-        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
+        createWorkspaceWithCloudContext(
+            workspaceService, userAccessTestUtils.defaultUserAuthRequest());
     workspaceId = workspace.getWorkspaceId();
 
     var azureCloudContext = azureCloudContextService.getAzureCloudContext(workspaceId).get();
@@ -70,7 +71,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
             .getByResourceGroup(
                 azureCloudContext.getAzureResourceGroupId(), TEST_AZURE_STORAGE_ACCOUNT_NAME);
 
-    userRequest = userAccessUtils.defaultUserAuthRequest();
+    userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     var sourceScName = generateAzureResourceName("sc");
     sourceContainer =

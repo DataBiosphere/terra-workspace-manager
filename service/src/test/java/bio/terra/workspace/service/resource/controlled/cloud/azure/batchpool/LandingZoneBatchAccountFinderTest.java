@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureBatchPoolResourceBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureBatchPoolResourceBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertTrue;

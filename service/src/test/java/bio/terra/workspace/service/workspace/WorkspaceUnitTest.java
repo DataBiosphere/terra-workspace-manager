@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.buildMcWorkspace;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;

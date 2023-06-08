@@ -1,10 +1,10 @@
 package bio.terra.workspace.service.policy;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getBucketResource;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureDisk;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.getBucketResource;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.buildMcWorkspace;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

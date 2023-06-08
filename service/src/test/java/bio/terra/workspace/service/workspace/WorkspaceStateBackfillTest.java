@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createWorkspaceInDb;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.WorkspaceDao;

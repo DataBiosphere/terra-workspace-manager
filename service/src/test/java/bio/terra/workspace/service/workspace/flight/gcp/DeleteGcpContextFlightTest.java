@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createCloudContextInputs;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteCloudContextInputs;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createCloudContextInputs;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.deleteCloudContextInputs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,8 +14,8 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
@@ -59,7 +59,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private GcpCloudContextService gcpCloudContextService;
 
   private Workspace workspace;
@@ -72,18 +72,18 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
     workspace = defaultWorkspaceBuilder(uuid).spendProfileId(spendUtils.defaultSpendId()).build();
     workspaceUuid =
         workspaceService.createWorkspace(
-            workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+            workspace, null, null, userAccessTestUtils.defaultUserAuthRequest());
   }
 
   @AfterEach
   public void tearDown() {
-    workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(workspace, userAccessTestUtils.defaultUserAuthRequest());
   }
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteContextDo() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     FlightMap createParameters =
         createCloudContextInputs(
             workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());
@@ -146,7 +146,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteContextUndo() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     FlightMap createParameters =
         createCloudContextInputs(
             workspaceUuid, userRequest, CloudPlatform.GCP, spendUtils.defaultGcpSpendProfile());

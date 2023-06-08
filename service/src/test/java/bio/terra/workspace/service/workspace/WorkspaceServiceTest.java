@@ -1,14 +1,14 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotResource;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.testfixtures.ReferenceResourceFixtures.makeDataRepoSnapshotResource;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.buildMcWorkspace;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.addJsonContentType;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

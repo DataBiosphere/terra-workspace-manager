@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueDatasetId;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.uniqueDatasetId;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,8 +14,8 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
@@ -63,7 +63,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
   // Store workspaceId instead of workspace so that for local development, one can easily use a
   // previously created workspace.
   private UUID workspaceId;
-  private UserAccessUtils.TestUser user;
+  private UserAccessTestUtils.TestUser user;
   private String projectId;
 
   @Autowired private ControlledResourceService controlledResourceService;
@@ -71,7 +71,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
   @Autowired private FeatureConfiguration features;
   @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private JobService jobService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ResourceDao resourceDao;
@@ -80,10 +80,10 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
 
   @BeforeAll
   public void setup() {
-    user = userAccessUtils.defaultUser();
+    user = userAccessTestUtils.defaultUser();
     workspaceId =
         workspaceUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithGcpContext(userAccessTestUtils.defaultUserAuthRequest())
             .getWorkspaceId();
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
   }
@@ -100,7 +100,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
   /** After running all tests, delete the shared workspace. */
   @AfterAll
   public void cleanUp() {
-    user = userAccessUtils.defaultUser();
+    user = userAccessTestUtils.defaultUser();
     Workspace workspace = workspaceService.getWorkspace(workspaceId);
     workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
   }
@@ -141,7 +141,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
             .defaultTableLifetime(newDefaultTableLifetime)
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
     wsmResourceService.updateResource(
-        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
         fetchedDataset,
         new CommonUpdateParameters().setName(newName).setDescription(newDescription),
         updateParameters);
@@ -381,7 +381,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
             .defaultTableLifetime(newDefaultTableLifetime)
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
     wsmResourceService.updateResource(
-        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
         resource,
         new CommonUpdateParameters().setName(newName).setDescription(newDescription),
         updateParameters);
@@ -434,7 +434,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             wsmResourceService.updateResource(
-                userAccessUtils.defaultUser().getAuthenticatedRequest(),
+                userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
                 resource,
                 new CommonUpdateParameters()
                     .setName("NEW_updateBqDatasetUndo")
@@ -479,7 +479,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
             .defaultPartitionLifetime(0L);
 
     wsmResourceService.updateResource(
-        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
         resource,
         new CommonUpdateParameters(),
         updateParameters);
@@ -492,7 +492,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
     updateParameters =
         new ApiGcpBigQueryDatasetUpdateParameters().defaultTableLifetime(newDefaultTableLifetime);
     wsmResourceService.updateResource(
-        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
         resource,
         new CommonUpdateParameters(),
         updateParameters);
@@ -507,7 +507,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
         new ApiGcpBigQueryDatasetUpdateParameters()
             .defaultPartitionLifetime(newDefaultPartitionLifetime);
     wsmResourceService.updateResource(
-        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
         resource,
         new CommonUpdateParameters(),
         updateParameters);
@@ -533,7 +533,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
           BadRequestException.class,
           () ->
               wsmResourceService.updateResource(
-                  userAccessUtils.defaultUser().getAuthenticatedRequest(),
+                  userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
                   resource,
                   new CommonUpdateParameters(),
                   updateParameters));
@@ -551,7 +551,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
           BadRequestException.class,
           () ->
               wsmResourceService.updateResource(
-                  userAccessUtils.defaultUser().getAuthenticatedRequest(),
+                  userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
                   resource,
                   new CommonUpdateParameters(),
                   updateParameters2));
@@ -563,7 +563,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
     } finally {
       // Remove dataset to not conflict with other test that checks for empty lifetime
       controlledResourceService.deleteControlledResourceSync(
-          workspaceId, resource.getResourceId(), userAccessUtils.defaultUserAuthRequest());
+          workspaceId, resource.getResourceId(), userAccessTestUtils.defaultUserAuthRequest());
     }
   }
 

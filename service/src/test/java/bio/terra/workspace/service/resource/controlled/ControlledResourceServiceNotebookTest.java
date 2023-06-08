@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeNotebookCommonFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.AI_NOTEBOOK_PREV_PARAMETERS;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.AI_NOTEBOOK_UPDATE_PARAMETERS;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeNotebookCommonFieldsBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -22,9 +22,9 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.GcpCloudUtils;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.GcpCloudTestUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
@@ -92,7 +92,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
   // Store workspaceId instead of workspace so that for local development, one can easily use a
   // previously created workspace.
   private UUID workspaceId;
-  private UserAccessUtils.TestUser user;
+  private UserAccessTestUtils.TestUser user;
   private String projectId;
 
   @Autowired private CliConfiguration cliConfiguration;
@@ -103,7 +103,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
   @Autowired private PetSaService petSaService;
   @Autowired private SamService samService;
   @Autowired private StairwayComponent stairwayComponent;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WsmResourceService wsmResourceService;
@@ -145,7 +145,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
   @BeforeAll
   public void setup() {
-    user = userAccessUtils.defaultUser();
+    user = userAccessTestUtils.defaultUser();
     workspaceId =
         workspaceUtils
             .createWorkspaceWithGcpContext(user.getAuthenticatedRequest())
@@ -165,7 +165,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
   /** After running all tests, delete the shared workspace. */
   @AfterAll
   public void cleanUp() {
-    user = userAccessUtils.defaultUser();
+    user = userAccessTestUtils.defaultUser();
     Workspace workspace = workspaceService.getWorkspace(workspaceId);
     workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
   }
@@ -292,7 +292,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
     IamCow userIamCow = crlService.getIamCow(user.getAuthenticatedRequest());
     // Assert the user does not have access to their pet SA before the flight
     // Note this uses user credentials for the IAM cow to validate the user's access.
-    GcpCloudUtils.runWithRetryOnException(
+    GcpCloudTestUtils.runWithRetryOnException(
         () ->
             throwIfImpersonateSa(
                 ServiceAccountName.builder()
@@ -320,7 +320,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
             controlledResourceService.getControlledResource(
                 resource.getWorkspaceId(), resource.getResourceId()));
     // This check relies on cloud IAM propagation and is sometimes delayed.
-    GcpCloudUtils.runWithRetryOnException(
+    GcpCloudTestUtils.runWithRetryOnException(
         () ->
             throwIfImpersonateSa(
                 ServiceAccountName.builder()
@@ -739,7 +739,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
   /** Create a controlled AI Notebook instance with default private settings. */
   private ControlledAiNotebookInstanceResource createDefaultPrivateAiNotebookInstance(
-      String instanceId, UserAccessUtils.TestUser user) {
+      String instanceId, UserAccessTestUtils.TestUser user) {
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         defaultNotebookCreationParameters()
             .instanceId(instanceId)

@@ -1,6 +1,6 @@
-package bio.terra.workspace.common;
+package bio.terra.workspace.common.testutils;
 
-import static bio.terra.workspace.common.GcpCloudUtils.getWithRetryOnException;
+import static bio.terra.workspace.common.testutils.GcpCloudTestUtils.getWithRetryOnException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
@@ -31,11 +31,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GcsBucketUtils {
+public class GcsBucketTestUtils {
 
   public static final String GCS_FILE_NAME = "foo";
   public static final String GCS_FILE_CONTENTS = "bar";
-  private static final Logger LOGGER = LoggerFactory.getLogger(GcsBucketUtils.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(GcsBucketTestUtils.class);
   private static final String TSV_FILE_NAME = "signed_url_list.tsv";
 
   @Autowired CrlService crlService;

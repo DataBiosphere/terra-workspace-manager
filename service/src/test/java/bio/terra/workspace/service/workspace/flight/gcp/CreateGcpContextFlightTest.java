@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createCloudContextInputs;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createCloudContextInputs;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,8 +16,8 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.MakeFlightException;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -85,7 +85,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   @Autowired private JobService jobService;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private SamService samService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private WorkspaceConnectedTestUtils testUtils;
   @Autowired private GcpCloudContextService gcpCloudContextService;
 
@@ -93,7 +93,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void successCreatesProjectAndContext() throws Exception {
     UUID workspaceUuid = createWorkspace(spendUtils.defaultSpendId());
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
 
@@ -148,7 +148,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createsProjectAndContext_emptySpendProfile_flightFailsAndGcpProjectNotCreated() {
     UUID workspaceUuid = createWorkspace(null);
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
 
     FlightMap inputs =
@@ -172,7 +172,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void errorRevertsChanges() throws Exception {
     UUID workspaceUuid = createWorkspace(spendUtils.defaultSpendId());
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
 
     // Submit a flight class that always errors.
@@ -235,7 +235,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
     Workspace request =
         defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
     return workspaceService.createWorkspace(
-        request, null, null, userAccessUtils.defaultUserAuthRequest());
+        request, null, null, userAccessTestUtils.defaultUserAuthRequest());
   }
 
   /**
@@ -270,7 +270,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
                                     samService.syncWorkspacePolicy(
                                         workspaceUuid,
                                         role,
-                                        userAccessUtils.defaultUserAuthRequest()),
+                                        userAccessTestUtils.defaultUserAuthRequest()),
                                 "syncWorkspacePolicy")));
     Policy currentPolicy =
         crl.getCloudResourceManagerCow()

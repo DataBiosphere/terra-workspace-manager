@@ -1,12 +1,12 @@
 package bio.terra.workspace.service.resource.referenced;
 
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotResource;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultWsmResourceFields;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteWorkspaceFromDb;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.testfixtures.ReferenceResourceFixtures.makeDataRepoSnapshotResource;
+import static bio.terra.workspace.common.testfixtures.ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder;
+import static bio.terra.workspace.common.testfixtures.ReferenceResourceFixtures.makeDefaultWsmResourceFields;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.buildMcWorkspace;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.deleteWorkspaceFromDb;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;

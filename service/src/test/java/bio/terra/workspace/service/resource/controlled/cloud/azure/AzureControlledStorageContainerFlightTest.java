@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.uniqueStorageContainerName;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.uniqueStorageContainerName;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
@@ -37,7 +37,7 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
   @Autowired private LandingZoneTestUtils landingZoneTestUtils;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private AzureStorageAccessService azureStorageAccessService;
 
   private Workspace sharedWorkspace;
@@ -46,18 +46,19 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
   @BeforeAll
   public void setup() throws InterruptedException {
     sharedWorkspace =
-        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
+        createWorkspaceWithCloudContext(
+            workspaceService, userAccessTestUtils.defaultUserAuthRequest());
     workspaceUuid = sharedWorkspace.getWorkspaceId();
   }
 
   @AfterAll
   public void cleanup() {
-    workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(sharedWorkspace, userAccessTestUtils.defaultUserAuthRequest());
   }
 
   @Test
   public void createAndDeleteAzureStorageResource() throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     // Submit a storage container creation flight and then verify the resource exists in the
     // workspace.

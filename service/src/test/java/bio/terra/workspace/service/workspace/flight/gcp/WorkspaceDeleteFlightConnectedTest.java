@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultBigQueryDatasetCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.defaultBigQueryDatasetCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,8 +12,8 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -49,7 +49,7 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
    */
   private static final Duration DELETION_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
 
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
   @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
   @Autowired ControlledResourceService controlledResourceService;
   @Autowired JobService jobService;
@@ -60,7 +60,7 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteMcWorkspaceWithResource() throws Exception {
     // Create a workspace with a controlled resource
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     UUID workspaceId = workspace.getWorkspaceId();
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
@@ -122,7 +122,8 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void cannotUndoWorkspaceDelete() throws Exception {
     // Create a workspace with a controlled resource
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     UUID workspaceId = workspace.getWorkspaceId();
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);

@@ -1,13 +1,13 @@
 package bio.terra.workspace.common.logging;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.insertControlledResourceRow;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createWorkspaceInDb;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.model.OperationType.DELETE;
@@ -32,6 +32,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.testutils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.db.ResourceDao;
@@ -56,7 +57,6 @@ import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCl
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

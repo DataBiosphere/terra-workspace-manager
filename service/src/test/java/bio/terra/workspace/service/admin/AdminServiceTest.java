@@ -11,7 +11,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -50,7 +50,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   @Autowired JobService jobService;
   @Autowired WorkspaceDao workspaceDao;
   @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
   @Autowired GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping;
   @Autowired CrlService crlService;
   @Autowired WorkspaceActivityLogDao workspaceActivityLogDao;
@@ -68,15 +68,15 @@ public class AdminServiceTest extends BaseConnectedTest {
     iamCow = crlService.getIamCow();
     workspaceIds.add(
         connectedTestUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithGcpContext(userAccessTestUtils.defaultUserAuthRequest())
             .getWorkspaceId());
     workspaceIds.add(
         connectedTestUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithGcpContext(userAccessTestUtils.defaultUserAuthRequest())
             .getWorkspaceId());
     workspaceIds.add(
         connectedTestUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithGcpContext(userAccessTestUtils.defaultUserAuthRequest())
             .getWorkspaceId());
     projectIds =
         workspaceDao.getWorkspaceIdToGcpCloudContextMap().values().stream()
@@ -88,7 +88,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(null);
     for (UUID workspaceId : workspaceIds) {
       connectedTestUtils.deleteWorkspaceAndCloudContext(
-          userAccessUtils.defaultUserAuthRequest(), workspaceId);
+          userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
     }
   }
 
@@ -109,7 +109,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     // First update. No change will be applied.
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
+            userAccessTestUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
@@ -135,7 +135,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     // Second update, dry run
     jobId =
         adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ false);
+            userAccessTestUtils.defaultUserAuthRequest(), /*wetRun=*/ false);
     jobService.waitForJob(jobId);
 
     for (String projectId : projectIds) {
@@ -146,7 +146,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     // Third update, wet run
     jobId =
         adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
+            userAccessTestUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
@@ -198,7 +198,7 @@ public class AdminServiceTest extends BaseConnectedTest {
 
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
+            userAccessTestUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
@@ -217,7 +217,7 @@ public class AdminServiceTest extends BaseConnectedTest {
         InternalServerErrorException.class,
         () ->
             adminService.syncIamRoleForAllGcpProjects(
-                userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ false));
+                userAccessTestUtils.defaultUserAuthRequest(), /*wetRun=*/ false));
   }
 
   private void updateCustomRole(CustomGcpIamRole customRole, String projectId)

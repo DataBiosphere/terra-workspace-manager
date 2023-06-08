@@ -1,13 +1,13 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.GcsBucketUtils.addFileToBucket;
+import static bio.terra.workspace.common.testutils.GcsBucketTestUtils.addFileToBucket;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.GcpCloudUtils;
-import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.common.utils.TestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.GcpCloudTestUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.TestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
@@ -37,9 +37,9 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
   @Autowired JobService jobService;
-  @Autowired GcpCloudUtils cloudUtils;
+  @Autowired GcpCloudTestUtils cloudUtils;
   @Autowired FeatureConfiguration features;
   @Autowired CrlService crlService;
   @Autowired WorkspaceActivityLogService activityLogService;
@@ -56,17 +56,17 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
 
   @After
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test
   public void setupAndWaitBucket() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithCloudContext(userAccessTestUtils.defaultUserAuthRequest())
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
@@ -76,7 +76,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
     ApiGcpGcsBucketResource sourceBucket =
         mockMvcUtils
             .createControlledGcsBucket(
-                userAccessUtils.defaultUserAuthRequest(),
+                userAccessTestUtils.defaultUserAuthRequest(),
                 workspaceId,
                 sourceResourceName,
                 sourceBucketName,
@@ -85,7 +85,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
                 null)
             .getGcpBucket();
     addFileToBucket(
-        userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
+        userAccessTestUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
 
     // So I can end the test and run cleanup when I'm done debugging
     while (!timeToFinish) {
@@ -97,17 +97,18 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   public void setupAndWaitNotebook() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithCloudContext(userAccessTestUtils.defaultUserAuthRequest())
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
 
     ApiGcpAiNotebookInstanceResource notebook =
         mockMvcUtils
-            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+            .createAiNotebookInstance(
+                userAccessTestUtils.defaultUserAuthRequest(), workspaceId, null)
             .getAiNotebookInstance();
 
     // So I can end the test and run cleanup when I'm done debugging
@@ -120,10 +121,10 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   public void setupAndWaitBigQuery() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithCloudContext(userAccessTestUtils.defaultUserAuthRequest())
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
@@ -134,7 +135,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetResource resource =
         mockMvcUtils
             .createControlledBqDataset(
-                userAccessUtils.defaultUserAuthRequest(),
+                userAccessTestUtils.defaultUserAuthRequest(),
                 workspaceId,
                 sourceResourceName,
                 sourceDatasetName,
@@ -143,7 +144,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
                 null)
             .getBigQueryDataset();
     cloudUtils.populateBqTable(
-        userAccessUtils.defaultUser().getGoogleCredentials(),
+        userAccessTestUtils.defaultUser().getGoogleCredentials(),
         resource.getAttributes().getProjectId(),
         sourceDatasetName);
 

@@ -1,17 +1,17 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PROPERTY;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
-import static bio.terra.workspace.common.utils.MockMvcUtils.buildWsmRegionPolicyInput;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.TYPE_PROPERTY;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.USER_SET_PROPERTY;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.VERSION_PROPERTY;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.WORKSPACES_V1_PATH;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.buildWsmRegionPolicyInput;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
@@ -27,10 +27,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
-import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testfixtures.PolicyFixtures;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
@@ -85,7 +85,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
   @Autowired private ObjectMapper objectMapper;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private SamService samService;
 
   private ApiCreatedWorkspace workspace;
@@ -95,19 +95,20 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @BeforeAll
   public void setup() throws Exception {
     workspace =
-        mockMvcUtils.createWorkspaceWithoutCloudContext(userAccessUtils.defaultUserAuthRequest());
+        mockMvcUtils.createWorkspaceWithoutCloudContext(
+            userAccessTestUtils.defaultUserAuthRequest());
   }
 
   /** Clean up workspaces from Broad dev SAM. */
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.cleanupWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    mockMvcUtils.cleanupWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
   }
 
   @Test
   public void getWorkspace_requesterIsOwner_returnsFullWorkspace() throws Exception {
     ApiWorkspaceDescription gotWorkspace =
-        getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
 
     assertFullWorkspace(gotWorkspace);
   }
@@ -116,13 +117,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
       throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     getWorkspaceExpectingError(
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         workspace.getId(),
         /*minimumHighestRole=*/ Optional.empty(),
         HttpStatus.SC_FORBIDDEN);
@@ -132,13 +133,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
       throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     getWorkspaceExpectingError(
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         workspace.getId(),
         /*minimumHighestRole=*/ Optional.of(ApiIamRole.READER),
         HttpStatus.SC_FORBIDDEN);
@@ -149,14 +150,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     ApiWorkspaceDescription gotWorkspace =
         getWorkspace(
-            userAccessUtils.secondUserAuthRequest(),
+            userAccessTestUtils.secondUserAuthRequest(),
             workspace.getId(),
             /*minimumHighestRole=*/ Optional.of(ApiIamRole.DISCOVERER));
 
@@ -166,11 +167,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspaceByUserFacingId_requesterIsOwner_returnsFullWorkspace() throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
 
     ApiWorkspaceDescription gotWorkspace =
         getWorkspaceByUserFacingId(
-            userAccessUtils.defaultUserAuthRequest(), workspaceDescription.getUserFacingId());
+            userAccessTestUtils.defaultUserAuthRequest(), workspaceDescription.getUserFacingId());
 
     assertFullWorkspace(gotWorkspace);
   }
@@ -179,16 +180,16 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
       throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
 
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     getWorkspaceByUserFacingIdExpectingError(
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         workspaceDescription.getUserFacingId(),
         /*minimumHighestRole=*/ Optional.empty(),
         HttpStatus.SC_FORBIDDEN);
@@ -199,16 +200,16 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
           throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
 
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     getWorkspaceByUserFacingIdExpectingError(
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         workspaceDescription.getUserFacingId(),
         /*minimumHighestRole=*/ Optional.of(ApiIamRole.READER),
         HttpStatus.SC_FORBIDDEN);
@@ -219,17 +220,17 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
 
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     ApiWorkspaceDescription gotWorkspace =
         getWorkspaceByUserFacingId(
-            userAccessUtils.secondUserAuthRequest(),
+            userAccessTestUtils.secondUserAuthRequest(),
             workspaceDescription.getUserFacingId(),
             /*minimumHighestRole=*/ Optional.of(ApiIamRole.DISCOVERER));
 
@@ -239,7 +240,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void listWorkspaces_requesterIsOwner_returnsFullWorkspace() throws Exception {
     List<ApiWorkspaceDescription> listedWorkspaces =
-        listWorkspaces(userAccessUtils.defaultUserAuthRequest());
+        listWorkspaces(userAccessTestUtils.defaultUserAuthRequest());
 
     List<ApiWorkspaceDescription> matchedWorkspace =
         listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
@@ -252,13 +253,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_returnsNoWorkspaces()
       throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     List<ApiWorkspaceDescription> listedWorkspaces =
-        listWorkspaces(userAccessUtils.secondUserAuthRequest());
+        listWorkspaces(userAccessTestUtils.secondUserAuthRequest());
     List<ApiWorkspaceDescription> matchedWorkspace =
         listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
     assertTrue(matchedWorkspace.isEmpty());
@@ -269,13 +270,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_returnsNoWorkspaces()
           throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     List<ApiWorkspaceDescription> listedWorkspaces =
-        listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
+        listWorkspaces(userAccessTestUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
     List<ApiWorkspaceDescription> matchedWorkspace =
         listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
     assertTrue(matchedWorkspace.isEmpty());
@@ -284,42 +285,46 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void grantRole_logsAnActivity() throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db
     mockMvcUtils.assertLatestActivityLogChangeDetails(
         workspace.getId(),
-        userAccessUtils.getDefaultUserEmail(),
-        samService.getUserStatusInfo(userAccessUtils.defaultUserAuthRequest()).getUserSubjectId(),
+        userAccessTestUtils.getDefaultUserEmail(),
+        samService
+            .getUserStatusInfo(userAccessTestUtils.defaultUserAuthRequest())
+            .getUserSubjectId(),
         OperationType.GRANT_WORKSPACE_ROLE,
-        userAccessUtils.getSecondUserEmail(),
+        userAccessTestUtils.getSecondUserEmail(),
         ActivityLogChangedTarget.USER);
   }
 
   @Test
   public void removeRole_logsAnActivity() throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     mockMvcUtils.removeRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db.
     mockMvcUtils.assertLatestActivityLogChangeDetails(
         workspace.getId(),
-        userAccessUtils.getDefaultUserEmail(),
-        samService.getUserStatusInfo(userAccessUtils.defaultUserAuthRequest()).getUserSubjectId(),
+        userAccessTestUtils.getDefaultUserEmail(),
+        samService
+            .getUserStatusInfo(userAccessTestUtils.defaultUserAuthRequest())
+            .getUserSubjectId(),
         OperationType.REMOVE_WORKSPACE_ROLE,
-        userAccessUtils.getSecondUserEmail(),
+        userAccessTestUtils.getSecondUserEmail(),
         ActivityLogChangedTarget.USER);
   }
 
@@ -328,13 +333,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     List<ApiWorkspaceDescription> listedWorkspaces =
-        listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.DISCOVERER));
+        listWorkspaces(
+            userAccessTestUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.DISCOVERER));
 
     assertThat(listedWorkspaces, hasSize(1));
     assertStrippedWorkspace(listedWorkspaces.get(0));
@@ -344,7 +350,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void explainPolicies() throws Exception {
     ApiWsmPolicyExplainResult result =
-        explainPolicies(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), 0);
+        explainPolicies(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId(), 0);
 
     assertEquals(0, result.getDepth());
     assertEquals(workspace.getId(), result.getObjectId());
@@ -361,7 +367,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_sameWorkspace() throws Exception {
     ApiWsmPolicyMergeCheckResult result =
-        mergeCheck(userAccessUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId());
+        mergeCheck(
+            userAccessTestUtils.defaultUserAuthRequest(), workspace.getId(), workspace.getId());
     assertEquals(0, result.getConflicts().size());
     assertEquals(0, result.getResourcesWithConflict().size());
   }
@@ -372,16 +379,17 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     // Create workspace with US region constraint.
     UUID targetWorkspaceId =
         mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.US_REGION);
+            userAccessTestUtils.defaultUserAuthRequest(), PolicyFixtures.US_REGION);
 
     // Create workspace with Europe region constraint.
     UUID sourceWorkspaceId =
         mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.EUROPE_REGION);
+            userAccessTestUtils.defaultUserAuthRequest(), PolicyFixtures.EUROPE_REGION);
 
     // Both workspaces have conflicting policy.
     ApiWsmPolicyMergeCheckResult result =
-        mergeCheck(userAccessUtils.defaultUserAuthRequest(), targetWorkspaceId, sourceWorkspaceId);
+        mergeCheck(
+            userAccessTestUtils.defaultUserAuthRequest(), targetWorkspaceId, sourceWorkspaceId);
 
     assertTrue(result.getConflicts().size() > 0);
     assertEquals(0, result.getResourcesWithConflict().size());
@@ -390,7 +398,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_resourceWithDifferentRegion() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    var userRequest = userAccessTestUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
     try {
@@ -430,7 +438,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_existingResourceNoPolicyOnSource() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    var userRequest = userAccessTestUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
     try {
@@ -463,7 +471,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_caseInsensitiveRegion() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    var userRequest = userAccessTestUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
     try {
@@ -507,7 +515,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_nonMatchingGroups() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    var userRequest = userAccessTestUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
     try {
@@ -534,18 +542,18 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void updatePolicies_tpsEnabledAndPolicyUpdated() throws Exception {
     ApiWorkspaceDescription workspaceWithoutPolicy =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
     // add attributes
     String usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
         mockMvcUtils.updateRegionPolicy(
-            userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
+            userAccessTestUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
 
     assertTrue(result.isUpdateApplied());
     ApiWorkspaceDescription updatedWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
     assertEquals(1, updatedWorkspace.getPolicies().size());
     assertEquals(
         usRegion, updatedWorkspace.getPolicies().get(0).getAdditionalData().get(0).getValue());
@@ -553,11 +561,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     // remove attributes
     ApiWsmPolicyUpdateResult removeResult =
         mockMvcUtils.removeRegionPolicy(
-            userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
+            userAccessTestUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
 
     assertTrue(removeResult.isUpdateApplied());
     workspaceWithoutPolicy =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
     assertEquals(0, workspaceWithoutPolicy.getPolicies().size());
   }
 
@@ -565,52 +573,52 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void updatePolicies_tpsEnabledAndPolicyConflict() throws Exception {
     ApiWorkspaceDescription workspaceWithoutPolicy =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
     var usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
         mockMvcUtils.updateRegionPolicy(
-            userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
+            userAccessTestUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
 
     assertTrue(result.isUpdateApplied());
     ApiWorkspaceDescription updatedWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
     assertEquals(1, updatedWorkspace.getPolicies().size());
 
     mockMvcUtils.updatePoliciesExpect(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         HttpStatus.SC_CONFLICT,
         buildWsmRegionPolicyInput(PolicyFixtures.EUROPE_REGION),
         ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
     mockMvcUtils.updatePoliciesExpect(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         HttpStatus.SC_CONFLICT,
         buildWsmRegionPolicyInput("asiapacific"),
         ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT);
     updatedWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspace.getId());
     assertEquals(1, updatedWorkspace.getPolicies().size());
     assertEquals(
         usRegion, updatedWorkspace.getPolicies().get(0).getAdditionalData().get(0).getValue());
 
     // clean up
     mockMvcUtils.removeRegionPolicy(
-        userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
+        userAccessTestUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
   }
 
   @Test
   public void updatePolicies_requesterIsWriter_throws() throws Exception {
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.WRITER,
-        userAccessUtils.noBillingUser().getEmail());
+        userAccessTestUtils.noBillingUser().getEmail());
 
     mockMvcUtils.updatePoliciesExpect(
-        userAccessUtils.noBillingAccessUserAuthRequest(),
+        userAccessTestUtils.noBillingAccessUserAuthRequest(),
         workspace.getId(),
         HttpStatus.SC_FORBIDDEN,
         buildWsmRegionPolicyInput("asiapacific"),
@@ -622,33 +630,33 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     // Default user should be the only workspace owner, and so should not be able to remove
     // themselves.
     mockMvcUtils.removeRoleExpectBadRequest(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
-        userAccessUtils.getDefaultUserEmail());
+        userAccessTestUtils.getDefaultUserEmail());
     // After adding a second user, they should be able to remove themselves.
     mockMvcUtils.grantRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     mockMvcUtils.removeRole(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
-        userAccessUtils.getDefaultUserEmail());
+        userAccessTestUtils.getDefaultUserEmail());
     // Reset workspace to starting setup, where default user is an owner and secondary user has no
     // role.
     mockMvcUtils.grantRole(
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
-        userAccessUtils.getDefaultUserEmail());
+        userAccessTestUtils.getDefaultUserEmail());
     mockMvcUtils.removeRole(
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
   }
 
   private ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest request, UUID id)

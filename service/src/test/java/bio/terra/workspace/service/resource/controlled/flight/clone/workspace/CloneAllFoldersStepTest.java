@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteWorkspaceFromDb;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.deleteWorkspaceFromDb;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WORKSPACE_ID;
 import static com.google.common.collect.MoreCollectors.onlyElement;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -15,11 +15,11 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.testutils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;

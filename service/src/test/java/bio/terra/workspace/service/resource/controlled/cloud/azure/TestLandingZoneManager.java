@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.landingzone.db.exception.DuplicateLandingZoneException;
 import bio.terra.landingzone.db.model.LandingZoneRecord;
-import bio.terra.workspace.common.utils.AzureTestUtils;
+import bio.terra.workspace.common.testutils.AzureTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import java.time.LocalDate;
 import java.time.LocalTime;

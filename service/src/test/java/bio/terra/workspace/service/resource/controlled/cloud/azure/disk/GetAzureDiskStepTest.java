@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDisk;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureDisk;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;

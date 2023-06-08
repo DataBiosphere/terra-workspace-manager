@@ -1,8 +1,8 @@
-package bio.terra.workspace.common.fixtures;
+package bio.terra.workspace.common.testfixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;

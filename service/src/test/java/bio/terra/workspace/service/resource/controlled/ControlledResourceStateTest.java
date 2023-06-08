@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -12,7 +12,8 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
@@ -24,7 +25,6 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;

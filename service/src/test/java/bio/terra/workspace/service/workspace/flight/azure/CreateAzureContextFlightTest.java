@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.azure;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,9 +16,9 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testfixtures.PolicyFixtures;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
@@ -53,7 +53,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private JobService jobService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private AzureConfiguration azureConfiguration;
 
   @MockBean private LandingZoneApiDispatch landingZoneApiDispatchMock;
@@ -77,7 +77,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Test
   void successCreatesContext() throws Exception {
     Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     // There should be no cloud context initially.
     assertTrue(azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isEmpty());
@@ -152,9 +152,9 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
                             .value("azure." + policyRegion)));
 
     workspaceService.createWorkspace(
-        workspace, policies, null, userAccessUtils.defaultUserAuthRequest());
+        workspace, policies, null, userAccessTestUtils.defaultUserAuthRequest());
 
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     String jobId = UUID.randomUUID().toString();
     workspaceService.createCloudContext(
         workspace,
@@ -206,9 +206,9 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
                     .namespace(TpsUtilities.TERRA_NAMESPACE));
 
     workspaceService.createWorkspace(
-        workspace, policies, null, userAccessUtils.defaultUserAuthRequest());
+        workspace, policies, null, userAccessTestUtils.defaultUserAuthRequest());
 
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     String jobId = UUID.randomUUID().toString();
     workspaceService.createCloudContext(
         workspace,
@@ -226,7 +226,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
   @Test
   void errorRevertsChanges() throws Exception {
     Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     // There should be no cloud context initially.
     assertTrue(azureCloudContextService.getAzureCloudContext(workspace.getWorkspaceId()).isEmpty());

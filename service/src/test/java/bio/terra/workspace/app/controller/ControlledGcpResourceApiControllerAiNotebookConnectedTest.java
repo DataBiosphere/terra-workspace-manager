@@ -1,14 +1,14 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.assertControlledResourceMetadata;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.assertResourceMetadata;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiErrorReport;
@@ -44,7 +44,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
   @Autowired JobService jobService;
 
   private UUID workspaceId;
@@ -53,7 +53,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
   public void setup() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithCloudContext(userAccessTestUtils.defaultUserAuthRequest())
             .getId();
   }
 
@@ -63,19 +63,19 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
   @AfterEach
   public void resetFlightDebugInfo() {
     StairwayTestUtils.enumerateJobsDump(
-        jobService, workspaceId, userAccessUtils.defaultUserAuthRequest());
+        jobService, workspaceId, userAccessTestUtils.defaultUserAuthRequest());
     jobService.setFlightDebugInfoForTest(null);
   }
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test
   public void createAiNotebookInstance_correctZone() throws Exception {
     mockMvcUtils.updateWorkspaceProperties(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(
             new ApiProperty()
@@ -84,7 +84,8 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
 
     ApiGcpAiNotebookInstanceResource notebook =
         mockMvcUtils
-            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+            .createAiNotebookInstance(
+                userAccessTestUtils.defaultUserAuthRequest(), workspaceId, null)
             .getAiNotebookInstance();
 
     assertEquals("asia-east1-a", notebook.getAttributes().getLocation());
@@ -93,13 +94,13 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
         workspaceId,
         "asia-east1-a",
         "asia-east1",
-        userAccessUtils.getDefaultUserEmail(),
-        userAccessUtils.getDefaultUserEmail());
+        userAccessTestUtils.getDefaultUserEmail(),
+        userAccessTestUtils.getDefaultUserEmail());
 
     notebook =
         mockMvcUtils
             .createAiNotebookInstance(
-                userAccessUtils.defaultUserAuthRequest(), workspaceId, "europe-west1-b")
+                userAccessTestUtils.defaultUserAuthRequest(), workspaceId, "europe-west1-b")
             .getAiNotebookInstance();
 
     assertAiNotebook(
@@ -107,11 +108,11 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
         workspaceId,
         "europe-west1-b",
         "europe-west1",
-        userAccessUtils.getDefaultUserEmail(),
-        userAccessUtils.getDefaultUserEmail());
+        userAccessTestUtils.getDefaultUserEmail(),
+        userAccessTestUtils.getDefaultUserEmail());
 
     mockMvcUtils.deleteWorkspaceProperties(
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION));
   }
@@ -121,13 +122,13 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
     var duplicateName = "not-unique-name";
     mockMvcUtils
         .createAiNotebookInstanceAndWait(
-            userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
+            userAccessTestUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
         .getAiNotebookInstance();
 
     ApiErrorReport errorReport =
         mockMvcUtils
             .createAiNotebookInstanceAndExpect(
-                userAccessUtils.defaultUserAuthRequest(),
+                userAccessTestUtils.defaultUserAuthRequest(),
                 workspaceId,
                 duplicateName,
                 null,

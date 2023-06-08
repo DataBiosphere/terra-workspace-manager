@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;

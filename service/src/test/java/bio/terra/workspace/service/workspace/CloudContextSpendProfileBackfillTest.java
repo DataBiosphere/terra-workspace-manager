@@ -1,12 +1,12 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.testutils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;

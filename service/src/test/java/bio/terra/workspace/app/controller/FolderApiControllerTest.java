@@ -2,13 +2,13 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DELETE_FOLDER_JOB_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDERS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_PROPERTIES_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.DELETE_FOLDER_JOB_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.FOLDERS_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.FOLDER_PROPERTIES_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.FOLDER_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.addJsonContentType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCreateFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiFolder;
 import bio.terra.workspace.generated.model.ApiFolderList;

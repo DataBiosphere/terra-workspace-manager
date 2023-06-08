@@ -1,12 +1,12 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.createAzureBatchPoolResource;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.createAzureBatchPoolWithRequiredParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.createAzureBatchPoolResource;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.createAzureBatchPoolWithRequiredParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.addAuth;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;

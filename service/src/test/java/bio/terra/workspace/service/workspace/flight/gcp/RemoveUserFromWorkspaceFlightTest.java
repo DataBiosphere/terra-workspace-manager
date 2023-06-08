@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -15,9 +15,9 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.GcpCloudUtils;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.GcpCloudTestUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
@@ -86,7 +86,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   @Autowired private JobApiUtils jobApiUtils;
   @Autowired private SamService samService;
   @Autowired private PetSaService petSaService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private WorkspaceConnectedTestUtils connectedTestUtils;
   @Autowired private SpendProfileService spendProfileService;
   @Autowired private FeatureConfiguration features;
@@ -96,22 +96,22 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   void removeUserFromWorkspaceFlightDoUndo() throws Exception {
     // Create a workspace as the default test user
     Workspace workspace =
-        connectedTestUtils.createWorkspace(userAccessUtils.defaultUserAuthRequest());
+        connectedTestUtils.createWorkspace(userAccessTestUtils.defaultUserAuthRequest());
     var workspaceUuid = workspace.getWorkspaceId();
     // Add the secondary test user as a writer
     samService.grantWorkspaceRole(
         workspaceUuid,
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         WsmIamRole.WRITER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     samService.dumpRoleBindings(
         SamResource.WORKSPACE,
         workspaceUuid.toString(),
-        userAccessUtils.defaultUserAuthRequest().getRequiredToken());
+        userAccessTestUtils.defaultUserAuthRequest().getRequiredToken());
 
     // Create a GCP context as default user
-    var userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    var userRequest = userAccessTestUtils.defaultUser().getAuthenticatedRequest();
     String makeContextJobId = UUID.randomUUID().toString();
     SpendProfile spendProfile =
         spendProfileService.authorizeLinking(
@@ -134,18 +134,18 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Allow the secondary user to impersonate their pet SA.
     petSaService.enablePetServiceAccountImpersonation(
         workspaceUuid,
-        userAccessUtils.getSecondUserEmail(),
-        userAccessUtils.secondUserAuthRequest());
+        userAccessTestUtils.getSecondUserEmail(),
+        userAccessTestUtils.secondUserAuthRequest());
     String secondaryUserPetServiceEmail =
         petSaService
             .getUserPetSa(
                 cloudContext.getGcpProjectId(),
-                userAccessUtils.getSecondUserEmail(),
-                userAccessUtils.secondUserAuthRequest())
+                userAccessTestUtils.getSecondUserEmail(),
+                userAccessTestUtils.secondUserAuthRequest())
             .get()
             .email();
     // Validate the secondary user can impersonate their pet SA directly.
-    Iam secondaryUserIamClient = getIamClientForUser(userAccessUtils.secondUserAccessToken());
+    Iam secondaryUserIamClient = getIamClientForUser(userAccessTestUtils.secondUserAccessToken());
     assertTrue(
         canImpersonateSa(
             secondaryUserIamClient, cloudContext.getGcpProjectId(), secondaryUserPetServiceEmail));
@@ -153,7 +153,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Validate with Sam that secondary user can read their private resource
     assertTrue(
         samService.isAuthorized(
-            userAccessUtils.secondUserAuthRequest(),
+            userAccessTestUtils.secondUserAuthRequest(),
             privateDataset.getCategory().getSamResourceName(),
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
@@ -181,11 +181,11 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     FlightMap inputParameters = new FlightMap();
     inputParameters.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputParameters.put(
-        WorkspaceFlightMapKeys.USER_TO_REMOVE, userAccessUtils.getSecondUserEmail());
+        WorkspaceFlightMapKeys.USER_TO_REMOVE, userAccessTestUtils.getSecondUserEmail());
     inputParameters.put(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, WsmIamRole.WRITER.name());
     // Auth info comes from default user, as they are the ones "making this request"
     inputParameters.put(
-        JobMapKeys.AUTH_USER_INFO.getKeyName(), userAccessUtils.defaultUserAuthRequest());
+        JobMapKeys.AUTH_USER_INFO.getKeyName(), userAccessTestUtils.defaultUserAuthRequest());
     FlightState flightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
@@ -199,13 +199,13 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // resource, and can still impersonate their pet SA.
     assertTrue(
         samService.isAuthorized(
-            userAccessUtils.secondUserAuthRequest(),
+            userAccessTestUtils.secondUserAuthRequest(),
             SamResource.WORKSPACE,
             workspaceUuid.toString(),
             SamWorkspaceAction.WRITE));
     assertTrue(
         samService.isAuthorized(
-            userAccessUtils.secondUserAuthRequest(),
+            userAccessTestUtils.secondUserAuthRequest(),
             privateDataset.getCategory().getSamResourceName(),
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
@@ -229,20 +229,20 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // or impersonate their pet SA.
     assertFalse(
         samService.isAuthorized(
-            userAccessUtils.secondUserAuthRequest(),
+            userAccessTestUtils.secondUserAuthRequest(),
             SamResource.WORKSPACE,
             workspaceUuid.toString(),
             SamWorkspaceAction.WRITE));
     assertFalse(
         samService.isAuthorized(
-            userAccessUtils.secondUserAuthRequest(),
+            userAccessTestUtils.secondUserAuthRequest(),
             privateDataset.getCategory().getSamResourceName(),
             privateDataset.getResourceId().toString(),
             SamControlledResourceActions.WRITE_ACTION));
     // Permissions can take some time to propagate, retry until the user can no longer impersonate
     // their pet SA.
     assertTrue(
-        GcpCloudUtils.getWithRetryOnException(
+        GcpCloudTestUtils.getWithRetryOnException(
             () ->
                 assertCannotImpersonateSa(
                     secondaryUserIamClient,
@@ -250,7 +250,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
                     secondaryUserPetServiceEmail)));
 
     // Cleanup
-    workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(workspace, userAccessTestUtils.defaultUserAuthRequest());
   }
 
   private ControlledBigQueryDatasetResource buildPrivateDataset(
@@ -261,7 +261,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
             .resourceId(UUID.randomUUID())
             .name(datasetName)
             .cloningInstructions(CloningInstructions.COPY_NOTHING)
-            .assignedUser(userAccessUtils.getSecondUserEmail())
+            .assignedUser(userAccessTestUtils.getSecondUserEmail())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
             .build();
@@ -280,7 +280,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         .createControlledResourceSync(
             datasetToCreate,
             ControlledResourceIamRole.EDITOR,
-            userAccessUtils.secondUserAuthRequest(),
+            userAccessTestUtils.secondUserAuthRequest(),
             datasetCreationParameters)
         .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
   }

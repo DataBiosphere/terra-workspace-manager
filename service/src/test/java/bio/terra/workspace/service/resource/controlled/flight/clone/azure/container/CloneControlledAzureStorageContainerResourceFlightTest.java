@@ -1,12 +1,12 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.utils.AzureTestUtils;
+import bio.terra.workspace.common.testutils.AzureTestUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;

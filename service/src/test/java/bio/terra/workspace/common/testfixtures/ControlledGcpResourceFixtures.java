@@ -1,19 +1,19 @@
-package bio.terra.workspace.common.fixtures;
+package bio.terra.workspace.common.testfixtures;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DATE_TIME_1;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DATE_TIME_2;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_REGION;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_1;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_2;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_ID;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_NAME;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WORKSPACE_ID;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.DATE_TIME_1;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.DATE_TIME_2;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_REGION;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_1;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.OFFSET_DATE_TIME_2;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.RESOURCE_ID;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.RESOURCE_NAME;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
 
 import bio.terra.stairway.ShortUUID;
-import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.TestUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;

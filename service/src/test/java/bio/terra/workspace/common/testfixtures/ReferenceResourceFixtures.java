@@ -1,11 +1,11 @@
-package bio.terra.workspace.common.fixtures;
+package bio.terra.workspace.common.testfixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.testutils.TestUtils.appendRandomNumber;
 
-import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.common.testutils.TestUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;

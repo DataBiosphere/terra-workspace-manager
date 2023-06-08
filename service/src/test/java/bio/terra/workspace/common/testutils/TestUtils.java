@@ -1,4 +1,4 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.common.testutils;
 
 import java.util.Locale;
 import java.util.UUID;
