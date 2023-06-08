@@ -1,13 +1,13 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.common.testutils;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createCloudContextInputs;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createCloudContextInputs;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
 
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -40,20 +40,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class AzureTestUtils {
   @Autowired final AzureTestConfiguration azureTestConfiguration;
-  @Autowired private final UserAccessUtils userAccessUtils;
+  @Autowired private final UserAccessTestUtils userAccessTestUtils;
   @Autowired private CrlService crlService;
   @Autowired private AzureConfiguration azureConfiguration;
 
   public AzureTestUtils(
-      AzureTestConfiguration azureTestConfiguration, UserAccessUtils userAccessUtils) {
+      AzureTestConfiguration azureTestConfiguration, UserAccessTestUtils userAccessTestUtils) {
     this.azureTestConfiguration = azureTestConfiguration;
-    this.userAccessUtils = userAccessUtils;
+    this.userAccessTestUtils = userAccessTestUtils;
   }
 
   public Workspace createWorkspace(WorkspaceService workspaceService) {
     Workspace workspace = defaultWorkspaceBuilder(null).spendProfileId(getSpendProfileId()).build();
     workspaceService.createWorkspace(
-        workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+        workspace, null, null, userAccessTestUtils.defaultUserAuthRequest());
     return workspace;
   }
 

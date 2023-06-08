@@ -1,4 +1,4 @@
-package bio.terra.workspace.common;
+package bio.terra.workspace.common.testutils;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightContext;

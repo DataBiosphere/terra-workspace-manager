@@ -1,6 +1,6 @@
-package bio.terra.workspace.common.fixtures;
+package bio.terra.workspace.common.testfixtures;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.DEFAULT_USER_EMAIL;
 
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.db.WorkspaceDao;

@@ -1,6 +1,6 @@
 package bio.terra.workspace.common;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createDefaultMcWorkspace;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 

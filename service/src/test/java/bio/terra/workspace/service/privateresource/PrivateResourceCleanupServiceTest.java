@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.privateresource;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueBucketName;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.uniqueBucketName;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,7 +10,7 @@ import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.PrivateResourceCleanupConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
@@ -68,7 +68,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
   private String groupEmail;
 
   @Autowired WorkspaceConnectedTestUtils workspaceUtils;
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
   @Autowired SamConfiguration samConfiguration;
   @Autowired WorkspaceService workspaceService;
   @Autowired SamService samService;
@@ -89,9 +89,9 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     privateResourceCleanupConfiguration.setPollingInterval(Duration.ZERO);
     // Client API objects manage their own thread pools. If we add more tests, we should consider
     // factoring this into a shared object across tests.
-    ownerGroupApi = buildGroupApi(userAccessUtils.defaultUserAuthRequest());
+    ownerGroupApi = buildGroupApi(userAccessTestUtils.defaultUserAuthRequest());
     workspace =
-        workspaceUtils.createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest());
+        workspaceUtils.createWorkspaceWithGcpContext(userAccessTestUtils.defaultUserAuthRequest());
     groupName = UUID.randomUUID().toString();
     groupEmail = createGroup(groupName, ownerGroupApi);
   }
@@ -101,7 +101,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
    */
   @AfterEach
   public void cleanup() {
-    workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(workspace, userAccessTestUtils.defaultUserAuthRequest());
     deleteGroup(groupName, ownerGroupApi);
   }
 
@@ -110,13 +110,13 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
   void cleanupResourcesSuppressExceptions_cleansUserPrivateResource_succeeds() {
     // Default user owns the workspace and group. Secondary user has workspace membership via group.
     // Add second user to group
-    addUserToGroup(groupName, userAccessUtils.getSecondUserEmail(), ownerGroupApi);
+    addUserToGroup(groupName, userAccessTestUtils.getSecondUserEmail(), ownerGroupApi);
     // Add group to workspace as writer
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
                 workspace.getWorkspaceId(),
-                userAccessUtils.defaultUserAuthRequest(),
+                userAccessTestUtils.defaultUserAuthRequest(),
                 WsmIamRole.WRITER,
                 groupEmail),
         "grantWorkspaceRole");
@@ -126,7 +126,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
             .workspaceUuid(workspace.getWorkspaceId())
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_USER)
-            .assignedUser(userAccessUtils.getSecondUserEmail())
+            .assignedUser(userAccessTestUtils.getSecondUserEmail())
             .build();
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
@@ -138,26 +138,26 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     controlledResourceService.createControlledResourceSync(
         resource,
         ControlledResourceIamRole.EDITOR,
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         creationParameters);
     // Verify second user can read the private resource in Sam.
     SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
-                userAccessUtils.secondUserAuthRequest(),
+                userAccessTestUtils.secondUserAuthRequest(),
                 resource.getCategory().getSamResourceName(),
                 resource.getResourceId().toString(),
                 SamControlledResourceActions.READ_ACTION),
         "checkResourceAuth");
     // Remove second user from workspace via group
-    removeUserFromGroup(groupName, userAccessUtils.getSecondUserEmail(), ownerGroupApi);
+    removeUserFromGroup(groupName, userAccessTestUtils.getSecondUserEmail(), ownerGroupApi);
     // Verify second user is no longer in workspace, but still has resource access because cleanup
     // hasn't run yet.
     assertFalse(
         SamRethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
-                    userAccessUtils.secondUserAuthRequest(),
+                    userAccessTestUtils.secondUserAuthRequest(),
                     SamResource.WORKSPACE,
                     resource.getWorkspaceId().toString(),
                     SamWorkspaceAction.READ),
@@ -166,7 +166,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
         SamRethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
-                    userAccessUtils.secondUserAuthRequest(),
+                    userAccessTestUtils.secondUserAuthRequest(),
                     resource.getCategory().getSamResourceName(),
                     resource.getResourceId().toString(),
                     SamControlledResourceActions.READ_ACTION),
@@ -180,7 +180,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
         SamRethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
-                    userAccessUtils.secondUserAuthRequest(),
+                    userAccessTestUtils.secondUserAuthRequest(),
                     resource.getCategory().getSamResourceName(),
                     resource.getResourceId().toString(),
                     SamControlledResourceActions.READ_ACTION),
@@ -198,27 +198,27 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
   void cleanupResourcesSuppressExceptions_cleansApplicationPrivateResource_succeeds() {
     // Default user owns the workspace and group. Secondary user has workspace membership via group.
     // Add second user to group
-    addUserToGroup(groupName, userAccessUtils.getSecondUserEmail(), ownerGroupApi);
+    addUserToGroup(groupName, userAccessTestUtils.getSecondUserEmail(), ownerGroupApi);
     // Add group to workspace as writer
     SamRethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
                 workspace.getWorkspaceId(),
-                userAccessUtils.defaultUserAuthRequest(),
+                userAccessTestUtils.defaultUserAuthRequest(),
                 WsmIamRole.WRITER,
                 groupEmail),
         "grantWorkspaceRole");
     // Enable the WSM test app in this workspace. This has a test user as the "service account" so
     // we can delegate credentials normally.
     WsmApplication app = applicationDao.getApplication(TEST_WSM_APP);
-    AccessToken saAccessToken = userAccessUtils.generateAccessToken(app.getServiceAccount());
+    AccessToken saAccessToken = userAccessTestUtils.generateAccessToken(app.getServiceAccount());
     AuthenticatedUserRequest appRequest =
         new AuthenticatedUserRequest()
             .email(app.getServiceAccount())
             .token(Optional.of(saAccessToken.getTokenValue()));
 
     wsmApplicationService.enableWorkspaceApplication(
-        userAccessUtils.defaultUserAuthRequest(), workspace, TEST_WSM_APP);
+        userAccessTestUtils.defaultUserAuthRequest(), workspace, TEST_WSM_APP);
 
     // Create application private bucket assigned to second user.
     ControlledResourceFields commonFields =
@@ -227,7 +227,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
             .managedBy(ManagedByType.MANAGED_BY_APPLICATION)
             .applicationId(TEST_WSM_APP)
-            .assignedUser(userAccessUtils.getSecondUserEmail())
+            .assignedUser(userAccessTestUtils.getSecondUserEmail())
             .build();
 
     ControlledGcsBucketResource resource =
@@ -246,20 +246,20 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     SamRethrow.onInterrupted(
         () ->
             samService.checkAuthz(
-                userAccessUtils.secondUserAuthRequest(),
+                userAccessTestUtils.secondUserAuthRequest(),
                 resource.getCategory().getSamResourceName(),
                 resource.getResourceId().toString(),
                 SamControlledResourceActions.READ_ACTION),
         "checkResourceAuth");
     // Remove second user from workspace via group.
-    removeUserFromGroup(groupName, userAccessUtils.getSecondUserEmail(), ownerGroupApi);
+    removeUserFromGroup(groupName, userAccessTestUtils.getSecondUserEmail(), ownerGroupApi);
     // Verify second user is no longer in workspace, but still has resource access because cleanup
     // hasn't run yet.
     assertFalse(
         SamRethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
-                    userAccessUtils.secondUserAuthRequest(),
+                    userAccessTestUtils.secondUserAuthRequest(),
                     SamResource.WORKSPACE,
                     resource.getWorkspaceId().toString(),
                     SamWorkspaceAction.READ),
@@ -268,7 +268,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
         SamRethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
-                    userAccessUtils.secondUserAuthRequest(),
+                    userAccessTestUtils.secondUserAuthRequest(),
                     resource.getCategory().getSamResourceName(),
                     resource.getResourceId().toString(),
                     SamControlledResourceActions.READ_ACTION),
@@ -282,7 +282,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
         SamRethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
-                    userAccessUtils.secondUserAuthRequest(),
+                    userAccessTestUtils.secondUserAuthRequest(),
                     resource.getCategory().getSamResourceName(),
                     resource.getResourceId().toString(),
                     SamControlledResourceActions.READ_ACTION),

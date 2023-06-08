@@ -1,6 +1,6 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.AUTH_HEADER;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.AUTH_HEADER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -23,7 +23,7 @@ import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.AzureLandingZoneFixtures;
+import bio.terra.workspace.common.testfixtures.AzureLandingZoneFixtures;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.ZoneOffset;

@@ -2,10 +2,10 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
-import static bio.terra.workspace.common.utils.MockMvcUtils.RESOURCE_PROPERTIES_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.RESOURCE_PROPERTIES_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.addJsonContentType;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,8 +14,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
@@ -48,7 +48,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
   @Autowired MockMvcUtils mockMvcUtils;
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
   @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
 
   private UUID workspaceId;
@@ -57,13 +57,13 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
   public void setUp() {
     workspaceId =
         connectedTestUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithGcpContext(userAccessTestUtils.defaultUserAuthRequest())
             .getWorkspaceId();
   }
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Nested
@@ -73,7 +73,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
       // Create resource with properties foo -> bar.
       ApiCreatedControlledGcpBigQueryDataset resource =
           mockMvcUtils.createControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
       var folderIdKey = "terra_workspace_folder_id";
       Map<String, String> newProperties =
@@ -92,7 +92,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
       // Get the updated resource and assert that the new properties are added.
       ApiGcpBigQueryDatasetResource updatedResource =
           mockMvcUtils.getControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId, resourceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId, resourceId);
       assertEquals(
           expectedProperties,
           convertApiPropertyToMap(updatedResource.getMetadata().getProperties()));
@@ -108,7 +108,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
       // Get the updated resource and assert terra_workspace_folder_id has new UUID.
       ApiGcpBigQueryDatasetResource updatedResource2 =
           mockMvcUtils.getControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId, resourceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId, resourceId);
       assertEquals(
           newFolderId.toString(),
           convertApiPropertyToMap(updatedResource2.getMetadata().getProperties()).get(folderIdKey));
@@ -127,7 +127,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     public void updateResourceProperties_propertiesIsEmpty_throws400() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
           mockMvcUtils.createControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
 
       updateResourcePropertiesExpectCode(
@@ -138,7 +138,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     public void updateResourceProperties_folderIdNotUuid_throws400() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
           mockMvcUtils.createControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
 
       updateResourcePropertiesExpectCode(
@@ -149,19 +149,19 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     public void updateResourceProperties_readOnlyPermission_throws403() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
           mockMvcUtils.createControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
       mockMvcUtils.grantRole(
-          userAccessUtils.defaultUserAuthRequest(),
+          userAccessTestUtils.defaultUserAuthRequest(),
           workspaceId,
           WsmIamRole.READER,
-          userAccessUtils.getSecondUserEmail());
+          userAccessTestUtils.getSecondUserEmail());
 
       updateResourcePropertiesExpectCode(
           workspaceId,
           resourceId,
           Map.of("foo", "bar"),
-          userAccessUtils.secondUserAuthRequest(),
+          userAccessTestUtils.secondUserAuthRequest(),
           HttpStatus.SC_FORBIDDEN);
     }
   }
@@ -173,7 +173,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     public void deleteResourceProperties_propertiesDeleted() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
           mockMvcUtils.createControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
       updateResourcePropertiesExpectCode(
           workspaceId,
@@ -186,7 +186,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
       ApiGcpBigQueryDatasetResource updatedResource =
           mockMvcUtils.getControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId, resourceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId, resourceId);
       assertTrue(convertApiPropertyToMap(updatedResource.getMetadata().getProperties()).isEmpty());
     }
 
@@ -200,7 +200,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     public void deleteResourceProperties_propertiesIsEmpty_throws400() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
           mockMvcUtils.createControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
 
       deleteResourcePropertiesExpectCode(
@@ -211,7 +211,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     public void deleteResourceProperties_readOnlyPermission_throws403() throws Exception {
       ApiCreatedControlledGcpBigQueryDataset resource =
           mockMvcUtils.createControlledBqDataset(
-              userAccessUtils.defaultUserAuthRequest(), workspaceId);
+              userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
       updateResourcePropertiesExpectCode(
           workspaceId,
@@ -219,16 +219,16 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
           Map.of("foo", "bar", "sweet", "cake", "cute", "puppy"),
           HttpStatus.SC_NO_CONTENT);
       mockMvcUtils.grantRole(
-          userAccessUtils.defaultUserAuthRequest(),
+          userAccessTestUtils.defaultUserAuthRequest(),
           workspaceId,
           WsmIamRole.READER,
-          userAccessUtils.getSecondUserEmail());
+          userAccessTestUtils.getSecondUserEmail());
 
       deleteResourcePropertiesExpectCode(
           workspaceId,
           resourceId,
           List.of("foo"),
-          userAccessUtils.secondUserAuthRequest(),
+          userAccessTestUtils.secondUserAuthRequest(),
           HttpStatus.SC_FORBIDDEN);
     }
 
@@ -239,7 +239,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
           workspaceId,
           resourceId,
           propertyKeysToDelete,
-          userAccessUtils.defaultUserAuthRequest(),
+          userAccessTestUtils.defaultUserAuthRequest(),
           code);
     }
 
@@ -277,7 +277,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
       UUID workspaceId, UUID resourceId, Map<String, String> newProperties, int code)
       throws Exception {
     updateResourcePropertiesExpectCode(
-        workspaceId, resourceId, newProperties, userAccessUtils.defaultUserAuthRequest(), code);
+        workspaceId, resourceId, newProperties, userAccessTestUtils.defaultUserAuthRequest(), code);
   }
 
   private void updateResourcePropertiesExpectCode(

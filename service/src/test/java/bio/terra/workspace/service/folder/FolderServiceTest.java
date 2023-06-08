@@ -1,10 +1,10 @@
 package bio.terra.workspace.service.folder;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.ReferenceResourceFixtures.makeDefaultWsmResourceFieldBuilder;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,9 +14,9 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.utils.TestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.common.testutils.TestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FolderNotFoundException;
@@ -70,7 +70,7 @@ public class FolderServiceTest extends BaseConnectedTest {
   private static final UUID FOO_BAR_LOO_FOLDER_ID = UUID.randomUUID();
   @Autowired private FolderService folderService;
   @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private ResourceDao resourceDao;
   @Autowired private JobService jobService;
   @Autowired private ControlledResourceService controlledResourceService;
@@ -99,15 +99,15 @@ public class FolderServiceTest extends BaseConnectedTest {
   public void setUpBeforeAll() throws InterruptedException {
     workspaceId =
         workspaceConnectedTestUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithGcpContext(userAccessTestUtils.defaultUserAuthRequest())
             .getWorkspaceId();
     projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceId);
 
     samService.grantWorkspaceRole(
         workspaceId,
-        userAccessUtils.defaultUserAuthRequest(),
+        userAccessTestUtils.defaultUserAuthRequest(),
         WsmIamRole.WRITER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     // Second bucket is created by writer.
     controlledBucket2InFooFoo =
@@ -124,7 +124,7 @@ public class FolderServiceTest extends BaseConnectedTest {
                     .workspaceUuid(workspaceId)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .assignedUser(userAccessUtils.getDefaultUserEmail())
+                    .assignedUser(userAccessTestUtils.getDefaultUserEmail())
                     .properties(
                         Map.of(ResourceProperties.FOLDER_ID_KEY, FOO_BAR_LOO_FOLDER_ID.toString()))
                     .build())
@@ -168,7 +168,7 @@ public class FolderServiceTest extends BaseConnectedTest {
   @AfterAll
   public void cleanUpAfterAll() {
     workspaceConnectedTestUtils.deleteWorkspaceAndCloudContext(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @AfterEach
@@ -184,12 +184,12 @@ public class FolderServiceTest extends BaseConnectedTest {
         ForbiddenException.class,
         () ->
             folderService.deleteFolder(
-                workspaceId, FOO_BAR_LOO_FOLDER_ID, userAccessUtils.secondUserAuthRequest()));
+                workspaceId, FOO_BAR_LOO_FOLDER_ID, userAccessTestUtils.secondUserAuthRequest()));
 
     // foo/foo does not have private resource, thus can be deleted by non-owner
     var jobId =
         folderService.deleteFolder(
-            workspaceId, FOO_FOO_FOLDER_ID, userAccessUtils.secondUserAuthRequest());
+            workspaceId, FOO_FOO_FOLDER_ID, userAccessTestUtils.secondUserAuthRequest());
 
     jobService.waitForJob(jobId);
     JobResultOrException<Boolean> succeededJob = jobService.retrieveJobResult(jobId, Boolean.class);
@@ -207,7 +207,7 @@ public class FolderServiceTest extends BaseConnectedTest {
 
     jobId =
         folderService.deleteFolder(
-            workspaceId, FOO_FOLDER_ID, userAccessUtils.defaultUserAuthRequest());
+            workspaceId, FOO_FOLDER_ID, userAccessTestUtils.defaultUserAuthRequest());
     jobService.waitForJob(jobId);
 
     List<Folder> folders = List.of(fooFolder, fooBarFolder, fooFooFolder, fooBarLooFolder);
@@ -231,25 +231,25 @@ public class FolderServiceTest extends BaseConnectedTest {
             ControlledResourceIamRole.EDITOR,
             new ApiJobControl().id(UUID.randomUUID().toString()),
             "falseResultPath",
-            userAccessUtils.defaultUserAuthRequest());
+            userAccessTestUtils.defaultUserAuthRequest());
 
     // Create everything else in parallel with the notebook
     controlledResourceService.createControlledResourceSync(
         controlledBucket2InFooFoo,
         /*privateResourceIamRole=*/ null,
-        userAccessUtils.secondUserAuthRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         getGoogleBucketCreationParameters());
 
     referencedResourceService.createReferenceResource(
-        referencedBucketInFooFoo, userAccessUtils.defaultUserAuthRequest());
+        referencedBucketInFooFoo, userAccessTestUtils.defaultUserAuthRequest());
 
     referencedResourceService.createReferenceResource(
-        referencedBqTableInFoo, userAccessUtils.secondUserAuthRequest());
+        referencedBqTableInFoo, userAccessTestUtils.secondUserAuthRequest());
     referencedResourceService.createReferenceResource(
-        referencedDataRepoSnapshotInFooBar, userAccessUtils.secondUserAuthRequest());
+        referencedDataRepoSnapshotInFooBar, userAccessTestUtils.secondUserAuthRequest());
 
     referencedResourceService.createReferenceResource(
-        referencedGitRepoInFooBarLoo, userAccessUtils.defaultUserAuthRequest());
+        referencedGitRepoInFooBarLoo, userAccessTestUtils.defaultUserAuthRequest());
 
     // Wait for the AI notebook create to complete
     StairwayTestUtils.pollUntilComplete(
@@ -270,7 +270,7 @@ public class FolderServiceTest extends BaseConnectedTest {
             .datasetId("my_special_dataset")
             .dataTableId("my_secret_table")
             .build(),
-        userAccessUtils.secondUserAuthRequest());
+        userAccessTestUtils.secondUserAuthRequest());
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -280,7 +280,7 @@ public class FolderServiceTest extends BaseConnectedTest {
 
     var jobId =
         folderService.deleteFolder(
-            workspaceId, fooFolderId, userAccessUtils.defaultUserAuthRequest());
+            workspaceId, fooFolderId, userAccessTestUtils.defaultUserAuthRequest());
 
     jobService.waitForJob(jobId);
     // Service methods which wait for a flight to complete will throw an

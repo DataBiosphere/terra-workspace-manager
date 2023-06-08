@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BUCKET_UPDATE_PARAMETERS_2;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.BUCKET_UPDATE_PARAMETERS_2;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,8 +17,8 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -71,7 +71,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
   // Store workspaceId instead of workspace so that for local development, one can easily use a
   // previously created workspace.
   private UUID workspaceId;
-  private UserAccessUtils.TestUser user;
+  private UserAccessTestUtils.TestUser user;
   private String projectId;
 
   @Autowired private ControlledResourceService controlledResourceService;
@@ -79,7 +79,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
   @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private JobService jobService;
   @Autowired private StairwayComponent stairwayComponent;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceActivityLogService workspaceActivityLogService;
@@ -87,10 +87,10 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
 
   @BeforeAll
   public void setup() {
-    user = userAccessUtils.defaultUser();
+    user = userAccessTestUtils.defaultUser();
     workspaceId =
         workspaceUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithGcpContext(userAccessTestUtils.defaultUserAuthRequest())
             .getWorkspaceId();
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
   }
@@ -107,7 +107,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
   /** After running all tests, delete the shared workspace. */
   @AfterAll
   public void cleanUp() {
-    user = userAccessUtils.defaultUser();
+    user = userAccessTestUtils.defaultUser();
     Workspace workspace = workspaceService.getWorkspace(workspaceId);
     workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
   }
@@ -368,7 +368,8 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
    * the provided user. This uses the default bucket creation parameters from {@code
    * ControlledResourceFixtures}.
    */
-  private ControlledGcsBucketResource createDefaultSharedGcsBucket(UserAccessUtils.TestUser user) {
+  private ControlledGcsBucketResource createDefaultSharedGcsBucket(
+      UserAccessTestUtils.TestUser user) {
     ControlledGcsBucketResource originalResource =
         makeDefaultControlledGcsBucketBuilder(workspaceId).build();
 

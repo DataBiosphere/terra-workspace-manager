@@ -1,12 +1,12 @@
 package bio.terra.workspace.service.iam;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.uniqueBucketName;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDataRepoSnapshotResource;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildMcWorkspace;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.buildWorkspace;
-import static bio.terra.workspace.common.utils.MockMvcUtils.*;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.uniqueBucketName;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.ReferenceResourceFixtures.makeDataRepoSnapshotResource;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.buildMcWorkspace;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.buildWorkspace;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -24,7 +24,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
@@ -70,7 +70,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private SamService samService;
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private ObjectMapper objectMapper;
 
@@ -114,7 +114,7 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     // After being granted permission, secondary user can read the workspace.
     mockMvc
         .perform(
@@ -152,7 +152,7 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.WRITER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     String serializedResponse =
         mockMvc
             .perform(
@@ -190,7 +190,7 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     mockMvc
         .perform(
             addAuth(
@@ -202,7 +202,7 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     mockMvc
         .perform(
             addAuth(
@@ -222,7 +222,7 @@ class SamServiceTest extends BaseConnectedTest {
                 workspaceUuid,
                 secondaryUserRequest(),
                 WsmIamRole.READER,
-                userAccessUtils.getSecondUserEmail()));
+                userAccessTestUtils.getSecondUserEmail()));
   }
 
   @Test
@@ -234,7 +234,7 @@ class SamServiceTest extends BaseConnectedTest {
     Workspace rawlsWorkspace = buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
     workspaceService.createWorkspace(rawlsWorkspace, null, null, defaultUserRequest());
     ApiGrantRoleRequestBody request =
-        new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
+        new ApiGrantRoleRequestBody().memberEmail(userAccessTestUtils.getSecondUserEmail());
     mockMvc
         .perform(
             addJsonContentType(
@@ -268,20 +268,20 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     List<RoleBinding> policyList = samService.listRoleBindings(workspaceUuid, defaultUserRequest());
 
     RoleBinding expectedOwnerBinding =
         RoleBinding.builder()
             .role(WsmIamRole.OWNER)
-            .users(Collections.singletonList(userAccessUtils.getDefaultUserEmail()))
+            .users(Collections.singletonList(userAccessTestUtils.getDefaultUserEmail()))
             .build();
     RoleBinding expectedWriterBinding =
         RoleBinding.builder().role(WsmIamRole.WRITER).users(Collections.emptyList()).build();
     RoleBinding expectedReaderBinding =
         RoleBinding.builder()
             .role(WsmIamRole.READER)
-            .users(Collections.singletonList(userAccessUtils.getSecondUserEmail()))
+            .users(Collections.singletonList(userAccessTestUtils.getSecondUserEmail()))
             .build();
     RoleBinding expectedDiscovererBinding =
         RoleBinding.builder().role(WsmIamRole.DISCOVERER).users(Collections.emptyList()).build();
@@ -303,7 +303,7 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.WRITER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
     assertThrows(
         ForbiddenException.class,
         () -> samService.listRoleBindings(workspaceUuid, secondaryUserRequest()));
@@ -319,7 +319,7 @@ class SamServiceTest extends BaseConnectedTest {
                 fakeId,
                 defaultUserRequest(),
                 WsmIamRole.READER,
-                userAccessUtils.getSecondUserEmail()));
+                userAccessTestUtils.getSecondUserEmail()));
   }
 
   @Test
@@ -334,7 +334,7 @@ class SamServiceTest extends BaseConnectedTest {
   void listWorkspaceIdsAndHighestRoles() throws Exception {
     Map<UUID, WorkspaceDescription> actual =
         samService.listWorkspaceIdsAndHighestRoles(
-            userAccessUtils.defaultUserAuthRequest(), WsmIamRole.READER);
+            userAccessTestUtils.defaultUserAuthRequest(), WsmIamRole.READER);
 
     WorkspaceDescription match = actual.get(workspaceUuid);
     assertEquals(WsmIamRole.OWNER, match.highestRole());
@@ -348,7 +348,7 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     ControlledResource bucketResource =
         makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
@@ -372,14 +372,14 @@ class SamServiceTest extends BaseConnectedTest {
         workspaceUuid,
         defaultUserRequest(),
         WsmIamRole.READER,
-        userAccessUtils.getSecondUserEmail());
+        userAccessTestUtils.getSecondUserEmail());
 
     // Create private resource assigned to the default user.
     ControlledResourceFields commonFields =
         makeDefaultControlledResourceFieldsBuilder()
             .workspaceUuid(workspaceUuid)
             .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
-            .assignedUser(userAccessUtils.getDefaultUserEmail())
+            .assignedUser(userAccessTestUtils.getDefaultUserEmail())
             .privateResourceState(PrivateResourceState.ACTIVE)
             .build();
 
@@ -392,7 +392,7 @@ class SamServiceTest extends BaseConnectedTest {
     samService.createControlledResource(
         bucketResource,
         ControlledResourceIamRole.EDITOR,
-        userAccessUtils.getDefaultUserEmail(),
+        userAccessTestUtils.getDefaultUserEmail(),
         defaultUserRequest());
 
     // Workspace reader should not have read access on a private resource.
@@ -438,10 +438,10 @@ class SamServiceTest extends BaseConnectedTest {
   void checkAdminAuthz_throwsForbiddenException() {
     assertThrows(
         ForbiddenException.class,
-        () -> samService.checkAdminAuthz(userAccessUtils.defaultUserAuthRequest()));
+        () -> samService.checkAdminAuthz(userAccessTestUtils.defaultUserAuthRequest()));
     assertThrows(
         ForbiddenException.class,
-        () -> samService.checkAdminAuthz(userAccessUtils.secondUserAuthRequest()));
+        () -> samService.checkAdminAuthz(userAccessTestUtils.secondUserAuthRequest()));
   }
 
   /**
@@ -451,7 +451,7 @@ class SamServiceTest extends BaseConnectedTest {
    */
   private AuthenticatedUserRequest defaultUserRequest() {
     return new AuthenticatedUserRequest(
-        null, null, Optional.of(userAccessUtils.defaultUserAccessToken().getTokenValue()));
+        null, null, Optional.of(userAccessTestUtils.defaultUserAccessToken().getTokenValue()));
   }
 
   /**
@@ -461,7 +461,7 @@ class SamServiceTest extends BaseConnectedTest {
    */
   private AuthenticatedUserRequest secondaryUserRequest() {
     return new AuthenticatedUserRequest(
-        null, null, Optional.of(userAccessUtils.secondUserAccessToken().getTokenValue()));
+        null, null, Optional.of(userAccessTestUtils.secondUserAccessToken().getTokenValue()));
   }
 
   /** Create a workspace using the default test user for connected tests, return its ID. */

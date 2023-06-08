@@ -1,15 +1,15 @@
 package bio.terra.workspace.service.workspace.flight.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.deleteCloudContextInputs;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.deleteCloudContextInputs;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiManagedBy;
@@ -57,7 +57,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private JobService jobService;
   @Autowired private AzureCloudContextService azureCloudContextService;
 
@@ -71,12 +71,12 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     SpendProfileId spendProfileId = initSpendProfileMock();
     workspace = defaultWorkspaceBuilder(workspaceUuid).spendProfileId(spendProfileId).build();
     workspaceService.createWorkspace(
-        workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+        workspace, null, null, userAccessTestUtils.defaultUserAuthRequest());
   }
 
   @AfterEach
   public void tearDown() {
-    workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(workspace, userAccessTestUtils.defaultUserAuthRequest());
   }
 
   private void createAzureContext(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
@@ -135,7 +135,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
   @Test
   void deleteContextDo() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     createAzureContext(workspaceUuid, userRequest);
 
     // Delete the azure context.
@@ -167,7 +167,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
   @Test
   void deleteContextUndo() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     createAzureContext(workspaceUuid, userRequest);
 
     // Delete the azure context.
@@ -192,7 +192,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
   @Test
   void deleteNonExistentContext() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
 
     // Delete the non-existent azure context.
@@ -212,7 +212,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
   @Disabled("DeleteControlledAzureResourcesStep is not idempotent, so cannot be retried")
   @Test
   void deleteMcWorkspaceWithAzureContextAndResource() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     // create new workspace so delete at end of test won't interfere with @AfterEach teardown
     UUID uuid = UUID.randomUUID();

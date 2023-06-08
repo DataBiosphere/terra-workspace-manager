@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.utils.AzureTestUtils;
+import bio.terra.workspace.common.testutils.AzureTestUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;

@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVm;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureVm;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;

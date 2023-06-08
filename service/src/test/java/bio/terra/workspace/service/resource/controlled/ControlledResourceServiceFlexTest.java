@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultFlexResourceCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultFlexResourceBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.defaultFlexResourceCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultFlexResourceBuilder;
 import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_NOTHING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -10,8 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
@@ -46,22 +46,22 @@ public class ControlledResourceServiceFlexTest extends BaseConnectedTest {
   // Store workspaceId instead of workspace so that for local development, one can easily use a
   // previously created workspace.
   private UUID workspaceId;
-  private UserAccessUtils.TestUser user;
+  private UserAccessTestUtils.TestUser user;
 
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private JobService jobService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WsmResourceService wsmResourceService;
 
   @BeforeAll
   public void setup() {
-    user = userAccessUtils.defaultUser();
+    user = userAccessTestUtils.defaultUser();
     workspaceId =
         workspaceUtils
-            .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithGcpContext(userAccessTestUtils.defaultUserAuthRequest())
             .getWorkspaceId();
   }
 
@@ -77,7 +77,7 @@ public class ControlledResourceServiceFlexTest extends BaseConnectedTest {
   /** After running all tests, delete the shared workspace. */
   @AfterAll
   public void cleanUp() {
-    user = userAccessUtils.defaultUser();
+    user = userAccessTestUtils.defaultUser();
     Workspace workspace = workspaceService.getWorkspace(workspaceId);
     workspaceService.deleteWorkspace(workspace, user.getAuthenticatedRequest());
   }
@@ -123,7 +123,7 @@ public class ControlledResourceServiceFlexTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () ->
             wsmResourceService.updateResource(
-                userAccessUtils.defaultUser().getAuthenticatedRequest(),
+                userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
                 createdFlex,
                 new CommonUpdateParameters()
                     .setName(newName)

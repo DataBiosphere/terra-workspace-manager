@@ -1,12 +1,12 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.uniqueStorageContainerName;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.DEFAULT_AZURE_RESOURCE_REGION;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.uniqueStorageContainerName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -40,20 +40,20 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
   @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
 
   private Workspace sourceWorkspace = null;
   private Workspace destWorkspace = null;
 
   @BeforeAll
   public void setup() throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     sourceWorkspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
   }
 
   @AfterAll
   void cleanup() {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     Optional.ofNullable(sourceWorkspace)
         .ifPresent(workspace -> workspaceService.deleteWorkspace(workspace, userRequest));
     Optional.ofNullable(destWorkspace)
@@ -62,7 +62,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
 
   @Test
   void cloneAzureWorkspaceWithContainer() {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     final UUID containerResourceId = UUID.randomUUID();
     final String storageContainerName = uniqueStorageContainerName();

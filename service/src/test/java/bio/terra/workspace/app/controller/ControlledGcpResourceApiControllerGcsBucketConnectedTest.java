@@ -1,17 +1,17 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.GcsBucketUtils.GCS_FILE_CONTENTS;
-import static bio.terra.workspace.common.GcsBucketUtils.GCS_FILE_NAME;
-import static bio.terra.workspace.common.GcsBucketUtils.addFileToBucket;
-import static bio.terra.workspace.common.GcsBucketUtils.buildSignedUrlListObject;
-import static bio.terra.workspace.common.GcsBucketUtils.waitForProjectAccess;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.LOAD_SIGNED_URL_LIST_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiGcsBucketEquals;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceReady;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.testutils.GcsBucketTestUtils.GCS_FILE_CONTENTS;
+import static bio.terra.workspace.common.testutils.GcsBucketTestUtils.GCS_FILE_NAME;
+import static bio.terra.workspace.common.testutils.GcsBucketTestUtils.addFileToBucket;
+import static bio.terra.workspace.common.testutils.GcsBucketTestUtils.buildSignedUrlListObject;
+import static bio.terra.workspace.common.testutils.GcsBucketTestUtils.waitForProjectAccess;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.LOAD_SIGNED_URL_LIST_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.assertApiGcsBucketEquals;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.assertControlledResourceMetadata;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.assertResourceMetadata;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.assertResourceReady;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -21,13 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.GcpCloudUtils;
-import bio.terra.workspace.common.GcsBucketUtils;
-import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.common.utils.TestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testfixtures.PolicyFixtures;
+import bio.terra.workspace.common.testutils.GcpCloudTestUtils;
+import bio.terra.workspace.common.testutils.GcsBucketTestUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
+import bio.terra.workspace.common.testutils.TestUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -114,10 +114,10 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired ObjectMapper objectMapper;
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
   @Autowired JobService jobService;
-  @Autowired GcpCloudUtils cloudUtils;
-  @Autowired GcsBucketUtils gcsBucketUtils;
+  @Autowired GcpCloudTestUtils cloudUtils;
+  @Autowired GcsBucketTestUtils gcsBucketTestUtils;
   @Autowired FeatureConfiguration features;
   @Autowired CrlService crlService;
   @Autowired WorkspaceActivityLogService activityLogService;
@@ -164,7 +164,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     // 4. wait for 2nd user to have project permissions
 
     AuthenticatedUserRequest defaultUserRequest =
-        userAccessUtils.defaultUser().getAuthenticatedRequest();
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
     workspaceId2 = mockMvcUtils.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
@@ -174,30 +174,30 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         defaultUserRequest,
         workspaceId,
         WsmIamRole.WRITER,
-        userAccessUtils.secondUser().getEmail());
+        userAccessTestUtils.secondUser().getEmail());
     mockMvcUtils.grantRole(
         defaultUserRequest,
         workspaceId2,
         WsmIamRole.READER,
-        userAccessUtils.secondUser().getEmail());
+        userAccessTestUtils.secondUser().getEmail());
 
     // Create the cloud contexts
     mockMvcUtils.createGcpCloudContextAndWait(defaultUserRequest, workspaceId);
     mockMvcUtils.createGcpCloudContextAndWait(defaultUserRequest, workspaceId2);
 
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
     projectId = workspace.getGcpContext().getProjectId();
 
     ApiWorkspaceDescription workspace2 =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        mockMvcUtils.getWorkspace(userAccessTestUtils.defaultUserAuthRequest(), workspaceId2);
     projectId2 = workspace2.getGcpContext().getProjectId();
 
     // Wait for both users to have permission in both projects
-    waitForProjectAccess(userAccessUtils.defaultUser().getGoogleCredentials(), projectId);
-    waitForProjectAccess(userAccessUtils.defaultUser().getGoogleCredentials(), projectId2);
-    waitForProjectAccess(userAccessUtils.secondUser().getGoogleCredentials(), projectId);
-    waitForProjectAccess(userAccessUtils.secondUser().getGoogleCredentials(), projectId2);
+    waitForProjectAccess(userAccessTestUtils.defaultUser().getGoogleCredentials(), projectId);
+    waitForProjectAccess(userAccessTestUtils.defaultUser().getGoogleCredentials(), projectId2);
+    waitForProjectAccess(userAccessTestUtils.secondUser().getGoogleCredentials(), projectId);
+    waitForProjectAccess(userAccessTestUtils.secondUser().getGoogleCredentials(), projectId2);
 
     // It is easier to make two buckets and do clone both directions than to
     // get different permissions on users.
@@ -213,7 +213,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
                 LIFECYCLE_API)
             .getGcpBucket();
     addFileToBucket(
-        userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
+        userAccessTestUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
 
     source2Bucket =
         mockMvcUtils
@@ -228,16 +228,16 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
             .getGcpBucket();
     // Add two files to bucket2 and create a public url of the manifest tsv file of the two files.
     addFileToBucket(
-        userAccessUtils.defaultUser().getGoogleCredentials(), projectId2, source2BucketName);
+        userAccessTestUtils.defaultUser().getGoogleCredentials(), projectId2, source2BucketName);
     addFileToBucket(
-        userAccessUtils.defaultUser().getGoogleCredentials(),
+        userAccessTestUtils.defaultUser().getGoogleCredentials(),
         projectId2,
         source2BucketName,
         FILE_2,
         FILE_2_CONTENT);
     manifestUrl =
         buildSignedUrlListObject(
-            userAccessUtils.defaultUser().getGoogleCredentials(),
+            userAccessTestUtils.defaultUser().getGoogleCredentials(),
             projectId2,
             source2BucketName,
             List.of(FILE_2, GCS_FILE_NAME));
@@ -249,7 +249,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @AfterEach
   public void resetFlightDebugInfo() {
     AuthenticatedUserRequest defaultUserRequest =
-        userAccessUtils.defaultUser().getAuthenticatedRequest();
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
     jobService.setFlightDebugInfoForTest(null);
     StairwayTestUtils.enumerateJobsDump(jobService, workspaceId, defaultUserRequest);
     StairwayTestUtils.enumerateJobsDump(jobService, workspaceId2, defaultUserRequest);
@@ -258,7 +258,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @AfterAll
   public void cleanup() throws Exception {
     AuthenticatedUserRequest defaultUserRequest =
-        userAccessUtils.defaultUser().getAuthenticatedRequest();
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
     mockMvcUtils.deleteWorkspace(defaultUserRequest, workspaceId);
     mockMvcUtils.deleteWorkspace(defaultUserRequest, workspaceId2);
   }
@@ -266,7 +266,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   public void create() throws Exception {
     AuthenticatedUserRequest defaultUserRequest =
-        userAccessUtils.defaultUser().getAuthenticatedRequest();
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     // Assert resource returned by create
     assertGcsBucket(
@@ -288,9 +288,9 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     assertResourceReady(gotBucket.getMetadata());
 
     // Call GCP directly.
-    GcsBucketUtils.assertBucketFileFooContainsBar(
-        userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
-    gcsBucketUtils.assertBucketAttributes(
+    GcsBucketTestUtils.assertBucketFileFooContainsBar(
+        userAccessTestUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
+    gcsBucketTestUtils.assertBucketAttributes(
         defaultUserRequest, projectId, sourceBucketName, LOCATION, STORAGE_CLASS, LIFECYCLE_GCP);
   }
 
@@ -298,7 +298,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @EnabledIf(expression = "${feature.alpha1-enabled}", loadContext = true)
   public void loadSignedUrlList_succeedsAndFileLoadedIntoBucket() throws Exception {
     AuthenticatedUserRequest defaultUserRequest =
-        userAccessUtils.defaultUser().getAuthenticatedRequest();
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     ApiLoadUrlListResult result =
         loadSignedUrlList(
@@ -308,14 +308,14 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
             manifestUrl.toString());
 
     assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
-    GcsBucketUtils.assertBucketFiles(
-        userAccessUtils.defaultUser().getGoogleCredentials(),
+    GcsBucketTestUtils.assertBucketFiles(
+        userAccessTestUtils.defaultUser().getGoogleCredentials(),
         projectId,
         sourceBucketName,
         String.format("storage.googleapis.com/%s/%s", source2BucketName, FILE_2),
         FILE_2_CONTENT);
-    GcsBucketUtils.assertBucketFiles(
-        userAccessUtils.defaultUser().getGoogleCredentials(),
+    GcsBucketTestUtils.assertBucketFiles(
+        userAccessTestUtils.defaultUser().getGoogleCredentials(),
         projectId,
         sourceBucketName,
         String.format("storage.googleapis.com/%s/%s", source2BucketName, GCS_FILE_NAME),
@@ -325,7 +325,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   @EnabledIf(expression = "${feature.alpha1-enabled}", loadContext = true)
   public void loadSignedUrlList_403() throws Exception {
-    AuthenticatedUserRequest thirdUserAuthRequest = userAccessUtils.thirdUserAuthRequest();
+    AuthenticatedUserRequest thirdUserAuthRequest = userAccessTestUtils.thirdUserAuthRequest();
 
     // Third user has no access to sourceBucket.
     loadSignedUrlListExpectError(
@@ -338,7 +338,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   @EnabledIf(expression = "${feature.alpha1-enabled}", loadContext = true)
   public void loadSignedUrlList_404() throws Exception {
-    AuthenticatedUserRequest secondUserAuthRequest = userAccessUtils.secondUserAuthRequest();
+    AuthenticatedUserRequest secondUserAuthRequest = userAccessTestUtils.secondUserAuthRequest();
 
     loadSignedUrlListExpectError(
         secondUserAuthRequest,
@@ -354,9 +354,9 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
 
     AuthenticatedUserRequest ownerUserRequest =
-        userAccessUtils.defaultUser().getAuthenticatedRequest();
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
     AuthenticatedUserRequest writerUserRequest =
-        userAccessUtils.secondUser().getAuthenticatedRequest();
+        userAccessTestUtils.secondUser().getAuthenticatedRequest();
 
     ApiGcpGcsBucketResource updatedResource =
         mockMvcUtils.updateControlledGcsBucket(
@@ -393,7 +393,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
     mockMvcUtils.cloneControlledGcsBucketAsync(
-        userAccessUtils.noBillingUser().getAuthenticatedRequest(),
+        userAccessTestUtils.noBillingUser().getAuthenticatedRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceBucket.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
@@ -408,7 +408,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
     mockMvcUtils.cloneControlledGcsBucketAsync(
-        userAccessUtils.secondUser().getAuthenticatedRequest(),
+        userAccessTestUtils.secondUser().getAuthenticatedRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceBucket.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
@@ -423,7 +423,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   public void clone_userWithWriteAccessOnDestWorkspace_succeeds() throws Exception {
     var destResourceName = TestUtils.appendRandomNumber("clonedbucket");
-    AuthenticatedUserRequest userRequest = userAccessUtils.secondUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.secondUser().getAuthenticatedRequest();
     ApiGcpGcsBucketResource clonedResource =
         mockMvcUtils
             .cloneControlledGcsBucket(
@@ -457,7 +458,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   void clone_duplicateBucketName_jobThrows409() throws Exception {
     ApiErrorReport errorReport =
         mockMvcUtils.cloneControlledGcsBucket_jobError(
-            userAccessUtils.defaultUser().getAuthenticatedRequest(),
+            userAccessTestUtils.defaultUser().getAuthenticatedRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceBucket.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
@@ -471,7 +472,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   public void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
     ApiCreatedControlledGcpGcsBucket clonedResource =
         mockMvcUtils.cloneControlledGcsBucket(
             userRequest,
@@ -499,7 +501,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     String destLocation = "europe-west1";
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destBucketName = TestUtils.appendRandomNumber("dest-bucket-name");
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     ApiGcpGcsBucketResource clonedResource =
         mockMvcUtils
@@ -523,7 +526,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         destResourceName,
         sourceBucket.getMetadata().getDescription(),
         destBucketName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /*expectedCreatedBy=*/ userAccessTestUtils.getDefaultUserEmail(),
         workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         userRequest);
@@ -535,9 +538,9 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     assertApiGcsBucketEquals(clonedResource, gotResource);
 
     // Call GCP directly.
-    gcsBucketUtils.assertBucketHasNoFiles(
+    gcsBucketTestUtils.assertBucketHasNoFiles(
         userRequest, projectId2, gotResource.getAttributes().getBucketName());
-    gcsBucketUtils.assertBucketAttributes(
+    gcsBucketTestUtils.assertBucketAttributes(
         userRequest,
         projectId2,
         gotResource.getAttributes().getBucketName(),
@@ -555,7 +558,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     String destLocation = "europe-west1";
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destBucketName = TestUtils.appendRandomNumber("dest-bucket-name");
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     ApiGcpGcsBucketResource clonedResource =
         mockMvcUtils
@@ -578,7 +582,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         sourceBucket.getMetadata().getDescription(),
         destBucketName,
         destLocation,
-        /*expectedCreatedBy=*/ userAccessUtils.defaultUser().getEmail(),
+        /*expectedCreatedBy=*/ userAccessTestUtils.defaultUser().getEmail(),
         workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         userRequest);
@@ -590,11 +594,11 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     assertApiGcsBucketEquals(clonedResource, gotResource);
 
     // Call GCP directly.
-    GcsBucketUtils.assertBucketFileFooContainsBar(
-        userAccessUtils.defaultUser().getGoogleCredentials(),
+    GcsBucketTestUtils.assertBucketFileFooContainsBar(
+        userAccessTestUtils.defaultUser().getGoogleCredentials(),
         projectId,
         gotResource.getAttributes().getBucketName());
-    gcsBucketUtils.assertBucketAttributes(
+    gcsBucketTestUtils.assertBucketAttributes(
         userRequest,
         projectId,
         gotResource.getAttributes().getBucketName(),
@@ -612,7 +616,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     String destLocation = "europe-west1";
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destBucketName = TestUtils.appendRandomNumber("dest-bucket-name");
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     ApiGcpGcsBucketResource clonedResource =
         mockMvcUtils
@@ -635,7 +640,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         sourceBucket.getMetadata().getDescription(),
         destBucketName,
         destLocation,
-        /*expectedCreatedBy=*/ userAccessUtils.defaultUser().getEmail(),
+        /*expectedCreatedBy=*/ userAccessTestUtils.defaultUser().getEmail(),
         workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         userRequest);
@@ -647,11 +652,11 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     assertApiGcsBucketEquals(clonedResource, gotResource);
 
     // Call GCP directly.
-    GcsBucketUtils.assertBucketFileFooContainsBar(
-        userAccessUtils.defaultUser().getGoogleCredentials(),
+    GcsBucketTestUtils.assertBucketFileFooContainsBar(
+        userAccessTestUtils.defaultUser().getGoogleCredentials(),
         projectId,
         gotResource.getAttributes().getBucketName());
-    gcsBucketUtils.assertBucketAttributes(
+    gcsBucketTestUtils.assertBucketAttributes(
         userRequest,
         projectId,
         gotResource.getAttributes().getBucketName(),
@@ -666,7 +671,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
 
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
     ApiGcpGcsBucketResource clonedResource =
         mockMvcUtils
             .cloneControlledGcsBucket(
@@ -691,7 +697,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         destResourceName,
         sourceBucket.getMetadata().getDescription(),
         sourceBucketName,
-        /*expectedCreatedBy=*/ userAccessUtils.defaultUser().getEmail(),
+        /*expectedCreatedBy=*/ userAccessTestUtils.defaultUser().getEmail(),
         workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         userRequest);
@@ -708,7 +714,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   void clone_policiesMerged() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     // Clean up policies from previous runs, if any exist
     mockMvcUtils.deletePolicies(userRequest, workspaceId);
@@ -752,7 +759,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   void clone_copyResource_undo() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     mockMvcUtils.cloneControlledGcsBucket_undo(
         userRequest,
@@ -769,7 +777,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   void clone_copyReference_undo() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     mockMvcUtils.cloneControlledGcsBucket_undo(
         userRequest,

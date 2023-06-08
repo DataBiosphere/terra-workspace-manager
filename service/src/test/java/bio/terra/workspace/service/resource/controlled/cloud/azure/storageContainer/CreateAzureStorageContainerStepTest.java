@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.uniqueStorageAccountName;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureStorageContainer;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.uniqueStorageAccountName;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.STORAGE_ACCOUNT_NAME;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;

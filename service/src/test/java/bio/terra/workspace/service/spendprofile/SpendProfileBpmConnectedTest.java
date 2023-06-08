@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
@@ -26,7 +26,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   @Autowired SamService samService;
   @Autowired SpendProfileConfiguration spendProfileConfiguration;
   @Autowired SpendConnectedTestUtils spendUtils;
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
   @Autowired SpendProfileService spendProfileService;
 
   SpendProfile profile;
@@ -46,7 +46,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
     var billingAcctId = spendUtils.defaultBillingAccountId();
     profile =
         spendProfileService.createGcpSpendProfile(
-            billingAcctId, profileName, "direct", userAccessUtils.thirdUserAuthRequest());
+            billingAcctId, profileName, "direct", userAccessTestUtils.thirdUserAuthRequest());
   }
 
   @AfterAll
@@ -55,7 +55,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
       return;
     }
     spendProfileService.deleteProfile(
-        UUID.fromString(profile.id().getId()), userAccessUtils.thirdUserAuthRequest());
+        UUID.fromString(profile.id().getId()), userAccessTestUtils.thirdUserAuthRequest());
   }
 
   @Test
@@ -63,7 +63,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   void authorizeLinkingSuccess() {
     var linkedProfile =
         spendProfileService.authorizeLinking(
-            profile.id(), true, userAccessUtils.thirdUserAuthRequest());
+            profile.id(), true, userAccessTestUtils.thirdUserAuthRequest());
     assertEquals(linkedProfile.billingAccountId(), profile.billingAccountId());
     assertEquals(linkedProfile.id(), profile.id());
   }
@@ -75,7 +75,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
         SpendUnauthorizedException.class,
         () ->
             spendProfileService.authorizeLinking(
-                profile.id(), true, userAccessUtils.defaultUserAuthRequest()));
+                profile.id(), true, userAccessTestUtils.defaultUserAuthRequest()));
   }
 
   @Test
@@ -88,7 +88,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
                 spendProfileService.authorizeLinking(
                     new SpendProfileId(UUID.randomUUID().toString()),
                     true,
-                    userAccessUtils.thirdUserAuthRequest()));
+                    userAccessTestUtils.thirdUserAuthRequest()));
     assert (ex.getStatusCode() == HttpStatus.NOT_FOUND);
   }
 }

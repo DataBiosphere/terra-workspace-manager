@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_NEW;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_PREV;
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_NEW;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.BQ_DATASET_UPDATE_PARAMETERS_PREV;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;

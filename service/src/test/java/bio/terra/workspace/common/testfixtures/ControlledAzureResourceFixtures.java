@@ -1,13 +1,13 @@
-package bio.terra.workspace.common.fixtures;
+package bio.terra.workspace.common.testfixtures;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WORKSPACE_ID;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFields;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
+import bio.terra.workspace.common.testutils.TestUtils;
 import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.MapperUtils;
-import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolDeploymentConfiguration;

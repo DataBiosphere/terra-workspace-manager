@@ -1,13 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getInvalidAzureVmCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultAzureDiskBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.makeDefaultControlledAzureVmResourceBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureVmCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getInvalidAzureVmCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.makeDefaultAzureDiskBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.makeDefaultControlledAzureVmResourceBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.STAIRWAY_FLIGHT_TIMEOUT;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,9 +18,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.testutils.StairwayTestUtils;
 import bio.terra.workspace.common.utils.AzureUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
@@ -62,7 +62,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
   @Autowired private WorkspaceService workspaceService;
   @Autowired private JobService jobService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
   private Workspace sharedWorkspace;
@@ -72,7 +72,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
 
   @BeforeAll
   public void setup() throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     sharedWorkspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
     workspaceUuid = sharedWorkspace.getWorkspaceId();
 
@@ -84,13 +84,13 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   public void cleanup() {
     // Deleting the workspace will also delete any resources contained in the workspace, including
     // VMs and the resources created during setup.
-    workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(sharedWorkspace, userAccessTestUtils.defaultUserAuthRequest());
   }
 
   @Tag("azureConnected")
   @Test
   public void createAndDeleteAzureVmControlledResource() throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     final ApiAzureVmCreationParameters creationParameters = getAzureVmCreationParameters();
 
@@ -142,7 +142,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   @Test
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtension()
       throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     final ApiAzureVmCreationParameters creationParameters =
         getAzureVmCreationParametersWithCustomScriptExtension();
@@ -209,7 +209,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   @Test
   public void createVmWithFailureMakeSureNetworkInterfaceIsNotAbandoned()
       throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     final ApiAzureVmCreationParameters creationParameters = getInvalidAzureVmCreationParameters();
 
@@ -294,7 +294,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   @Test
   public void createAndDeleteAzureVmControlledResourceWithEphemeralDisk()
       throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     final ApiAzureVmCreationParameters creationParameters =
         getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData();

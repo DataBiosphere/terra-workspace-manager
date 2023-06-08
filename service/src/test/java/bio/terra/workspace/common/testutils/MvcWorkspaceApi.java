@@ -1,6 +1,6 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.common.testutils;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -45,7 +45,8 @@ public class MvcWorkspaceApi {
   public static final String CLOUD_CONTEXT_V2_DELETE_RESULT =
       "/api/workspaces/v2/%s/cloudcontexts/delete-result/%s";
   private static final Duration POLLING_INTERVAL = Duration.ofSeconds(15);
-  // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
+  // Do not Autowire UserAccessTestUtils. UserAccessTestUtils are for connected tests and not unit
+  // tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;

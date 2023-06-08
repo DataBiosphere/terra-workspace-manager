@@ -1,11 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
+import static bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures.getAzureDiskCreationParameters;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
 
   private Workspace sharedWorkspace;
   private UUID workspaceUuid;
@@ -38,18 +38,19 @@ public class CreateAndDeleteAzureControlledResourceFlightTest extends BaseAzureC
   @BeforeAll
   public void setup() throws InterruptedException {
     sharedWorkspace =
-        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
+        createWorkspaceWithCloudContext(
+            workspaceService, userAccessTestUtils.defaultUserAuthRequest());
     workspaceUuid = sharedWorkspace.getWorkspaceId();
   }
 
   @AfterAll
   public void cleanup() {
-    workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(sharedWorkspace, userAccessTestUtils.defaultUserAuthRequest());
   }
 
   @Test
   public void createAzureDiskControlledResource() throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     final ApiAzureDiskCreationParameters creationParameters = getAzureDiskCreationParameters();
 

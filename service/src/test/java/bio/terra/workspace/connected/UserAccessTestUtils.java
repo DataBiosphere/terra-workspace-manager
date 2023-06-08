@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 /** Helper component for providing user access tokens for connected tests. */
 @Component
 @Profile("connected-test")
-public class UserAccessUtils {
+public class UserAccessTestUtils {
   /** The OAuth scopes important for logging in a user and acting on their behalf in GCP. */
   public static final ImmutableList<String> GCP_SCOPES =
       ImmutableList.of(

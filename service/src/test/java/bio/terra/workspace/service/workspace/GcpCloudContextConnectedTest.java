@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeReferencedBqDatasetResource;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
+import static bio.terra.workspace.common.testfixtures.ReferenceResourceFixtures.makeReferencedBqDatasetResource;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
@@ -20,8 +20,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
@@ -102,7 +102,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @Autowired private ResourceDao resourceDao;
   @Autowired private SamService samService;
   @Autowired private SpendConnectedTestUtils spendUtils;
-  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private UserAccessTestUtils userAccessTestUtils;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
   @Autowired private WsmApplicationService appService;
@@ -116,7 +116,8 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   void setup() throws Exception {
     jobService.setFlightDebugInfoForTest(null);
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
     workspaceId = mockMvcUtils.createWorkspaceWithCloudContext(userRequest).getId();
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     workspaceId2 = null;
@@ -134,7 +135,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
       if (workspaceId != null) {
         int status =
             mockMvcUtils.deleteWorkspaceNoCheck(
-                userAccessUtils.defaultUserAuthRequest(), workspaceId);
+                userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
         assertTrue(
             status == HttpStatus.NO_CONTENT.value() || status == HttpStatus.NOT_FOUND.value());
         workspaceId = null;
@@ -142,7 +143,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
       if (workspaceId2 != null) {
         int status =
             mockMvcUtils.deleteWorkspaceNoCheck(
-                userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+                userAccessTestUtils.defaultUserAuthRequest(), workspaceId2);
         assertTrue(
             status == HttpStatus.NO_CONTENT.value() || status == HttpStatus.NOT_FOUND.value());
         workspaceId2 = null;
@@ -155,7 +156,8 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteWorkspaceWithGoogleContext() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest =
+        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
 
     // Reach in and find the project id
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
@@ -196,7 +198,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGetDeleteGoogleContext() throws Exception {
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isPresent());
-    mockMvcUtils.deleteGcpCloudContext(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteGcpCloudContext(userAccessTestUtils.defaultUserAuthRequest(), workspaceId);
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
   }
 
@@ -205,7 +207,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     String bucketName = "terra-test-" + UUID.randomUUID().toString().toLowerCase();
     return mockMvcUtils
         .createControlledGcsBucket(
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             workspaceId,
             "bucket_1", /* resource name */
             bucketName,
@@ -223,7 +225,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     // Enable an application
     Workspace sourceWorkspace = workspaceService.getWorkspace(workspaceId);
     appService.enableWorkspaceApplication(
-        userAccessUtils.defaultUserAuthRequest(), sourceWorkspace, TEST_WSM_APP);
+        userAccessTestUtils.defaultUserAuthRequest(), sourceWorkspace, TEST_WSM_APP);
 
     // Create a folder
     Folder sourceFolder =
@@ -252,7 +254,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     String cloneJobId =
         workspaceService.cloneWorkspace(
             sourceWorkspace,
-            userAccessUtils.defaultUserAuthRequest(),
+            userAccessTestUtils.defaultUserAuthRequest(),
             destinationLocation,
             /*additionalPolicies=*/ null,
             destinationWorkspace,
@@ -306,7 +308,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     Workspace sourceWorkspace = workspaceService.getWorkspace(workspaceId);
     // Enable an application
     appService.enableWorkspaceApplication(
-        userAccessUtils.defaultUserAuthRequest(), sourceWorkspace, TEST_WSM_APP);
+        userAccessTestUtils.defaultUserAuthRequest(), sourceWorkspace, TEST_WSM_APP);
 
     // Create a folder
     folderDao.createFolder(
@@ -326,7 +328,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .createReferenceResource(
                 makeReferencedBqDatasetResource(
                     sourceWorkspace.getWorkspaceId(), "my-project", "fake_dataset"),
-                userAccessUtils.defaultUserAuthRequest())
+                userAccessTestUtils.defaultUserAuthRequest())
             .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters()
@@ -342,7 +344,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
             .createControlledResourceSync(
-                resource, null, userAccessUtils.defaultUserAuthRequest(), creationParameters)
+                resource, null, userAccessTestUtils.defaultUserAuthRequest(), creationParameters)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     workspaceId2 = UUID.randomUUID();
@@ -379,7 +381,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
         () ->
             workspaceService.cloneWorkspace(
                 sourceWorkspace,
-                userAccessUtils.defaultUserAuthRequest(),
+                userAccessTestUtils.defaultUserAuthRequest(),
                 destinationLocation,
                 /*additionalPolicies=*/ null,
                 destinationWorkspace,

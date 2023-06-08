@@ -1,4 +1,4 @@
-package bio.terra.workspace.common;
+package bio.terra.workspace.common.testutils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -33,8 +33,8 @@ import org.springframework.stereotype.Component;
 
 /** Utils for working with cloud objects. */
 @Component
-public class GcpCloudUtils {
-  private static final Logger logger = LoggerFactory.getLogger(GcpCloudUtils.class);
+public class GcpCloudTestUtils {
+  private static final Logger logger = LoggerFactory.getLogger(GcpCloudTestUtils.class);
 
   @Autowired CrlService crlService;
 

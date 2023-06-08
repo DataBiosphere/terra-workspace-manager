@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.ImmutableList;
@@ -20,7 +20,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Autowired SamService samService;
   @Autowired SpendProfileConfiguration spendProfileConfiguration;
   @Autowired SpendConnectedTestUtils spendUtils;
-  @Autowired UserAccessUtils userAccessUtils;
+  @Autowired UserAccessTestUtils userAccessTestUtils;
 
   /** Condition used to disable these tests if run in a deployment where BPM is not configured. */
   public boolean bpmUnavailable() {
@@ -37,7 +37,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
         new SpendProfileService(samService, ImmutableList.of(profile), spendProfileConfiguration);
 
     assertEquals(
-        profile, service.authorizeLinking(id, false, userAccessUtils.defaultUserAuthRequest()));
+        profile, service.authorizeLinking(id, false, userAccessTestUtils.defaultUserAuthRequest()));
   }
 
   @Test
@@ -51,7 +51,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
 
     assertThrows(
         SpendUnauthorizedException.class,
-        () -> service.authorizeLinking(id, false, userAccessUtils.secondUserAuthRequest()));
+        () -> service.authorizeLinking(id, false, userAccessTestUtils.secondUserAuthRequest()));
   }
 
   @Test
@@ -63,7 +63,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
         SpendUnauthorizedException.class,
         () ->
             service.authorizeLinking(
-                new SpendProfileId("bar"), false, userAccessUtils.defaultUserAuthRequest()));
+                new SpendProfileId("bar"), false, userAccessTestUtils.defaultUserAuthRequest()));
   }
 
   @Test
@@ -74,6 +74,6 @@ class SpendProfileServiceTest extends BaseConnectedTest {
         SpendProfile.buildGcpSpendProfile(
             spendUtils.defaultSpendId(), spendUtils.defaultBillingAccountId()),
         service.authorizeLinking(
-            spendUtils.defaultSpendId(), false, userAccessUtils.defaultUserAuthRequest()));
+            spendUtils.defaultSpendId(), false, userAccessTestUtils.defaultUserAuthRequest()));
   }
 }

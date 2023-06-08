@@ -1,7 +1,7 @@
 package bio.terra.workspace.common;
 
 import bio.terra.landingzone.db.LandingZoneDao;
-import bio.terra.workspace.common.utils.AzureTestUtils;
+import bio.terra.workspace.common.testutils.AzureTestUtils;
 import bio.terra.workspace.connected.AzureConnectedTestUtils;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;

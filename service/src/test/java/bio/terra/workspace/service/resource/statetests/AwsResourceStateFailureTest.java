@@ -1,21 +1,22 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.insertControlledResourceRow;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createDefaultMcWorkspace;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_STORAGE_FOLDERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.testfixtures.ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource;
+import static bio.terra.workspace.common.testfixtures.ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.insertControlledResourceRow;
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createDefaultMcWorkspace;
+import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createWorkspaceInDb;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.AWS_STORAGE_FOLDERS_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT;
+import static bio.terra.workspace.common.testutils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
+import bio.terra.workspace.common.testutils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiAccessScope;
@@ -30,7 +31,6 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
