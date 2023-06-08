@@ -153,8 +153,7 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
   /** {@inheritDoc} */
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO(TERRA-315) Add support for UpdateAwsS3StorageFolder
-    throw new ApiException("addUpdateSteps NotImplemented");
+    // TODO(TERRA-315) Determine if we need to support updating the storage folder prefix
   }
 
   public ApiAwsS3StorageFolderAttributes toApiAttributes() {

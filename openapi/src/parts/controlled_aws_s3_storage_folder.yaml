@@ -62,6 +62,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled AWS S3 Storage resource.
+      operationId: updateAwsS3StorageFolder
+      tags: [ ControlledAwsResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledAwsS3StorageFolderRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdateControlledAwsS3StorageFolderResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
     post:
       summary: | 
         Delete a controlled AWS S3 Storage resource. This is async, because the 
@@ -171,6 +190,17 @@ components:
         awsS3StorageFolder:
           $ref: '#/components/schemas/AwsS3StorageFolderResource'
 
+    UpdateControlledAwsS3StorageFolderRequestBody:
+      type: object
+      description: Update an AWS S3 Storage folder's metadata.
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+
   responses:
     CreateControlledAwsS3StorageFolderResponse:
       description: Response to create controlled AWS S3 Storage Folder resource.
@@ -181,6 +211,13 @@ components:
 
     GetControlledAwsS3StorageFolderResponse:
       description: Response to get AWS S3 Storage Folder resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsS3StorageFolderResource'
+
+    UpdateControlledAwsS3StorageFolderResponse:
+      description: Response for an AWS S3 Storage Folder update.
       content:
         application/json:
           schema:
