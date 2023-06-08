@@ -84,7 +84,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   }
 
   @Test
-  void validateWorkspaceConformsToRegionPolicy_valid() {
+  void validateWorkspaceConformsToRegionPolicy_valid() throws Exception {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
         defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
@@ -115,7 +115,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   }
 
   @Test
-  void validateWorkspaceConformsToRegionPolicy_invalidResources() {
+  void validateWorkspaceConformsToRegionPolicy_invalidResources() throws Exception {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
         defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();
@@ -148,7 +148,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   }
 
   @Test
-  void validateWorkspaceConformsToRegionPolicy_invalidLandingZone() {
+  void validateWorkspaceConformsToRegionPolicy_invalidLandingZone() throws Exception {
     var spendProfileId = new SpendProfileId(UUID.randomUUID().toString());
     var workspace =
         defaultWorkspaceBuilder(UUID.randomUUID()).spendProfileId(spendProfileId).build();

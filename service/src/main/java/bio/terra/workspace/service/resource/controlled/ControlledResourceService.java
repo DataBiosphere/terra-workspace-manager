@@ -6,6 +6,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
@@ -15,7 +16,6 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParam
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobBuilder;
@@ -441,7 +441,7 @@ public class ControlledResourceService {
         commonCreationJobBuilder(
             resource, privateResourceIamRole, jobControl, resultPath, userRequest);
     String petSaEmail =
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.getOrCreatePetSaEmail(
                     resource.getProjectId(), userRequest.getRequiredToken()),

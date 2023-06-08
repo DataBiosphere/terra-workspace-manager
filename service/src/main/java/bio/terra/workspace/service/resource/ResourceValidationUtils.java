@@ -10,6 +10,7 @@ import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
@@ -477,11 +478,17 @@ public class ResourceValidationUtils {
 
   public static void validateRegion(
       TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region, CloudPlatform cloudPlatform) {
-    tpsApiDispatch.createPaoIfNotExist(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+    Rethrow.onInterrupted(
+        () ->
+            tpsApiDispatch.createPaoIfNotExist(
+                workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+        "createPaoIfNotExist");
 
     // Get the list of valid locations for this workspace from TPS. If there are no regional
     // constraints applied to the workspace, TPS should return all available regions.
-    List<String> validLocations = tpsApiDispatch.listValidRegions(workspaceId, cloudPlatform);
+    List<String> validLocations =
+        Rethrow.onInterrupted(
+            () -> tpsApiDispatch.listValidRegions(workspaceId, cloudPlatform), "listValidRegions");
 
     if (validLocations.stream().noneMatch(region::equalsIgnoreCase)) {
       throw new RegionNotAllowedException(

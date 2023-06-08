@@ -16,11 +16,11 @@ import bio.terra.stairway.exception.MakeFlightException;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
@@ -267,7 +267,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
                     Function.identity(),
                     role ->
                         "group:"
-                            + SamRethrow.onInterrupted(
+                            + Rethrow.onInterrupted(
                                 () ->
                                     samService.syncWorkspacePolicy(
                                         workspaceUuid,

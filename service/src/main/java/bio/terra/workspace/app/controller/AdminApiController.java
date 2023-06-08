@@ -2,13 +2,13 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.generated.controller.AdminApi;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.admin.AdminService;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -46,7 +46,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
   @Override
   public ResponseEntity<ApiJobResult> syncIamRoles(Boolean wetRun) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () -> samService.checkAdminAuthz(userRequest), "check whether the user has admin access");
 
     String jobId =
@@ -63,7 +63,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
 
   private ResponseEntity<ApiJobResult> getApiJobResult(String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () -> samService.checkAdminAuthz(userRequest), "check whether the user has admin access");
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));

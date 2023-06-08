@@ -7,13 +7,13 @@ import bio.terra.workspace.app.controller.shared.ControllerUtils;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -154,7 +154,7 @@ public class ControllerBase {
 
         // Validate that the assigned user is a member of the workspace. It must have at least
         // READ action.
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.userIsAuthorized(
                     SamConstants.SamResource.WORKSPACE,

@@ -12,6 +12,7 @@ import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
@@ -66,7 +67,7 @@ import org.springframework.stereotype.Component;
  * interpreted by the functions in this class.
  *
  * <p>This class is used both by Flights and outside of Flights. Flights need the
- * InterruptedExceptions to be thrown. Outside of flights, use the SamRethrow.onInterrupted. See
+ * InterruptedExceptions to be thrown. Outside of flights, use the Rethrow.onInterrupted. See
  * comment there for more detail.
  */
 @Component
@@ -163,8 +164,7 @@ public class SamService {
    * flight as we don't need to retry when `InterruptException` happens outside a flight.
    */
   public String getUserEmailFromSamAndRethrowOnInterrupt(AuthenticatedUserRequest userRequest) {
-    return SamRethrow.onInterrupted(
-        () -> getUserEmailFromSam(userRequest), "Get user email from SAM");
+    return Rethrow.onInterrupted(() -> getUserEmailFromSam(userRequest), "Get user email from SAM");
   }
 
   /**

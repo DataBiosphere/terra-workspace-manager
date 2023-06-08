@@ -18,6 +18,7 @@ import bio.terra.workspace.app.controller.shared.WorkspaceApiUtils;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.controller.WorkspaceApi;
 import bio.terra.workspace.generated.model.ApiAwsContext;
@@ -54,7 +55,6 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.exception.InvalidRoleException;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -430,7 +430,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     }
     workspaceService.validateWorkspaceState(workspaceUuid);
     // No additional authz check as this is just a wrapper around a Sam endpoint.
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
                 workspaceUuid,
@@ -473,7 +473,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiRoleBindingList> getRoles(@PathVariable("workspaceId") UUID uuid) {
     // No additional authz check as this is just a wrapper around a Sam endpoint.
     List<bio.terra.workspace.service.iam.model.RoleBinding> bindingList =
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () -> samService.listRoleBindings(uuid, getAuthenticatedInfo()), "listRoleBindings");
     ApiRoleBindingList responseList = new ApiRoleBindingList();
     for (bio.terra.workspace.service.iam.model.RoleBinding roleBinding : bindingList) {
@@ -721,8 +721,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         userRequest, workspaceUuid, SamWorkspaceAction.READ);
 
     List<String> regions =
-        tpsApiDispatch.listValidRegions(
-            workspaceUuid, CloudPlatform.fromApiCloudPlatform(platform));
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.listValidRegions(
+                    workspaceUuid, CloudPlatform.fromApiCloudPlatform(platform)),
+            "listValidRegions");
 
     ApiRegions apiRegions = new ApiRegions();
     apiRegions.addAll(regions);
@@ -737,7 +740,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamWorkspaceAction.READ);
     PolicyExplainResult explainResult =
-        tpsApiDispatch.explain(workspaceUuid, depth, workspaceService, userRequest);
+        Rethrow.onInterrupted(
+            () -> tpsApiDispatch.explain(workspaceUuid, depth, workspaceService, userRequest),
+            "explain");
 
     return new ResponseEntity<>(explainResult.toApi(), HttpStatus.OK);
   }
@@ -747,16 +752,26 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   public ResponseEntity<ApiWsmPolicyMergeCheckResult> mergeCheck(
       UUID targetWorkspaceId, ApiMergeCheckRequest requestBody) {
     UUID sourceWorkspaceId = requestBody.getWorkspaceId();
-    tpsApiDispatch.createPaoIfNotExist(
-        sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
-    tpsApiDispatch.createPaoIfNotExist(
-        targetWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+    Rethrow.onInterrupted(
+        () ->
+            tpsApiDispatch.createPaoIfNotExist(
+                sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+        "createPaoIfNotExist");
+    Rethrow.onInterrupted(
+        () ->
+            tpsApiDispatch.createPaoIfNotExist(
+                targetWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+        "createPaoIfNotExist");
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, targetWorkspaceId, SamWorkspaceAction.READ);
     TpsPaoUpdateResult dryRunResults =
-        tpsApiDispatch.mergePao(targetWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN);
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.mergePao(
+                    targetWorkspaceId, sourceWorkspaceId, TpsUpdateMode.DRY_RUN),
+            "mergePao");
 
     addAnyGroupMergeConflicts(targetWorkspaceId, sourceWorkspaceId, dryRunResults);
 
@@ -765,8 +780,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     for (var platform : ApiCloudPlatform.values()) {
       HashSet<String> validRegions =
           new HashSet<>(
-              tpsApiDispatch.listValidRegions(
-                  sourceWorkspaceId, CloudPlatform.fromApiCloudPlatform(platform)));
+              Rethrow.onInterrupted(
+                  () ->
+                      tpsApiDispatch.listValidRegions(
+                          sourceWorkspaceId, CloudPlatform.fromApiCloudPlatform(platform)),
+                  "listValidRegions"));
 
       List<ControlledResource> existingResources =
           resourceDao.listControlledResources(
@@ -821,7 +839,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
    */
   private void addAnyGroupMergeConflicts(
       UUID targetWorkspaceId, UUID sourceWorkspaceId, TpsPaoUpdateResult dryRunResults) {
-    TpsPaoGetResult targetPaoPreUpdate = tpsApiDispatch.getPao(targetWorkspaceId);
+    TpsPaoGetResult targetPaoPreUpdate =
+        Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(targetWorkspaceId), "getPao");
 
     HashSet<String> priorGroups =
         new HashSet<>(
@@ -833,7 +852,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                 dryRunResults.getResultingPao().getEffectiveAttributes()));
 
     if (!priorGroups.equals(mergedGroups)) {
-      var sourcePao = tpsApiDispatch.getPao(sourceWorkspaceId);
+      var sourcePao =
+          Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(sourceWorkspaceId), "getPao");
       TpsPaoDescription targetDescription =
           new TpsPaoDescription()
               .objectId(targetWorkspaceId)

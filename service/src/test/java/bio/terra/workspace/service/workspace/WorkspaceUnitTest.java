@@ -85,7 +85,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   }
 
   @Test
-  void linkPolicies_dryRun() {
+  void linkPolicies_dryRun() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
@@ -107,7 +107,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   }
 
   @Test
-  void linkPolicies_policyConflict() {
+  void linkPolicies_policyConflict() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
@@ -138,7 +138,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   }
 
   @Test
-  void linkPolicies_workspaceConflict() {
+  void linkPolicies_workspaceConflict() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
@@ -163,7 +163,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   }
 
   @Test
-  void linkPolicies_applied() {
+  void linkPolicies_applied() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
@@ -195,7 +195,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   }
 
   @Test
-  void updatePolicies_dryRun() {
+  void updatePolicies_dryRun() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
@@ -215,7 +215,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   }
 
   @Test
-  void updatePolicies_policyConflict() {
+  void updatePolicies_policyConflict() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
@@ -244,7 +244,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   }
 
   @Test
-  void updatePolicies_workspaceConflict() {
+  void updatePolicies_workspaceConflict() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
@@ -267,7 +267,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   }
 
   @Test
-  void updatePolicies_applied() {
+  void updatePolicies_applied() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 

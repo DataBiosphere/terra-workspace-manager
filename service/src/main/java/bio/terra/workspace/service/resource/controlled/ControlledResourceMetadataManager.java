@@ -2,11 +2,11 @@ package bio.terra.workspace.service.resource.controlled;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
@@ -122,7 +122,7 @@ public class ControlledResourceMetadataManager {
           // Broken user resource. The Sam resource for this resource may not exist.
           // Either it failed to get created or we undid it on the way out of the
           // flight. So we base the authz check on the user's permission on the workspace.
-          SamRethrow.onInterrupted(
+          Rethrow.onInterrupted(
               () ->
                   samService.checkAuthz(
                       userRequest,
@@ -140,7 +140,7 @@ public class ControlledResourceMetadataManager {
 
   private void checkResourceAuthz(
       AuthenticatedUserRequest userRequest, String samName, UUID resourceId, String action) {
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () -> samService.checkAuthz(userRequest, samName, resourceId.toString(), action),
         "checkAuthz");
   }

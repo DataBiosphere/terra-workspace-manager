@@ -3,12 +3,12 @@ package bio.terra.workspace.service.privateresource;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.app.configuration.external.PrivateResourceCleanupConfiguration;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.CronjobDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.WorkspaceDao.WorkspaceUserPair;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -110,7 +110,7 @@ public class PrivateResourceCleanupService {
     for (WorkspaceUserPair workspaceUserPair : resourcesToValidate) {
       try {
         boolean userHasPermission =
-            SamRethrow.onInterrupted(
+            Rethrow.onInterrupted(
                 () ->
                     samService.checkAuthAsWsmSa(
                         SamResource.WORKSPACE,

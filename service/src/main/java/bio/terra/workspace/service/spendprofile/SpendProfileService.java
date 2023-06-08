@@ -7,8 +7,8 @@ import bio.terra.profile.client.ApiException;
 import bio.terra.profile.model.CreateProfileRequest;
 import bio.terra.profile.model.ProfileModel;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
@@ -84,7 +84,7 @@ public class SpendProfileService {
 
     SpendProfile spend = null;
     if (spendProfiles.containsKey(spendProfileId)) {
-      if (!SamRethrow.onInterrupted(
+      if (!Rethrow.onInterrupted(
           () ->
               samService.isAuthorized(
                   userRequest,
@@ -99,7 +99,7 @@ public class SpendProfileService {
       // profiles returned from BPM means we are auth'ed
       spend = getSpendProfileFromBpm(userRequest, spendProfileId);
     } else {
-      if (!SamRethrow.onInterrupted(
+      if (!Rethrow.onInterrupted(
           () ->
               samService.isAuthorized(
                   userRequest,
