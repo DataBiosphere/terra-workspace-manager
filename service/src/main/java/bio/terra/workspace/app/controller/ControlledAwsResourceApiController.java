@@ -562,7 +562,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     ControlledAwsSageMakerNotebookResource updatedResource =
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceUuid)
-            .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
 
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
