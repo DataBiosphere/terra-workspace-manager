@@ -88,6 +88,27 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled AWS SageMaker Notebook resource.
+      operationId: updateAwsSageMakerNotebook
+      tags: [ ControlledAwsResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledAwsSageMakerNotebookRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/UpdateControlledAwsSageMakerNotebookResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
     post:
       summary: |
         Delete a controlled AWS SageMaker Notebook resource. This is async, because the 
@@ -202,6 +223,17 @@ components:
         awsSageMakerNotebook:
           $ref: '#/components/schemas/AwsSageMakerNotebookResource'
 
+    UpdateControlledAwsSageMakerNotebookRequestBody:
+      type: object
+      description: Update an AWS SageMaker Notebook resource's metadata.
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+
   responses:
     CreateControlledAwsSageMakerNotebookResponse:
       description: Response to create controlled AWS SageMaker Notebook instance resource.
@@ -212,6 +244,13 @@ components:
 
     GetControlledAwsSageMakerNotebookResponse:
       description: Response to get AWS SageMaker Notebook resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsSageMakerNotebookResource'
+
+    UpdateControlledAwsSageMakerNotebookResponse:
+      description: Response for an AWS SageMaker Notebook update.
       content:
         application/json:
           schema:

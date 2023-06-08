@@ -23,6 +23,8 @@ import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceResult;
 import bio.terra.workspace.generated.model.ApiGenerateAwsResourceCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiUpdateControlledAwsS3StorageFolderRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledAwsSageMakerNotebookRequestBody;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -32,6 +34,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
+import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
@@ -43,6 +46,7 @@ import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -77,6 +81,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   private final Logger logger = LoggerFactory.getLogger(ControlledAwsResourceApiController.class);
 
+  private final WsmResourceService wsmResourceService;
+
   private final AwsCloudContextService awsCloudContextService;
 
   @Autowired
@@ -91,6 +97,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       ControlledResourceService controlledResourceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       WorkspaceService workspaceService,
+      WsmResourceService wsmResourceService,
       AwsCloudContextService awsCloudContextService) {
     super(
         authenticatedUserRequestFactory,
@@ -103,6 +110,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         controlledResourceService,
         controlledResourceMetadataManager,
         workspaceService);
+    this.wsmResourceService = wsmResourceService;
     this.awsCloudContextService = awsCloudContextService;
   }
 
@@ -318,6 +326,41 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
   @Traced
   @Override
+  public ResponseEntity<ApiAwsS3StorageFolderResource> updateAwsS3StorageFolder(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiUpdateControlledAwsS3StorageFolderRequestBody body) {
+    logger.info(
+        "Updating AWS S3 Storage Folder resourceId {} workspaceUuid {}",
+        resourceUuid,
+        workspaceUuid);
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AWS);
+
+    ControlledAwsS3StorageFolderResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceUuid,
+                SamConstants.SamControlledResourceActions.EDIT_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
+
+    CommonUpdateParameters commonUpdateParameters =
+        new CommonUpdateParameters().setName(body.getName()).setDescription(body.getDescription());
+
+    wsmResourceService.updateResource(userRequest, resource, commonUpdateParameters, null);
+
+    ControlledAwsS3StorageFolderResource updatedResource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
+
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsS3StorageFolder(
       UUID workspaceUuid,
       UUID resourceUuid,
@@ -487,6 +530,41 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
                 SamConstants.SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiAwsSageMakerNotebookResource> updateAwsSageMakerNotebook(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiUpdateControlledAwsSageMakerNotebookRequestBody body) {
+    logger.info(
+        "Updating AWS SageMaker Notebook resourceId {} workspaceUuid {}",
+        resourceUuid,
+        workspaceUuid);
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AWS);
+
+    ControlledAwsSageMakerNotebookResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest,
+                workspaceUuid,
+                resourceUuid,
+                SamConstants.SamControlledResourceActions.EDIT_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
+    CommonUpdateParameters commonUpdateParameters =
+        new CommonUpdateParameters().setName(body.getName()).setDescription(body.getDescription());
+
+    wsmResourceService.updateResource(userRequest, resource, commonUpdateParameters, null);
+
+    ControlledAwsSageMakerNotebookResource updatedResource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
+
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
   @Traced
