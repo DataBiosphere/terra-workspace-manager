@@ -257,7 +257,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
 
     String jobId =
         controlledResourceService.deleteControlledResourceAsync(
-            new ApiJobControl().id(UUID.randomUUID().toString()),
+            UUID.randomUUID().toString(),
             workspaceId,
             createdBucket.getResourceId(),
             "fake result path",

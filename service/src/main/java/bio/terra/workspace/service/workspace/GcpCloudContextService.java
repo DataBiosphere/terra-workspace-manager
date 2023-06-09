@@ -3,18 +3,20 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateCustomGcpRolesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreatePetSaStep;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledDbResourcesStep;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledSamResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteCloudContextResourceFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.GcpCloudSyncStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.GenerateRbsRequestIdStep;
@@ -30,6 +32,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
@@ -49,10 +52,12 @@ public class GcpCloudContextService implements CloudContextService {
   private static GcpCloudContextService theService;
 
   private final WorkspaceDao workspaceDao;
+  private final ResourceDao resourceDao;
 
   @Autowired
-  public GcpCloudContextService(WorkspaceDao workspaceDao) {
+  public GcpCloudContextService(WorkspaceDao workspaceDao, ResourceDao resourceDao) {
     this.workspaceDao = workspaceDao;
+    this.resourceDao = resourceDao;
   }
 
   // Set up static accessor for use by CloudPlatform
@@ -121,30 +126,39 @@ public class GcpCloudContextService implements CloudContextService {
       FlightBeanBag appContext,
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest) {
-    RetryRule retryRule = RetryRules.cloudLongRunning();
-
-    // We delete controlled resources from Sam and WSM databases, but do not need to delete the
-    // actual cloud objects, as GCP handles the cleanup when we delete the containing project.
-    flight.addStep(
-        new DeleteControlledSamResourcesStep(
-            appContext.getSamService(),
-            appContext.getResourceDao(),
-            workspaceUuid,
-            CloudPlatform.GCP),
-        retryRule);
-    flight.addStep(
-        new DeleteControlledDbResourcesStep(
-            appContext.getResourceDao(), workspaceUuid, CloudPlatform.GCP),
-        retryRule);
     flight.addStep(
         new DeleteGcpProjectStep(
             appContext.getCrlService(), appContext.getGcpCloudContextService()),
-        retryRule);
+        RetryRules.cloudLongRunning());
   }
 
   @Override
   public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
     return GcpCloudContext.deserialize(dbCloudContext);
+  }
+
+  @Override
+  public List<ControlledResource> makeOrderedResourceList(UUID workspaceUuid) {
+    return resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
+  }
+
+  @Override
+  public void launchDeleteFlight(
+      ControlledResourceService controlledResourceService,
+      UUID workspaceUuid,
+      UUID resourceId,
+      String flightId,
+      AuthenticatedUserRequest userRequest) {
+    controlledResourceService
+        .flexibleDeletionJobBuilder(
+            flightId,
+            workspaceUuid,
+            resourceId,
+            /* forceDelete= */ false,
+            /* resultPath= */ null,
+            userRequest,
+            DeleteCloudContextResourceFlight.class)
+        .submit();
   }
 
   /**

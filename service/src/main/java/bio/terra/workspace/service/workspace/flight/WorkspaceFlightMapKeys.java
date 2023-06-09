@@ -24,6 +24,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String CLOUD_CONTEXT = "cloudContext";
   public static final String FLIGHT_IDS = "flightIds";
   public static final String CREATE_CLOUD_CONTEXT_FLIGHT_ID = "createCloudContextFlightId";
+  public static final String RESOURCE_DELETE_FLIGHT_PAIR_LIST = "resourceDeleteFlightPairList";
 
   private WorkspaceFlightMapKeys() {}
 

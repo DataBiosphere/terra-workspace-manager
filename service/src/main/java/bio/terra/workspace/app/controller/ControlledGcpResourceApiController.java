@@ -178,7 +178,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         "deleteBucket workspace {} resource {}", workspaceUuid.toString(), resourceUuid.toString());
     final String jobId =
         controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
+            jobControl.getId(),
             workspaceUuid,
             resourceUuid,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
@@ -621,7 +621,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         resourceUuid.toString());
     String jobId =
         controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
+            jobControl.getId(),
             workspaceUuid,
             resourceUuid,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),

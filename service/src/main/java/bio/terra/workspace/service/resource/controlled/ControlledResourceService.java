@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.stairway.Flight;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
@@ -216,13 +217,13 @@ public class ControlledResourceService {
    * job.
    */
   public String deleteControlledResourceAsync(
-      ApiJobControl jobControl,
+      String jobId,
       UUID workspaceUuid,
       UUID resourceId,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     return deleteControlledResourceAsync(
-        jobControl, workspaceUuid, resourceId, false, resultPath, userRequest);
+        jobId, workspaceUuid, resourceId, false, resultPath, userRequest);
   }
 
   /**
@@ -230,14 +231,14 @@ public class ControlledResourceService {
    * job.
    */
   private String deleteControlledResourceAsync(
-      ApiJobControl jobControl,
+      String jobId,
       UUID workspaceUuid,
       UUID resourceId,
       boolean forceDelete,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
     return commonDeletionJobBuilder(
-            jobControl.getId(), workspaceUuid, resourceId, forceDelete, resultPath, userRequest)
+            jobId, workspaceUuid, resourceId, forceDelete, resultPath, userRequest)
         .submit();
   }
 
@@ -252,6 +253,24 @@ public class ControlledResourceService {
       boolean forceDelete,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
+    return flexibleDeletionJobBuilder(
+        jobId,
+        workspaceUuid,
+        resourceId,
+        forceDelete,
+        resultPath,
+        userRequest,
+        DeleteControlledResourcesFlight.class);
+  }
+
+  public JobBuilder flexibleDeletionJobBuilder(
+      String jobId,
+      UUID workspaceUuid,
+      UUID resourceId,
+      boolean forceDelete,
+      String resultPath,
+      AuthenticatedUserRequest userRequest,
+      Class<? extends Flight> flightClass) {
     WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
     String jobDescription = "Delete controlled resource; id: " + resourceId;
 
@@ -261,7 +280,7 @@ public class ControlledResourceService {
         .newJob()
         .description(jobDescription)
         .jobId(jobId)
-        .flightClass(DeleteControlledResourcesFlight.class)
+        .flightClass(flightClass)
         .userRequest(userRequest)
         .workspaceId(workspaceUuid.toString())
         .operationType(OperationType.DELETE)

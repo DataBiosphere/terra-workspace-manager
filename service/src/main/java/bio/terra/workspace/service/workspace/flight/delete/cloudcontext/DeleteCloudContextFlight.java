@@ -9,7 +9,9 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.CloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -44,13 +46,26 @@ public class DeleteCloudContextFlight extends Flight {
         FlightUtils.getRequired(
             inputParameters, WorkspaceFlightMapKeys.CLOUD_PLATFORM, CloudPlatform.class);
     WorkspaceDao workspaceDao = appContext.getWorkspaceDao();
+    SamService samService = appContext.getSamService();
+    CloudContextService cloudContextService = cloudPlatform.getCloudContextService();
+    ControlledResourceService controlledResourceService = appContext.getControlledResourceService();
 
     RetryRule dbRetry = RetryRules.shortDatabase();
+    RetryRule serviceRetry = RetryRules.cloud();
 
     addStep(new DeleteCloudContextStartStep(workspaceUuid, workspaceDao, cloudPlatform), dbRetry);
 
+    addStep(
+        new BuildAndValidateResourceListStep(
+            cloudContextService, samService, userRequest, workspaceUuid),
+        serviceRetry);
+
+    addStep(
+        new DeleteResourcesStep(
+            cloudContextService, controlledResourceService, userRequest, workspaceUuid),
+        serviceRetry);
+
     // Add the delete steps for the appropriate cloud type
-    CloudContextService cloudContextService = cloudPlatform.getCloudContextService();
     cloudContextService.addDeleteCloudContextSteps(this, appContext, workspaceUuid, userRequest);
 
     addStep(new DeleteCloudContextFinishStep(workspaceUuid, workspaceDao, cloudPlatform), dbRetry);
