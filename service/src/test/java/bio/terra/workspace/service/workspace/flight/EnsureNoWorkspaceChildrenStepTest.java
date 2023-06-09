@@ -4,9 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.testutils.MockMvcUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.exceptions.ChildrenBlockingDeletionException;
@@ -28,10 +26,10 @@ public class EnsureNoWorkspaceChildrenStepTest {
   void stepPassesWhenNoChildrenExistForWorkspace() throws Exception {
     SamService sam = Mockito.mock(SamService.class);
     UUID workspaceId = UUID.randomUUID();
-    AuthenticatedUserRequest userRequest = MockMvcUtils.USER_REQUEST;
+    AuthenticatedUserRequest userRequest = new AuthenticatedUserRequest();
     when(sam.getWorkspaceChildResources(userRequest, workspaceId)).thenReturn(List.of());
 
-    StepResult result =
+    var result =
         new EnsureNoWorkspaceChildrenStep(sam, userRequest, workspaceId)
             .doStep(Mockito.mock(FlightContext.class));
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
@@ -41,7 +39,7 @@ public class EnsureNoWorkspaceChildrenStepTest {
   void stepFailsWhenChildrenExistForWorkspace() throws Exception {
     SamService sam = Mockito.mock(SamService.class);
     UUID workspaceId = UUID.randomUUID();
-    AuthenticatedUserRequest userRequest = MockMvcUtils.USER_REQUEST;
+    AuthenticatedUserRequest userRequest = new AuthenticatedUserRequest();
     var resourceId = "test_child_resource";
     var resourceType = "test_resource_type";
     var children =

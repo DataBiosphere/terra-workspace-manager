@@ -32,7 +32,6 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
-import bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.testutils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.RawDaoTestFixture;
@@ -418,8 +417,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   private ControlledAiNotebookInstanceResource createNotebookAndLog(UUID workspaceId) {
-    var aiNotebook =
-        ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder(workspaceId).build();
+    var aiNotebook = makeDefaultAiNotebookInstanceBuilder(workspaceId).build();
     insertControlledResourceRow(resourceDao, aiNotebook);
     activityLogDao.writeActivity(
         workspaceId,

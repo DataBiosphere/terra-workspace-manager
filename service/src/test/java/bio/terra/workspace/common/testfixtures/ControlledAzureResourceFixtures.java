@@ -213,11 +213,11 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ApiAzureVmCustomScriptExtension getAzureVmCustomScriptExtension() {
-    final String[] customScriptFileUri =
+     String[] customScriptFileUri =
         new String[] {
           "https://raw.githubusercontent.com/DataBiosphere/leonardo/TOAZ-83-dummy-script/http/src/main/resources/init-resources/msdsvmcontent/dummy_script.sh"
         };
-    final String commandToExecute = "bash dummy_script.sh hello";
+     String commandToExecute = "bash dummy_script.sh hello";
 
     var publicSettings =
         Arrays.asList(

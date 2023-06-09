@@ -263,13 +263,13 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void duplicateControlledBucketNameRejected() {
-    final String clashingBucketName = "not-a-pail";
-    final ControlledGcsBucketResource initialResource =
+    String clashingBucketName = "not-a-pail";
+    ControlledGcsBucketResource initialResource =
         makeDefaultControlledGcsBucketBuilder(workspaceUuid).bucketName(clashingBucketName).build();
     insertControlledResourceRow(resourceDao, initialResource);
 
-    final UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
-    final ControlledGcsBucketResource duplicatingResource =
+    UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
+    ControlledGcsBucketResource duplicatingResource =
         makeDefaultControlledGcsBucketBuilder(workspaceId2).bucketName(clashingBucketName).build();
 
     assertThrows(
@@ -300,7 +300,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     ControlledResourceFields commonFields2 =
         makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid).name("resource-2").build();
-    final ControlledResource duplicatingResource =
+    ControlledResource duplicatingResource =
         makeDefaultAiNotebookInstanceBuilder()
             .common(commonFields2)
             .instanceId(cloudInstanceId)
@@ -330,7 +330,7 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     ControlledResourceFields commonFields5 =
         makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid).name("resource-5").build();
-    final ControlledAiNotebookInstanceResource resourceWithDefaultLocation =
+    ControlledAiNotebookInstanceResource resourceWithDefaultLocation =
         makeDefaultAiNotebookInstanceBuilder()
             .common(commonFields5)
             .instanceId(cloudInstanceId)
@@ -349,7 +349,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     String datasetName1 = "dataset1";
     String projectId1 = "projectId1";
     String projectId2 = "projectId2";
-    final ControlledBigQueryDatasetResource initialResource =
+    ControlledBigQueryDatasetResource initialResource =
         ControlledBigQueryDatasetResource.builder()
             .common(makeDefaultControlledResourceFields(workspaceUuid))
             .projectId(projectId1)
@@ -362,7 +362,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       // This is in a different workspace (and so a different cloud context), so it is not a
       // conflict
       // even with the same Dataset ID.
-      final ControlledBigQueryDatasetResource uniqueResource =
+      ControlledBigQueryDatasetResource uniqueResource =
           ControlledBigQueryDatasetResource.builder()
               .common(makeDefaultControlledResourceFields(workspaceId2))
               .datasetName(datasetName1)
@@ -371,7 +371,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       createControlledResourceAndLog(uniqueResource);
 
       // This is in the same workspace as initialResource, so it should be a conflict.
-      final ControlledBigQueryDatasetResource duplicatingResource =
+      ControlledBigQueryDatasetResource duplicatingResource =
           ControlledBigQueryDatasetResource.builder()
               .common(makeDefaultControlledResourceFields(workspaceUuid))
               .projectId(projectId1)

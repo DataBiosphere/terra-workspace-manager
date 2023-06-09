@@ -108,8 +108,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
   // https://github.com/DataBiosphere/terra-workspace-manager#for-local-runs-skip-workspacecontext-creation
   @BeforeAll
   public void setup() throws Exception {
-    AuthenticatedUserRequest defaultUserRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest defaultUserRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     // See note in ControlledGcpResourceApiControllerGcsBucketTest for details
     // on how we handle the grant permissions and avoid long propagation delays.
@@ -187,8 +186,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
    */
   @AfterEach
   public void resetFlightDebugInfo() {
-    AuthenticatedUserRequest defaultUserRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest defaultUserRequest = userAccessTestUtils.defaultUserAuthRequest();
     jobService.setFlightDebugInfoForTest(null);
     StairwayTestUtils.enumerateJobsDump(jobService, workspaceId, defaultUserRequest);
     StairwayTestUtils.enumerateJobsDump(jobService, workspaceId2, defaultUserRequest);
@@ -196,16 +194,14 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
 
   @AfterAll
   public void cleanup() throws Exception {
-    AuthenticatedUserRequest defaultUserRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest defaultUserRequest = userAccessTestUtils.defaultUserAuthRequest();
     mockMvcUtils.deleteWorkspace(defaultUserRequest, workspaceId);
     mockMvcUtils.deleteWorkspace(defaultUserRequest, workspaceId2);
   }
 
   @Test
   public void create() throws Exception {
-    AuthenticatedUserRequest defaultUserRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest defaultUserRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     // Assert resource returned by create
     assertBqDataset(
@@ -244,10 +240,8 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
     var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
     var newDescription = "This is an updated description";
     var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
-    AuthenticatedUserRequest ownerUserRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
-    AuthenticatedUserRequest writerUserRequest =
-        userAccessTestUtils.secondUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest ownerUserRequest = userAccessTestUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest writerUserRequest = userAccessTestUtils.secondUserAuthRequest();
 
     ApiGcpBigQueryDatasetResource updatedResource =
         mockMvcUtils.updateControlledBqDataset(
@@ -303,7 +297,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
     mockMvcUtils.cloneControlledBqDatasetAsync(
-        userAccessTestUtils.secondUser().getAuthenticatedRequest(),
+        userAccessTestUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
@@ -320,8 +314,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
   @Test
   public void clone_userWithWriteAccessOnDestWorkspace_succeeds() throws Exception {
     var destResourceName = TestUtils.appendRandomNumber("clonedbq");
-    AuthenticatedUserRequest userRequest =
-        userAccessTestUtils.secondUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.secondUserAuthRequest();
     logger.info(">>Cloning user is {}", userRequest.getEmail());
     ApiGcpBigQueryDatasetResource clonedBqDataset =
         mockMvcUtils.cloneControlledBqDataset(
@@ -624,8 +617,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
     if (!features.isTpsEnabled()) {
       return;
     }
-    AuthenticatedUserRequest userRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     // Clean up policies from previous runs, if any exist
     mockMvcUtils.deletePolicies(userRequest, workspaceId);

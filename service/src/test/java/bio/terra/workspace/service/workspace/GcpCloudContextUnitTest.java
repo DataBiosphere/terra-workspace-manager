@@ -12,7 +12,6 @@ import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -33,9 +32,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   private static final String POLICY_READER = "policy-reader";
   private static final String POLICY_APPLICATION = "policy-application";
 
-  @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceDao workspaceDao;
-  @Autowired private ResourceDao resourceDao;
 
   @Test
   void serdesTest() {
