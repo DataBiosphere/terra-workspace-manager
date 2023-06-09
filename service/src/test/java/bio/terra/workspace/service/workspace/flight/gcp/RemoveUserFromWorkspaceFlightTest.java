@@ -21,6 +21,7 @@ import bio.terra.workspace.connected.UserAccessTestUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
@@ -111,7 +112,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         userAccessTestUtils.defaultUserAuthRequest().getRequiredToken());
 
     // Create a GCP context as default user
-    var userRequest = userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     String makeContextJobId = UUID.randomUUID().toString();
     SpendProfile spendProfile =
         spendProfileService.authorizeLinking(

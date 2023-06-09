@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.logging;
 
-import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.insertControlledResourceRow;
@@ -332,7 +332,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
     List<WsmResource> resourceToDelete = new ArrayList<>();
-    resourceToDelete.add(makeDefaultAiNotebookInstance().build());
+    resourceToDelete.add(makeDefaultAiNotebookInstanceBuilder().build());
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
     hook.endFlight(
         new FakeFlightContext(
@@ -417,7 +417,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   private ControlledAiNotebookInstanceResource createNotebookAndLog(UUID workspaceId) {
-    var aiNotebook = makeDefaultAiNotebookInstance(workspaceId).build();
+    var aiNotebook = makeDefaultAiNotebookInstanceBuilder(workspaceId).build();
     insertControlledResourceRow(resourceDao, aiNotebook);
     activityLogDao.writeActivity(
         workspaceId,
@@ -518,7 +518,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
     List<WsmResource> resourceToDelete = new ArrayList<>();
-    resourceToDelete.add(makeDefaultAiNotebookInstance().build());
+    resourceToDelete.add(makeDefaultAiNotebookInstanceBuilder().build());
     resourceToDelete.add(makeDefaultControlledBqDatasetBuilder(workspaceUuid).build());
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
     hook.endFlight(

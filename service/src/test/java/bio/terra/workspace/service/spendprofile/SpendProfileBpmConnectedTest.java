@@ -46,7 +46,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
     var billingAcctId = spendUtils.defaultBillingAccountId();
     profile =
         spendProfileService.createGcpSpendProfile(
-            billingAcctId, profileName, "direct", userAccessTestUtils.thirdUserAuthRequest());
+            billingAcctId, profileName, "direct", userAccessTestUtils.billingUserAuthRequest());
   }
 
   @AfterAll
@@ -55,7 +55,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
       return;
     }
     spendProfileService.deleteProfile(
-        UUID.fromString(profile.id().getId()), userAccessTestUtils.thirdUserAuthRequest());
+        UUID.fromString(profile.id().getId()), userAccessTestUtils.billingUserAuthRequest());
   }
 
   @Test
@@ -63,7 +63,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   void authorizeLinkingSuccess() {
     var linkedProfile =
         spendProfileService.authorizeLinking(
-            profile.id(), true, userAccessTestUtils.thirdUserAuthRequest());
+            profile.id(), true, userAccessTestUtils.billingUserAuthRequest());
     assertEquals(linkedProfile.billingAccountId(), profile.billingAccountId());
     assertEquals(linkedProfile.id(), profile.id());
   }
@@ -88,7 +88,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
                 spendProfileService.authorizeLinking(
                     new SpendProfileId(UUID.randomUUID().toString()),
                     true,
-                    userAccessTestUtils.thirdUserAuthRequest()));
+                    userAccessTestUtils.billingUserAuthRequest()));
     assert (ex.getStatusCode() == HttpStatus.NOT_FOUND);
   }
 }

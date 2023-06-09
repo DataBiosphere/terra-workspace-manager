@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
-import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeNotebookCommonFieldsBuilder;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.DEFAULT_ZONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,13 +19,13 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   @Test
   public void validateOk() {
     // will throw if anything is amiss.
-    makeDefaultAiNotebookInstance().build().validate();
+    makeDefaultAiNotebookInstanceBuilder().build().validate();
   }
 
   @Test
   public void resourceWithNullLocation_validatesOkAndSetsDefaultLocation() {
     ControlledAiNotebookInstanceResource resource =
-        makeDefaultAiNotebookInstance().location(null).build();
+        makeDefaultAiNotebookInstanceBuilder().location(null).build();
 
     resource.validate();
     assertEquals(DEFAULT_ZONE, resource.getLocation());
@@ -49,7 +49,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
 
   @Test
   public void testFlightMapSerialization() {
-    ControlledAiNotebookInstanceResource resource = makeDefaultAiNotebookInstance().build();
+    ControlledAiNotebookInstanceResource resource = makeDefaultAiNotebookInstanceBuilder().build();
 
     // TODO: [PF-935] Create a public API on FlightMap or Stairway test fixture that explicitly
     // tests that a type serializes and deserializes to the correct result.  For now leverage the
@@ -65,7 +65,7 @@ public class ControlledAiNotebookInstanceResourceTest extends BaseUnitTest {
   @Test
   public void toApiResource() {
     ControlledAiNotebookInstanceResource resource =
-        makeDefaultAiNotebookInstance()
+        makeDefaultAiNotebookInstanceBuilder()
             .instanceId("my-instance-id")
             .location("us-east1-b")
             .projectId("my-project-id")

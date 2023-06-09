@@ -116,8 +116,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   void setup() throws Exception {
     jobService.setFlightDebugInfoForTest(null);
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
-    AuthenticatedUserRequest userRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     workspaceId = mockMvcUtils.createWorkspaceWithCloudContext(userRequest).getId();
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     workspaceId2 = null;
@@ -156,8 +155,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteWorkspaceWithGoogleContext() throws Exception {
-    AuthenticatedUserRequest userRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
 
     // Reach in and find the project id
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
