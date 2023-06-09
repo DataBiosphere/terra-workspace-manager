@@ -251,8 +251,8 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
         new ApiCloneControlledFlexibleResourceResult()
             .resource(clonedFlexResource.toApiResource())
             .effectiveCloningInstructions(cloningInstructions.toApiModel())
-            .sourceWorkspaceId(resourceUuid)
-            .sourceResourceId(workspaceUuid);
+            .sourceWorkspaceId(workspaceUuid)
+            .sourceResourceId(resourceUuid);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
