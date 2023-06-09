@@ -576,6 +576,9 @@ components:
             additional policies create a conflict with the existing workspace,
             cloning will fail.
           $ref: '#/components/schemas/WsmPolicyInputs'
+        projectOwnerGroupId:
+          description: Optional Sam resource group ID which allows the group to be added as project owner on the destination workspace
+          type: string
 
     ResourceCloneDetails:
       description: >-
@@ -660,6 +663,9 @@ components:
           type: array
           items:
             type: string
+        projectOwnerGroupId:
+          description: Optional Sam resource group ID which allows the group to be added as project owner on the workspace
+          type: string
 
     CreateWorkspaceV2Request:
       type: object

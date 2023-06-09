@@ -236,7 +236,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
             .spendProfileId(spendProfileId)
             .build();
     return workspaceService.createWorkspace(
-        request, null, null, userAccessUtils.defaultUserAuthRequest());
+        request, null, null, null, userAccessUtils.defaultUserAuthRequest());
   }
 
   /**

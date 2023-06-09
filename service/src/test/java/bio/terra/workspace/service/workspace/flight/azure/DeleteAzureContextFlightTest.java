@@ -69,7 +69,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
             .spendProfileId(spendProfileId)
             .build();
     workspaceService.createWorkspace(
-        workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+        workspace, null, null, null, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterEach
@@ -100,7 +100,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
       throws Exception {
     var creationParameters = ControlledAzureResourceFixtures.getAzureDiskCreationParameters();
 
-    UUID id = UUID.randomUUID();
+    final UUID id = UUID.randomUUID();
     var azureResource =
         ControlledAzureDiskResource.builder()
             .common(
@@ -203,5 +203,47 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
             null);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
+  }
+
+  @Disabled("DeleteControlledAzureResourcesStep is not idempotent, so cannot be retried")
+  @Test
+  void deleteMcWorkspaceWithAzureContextAndResource() throws Exception {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+
+    // create new workspace so delete at end of test won't interfere with @AfterEach teardown
+    UUID uuid = UUID.randomUUID();
+    SpendProfileId spendProfileId = initSpendProfileMock();
+    Workspace request =
+        WorkspaceFixtures.defaultWorkspaceBuilder(uuid).spendProfileId(spendProfileId).build();
+    UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, null, null, userRequest);
+
+    createAzureContext(mcWorkspaceUuid, userRequest);
+    UUID resourceId = createAzureResource(mcWorkspaceUuid, userRequest);
+
+    // Run the delete flight, retrying every retryable step once
+    FlightMap deleteParameters =
+        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
+
+    // TODO: PF-2694 - the structure of the workspace delete probably needs to change,
+    //  so this test needs to change. Populate the proper workspace delete steps below.
+    Map<String, StepStatus> doFailures = new HashMap<>();
+    // << !!! >>
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
+
+    FlightState flightState =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            WorkspaceDeleteFlight.class,
+            deleteParameters,
+            DELETION_FLIGHT_TIMEOUT,
+            debugInfo);
+    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
+
+    // Verify the resource and workspace are not in WSM DB
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> controlledResourceService.getControlledResource(mcWorkspaceUuid, resourceId));
+    assertThrows(
+        WorkspaceNotFoundException.class, () -> workspaceService.getWorkspace(mcWorkspaceUuid));
   }
 }

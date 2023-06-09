@@ -226,7 +226,11 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .build();
     UUID createdWorkspaceUuid =
         workspaceService.createWorkspace(
-            workspace, policies, body.getApplicationIds(), userRequest);
+            workspace,
+            policies,
+            body.getApplicationIds(),
+            body.getProjectOwnerGroupId(),
+            userRequest);
 
     ApiCreatedWorkspace responseWorkspace = new ApiCreatedWorkspace().id(createdWorkspaceUuid);
     logger.info("Created workspace {} for {}", responseWorkspace, userRequest.getEmail());
@@ -675,7 +679,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             body.getLocation(),
             TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAdditionalPolicies()),
             destinationWorkspace,
-            spendProfile);
+            spendProfile,
+            body.getProjectOwnerGroupId());
 
     final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     final ApiClonedWorkspace clonedWorkspaceStub =

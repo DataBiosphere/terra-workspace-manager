@@ -76,7 +76,9 @@ public enum WsmIamRole {
 
   public static WsmIamRole fromApiModel(ApiIamRole apiModel) {
     Optional<WsmIamRole> result =
-        Arrays.stream(WsmIamRole.values()).filter(x -> x.apiRole.equals(apiModel)).findFirst();
+        Arrays.stream(WsmIamRole.values())
+            .filter(x -> x.apiRole != null && x.apiRole.equals(apiModel))
+            .findFirst();
     return result.orElseThrow(
         () ->
             new RuntimeException("No IamRole enum found corresponding to model role " + apiModel));

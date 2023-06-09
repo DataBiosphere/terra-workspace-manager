@@ -227,11 +227,12 @@ class SamServiceTest extends BaseConnectedTest {
   void permissionsApiFailsInRawlsWorkspace() throws Exception {
     UUID workspaceUuid = UUID.randomUUID();
     // RAWLS_WORKSPACEs do not own their own Sam resources, so we need to manage them separately.
-    samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceUuid, new ArrayList<>());
+    samService.createWorkspaceWithDefaults(
+        defaultUserRequest(), workspaceUuid, new ArrayList<>(), null);
 
     Workspace rawlsWorkspace =
         WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
-    workspaceService.createWorkspace(rawlsWorkspace, null, null, defaultUserRequest());
+    workspaceService.createWorkspace(rawlsWorkspace, null, null, null, defaultUserRequest());
     ApiGrantRoleRequestBody request =
         new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
     mockMvc
@@ -473,7 +474,7 @@ class SamServiceTest extends BaseConnectedTest {
 
   private Workspace createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
-    workspaceService.createWorkspace(workspace, null, null, userRequest);
+    workspaceService.createWorkspace(workspace, null, null, null, userRequest);
     return workspace;
   }
 }

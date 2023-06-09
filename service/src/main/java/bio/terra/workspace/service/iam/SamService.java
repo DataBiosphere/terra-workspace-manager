@@ -48,14 +48,7 @@ import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
-import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
+import org.broadinstitute.dsde.workbench.client.sam.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -309,7 +302,10 @@ public class SamService {
    */
   @Traced
   public void createWorkspaceWithDefaults(
-      AuthenticatedUserRequest userRequest, UUID uuid, List<String> authDomainList)
+      AuthenticatedUserRequest userRequest,
+      UUID uuid,
+      List<String> authDomainList,
+      String projectOwnerGroupId)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
@@ -324,7 +320,7 @@ public class SamService {
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(uuid.toString())
-            .policies(defaultWorkspacePolicies(humanUserEmail))
+            .policies(defaultWorkspacePolicies(humanUserEmail, projectOwnerGroupId))
             .authDomain(authDomainList);
     try {
       SamRetry.retry(
@@ -1092,16 +1088,32 @@ public class SamService {
    * provided at creation time. Although policy membership can be modified later, policy creation
    * must happen at the same time as workspace resource creation.
    */
-  private Map<String, AccessPolicyMembershipV2> defaultWorkspacePolicies(String ownerEmail) {
+  private Map<String, AccessPolicyMembershipV2> defaultWorkspacePolicies(
+      String ownerEmail, String projectOwnerGroupId) {
     Map<String, AccessPolicyMembershipV2> policyMap = new HashMap<>();
     policyMap.put(
         WsmIamRole.OWNER.toSamRole(),
         new AccessPolicyMembershipV2()
             .addRolesItem(WsmIamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail));
+    if (projectOwnerGroupId != null) {
+      //      policyMap.put(
+      //          WsmIamRole.PROJECT_OWNER.toSamRole(),
+      //          new AccessPolicyMembershipV2()
+      //              .addRolesItem(WsmIamRole.PROJECT_OWNER.toSamRole())
+      //              .addMemberEmailsItem("")); // temp email for testing
+      ////              .addMemberPoliciesItem(
+      ////                  new PolicyIdentifiers()
+      ////                      .resourceTypeName("billing-project")
+      ////                      .policyName("owner")
+      ////                      .resourceId(projectOwnerGroupId));
+    }
+    // .addMemberEmailsItem("policy-272e49d3-126f-4c7c-a885-49e3a379de10@dev.test.firecloud.org"));
+    // policy-272e49d3-126f-4c7c-a885-49e3a379de10@dev.test.firecloud.org
     // For all non-owner/manager roles, we create empty policies which can be modified later.
     for (WsmIamRole workspaceRole : WsmIamRole.values()) {
-      if (workspaceRole != WsmIamRole.OWNER && workspaceRole != WsmIamRole.MANAGER) {
+      if (!Set.of(WsmIamRole.OWNER, WsmIamRole.MANAGER, WsmIamRole.PROJECT_OWNER)
+          .contains(workspaceRole)) {
         policyMap.put(
             workspaceRole.toSamRole(),
             new AccessPolicyMembershipV2().addRolesItem(workspaceRole.toSamRole()));
