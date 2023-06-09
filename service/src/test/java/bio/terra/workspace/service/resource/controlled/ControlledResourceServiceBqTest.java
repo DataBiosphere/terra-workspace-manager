@@ -12,6 +12,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -112,7 +113,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .datasetName(datasetId)
             .build();
@@ -174,7 +175,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createBqDatasetDo() throws Exception {
-    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
+    String datasetId = ControlledGcpResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
     long defaultTableLifetimeSec = 5900L;
     long defaultPartitionLifetimeSec = 5901L;
@@ -185,7 +186,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
             .defaultTableLifetime(defaultTableLifetimeSec)
             .defaultPartitionLifetime(defaultPartitionLifetimeSec);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .datasetName(datasetId)
             .build();
@@ -219,13 +220,13 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createBqDatasetUndo() throws Exception {
-    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
+    String datasetId = ControlledGcpResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .datasetName(datasetId)
             .build();
@@ -265,13 +266,13 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteBqDatasetDo() throws Exception {
-    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
+    String datasetId = ControlledGcpResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .datasetName(datasetId)
             .build();
@@ -310,13 +311,13 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void deleteBqDatasetUndo() throws Exception {
-    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
+    String datasetId = ControlledGcpResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters().datasetId(datasetId).location(location);
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .datasetName(datasetId)
             .build();
@@ -523,7 +524,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
 
     try {
       // make an update request to set the table expiration time to an invalid value (<3600)
-      final ApiGcpBigQueryDatasetUpdateParameters updateParameters =
+      ApiGcpBigQueryDatasetUpdateParameters updateParameters =
           new ApiGcpBigQueryDatasetUpdateParameters()
               .defaultTableLifetime(3000L)
               .defaultPartitionLifetime(3601L);
@@ -541,7 +542,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
       validateBigQueryDatasetCloudMetadata(projectId, resource.getDatasetName(), null, null);
 
       // make another update request to set the partition expiration time to an invalid value (<0)
-      final ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
+      ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
           new ApiGcpBigQueryDatasetUpdateParameters()
               .defaultTableLifetime(3600L)
               .defaultPartitionLifetime(-2L);
@@ -574,7 +575,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
    */
   private ControlledBigQueryDatasetResource createBigQueryResource(
       Long initialDefaultTableLifetime, Long initialDefaultPartitionLifetime) {
-    String datasetId = ControlledResourceFixtures.uniqueDatasetId();
+    String datasetId = ControlledGcpResourceFixtures.uniqueDatasetId();
     ApiGcpBigQueryDatasetCreationParameters creationParameters =
         new ApiGcpBigQueryDatasetCreationParameters()
             .datasetId(datasetId)

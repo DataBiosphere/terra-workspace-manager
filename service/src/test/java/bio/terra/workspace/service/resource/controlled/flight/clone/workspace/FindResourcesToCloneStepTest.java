@@ -14,7 +14,7 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -41,13 +41,14 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
   @BeforeEach
   public void setup() {
     resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(UUID.randomUUID()).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(UUID.randomUUID())
+            .build();
 
     findResourcesToCloneStep = new FindResourcesToCloneStep(mockResourceDao);
     doReturn(mockStairway).when(mockFlightContext).getStairway();
     doReturn(FLIGHT_ID).when(mockStairway).createFlightId();
 
-    final FlightMap inputParameters = new FlightMap();
+    FlightMap inputParameters = new FlightMap();
     inputParameters.put(ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.randomUUID());
     doReturn(inputParameters).when(mockFlightContext).getInputParameters();
 
@@ -59,8 +60,8 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
 
   @Test
   public void testDoStep_largeBatch() throws InterruptedException, RetryException {
-    final List<WsmResource> batch1 = Collections.nCopies(100, resource);
-    final List<WsmResource> batch2 = Collections.nCopies(20, resource);
+    List<WsmResource> batch1 = Collections.nCopies(100, resource);
+    List<WsmResource> batch2 = Collections.nCopies(20, resource);
     doReturn(batch1)
         .when(mockResourceDao)
         .enumerateResources(any(UUID.class), eq(null), eq(null), eq(0), eq(100));
@@ -68,9 +69,10 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
         .when(mockResourceDao)
         .enumerateResources(any(UUID.class), eq(null), eq(null), eq(100), eq(100));
 
-    final StepResult stepResult = findResourcesToCloneStep.doStep(mockFlightContext);
+    StepResult stepResult = findResourcesToCloneStep.doStep(mockFlightContext);
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
-    final List<ResourceCloneInputs> result =
+
+    List<ResourceCloneInputs> result =
         workingMap.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
     assertThat(result, hasSize(120));
     assertTrue(resource.partialEqual(result.get(0).getResource()));
@@ -79,13 +81,14 @@ public class FindResourcesToCloneStepTest extends BaseUnitTest {
 
   @Test
   public void testDoStep_smallBatch() throws InterruptedException, RetryException {
-    final List<WsmResource> batch1 = Collections.nCopies(3, resource);
+    List<WsmResource> batch1 = Collections.nCopies(3, resource);
     doReturn(batch1)
         .when(mockResourceDao)
         .enumerateResources(any(UUID.class), eq(null), eq(null), eq(0), eq(100));
-    final StepResult stepResult = findResourcesToCloneStep.doStep(mockFlightContext);
+    StepResult stepResult = findResourcesToCloneStep.doStep(mockFlightContext);
     assertEquals(StepResult.getStepResultSuccess(), stepResult);
-    final List<ResourceCloneInputs> result =
+
+    List<ResourceCloneInputs> result =
         workingMap.get(ControlledResourceKeys.RESOURCES_TO_CLONE, new TypeReference<>() {});
     assertThat(result, hasSize(3));
     assertTrue(resource.partialEqual(result.get(0).getResource()));

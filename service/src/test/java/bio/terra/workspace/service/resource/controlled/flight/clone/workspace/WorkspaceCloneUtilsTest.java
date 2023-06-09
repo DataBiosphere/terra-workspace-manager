@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeControlledResourceFieldsBuilder;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.uniqueDatasetId;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_GCP_RESOURCE_REGION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledBigQueryDataset;
@@ -12,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -40,7 +39,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledBigQueryDataset_cloneSucceeds() {
     var sourceDataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
     var cloneDescription = "This is a cloned dataset";
     var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
@@ -72,7 +71,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   public void
       buildDestinationControlledBigQueryDataset_nameAndDescriptionIsNull_preserveSourceResourceNameAndDescription() {
     var sourceDataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID).build();
     var cloneDatasetName = RandomStringUtils.randomAlphabetic(5);
     var cloneProjectName = "my-cloned-gcp-project";
 
@@ -103,7 +102,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   public void
       buildDestinationControlledBigQueryDataset_private_setPrivateResourceStateToInitializing() {
     ControlledBigQueryDatasetResource sourceDataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID)
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(WORKSPACE_ID)
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .privateResourceState(PrivateResourceState.ACTIVE)
@@ -136,7 +135,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     var sourceDataset =
         ControlledBigQueryDatasetResource.builder()
             .common(makeControlledResourceFieldsWithCustomProperties())
-            .datasetName(uniqueDatasetId())
+            .datasetName(ControlledGcpResourceFixtures.uniqueDatasetId())
             .projectId("my-gcp-project")
             .build();
 
@@ -165,7 +164,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
     var sourceDataset =
         ControlledBigQueryDatasetResource.builder()
             .common(makeControlledResourceFieldsWithCustomProperties())
-            .datasetName(uniqueDatasetId())
+            .datasetName(ControlledGcpResourceFixtures.uniqueDatasetId())
             .projectId("my-gcp-project")
             .build();
 
@@ -190,7 +189,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledGcsBucket_cloneSucceeds() {
     ControlledGcsBucketResource sourceBucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
     var cloneResourceName = RandomStringUtils.randomAlphabetic(5);
     var cloneDescription = "This is a cloned bucket";
     // Gcs bucket cloud instance id must be lower-case.
@@ -218,7 +217,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   public void
       buildDestinationControlledGcsBucket_nameAndDescriptionIsNull_preserveSourceResourceNameAndDescription() {
     ControlledGcsBucketResource sourceBucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID).build();
     // Gcs bucket cloud instance id must be lower-case.
     var cloneBucketName = RandomStringUtils.randomAlphabetic(5).toLowerCase(Locale.ROOT);
 
@@ -244,7 +243,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledGcsBucket_private_setPrivateResourceStateToInitializing() {
     var sourceBucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .privateResourceState(PrivateResourceState.ACTIVE)
@@ -273,7 +272,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   @Test
   public void buildDestinationControlledGcsBucket_clearSomeProperties() {
     ControlledGcsBucketResource sourceBucket =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(WORKSPACE_ID)
             .common(makeControlledResourceFieldsWithCustomProperties())
             .build();
     ControlledGcsBucketResource bucketToClone =
@@ -295,7 +294,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
   }
 
   private static ControlledResourceFields makeControlledResourceFieldsWithCustomProperties() {
-    return makeControlledResourceFieldsBuilder(WORKSPACE_ID)
+    return ControlledResourceFixtures.makeControlledResourceFieldsBuilder(WORKSPACE_ID)
         .properties(Map.of(FOLDER_ID_KEY, UUID.randomUUID().toString(), "foo", "bar"))
         .build();
   }

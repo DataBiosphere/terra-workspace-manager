@@ -1,6 +1,6 @@
 package bio.terra.workspace.connected;
 
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
@@ -19,7 +19,7 @@ public class ResourceConnectedTestUtils {
   public ControlledResource createControlledBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId) {
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
     return controlledResourceService.createControlledResourceSync(
         bucketResource,
         ControlledResourceIamRole.OWNER,

@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT;
@@ -78,7 +77,8 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
-    refMetadata = makeDefaultReferencedResourceFieldsApi().name(RESOURCE_NAME);
+    refMetadata =
+        ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi().name(RESOURCE_NAME);
   }
 
   @Test
@@ -101,7 +101,9 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     // ANY-Referenced Data Repo Snapshot
     ApiCreateDataRepoSnapshotReferenceRequestBody tdrRequest =
         new ApiCreateDataRepoSnapshotReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(RESOURCE_NAME))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(RESOURCE_NAME))
             .snapshot(
                 new ApiDataRepoSnapshotAttributes()
                     .instanceName("terra")
@@ -115,7 +117,9 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     // ANY-Referenced Git Repo
     var gitRequest =
         new ApiCreateGitRepoReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(RESOURCE_NAME))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(RESOURCE_NAME))
             .gitrepo(new ApiGitRepoAttributes().gitRepoUrl("fake-url"));
     mockMvcUtils.postExpect(
         USER_REQUEST,

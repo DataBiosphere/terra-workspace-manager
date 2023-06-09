@@ -1,7 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GENERATE_GCP_BQ_DATASET_NAME_PATH_FORMAT;
@@ -18,6 +16,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
 import bio.terra.workspace.generated.model.ApiBqDatasetCloudId;
@@ -165,10 +165,10 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
     ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
         new ApiCreateControlledGcpBigQueryDatasetRequestBody()
             .common(
-                makeDefaultControlledResourceFieldsApi()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
                     .properties(
                         PropertiesUtils.convertMapToApiProperties(Map.of(FOLDER_ID_KEY, "root"))))
-            .dataset(defaultBigQueryDatasetCreationParameters());
+            .dataset(ControlledGcpResourceFixtures.defaultBigQueryDatasetCreationParameters());
 
     mockMvcUtils.postExpect(
         USER_REQUEST,

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -167,7 +167,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   }
 
   private static String generateAzureResourceName(String tag) {
-    final String id = UUID.randomUUID().toString().substring(0, 6);
+    String id = UUID.randomUUID().toString().substring(0, 6);
     return String.format("it%s%s", tag, id);
   }
 

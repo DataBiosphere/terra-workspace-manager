@@ -16,7 +16,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
@@ -304,10 +304,10 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParameters();
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -316,10 +316,10 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
         new CreateAzureVmStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureVm(creationParameters),
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
 
-    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -346,7 +346,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
             .setSubnetName(STUB_SUBNET_NAME)
             .setImage(
                 AzureUtils.getVmImageData(
-                    ControlledResourceFixtures.getAzureVmCreationParameters().getVmImage()))
+                    ControlledAzureResourceFixtures.getAzureVmCreationParameters().getVmImage()))
             .build();
 
     assertThat(requestDataOpt, equalTo(Optional.of(expected)));
@@ -354,10 +354,10 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm_alreadyExists() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParameters();
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -366,13 +366,13 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
         new CreateAzureVmStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureVm(creationParameters),
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
 
     // Stub creation to throw Conflict exception.
     when(mockVmStage12.create(any(Context.class))).thenThrow(mockException);
 
-    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
     // Verify step still returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
@@ -380,10 +380,10 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
 
   @Test
   void createVm_VmExtensionProvisioningError() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParameters();
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -392,7 +392,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
         new CreateAzureVmStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureVm(creationParameters),
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
 
     // throw a vm extension provisioning exception
@@ -408,17 +408,17 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
                 AzureManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR, "VM error"));
     when(mockVmStage12.create(any(Context.class))).thenThrow(vmExtensionException);
 
-    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
   }
 
   @Test
   void createVm_ResourceNotFound() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParameters();
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -427,7 +427,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
         new CreateAzureVmStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureVm(creationParameters),
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
 
     // throw a not found exception
@@ -440,17 +440,17 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
             new ManagementError(AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, "Not found"));
     when(mockVmStage12.create(any(Context.class))).thenThrow(notFoundException);
 
-    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
   }
 
   @Test
   void createVm_generic4xxException() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParameters();
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters();
 
-    final FlightMap creationParametersFlightMap = new FlightMap();
+    FlightMap creationParametersFlightMap = new FlightMap();
     creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
     creationParametersFlightMap.makeImmutable();
     when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
@@ -459,7 +459,7 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
         new CreateAzureVmStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureVm(creationParameters),
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
 
     // throw a 4xx
@@ -470,24 +470,24 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
             "error", mockResponse, new ManagementError("unknown error code", "Error"));
     when(mockVmStage12.create(any(Context.class))).thenThrow(notFoundException);
 
-    final StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
   }
 
   @Test
   void deleteVm() throws InterruptedException {
-    final ApiAzureVmCreationParameters creationParameters =
-        ControlledResourceFixtures.getAzureVmCreationParameters();
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters();
 
     var createAzureVmStep =
         new CreateAzureVmStep(
             mockAzureConfig,
             mockCrlService,
-            ControlledResourceFixtures.getAzureVm(creationParameters),
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
             mockResourceDao);
 
-    final StepResult stepResult = createAzureVmStep.undoStep(mockFlightContext);
+    StepResult stepResult = createAzureVmStep.undoStep(mockFlightContext);
 
     // Verify step returns success
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));

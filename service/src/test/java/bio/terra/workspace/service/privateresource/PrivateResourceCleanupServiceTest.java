@@ -8,6 +8,7 @@ import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.workspace.app.configuration.external.PrivateResourceCleanupConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -130,7 +131,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
             .common(commonFields)
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .bucketName(ControlledGcpResourceFixtures.uniqueBucketName())
             .build();
     ApiGcpGcsBucketCreationParameters creationParameters =
         new ApiGcpGcsBucketCreationParameters().location("us-central1");
@@ -232,7 +233,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     ControlledGcsBucketResource resource =
         ControlledGcsBucketResource.builder()
             .common(commonFields)
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .bucketName(ControlledGcpResourceFixtures.uniqueBucketName())
             .build();
 
     ApiGcpGcsBucketCreationParameters creationParameters =

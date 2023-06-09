@@ -1,11 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -38,7 +38,7 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
     var resource =
         ControlledAzureStorageContainerResource.builder()
             .common(
-                makeDefaultControlledResourceFieldsBuilder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .build())
             .storageContainerName(UUID.randomUUID().toString())

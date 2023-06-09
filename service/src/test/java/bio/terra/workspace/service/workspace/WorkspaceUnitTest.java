@@ -37,13 +37,10 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 public class WorkspaceUnitTest extends BaseUnitTest {
-  private static final Logger logger = LoggerFactory.getLogger(WorkspaceUnitTest.class);
   @MockBean private WorkspaceDao mockWorkspaceDao;
   @MockBean private PolicyValidator mockPolicyValidator;
   @MockBean private WorkspaceActivityLogService mockWorkspaceActivityLogService;
@@ -89,7 +86,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
-    final UUID sourceId = UUID.randomUUID();
+    UUID sourceId = UUID.randomUUID();
     when(mockTpsApiDispatch().linkPao(workspace.workspaceId(), sourceId, TpsUpdateMode.DRY_RUN))
         .thenReturn(new TpsPaoUpdateResult().conflicts(List.of()).updateApplied(false));
 
@@ -111,7 +108,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
-    final UUID sourceId = UUID.randomUUID();
+    UUID sourceId = UUID.randomUUID();
     when(mockTpsApiDispatch().linkPao(workspace.workspaceId(), sourceId, TpsUpdateMode.DRY_RUN))
         .thenReturn(
             new TpsPaoUpdateResult().conflicts(List.of(new TpsPaoConflict())).updateApplied(false));
@@ -142,7 +139,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
-    final UUID sourceId = UUID.randomUUID();
+    UUID sourceId = UUID.randomUUID();
     when(mockTpsApiDispatch().linkPao(workspace.workspaceId(), sourceId, TpsUpdateMode.DRY_RUN))
         .thenReturn(new TpsPaoUpdateResult().conflicts(List.of()).updateApplied(false));
     doThrow(new PolicyConflictException("conflict"))
@@ -167,7 +164,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
 
-    final UUID sourceId = UUID.randomUUID();
+    UUID sourceId = UUID.randomUUID();
     when(mockTpsApiDispatch().linkPao(workspace.workspaceId(), sourceId, TpsUpdateMode.DRY_RUN))
         .thenReturn(new TpsPaoUpdateResult().conflicts(List.of()).updateApplied(false));
     when(mockTpsApiDispatch()

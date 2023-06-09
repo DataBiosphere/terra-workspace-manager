@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
@@ -107,7 +106,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     when(mockSamService.isAuthorized(
             any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
-    final String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
+    String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
     // Return a valid Google group for cloud sync, as Google validates groups added to GCP projects.
     when(mockSamService.syncWorkspacePolicy(any(), any(), any())).thenReturn(policyGroup);
 
@@ -183,7 +182,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void getWorkspaceByUserFacingId_existing() {
     String userFacingId = "user-facing-id-getworkspacebyuserfacingid_existing";
-    Workspace request = defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
+    Workspace request =
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     assertEquals(
@@ -221,7 +221,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void getWorkspaceByUserFacingId_forbiddenExisting() throws Exception {
     String userFacingId = "user-facing-id-getworkspacebyuserfacingid_forbiddenexisting";
-    Workspace request = defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
+    Workspace request =
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
@@ -265,7 +266,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     Workspace duplicateWorkspace =
-        defaultWorkspaceBuilder(request.getWorkspaceId())
+        WorkspaceFixtures.defaultWorkspaceBuilder(request.getWorkspaceId())
             .description("slightly different workspace")
             .build();
     assertThrows(
@@ -276,10 +277,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void duplicateWorkspaceUserFacingIdRequestsRejected() {
     String userFacingId = "create-workspace-user-facing-id";
-    Workspace request = defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
+    Workspace request =
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     Workspace duplicateUserFacingId =
-        defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
 
     DuplicateUserFacingIdException ex =
         assertThrows(
@@ -314,7 +316,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void testWithSpendProfile() {
     SpendProfileId spendProfileId = new SpendProfileId("foo");
-    Workspace request = defaultWorkspaceBuilder(null).spendProfileId(spendProfileId).build();
+    Workspace request =
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).spendProfileId(spendProfileId).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     Workspace createdWorkspace = workspaceService.getWorkspace(request.getWorkspaceId());
@@ -327,7 +330,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String name = "My workspace";
     String description = "The greatest workspace";
     Workspace request =
-        defaultWorkspaceBuilder(null).displayName(name).description(description).build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(null)
+            .displayName(name)
+            .description(description)
+            .build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     Workspace createdWorkspace = workspaceService.getWorkspace(request.getWorkspaceId());
@@ -428,10 +434,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void testUpdateWorkspaceUserFacingIdAlreadyExistsRejected() {
     // Create one workspace with userFacingId, one without.
     String userFacingId = "update-workspace-user-facing-id";
-    Workspace request = defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
+    Workspace request =
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID secondWorkspaceUuid = UUID.randomUUID();
-    request = defaultWorkspaceBuilder(secondWorkspaceUuid).build();
+    request = WorkspaceFixtures.defaultWorkspaceBuilder(secondWorkspaceUuid).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     // Try to set second workspace's userFacing to first.
@@ -455,7 +462,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             put("xyzzy", "plohg");
           }
         };
-    Workspace request = defaultWorkspaceBuilder(null).build();
+    Workspace request = WorkspaceFixtures.defaultWorkspaceBuilder(null).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
     var lastUpdateDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
@@ -520,7 +527,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void createRawlsWorkspaceDoSteps() throws InterruptedException {
     Workspace request =
-        defaultWorkspaceBuilder(null).workspaceStage(WorkspaceStage.RAWLS_WORKSPACE).build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(null)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
     // Ensure the auth check in CheckSamWorkspaceAuthzStep always succeeds.
     doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -575,7 +584,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     propertyMap.put("foo", "bar");
     propertyMap.put("xyzzy", "plohg");
 
-    Workspace request = defaultWorkspaceBuilder(null).properties(propertyMap).build();
+    Workspace request =
+        WorkspaceFixtures.defaultWorkspaceBuilder(null).properties(propertyMap).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
     var lastUpdateDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
@@ -634,7 +644,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void deleteWorkspaceWithDataReference() {
     // First, create a workspace.
     UUID workspaceUuid = UUID.randomUUID();
-    Workspace request = defaultWorkspaceBuilder(workspaceUuid).build();
+    Workspace request = WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
     // Next, add a data reference to that workspace.
@@ -668,7 +678,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .thenReturn(true);
     UUID workspaceId = UUID.randomUUID();
     Workspace request =
-        defaultWorkspaceBuilder(workspaceId).workspaceStage(WorkspaceStage.RAWLS_WORKSPACE).build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceId)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
     String jobId = UUID.randomUUID().toString();
     ApiCreateCloudContextRequest contextRequest =

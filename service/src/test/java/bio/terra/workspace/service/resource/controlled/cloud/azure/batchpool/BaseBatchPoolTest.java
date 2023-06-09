@@ -7,7 +7,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -60,7 +60,7 @@ public class BaseBatchPoolTest extends BaseAzureUnitTest {
   protected ControlledAzureBatchPoolResource resource;
 
   protected ControlledAzureBatchPoolResource.Builder buildDefaultResourceBuilder() {
-    return ControlledResourceFixtures.getAzureBatchPoolResourceBuilder(
+    return ControlledAzureResourceFixtures.getAzureBatchPoolResourceBuilder(
         BATCH_POOL_ID,
         BATCH_POOL_DISPLAY_NAME,
         BATCH_POOL_VM_SIZE,

@@ -15,6 +15,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
@@ -87,7 +88,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
       PrivateResourceState privateResourceState,
       AccessScopeType accessScopeType,
       ManagedByType managedByType) {
-    return ControlledResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(
+    return ControlledAzureResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(
             /*workspaceId=*/ UUID.randomUUID())
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()

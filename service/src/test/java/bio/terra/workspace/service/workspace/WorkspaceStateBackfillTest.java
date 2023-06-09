@@ -5,6 +5,7 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbWorkspace;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ public class WorkspaceStateBackfillTest extends BaseUnitTest {
 
   @Test
   public void testBackfillQuery() {
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     UUID workspaceId = workspace.workspaceId();
     WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 

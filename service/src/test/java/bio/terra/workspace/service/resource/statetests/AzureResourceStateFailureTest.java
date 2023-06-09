@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_BATCH_POOL_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_DISK_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_STORAGE_CONTAINER_PATH_FORMAT;
@@ -17,7 +16,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceBatchPoolFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -106,9 +105,9 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     // AZURE-Controlled Batch
     var batchRequest =
         new ApiCreateControlledAzureBatchPoolRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi())
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi())
             .azureBatchPool(
-                ControlledResourceBatchPoolFixtures.createBatchPoolWithRequiredParameters());
+                ControlledAzureResourceFixtures.createAzureBatchPoolWithRequiredParameters());
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(batchRequest),
@@ -118,8 +117,8 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     // AZURE-Controlled Disk
     var diskRequest =
         new ApiCreateControlledAzureDiskRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi())
-            .azureDisk(ControlledResourceFixtures.getAzureDiskCreationParameters());
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi())
+            .azureDisk(ControlledAzureResourceFixtures.getAzureDiskCreationParameters());
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(diskRequest),
@@ -129,9 +128,9 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     // AZURE-Storage Container
     var storageRequest =
         new ApiCreateControlledAzureStorageContainerRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi())
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi())
             .azureStorageContainer(
-                ControlledResourceFixtures.getAzureStorageContainerCreationParameters());
+                ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters());
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(storageRequest),
@@ -141,9 +140,9 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     // AZURE-VM
     var vmRequest =
         new ApiCreateControlledAzureVmRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi())
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi())
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
-            .azureVm(ControlledResourceFixtures.getAzureVmCreationParameters());
+            .azureVm(ControlledAzureResourceFixtures.getAzureVmCreationParameters());
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(vmRequest),
@@ -162,24 +161,26 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
 
     // Create the resources in the database
     // AZURE-Controlled Batch
-    var batchResource = ControlledResourceFixtures.makeDefaultAzureBatchPoolResource(workspaceUuid);
+    var batchResource =
+        ControlledAzureResourceFixtures.makeDefaultAzureBatchPoolResource(workspaceUuid);
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, batchResource);
 
     // AZURE-Controlled Disk
     var diskResource =
-        ControlledResourceFixtures.makeDefaultAzureDiskBuilder(
-                ControlledResourceFixtures.getAzureDiskCreationParameters(), workspaceUuid)
+        ControlledAzureResourceFixtures.makeDefaultAzureDiskBuilder(
+                ControlledAzureResourceFixtures.getAzureDiskCreationParameters(), workspaceUuid)
             .build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, diskResource);
 
     // AZURE-Storage Container
     var storageResource =
-        ControlledResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(workspaceUuid)
+        ControlledAzureResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(
+                workspaceUuid)
             .build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, storageResource);
 
     // AZURE-VM
-    var vmResource = ControlledResourceFixtures.makeAzureVm(workspaceUuid);
+    var vmResource = ControlledAzureResourceFixtures.makeAzureVm(workspaceUuid);
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, vmResource);
 
     // Set cloud context info deleting state
@@ -232,7 +233,8 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
 
     // AZURE-Storage Container
     var storageResource =
-        ControlledResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(workspaceUuid)
+        ControlledAzureResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(
+                workspaceUuid)
             .build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, storageResource);
 

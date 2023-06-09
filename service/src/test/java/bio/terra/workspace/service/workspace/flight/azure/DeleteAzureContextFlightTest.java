@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -101,9 +102,9 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
   private UUID createAzureResource(UUID workspaceUuid, AuthenticatedUserRequest userRequest)
       throws Exception {
-    var creationParameters = ControlledResourceFixtures.getAzureDiskCreationParameters();
+    var creationParameters = ControlledAzureResourceFixtures.getAzureDiskCreationParameters();
 
-    final UUID id = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
     var azureResource =
         ControlledAzureDiskResource.builder()
             .common(

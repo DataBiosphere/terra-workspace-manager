@@ -16,7 +16,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
@@ -50,8 +50,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   @Captor ArgumentCaptor<String> containerNameCaptor;
 
   private final ApiAzureStorageContainerCreationParameters creationParameters =
-      ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
-  private final String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
+      ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters();
   private ControlledAzureStorageContainerResource storageContainerResource;
   private DeleteAzureStorageContainerStep deleteAzureStorageContainerStep;
 
@@ -65,7 +64,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
 
   private void initDeleteValidationStep(Optional<UUID> storageAccountId) {
     storageContainerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(
+        ControlledAzureResourceFixtures.getAzureStorageContainer(
             creationParameters.getStorageContainerName());
 
     deleteAzureStorageContainerStep =
@@ -105,7 +104,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     when(mockStorageAccounts.getById(sharedAccountId)).thenReturn(mockStorageAccount);
 
     // act
-    final StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
+    StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
 
@@ -135,7 +134,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
                     + "Please check that the landing zone deployment is complete."));
 
     // act
-    final StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
+    StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
     assertThat(stepResult.getException().get(), instanceOf(LandingZoneNotFoundException.class));
@@ -155,7 +154,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
         .thenReturn(Optional.empty());
 
     // act
-    final StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
+    StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
     assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));

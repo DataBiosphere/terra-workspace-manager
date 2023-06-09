@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_WITHOUT_EXPIRATION;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.BQ_DATASET_WITH_EXPIRATION;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BQ_DATASET_WITHOUT_EXPIRATION;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.BQ_DATASET_WITH_EXPIRATION;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.BigQueryApiConversions.fromBqExpirationTime;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.BigQueryApiConversions.toBqExpirationTime;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.BigQueryApiConversions.toUpdateParameters;
@@ -15,12 +15,12 @@ import org.junit.jupiter.api.Test;
 public class BigQueryApiConversionsTest extends BaseUnitTest {
   @Test
   public void testToUpdateParameters() {
-    final ApiGcpBigQueryDatasetUpdateParameters updateParameters1 =
+    ApiGcpBigQueryDatasetUpdateParameters updateParameters1 =
         toUpdateParameters(BQ_DATASET_WITH_EXPIRATION);
     assertEquals(5900, updateParameters1.getDefaultTableLifetime());
     assertEquals(5901, updateParameters1.getDefaultPartitionLifetime());
 
-    final ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
+    ApiGcpBigQueryDatasetUpdateParameters updateParameters2 =
         toUpdateParameters(BQ_DATASET_WITHOUT_EXPIRATION);
     assertEquals(0, updateParameters2.getDefaultTableLifetime());
     assertEquals(0, updateParameters2.getDefaultPartitionLifetime());
