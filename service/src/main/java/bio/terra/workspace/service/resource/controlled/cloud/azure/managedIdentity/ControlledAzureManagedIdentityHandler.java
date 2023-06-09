@@ -23,7 +23,8 @@ public class ControlledAzureManagedIdentityHandler implements WsmResourceHandler
   @Override
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     ControlledAzureManagedIdentityAttributes attributes =
-        DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureManagedIdentityAttributes.class);
+        DbSerDes.fromJson(
+            dbResource.getAttributes(), ControlledAzureManagedIdentityAttributes.class);
 
     return ControlledAzureManagedIdentityResource.builder()
         .managedIdentityName(attributes.getManagedIdentityName())

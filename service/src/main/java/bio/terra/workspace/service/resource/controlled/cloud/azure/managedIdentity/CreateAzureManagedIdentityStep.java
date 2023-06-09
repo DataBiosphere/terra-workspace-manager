@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity;
 
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
-import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateDiskRequestData;
 import bio.terra.cloudres.azure.resourcemanager.msi.data.CreateUserAssignedManagedIdentityRequestData;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -15,20 +14,25 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
-import com.azure.resourcemanager.compute.ComputeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Creates an Azure Managed Identity. Designed to run directly after {@link GetAzureManagedIdentityStep}. */
+/**
+ * Creates an Azure Managed Identity. Designed to run directly after {@link
+ * GetAzureManagedIdentityStep}.
+ */
 public class CreateAzureManagedIdentityStep implements Step {
 
-  private static final Logger logger = LoggerFactory.getLogger(CreateAzureManagedIdentityStep.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(CreateAzureManagedIdentityStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureManagedIdentityResource resource;
 
   public CreateAzureManagedIdentityStep(
-      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureManagedIdentityResource resource) {
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ControlledAzureManagedIdentityResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -85,7 +89,8 @@ public class CreateAzureManagedIdentityStep implements Step {
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
 
     try {
-      msiManager.identities()
+      msiManager
+          .identities()
           .deleteByResourceGroup(
               azureCloudContext.getAzureResourceGroupId(), resource.getManagedIdentityName());
     } catch (ManagementException e) {

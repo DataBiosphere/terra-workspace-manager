@@ -8,9 +8,12 @@ public class ControlledAzureDatabaseAttributes {
   private final String databaseName;
   private final UUID databaseOwner;
   private final String region;
+
   @JsonCreator
   public ControlledAzureDatabaseAttributes(
-      @JsonProperty("databaseName") String databaseName, @JsonProperty("databaseOwner") UUID databaseOwner, @JsonProperty("region") String region) {
+      @JsonProperty("databaseName") String databaseName,
+      @JsonProperty("databaseOwner") UUID databaseOwner,
+      @JsonProperty("region") String region) {
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
     this.region = region;

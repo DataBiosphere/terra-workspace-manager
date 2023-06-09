@@ -6,9 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ControlledAzureManagedIdentityAttributes {
   private final String managedIdentityName;
   private final String region;
+
   @JsonCreator
   public ControlledAzureManagedIdentityAttributes(
-      @JsonProperty("managedIdentityName") String managedIdentityName, @JsonProperty("region") String region) {
+      @JsonProperty("managedIdentityName") String managedIdentityName,
+      @JsonProperty("region") String region) {
     this.managedIdentityName = managedIdentityName;
     this.region = region;
   }

@@ -14,6 +14,7 @@ import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProviderImpl;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -39,7 +40,8 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
-      @JsonProperty("databaseName") String databaseName, @JsonProperty("databaseOwner") UUID databaseOwner) {
+      @JsonProperty("databaseName") String databaseName,
+      @JsonProperty("databaseOwner") UUID databaseOwner) {
     super(resourceFields, controlledResourceFields);
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
@@ -47,8 +49,8 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   }
 
   // Constructor for the builder
-  private ControlledAzureDatabaseResource(ControlledResourceFields common, String databaseName,
-      UUID databaseOwner) {
+  private ControlledAzureDatabaseResource(
+      ControlledResourceFields common, String databaseName, UUID databaseOwner) {
     super(common);
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
@@ -121,13 +123,18 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new GetAzureDatabaseStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new GetAzureDatabaseStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureDatabaseStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this,
-            flightBeanBag.getLandingZoneApiDispatch(), flightBeanBag.getSamService(),
-            flightBeanBag.getWorkspaceService(), getWorkspaceId()),
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getLandingZoneApiDispatch(),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWorkspaceService(),
+            getWorkspaceId(), new KubernetesClientProviderImpl()),
         cloudRetry);
   }
 
@@ -145,7 +152,9 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   public ApiAzureDatabaseResource toApiResource() {
-    return new ApiAzureDatabaseResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+    return new ApiAzureDatabaseResource()
+        .metadata(super.toApiMetadata())
+        .attributes(toApiAttributes());
   }
 
   private ApiAzureDatabaseAttributes toApiAttributes() {

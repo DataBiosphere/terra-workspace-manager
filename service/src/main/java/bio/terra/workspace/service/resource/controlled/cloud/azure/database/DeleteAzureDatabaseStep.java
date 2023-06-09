@@ -22,7 +22,9 @@ public class DeleteAzureDatabaseStep implements Step {
   private final ControlledAzureDatabaseResource resource;
 
   public DeleteAzureDatabaseStep(
-      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureDatabaseResource resource) {
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ControlledAzureDatabaseResource resource) {
     this.crlService = crlService;
     this.azureConfig = azureConfig;
     this.resource = resource;

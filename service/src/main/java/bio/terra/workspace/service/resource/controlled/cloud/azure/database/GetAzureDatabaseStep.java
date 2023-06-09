@@ -23,7 +23,9 @@ public class GetAzureDatabaseStep implements Step {
   private final ControlledAzureDatabaseResource resource;
 
   public GetAzureDatabaseStep(
-      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureDatabaseResource resource) {
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ControlledAzureDatabaseResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -37,8 +39,10 @@ public class GetAzureDatabaseStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
     try {
-      msiManager.identities()
-          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getDatabaseName());
+      msiManager
+          .identities()
+          .getByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), resource.getDatabaseName());
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new DuplicateResourceException(

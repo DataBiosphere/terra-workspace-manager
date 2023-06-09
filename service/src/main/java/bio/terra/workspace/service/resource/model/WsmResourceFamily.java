@@ -49,8 +49,16 @@ public enum WsmResourceFamily {
       null), // no controlled type for BQ data table
 
   // AZURE
-  AZURE_MANAGED_IDENTITY("AZURE_MANAGED_IDENTITY", ApiResourceType.AZURE_MANAGED_IDENTITY, null, WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY),
-  AZURE_DATABASE("AZURE_DATABASE", ApiResourceType.AZURE_DATABASE, null, WsmResourceType.CONTROLLED_AZURE_DATABASE),
+  AZURE_MANAGED_IDENTITY(
+      "AZURE_MANAGED_IDENTITY",
+      ApiResourceType.AZURE_MANAGED_IDENTITY,
+      null,
+      WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY),
+  AZURE_DATABASE(
+      "AZURE_DATABASE",
+      ApiResourceType.AZURE_DATABASE,
+      null,
+      WsmResourceType.CONTROLLED_AZURE_DATABASE),
   AZURE_DISK("AZURE_DISK", ApiResourceType.AZURE_DISK, null, WsmResourceType.CONTROLLED_AZURE_DISK),
   AZURE_VM("AZURE_VM", ApiResourceType.AZURE_VM, null, WsmResourceType.CONTROLLED_AZURE_VM),
   AZURE_STORAGE_CONTAINER(

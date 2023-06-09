@@ -12,11 +12,11 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
-import com.azure.resourcemanager.compute.ComputeManager;
 
 /**
- * Gets an Azure Managed Identity, and fails if it already exists. This step is designed to run immediately
- * before {@link CreateAzureManagedIdentityStep} to ensure idempotency of the create operation.
+ * Gets an Azure Managed Identity, and fails if it already exists. This step is designed to run
+ * immediately before {@link CreateAzureManagedIdentityStep} to ensure idempotency of the create
+ * operation.
  */
 public class GetAzureManagedIdentityStep implements Step {
   private final AzureConfiguration azureConfig;
@@ -24,7 +24,9 @@ public class GetAzureManagedIdentityStep implements Step {
   private final ControlledAzureManagedIdentityResource resource;
 
   public GetAzureManagedIdentityStep(
-      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureManagedIdentityResource resource) {
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ControlledAzureManagedIdentityResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -38,8 +40,10 @@ public class GetAzureManagedIdentityStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
     try {
-      msiManager.identities()
-          .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), resource.getManagedIdentityName());
+      msiManager
+          .identities()
+          .getByResourceGroup(
+              azureCloudContext.getAzureResourceGroupId(), resource.getManagedIdentityName());
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new DuplicateResourceException(

@@ -44,7 +44,8 @@ public class ControlledAzureManagedIdentityResource extends ControlledResource {
   }
 
   // Constructor for the builder
-  private ControlledAzureManagedIdentityResource(ControlledResourceFields common, String managedIdentityName) {
+  private ControlledAzureManagedIdentityResource(
+      ControlledResourceFields common, String managedIdentityName) {
     super(common);
     this.managedIdentityName = managedIdentityName;
     validate();
@@ -113,7 +114,8 @@ public class ControlledAzureManagedIdentityResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new GetAzureManagedIdentityStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new GetAzureManagedIdentityStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new CreateAzureManagedIdentityStep(
@@ -135,7 +137,9 @@ public class ControlledAzureManagedIdentityResource extends ControlledResource {
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   public ApiAzureManagedIdentityResource toApiResource() {
-    return new ApiAzureManagedIdentityResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
+    return new ApiAzureManagedIdentityResource()
+        .metadata(super.toApiMetadata())
+        .attributes(toApiAttributes());
   }
 
   private ApiAzureManagedIdentityAttributes toApiAttributes() {

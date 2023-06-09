@@ -8,22 +8,24 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.resourcemanager.compute.ComputeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A step for deleting a controlled Azure Managed Identity resource. This step uses the following process to
- * actually delete the Azure Managed Identity.
+ * A step for deleting a controlled Azure Managed Identity resource. This step uses the following
+ * process to actually delete the Azure Managed Identity.
  */
 public class DeleteAzureManagedIdentityStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(DeleteAzureManagedIdentityStep.class);
+  private static final Logger logger =
+      LoggerFactory.getLogger(DeleteAzureManagedIdentityStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureManagedIdentityResource resource;
 
   public DeleteAzureManagedIdentityStep(
-      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureManagedIdentityResource resource) {
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      ControlledAzureManagedIdentityResource resource) {
     this.crlService = crlService;
     this.azureConfig = azureConfig;
     this.resource = resource;
@@ -49,7 +51,8 @@ public class DeleteAzureManagedIdentityStep implements Step {
       msiManager.identities().deleteById(azureResourceId);
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
-      logger.info("Attempt to delete Azure managed identity failed on this try: " + azureResourceId, ex);
+      logger.info(
+          "Attempt to delete Azure managed identity failed on this try: " + azureResourceId, ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
   }

@@ -585,8 +585,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Traced
   @Override
-  public ResponseEntity<ApiCreatedControlledAzureDatabase> createAzureDatabase(UUID workspaceId,
-      ApiCreateControlledAzureDatabaseRequestBody body) {
+  public ResponseEntity<ApiCreatedControlledAzureDatabase> createAzureDatabase(
+      UUID workspaceId, ApiCreateControlledAzureDatabaseRequestBody body) {
     return ControlledAzureResourceApi.super.createAzureDatabase(workspaceId, body);
   }
 
@@ -643,8 +643,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Traced
   @Override
-  public ResponseEntity<ApiAzureDatabaseResource> getAzureDatabase(UUID workspaceId,
-      UUID resourceId) {
+  public ResponseEntity<ApiAzureDatabaseResource> getAzureDatabase(
+      UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureDatabaseResource resource =
@@ -657,8 +657,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Traced
   @Override
-  public ResponseEntity<ApiAzureManagedIdentityResource> getAzureManagedIdentity(UUID workspaceId,
-      UUID resourceId) {
+  public ResponseEntity<ApiAzureManagedIdentityResource> getAzureManagedIdentity(
+      UUID workspaceId, UUID resourceId) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     features.azureEnabledCheck();
     final ControlledAzureManagedIdentityResource resource =

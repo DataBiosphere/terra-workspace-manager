@@ -52,7 +52,10 @@ public class LandingZoneApiDispatch {
   private static final String AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE =
       "Microsoft.Storage/storageAccounts";
   private static final String AZURE_BATCH_ACCOUNT_RESOURCE_TYPE = "Microsoft.Batch/batchAccounts";
-  private static final String AZURE_KUBERNETES_CLUSTER_RESOURCE_TYPE = "Microsoft.ContainerService/managedClusters";
+  private static final String AZURE_KUBERNETES_CLUSTER_RESOURCE_TYPE =
+      "Microsoft.ContainerService/managedClusters";
+  private static final String AZURE_DATABASE_RESOURCE_TYPE =
+      "Microsoft.DBforPostgreSQL/flexibleServers";
 
   private final LandingZoneService landingZoneService;
   private final FeatureConfiguration features;
@@ -195,7 +198,20 @@ public class LandingZoneApiDispatch {
 
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedKubernetesCluster(
       BearerToken bearerToken, UUID landingZoneId) {
-    return getSharedResourceByType(bearerToken, landingZoneId, AZURE_KUBERNETES_CLUSTER_RESOURCE_TYPE);
+    return getSharedResourceByType(
+        bearerToken, landingZoneId, AZURE_KUBERNETES_CLUSTER_RESOURCE_TYPE);
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedDatabase(
+      BearerToken bearerToken, UUID landingZoneId) {
+    return getSharedResourceByType(
+        bearerToken, landingZoneId, AZURE_DATABASE_RESOURCE_TYPE);
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedDatabaseAdminIdentity(
+      BearerToken bearerToken, UUID landingZoneId) {
+    return getSharedResourceByType(
+        bearerToken, landingZoneId, AZURE_DATABASE_RESOURCE_TYPE);
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
