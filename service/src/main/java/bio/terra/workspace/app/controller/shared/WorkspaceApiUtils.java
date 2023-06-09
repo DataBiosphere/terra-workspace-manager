@@ -9,6 +9,7 @@ import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.generated.model.ApiAwsContext;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiGcpContext;
@@ -154,8 +155,13 @@ public class WorkspaceApiUtils {
 
     List<ApiWsmPolicyInput> workspacePolicies = null;
     if (features.isTpsEnabled()) {
-      tpsApiDispatch.createPaoIfNotExist(workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE);
-      TpsPaoGetResult workspacePao = tpsApiDispatch.getPao(workspaceUuid);
+      Rethrow.onInterrupted(
+          () ->
+              tpsApiDispatch.createPaoIfNotExist(
+                  workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+          "createPaoIfNotExist");
+      TpsPaoGetResult workspacePao =
+          Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(workspaceUuid), "getPao");
       workspacePolicies = TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(workspacePao);
     }
 

@@ -473,7 +473,7 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
   }
 
   @Test
-  public void validateRegionGCP() {
+  public void validateRegionGCP() throws Exception {
     var testRegions = List.of("us", "us-central1", "us-east1-a");
     UUID workspaceId = UUID.randomUUID();
 
@@ -491,7 +491,7 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
   }
 
   @Test
-  public void validateRegionAzure() {
+  public void validateRegionAzure() throws Exception {
     var testRegions = List.of(Region.US_EAST, Region.US_EAST2);
     UUID workspaceId = UUID.randomUUID();
 
@@ -509,7 +509,7 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
   }
 
   @Test
-  public void validateRegion_invalid_throws() {
+  public void validateRegion_invalid_throws() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     TpsPaoGetResult pao = new TpsPaoGetResult().objectId(workspaceId);
     when(mockTpsApiDispatch().listValidRegions(workspaceId, CloudPlatform.GCP))

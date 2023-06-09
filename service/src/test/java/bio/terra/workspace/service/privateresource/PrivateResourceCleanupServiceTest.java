@@ -9,13 +9,13 @@ import bio.terra.workspace.app.configuration.external.PrivateResourceCleanupConf
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
@@ -111,7 +111,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Add second user to group
     addUserToGroup(groupName, userAccessUtils.getSecondUserEmail(), ownerGroupApi);
     // Add group to workspace as writer
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
                 workspace.getWorkspaceId(),
@@ -140,7 +140,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest(),
         creationParameters);
     // Verify second user can read the private resource in Sam.
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userAccessUtils.secondUserAuthRequest(),
@@ -153,7 +153,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Verify second user is no longer in workspace, but still has resource access because cleanup
     // hasn't run yet.
     assertFalse(
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
                     userAccessUtils.secondUserAuthRequest(),
@@ -162,7 +162,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
                     SamWorkspaceAction.READ),
             "checkResourceAuth"));
     assertTrue(
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
                     userAccessUtils.secondUserAuthRequest(),
@@ -176,7 +176,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     privateResourceCleanupService.cleanupResourcesSuppressExceptions();
     // Verify second user can no longer read the resource.
     assertFalse(
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
                     userAccessUtils.secondUserAuthRequest(),
@@ -199,7 +199,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Add second user to group
     addUserToGroup(groupName, userAccessUtils.getSecondUserEmail(), ownerGroupApi);
     // Add group to workspace as writer
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () ->
             samService.grantWorkspaceRole(
                 workspace.getWorkspaceId(),
@@ -242,7 +242,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
         resource, ControlledResourceIamRole.WRITER, appRequest, creationParameters);
 
     // Verify second user can read the private resource in Sam.
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userAccessUtils.secondUserAuthRequest(),
@@ -255,7 +255,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Verify second user is no longer in workspace, but still has resource access because cleanup
     // hasn't run yet.
     assertFalse(
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
                     userAccessUtils.secondUserAuthRequest(),
@@ -264,7 +264,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
                     SamWorkspaceAction.READ),
             "checkResourceAuth"));
     assertTrue(
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
                     userAccessUtils.secondUserAuthRequest(),
@@ -278,7 +278,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     privateResourceCleanupService.cleanupResourcesSuppressExceptions();
     // Verify second user can no longer read the resource.
     assertFalse(
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
                     userAccessUtils.secondUserAuthRequest(),
@@ -295,7 +295,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // Application can still read the resource, because applications have EDITOR role on their
     // application-private resources.
     assertTrue(
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.isAuthorized(
                     appRequest,

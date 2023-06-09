@@ -12,12 +12,12 @@ import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -264,7 +264,7 @@ public class WorkspaceService {
         workspaceUuid,
         action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
@@ -414,7 +414,7 @@ public class WorkspaceService {
       AuthenticatedUserRequest userRequest, int offset, int limit, WsmIamRole minimumHighestRole) {
     // In general, highest SAM role should be fetched in controller. Fetch here to save a SAM call.
     Map<UUID, WorkspaceDescription> samWorkspacesResponse =
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
             "listWorkspaceIds");
 
@@ -445,7 +445,7 @@ public class WorkspaceService {
     // This is one exception where we need to do an authz check inside a service instead of a
     // controller. This is because checks with Sam require the workspace ID, but until we read from
     // WSM's database we only have the user-facing ID.
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userRequest,
@@ -460,7 +460,7 @@ public class WorkspaceService {
   public WsmIamRole getHighestRole(UUID uuid, AuthenticatedUserRequest userRequest) {
     logger.info("getHighestRole - userRequest: {}\nuserFacingId: {}", userRequest, uuid.toString());
     List<WsmIamRole> requesterRoles =
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.listRequesterRoles(
                     userRequest, SamConstants.SamResource.WORKSPACE, uuid.toString()),
@@ -746,12 +746,23 @@ public class WorkspaceService {
         sourcePaoId.getObjectId(),
         userRequest.getEmail());
 
-    tpsApiDispatch.createPaoIfNotExist(
-        sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType());
-    tpsApiDispatch.createPaoIfNotExist(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+    Rethrow.onInterrupted(
+        () ->
+            tpsApiDispatch.createPaoIfNotExist(
+                sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType()),
+        "createPaoIfNotExist");
+    Rethrow.onInterrupted(
+        () ->
+            tpsApiDispatch.createPaoIfNotExist(
+                workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+        "createPaoIfNotExist");
 
     TpsPaoUpdateResult dryRun =
-        tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), TpsUpdateMode.DRY_RUN);
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.linkPao(
+                    workspaceId, sourcePaoId.getObjectId(), TpsUpdateMode.DRY_RUN),
+            "linkPao");
 
     if (!dryRun.getConflicts().isEmpty() && tpsUpdateMode != TpsUpdateMode.DRY_RUN) {
       throw new PolicyConflictException(
@@ -765,7 +776,9 @@ public class WorkspaceService {
       return dryRun;
     } else {
       var updateResult =
-          tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), tpsUpdateMode);
+          Rethrow.onInterrupted(
+              () -> tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), tpsUpdateMode),
+              "linkPao");
       if (Boolean.TRUE.equals(updateResult.isUpdateApplied())) {
         workspaceActivityLogService.writeActivity(
             userRequest,
@@ -799,8 +812,11 @@ public class WorkspaceService {
     logger.info("Updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
 
     var dryRun =
-        tpsApiDispatch.updatePao(
-            workspaceUuid, addAttributes, removeAttributes, TpsUpdateMode.DRY_RUN);
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.updatePao(
+                    workspaceUuid, addAttributes, removeAttributes, TpsUpdateMode.DRY_RUN),
+            "updatePao");
 
     if (!dryRun.getConflicts().isEmpty() && updateMode != TpsUpdateMode.DRY_RUN) {
       throw new PolicyConflictException(
@@ -814,7 +830,11 @@ public class WorkspaceService {
       return dryRun;
     } else {
       var result =
-          tpsApiDispatch.updatePao(workspaceUuid, addAttributes, removeAttributes, updateMode);
+          Rethrow.onInterrupted(
+              () ->
+                  tpsApiDispatch.updatePao(
+                      workspaceUuid, addAttributes, removeAttributes, updateMode),
+              "updatePao");
 
       if (Boolean.TRUE.equals(result.isUpdateApplied())) {
         workspaceActivityLogService.writeActivity(

@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.policy.model.TpsLocation;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.generated.controller.PolicyApi;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiRegions;
@@ -26,7 +27,11 @@ public class PolicyApiController implements PolicyApi {
   public ResponseEntity<ApiWsmPolicyLocation> getLocationInfo(
       ApiCloudPlatform platform, @Nullable String location) {
     TpsLocation tpsLocation =
-        tpsApiDispatch.getLocationInfo(CloudPlatform.fromApiCloudPlatform(platform), location);
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.getLocationInfo(
+                    CloudPlatform.fromApiCloudPlatform(platform), location),
+            "getLocationInfo");
 
     return new ResponseEntity<>(convertTpsToWsmPolicyLocation(tpsLocation), HttpStatus.OK);
   }
