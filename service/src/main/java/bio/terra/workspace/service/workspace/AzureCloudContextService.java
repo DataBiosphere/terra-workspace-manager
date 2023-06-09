@@ -34,7 +34,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class AzureCloudContextService implements CloudContextService {
   private static AzureCloudContextService theService;
-
   private final WorkspaceDao workspaceDao;
   private final FeatureConfiguration featureConfiguration;
   private final WorkspaceService workspaceService;

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.model;
 
+import bio.terra.workspace.common.exception.InternalLogicException;
 import javax.annotation.Nullable;
 
 /**
@@ -15,7 +16,14 @@ public interface CloudContext {
   CloudContextCommonFields getCommonFields();
 
   /** Get the subtype from the cloud platform */
-  <T> T castByEnum(CloudPlatform cloudPlatform);
+  @SuppressWarnings("unchecked")
+  default <T> T castByEnum(CloudPlatform cloudPlatform) {
+    if (cloudPlatform != getCloudPlatform()) {
+      throw new InternalLogicException(
+          String.format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
+    }
+    return (T) this;
+  }
 
   /**
    * Create the serialized form of cloud-specific data to be stored in the database. If no data

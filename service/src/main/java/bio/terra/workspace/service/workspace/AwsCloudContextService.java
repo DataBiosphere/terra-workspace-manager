@@ -10,12 +10,10 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -49,26 +47,18 @@ import software.amazon.awssdk.regions.Region;
     justification = "Enable both injection and static lookup")
 @Component
 public class AwsCloudContextService implements CloudContextService {
-  private final AwsConfiguration awsConfiguration;
+  private static AwsCloudContextService theService;
   private final WorkspaceDao workspaceDao;
   private final FeatureService featureService;
-  private final ResourceDao resourceDao;
-  private final ControlledResourceService controlledResourceService;
+  private final AwsConfiguration awsConfiguration;
   private EnvironmentDiscovery environmentDiscovery;
-  private static AwsCloudContextService theService;
 
   @Autowired
   public AwsCloudContextService(
-      WorkspaceDao workspaceDao,
-      FeatureService featureService,
-      AwsConfiguration awsConfiguration,
-      ResourceDao resourceDao,
-      ControlledResourceService controlledResourceService) {
+      WorkspaceDao workspaceDao, FeatureService featureService, AwsConfiguration awsConfiguration) {
     this.awsConfiguration = awsConfiguration;
     this.workspaceDao = workspaceDao;
     this.featureService = featureService;
-    this.resourceDao = resourceDao;
-    this.controlledResourceService = controlledResourceService;
   }
 
   // Set up static accessor for use by CloudPlatform
@@ -100,7 +90,11 @@ public class AwsCloudContextService implements CloudContextService {
       AuthenticatedUserRequest userRequest) {
     flight.addStep(
         new DeleteControlledAwsResourcesStep(
-            resourceDao, controlledResourceService, workspaceUuid, userRequest));
+            appContext.getResourceDao(),
+            appContext.getControlledResourceService(),
+            appContext.getSamService(),
+            workspaceUuid,
+            userRequest));
   }
 
   @Override

@@ -503,6 +503,14 @@ public class ResourceValidationUtils {
     }
   }
 
+  public static void checkStringNonEmpty(
+      @Nullable String fieldValue, String fieldName, String resourceDescriptor) {
+    if (StringUtils.isEmpty(fieldValue)) {
+      throw new MissingRequiredFieldException(
+          String.format("Missing required string '%s' for %s", fieldName, resourceDescriptor));
+    }
+  }
+
   public static void validateApiAzureVmCreationParameters(
       ApiAzureVmCreationParameters apiAzureVmCreationParameters) {
     var vmImage = apiAzureVmCreationParameters.getVmImage();

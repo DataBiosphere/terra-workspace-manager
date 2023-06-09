@@ -135,8 +135,8 @@ public class ControlledAzureResourceFixtures {
                 .name(resourceName)
                 .description(resourceDescription)
                 .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+                .managedBy(ManagedByType.MANAGED_BY_USER)
                 .region("eastus") // Needs to match the AzureControlledStorageContainerFlightTest
                 .build())
         .storageContainerName(containerName)

@@ -111,7 +111,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         userAccessTestUtils.defaultUserAuthRequest().getRequiredToken());
 
     // Create a GCP context as default user
-    var userRequest = userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    var userRequest = userAccessTestUtils.defaultUserAuthRequest();
     String makeContextJobId = UUID.randomUUID().toString();
     SpendProfile spendProfile =
         spendProfileService.authorizeLinking(

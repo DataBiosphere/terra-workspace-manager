@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsUnitTest {
 
   @Test
-  public void generateFolderName() {
+  public void generateFolderNameTest() {
     String workspaceUserFacingId = "workspaceUserFacingId";
     String resourceName = "resource";
     String generatedName = resourceName + '-' + workspaceUserFacingId;

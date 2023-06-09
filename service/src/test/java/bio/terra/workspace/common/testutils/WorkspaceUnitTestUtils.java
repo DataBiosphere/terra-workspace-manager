@@ -3,6 +3,7 @@ package bio.terra.workspace.common.testutils;
 import static bio.terra.workspace.common.testfixtures.WorkspaceFixtures.createDefaultMcWorkspace;
 
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -112,5 +113,13 @@ public class WorkspaceUnitTestUtils {
     workspaceDao.deleteCloudContextSuccess(workspaceUuid, CloudPlatform.GCP, flightId);
   }
 
-  private WorkspaceUnitTestUtils() {}
+  public static DbCloudContext makeDbCloudContext(CloudPlatform cloudPlatform, String json) {
+    return new DbCloudContext()
+        .cloudPlatform(cloudPlatform)
+        .spendProfile(WorkspaceUnitTestUtils.SPEND_PROFILE_ID)
+        .contextJson(json)
+        .state(WsmResourceState.READY)
+        .flightId(null)
+        .error(null);
+  }
 }

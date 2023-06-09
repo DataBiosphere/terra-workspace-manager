@@ -30,8 +30,7 @@ public class WorkspaceV2ApiTest extends BaseConnectedTest {
   }
 
   private void createDeleteOperation(ApiCloudPlatform cloudPlatform) throws Exception {
-    AuthenticatedUserRequest defaultUserRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest defaultUserRequest = userAccessTestUtils.defaultUserAuthRequest();
     // Create the workspace with no cloud context
     ApiCreateWorkspaceV2Result result =
         mvcWorkspaceApi.createWorkspaceAndWait(defaultUserRequest, cloudPlatform);

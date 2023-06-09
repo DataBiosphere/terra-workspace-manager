@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.exceptions.ChildrenBlockingDeletionException;
@@ -24,34 +26,34 @@ public class EnsureNoWorkspaceChildrenStepTest {
 
   @Test
   void stepPassesWhenNoChildrenExistForWorkspace() throws Exception {
-    var sam = Mockito.mock(SamService.class);
-    var workspaceId = UUID.randomUUID();
-    var request = new AuthenticatedUserRequest();
-    when(sam.getWorkspaceChildResources(request, workspaceId)).thenReturn(List.of());
+    SamService sam = Mockito.mock(SamService.class);
+    UUID workspaceId = UUID.randomUUID();
+    AuthenticatedUserRequest userRequest = MockMvcUtils.USER_REQUEST;
+    when(sam.getWorkspaceChildResources(userRequest, workspaceId)).thenReturn(List.of());
 
-    var result =
-        new EnsureNoWorkspaceChildrenStep(sam, request, workspaceId)
+    StepResult result =
+        new EnsureNoWorkspaceChildrenStep(sam, userRequest, workspaceId)
             .doStep(Mockito.mock(FlightContext.class));
     assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }
 
   @Test
   void stepFailsWhenChildrenExistForWorkspace() throws Exception {
-    var sam = Mockito.mock(SamService.class);
-    var workspaceId = UUID.randomUUID();
-    var request = new AuthenticatedUserRequest();
+    SamService sam = Mockito.mock(SamService.class);
+    UUID workspaceId = UUID.randomUUID();
+    AuthenticatedUserRequest userRequest = MockMvcUtils.USER_REQUEST;
     var resourceId = "test_child_resource";
     var resourceType = "test_resource_type";
     var children =
         List.of(
             new FullyQualifiedResourceId().resourceId(resourceId).resourceTypeName(resourceType));
-    when(sam.getWorkspaceChildResources(request, workspaceId)).thenReturn(children);
+    when(sam.getWorkspaceChildResources(userRequest, workspaceId)).thenReturn(children);
 
     var e =
         assertThrows(
             ChildrenBlockingDeletionException.class,
             () ->
-                new EnsureNoWorkspaceChildrenStep(sam, request, workspaceId)
+                new EnsureNoWorkspaceChildrenStep(sam, userRequest, workspaceId)
                     .doStep(Mockito.mock(FlightContext.class)));
 
     assertTrue(e.getCauses().stream().anyMatch(cause -> cause.contains(resourceId)));

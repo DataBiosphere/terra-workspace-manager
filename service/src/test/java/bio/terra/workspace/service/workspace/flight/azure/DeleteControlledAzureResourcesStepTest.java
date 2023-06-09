@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.azure;
 
+import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.WORKSPACE_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,6 +13,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.testfixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.testutils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -26,7 +29,6 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -39,28 +41,14 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
 
   @Test
   void testRequiresDeleteAction() throws InterruptedException, RetryException {
-    UUID workspaceId = UUID.randomUUID();
-    AuthenticatedUserRequest userRequest =
-        new AuthenticatedUserRequest("user@example.com", "subjectId", Optional.empty());
     ControlledResource deleteMe =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceId)
-                    .resourceId(UUID.randomUUID())
-                    .name("deleteMe")
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .createdByEmail(userRequest.getEmail())
-                    .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-                    .build())
-            .storageContainerName("user-storage-container")
-            .build();
+        ControlledAzureResourceFixtures.getAzureStorageContainer(
+            WORKSPACE_ID, UUID.randomUUID(), "user-storage-container", "deleteMe", null);
     ControlledResource cannotDeleteMe =
         ControlledAzureStorageContainerResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceId)
+                    .workspaceUuid(WORKSPACE_ID)
                     .resourceId(UUID.randomUUID())
                     .name("cannotDeleteMe")
                     .cloningInstructions(CloningInstructions.COPY_NOTHING)
@@ -70,9 +58,11 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
                     .build())
             .storageContainerName("application-storage-container")
             .build();
+
+    AuthenticatedUserRequest userRequest = MockMvcUtils.USER_REQUEST;
     doReturn(List.of(deleteMe, cannotDeleteMe))
         .when(mockResourceDao)
-        .listControlledResources(workspaceId, CloudPlatform.AZURE);
+        .listControlledResources(WORKSPACE_ID, CloudPlatform.AZURE);
     doReturn(true)
         .when(mockSamService)
         .isAuthorized(
@@ -93,10 +83,10 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
             mockResourceDao,
             mockControlledResourceService,
             mockSamService,
-            workspaceId,
+            WORKSPACE_ID,
             userRequest);
 
-    final StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
+    StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
 
     // Step is expected to fail and no resources should be deleted
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
@@ -108,28 +98,14 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
 
   @Test
   void testDeletesAllResources() throws InterruptedException, RetryException {
-    UUID workspaceId = UUID.randomUUID();
-    AuthenticatedUserRequest userRequest =
-        new AuthenticatedUserRequest("user@example.com", "subjectId", Optional.empty());
     ControlledResource deleteMe =
-        ControlledAzureStorageContainerResource.builder()
-            .common(
-                ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceId)
-                    .resourceId(UUID.randomUUID())
-                    .name("deleteMe")
-                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                    .createdByEmail(userRequest.getEmail())
-                    .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-                    .build())
-            .storageContainerName("user-storage-container")
-            .build();
+        ControlledAzureResourceFixtures.getAzureStorageContainer(
+            WORKSPACE_ID, UUID.randomUUID(), "user-storage-container", "deleteMe", null);
     ControlledResource deleteMeToo =
         ControlledAzureStorageContainerResource.builder()
             .common(
                 ControlledResourceFields.builder()
-                    .workspaceUuid(workspaceId)
+                    .workspaceUuid(WORKSPACE_ID)
                     .resourceId(UUID.randomUUID())
                     .name("deleteMeToo")
                     .cloningInstructions(CloningInstructions.COPY_NOTHING)
@@ -139,9 +115,11 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
                     .build())
             .storageContainerName("application-storage-container")
             .build();
+
+    AuthenticatedUserRequest userRequest = MockMvcUtils.USER_REQUEST;
     doReturn(List.of(deleteMe, deleteMeToo))
         .when(mockResourceDao)
-        .listControlledResources(workspaceId, CloudPlatform.AZURE);
+        .listControlledResources(WORKSPACE_ID, CloudPlatform.AZURE);
     doReturn(true)
         .when(mockSamService)
         .isAuthorized(
@@ -162,15 +140,15 @@ class DeleteControlledAzureResourcesStepTest extends BaseAzureUnitTest {
             mockResourceDao,
             mockControlledResourceService,
             mockSamService,
-            workspaceId,
+            WORKSPACE_ID,
             userRequest);
 
-    final StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
+    StepResult result = deleteControlledAzureResourcesStep.doStep(mockFlightContext);
 
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
     verify(mockControlledResourceService)
-        .deleteControlledResourceSync(workspaceId, deleteMe.getResourceId(), userRequest);
+        .deleteControlledResourceSync(WORKSPACE_ID, deleteMe.getResourceId(), userRequest);
     verify(mockControlledResourceService)
-        .deleteControlledResourceSync(workspaceId, deleteMeToo.getResourceId(), userRequest);
+        .deleteControlledResourceSync(WORKSPACE_ID, deleteMeToo.getResourceId(), userRequest);
   }
 }
