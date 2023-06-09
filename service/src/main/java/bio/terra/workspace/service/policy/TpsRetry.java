@@ -124,6 +124,8 @@ public class TpsRetry {
   /**
    * Given an exception from Tps, either timeout and rethrow the error from Tps or sleep for
    * retryDuration. If the thread times out while sleeping, throw the initial exception.
+   * <p> With the current values of INITIAL_WAIT and MAXIMUM_WAIT, this will
+   * sleep 10, 20, 30, 30, 30... seconds.
    *
    * @param previousException The error Tps threw
    * @throws ApiException InterruptedException
