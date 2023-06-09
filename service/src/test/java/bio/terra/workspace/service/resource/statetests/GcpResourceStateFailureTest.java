@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.statetests;
 
 import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.defaultNotebookCreationParameters;
-import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledResourceFixtures.insertControlledResourceRow;
@@ -145,7 +145,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
 
     // Create the resources in the database
     // GCP-Controlled Notebook
-    var notebookResource = makeDefaultAiNotebookInstance(workspaceUuid).build();
+    var notebookResource = makeDefaultAiNotebookInstanceBuilder(workspaceUuid).build();
     insertControlledResourceRow(resourceDao, notebookResource);
 
     // GCP-Controlled BigQuery

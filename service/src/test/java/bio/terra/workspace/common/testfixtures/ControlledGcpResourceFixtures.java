@@ -331,7 +331,8 @@ public class ControlledGcpResourceFixtures {
         .region(DEFAULT_RESOURCE_REGION);
   }
 
-  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance() {
+  public static ControlledAiNotebookInstanceResource.Builder
+      makeDefaultAiNotebookInstanceBuilder() {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
@@ -339,7 +340,7 @@ public class ControlledGcpResourceFixtures {
         .projectId("my-project-id");
   }
 
-  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstance(
+  public static ControlledAiNotebookInstanceResource.Builder makeDefaultAiNotebookInstanceBuilder(
       UUID workspaceId) {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceId).build())

@@ -1,6 +1,6 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstance;
+import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder;
 import static bio.terra.workspace.common.testfixtures.ControlledGcpResourceFixtures.makeNotebookCommonFieldsBuilder;
@@ -144,7 +144,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     ControlledResourceFields commonFields =
         makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid).build();
     ControlledAiNotebookInstanceResource resource =
-        makeDefaultAiNotebookInstance().common(commonFields).build();
+        makeDefaultAiNotebookInstanceBuilder().common(commonFields).build();
     insertControlledResourceRow(resourceDao, resource);
 
     var getResource = resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
@@ -159,7 +159,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     ControlledResourceFields commonFields =
         makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid).build();
     ControlledAiNotebookInstanceResource resource =
-        makeDefaultAiNotebookInstance().common(commonFields).build();
+        makeDefaultAiNotebookInstanceBuilder().common(commonFields).build();
     insertControlledResourceRow(resourceDao, resource);
     activityLogDao.writeActivity(
         workspaceUuid,
@@ -181,7 +181,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     ControlledResourceFields commonFields =
         makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid).build();
     ControlledAiNotebookInstanceResource resource =
-        makeDefaultAiNotebookInstance().common(commonFields).build();
+        makeDefaultAiNotebookInstanceBuilder().common(commonFields).build();
     insertControlledResourceRow(resourceDao, resource);
 
     var newRegion = "great-new-world";
@@ -210,7 +210,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     ControlledResourceFields commonFields =
         makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid).build();
     ControlledAiNotebookInstanceResource resource =
-        makeDefaultAiNotebookInstance().common(commonFields).build();
+        makeDefaultAiNotebookInstanceBuilder().common(commonFields).build();
     insertControlledResourceRow(resourceDao, resource);
 
     assertTrue(resourceDao.updateControlledResourceRegion(resource.getResourceId(), null));
@@ -263,13 +263,13 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @Test
   public void duplicateControlledBucketNameRejected() {
-    final String clashingBucketName = "not-a-pail";
-    final ControlledGcsBucketResource initialResource =
+    String clashingBucketName = "not-a-pail";
+    ControlledGcsBucketResource initialResource =
         makeDefaultControlledGcsBucketBuilder(workspaceUuid).bucketName(clashingBucketName).build();
     insertControlledResourceRow(resourceDao, initialResource);
 
-    final UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
-    final ControlledGcsBucketResource duplicatingResource =
+    UUID workspaceId2 = createWorkspaceWithGcpContext(workspaceDao);
+    ControlledGcsBucketResource duplicatingResource =
         makeDefaultControlledGcsBucketBuilder(workspaceId2).bucketName(clashingBucketName).build();
 
     assertThrows(
@@ -287,7 +287,10 @@ public class ResourceDaoTest extends BaseUnitTest {
     ControlledResourceFields commonFields1 =
         makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid).build();
     ControlledAiNotebookInstanceResource initialResource =
-        makeDefaultAiNotebookInstance().common(commonFields1).instanceId(cloudInstanceId).build();
+        makeDefaultAiNotebookInstanceBuilder()
+            .common(commonFields1)
+            .instanceId(cloudInstanceId)
+            .build();
 
     insertControlledResourceRow(resourceDao, initialResource);
     assertTrue(
@@ -297,8 +300,11 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     ControlledResourceFields commonFields2 =
         makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid).name("resource-2").build();
-    final ControlledResource duplicatingResource =
-        makeDefaultAiNotebookInstance().common(commonFields2).instanceId(cloudInstanceId).build();
+    ControlledResource duplicatingResource =
+        makeDefaultAiNotebookInstanceBuilder()
+            .common(commonFields2)
+            .instanceId(cloudInstanceId)
+            .build();
     assertThrows(
         DuplicateResourceException.class,
         () -> insertControlledResourceRow(resourceDao, duplicatingResource));
@@ -309,7 +315,10 @@ public class ResourceDaoTest extends BaseUnitTest {
             .name("resource-3")
             .build();
     ControlledResource resourceWithDifferentWorkspaceId =
-        makeDefaultAiNotebookInstance().common(commonFields3).instanceId(cloudInstanceId).build();
+        makeDefaultAiNotebookInstanceBuilder()
+            .common(commonFields3)
+            .instanceId(cloudInstanceId)
+            .build();
 
     // should be fine: separate workspaces implies separate gcp projects
     createControlledResourceAndLog(resourceWithDifferentWorkspaceId);
@@ -321,8 +330,8 @@ public class ResourceDaoTest extends BaseUnitTest {
 
     ControlledResourceFields commonFields5 =
         makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceUuid).name("resource-5").build();
-    final ControlledAiNotebookInstanceResource resourceWithDefaultLocation =
-        makeDefaultAiNotebookInstance()
+    ControlledAiNotebookInstanceResource resourceWithDefaultLocation =
+        makeDefaultAiNotebookInstanceBuilder()
             .common(commonFields5)
             .instanceId(cloudInstanceId)
             .location(null)
@@ -340,7 +349,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     String datasetName1 = "dataset1";
     String projectId1 = "projectId1";
     String projectId2 = "projectId2";
-    final ControlledBigQueryDatasetResource initialResource =
+    ControlledBigQueryDatasetResource initialResource =
         ControlledBigQueryDatasetResource.builder()
             .common(makeDefaultControlledResourceFields(workspaceUuid))
             .projectId(projectId1)
@@ -353,7 +362,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       // This is in a different workspace (and so a different cloud context), so it is not a
       // conflict
       // even with the same Dataset ID.
-      final ControlledBigQueryDatasetResource uniqueResource =
+      ControlledBigQueryDatasetResource uniqueResource =
           ControlledBigQueryDatasetResource.builder()
               .common(makeDefaultControlledResourceFields(workspaceId2))
               .datasetName(datasetName1)
@@ -362,7 +371,7 @@ public class ResourceDaoTest extends BaseUnitTest {
       createControlledResourceAndLog(uniqueResource);
 
       // This is in the same workspace as initialResource, so it should be a conflict.
-      final ControlledBigQueryDatasetResource duplicatingResource =
+      ControlledBigQueryDatasetResource duplicatingResource =
           ControlledBigQueryDatasetResource.builder()
               .common(makeDefaultControlledResourceFields(workspaceUuid))
               .projectId(projectId1)
@@ -562,7 +571,7 @@ public class ResourceDaoTest extends BaseUnitTest {
                       .build())
               .build();
       ControlledAiNotebookInstanceResource notebook =
-          makeDefaultAiNotebookInstance()
+          makeDefaultAiNotebookInstanceBuilder()
               .common(
                   makeNotebookCommonFieldsBuilder()
                       .workspaceUuid(workspaceUuid3)

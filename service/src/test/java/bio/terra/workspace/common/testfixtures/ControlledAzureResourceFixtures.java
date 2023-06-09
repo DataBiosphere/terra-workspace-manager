@@ -135,8 +135,8 @@ public class ControlledAzureResourceFixtures {
                 .name(resourceName)
                 .description(resourceDescription)
                 .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+                .managedBy(ManagedByType.MANAGED_BY_USER)
                 .region("eastus") // Needs to match the AzureControlledStorageContainerFlightTest
                 .build())
         .storageContainerName(containerName)
@@ -213,11 +213,11 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ApiAzureVmCustomScriptExtension getAzureVmCustomScriptExtension() {
-    final String[] customScriptFileUri =
+    String[] customScriptFileUri =
         new String[] {
           "https://raw.githubusercontent.com/DataBiosphere/leonardo/TOAZ-83-dummy-script/http/src/main/resources/init-resources/msdsvmcontent/dummy_script.sh"
         };
-    final String commandToExecute = "bash dummy_script.sh hello";
+    String commandToExecute = "bash dummy_script.sh hello";
 
     var publicSettings =
         Arrays.asList(

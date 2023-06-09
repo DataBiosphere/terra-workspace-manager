@@ -138,7 +138,7 @@ public class UserAccessTestUtils {
     return secondUser().getAuthenticatedRequest();
   }
 
-  public AuthenticatedUserRequest thirdUserAuthRequest() {
+  public AuthenticatedUserRequest billingUserAuthRequest() {
     return billingUser().getAuthenticatedRequest();
   }
 

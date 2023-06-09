@@ -122,8 +122,7 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void cannotUndoWorkspaceDelete() throws Exception {
     // Create a workspace with a controlled resource
-    AuthenticatedUserRequest userRequest =
-        userAccessTestUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest = userAccessTestUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     UUID workspaceId = workspace.getWorkspaceId();
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
