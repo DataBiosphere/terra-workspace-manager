@@ -469,6 +469,22 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   }
 
   @Test
+  public void cloneGcsBucket_badRequest_throws400() throws Exception {
+    // Cannot set bucketName for COPY_REFERENCE clone
+    mockMvcUtils.cloneControlledGcsBucketAsync(
+        userAccessUtils.defaultUser().getAuthenticatedRequest(),
+        /*sourceWorkspaceId=*/ workspaceId,
+        sourceBucket.getMetadata().getResourceId(),
+        /*destWorkspaceId=*/ workspaceId,
+        ApiCloningInstructionsEnum.REFERENCE,
+        /*destResourceName=*/ null,
+        "invalidSetBucketName",
+        /*destLocation=*/ null,
+        List.of(HttpStatus.SC_BAD_REQUEST),
+        /*shouldUndo=*/ false);
+  }
+
+  @Test
   public void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();

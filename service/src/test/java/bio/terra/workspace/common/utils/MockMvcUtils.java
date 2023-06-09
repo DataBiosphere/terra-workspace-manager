@@ -246,6 +246,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s";
   public static final String AZURE_VM_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/vm/%s";
+  public static final String CLONE_AZURE_STORAGE_CONTAINER_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/clone";
   public static final String CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder";
   public static final String AWS_STORAGE_FOLDERS_PATH_FORMAT =

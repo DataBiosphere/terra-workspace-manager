@@ -23,16 +23,15 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadat
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.FlexResourceCreationParameters;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -210,39 +209,29 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
       UUID workspaceUuid,
       UUID resourceUuid,
       @Valid ApiCloneControlledFlexibleResourceRequest body) {
+    logger.info(
+        "Cloning flex resource resourceId {} workspaceUuid {}", resourceUuid, workspaceUuid);
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-
-    // Do a permission check before validating the cloning instructions.
-    // It's preferable to throw a permission error first.
-    controlledResourceMetadataManager.validateCloneAction(
-        userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid);
+    ControlledFlexibleResource resource =
+        controlledResourceMetadataManager
+            .validateCloneAction(
+                userRequest, workspaceUuid, body.getDestinationWorkspaceId(), resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
+    CloningInstructions cloningInstructions =
+        resource.computeCloningInstructions(body.getCloningInstructions());
+    ResourceValidationUtils.validateCloningInstructions(
+        StewardshipType.CONTROLLED, cloningInstructions);
     workspaceService.validateWorkspaceState(workspaceUuid);
-    workspaceService.validateWorkspaceState(body.getDestinationWorkspaceId());
-
-    if (body.getCloningInstructions() != null) {
-      ResourceValidationUtils.validateCloningInstructions(
-          StewardshipType.CONTROLLED,
-          CloningInstructions.fromApiModel(body.getCloningInstructions()));
-    }
-
-    ControlledResource sourceFlexResource =
-        controlledResourceService.getControlledResource(workspaceUuid, resourceUuid);
-
-    CloningInstructions effectiveCloningInstructions =
-        Optional.ofNullable(body.getCloningInstructions())
-            .map(CloningInstructions::fromApiModel)
-            .orElse(sourceFlexResource.getCloningInstructions());
-
-    UUID sourceResourceId = sourceFlexResource.getResourceId();
-    UUID sourceWorkspaceId = sourceFlexResource.getWorkspaceId();
+    workspaceService.validateCloneWorkspaceAndContextState(
+        body.getDestinationWorkspaceId(), CloudPlatform.ANY, cloningInstructions);
 
     // If COPY_NOTHING return an empty result (no-op).
-    if (effectiveCloningInstructions == CloningInstructions.COPY_NOTHING) {
+    if (cloningInstructions == CloningInstructions.COPY_NOTHING) {
       ApiCloneControlledFlexibleResourceResult emptyResult =
           new ApiCloneControlledFlexibleResourceResult()
               .effectiveCloningInstructions(CloningInstructions.COPY_NOTHING.toApiModel())
-              .sourceResourceId(sourceResourceId)
-              .sourceWorkspaceId(sourceWorkspaceId)
+              .sourceResourceId(resourceUuid)
+              .sourceWorkspaceId(workspaceUuid)
               .resource(null);
       return new ResponseEntity<>(emptyResult, HttpStatus.OK);
     }
@@ -250,21 +239,20 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     // Otherwise start a flight to clone the flex resource.
     ControlledFlexibleResource clonedFlexResource =
         controlledResourceService.cloneFlexResource(
-            workspaceUuid,
-            resourceUuid,
+            resource,
             body.getDestinationWorkspaceId(),
             UUID.randomUUID(),
             userRequest,
             body.getName(),
             body.getDescription(),
-            body.getCloningInstructions());
+            cloningInstructions);
 
     ApiCloneControlledFlexibleResourceResult result =
         new ApiCloneControlledFlexibleResourceResult()
             .resource(clonedFlexResource.toApiResource())
-            .effectiveCloningInstructions(effectiveCloningInstructions.toApiModel())
-            .sourceWorkspaceId(sourceResourceId)
-            .sourceResourceId(sourceWorkspaceId);
+            .effectiveCloningInstructions(cloningInstructions.toApiModel())
+            .sourceWorkspaceId(workspaceUuid)
+            .sourceResourceId(resourceUuid);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }

@@ -5,8 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.resource.model.WsmResource;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
@@ -45,13 +43,6 @@ public class StateTestUtils {
             MockMvcUtils.addAuth(
                 delete(String.format(pathFormat, workspaceId, resourceId)), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_CONFLICT));
-  }
-
-  void createControlledResourceInDb(WsmResource resource, ResourceDao resourceDao) {
-    // insertControlledResourceRow
-    String flightId = UUID.randomUUID().toString();
-    resourceDao.createResourceStart(resource, flightId);
-    resourceDao.createResourceSuccess(resource, flightId);
   }
 
   <T> void updateControlledResource(

@@ -5,6 +5,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_BATCH_POOL_PAT
 import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_DISK_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_STORAGE_CONTAINER_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_DISK_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_STORAGE_CONTAINERS_PATH_FORMAT;
@@ -22,6 +23,8 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerRequest;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContainerRequestBody;
@@ -216,5 +219,43 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
         vmResource.getResourceId(),
         AZURE_VM_PATH_FORMAT,
         objectMapper.writeValueAsString(vmDeleteBody));
+  }
+
+  @Test
+  void testAzureResourceCloneValidation() throws Exception {
+    // Fake up a READY workspace and a READY cloud context
+    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace(billingProfileId);
+    UUID workspaceUuid = workspace.workspaceId();
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    WorkspaceUnitTestUtils.createAzureCloudContextInDatabase(
+        workspaceDao, workspaceUuid, billingProfileId);
+
+    // AZURE-Storage Container
+    var storageResource =
+        ControlledResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(workspaceUuid)
+            .build();
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, storageResource);
+
+    // Fake up a READY targetWorkspace
+    Workspace targetWorkspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    WorkspaceFixtures.createWorkspaceInDb(targetWorkspace, workspaceDao);
+    // Fake up a CREATING cloud context
+    var createContextFlightId = UUID.randomUUID().toString();
+    workspaceDao.createCloudContextStart(
+        targetWorkspace.workspaceId(),
+        CloudPlatform.AZURE,
+        billingProfileId,
+        createContextFlightId);
+
+    var storageCloneBody =
+        new ApiCloneControlledAzureStorageContainerRequest()
+            .cloningInstructions(ApiCloningInstructionsEnum.DEFINITION)
+            .destinationWorkspaceId(targetWorkspace.workspaceId())
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+    stateTestUtils.postResourceExpectConflict(
+        workspaceUuid,
+        storageResource.getResourceId(),
+        CLONE_AZURE_STORAGE_CONTAINER_PATH_FORMAT,
+        objectMapper.writeValueAsString(storageCloneBody));
   }
 }

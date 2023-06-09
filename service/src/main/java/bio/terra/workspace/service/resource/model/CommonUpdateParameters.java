@@ -7,7 +7,8 @@ import javax.annotation.Nullable;
 
 /**
  * Class for assembling common update parameters from an update request. The setters perform
- * validation.
+ * validation. The class stores the cloning instruction as the DB string so it can be null. Various
+ * getters do the conversions to CloningInstructions
  */
 public class CommonUpdateParameters {
   private @Nullable String name;

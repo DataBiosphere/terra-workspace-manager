@@ -42,6 +42,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collections;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -211,5 +212,58 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         notebookResource.getResourceId(),
         CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
         objectMapper.writeValueAsString(bucketDeleteBody));
+  }
+
+  @Test
+  void testGcpResourceCloneValidation() throws Exception {
+    // Fake up a READY workspace and a READY cloud context
+    UUID workspaceUuid = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
+
+    // GCP-Controlled BigQuery
+    var bqResource =
+        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bqResource);
+
+    // GCP-Controlled Bucket
+    var bucketResource =
+        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bucketResource);
+
+    // Fake up a READY targetWorkspace
+    Workspace targetWorkspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    WorkspaceFixtures.createWorkspaceInDb(targetWorkspace, workspaceDao);
+    // Fake up a CREATING cloud context
+    var createContextFlightId = UUID.randomUUID().toString();
+    workspaceDao.createCloudContextStart(
+        targetWorkspace.getWorkspaceId(),
+        CloudPlatform.GCP,
+        WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+        createContextFlightId);
+
+    mockMvcUtils.cloneControlledBqDatasetAsync(
+        USER_REQUEST,
+        workspaceUuid,
+        bqResource.getResourceId(),
+        targetWorkspace.workspaceId(),
+        ApiCloningInstructionsEnum.DEFINITION,
+        null,
+        null,
+        null,
+        null,
+        null,
+        Collections.singletonList(HttpStatus.SC_CONFLICT),
+        false);
+
+    mockMvcUtils.cloneControlledGcsBucketAsync(
+        USER_REQUEST,
+        workspaceUuid,
+        bucketResource.getResourceId(),
+        targetWorkspace.workspaceId(),
+        ApiCloningInstructionsEnum.DEFINITION,
+        null,
+        null,
+        null,
+        Collections.singletonList(HttpStatus.SC_CONFLICT),
+        false);
   }
 }
