@@ -586,8 +586,40 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledAzureDatabase> createAzureDatabase(
-      UUID workspaceId, ApiCreateControlledAzureDatabaseRequestBody body) {
-    return ControlledAzureResourceApi.super.createAzureDatabase(workspaceId, body);
+      UUID workspaceUuid, ApiCreateControlledAzureDatabaseRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            landingZoneApiDispatch.getLandingZoneRegion(
+                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+
+    var resource =
+        ControlledAzureDatabaseResource.builder()
+            .common(commonFields)
+            .databaseOwner(body.getAzureDatabase().getOwner())
+            .databaseName(body.getAzureDatabase().getName())
+            .k8sNamespace(body.getAzureDatabase().getK8sNamespace())
+            .build();
+
+    final ControlledAzureDatabaseResource createdDatabase =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureDatabase())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE);
+
+    var response =
+        new ApiCreatedControlledAzureDatabase()
+            .resourceId(createdDatabase.getResourceId())
+            .azureDatabase(createdDatabase.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Traced

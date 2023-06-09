@@ -15,6 +15,8 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProviderImpl;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -35,25 +37,33 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   private final String databaseName;
   private final UUID databaseOwner;
 
+  private final String k8sNamespace;
+
   @JsonCreator
   public ControlledAzureDatabaseResource(
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("databaseName") String databaseName,
-      @JsonProperty("databaseOwner") UUID databaseOwner) {
+      @JsonProperty("databaseOwner") UUID databaseOwner,
+      String k8sNamespace) {
     super(resourceFields, controlledResourceFields);
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
+    this.k8sNamespace = k8sNamespace;
     validate();
   }
 
   // Constructor for the builder
   private ControlledAzureDatabaseResource(
-      ControlledResourceFields common, String databaseName, UUID databaseOwner) {
+      ControlledResourceFields common,
+      String databaseName,
+      UUID databaseOwner,
+      String k8sNamespace) {
     super(common);
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
+    this.k8sNamespace = k8sNamespace;
     validate();
   }
 
@@ -90,6 +100,10 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   public UUID getDatabaseOwner() {
     return databaseOwner;
   }
+
+  public String getK8sNamespace() {
+    return k8sNamespace;
+  }
   // -- getters not included in serialization --
 
   @Override
@@ -122,9 +136,38 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
+
     flight.addStep(
         new GetAzureDatabaseStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        cloudRetry);
+
+    flight.addStep(
+        new GetFederatedIdentityStep(
+            getK8sNamespace(),
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            getDatabaseOwner(),
+            new KubernetesClientProviderImpl(),
+            flightBeanBag.getLandingZoneApiDispatch(),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWorkspaceService(),
+            getWorkspaceId(),
+            flightBeanBag.getResourceDao()),
+        cloudRetry);
+
+    flight.addStep(
+        new CreateFederatedIdentityStep(
+            getK8sNamespace(),
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            getDatabaseOwner(),
+            new KubernetesClientProviderImpl(),
+            flightBeanBag.getLandingZoneApiDispatch(),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWorkspaceService(),
+            getWorkspaceId(),
+            flightBeanBag.getResourceDao()),
         cloudRetry);
     flight.addStep(
         new CreateAzureDatabaseStep(
@@ -134,7 +177,9 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getLandingZoneApiDispatch(),
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
-            getWorkspaceId(), new KubernetesClientProviderImpl()),
+            getWorkspaceId(),
+            new KubernetesClientProviderImpl(),
+            flightBeanBag.getResourceDao()),
         cloudRetry);
   }
 
@@ -143,7 +188,13 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureDatabaseStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getLandingZoneApiDispatch(),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWorkspaceService(),
+            getWorkspaceId()),
         RetryRules.cloud());
   }
 
@@ -230,6 +281,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
     private ControlledResourceFields common;
     private String databaseName;
     private UUID databaseOwner;
+    private String k8sNamespace;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -241,13 +293,18 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       return this;
     }
 
-    public Builder size(UUID databaseOwner) {
+    public Builder databaseOwner(UUID databaseOwner) {
       this.databaseOwner = databaseOwner;
       return this;
     }
 
+    public Builder k8sNamespace(String k8sNamespace) {
+      this.k8sNamespace = k8sNamespace;
+      return this;
+    }
+
     public ControlledAzureDatabaseResource build() {
-      return new ControlledAzureDatabaseResource(common, databaseName, databaseOwner);
+      return new ControlledAzureDatabaseResource(common, databaseName, databaseOwner, k8sNamespace);
     }
   }
 }

@@ -22,6 +22,8 @@ dependencies {
   implementation 'com.azure:azure-storage-blob:12.21.1'
   implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: '2.27.0'
   implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-containerservice', version: '2.27.0'
+  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-msi', version: '2.27.0'
+  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-postgresqlflexibleserver', version: '1.0.0-beta.6'
 
   // AWS dependencies
   implementation platform('software.amazon.awssdk:bom:2.20.22')

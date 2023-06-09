@@ -108,6 +108,9 @@ components:
           description: Resource id of an azure managed identity in this workspace to be the owner of the database
           type: string
           format: uuid
+        k8sNamespace:
+          description: The kubernetes namespace from which the database will be accessed
+          type: string
 
     CreatedControlledAzureDatabase:
       description: Response payload for requesting a new Azure database

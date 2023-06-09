@@ -1,13 +1,18 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 
+import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,14 +25,26 @@ public class DeleteAzureDatabaseStep implements Step {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureDatabaseResource resource;
+  private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final SamService samService;
+  private final WorkspaceService workspaceService;
+  private final UUID workspaceId;
 
   public DeleteAzureDatabaseStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
-      ControlledAzureDatabaseResource resource) {
+      ControlledAzureDatabaseResource resource,
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      SamService samService,
+      WorkspaceService workspaceService,
+      UUID workspaceId) {
     this.crlService = crlService;
     this.azureConfig = azureConfig;
     this.resource = resource;
+    this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.samService = samService;
+    this.workspaceService = workspaceService;
+    this.workspaceId = workspaceId;
   }
 
   @Override
@@ -37,20 +54,37 @@ public class DeleteAzureDatabaseStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
-    var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
-    var azureResourceId =
-        String.format(
-            "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Database/userAssignedIdentities/%s",
-            azureCloudContext.getAzureSubscriptionId(),
-            azureCloudContext.getAzureResourceGroupId(),
-            resource.getDatabaseName());
+    var postgresManager = crlService.getPostgreSqlManager(azureCloudContext, azureConfig);
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    UUID landingZoneId =
+        landingZoneApiDispatch.getLandingZoneId(
+            bearerToken, workspaceService.getWorkspace(workspaceId));
+    var databaseResource =
+        landingZoneApiDispatch
+            .getSharedDatabase(bearerToken, landingZoneId)
+            .orElseThrow(() -> new RuntimeException("No shared database found"));
     try {
-      logger.info("Attempting to delete database " + azureResourceId);
+      logger.info(
+          "Attempting to delete database {} in server {} of resource group {}",
+          databaseResource.getResourceName(),
+          databaseResource.getResourceName(),
+          azureCloudContext.getAzureResourceGroupId());
 
-      msiManager.identities().deleteById(azureResourceId);
+      postgresManager
+          .databases()
+          .delete(
+              azureCloudContext.getAzureResourceGroupId(),
+              databaseResource.getResourceName(),
+              resource.getDatabaseName());
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
-      logger.info("Attempt to delete Azure database failed on this try: " + azureResourceId, ex);
+      logger.info(
+          "Attempt to delete database %s in server %s of resource group %s on this try"
+              .formatted(
+                  databaseResource.getResourceName(),
+                  databaseResource.getResourceName(),
+                  azureCloudContext.getAzureResourceGroupId()),
+          ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
   }
