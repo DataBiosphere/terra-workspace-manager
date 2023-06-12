@@ -10,12 +10,14 @@ import bio.terra.policy.model.TpsPaoDescription;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -29,8 +31,11 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.stage.StageService;
+import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
+import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
@@ -39,7 +44,11 @@ import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorks
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
+import bio.terra.workspace.service.workspace.model.AwsCloudContext;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
@@ -255,11 +264,12 @@ public class WorkspaceService {
         workspaceUuid,
         action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
         "checkAuthz");
+
     return workspace;
   }
 
@@ -274,6 +284,99 @@ public class WorkspaceService {
     Workspace workspace = validateWorkspaceAndAction(userRequest, workspaceUuid, action);
     stageService.assertMcWorkspace(workspace, action);
     return workspace;
+  }
+
+  public void validateWorkspaceState(UUID workspaceUuid) {
+    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
+    validateWorkspaceState(workspace);
+  }
+
+  /**
+   * Test that the workspace is in a ready state. This is designed to be used right after
+   * validateWorkspaceAndAction
+   *
+   * @param workspace object describing the workspace, including its current state
+   */
+  public void validateWorkspaceState(Workspace workspace) {
+    if (workspace.state() != WsmResourceState.READY) {
+      throw new InvalidCloudContextStateException(
+          String.format(
+              "Workspace is busy %s. Try again later.", workspace.state().toApi().toString()));
+    }
+  }
+
+  /**
+   * Variant of validation that takes a workspace uuid, retrieves the workspace, and then does the
+   * regular validation. Designed for use in resource operations that do not test workspace
+   * permissions.
+   *
+   * @param workspaceUuid id of the workspace to validate
+   * @param cloudPlatform cloud platform for cloud context to validate
+   * @return cloud context object for the platform
+   */
+  public CloudContext validateWorkspaceAndContextState(
+      UUID workspaceUuid, CloudPlatform cloudPlatform) {
+    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
+    return validateWorkspaceAndContextState(workspace, cloudPlatform);
+  }
+
+  /**
+   * Test that the workspace and cloud context are in a ready state. This is designed to be used
+   * right after validateWorkspaceAndAction for cases where we want to validate that the workspace
+   * and cloud context are in the READY state.
+   *
+   * <p>NOTE: this is not perfect concurrency control. We could add share locks on the workspace and
+   * cloud context to achieve that. We've decided not to add that complexity. We expect this check
+   * to cover the practical usage.
+   *
+   * @param workspace object describing the workspace, including its current state
+   * @param cloudPlatform cloud platform for cloud context to validate
+   * @return cloud context object for the platform
+   */
+  public CloudContext validateWorkspaceAndContextState(
+      Workspace workspace, CloudPlatform cloudPlatform) {
+    validateWorkspaceState(workspace);
+    Optional<DbCloudContext> optionalDbCloudContext =
+        workspaceDao.getCloudContext(workspace.workspaceId(), cloudPlatform);
+    if (optionalDbCloudContext.isEmpty()) {
+      throw new CloudContextRequiredException(
+          String.format(
+              "Operation requires %s cloud context", cloudPlatform.toApiModel().toString()));
+    }
+    if (optionalDbCloudContext.get().getState() != WsmResourceState.READY) {
+      throw new InvalidCloudContextStateException(
+          String.format(
+              "%s cloud context is busy %s. Try again later.",
+              cloudPlatform.toApiModel().toString(), workspace.state().toApi().toString()));
+    }
+
+    return switch (cloudPlatform) {
+      case AWS -> AwsCloudContext.deserialize(optionalDbCloudContext.get());
+      case AZURE -> AzureCloudContext.deserialize(optionalDbCloudContext.get());
+      case GCP -> GcpCloudContext.deserialize(optionalDbCloudContext.get());
+      default -> throw new InternalLogicException("Invalid cloud platform " + cloudPlatform);
+    };
+  }
+
+  /**
+   * Validate the workspace state and possibly the cloud context of the target of a clone. If the
+   * cloud platform is ANY or we are not creating a new controlled resource, then we do not require
+   * a target cloud context.
+   *
+   * @param workspaceUuid target workspace
+   * @param cloudPlatform cloud platform
+   * @param cloningInstructions cloniing instructions
+   */
+  public void validateCloneWorkspaceAndContextState(
+      UUID workspaceUuid, CloudPlatform cloudPlatform, CloningInstructions cloningInstructions) {
+    // If we do not require a target cloud context, just check the workspace
+    if (cloudPlatform == CloudPlatform.ANY
+        || (cloningInstructions != CloningInstructions.COPY_DEFINITION
+            && cloningInstructions != CloningInstructions.COPY_RESOURCE)) {
+      validateWorkspaceState(workspaceUuid);
+    } else {
+      validateWorkspaceAndContextState(workspaceUuid, cloudPlatform);
+    }
   }
 
   /**
@@ -311,7 +414,7 @@ public class WorkspaceService {
       AuthenticatedUserRequest userRequest, int offset, int limit, WsmIamRole minimumHighestRole) {
     // In general, highest SAM role should be fetched in controller. Fetch here to save a SAM call.
     Map<UUID, WorkspaceDescription> samWorkspacesResponse =
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
             "listWorkspaceIds");
 
@@ -342,7 +445,7 @@ public class WorkspaceService {
     // This is one exception where we need to do an authz check inside a service instead of a
     // controller. This is because checks with Sam require the workspace ID, but until we read from
     // WSM's database we only have the user-facing ID.
-    SamRethrow.onInterrupted(
+    Rethrow.onInterrupted(
         () ->
             samService.checkAuthz(
                 userRequest,
@@ -357,7 +460,7 @@ public class WorkspaceService {
   public WsmIamRole getHighestRole(UUID uuid, AuthenticatedUserRequest userRequest) {
     logger.info("getHighestRole - userRequest: {}\nuserFacingId: {}", userRequest, uuid.toString());
     List<WsmIamRole> requesterRoles =
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.listRequesterRoles(
                     userRequest, SamConstants.SamResource.WORKSPACE, uuid.toString()),
@@ -643,12 +746,23 @@ public class WorkspaceService {
         sourcePaoId.getObjectId(),
         userRequest.getEmail());
 
-    tpsApiDispatch.createPaoIfNotExist(
-        sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType());
-    tpsApiDispatch.createPaoIfNotExist(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+    Rethrow.onInterrupted(
+        () ->
+            tpsApiDispatch.createPaoIfNotExist(
+                sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType()),
+        "createPaoIfNotExist");
+    Rethrow.onInterrupted(
+        () ->
+            tpsApiDispatch.createPaoIfNotExist(
+                workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+        "createPaoIfNotExist");
 
     TpsPaoUpdateResult dryRun =
-        tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), TpsUpdateMode.DRY_RUN);
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.linkPao(
+                    workspaceId, sourcePaoId.getObjectId(), TpsUpdateMode.DRY_RUN),
+            "linkPao");
 
     if (!dryRun.getConflicts().isEmpty() && tpsUpdateMode != TpsUpdateMode.DRY_RUN) {
       throw new PolicyConflictException(
@@ -662,7 +776,9 @@ public class WorkspaceService {
       return dryRun;
     } else {
       var updateResult =
-          tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), tpsUpdateMode);
+          Rethrow.onInterrupted(
+              () -> tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), tpsUpdateMode),
+              "linkPao");
       if (Boolean.TRUE.equals(updateResult.isUpdateApplied())) {
         workspaceActivityLogService.writeActivity(
             userRequest,
@@ -696,8 +812,11 @@ public class WorkspaceService {
     logger.info("Updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
 
     var dryRun =
-        tpsApiDispatch.updatePao(
-            workspaceUuid, addAttributes, removeAttributes, TpsUpdateMode.DRY_RUN);
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.updatePao(
+                    workspaceUuid, addAttributes, removeAttributes, TpsUpdateMode.DRY_RUN),
+            "updatePao");
 
     if (!dryRun.getConflicts().isEmpty() && updateMode != TpsUpdateMode.DRY_RUN) {
       throw new PolicyConflictException(
@@ -711,7 +830,11 @@ public class WorkspaceService {
       return dryRun;
     } else {
       var result =
-          tpsApiDispatch.updatePao(workspaceUuid, addAttributes, removeAttributes, updateMode);
+          Rethrow.onInterrupted(
+              () ->
+                  tpsApiDispatch.updatePao(
+                      workspaceUuid, addAttributes, removeAttributes, updateMode),
+              "updatePao");
 
       if (Boolean.TRUE.equals(result.isUpdateApplied())) {
         workspaceActivityLogService.writeActivity(

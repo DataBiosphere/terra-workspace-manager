@@ -174,6 +174,20 @@ components:
       type: string
       pattern: '^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$'
 
+    OperationState:
+      type: object
+      description: Common operation state properties for cloud context and workspaces
+      required: [ state ]
+      properties:
+        state:
+          $ref: '#/components/schemas/State'
+        errorReport:
+          # Null if the object is not in a broken state
+          $ref: '#/components/schemas/ErrorReport'
+        jobId:
+          # Null if the no WSM operation is running on the object (create, update, delete)
+          type: string
+
     PrivateResourceUser:
       description: >-
         This text describes the target state:

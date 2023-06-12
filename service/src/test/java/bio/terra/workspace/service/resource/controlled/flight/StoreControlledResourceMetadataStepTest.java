@@ -10,7 +10,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -49,18 +49,18 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
         workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.PROJECT_ID);
 
     ControlledGcsBucketResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     CreateResourceInDbStartStep storeGoogleBucketMetadataStep =
         new CreateResourceInDbStartStep(
             resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE, bucketResource);
 
-    final FlightMap inputFlightMap = new FlightMap();
+    FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(ResourceKeys.RESOURCE, bucketResource);
     inputFlightMap.makeImmutable();
 
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
 
-    final StepResult result = storeGoogleBucketMetadataStep.doStep(mockFlightContext);
+    StepResult result = storeGoogleBucketMetadataStep.doStep(mockFlightContext);
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
 
     WsmResource daoResource =

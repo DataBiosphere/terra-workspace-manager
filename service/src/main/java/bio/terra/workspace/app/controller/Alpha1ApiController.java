@@ -85,6 +85,7 @@ public class Alpha1ApiController implements Alpha1Api {
             .validateControlledResourceAndAction(
                 userRequest, workspaceId, resourceId, SamControlledResourceActions.WRITE_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    workspaceService.validateWorkspaceState(workspaceId);
     String jobId =
         controlledResourceService.transferUrlListToGcsBucket(
             userRequest, workspaceId, bucket, body.getManifestFileUrl());

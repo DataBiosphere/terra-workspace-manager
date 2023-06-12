@@ -11,7 +11,7 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -65,12 +65,12 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
 
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .build();
 
     var creationParameters =
-        ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
+        ControlledGcpResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
     controlledResourceService
         .createControlledResourceSync(dataset, null, userRequest, creationParameters)
@@ -130,11 +130,11 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
 
     ControlledBigQueryDatasetResource dataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .build();
     var creationParameters =
-        ControlledResourceFixtures.defaultBigQueryDatasetCreationParameters()
+        ControlledGcpResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
     controlledResourceService
         .createControlledResourceSync(dataset, null, userRequest, creationParameters)

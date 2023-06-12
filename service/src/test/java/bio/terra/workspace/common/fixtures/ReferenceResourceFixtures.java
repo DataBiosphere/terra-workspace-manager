@@ -11,7 +11,11 @@ import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import java.util.Map;
 import java.util.UUID;
 
@@ -46,16 +50,65 @@ public class ReferenceResourceFixtures {
         UUID.randomUUID().toString());
   }
 
+  public static ReferencedGitRepoResource makeGitRepoResource(
+      UUID workspaceUuid, String gitRepoUrl) {
+    UUID resourceId = UUID.randomUUID();
+    String resourceName = "testgitrepo-" + resourceId;
+    return new ReferencedGitRepoResource(
+        makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+            .resourceId(resourceId)
+            .name(resourceName)
+            .build(),
+        gitRepoUrl);
+  }
+
   public static ReferencedBigQueryDatasetResource makeReferencedBqDatasetResource(
       UUID workspaceId, String projectId, String bqDataset) {
     UUID resourceId = UUID.randomUUID();
     return new ReferencedBigQueryDatasetResource(
         makeDefaultWsmResourceFieldBuilder(workspaceId)
             .resourceId(resourceId)
-            .name("testbq-" + resourceId)
+            .name(TestUtils.appendRandomNumber("testbq_"))
             .build(),
         projectId,
         bqDataset);
+  }
+
+  public static ReferencedBigQueryDataTableResource makeReferencedBqDataTableResource(
+      UUID workspaceId, String projectId, String bqDataset, String file) {
+    UUID resourceId = UUID.randomUUID();
+
+    return new ReferencedBigQueryDataTableResource(
+        makeDefaultWsmResourceFieldBuilder(workspaceId)
+            .resourceId(resourceId)
+            .name(TestUtils.appendRandomNumber("testbq_"))
+            .build(),
+        projectId,
+        bqDataset,
+        file);
+  }
+
+  public static ReferencedGcsBucketResource makeReferencedGcsBucketResource(
+      UUID workspaceId, String bucketName) {
+    UUID resourceId = UUID.randomUUID();
+    return new ReferencedGcsBucketResource(
+        makeDefaultWsmResourceFieldBuilder(workspaceId)
+            .resourceId(resourceId)
+            .name(TestUtils.appendRandomNumber("testgcs"))
+            .build(),
+        bucketName);
+  }
+
+  public static ReferencedGcsObjectResource makeReferencedGcsObjectResource(
+      UUID workspaceId, String bucketName, String file) {
+    UUID resourceId = UUID.randomUUID();
+    return new ReferencedGcsObjectResource(
+        makeDefaultWsmResourceFieldBuilder(workspaceId)
+            .resourceId(resourceId)
+            .name(TestUtils.appendRandomNumber("testgcs"))
+            .build(),
+        bucketName,
+        file);
   }
 
   public static ApiReferenceResourceCommonFields makeDefaultReferencedResourceFieldsApi() {

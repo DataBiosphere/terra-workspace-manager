@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -83,14 +84,14 @@ public class AzureDisabledTest extends BaseConnectedTest {
     // We're re-using these common fields for multiple requests. Normally this would be a problem
     // because the resource ID would be duplicated, but we expect all "create resource" calls
     // to fail, so this is fine.
-    final ApiControlledResourceCommonFields commonFields =
+    ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
     // Create disk
-    final ApiCreateControlledAzureDiskRequestBody diskRequest =
+    ApiCreateControlledAzureDiskRequestBody diskRequest =
         new ApiCreateControlledAzureDiskRequestBody()
             .common(commonFields)
-            .azureDisk(ControlledResourceFixtures.getAzureDiskCreationParameters());
+            .azureDisk(ControlledAzureResourceFixtures.getAzureDiskCreationParameters());
     mockMvc
         .perform(
             addJsonContentType(
@@ -101,10 +102,10 @@ public class AzureDisabledTest extends BaseConnectedTest {
         .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
 
     // Create VM
-    final ApiCreateControlledAzureVmRequestBody vmRequest =
+    ApiCreateControlledAzureVmRequestBody vmRequest =
         new ApiCreateControlledAzureVmRequestBody()
             .common(commonFields)
-            .azureVm(ControlledResourceFixtures.getAzureVmCreationParameters());
+            .azureVm(ControlledAzureResourceFixtures.getAzureVmCreationParameters());
     mockMvc
         .perform(
             addJsonContentType(

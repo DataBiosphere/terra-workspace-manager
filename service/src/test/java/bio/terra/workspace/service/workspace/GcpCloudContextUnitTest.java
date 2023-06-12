@@ -17,6 +17,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.Optional;
@@ -90,7 +91,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
   @Test
   public void deserialize_creatingContext_valid() {
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     UUID workspaceUuid = workspace.workspaceId();
     WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 

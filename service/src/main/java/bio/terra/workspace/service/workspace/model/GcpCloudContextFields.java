@@ -48,8 +48,8 @@ public class GcpCloudContextFields {
     return samPolicyApplication;
   }
 
-  public ApiGcpContext toApi() {
-    return new ApiGcpContext().projectId(gcpProjectId);
+  public void toApi(ApiGcpContext gcpContext) {
+    gcpContext.projectId(gcpProjectId);
   }
 
   public String serialize() {

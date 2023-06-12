@@ -1,7 +1,8 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -38,7 +39,6 @@ public class CloudContextSpendProfileBackfillTest extends BaseUnitTest {
     dbCloudContext = dbCloudContextOptional.orElseThrow();
     Assertions.assertNotNull(dbCloudContext.getSpendProfile());
     Assertions.assertEquals(
-        dbCloudContext.getSpendProfile().getId(),
-        WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID.getId());
+        dbCloudContext.getSpendProfile().getId(), DEFAULT_SPEND_PROFILE_ID.getId());
   }
 }

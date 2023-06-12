@@ -365,9 +365,8 @@ public class AwsUtils {
   public static boolean checkFolderExists(
       AwsCredentialsProvider awsCredentialsProvider,
       ControlledAwsS3StorageFolderResource storageResource) {
-    String folder = storageResource.getPrefix();
-
-    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    String prefix = storageResource.getPrefix();
+    String folderKey = prefix.endsWith("/") ? prefix : String.format("%s/", prefix);
     return CollectionUtils.isNotEmpty(
         getS3ObjectKeysByPrefix(
             awsCredentialsProvider,
@@ -409,11 +408,11 @@ public class AwsUtils {
   public static void deleteStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
       ControlledAwsS3StorageFolderResource storageResource) {
-    String folder = storageResource.getPrefix();
     Region region = Region.of(storageResource.getRegion());
     String bucketName = storageResource.getBucketName();
+    String prefix = storageResource.getPrefix();
 
-    String folderKey = folder.endsWith("/") ? folder : String.format("%s/", folder);
+    String folderKey = prefix.endsWith("/") ? prefix : String.format("%s/", prefix);
     List<String> objectKeys =
         getS3ObjectKeysByPrefix(
             awsCredentialsProvider, region, bucketName, folderKey, Integer.MAX_VALUE);
@@ -494,8 +493,9 @@ public class AwsUtils {
       int limit) {
     S3Client s3Client = getS3Client(awsCredentialsProvider, region);
 
+    String folderKey = prefix.endsWith("/") ? prefix : String.format("%s/", prefix);
     ListObjectsV2Request.Builder requestBuilder =
-        ListObjectsV2Request.builder().bucket(bucketName).prefix(prefix).delimiter("/");
+        ListObjectsV2Request.builder().bucket(bucketName).prefix(folderKey);
 
     int limitRemaining = limit;
     String continuationToken = null;

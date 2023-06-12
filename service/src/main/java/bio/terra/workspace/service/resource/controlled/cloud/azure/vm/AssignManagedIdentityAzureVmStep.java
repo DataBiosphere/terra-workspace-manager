@@ -5,8 +5,8 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -49,7 +49,7 @@ public class AssignManagedIdentityAzureVmStep implements Step {
       MsiManager msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
 
       String petManagedIdentityId =
-          SamRethrow.onInterrupted(
+          Rethrow.onInterrupted(
               () ->
                   samService.getOrCreateUserManagedIdentityForUser(
                       resource.getAssignedUser().get(),

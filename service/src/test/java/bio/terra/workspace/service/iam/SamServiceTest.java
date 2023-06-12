@@ -18,6 +18,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -349,7 +350,7 @@ class SamServiceTest extends BaseConnectedTest {
         userAccessUtils.getSecondUserEmail());
 
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     // Workspace reader should have read access on a user-shared resource via inheritance
@@ -383,7 +384,7 @@ class SamServiceTest extends BaseConnectedTest {
 
     ControlledResource bucketResource =
         ControlledGcsBucketResource.builder()
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .bucketName(ControlledGcpResourceFixtures.uniqueBucketName())
             .common(commonFields)
             .build();
 
@@ -414,7 +415,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void duplicateResourceCreateIgnored() throws Exception {
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
     // This duplicate call should complete without throwing.
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
@@ -425,7 +426,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void duplicateResourceDeleteIgnored() throws Exception {
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());

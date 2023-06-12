@@ -3,6 +3,7 @@ package bio.terra.workspace.service.policy;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
@@ -62,7 +63,10 @@ public class PolicyValidator {
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var validationErrors = new ArrayList<String>();
     for (var cloudPlatform : workspaceDao.listCloudPlatforms(workspace.workspaceId())) {
-      var validRegions = tpsApiDispatch.listValidRegionsForPao(policies, cloudPlatform);
+      var validRegions =
+          Rethrow.onInterrupted(
+              () -> tpsApiDispatch.listValidRegionsForPao(policies, cloudPlatform),
+              "listValidRegionsForPao");
       validationErrors.addAll(
           ResourceValidationUtils.validateExistingResourceRegions(
               workspace.workspaceId(), validRegions, cloudPlatform, resourceDao));
@@ -114,7 +118,8 @@ public class PolicyValidator {
   public List<String> validateWorkspaceConformsToGroupPolicy(
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var groups = TpsUtilities.getGroupConstraintsFromInputs(policies.getEffectiveAttributes());
-    var currentPao = tpsApiDispatch.getPao((workspace.getWorkspaceId()));
+    var currentPao =
+        Rethrow.onInterrupted(() -> tpsApiDispatch.getPao((workspace.getWorkspaceId())), "getPao");
     var existingGroups =
         (currentPao == null)
             ? new ArrayList<String>()

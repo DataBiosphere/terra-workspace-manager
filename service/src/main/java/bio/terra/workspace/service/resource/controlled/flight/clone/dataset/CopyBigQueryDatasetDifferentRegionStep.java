@@ -7,9 +7,9 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -85,7 +85,7 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
     try (DataTransferServiceClient dataTransferServiceClient = DataTransferServiceClient.create()) {
       ProjectName parent = ProjectName.of(destinationProjectId);
       String petSaEmail =
-          SamRethrow.onInterrupted(
+          Rethrow.onInterrupted(
               () ->
                   samService.getOrCreatePetSaEmail(
                       destinationProjectId, userRequest.getRequiredToken()),

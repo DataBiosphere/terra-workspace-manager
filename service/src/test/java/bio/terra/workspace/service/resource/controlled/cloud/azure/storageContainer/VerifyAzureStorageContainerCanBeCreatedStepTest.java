@@ -14,7 +14,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
@@ -47,10 +47,8 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
 
   private static final UUID LANDING_ZONE_ID =
       UUID.fromString("b2db9b47-fd0f-4ae9-b9b4-f675550b0291");
-
-  private final String storageAccountName = ControlledResourceFixtures.uniqueStorageAccountName();
-  final ApiAzureStorageContainerCreationParameters creationParameters =
-      ControlledResourceFixtures.getAzureStorageContainerCreationParameters();
+  private final ApiAzureStorageContainerCreationParameters creationParameters =
+      ControlledAzureResourceFixtures.getAzureStorageContainerCreationParameters();
   private ControlledAzureStorageContainerResource storageContainerResource;
   private final ManagementException containerNotFoundException =
       new ManagementException(
@@ -70,7 +68,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
 
   private void initValidationStep() {
     storageContainerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(
+        ControlledAzureResourceFixtures.getAzureStorageContainer(
             creationParameters.getStorageContainerName());
 
     verifyCanBeCreatedStep =
@@ -113,7 +111,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
         .thenThrow(containerNotFoundException);
 
     // act
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
+    StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
 
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
   }
@@ -131,7 +129,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
                     + "Please check that the landing zone deployment is complete."));
 
     // act
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
+    StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
     assertThat(stepResult.getException().get(), instanceOf(LandingZoneNotFoundException.class));
@@ -150,7 +148,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
     when(mockUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
 
     // act
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
+    StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
     assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));
@@ -185,7 +183,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
         .thenReturn(mockBlobContainer);
 
     // act
-    final StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
+    StepResult stepResult = verifyCanBeCreatedStep.doStep(mockFlightContext);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
     assertThat(stepResult.getException().get(), instanceOf(DuplicateResourceException.class));

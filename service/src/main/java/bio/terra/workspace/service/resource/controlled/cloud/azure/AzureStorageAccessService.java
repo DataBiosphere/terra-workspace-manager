@@ -5,10 +5,10 @@ import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
@@ -86,7 +86,7 @@ public class AzureStorageAccessService {
       String samResourceName,
       String desiredPermissions) {
     final List<String> containerActions =
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.listResourceActions(
                     userRequest, samResourceName, storageContainerUuid.toString()),
@@ -317,6 +317,7 @@ public class AzureStorageAccessService {
       UUID workspaceUuid, UUID storageContainerUuid, AuthenticatedUserRequest userRequest) {
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
     // storage container and storage account resource
+    // TODO: PF-2823 Access control checks should be done in the controller layer
     final ControlledAzureStorageContainerResource storageContainerResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(

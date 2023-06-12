@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.fixtures.PolicyFixtures.IOWA_REGION;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -177,7 +178,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     workspaceSetup(ApiCloningInstructionsEnum.REFERENCE);
     ApiCloneWorkspaceRequest request =
         new ApiCloneWorkspaceRequest()
-            .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE)
+            .spendProfile(DEFAULT_SPEND_PROFILE)
             .additionalPolicies(
                 new ApiWsmPolicyInputs().addInputsItem(makeRegionPolicyInput("asiapacific")));
 

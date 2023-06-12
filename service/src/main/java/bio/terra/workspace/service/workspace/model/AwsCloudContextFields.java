@@ -53,8 +53,8 @@ public class AwsCloudContextFields {
     return environmentAlias;
   }
 
-  public ApiAwsContext toApi() {
-    return new ApiAwsContext()
+  public void toApi(ApiAwsContext awsContext) {
+    awsContext
         .majorVersion(majorVersion)
         .organizationId(organizationId)
         .accountId(accountId)

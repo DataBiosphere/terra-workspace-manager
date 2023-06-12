@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.defaultWorkspaceBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -18,8 +17,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -240,7 +240,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
 
     workspaceId2 = UUID.randomUUID();
     Workspace destinationWorkspace =
-        defaultWorkspaceBuilder(workspaceId2)
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceId2)
             .userFacingId("dest-user-facing-id")
             .displayName("Destination Workspace")
             .description("Copied from source")
@@ -258,14 +258,14 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             destinationWorkspace,
             spendUtils.defaultGcpSpendProfile());
     jobService.waitForJob(cloneJobId);
-    final JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
+    JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
         jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class);
     assertNull(cloneResultOrException.getException());
-    final ApiClonedWorkspace cloneResult = cloneResultOrException.getResult();
+    ApiClonedWorkspace cloneResult = cloneResultOrException.getResult();
     assertEquals(destinationWorkspace.getWorkspaceId(), cloneResult.getDestinationWorkspaceId());
     assertThat(cloneResult.getResources(), hasSize(1));
 
-    final ApiResourceCloneDetails bucketCloneDetails = cloneResult.getResources().get(0);
+    ApiResourceCloneDetails bucketCloneDetails = cloneResult.getResources().get(0);
     assertEquals(ApiCloneResourceResult.SUCCEEDED, bucketCloneDetails.getResult());
     assertNull(bucketCloneDetails.getErrorMessage());
     assertEquals(ApiResourceType.GCS_BUCKET, bucketCloneDetails.getResourceType());
@@ -273,7 +273,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
         bucketResource.getMetadata().getResourceId(), bucketCloneDetails.getSourceResourceId());
 
     // destination WS should exist
-    final Workspace retrievedDestinationWorkspace =
+    Workspace retrievedDestinationWorkspace =
         workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId());
     assertEquals(
         "Destination Workspace", retrievedDestinationWorkspace.getDisplayName().orElseThrow());
@@ -333,7 +333,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .datasetId("my_awesome_dataset")
             .location("us-central1");
     ControlledBigQueryDatasetResource resource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(
                 sourceWorkspace.getWorkspaceId())
             .projectId(projectId)
             .datasetName("my_awesome_dataset")
@@ -348,14 +348,14 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
 
     workspaceId2 = UUID.randomUUID();
     Workspace destinationWorkspace =
-        defaultWorkspaceBuilder(workspaceId2)
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceId2)
             .userFacingId("dest-user-facing-id")
             .displayName("Destination Workspace")
             .description("Copied from source")
             .spendProfileId(new SpendProfileId(SPEND_PROFILE_ID))
             .build();
 
-    final String destinationLocation = "us-east1";
+    String destinationLocation = "us-east1";
     // Retry undo steps once and fail at the end of the flight.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(CloneAllFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);

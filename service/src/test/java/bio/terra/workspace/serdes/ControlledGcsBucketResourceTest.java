@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.StairwayMapper;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,7 +22,7 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
         MissingRequiredFieldException.class,
         () ->
             ControlledGcsBucketResource.builder()
-                .bucketName(ControlledResourceFixtures.uniqueBucketName())
+                .bucketName(ControlledGcpResourceFixtures.uniqueBucketName())
                 .common(
                     ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                         .workspaceUuid(null)
@@ -32,12 +33,12 @@ public class ControlledGcsBucketResourceTest extends BaseUnitTest {
   @Test
   public void testSerialization() throws JsonProcessingException {
     ControlledGcsBucketResource gcsBucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(null).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(null).build();
 
-    final ObjectMapper objectMapper = StairwayMapper.getObjectMapper();
-    final String serialized = objectMapper.writeValueAsString(gcsBucketResource);
+    ObjectMapper objectMapper = StairwayMapper.getObjectMapper();
+    String serialized = objectMapper.writeValueAsString(gcsBucketResource);
 
-    final ControlledGcsBucketResource deserialized =
+    ControlledGcsBucketResource deserialized =
         objectMapper.readValue(serialized, ControlledGcsBucketResource.class);
 
     assertTrue(deserialized.partialEqual(gcsBucketResource));

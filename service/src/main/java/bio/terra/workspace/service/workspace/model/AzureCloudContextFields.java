@@ -36,8 +36,8 @@ public class AzureCloudContextFields {
     return azureResourceGroupId;
   }
 
-  public ApiAzureContext toApi() {
-    return new ApiAzureContext()
+  public void toApi(ApiAzureContext azureContext) {
+    azureContext
         .tenantId(azureTenantId)
         .subscriptionId(azureSubscriptionId)
         .resourceGroupId(azureResourceGroupId);

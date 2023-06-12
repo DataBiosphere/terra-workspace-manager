@@ -1,9 +1,6 @@
 package bio.terra.workspace.common.utils;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultGceInstanceCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
-import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
@@ -26,8 +23,10 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
+import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -231,18 +230,34 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/cloudcontexts/GCP";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/result/%s";
-  public static final String CREATE_AZURE_IP_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/ip";
   public static final String CREATE_AZURE_DISK_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/disks";
-  public static final String CREATE_AZURE_NETWORK_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/network";
   public static final String CREATE_AZURE_VM_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
   public static final String CREATE_AZURE_SAS_TOKEN_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/getSasToken";
   public static final String CREATE_AZURE_BATCH_POOL_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/batchpool";
+  public static final String CREATE_AZURE_STORAGE_CONTAINERS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer";
+  public static final String AZURE_BATCH_POOL_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/batchpool/%s";
+  public static final String AZURE_DISK_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/disks/%s";
+  public static final String AZURE_STORAGE_CONTAINER_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s";
+  public static final String AZURE_VM_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/vm/%s";
+  public static final String CLONE_AZURE_STORAGE_CONTAINER_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/clone";
+  public static final String CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder";
+  public static final String AWS_STORAGE_FOLDERS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder/%s";
+  public static final String CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/aws/notebook";
+  public static final String AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/aws/notebook/%s";
   public static final String GET_REFERENCED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
@@ -265,6 +280,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/%s/properties";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances";
+  public static final String CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/%s";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/create-result/%s";
   public static final String CONTROLLED_GCP_GCE_INSTANCES_V1_PATH_FORMAT =
@@ -806,12 +823,12 @@ public class MockMvcUtils {
     ApiCreateControlledGcpAiNotebookInstanceRequestBody request =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
-                makeDefaultControlledResourceFieldsApi()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
                     .name(TestUtils.appendRandomNumber("ai-notebook")))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
             .aiNotebookInstance(
-                defaultNotebookCreationParameters()
+                ControlledGcpResourceFixtures.defaultNotebookCreationParameters()
                     .location(location)
                     .instanceId(
                         Optional.ofNullable(instanceId)
@@ -828,7 +845,7 @@ public class MockMvcUtils {
             serializedResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
+      TimeUnit.SECONDS.sleep(5);
       result = getAiNotebookInstanceResult(userRequest, workspaceId, jobId);
     }
     assertEquals(jobStatus, result.getJobReport().getStatus());
@@ -943,7 +960,9 @@ public class MockMvcUtils {
     }
     ApiCreateControlledGcpBigQueryDatasetRequestBody request =
         new ApiCreateControlledGcpBigQueryDatasetRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
+                    .name(resourceName))
             .dataset(creationParameters);
 
     String serializedResponse =
@@ -1289,7 +1308,9 @@ public class MockMvcUtils {
       throws Exception {
     ApiCreateControlledGcpGcsBucketRequestBody request =
         new ApiCreateControlledGcpGcsBucketRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
+                    .name(resourceName))
             .gcsBucket(
                 new ApiGcpGcsBucketCreationParameters()
                     .name(bucketName)
@@ -1580,7 +1601,8 @@ public class MockMvcUtils {
     }
 
     return new ApiCreateControlledFlexibleResourceRequestBody()
-        .common(makeDefaultControlledResourceFieldsApi().name(resourceName))
+        .common(
+            ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi().name(resourceName))
         .flexibleResource(creationParameters);
   }
 
@@ -1808,7 +1830,7 @@ public class MockMvcUtils {
     ApiCreateDataRepoSnapshotReferenceRequestBody request =
         new ApiCreateDataRepoSnapshotReferenceRequestBody()
             .metadata(
-                makeDefaultReferencedResourceFieldsApi()
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
                     .name(resourceName)
                     .cloningInstructions(cloningInstructions))
             .snapshot(creationParameters);
@@ -1914,7 +1936,9 @@ public class MockMvcUtils {
         new ApiGcpBigQueryDatasetAttributes().projectId(projectId).datasetId(datasetName);
     ApiCreateGcpBigQueryDatasetReferenceRequestBody request =
         new ApiCreateGcpBigQueryDatasetReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .dataset(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2017,7 +2041,9 @@ public class MockMvcUtils {
             .dataTableId(tableId);
     ApiCreateGcpBigQueryDataTableReferenceRequestBody request =
         new ApiCreateGcpBigQueryDataTableReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .dataTable(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2125,7 +2151,9 @@ public class MockMvcUtils {
         new ApiGcpGcsBucketAttributes().bucketName(bucketName);
     ApiCreateGcpGcsBucketReferenceRequestBody request =
         new ApiCreateGcpGcsBucketReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .bucket(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2226,7 +2254,9 @@ public class MockMvcUtils {
         new ApiGcpGcsObjectAttributes().bucketName(bucketName).fileName(fileName);
     ApiCreateGcpGcsObjectReferenceRequestBody request =
         new ApiCreateGcpGcsObjectReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .file(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2329,7 +2359,9 @@ public class MockMvcUtils {
     ApiGitRepoAttributes creationParameters = new ApiGitRepoAttributes().gitRepoUrl(gitRepoUrl);
     ApiCreateGitRepoReferenceRequestBody request =
         new ApiCreateGitRepoReferenceRequestBody()
-            .metadata(makeDefaultReferencedResourceFieldsApi().name(resourceName))
+            .metadata(
+                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
+                    .name(resourceName))
             .gitrepo(creationParameters);
     String serializedResponse =
         getSerializedResponseForPost(
@@ -2384,7 +2416,7 @@ public class MockMvcUtils {
    * Expect a code when updating, and return the serialized API resource if expected code is
    * successful.
    */
-  private <T> T updateResource(
+  public <T> T updateResource(
       Class<T> classType,
       String pathFormat,
       UUID workspaceId,
@@ -2545,8 +2577,7 @@ public class MockMvcUtils {
     assertFalse(actualMetadata.getLastUpdatedDate().isBefore(actualMetadata.getCreatedDate()));
 
     assertEquals(
-        PropertiesUtils.convertMapToApiProperties(
-            ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES),
+        PropertiesUtils.convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES),
         actualMetadata.getProperties());
   }
 
@@ -2629,13 +2660,13 @@ public class MockMvcUtils {
    * non-update change_type such as `GRANT_WORKSPACE_ROLE` and `REMOVE_WORKSPACE_ROLE`.
    */
   private ActivityLogChangeDetails getLastChangeDetails(UUID workspaceId, String changeSubjectId) {
-    final String sql =
+    String sql =
         """
             SELECT * FROM workspace_activity_log
             WHERE workspace_id = :workspace_id AND change_subject_id=:change_subject_id
             ORDER BY change_date DESC LIMIT 1
         """;
-    final var params =
+    var params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceId.toString())
             .addValue("change_subject_id", changeSubjectId);
@@ -2793,7 +2824,22 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
-  /** Posts http request and expect error thrown. */
+  /** Patch http request and expect error thrown. */
+  public void patchExpect(
+      AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
+      throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                patch(api)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is(httpStatus));
+  }
+
   public void postExpect(
       AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
       throws Exception {
