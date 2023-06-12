@@ -38,14 +38,8 @@ public class DeleteSamResourceStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     WsmResource wsmResource = resourceDao.getResource(workspaceUuid, resourceId);
     ControlledResource resource = wsmResource.castToControlledResource();
-    // deleteControlledResource already handles duplicate deletion, so we do not need to explicitly
-    // handle it inside this step.
-    final AuthenticatedUserRequest userRequest =
-        FlightUtils.getRequired(
-            flightContext.getInputParameters(),
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
-    samService.deleteControlledResource(resource, userRequest);
+
+    samService.deleteControlledResource(resource, samService.getWsmServiceAccountToken());
     return StepResult.getStepResultSuccess();
   }
 
