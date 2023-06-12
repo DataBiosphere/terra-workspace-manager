@@ -15,8 +15,10 @@ import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryUtils;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.CloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextDeleteException;
 import java.time.Duration;
@@ -30,16 +32,19 @@ public class DeleteResourcesStep implements Step {
   private final CloudContextService cloudContextService;
   private final ControlledResourceService controlledResourceService;
   private final AuthenticatedUserRequest userRequest;
+  private final ResourceDao resourceDao;
   private final UUID workspaceUuid;
 
   public DeleteResourcesStep(
       CloudContextService cloudContextService,
       ControlledResourceService controlledResourceService,
       AuthenticatedUserRequest userRequest,
+      ResourceDao resourceDao,
       UUID workspaceUuid) {
     this.cloudContextService = cloudContextService;
     this.controlledResourceService = controlledResourceService;
     this.userRequest = userRequest;
+    this.resourceDao = resourceDao;
     this.workspaceUuid = workspaceUuid;
   }
 
@@ -92,10 +97,21 @@ public class DeleteResourcesStep implements Step {
       throwable = null;
       message = "flight failed with no error message";
     }
+
+    // Try to get the resource info so we can make a better error message, but don't fail if
+    // something goes wrong.
+    String resourceName;
+    try {
+      WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
+      resourceName = resource.getName();
+    } catch (Exception e) {
+      logger.warn("Attempt to get resource id {} failed", resourceId, e);
+      resourceName = "<not found>";
+    }
     throw new CloudContextDeleteException(
         String.format(
-            "Cloud context delete failed because resource %s could not be deleted. Cause was: %s",
-            resourceId, message),
+            "Cloud context delete failed because resource %s(%s) could not be deleted. Cause was: %s",
+            resourceName, resourceId, message),
         throwable);
   }
 

@@ -49,6 +49,7 @@ public class DeleteCloudContextResourceFlight extends Flight {
     RetryRule cloudRetry = RetryRules.cloud();
     RetryRule dbRetry = RetryRules.shortDatabase();
 
+    // Mark the resource as in the deleting step to avoid concurrency issues.
     addStep(
         new DeleteMetadataStartStep(
             flightBeanBag.getResourceDao(), workspaceUuid, resource.getResourceId()),

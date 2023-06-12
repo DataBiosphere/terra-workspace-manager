@@ -7,6 +7,7 @@ import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -49,6 +50,7 @@ public class DeleteCloudContextFlight extends Flight {
     SamService samService = appContext.getSamService();
     CloudContextService cloudContextService = cloudPlatform.getCloudContextService();
     ControlledResourceService controlledResourceService = appContext.getControlledResourceService();
+    ResourceDao resourceDao = appContext.getResourceDao();
 
     RetryRule dbRetry = RetryRules.shortDatabase();
     RetryRule serviceRetry = RetryRules.cloud();
@@ -62,7 +64,11 @@ public class DeleteCloudContextFlight extends Flight {
 
     addStep(
         new DeleteResourcesStep(
-            cloudContextService, controlledResourceService, userRequest, workspaceUuid),
+            cloudContextService,
+            controlledResourceService,
+            userRequest,
+            resourceDao,
+            workspaceUuid),
         serviceRetry);
 
     // Add the delete steps for the appropriate cloud type
