@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultGceInstanceCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.fixtures.ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi;
@@ -55,6 +56,7 @@ import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateGcpBigQueryDataTableReferenceRequestBody;
@@ -66,6 +68,7 @@ import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGceInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
@@ -252,6 +255,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets/generateName";
   public static final String GENERATE_GCP_AI_NOTEBOOK_NAME_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/generateName";
+  public static final String GENERATE_GCP_GCE_INSTANCE_NAME_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/gce-instances/generateName";
   public static final String FOLDERS_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders";
   public static final String FOLDER_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders/%s";
   public static final String FOLDER_PROPERTIES_V1_PATH_FORMAT =
@@ -262,6 +267,10 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances";
   public static final String CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/create-result/%s";
+  public static final String CONTROLLED_GCP_GCE_INSTANCES_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/gce-instances";
+  public static final String CONTROLLED_GCP_GCE_INSTANCES_V1_RESULT_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/gce-instances/create-result/%s";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
@@ -834,6 +843,70 @@ public class MockMvcUtils {
             userRequest, CONTROLLED_GCP_AI_NOTEBOOKS_V1_RESULT_PATH_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(
         serializedResponse, ApiCreatedControlledGcpAiNotebookInstanceResult.class);
+  }
+
+  public ApiCreatedControlledGcpGceInstanceResult createGceInstance(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String zone)
+      throws Exception {
+    return createGceInstanceAndWait(userRequest, workspaceId, /*instanceId=*/ null, zone);
+  }
+
+  public ApiCreatedControlledGcpGceInstanceResult createGceInstanceAndWait(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String zone)
+      throws Exception {
+    return createGceInstanceAndExpect(
+        userRequest, workspaceId, instanceId, zone, StatusEnum.SUCCEEDED);
+  }
+
+  public ApiCreatedControlledGcpGceInstanceResult createGceInstanceAndExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String instanceId,
+      @Nullable String zone,
+      StatusEnum jobStatus)
+      throws Exception {
+    ApiCreateControlledGcpGceInstanceRequestBody request =
+        new ApiCreateControlledGcpGceInstanceRequestBody()
+            .common(
+                makeDefaultControlledResourceFieldsApi()
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
+                    .name(TestUtils.appendRandomNumber("gce-instance")))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
+            .gceInstance(
+                defaultGceInstanceCreationParameters()
+                    .zone(zone)
+                    .instanceId(
+                        Optional.ofNullable(instanceId)
+                            .orElse(TestUtils.appendRandomNumber("instance-id"))));
+
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            CONTROLLED_GCP_GCE_INSTANCES_V1_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    ApiCreatedControlledGcpGceInstanceResult result =
+        objectMapper.readValue(serializedResponse, ApiCreatedControlledGcpGceInstanceResult.class);
+    String jobId = result.getJobReport().getId();
+    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
+      Thread.sleep(/*millis=*/ 5000);
+      result = getGceInstanceResult(userRequest, workspaceId, jobId);
+    }
+    assertEquals(jobStatus, result.getJobReport().getStatus());
+
+    return result;
+  }
+
+  private ApiCreatedControlledGcpGceInstanceResult getGceInstanceResult(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
+    String serializedResponse =
+        getSerializedResponseForGetJobResult(
+            userRequest, CONTROLLED_GCP_GCE_INSTANCES_V1_RESULT_PATH_FORMAT, workspaceId, jobId);
+    return objectMapper.readValue(
+        serializedResponse, ApiCreatedControlledGcpGceInstanceResult.class);
   }
 
   public ApiCreatedControlledGcpBigQueryDataset createControlledBqDataset(

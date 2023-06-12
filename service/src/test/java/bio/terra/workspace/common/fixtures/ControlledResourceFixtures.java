@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceCons
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource.Builder;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -236,6 +237,14 @@ public class ControlledResourceFixtures {
             new ApiGcpAiNotebookInstanceVmImage()
                 .projectId("deeplearning-platform-release")
                 .imageFamily("r-latest-cpu-experimental"));
+  }
+
+  public static ApiGcpGceInstanceCreationParameters defaultGceInstanceCreationParameters() {
+    return new ApiGcpGceInstanceCreationParameters()
+        .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
+        .zone("us-central1-a")
+        .machineType("zones/us-central1-a/machineTypes/n1-standard-1")
+        .vmImage("projects/debian-cloud/global/images/family/debian-11");
   }
 
   public static ApiGcpBigQueryDatasetCreationParameters defaultBigQueryDatasetCreationParameters() {
@@ -531,6 +540,49 @@ public class ControlledResourceFixtures {
 
   public static final ApiGcpAiNotebookUpdateParameters AI_NOTEBOOK_UPDATE_PARAMETERS =
       new ApiGcpAiNotebookUpdateParameters().metadata(ImmutableMap.of("foo", "bar", "count", "3"));
+
+  /**
+   * Returns a {@link ControlledGceInstanceResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
+  public static ControlledResourceFields.Builder makeGceInstanceCommonFieldsBuilder() {
+    return ControlledResourceFields.builder()
+        .workspaceUuid(UUID.randomUUID())
+        .resourceId(UUID.randomUUID())
+        .name(TestUtils.appendRandomNumber("my-instance"))
+        .description("my description")
+        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+        .assignedUser("myusername@mydomain.mine")
+        .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+        .region(DEFAULT_RESOURCE_REGION);
+  }
+
+  public static ControlledGceInstanceResource.Builder makeDefaultGceInstance() {
+    return ControlledGceInstanceResource.builder()
+        .common(makeGceInstanceCommonFieldsBuilder().build())
+        .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
+        .zone("us-east1-b")
+        .projectId("my-project-id");
+  }
+
+  public static ControlledGceInstanceResource.Builder makeDefaultGceInstance(UUID workspaceId) {
+    return ControlledGceInstanceResource.builder()
+        .common(makeGceInstanceCommonFieldsBuilder().workspaceUuid(workspaceId).build())
+        .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
+        .zone("us-east1-b")
+        .projectId("my-project-id");
+  }
+
+  public static final ApiGcpGceUpdateParameters GCE_INSTANCE_PREV_PARAMETERS =
+      new ApiGcpGceUpdateParameters()
+          .metadata(ImmutableMap.of("sky", "blue", "rose", "red", "foo", "bar2", "count", "0"));
+
+  public static final ApiGcpGceUpdateParameters GCE_INSTANCE_UPDATE_PARAMETERS =
+      new ApiGcpGceUpdateParameters().metadata(ImmutableMap.of("foo", "bar", "count", "3"));
 
   public static final OffsetDateTime OFFSET_DATE_TIME_1 =
       OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
