@@ -110,6 +110,13 @@ public class ResourceValidationUtils {
       Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
 
   /**
+   * Compute instances must be 1-63 characters, using lower case letters, numbers, and dashes. The
+   * first character must be a lower case letter, and the last character must not be a dash.
+   */
+  public static final Pattern GCE_INSTANCE_NAME_VALIDATION_PATTERN =
+      Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)");
+
+  /**
    * Resource names must be 1-1024 characters, using letters, numbers, dashes, and underscores and
    * must not start with a dash or underscore.
    */
@@ -424,6 +431,14 @@ public class ResourceValidationUtils {
     if ((vmImage.getImageName() == null) == (vmImage.getImageFamily() == null)) {
       throw new InconsistentFieldsException(
           "Exactly one of imageName or imageFamily must be specified for a valid vmImage.");
+    }
+  }
+
+  public static void validateGceInstanceId(String name) {
+    if (!GCE_INSTANCE_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid GCE instance ID {}", name);
+      throw new InvalidReferenceException(
+          "Invalid GCE instance ID specified. ID must be 1 to 63 alphanumeric lower case characters or dashes, where the first character is a lower case letter.");
     }
   }
 
