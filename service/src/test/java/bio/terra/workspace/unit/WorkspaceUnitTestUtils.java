@@ -110,6 +110,4 @@ public class WorkspaceUnitTestUtils {
     workspaceDao.deleteCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
     workspaceDao.deleteCloudContextSuccess(workspaceUuid, CloudPlatform.GCP, flightId);
   }
-
-  private WorkspaceUnitTestUtils() {}
 }

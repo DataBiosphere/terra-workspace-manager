@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.folder;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -12,6 +11,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -119,7 +119,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     controlledAiNotebookInFooBarLoo =
         ControlledAiNotebookInstanceResource.builder()
             .common(
-                makeDefaultControlledResourceFieldsBuilder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceId)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .managedBy(ManagedByType.MANAGED_BY_USER)
@@ -226,7 +226,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     String notebookJobId =
         controlledResourceService.createAiNotebookInstance(
             controlledAiNotebookInFooBarLoo,
-            ControlledResourceFixtures.defaultNotebookCreationParameters(),
+            ControlledGcpResourceFixtures.defaultNotebookCreationParameters(),
             ControlledResourceIamRole.EDITOR,
             new ApiJobControl().id(UUID.randomUUID().toString()),
             "falseResultPath",
@@ -237,7 +237,7 @@ public class FolderServiceTest extends BaseConnectedTest {
         controlledBucket2InFooFoo,
         /*privateResourceIamRole=*/ null,
         userAccessUtils.secondUserAuthRequest(),
-        ControlledResourceFixtures.getGoogleBucketCreationParameters());
+        ControlledGcpResourceFixtures.getGoogleBucketCreationParameters());
 
     referencedResourceService.createReferenceResource(
         referencedBucketInFooFoo, userAccessUtils.defaultUserAuthRequest());
@@ -308,7 +308,7 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   private static ControlledResourceFields createControlledResourceCommonFieldWithFolderId(
       UUID workspaceId, UUID folderId) {
-    return makeDefaultControlledResourceFieldsBuilder()
+    return ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
         .workspaceUuid(workspaceId)
         .properties(Map.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
         .build();

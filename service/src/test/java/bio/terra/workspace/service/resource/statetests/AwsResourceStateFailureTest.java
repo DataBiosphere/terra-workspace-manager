@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_STORAGE_FOLDERS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
@@ -10,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -85,7 +85,7 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
     // AWS-storage
     var storageRequest =
         new ApiCreateControlledAwsS3StorageFolderRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi())
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi())
             .awsS3StorageFolder(new ApiAwsS3StorageFolderCreationParameters().folderName("foo"));
     mockMvcUtils.postExpect(
         USER_REQUEST,
@@ -97,7 +97,8 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
     var vmRequest =
         new ApiCreateControlledAwsSageMakerNotebookRequestBody()
             .common(
-                makeDefaultControlledResourceFieldsApi().accessScope(ApiAccessScope.PRIVATE_ACCESS))
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
+                    .accessScope(ApiAccessScope.PRIVATE_ACCESS))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
             .awsSageMakerNotebook(
                 new ApiAwsSageMakerNotebookCreationParameters().instanceName("foo"));
@@ -120,12 +121,12 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
     // Create the resources in the database
     // AWS-Storage
     var storageResource =
-        ControlledResourceFixtures.makeDefaultAwsS3StorageFolderResource(workspaceUuid);
+        ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource(workspaceUuid);
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, storageResource);
 
     // AWS-Notebook
     var notebookResource =
-        ControlledResourceFixtures.makeDefaultAwsSagemakerNotebookResource(workspaceUuid);
+        ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource(workspaceUuid);
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
 
     // Set cloud context info deleting state

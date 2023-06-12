@@ -1,22 +1,19 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
+import static bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures.TEST_AZURE_STORAGE_ACCOUNT_NAME;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.connected.LandingZoneTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -31,11 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Tag("azureConnectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
 public class AzureControlledStorageContainerFlightTest extends BaseAzureConnectedTest {
-  private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(15);
-
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private JobService jobService;
-  @Autowired private LandingZoneTestUtils landingZoneTestUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private AzureStorageAccessService azureStorageAccessService;
 
@@ -60,10 +53,10 @@ public class AzureControlledStorageContainerFlightTest extends BaseAzureConnecte
 
     // Submit a storage container creation flight and then verify the resource exists in the
     // workspace.
-    final UUID sharedContainerResourceId = UUID.randomUUID();
-    final String storageContainerName = ControlledResourceFixtures.uniqueBucketName();
+    UUID sharedContainerResourceId = UUID.randomUUID();
+    String storageContainerName = ControlledAzureResourceFixtures.uniqueStorageContainerName();
     ControlledAzureStorageContainerResource sharedContainerResource =
-        ControlledResourceFixtures.getAzureStorageContainer(
+        ControlledAzureResourceFixtures.getAzureStorageContainer(
             workspaceUuid,
             sharedContainerResourceId,
             storageContainerName,

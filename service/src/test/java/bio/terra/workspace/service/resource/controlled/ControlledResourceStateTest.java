@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -11,7 +10,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -31,12 +30,9 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContextService {
-  private static final Logger logger = LoggerFactory.getLogger(ControlledResourceStateTest.class);
   @Autowired JobService jobService;
   @Autowired ControlledResourceService controlledResourceService;
   @Autowired WorkspaceDao workspaceDao;
@@ -69,8 +65,9 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
 
     ControlledGcsBucketResource resource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
-    ApiGcpGcsBucketCreationParameters creationParameters = getGoogleBucketCreationParameters();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceId).build();
+    ApiGcpGcsBucketCreationParameters creationParameters =
+        ControlledGcpResourceFixtures.getGoogleBucketCreationParameters();
 
     // Inject an error
     Map<String, StepStatus> failStep = new HashMap<>();

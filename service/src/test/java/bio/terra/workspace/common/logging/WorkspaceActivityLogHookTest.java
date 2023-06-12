@@ -1,6 +1,5 @@
 package bio.terra.workspace.common.logging;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.createWorkspaceInDb;
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
@@ -25,6 +24,7 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
@@ -115,7 +115,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CLONE);
     inputParams.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
     ControlledGcsBucketResource gcsBucketToClone =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     inputParams.put(ResourceKeys.RESOURCE, gcsBucketToClone);
     hook.endFlight(
         new FakeFlightContext(
@@ -254,7 +254,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(emptyChangeDetails.isEmpty());
 
-    createWorkspaceInDb(workspace, workspaceDao);
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
     FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
     hook.endFlight(
         new FakeFlightContext(
@@ -329,7 +329,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
     List<WsmResource> resourceToDelete = new ArrayList<>();
-    resourceToDelete.add(ControlledResourceFixtures.makeDefaultAiNotebookInstance().build());
+    resourceToDelete.add(
+        ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder().build());
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
     hook.endFlight(
         new FakeFlightContext(
@@ -383,7 +384,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     resourcesToDelete.add(aiNotebook);
     // a dataset that is "deleted" as it is never put into the resource DAO.
     var dataset =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId).build();
     activityLogDao.writeActivity(
         workspaceId,
         new DbWorkspaceActivityLog(
@@ -415,7 +416,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   private ControlledAiNotebookInstanceResource createNotebookAndLog(UUID workspaceId) {
-    var aiNotebook = ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceId).build();
+    var aiNotebook =
+        ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder(workspaceId).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, aiNotebook);
     activityLogDao.writeActivity(
         workspaceId,
@@ -516,9 +518,10 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
     List<WsmResource> resourceToDelete = new ArrayList<>();
-    resourceToDelete.add(ControlledResourceFixtures.makeDefaultAiNotebookInstance().build());
     resourceToDelete.add(
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build());
+        ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder().build());
+    resourceToDelete.add(
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build());
     inputParams.put(CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete);
     hook.endFlight(
         new FakeFlightContext(

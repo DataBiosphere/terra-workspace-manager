@@ -256,7 +256,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
   void duplicateWorkspaceFails() {
     Workspace workspace = defaultRawlsWorkspace(workspaceUuid);
     WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
-
     assertThrows(
         DuplicateWorkspaceException.class,
         () -> WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao));

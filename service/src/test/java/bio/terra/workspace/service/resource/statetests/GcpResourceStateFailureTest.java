@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
@@ -14,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -97,12 +96,12 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     var notebookRequest =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
             .common(
-                makeDefaultControlledResourceFieldsApi()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
                     .name(TestUtils.appendRandomNumber("ai-notebook")))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
             .aiNotebookInstance(
-                defaultNotebookCreationParameters()
+                ControlledGcpResourceFixtures.defaultNotebookCreationParameters()
                     .instanceId(TestUtils.appendRandomNumber("instance-id")));
     mockMvcUtils.postExpect(
         USER_REQUEST,
@@ -114,7 +113,9 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     var bqParameters = new ApiGcpBigQueryDatasetCreationParameters().datasetId("fake-dataset");
     var bqRequest =
         new ApiCreateControlledGcpBigQueryDatasetRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi().name(RESOURCE_NAME))
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
+                    .name(RESOURCE_NAME))
             .dataset(bqParameters);
     mockMvcUtils.postExpect(
         USER_REQUEST,
@@ -125,7 +126,9 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     // GCP-Controlled Bucket
     var bucketRequest =
         new ApiCreateControlledGcpGcsBucketRequestBody()
-            .common(makeDefaultControlledResourceFieldsApi().name(RESOURCE_NAME))
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
+                    .name(RESOURCE_NAME))
             .gcsBucket(new ApiGcpGcsBucketCreationParameters().name("fake-bucket-name"));
     mockMvcUtils.postExpect(
         USER_REQUEST,
@@ -142,17 +145,17 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     // Create the resources in the database
     // GCP-Controlled Notebook
     var notebookResource =
-        ControlledResourceFixtures.makeDefaultAiNotebookInstance(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder(workspaceUuid).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
 
     // GCP-Controlled BigQuery
     var bqResource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bqResource);
 
     // GCP-Controlled Bucket
     var bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bucketResource);
 
     // Set cloud context info deleting state
@@ -221,12 +224,12 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
 
     // GCP-Controlled BigQuery
     var bqResource =
-        ControlledResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bqResource);
 
     // GCP-Controlled Bucket
     var bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, bucketResource);
 
     // Fake up a READY targetWorkspace

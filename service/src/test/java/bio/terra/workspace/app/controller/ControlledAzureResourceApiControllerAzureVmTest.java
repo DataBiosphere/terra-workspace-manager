@@ -13,7 +13,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -63,11 +65,12 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
     UUID workspaceId = UUID.randomUUID();
     setupMockLandingZoneRegion(Region.US_SOUTH_CENTRAL);
 
-    final ApiControlledResourceCommonFields commonFields =
+    ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
-    var creationParameters = ControlledResourceFixtures.getAzureVmCreationParameters().diskId(null);
-    final ApiCreateControlledAzureVmRequestBody vmRequest =
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters().diskId(null);
+    ApiCreateControlledAzureVmRequestBody vmRequest =
         new ApiCreateControlledAzureVmRequestBody()
             .common(commonFields)
             .azureVm(creationParameters)

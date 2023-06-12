@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.getGoogleBucketCreationParameters;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.DEFAULT_REGION;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGoogleDateTime;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -24,7 +24,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
@@ -86,27 +86,27 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
 
   @Test
   public void testCreatesBucket() throws RetryException, InterruptedException {
-    final ApiGcpGcsBucketCreationParameters creationParameters =
-        getGoogleBucketCreationParameters();
+    ApiGcpGcsBucketCreationParameters creationParameters =
+        ControlledGcpResourceFixtures.getGoogleBucketCreationParameters();
 
     CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
             mockCrlService,
-            ControlledResourceFixtures.getBucketResource(creationParameters.getName()),
+            ControlledGcpResourceFixtures.getBucketResource(creationParameters.getName()),
             mockGcpCloudContextService);
 
     setupFlightContextMock(creationParameters);
 
-    final StepResult stepResult = createGcsBucketStep.doStep(mockFlightContext);
+    StepResult stepResult = createGcsBucketStep.doStep(mockFlightContext);
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
 
-    final BucketInfo info = bucketInfoCaptor.getValue();
+    BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(creationParameters.getName()));
     assertThat(info.getLocation(), equalTo(DEFAULT_REGION));
     assertThat(info.getStorageClass(), equalTo(StorageClass.STANDARD));
     assertThat(info.getLifecycleRules(), hasSize(equalTo(2)));
 
-    final LifecycleRule expectedDeleteRule =
+    LifecycleRule expectedDeleteRule =
         new LifecycleRule(
             LifecycleAction.newDeleteAction(),
             LifecycleCondition.newBuilder()
@@ -117,10 +117,10 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
                 .setMatchesStorageClass(Collections.singletonList(StorageClass.ARCHIVE))
                 .build());
 
-    final LifecycleRule deleteRule = info.getLifecycleRules().get(0);
+    LifecycleRule deleteRule = info.getLifecycleRules().get(0);
     assertEquals(expectedDeleteRule, deleteRule);
 
-    final LifecycleRule expectedStorageClassRule =
+    LifecycleRule expectedStorageClassRule =
         new LifecycleRule(
             LifecycleAction.newSetStorageClassAction(StorageClass.NEARLINE),
             LifecycleCondition.newBuilder()
@@ -131,24 +131,24 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
                 .setIsLive(null)
                 .setMatchesStorageClass(Collections.singletonList(StorageClass.STANDARD))
                 .build());
-    final LifecycleRule storageClassRule = info.getLifecycleRules().get(1);
+    LifecycleRule storageClassRule = info.getLifecycleRules().get(1);
     assertEquals(expectedStorageClassRule, storageClassRule);
   }
 
   @Test
   public void testCreatesBucketWithoutAllParameters() throws RetryException, InterruptedException {
-    final String bucketName = TestUtils.appendRandomNumber("pedro");
-    final CreateGcsBucketStep createGcsBucketStep =
+    String bucketName = TestUtils.appendRandomNumber("pedro");
+    CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
             mockCrlService,
-            ControlledResourceFixtures.getBucketResource(bucketName),
+            ControlledGcpResourceFixtures.getBucketResource(bucketName),
             mockGcpCloudContextService);
-    setupFlightContextMock(ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
+    setupFlightContextMock(GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
 
-    final StepResult stepResult = createGcsBucketStep.doStep(mockFlightContext);
+    StepResult stepResult = createGcsBucketStep.doStep(mockFlightContext);
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
 
-    final BucketInfo info = bucketInfoCaptor.getValue();
+    BucketInfo info = bucketInfoCaptor.getValue();
     assertThat(info.getName(), equalTo(bucketName));
     assertThat(info.getLocation(), equalTo(DEFAULT_REGION));
     assertThat(info.getStorageClass(), is(nullValue()));
@@ -162,13 +162,13 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
         .create(bucketInfoCaptor.capture());
 
     // A bad bucket name that fails to be caught by the WSM validation.
-    final String bucketName = TestUtils.appendRandomNumber("bad-bucket-name");
+    String bucketName = TestUtils.appendRandomNumber("bad-bucket-name");
     CreateGcsBucketStep createGcsBucketStep =
         new CreateGcsBucketStep(
             mockCrlService,
-            ControlledResourceFixtures.getBucketResource(bucketName),
+            ControlledGcpResourceFixtures.getBucketResource(bucketName),
             mockGcpCloudContextService);
-    setupFlightContextMock(ControlledResourceFixtures.GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
+    setupFlightContextMock(GOOGLE_BUCKET_CREATION_PARAMETERS_MINIMAL);
 
     assertThrows(BadRequestException.class, () -> createGcsBucketStep.doStep(mockFlightContext));
   }

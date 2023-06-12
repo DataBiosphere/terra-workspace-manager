@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.defaultNotebookCreationParameters;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,6 +13,7 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
@@ -96,35 +96,38 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
   @Test
   public void notebookCreationParametersExactlyOneOfVmImageOrContainerImage() {
     // Nothing throws on successful validation.
-    ResourceValidationUtils.validate(defaultNotebookCreationParameters());
+    ResourceValidationUtils.validate(
+        ControlledGcpResourceFixtures.defaultNotebookCreationParameters());
 
     // Neither vmImage nor containerImage.
     assertThrows(
         InconsistentFieldsException.class,
         () ->
             ResourceValidationUtils.validate(
-                defaultNotebookCreationParameters().containerImage(null).vmImage(null)));
+                ControlledGcpResourceFixtures.defaultNotebookCreationParameters()
+                    .containerImage(null)
+                    .vmImage(null)));
     // Both vmImage and containerImage.
     assertThrows(
         InconsistentFieldsException.class,
         () ->
             ResourceValidationUtils.validate(
-                defaultNotebookCreationParameters()
+                ControlledGcpResourceFixtures.defaultNotebookCreationParameters()
                     .containerImage(new ApiGcpAiNotebookInstanceContainerImage())
                     .vmImage(new ApiGcpAiNotebookInstanceVmImage())));
     // Valid containerImage.
     ResourceValidationUtils.validate(
-        defaultNotebookCreationParameters()
+        ControlledGcpResourceFixtures.defaultNotebookCreationParameters()
             .vmImage(null)
             .containerImage(
                 new ApiGcpAiNotebookInstanceContainerImage().repository("my-repository")));
     // Valid vmImage.
     ResourceValidationUtils.validate(
-        defaultNotebookCreationParameters()
+        ControlledGcpResourceFixtures.defaultNotebookCreationParameters()
             .vmImage(new ApiGcpAiNotebookInstanceVmImage().imageName("image-name"))
             .containerImage(null));
     ResourceValidationUtils.validate(
-        defaultNotebookCreationParameters()
+        ControlledGcpResourceFixtures.defaultNotebookCreationParameters()
             .vmImage(new ApiGcpAiNotebookInstanceVmImage().imageFamily("image-family"))
             .containerImage(null));
     // Neither vmImage.imageName nor vmImage.familyName
@@ -132,7 +135,7 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
         InconsistentFieldsException.class,
         () ->
             ResourceValidationUtils.validate(
-                defaultNotebookCreationParameters()
+                ControlledGcpResourceFixtures.defaultNotebookCreationParameters()
                     .vmImage(new ApiGcpAiNotebookInstanceVmImage())
                     .containerImage(null)));
     // Both vmImage.imageName and vmImage.familyName
@@ -140,7 +143,7 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
         InconsistentFieldsException.class,
         () ->
             ResourceValidationUtils.validate(
-                defaultNotebookCreationParameters()
+                ControlledGcpResourceFixtures.defaultNotebookCreationParameters()
                     .vmImage(
                         new ApiGcpAiNotebookInstanceVmImage()
                             .imageName("image-name")
@@ -477,7 +480,7 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
     var testRegions = List.of("us", "us-central1", "us-east1-a");
     UUID workspaceId = UUID.randomUUID();
 
-    final CloudPlatform cloudPlatform = CloudPlatform.GCP;
+    CloudPlatform cloudPlatform = CloudPlatform.GCP;
     when(mockTpsApiDispatch().listValidRegions(workspaceId, cloudPlatform))
         .thenReturn(List.of("US", "us-central1", "us-east1"));
 
@@ -495,7 +498,7 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
     var testRegions = List.of(Region.US_EAST, Region.US_EAST2);
     UUID workspaceId = UUID.randomUUID();
 
-    final CloudPlatform cloudPlatform = CloudPlatform.AZURE;
+    CloudPlatform cloudPlatform = CloudPlatform.AZURE;
     when(mockTpsApiDispatch().listValidRegions(workspaceId, cloudPlatform))
         .thenReturn(testRegions.stream().map(Region::name).toList());
 
@@ -530,10 +533,10 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
 
   @Test
   void validateExistingResourceRegions_valid() {
-    final String validRegion = "validRegion";
-    final UUID workspaceId = UUID.randomUUID();
-    final CloudPlatform cloudPlatform = CloudPlatform.AZURE;
-    final ControlledResource mockControlledResource = mock(ControlledResource.class);
+    String validRegion = "validRegion";
+    UUID workspaceId = UUID.randomUUID();
+    CloudPlatform cloudPlatform = CloudPlatform.AZURE;
+    ControlledResource mockControlledResource = mock(ControlledResource.class);
 
     when(mockControlledResource.getName()).thenReturn("res name");
     when(mockControlledResource.getRegion()).thenReturn(validRegion);
@@ -549,10 +552,10 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
 
   @Test
   void validateExistingResourceRegions_invalid() {
-    final String validRegion = "validRegion";
-    final UUID workspaceId = UUID.randomUUID();
-    final CloudPlatform cloudPlatform = CloudPlatform.AZURE;
-    final ControlledResource mockControlledResource = mock(ControlledResource.class);
+    String validRegion = "validRegion";
+    UUID workspaceId = UUID.randomUUID();
+    CloudPlatform cloudPlatform = CloudPlatform.AZURE;
+    ControlledResource mockControlledResource = mock(ControlledResource.class);
 
     when(mockControlledResource.getName()).thenReturn("res name");
     when(mockControlledResource.getRegion()).thenReturn("invalidRegion");
