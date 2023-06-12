@@ -6,6 +6,7 @@ import static bio.terra.workspace.common.GcsBucketUtils.addFileToBucket;
 import static bio.terra.workspace.common.GcsBucketUtils.buildSignedUrlListObject;
 import static bio.terra.workspace.common.GcsBucketUtils.waitForProjectAccess;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.LOAD_SIGNED_URL_LIST_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiGcsBucketEquals;
@@ -49,6 +50,7 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -388,6 +390,31 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         sourceResourceName,
         RESOURCE_DESCRIPTION,
         ApiCloningInstructionsEnum.DEFINITION);
+  }
+
+  @Test
+  public void update_throws409() throws Exception {
+    var oldName = sourceBucket.getMetadata().getName();
+    var newName = TestUtils.appendRandomNumber("newbucketresourcename");
+    var unused =
+        mockMvcUtils.createReferencedGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(), workspaceId, newName, sourceBucketName);
+
+    mockMvcUtils.updateResource(
+        ApiGcpGcsBucketResource.class,
+        CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
+        workspaceId,
+        sourceBucket.getMetadata().getResourceId(),
+        objectMapper.writeValueAsString(
+            new ApiUpdateControlledGcpGcsBucketRequestBody().name(newName)),
+        userAccessUtils.defaultUserAuthRequest(),
+        HttpStatus.SC_CONFLICT);
+    ApiGcpGcsBucketResource getResource =
+        mockMvcUtils.getControlledGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            sourceBucket.getMetadata().getResourceId());
+    assertEquals(oldName, getResource.getMetadata().getName());
   }
 
   @Test

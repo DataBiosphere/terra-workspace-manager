@@ -31,6 +31,7 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -496,6 +497,27 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   @Test
+  public void updateResourceSuccess_throwDuplicateResourceException() {
+    ControlledBigQueryDatasetResource dataset1 =
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+    createControlledResourceAndLog(dataset1);
+    ControlledBigQueryDatasetResource dataset2 =
+        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
+    createControlledResourceAndLog(dataset2);
+    // update dataset2 to dataset1's name.
+    CommonUpdateParameters updateParams = new CommonUpdateParameters().setName(dataset1.getName());
+    var dbUpdater =
+        resourceDao.updateResourceStart(
+            workspaceUuid, dataset2.getResourceId(), updateParams, null);
+
+    assertThrows(
+        DuplicateResourceException.class,
+        () ->
+            resourceDao.updateResourceSuccess(
+                workspaceUuid, dataset2.getResourceId(), dbUpdater, null));
+  }
+
+  @Test
   public void deleteResourceProperties_resourcePropertiesDeleted() {
     ControlledBigQueryDatasetResource resource =
         ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
@@ -629,7 +651,9 @@ public class ResourceDaoTest extends BaseUnitTest {
   }
 
   private void createControlledResourceAndLog(ControlledResource resource) {
-    resourceDao.createResourceStart(resource, UUID.randomUUID().toString());
+    var flightId = UUID.randomUUID().toString();
+    resourceDao.createResourceStart(resource, flightId);
+    resourceDao.createResourceSuccess(resource, flightId);
     activityLogDao.writeActivity(
         workspaceUuid,
         new DbWorkspaceActivityLog(
