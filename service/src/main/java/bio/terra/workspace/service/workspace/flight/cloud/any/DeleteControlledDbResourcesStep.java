@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.cloud.gcp;
+package bio.terra.workspace.service.workspace.flight.cloud.any;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;

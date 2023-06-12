@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteContr
 import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.referenced.flight.clone.CloneReferencedResourceFlight;
 import bio.terra.workspace.service.workspace.flight.application.ApplicationAbleFlight;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteCloudContextResourceFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceV2Flight;
@@ -42,6 +43,8 @@ public enum ActivityFlight {
       CreateCloudContextFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT),
   CLOUD_CONTEXT_DELETE_FLIGHT(
       DeleteCloudContextFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT),
+  DELETE_CLOUD_CONTEXT_RESOURCE_FLIGHT(
+      DeleteCloudContextResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
 
   // Resources
   ALL_RESOURCES_CLONE_FLIGHT(
@@ -56,7 +59,6 @@ public enum ActivityFlight {
   CLONE_FLEX_RESOURCE_FLIGHT(
       CloneControlledFlexibleResourceFlight.class.getName(),
       ActivityLogChangedTarget.CONTROLLED_FLEXIBLE_RESOURCE),
-
   FOLDER_DELETE_FLIGHT(DeleteFolderFlight.class.getName(), ActivityLogChangedTarget.FOLDER),
 
   // User

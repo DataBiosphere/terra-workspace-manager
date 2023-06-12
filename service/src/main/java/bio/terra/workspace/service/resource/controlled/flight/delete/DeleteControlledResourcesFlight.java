@@ -63,10 +63,12 @@ public class DeleteControlledResourcesFlight extends Flight {
       UUID workspaceUuid,
       WsmResourceStateRule resourceStateRule) {
     final RetryRule cloudRetry = RetryRules.cloud();
+    final RetryRule dbRetry = RetryRules.shortDatabase();
 
     addStep(
         new DeleteMetadataStartStep(
-            flightBeanBag.getResourceDao(), workspaceUuid, resource.getResourceId()));
+            flightBeanBag.getResourceDao(), workspaceUuid, resource.getResourceId()),
+        dbRetry);
 
     // Get the cloud context for the resource we are deleting
     switch (resource.getResourceType().getCloudPlatform()) {

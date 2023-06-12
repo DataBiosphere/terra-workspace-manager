@@ -2,13 +2,16 @@ package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.PolicyValidator;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
-import bio.terra.workspace.service.workspace.flight.cloud.azure.DeleteControlledAzureResourcesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateLandingZoneAgainstPolicyStep;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateMRGStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
@@ -18,6 +21,8 @@ import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
@@ -36,6 +41,7 @@ public class AzureCloudContextService implements CloudContextService {
   private static AzureCloudContextService theService;
 
   private final WorkspaceDao workspaceDao;
+  private final ResourceDao resourceDao;
   private final FeatureConfiguration featureConfiguration;
   private final WorkspaceService workspaceService;
   private final PolicyValidator policyValidator;
@@ -43,10 +49,12 @@ public class AzureCloudContextService implements CloudContextService {
   @Autowired
   public AzureCloudContextService(
       WorkspaceDao workspaceDao,
+      ResourceDao resourceDao,
       FeatureConfiguration featureConfiguration,
       WorkspaceService workspaceService,
       PolicyValidator policyValidator) {
     this.workspaceDao = workspaceDao;
+    this.resourceDao = resourceDao;
     this.featureConfiguration = featureConfiguration;
     this.workspaceService = workspaceService;
     this.policyValidator = policyValidator;
@@ -91,18 +99,53 @@ public class AzureCloudContextService implements CloudContextService {
       FlightBeanBag appContext,
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest) {
-    flight.addStep(
-        new DeleteControlledAzureResourcesStep(
-            appContext.getResourceDao(),
-            appContext.getControlledResourceService(),
-            appContext.getSamService(),
-            workspaceUuid,
-            userRequest));
+    // No post-resource delete steps for Azure
   }
 
   @Override
   public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
     return AzureCloudContext.deserialize(dbCloudContext);
+  }
+
+  @Override
+  public List<ControlledResource> makeOrderedResourceList(UUID workspaceUuid) {
+    List<ControlledResource> unorderedList =
+        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
+    // Delete VMs first because they use other resources like disks, networks, etc.
+    List<ControlledResource> orderedList =
+        new ArrayList<>(
+            unorderedList.stream()
+                .filter(r -> r.getResourceType() == WsmResourceType.CONTROLLED_AZURE_VM)
+                .toList());
+
+    // Delete storage containers so that Sam resources are properly deleted (before storage accounts
+    // are deleted).
+    orderedList.addAll(
+        unorderedList.stream()
+            .filter(r -> r.getResourceType() == WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER)
+            .toList());
+
+    // Delete all remaining resources
+    orderedList.addAll(
+        unorderedList.stream()
+            .filter(
+                r ->
+                    r.getResourceType() != WsmResourceType.CONTROLLED_AZURE_VM
+                        && r.getResourceType()
+                            != WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER)
+            .toList());
+    return orderedList;
+  }
+
+  @Override
+  public void launchDeleteFlight(
+      ControlledResourceService controlledResourceService,
+      UUID workspaceUuid,
+      UUID resourceId,
+      String flightId,
+      AuthenticatedUserRequest userRequest) {
+    controlledResourceService.deleteControlledResourceAsync(
+        flightId, workspaceUuid, resourceId, null, userRequest);
   }
 
   /**

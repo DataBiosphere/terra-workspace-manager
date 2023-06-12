@@ -231,7 +231,7 @@ public final class FlightUtils {
     }
   }
 
-  private static boolean flightComplete(FlightState flightState) {
+  public static boolean flightComplete(FlightState flightState) {
     logger.info(
         "Testing flight {} completion; state is {}",
         flightState.getFlightId(),

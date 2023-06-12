@@ -16,12 +16,12 @@ import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
-import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteControlledAwsResourcesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.MakeAwsCloudContextStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
@@ -33,6 +33,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
@@ -53,7 +54,6 @@ public class AwsCloudContextService implements CloudContextService {
   private final WorkspaceDao workspaceDao;
   private final FeatureService featureService;
   private final ResourceDao resourceDao;
-  private final ControlledResourceService controlledResourceService;
   private EnvironmentDiscovery environmentDiscovery;
   private static AwsCloudContextService theService;
 
@@ -62,13 +62,11 @@ public class AwsCloudContextService implements CloudContextService {
       WorkspaceDao workspaceDao,
       FeatureService featureService,
       AwsConfiguration awsConfiguration,
-      ResourceDao resourceDao,
-      ControlledResourceService controlledResourceService) {
+      ResourceDao resourceDao) {
     this.awsConfiguration = awsConfiguration;
     this.workspaceDao = workspaceDao;
     this.featureService = featureService;
     this.resourceDao = resourceDao;
-    this.controlledResourceService = controlledResourceService;
   }
 
   // Set up static accessor for use by CloudPlatform
@@ -98,14 +96,28 @@ public class AwsCloudContextService implements CloudContextService {
       FlightBeanBag appContext,
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest) {
-    flight.addStep(
-        new DeleteControlledAwsResourcesStep(
-            resourceDao, controlledResourceService, workspaceUuid, userRequest));
+    // No post-resource delete steps for AWS
   }
 
   @Override
   public CloudContext makeCloudContextFromDb(DbCloudContext dbCloudContext) {
     return AwsCloudContext.deserialize(dbCloudContext);
+  }
+
+  @Override
+  public List<ControlledResource> makeOrderedResourceList(UUID workspaceUuid) {
+    return resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AWS);
+  }
+
+  @Override
+  public void launchDeleteFlight(
+      ControlledResourceService controlledResourceService,
+      UUID workspaceUuid,
+      UUID resourceId,
+      String flightId,
+      AuthenticatedUserRequest userRequest) {
+    controlledResourceService.deleteControlledResourceAsync(
+        flightId, workspaceUuid, resourceId, null, userRequest);
   }
 
   /** Returns authentication from configuration */
