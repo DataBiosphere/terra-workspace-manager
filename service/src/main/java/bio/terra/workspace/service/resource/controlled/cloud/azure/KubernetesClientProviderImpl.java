@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
+
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import com.azure.resourcemanager.containerservice.ContainerServiceManager;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -14,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 public class KubernetesClientProviderImpl implements KubernetesClientProvider {
   @NotNull
   public CoreV1Api createCoreApiClient(
-      ContainerServiceManager containerServiceManager, String mrgName, String aksClusterName) {
-    KubeConfig kubeConfig = loadKubeConfig(containerServiceManager, mrgName, aksClusterName);
+      ContainerServiceManager containerServiceManager, String mrgName, ApiAzureLandingZoneDeployedResource aksClusterDeployedResource) {
+    KubeConfig kubeConfig = loadKubeConfig(containerServiceManager, mrgName, getResourceName(aksClusterDeployedResource));
     var userToken = kubeConfig.getCredentials().get("token");
 
     ApiClient client =

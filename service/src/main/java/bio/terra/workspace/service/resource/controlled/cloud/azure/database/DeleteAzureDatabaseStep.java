@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
+
 import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -66,23 +68,23 @@ public class DeleteAzureDatabaseStep implements Step {
     try {
       logger.info(
           "Attempting to delete database {} in server {} of resource group {}",
-          databaseResource.getResourceName(),
-          databaseResource.getResourceName(),
+          getResourceName(databaseResource),
+          getResourceName(databaseResource),
           azureCloudContext.getAzureResourceGroupId());
 
       postgresManager
           .databases()
           .delete(
               azureCloudContext.getAzureResourceGroupId(),
-              databaseResource.getResourceName(),
+              getResourceName(databaseResource),
               resource.getDatabaseName());
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
       logger.info(
           "Attempt to delete database %s in server %s of resource group %s on this try"
               .formatted(
-                  databaseResource.getResourceName(),
-                  databaseResource.getResourceName(),
+                  getResourceName(databaseResource),
+                  getResourceName(databaseResource),
                   azureCloudContext.getAzureResourceGroupId()),
           ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);

@@ -46,7 +46,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
           WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("databaseName") String databaseName,
       @JsonProperty("databaseOwner") UUID databaseOwner,
-      String k8sNamespace) {
+      @JsonProperty("k8sNamespace") String k8sNamespace) {
     super(resourceFields, controlledResourceFields);
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
@@ -109,13 +109,13 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   @Override
   @JsonIgnore
   public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY;
+    return WsmResourceType.CONTROLLED_AZURE_DATABASE;
   }
 
   @Override
   @JsonIgnore
   public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AZURE_MANAGED_IDENTITY;
+    return WsmResourceFamily.AZURE_DATABASE;
   }
 
   /** {@inheritDoc} */
@@ -153,7 +153,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
-            flightBeanBag.getResourceDao()),
+            flightBeanBag.getResourceDao(), userRequest),
         cloudRetry);
 
     flight.addStep(
@@ -167,7 +167,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
-            flightBeanBag.getResourceDao()),
+            flightBeanBag.getResourceDao(), userRequest),
         cloudRetry);
     flight.addStep(
         new CreateAzureDatabaseStep(
@@ -179,7 +179,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
             new KubernetesClientProviderImpl(),
-            flightBeanBag.getResourceDao()),
+            flightBeanBag.getResourceDao(), userRequest),
         cloudRetry);
   }
 
@@ -215,7 +215,8 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAzureDatabaseAttributes(getDatabaseName(), getDatabaseOwner(), getRegion()));
+        new ControlledAzureDatabaseAttributes(getDatabaseName(), getDatabaseOwner(), k8sNamespace,
+            getRegion()));
   }
 
   @Override
@@ -228,10 +229,10 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY
-        || getResourceFamily() != WsmResourceFamily.AZURE_MANAGED_IDENTITY
+    if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_DATABASE
+        || getResourceFamily() != WsmResourceFamily.AZURE_DATABASE
         || getStewardshipType() != StewardshipType.CONTROLLED) {
-      throw new InconsistentFieldsException("Expected controlled AZURE_MANAGED_IDENTITY");
+      throw new InconsistentFieldsException("Expected controlled AZURE_DATABASE");
     }
     if (getDatabaseName() == null) {
       throw new MissingRequiredFieldException(

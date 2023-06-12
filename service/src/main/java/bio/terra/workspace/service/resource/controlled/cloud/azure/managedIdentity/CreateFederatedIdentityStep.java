@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
 import static bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep.FEDERATED_IDENTITY_EXISTS;
 
 import bio.terra.common.iam.BearerToken;
@@ -13,6 +14,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -46,6 +48,7 @@ public class CreateFederatedIdentityStep implements Step {
   private final WorkspaceService workspaceService;
   private final UUID workspaceId;
   private final ResourceDao resourceDao;
+  private final AuthenticatedUserRequest userRequest;
 
   public CreateFederatedIdentityStep(
       String k8sNamespace,
@@ -57,7 +60,7 @@ public class CreateFederatedIdentityStep implements Step {
       SamService samService,
       WorkspaceService workspaceService,
       UUID workspaceId,
-      ResourceDao resourceDao) {
+      ResourceDao resourceDao, AuthenticatedUserRequest userRequest) {
     this.k8sNamespace = k8sNamespace;
     this.azureConfig = azureConfig;
     this.crlService = crlService;
@@ -68,6 +71,7 @@ public class CreateFederatedIdentityStep implements Step {
     this.workspaceService = workspaceService;
     this.workspaceId = workspaceId;
     this.resourceDao = resourceDao;
+    this.userRequest = userRequest;
   }
 
   @Override
@@ -78,7 +82,7 @@ public class CreateFederatedIdentityStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
-    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var bearerToken = new BearerToken(userRequest.getRequiredToken());
     ControlledAzureManagedIdentityResource managedIdentityResource =
         resourceDao
             .getResource(workspaceId, managedIdentityId)
@@ -105,14 +109,14 @@ public class CreateFederatedIdentityStep implements Step {
         kubernetesClientProvider.createCoreApiClient(
             containerServiceManager,
             azureCloudContext.getAzureResourceGroupId(),
-            aksCluster.getResourceName());
+            aksCluster);
 
     var oidcIssuer =
         Optional.ofNullable(
                 containerServiceManager
                     .kubernetesClusters()
                     .getByResourceGroup(
-                        azureCloudContext.getAzureResourceGroupId(), aksCluster.getResourceName())
+                        azureCloudContext.getAzureResourceGroupId(), getResourceName(aksCluster))
                     .innerModel()
                     .oidcIssuerProfile()
                     .issuerUrl())
@@ -202,7 +206,7 @@ public class CreateFederatedIdentityStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
-    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var bearerToken = new BearerToken(userRequest.getRequiredToken());
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
@@ -229,7 +233,7 @@ public class CreateFederatedIdentityStep implements Step {
                     kubernetesClientProvider.createCoreApiClient(
                         containerServiceManager,
                         azureCloudContext.getAzureResourceGroupId(),
-                        aksCluster.getResourceName());
+                        aksCluster);
                 deleteK8sServiceAccount(aksApi, k8sNamespace, uamiName);
               } catch (ApiException e) {
                 logger.info("Failed to delete k8s service account", e);

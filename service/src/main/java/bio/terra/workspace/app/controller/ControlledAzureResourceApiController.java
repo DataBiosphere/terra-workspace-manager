@@ -600,6 +600,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
 
     var resource =
         ControlledAzureDatabaseResource.builder()
@@ -639,6 +640,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
 
     var resource =
         ControlledAzureManagedIdentityResource.builder()

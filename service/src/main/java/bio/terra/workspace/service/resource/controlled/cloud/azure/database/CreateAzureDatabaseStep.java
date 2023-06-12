@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
+
 import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -11,6 +13,7 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
@@ -55,6 +58,7 @@ public class CreateAzureDatabaseStep implements Step {
 
   // namespace where we create the pod to create the database
   private final String aksNamespace = "default";
+  private final AuthenticatedUserRequest userRequest;
 
   public CreateAzureDatabaseStep(
       AzureConfiguration azureConfig,
@@ -65,7 +69,7 @@ public class CreateAzureDatabaseStep implements Step {
       WorkspaceService workspaceService,
       UUID workspaceId,
       KubernetesClientProvider kubernetesClientProvider,
-      ResourceDao resourceDao) {
+      ResourceDao resourceDao, AuthenticatedUserRequest userRequest) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -75,6 +79,7 @@ public class CreateAzureDatabaseStep implements Step {
     this.workspaceId = workspaceId;
     this.kubernetesClientProvider = kubernetesClientProvider;
     this.resourceDao = resourceDao;
+    this.userRequest = userRequest;
   }
 
   private String getPodName(String newDbUserName) {
@@ -104,7 +109,7 @@ public class CreateAzureDatabaseStep implements Step {
                 azureCloudContext.getAzureResourceGroupId(),
                 managedIdentityResource.getManagedIdentityName());
 
-    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var bearerToken = new BearerToken(userRequest.getRequiredToken());
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
@@ -117,7 +122,7 @@ public class CreateAzureDatabaseStep implements Step {
         kubernetesClientProvider.createCoreApiClient(
             containerServiceManager,
             azureCloudContext.getAzureResourceGroupId(),
-            clusterResource.getResourceName());
+            clusterResource);
     var podName = getPodName(managedIdentity.name());
     try {
       startCreateDatabaseContainer(
@@ -192,15 +197,13 @@ public class CreateAzureDatabaseStep implements Step {
                   "psql \"host=${DB_SERVER_NAME}.postgres.database.azure.com port=5432 dbname=postgres user=${ADMIN_DB_USER_NAME} password=$(az account get-access-token --query accessToken -otsv) sslmode=require\" --command \"CREATE DATABASE ${NEW_DB_NAME};\"",
                   "psql \"host=${DB_SERVER_NAME}.postgres.database.azure.com port=5432 dbname=postgres user=${ADMIN_DB_USER_NAME} password=$(az account get-access-token --query accessToken -otsv) sslmode=require\" --command \"SELECT case when exists(select * FROM pg_roles where rolname='${NEW_DB_USER_NAME}') then 'exists' else pgaadauth_create_principal_with_oid('${NEW_DB_USER_NAME}', '${NEW_DB_USER_OID}', 'service', false, false) end; GRANT ALL PRIVILEGES on DATABASE ${NEW_DB_NAME} to ${NEW_DB_USER_NAME};\""));
       String dbServerName =
-          landingZoneApiDispatch
+          getResourceName(landingZoneApiDispatch
               .getSharedDatabase(bearerToken, landingZoneId)
-              .orElseThrow(() -> new RuntimeException("No shared database found"))
-              .getResourceName();
+              .orElseThrow(() -> new RuntimeException("No shared database found")));
       String adminDbUserName =
-          landingZoneApiDispatch
+          getResourceName(landingZoneApiDispatch
               .getSharedDatabaseAdminIdentity(bearerToken, landingZoneId)
-              .orElseThrow(() -> new RuntimeException("No shared database admin identity found"))
-              .getResourceName();
+              .orElseThrow(() -> new RuntimeException("No shared database admin identity found")));
       V1Pod pod =
           new V1Pod()
               .metadata(
@@ -257,7 +260,7 @@ public class CreateAzureDatabaseStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
     var postgresManager = crlService.getPostgreSqlManager(azureCloudContext, azureConfig);
-    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var bearerToken = new BearerToken(userRequest.getRequiredToken());
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
@@ -268,23 +271,23 @@ public class CreateAzureDatabaseStep implements Step {
     try {
       logger.info(
           "Attempting to delete database {} in server {} of resource group {}",
-          databaseResource.getResourceName(),
-          databaseResource.getResourceName(),
+          getResourceName(databaseResource),
+          getResourceName(databaseResource),
           azureCloudContext.getAzureResourceGroupId());
 
       postgresManager
           .databases()
           .delete(
               azureCloudContext.getAzureResourceGroupId(),
-              databaseResource.getResourceName(),
+              getResourceName(databaseResource),
               resource.getDatabaseName());
       return StepResult.getStepResultSuccess();
     } catch (ManagementException e) {
       if (e.getResponse().getStatusCode() == 404) {
         logger.info(
             "Database {} in server {} of resource group {} not found",
-            databaseResource.getResourceName(),
-            databaseResource.getResourceName(),
+            getResourceName(databaseResource),
+            getResourceName(databaseResource),
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
       } else {
