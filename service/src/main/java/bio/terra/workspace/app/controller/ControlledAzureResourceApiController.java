@@ -473,7 +473,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         workspaceUuid.toString());
     final String jobId =
         controlledResourceService.deleteControlledResourceAsync(
-            jobControl,
+            jobControl.getId(),
             workspaceUuid,
             resourceUuid,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),

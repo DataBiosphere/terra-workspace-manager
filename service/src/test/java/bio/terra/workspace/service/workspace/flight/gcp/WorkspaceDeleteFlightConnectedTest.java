@@ -28,7 +28,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspaceAuthzStep;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspaceFinishStep;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.DeleteWorkspaceStartStep;
-import bio.terra.workspace.service.workspace.flight.delete.workspace.EnsureNoWorkspaceChildrenStep;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.RunDeleteCloudContextFlightStep;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -94,8 +93,6 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
     doFailures.put(DeleteWorkspaceStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(
         RunDeleteCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    doFailures.put(
-        EnsureNoWorkspaceChildrenStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteWorkspaceAuthzStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     doFailures.put(DeleteWorkspaceFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();

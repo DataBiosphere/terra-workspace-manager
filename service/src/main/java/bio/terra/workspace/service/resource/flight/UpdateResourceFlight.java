@@ -6,6 +6,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -43,6 +44,7 @@ public class UpdateResourceFlight extends Flight {
             inputParameters,
             WorkspaceFlightMapKeys.ResourceKeys.COMMON_UPDATE_PARAMETERS,
             CommonUpdateParameters.class);
+    RetryRule dbRetry = RetryRules.shortDatabase();
 
     // Get database row; mark as updating; build the DbUpdater object, setting
     // the common update parameters and save in working map
@@ -51,13 +53,15 @@ public class UpdateResourceFlight extends Flight {
             flightBeanBag.getResourceDao(),
             resource.getWorkspaceId(),
             resource.getResourceId(),
-            commonUpdateParameters));
+            commonUpdateParameters),
+        dbRetry);
 
     resource.addUpdateSteps(this, flightBeanBag);
 
     // Apply updates and reset state
     addStep(
         new UpdateFinishStep(
-            flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()));
+            flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()),
+        dbRetry);
   }
 }

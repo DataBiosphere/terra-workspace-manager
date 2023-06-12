@@ -13,8 +13,8 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledDbResourcesStep;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteControlledSamResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.any.DeleteControlledDbResourcesStep;
+import bio.terra.workspace.service.workspace.flight.cloud.any.DeleteControlledSamResourcesStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
@@ -64,12 +64,6 @@ public class WorkspaceDeleteFlight extends Flight {
     addStep(
         new DeleteControlledDbResourcesStep(resourceDao, workspaceUuid, CloudPlatform.ANY),
         dbRetryRule);
-
-    // Belt and suspenders: the delete cloud context flights should fail and cause this flight to
-    // fail if there are any resources left. However, just to be sure...
-    addStep(
-        new EnsureNoWorkspaceChildrenStep(appContext.getSamService(), userRequest, workspaceUuid),
-        terraRetryRule);
 
     // Workspace-stage driven steps
     addAuthZSteps(appContext, inputParameters, userRequest, workspaceUuid, terraRetryRule);
