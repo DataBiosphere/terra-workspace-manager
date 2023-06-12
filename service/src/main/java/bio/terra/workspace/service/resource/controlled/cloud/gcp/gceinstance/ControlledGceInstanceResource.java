@@ -1,8 +1,7 @@
-package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.DEFAULT_ZONE;
 
-import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.stairway.RetryRule;
@@ -12,8 +11,8 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
+import bio.terra.workspace.generated.model.ApiGcpGceInstanceAttributes;
+import bio.terra.workspace.generated.model.ApiGcpGceInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
@@ -39,56 +38,47 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
-/** A {@link ControlledResource} for a Google AI Platform Notebook instance. */
-public class ControlledAiNotebookInstanceResource extends ControlledResource {
-
-  /** The Notebook instance metadata key used to control proxy mode. */
-  protected static final String PROXY_MODE_METADATA_KEY = "proxy-mode";
-  /** The Notebook instance metadata key used to set the terra workspace. */
+/** A {@link ControlledResource} for a Google Compute Engine VM instance. */
+public class ControlledGceInstanceResource extends ControlledResource {
+  /** The instance metadata key used to set the terra workspace. */
   protected static final String WORKSPACE_ID_METADATA_KEY = "terra-workspace-id";
   /**
-   * The Notebook instance metadata key used to point the terra CLI at the correct WSM and SAM
-   * instances given a CLI specific name.
+   * The instance metadata key used to point the terra CLI at the correct WSM and SAM instances
+   * given a CLI specific name.
    */
   protected static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
-  /**
-   * When notebook has a custom image, disable root access and requires user to log in as Jupyter.
-   * <a
-   * href="https://github.com/hashicorp/terraform-provider-google/issues/7900#issuecomment-1067097275">...</a>.
-   */
-  protected static final String NOTEBOOK_DISABLE_ROOT_METADATA_KEY = "notebook-disable-root";
 
-  private static final String RESOURCE_DESCRIPTOR = "ControlledAiNotebookInstance";
+  private static final String RESOURCE_DESCRIPTOR = "ControlledGceInstance";
 
   /** Metadata keys that are reserved by terra. User cannot modify those. */
   public static final Set<String> RESERVED_METADATA_KEYS =
-      Set.of(PROXY_MODE_METADATA_KEY, WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
+      Set.of(WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
 
   private final String instanceId;
-  private final String location;
+  private final String zone;
   private final String projectId;
 
   @JsonCreator
-  public ControlledAiNotebookInstanceResource(
+  public ControlledGceInstanceResource(
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("instanceId") String instanceId,
-      @JsonProperty("location") String location,
+      @JsonProperty("zone") String zone,
       @JsonProperty("projectId") String projectId) {
     super(resourceFields, controlledResourceFields);
     this.instanceId = instanceId;
-    this.location = location;
+    this.zone = zone;
     this.projectId = projectId;
     validate();
   }
 
   // Constructor for the builder
-  private ControlledAiNotebookInstanceResource(
-      ControlledResourceFields common, String instanceId, String location, String projectId) {
+  private ControlledGceInstanceResource(
+      ControlledResourceFields common, String instanceId, String zone, String projectId) {
     super(common);
     this.instanceId = instanceId;
-    this.location = location;
+    this.zone = zone;
     this.projectId = projectId;
     validate();
   }
@@ -120,17 +110,17 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return super.getWsmControlledResourceFields();
   }
 
-  /** The user specified id of the notebook instance. */
+  /** The GCP zone of the instance, e.g. "us-east1-b". */
+  public String getZone() {
+    return zone;
+  }
+
+  /** The user specified name of the instance. */
   public String getInstanceId() {
     return instanceId;
   }
 
-  /** The Google Cloud Platform location of the notebook instance, e.g. "us-east1-b". */
-  public String getLocation() {
-    return location;
-  }
-
-  /** The GCP project id where the notebook is created */
+  /** The GCP project id where the instance is created */
   public String getProjectId() {
     return projectId;
   }
@@ -140,13 +130,13 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   @Override
   @JsonIgnore
   public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE;
+    return WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE;
   }
 
   @Override
   @JsonIgnore
   public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.AI_NOTEBOOK_INSTANCE;
+    return WsmResourceFamily.GCE_INSTANCE;
   }
 
   /** {@inheritDoc} */
@@ -160,7 +150,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   }
 
   /**
-   * Special retry rule for the notebook permission sync. We are seeing very long propagation times
+   * Special retry rule for the instance permission sync. We are seeing very long propagation times
    * in environments with Domain Restricted Sharing. This rule tries not to penalize non-DRS
    * environments by running an initial phase of retries with the usual "cloud" interval of 10
    * seconds. Then after a minute it switches to a longer interval. Currently set to wait 8 more
@@ -222,7 +212,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getSamService()),
         gcpRetryRule);
     flight.addStep(
-        new CreateAiNotebookInstanceStep(
+        new CreateGceInstanceStep(
             this,
             petSaEmail,
             workspaceUserFacingId,
@@ -231,14 +221,14 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             flightBeanBag.getVersionConfiguration()),
         gcpRetryRule);
     flight.addStep(
-        new NotebookCloudSyncStep(
+        new GceInstanceCloudSyncStep(
             flightBeanBag.getControlledResourceService(),
             flightBeanBag.getCrlService(),
             this,
             userRequest),
         longSyncRetryRule);
     flight.addStep(
-        new UpdateNotebookResourceLocationAttributesStep(this, flightBeanBag.getResourceDao()),
+        new UpdateGceInstanceResourceZoneAttributesStep(this, flightBeanBag.getResourceDao()),
         shortDatabaseRetryRule);
     flight.addStep(
         new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
@@ -249,92 +239,75 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new DeleteAiNotebookInstanceStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
+        new DeleteGceInstanceStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    ControlledAiNotebookInstanceResource aiNotebookResource =
-        getResourceFromFlightInputParameters(
-            flight, WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    ControlledGceInstanceResource vmResource =
+        getResourceFromFlightInputParameters(flight, WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
 
     // Retrieve existing attributes in case of undo later.
     RetryRule gcpRetry = RetryRules.cloud();
     flight.addStep(
-        new RetrieveAiNotebookResourceAttributesStep(
-            aiNotebookResource, flightBeanBag.getCrlService()),
+        new RetrieveGceInstanceResourceAttributesStep(vmResource, flightBeanBag.getCrlService()),
         gcpRetry);
 
-    // Update the AI notebook's attributes.
+    // Update the instance attributes.
     flight.addStep(
-        new UpdateAiNotebookAttributesStep(aiNotebookResource, flightBeanBag.getCrlService()),
-        gcpRetry);
+        new UpdateGceInstanceAttributesStep(vmResource, flightBeanBag.getCrlService()), gcpRetry);
   }
 
-  public InstanceName toInstanceName() {
-    return toInstanceName(getLocation());
+  public ApiGcpGceInstanceResource toApiResource() {
+    return new ApiGcpGceInstanceResource().metadata(toApiMetadata()).attributes(toApiAttributes());
   }
 
-  public InstanceName toInstanceName(String requestedLocation) {
-    return InstanceName.builder()
+  public ApiGcpGceInstanceAttributes toApiAttributes() {
+    return new ApiGcpGceInstanceAttributes()
         .projectId(getProjectId())
-        .location(requestedLocation)
-        .instanceId(instanceId)
-        .build();
-  }
-
-  public ApiGcpAiNotebookInstanceResource toApiResource() {
-    return new ApiGcpAiNotebookInstanceResource()
-        .metadata(toApiMetadata())
-        .attributes(toApiAttributes());
-  }
-
-  public ApiGcpAiNotebookInstanceAttributes toApiAttributes() {
-    return new ApiGcpAiNotebookInstanceAttributes()
-        .projectId(projectId)
-        .location(getLocation())
+        .zone(getZone())
         .instanceId(getInstanceId());
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAiNotebookInstanceAttributes(getInstanceId(), getLocation(), getProjectId()));
+        new ControlledGceInstanceAttributes(getProjectId(), getZone(), getInstanceId()));
   }
 
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.gcpAiNotebookInstance(toApiAttributes());
+    union.gcpGceInstance(toApiAttributes());
     return union;
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE
-        || getResourceFamily() != WsmResourceFamily.AI_NOTEBOOK_INSTANCE
+    if (getResourceType() != WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE
+        || getResourceFamily() != WsmResourceFamily.GCE_INSTANCE
         || getStewardshipType() != StewardshipType.CONTROLLED) {
-      throw new InconsistentFieldsException("Expected controlled GCP AI_NOTEBOOK_INSTANCE");
+      throw new InconsistentFieldsException("Expected controlled GCP GCE_INSTANCE");
     }
     if (!getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
       throw new BadRequestException(
-          "Access scope must be private. Shared AI Notebook instances are not yet implemented.");
+          "Access scope must be private. Shared GCE instances are not yet implemented.");
     }
     ResourceValidationUtils.checkFieldNonNull(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(getLocation(), "location", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkFieldNonNull(getZone(), "zone", RESOURCE_DESCRIPTOR);
     ResourceValidationUtils.checkFieldNonNull(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
+    ResourceValidationUtils.validateGceInstanceId(getInstanceId());
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ControlledAiNotebookInstanceResource)) return false;
+    if (!(o instanceof ControlledGceInstanceResource)) return false;
     if (!super.equals(o)) return false;
-    ControlledAiNotebookInstanceResource resource = (ControlledAiNotebookInstanceResource) o;
+    ControlledGceInstanceResource resource = (ControlledGceInstanceResource) o;
     return Objects.equal(instanceId, resource.instanceId)
-        && Objects.equal(location, resource.location)
+        && Objects.equal(zone, resource.zone)
         && Objects.equal(projectId, resource.projectId);
   }
 
@@ -344,21 +317,21 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.partialEqual(o)) return false;
 
-    ControlledAiNotebookInstanceResource that = (ControlledAiNotebookInstanceResource) o;
+    ControlledGceInstanceResource that = (ControlledGceInstanceResource) o;
 
-    return instanceId.equals(that.instanceId) && location.equals(that.location);
+    return instanceId.equals(that.instanceId) && zone.equals(that.zone);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), instanceId, location, projectId);
+    return Objects.hashCode(super.hashCode(), projectId, zone, instanceId);
   }
 
-  /** Builder for {@link ControlledAiNotebookInstanceResource}. */
+  /** Builder for {@link ControlledGceInstanceResource}. */
   public static class Builder {
     private ControlledResourceFields common;
     private String instanceId;
-    private String location;
+    private String zone;
     private String projectId;
 
     public Builder common(ControlledResourceFields common) {
@@ -371,18 +344,18 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       return this;
     }
 
-    public Builder location(@Nullable String location) {
-      this.location = Optional.ofNullable(location).orElse(DEFAULT_ZONE);
-      return this;
-    }
-
     public Builder projectId(String projectId) {
       this.projectId = projectId;
       return this;
     }
 
-    public ControlledAiNotebookInstanceResource build() {
-      return new ControlledAiNotebookInstanceResource(common, instanceId, location, projectId);
+    public Builder zone(@Nullable String zone) {
+      this.zone = Optional.ofNullable(zone).orElse(DEFAULT_ZONE);
+      return this;
+    }
+
+    public ControlledGceInstanceResource build() {
+      return new ControlledGceInstanceResource(common, instanceId, zone, projectId);
     }
   }
 }

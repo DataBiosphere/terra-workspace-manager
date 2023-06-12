@@ -20,6 +20,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotHandler;
@@ -129,6 +131,14 @@ public enum WsmResourceType {
       ReferencedBigQueryDataTableResource.class,
       ReferencedBigQueryDataTableHandler::getHandler,
       ActivityLogChangedTarget.REFERENCED_GCP_BIG_QUERY_DATA_TABLE),
+  CONTROLLED_GCP_GCE_INSTANCE(
+      CloudPlatform.GCP,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_GCP_GCE_INSTANCE",
+      ApiResourceType.GCE_INSTANCE,
+      ControlledGceInstanceResource.class,
+      ControlledGceInstanceHandler::getHandler,
+      ActivityLogChangedTarget.CONTROLLED_GCP_GCE_INSTANCE),
 
   // AZURE
   CONTROLLED_AZURE_DISK(
