@@ -888,12 +888,12 @@ public class MockMvcUtils {
     ApiCreateControlledGcpGceInstanceRequestBody request =
         new ApiCreateControlledGcpGceInstanceRequestBody()
             .common(
-                makeDefaultControlledResourceFieldsApi()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
                     .name(TestUtils.appendRandomNumber("gce-instance")))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
             .gceInstance(
-                defaultGceInstanceCreationParameters()
+                ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
                     .zone(zone)
                     .instanceId(
                         Optional.ofNullable(instanceId)

@@ -708,7 +708,7 @@ public class ControlledResourceService {
         commonCreationJobBuilder(
             resource, privateResourceIamRole, jobControl, resultPath, userRequest);
     String petSaEmail =
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () ->
                 samService.getOrCreatePetSaEmail(
                     resource.getProjectId(), userRequest.getRequiredToken()),

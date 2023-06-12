@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -18,13 +18,13 @@ public class ControlledGceInstanceResourceTest extends BaseUnitTest {
   @Test
   public void validateOk() {
     // will throw if anything is amiss.
-    ControlledResourceFixtures.makeDefaultGceInstance().build().validate();
+    ControlledGcpResourceFixtures.makeDefaultGceInstance().build().validate();
   }
 
   @Test
   public void resourceWithNullLocation_validatesOkAndSetsDefaultLocation() {
     ControlledGceInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultGceInstance().zone(null).build();
+        ControlledGcpResourceFixtures.makeDefaultGceInstance().zone(null).build();
 
     resource.validate();
     assertEquals(DEFAULT_ZONE, resource.getZone());
@@ -33,7 +33,7 @@ public class ControlledGceInstanceResourceTest extends BaseUnitTest {
   @Test
   public void validateSharedAccessThrows() {
     ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeGceInstanceCommonFieldsBuilder()
+        ControlledGcpResourceFixtures.makeGceInstanceCommonFieldsBuilder()
             .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
             .build();
 
@@ -51,7 +51,7 @@ public class ControlledGceInstanceResourceTest extends BaseUnitTest {
   @Test
   public void testFlightMapSerialization() {
     ControlledGceInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultGceInstance().build();
+        ControlledGcpResourceFixtures.makeDefaultGceInstance().build();
 
     // TODO: [PF-935] Create a public API on FlightMap or Stairway test fixture that explicitly
     // tests that a type serializes and deserializes to the correct result.  For now leverage the
@@ -66,7 +66,7 @@ public class ControlledGceInstanceResourceTest extends BaseUnitTest {
   @Test
   public void toApiResource() {
     ControlledGceInstanceResource resource =
-        ControlledResourceFixtures.makeDefaultGceInstance()
+        ControlledGcpResourceFixtures.makeDefaultGceInstance()
             .instanceId("my-instance-id")
             .zone("us-east1-b")
             .projectId("my-project-id")

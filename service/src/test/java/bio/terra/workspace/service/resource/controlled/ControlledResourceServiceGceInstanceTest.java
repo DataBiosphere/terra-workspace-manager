@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCE_INSTANCE_PREV_PARAMETERS;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.GCE_INSTANCE_UPDATE_PARAMETERS;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GCE_INSTANCE_PREV_PARAMETERS;
+import static bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures.GCE_INSTANCE_UPDATE_PARAMETERS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,7 +21,7 @@ import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
@@ -180,7 +180,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
 
     cliConfiguration.setServerName(serverName);
     ApiGcpGceInstanceCreationParameters creationParameters =
-        ControlledResourceFixtures.defaultGceInstanceCreationParameters()
+        ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
 
@@ -262,7 +262,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
     String name = "create-gce-instance-undo-name";
 
     ApiGcpGceInstanceCreationParameters creationParameters =
-        ControlledResourceFixtures.defaultGceInstanceCreationParameters()
+        ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
     ControlledGceInstanceResource resource =
@@ -360,7 +360,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
     var newDescription = "new description for update-gce-instance-do-name-NEW";
 
     var creationParameters =
-        ControlledResourceFixtures.defaultGceInstanceCreationParameters()
+        ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
     var resource = makeInstanceTestResource(workspaceId, name, instanceId);
@@ -444,7 +444,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
     var newDescription = "new description for update-gce-instance-do-name-and-description-only-NEW";
 
     var creationParameters =
-        ControlledResourceFixtures.defaultGceInstanceCreationParameters()
+        ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
     var resource = makeInstanceTestResource(workspaceId, name, instanceId);
@@ -511,7 +511,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
 
     Map<String, String> prevCustomMetadata = GCE_INSTANCE_PREV_PARAMETERS.getMetadata();
     var creationParameters =
-        ControlledResourceFixtures.defaultGceInstanceCreationParameters()
+        ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE)
             .metadata(prevCustomMetadata);
@@ -598,7 +598,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
         "new description for update-gce-instance-undo-name-illegal-metadata-key-NEW";
 
     var creationParameters =
-        ControlledResourceFixtures.defaultGceInstanceCreationParameters()
+        ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
     var resource = makeInstanceTestResource(workspaceId, name, instanceId);
@@ -675,7 +675,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
       UUID workspaceUuid, String name, String instanceId) {
 
     ControlledResourceFields commonFields =
-        ControlledResourceFixtures.makeGceInstanceCommonFieldsBuilder()
+        ControlledGcpResourceFixtures.makeGceInstanceCommonFieldsBuilder()
             .workspaceUuid(workspaceUuid)
             .name(name)
             .assignedUser(user.getEmail())
@@ -695,7 +695,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
     String instanceId = "create-gce-instance-shared";
 
     ApiGcpGceInstanceCreationParameters creationParameters =
-        ControlledResourceFixtures.defaultGceInstanceCreationParameters()
+        ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
     ControlledGceInstanceResource resource =
@@ -767,7 +767,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
   private ControlledGceInstanceResource createDefaultPrivateGceInstance(
       String instanceId, UserAccessUtils.TestUser user) {
     ApiGcpGceInstanceCreationParameters creationParameters =
-        ControlledResourceFixtures.defaultGceInstanceCreationParameters()
+        ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
     ControlledGceInstanceResource resource =

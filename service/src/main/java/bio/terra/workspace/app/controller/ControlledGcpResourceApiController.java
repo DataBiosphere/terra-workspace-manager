@@ -717,7 +717,10 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             resourceLocation,
             userRequest,
             WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
-    String projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceUuid);
+    CloudContext cloudContext =
+        workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.GCP);
+    GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
+    String projectId = gcpCloudContext.getGcpProjectId();
 
     ControlledGceInstanceResource resource =
         ControlledGceInstanceResource.builder()
