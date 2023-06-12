@@ -9,7 +9,6 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -38,7 +37,6 @@ public class GetFederatedIdentityStep implements Step {
   private final WorkspaceService workspaceService;
   private final UUID workspaceId;
   private final ResourceDao resourceDao;
-  private final AuthenticatedUserRequest userRequest;
 
   public GetFederatedIdentityStep(
       String k8sNamespace,
@@ -50,7 +48,7 @@ public class GetFederatedIdentityStep implements Step {
       SamService samService,
       WorkspaceService workspaceService,
       UUID workspaceId,
-      ResourceDao resourceDao, AuthenticatedUserRequest userRequest) {
+      ResourceDao resourceDao) {
     this.k8sNamespace = k8sNamespace;
     this.azureConfig = azureConfig;
     this.crlService = crlService;
@@ -61,12 +59,11 @@ public class GetFederatedIdentityStep implements Step {
     this.workspaceService = workspaceService;
     this.workspaceId = workspaceId;
     this.resourceDao = resourceDao;
-    this.userRequest = userRequest;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    var bearerToken = new BearerToken(userRequest.getRequiredToken());
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     ControlledAzureManagedIdentityResource managedIdentityResource =
         resourceDao
             .getResource(workspaceId, managedIdentityId)

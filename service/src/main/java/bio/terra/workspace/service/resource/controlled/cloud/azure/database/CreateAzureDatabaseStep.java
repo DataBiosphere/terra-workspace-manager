@@ -13,7 +13,6 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
@@ -58,7 +57,6 @@ public class CreateAzureDatabaseStep implements Step {
 
   // namespace where we create the pod to create the database
   private final String aksNamespace = "default";
-  private final AuthenticatedUserRequest userRequest;
 
   public CreateAzureDatabaseStep(
       AzureConfiguration azureConfig,
@@ -69,7 +67,7 @@ public class CreateAzureDatabaseStep implements Step {
       WorkspaceService workspaceService,
       UUID workspaceId,
       KubernetesClientProvider kubernetesClientProvider,
-      ResourceDao resourceDao, AuthenticatedUserRequest userRequest) {
+      ResourceDao resourceDao) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -79,7 +77,6 @@ public class CreateAzureDatabaseStep implements Step {
     this.workspaceId = workspaceId;
     this.kubernetesClientProvider = kubernetesClientProvider;
     this.resourceDao = resourceDao;
-    this.userRequest = userRequest;
   }
 
   private String getPodName(String newDbUserName) {
@@ -109,7 +106,7 @@ public class CreateAzureDatabaseStep implements Step {
                 azureCloudContext.getAzureResourceGroupId(),
                 managedIdentityResource.getManagedIdentityName());
 
-    var bearerToken = new BearerToken(userRequest.getRequiredToken());
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
@@ -260,7 +257,7 @@ public class CreateAzureDatabaseStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
     var postgresManager = crlService.getPostgreSqlManager(azureCloudContext, azureConfig);
-    var bearerToken = new BearerToken(userRequest.getRequiredToken());
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));

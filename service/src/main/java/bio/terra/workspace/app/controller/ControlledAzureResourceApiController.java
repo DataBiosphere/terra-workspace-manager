@@ -597,7 +597,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             landingZoneApiDispatch.getLandingZoneRegion(
                 userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
-            WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
+            WsmResourceType.CONTROLLED_AZURE_DATABASE);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
@@ -637,7 +637,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             landingZoneApiDispatch.getLandingZoneRegion(
                 userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
-            WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
+            WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     workspaceService.validateMcWorkspaceAndAction(
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);

@@ -153,7 +153,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
-            flightBeanBag.getResourceDao(), userRequest),
+            flightBeanBag.getResourceDao()),
         cloudRetry);
 
     flight.addStep(
@@ -167,7 +167,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
-            flightBeanBag.getResourceDao(), userRequest),
+            flightBeanBag.getResourceDao()),
         cloudRetry);
     flight.addStep(
         new CreateAzureDatabaseStep(
@@ -179,7 +179,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
             new KubernetesClientProviderImpl(),
-            flightBeanBag.getResourceDao(), userRequest),
+            flightBeanBag.getResourceDao()),
         cloudRetry);
   }
 
