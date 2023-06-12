@@ -19,6 +19,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -412,17 +413,25 @@ public class WorkspaceService {
   @Traced
   public List<WorkspaceDescription> getWorkspaceDescriptions(
       AuthenticatedUserRequest userRequest, int offset, int limit, WsmIamRole minimumHighestRole) {
-    // In general, highest SAM role should be fetched in controller. Fetch here to save a SAM call.
-    Map<UUID, WorkspaceDescription> samWorkspacesResponse =
-        Rethrow.onInterrupted(
-            () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
-            "listWorkspaceIds");
 
-    return workspaceDao
-        .getWorkspacesMatchingList(samWorkspacesResponse.keySet(), offset, limit)
-        .stream()
-        .map(w -> samWorkspacesResponse.get(w.getWorkspaceId()))
-        .toList();
+    // From Sam, retrieve the workspace id, highest role, and missing auth domain groups for all
+    // workspaces the user has access to.
+    Map<UUID, AccessibleWorkspace> accessibleWorkspaces =
+      Rethrow.onInterrupted(
+        () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
+        "listWorkspaceIds");
+
+    // From DAO, retrieve the workspace metadata
+    List<Workspace> workspaces =
+      workspaceDao.getWorkspacesMatchingList(accessibleWorkspaces.keySet(), offset, limit);
+
+    // Join the DAO workspaces with the Sam info to generate a list of workspace descriptions
+    return workspaces.stream().map(w -> {
+        AccessibleWorkspace accessibleWorkspace = accessibleWorkspaces.get(w.getWorkspaceId());
+        return new WorkspaceDescription(w,
+          accessibleWorkspace.highestRole(),
+          accessibleWorkspace.missingAuthDomainGroups());
+      }).toList();
   }
 
   /** Retrieves an existing workspace by ID */
@@ -748,14 +757,14 @@ public class WorkspaceService {
 
     Rethrow.onInterrupted(
         () ->
-            tpsApiDispatch.createPaoIfNotExist(
+            tpsApiDispatch.getOrCreatePao(
                 sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType()),
-        "createPaoIfNotExist");
+        "getOrCreatePao");
     Rethrow.onInterrupted(
         () ->
-            tpsApiDispatch.createPaoIfNotExist(
+            tpsApiDispatch.getOrCreatePao(
                 workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
-        "createPaoIfNotExist");
+        "getOrCreatePao");
 
     TpsPaoUpdateResult dryRun =
         Rethrow.onInterrupted(

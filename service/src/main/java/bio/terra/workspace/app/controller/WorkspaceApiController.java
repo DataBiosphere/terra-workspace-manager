@@ -754,14 +754,14 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     UUID sourceWorkspaceId = requestBody.getWorkspaceId();
     Rethrow.onInterrupted(
         () ->
-            tpsApiDispatch.createPaoIfNotExist(
+            tpsApiDispatch.getOrCreatePao(
                 sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
-        "createPaoIfNotExist");
+        "getOrCreatePao");
     Rethrow.onInterrupted(
         () ->
-            tpsApiDispatch.createPaoIfNotExist(
+            tpsApiDispatch.getOrCreatePao(
                 targetWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
-        "createPaoIfNotExist");
+        "getOrCreatePao");
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(

@@ -44,10 +44,12 @@ public class MergePolicyAttributesStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // Create PAOs if they don't exist; catch TPS exceptions and retry
+    TpsPaoGetResult destinationPao;
     try {
-      tpsApiDispatch.createPaoIfNotExist(
+      tpsApiDispatch.getOrCreatePao(
           sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
-      tpsApiDispatch.createPaoIfNotExist(
+      destinationPao =
+        tpsApiDispatch.getOrCreatePao(
           destinationWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
     } catch (Exception ex) {
       logger.info("Attempt to create a PAO for workspace failed", ex);
@@ -55,7 +57,6 @@ public class MergePolicyAttributesStep implements Step {
     }
 
     // Save the destination attributes so we can restore them if the flight fails
-    TpsPaoGetResult destinationPao = tpsApiDispatch.getPao(destinationWorkspaceId);
     TpsPolicyInputs destinationAttributes = destinationPao.getAttributes();
     context.getWorkingMap().put(WorkspaceFlightMapKeys.POLICIES, destinationAttributes);
 

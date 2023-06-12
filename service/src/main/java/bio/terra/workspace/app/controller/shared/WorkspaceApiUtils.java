@@ -155,13 +155,12 @@ public class WorkspaceApiUtils {
 
     List<ApiWsmPolicyInput> workspacePolicies = null;
     if (features.isTpsEnabled()) {
-      Rethrow.onInterrupted(
-          () ->
-              tpsApiDispatch.createPaoIfNotExist(
-                  workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE),
-          "createPaoIfNotExist");
       TpsPaoGetResult workspacePao =
-          Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(workspaceUuid), "getPao");
+        Rethrow.onInterrupted(
+          () ->
+            tpsApiDispatch.getOrCreatePao(
+              workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+          "getOrCreatePao");
       workspacePolicies = TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(workspacePao);
     }
 
