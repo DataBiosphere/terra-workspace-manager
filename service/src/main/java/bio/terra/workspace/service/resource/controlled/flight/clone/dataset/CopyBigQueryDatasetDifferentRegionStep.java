@@ -92,12 +92,14 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
               "CopyBigQueryDatasetDifferentRegionStep");
 
       TransferConfig config =
-          dataTransferServiceClient.createTransferConfig(
-              CreateTransferConfigRequest.newBuilder()
-                  .setParent(parent.toString())
-                  .setTransferConfig(transferConfig)
-                  .setServiceAccountName(petSaEmail)
-                  .build());
+          RetryUtils.getWithRetryOnException(
+              () ->
+                  dataTransferServiceClient.createTransferConfig(
+                      CreateTransferConfigRequest.newBuilder()
+                          .setParent(parent.toString())
+                          .setTransferConfig(transferConfig)
+                          .setServiceAccountName(petSaEmail)
+                          .build()));
 
       var now = Instant.now();
 
