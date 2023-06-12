@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GIT_REPO_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -19,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -170,6 +172,30 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
         sourceGitRepoUrl,
         ApiCloningInstructionsEnum.NOTHING,
         userAccessUtils.defaultUserAuthRequest());
+  }
+
+  @Test
+  public void update_throws409() throws Exception {
+    var newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
+    mockMvcUtils.createReferencedGitRepo(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId, newName, sourceGitRepoUrl);
+
+    mockMvcUtils.updateResource(
+        ApiGitRepoResource.class,
+        REFERENCED_GIT_REPO_V1_PATH_FORMAT,
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        objectMapper.writeValueAsString(
+            new ApiUpdateBigQueryDatasetReferenceRequestBody().name(newName)),
+        userAccessUtils.defaultUserAuthRequest(),
+        HttpStatus.SC_CONFLICT);
+
+    ApiGitRepoResource gotResource =
+        mockMvcUtils.getReferencedGitRepo(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId());
+    assertEquals(sourceResourceName, gotResource.getMetadata().getName());
   }
 
   @Test
