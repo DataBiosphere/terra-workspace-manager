@@ -215,8 +215,8 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledAzureDatabaseAttributes(getDatabaseName(), getDatabaseOwner(), k8sNamespace,
-            getRegion()));
+        new ControlledAzureDatabaseAttributes(
+            getDatabaseName(), getDatabaseOwner(), k8sNamespace, getRegion()));
   }
 
   @Override

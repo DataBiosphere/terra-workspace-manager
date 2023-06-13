@@ -6,5 +6,7 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 
 public interface KubernetesClientProvider {
   CoreV1Api createCoreApiClient(
-      ContainerServiceManager containerServiceManager, String mrgName, ApiAzureLandingZoneDeployedResource aksClusterDeployedResource);
+      ContainerServiceManager containerServiceManager,
+      String mrgName,
+      ApiAzureLandingZoneDeployedResource aksClusterDeployedResource);
 }

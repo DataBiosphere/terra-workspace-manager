@@ -9,7 +9,6 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.utils.AzureTestUtils;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -60,12 +59,12 @@ public class AzureConnectedTestUtils {
     createResource(workspaceUuid, userRequest, resource, resourceType, null);
   }
 
-  public void createResource(
+  public <T> void createResource(
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest,
       ControlledResource resource,
       WsmResourceType resourceType,
-      ApiAzureVmCreationParameters vmCreationParameters)
+      T creationParameters)
       throws InterruptedException {
 
     FlightState flightState =
@@ -73,7 +72,7 @@ public class AzureConnectedTestUtils {
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceUuid, userRequest, resource, vmCreationParameters),
+                workspaceUuid, userRequest, resource, creationParameters),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 

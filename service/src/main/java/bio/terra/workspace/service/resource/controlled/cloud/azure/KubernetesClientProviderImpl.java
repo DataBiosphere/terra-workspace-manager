@@ -17,8 +17,12 @@ import org.jetbrains.annotations.NotNull;
 public class KubernetesClientProviderImpl implements KubernetesClientProvider {
   @NotNull
   public CoreV1Api createCoreApiClient(
-      ContainerServiceManager containerServiceManager, String mrgName, ApiAzureLandingZoneDeployedResource aksClusterDeployedResource) {
-    KubeConfig kubeConfig = loadKubeConfig(containerServiceManager, mrgName, getResourceName(aksClusterDeployedResource));
+      ContainerServiceManager containerServiceManager,
+      String mrgName,
+      ApiAzureLandingZoneDeployedResource aksClusterDeployedResource) {
+    KubeConfig kubeConfig =
+        loadKubeConfig(
+            containerServiceManager, mrgName, getResourceName(aksClusterDeployedResource));
     var userToken = kubeConfig.getCredentials().get("token");
 
     ApiClient client =

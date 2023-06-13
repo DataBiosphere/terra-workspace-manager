@@ -87,9 +87,7 @@ public class GetFederatedIdentityStep implements Step {
 
     var aksApi =
         kubernetesClientProvider.createCoreApiClient(
-            containerServiceManager,
-            azureCloudContext.getAzureResourceGroupId(),
-            aksCluster);
+            containerServiceManager, azureCloudContext.getAzureResourceGroupId(), aksCluster);
 
     final boolean k8sServiceAccountExists = k8sServiceAccountExists(uamiName, aksApi);
     final boolean federatedIdentityExists =

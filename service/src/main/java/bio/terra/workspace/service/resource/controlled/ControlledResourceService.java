@@ -528,9 +528,9 @@ public class ControlledResourceService {
       ControlledResource resource,
       ControlledResourceIamRole privateResourceIamRole,
       AuthenticatedUserRequest userRequest,
-      T creationParameters,      ApiJobControl jobControl,
-      String resultPath
-      ) {
+      T creationParameters,
+      ApiJobControl jobControl,
+      String resultPath) {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
                 resource, privateResourceIamRole, jobControl, resultPath, userRequest)

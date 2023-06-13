@@ -282,8 +282,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             userRequest,
             body.getAzureVm(),
             body.getJobControl(),
-            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result")
-            );
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
 
     final ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
 
@@ -612,14 +611,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .k8sNamespace(body.getAzureDatabase().getK8sNamespace())
             .build();
 
-    var jobId = controlledResourceService.createControlledResourceAsync(
-        resource,
-        commonFields.getIamRole(),
-        userRequest,
-        body.getAzureDatabase(),
-        body.getJobControl(),
-        getAsyncResultEndpoint(body.getJobControl().getId(), "create-result")
-    );
+    var jobId =
+        controlledResourceService.createControlledResourceAsync(
+            resource,
+            commonFields.getIamRole(),
+            userRequest,
+            body.getAzureDatabase(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
 
     return new ResponseEntity<>(fetchCreateControlledAzureDatabaseResult(jobId), HttpStatus.OK);
   }
@@ -691,8 +690,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Traced
   @Override
-  public ResponseEntity<Void> deleteAzureDatabase(
-      UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<Void> deleteAzureDatabase(UUID workspaceId, UUID resourceId) {
     return deleteControlledResourceSync(workspaceId, resourceId);
   }
 
@@ -711,8 +709,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Traced
   @Override
-  public ResponseEntity<Void> deleteAzureManagedIdentity(
-      UUID workspaceId, UUID resourceId) {
+  public ResponseEntity<Void> deleteAzureManagedIdentity(UUID workspaceId, UUID resourceId) {
     return deleteControlledResourceSync(workspaceId, resourceId);
   }
 

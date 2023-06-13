@@ -104,9 +104,7 @@ public class CreateFederatedIdentityStep implements Step {
 
     var aksApi =
         kubernetesClientProvider.createCoreApiClient(
-            containerServiceManager,
-            azureCloudContext.getAzureResourceGroupId(),
-            aksCluster);
+            containerServiceManager, azureCloudContext.getAzureResourceGroupId(), aksCluster);
 
     var oidcIssuer =
         Optional.ofNullable(
