@@ -14,7 +14,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -227,13 +227,13 @@ public class ControlledGcsBucketResource extends ControlledResource {
     }
     // Allow underscore bucket name to be backward compatible. The database contains bucket with
     // underscore bucketname.
-    ResourceValidationUtils.validateBucketNameAllowsUnderscore(bucketName);
+    GcpResourceValidationUtils.validateGcsBucketNameAllowsUnderscore(bucketName);
   }
 
   public void validateForNewBucket() {
     validate();
     // Disallow underscore in new terra managed GCS bucket.
-    ResourceValidationUtils.validateBucketNameDisallowUnderscore(bucketName);
+    GcpResourceValidationUtils.validateGcsBucketNameDisallowUnderscore(bucketName);
   }
 
   @Override

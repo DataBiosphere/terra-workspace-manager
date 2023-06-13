@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureDiskAttributes;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -181,7 +181,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureDisk.");
     }
-    ResourceValidationUtils.validateAzureDiskName(getDiskName());
+    AzureResourceValidationUtils.validateAzureDiskName(getDiskName());
   }
 
   @Override

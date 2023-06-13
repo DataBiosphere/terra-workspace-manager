@@ -9,7 +9,6 @@ import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -19,7 +18,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.Controll
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
@@ -28,7 +26,6 @@ import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCl
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFinishStep;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextStartStep;
-import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.core.management.Region;
@@ -38,7 +35,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -148,9 +144,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
     Map<String, StepStatus> doFailures = new HashMap<>();
     doFailures.put(
         DeleteCloudContextStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    // TODO: WOR-987 when this step is idempotent, re-enable this retry
-    // doFailures.put(DeleteControlledAzureResourcesStep.class.getName(),
-    // StepStatus.STEP_RESULT_FAILURE_RETRY);
+
     doFailures.put(
         DeleteCloudContextFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
@@ -209,47 +203,5 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
             null);
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertTrue(azureCloudContextService.getAzureCloudContext(workspaceUuid).isEmpty());
-  }
-
-  @Disabled("DeleteControlledAzureResourcesStep is not idempotent, so cannot be retried")
-  @Test
-  void deleteMcWorkspaceWithAzureContextAndResource() throws Exception {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-
-    // create new workspace so delete at end of test won't interfere with @AfterEach teardown
-    UUID uuid = UUID.randomUUID();
-    SpendProfileId spendProfileId = initSpendProfileMock();
-    Workspace request =
-        WorkspaceFixtures.defaultWorkspaceBuilder(uuid).spendProfileId(spendProfileId).build();
-    UUID mcWorkspaceUuid = workspaceService.createWorkspace(request, null, null, userRequest);
-
-    createAzureContext(mcWorkspaceUuid, userRequest);
-    UUID resourceId = createAzureResource(mcWorkspaceUuid, userRequest);
-
-    // Run the delete flight, retrying every retryable step once
-    FlightMap deleteParameters =
-        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AZURE);
-
-    // TODO: PF-2694 - the structure of the workspace delete probably needs to change,
-    //  so this test needs to change. Populate the proper workspace delete steps below.
-    Map<String, StepStatus> doFailures = new HashMap<>();
-    // << !!! >>
-    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doFailures).build();
-
-    FlightState flightState =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            WorkspaceDeleteFlight.class,
-            deleteParameters,
-            DELETION_FLIGHT_TIMEOUT,
-            debugInfo);
-    assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
-
-    // Verify the resource and workspace are not in WSM DB
-    assertThrows(
-        ResourceNotFoundException.class,
-        () -> controlledResourceService.getControlledResource(mcWorkspaceUuid, resourceId));
-    assertThrows(
-        WorkspaceNotFoundException.class, () -> workspaceService.getWorkspace(mcWorkspaceUuid));
   }
 }

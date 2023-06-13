@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.GcsBucketUtils.waitForProjectAccess;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
@@ -32,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -281,6 +283,37 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
         sourceResourceName,
         RESOURCE_DESCRIPTION,
         ApiCloningInstructionsEnum.DEFINITION);
+  }
+
+  @Test
+  public void update_throws409() throws Exception {
+    var oldName = sourceResource.getMetadata().getName();
+    var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
+
+    var unused =
+        mockMvcUtils.createReferencedBqDataset(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            newName,
+            projectId,
+            sourceDatasetName);
+
+    mockMvcUtils.updateResource(
+        ApiGcpBigQueryDatasetResource.class,
+        CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT,
+        workspaceId,
+        sourceResource.getMetadata().getResourceId(),
+        objectMapper.writeValueAsString(
+            new ApiUpdateControlledGcpBigQueryDatasetRequestBody().name(newName)),
+        userAccessUtils.defaultUserAuthRequest(),
+        HttpStatus.SC_CONFLICT);
+
+    ApiGcpBigQueryDatasetResource gotResource =
+        mockMvcUtils.getControlledBqDataset(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId());
+    assertEquals(oldName, gotResource.getMetadata().getName());
   }
 
   @Test

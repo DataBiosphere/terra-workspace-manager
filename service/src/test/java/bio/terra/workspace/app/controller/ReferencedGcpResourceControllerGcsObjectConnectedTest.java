@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_OBJECT_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -20,6 +21,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsObjectResource;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -175,6 +177,34 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         sourceFileName,
         ApiCloningInstructionsEnum.NOTHING,
         userAccessUtils.defaultUserAuthRequest());
+  }
+
+  @Test
+  public void update_throws409() throws Exception {
+    var newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
+    mockMvcUtils.createReferencedGcsObject(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        newName,
+        sourceBucketName,
+        sourceFileName);
+
+    mockMvcUtils.postExpect(
+        userAccessUtils.defaultUserAuthRequest(),
+        objectMapper.writeValueAsString(
+            new ApiUpdateBigQueryDatasetReferenceRequestBody().name(newName)),
+        String.format(
+            REFERENCED_GCP_GCS_OBJECT_V1_PATH_FORMAT,
+            workspaceId,
+            sourceResource.getMetadata().getResourceId()),
+        HttpStatus.SC_CONFLICT);
+
+    ApiGcpGcsObjectResource gotResource =
+        mockMvcUtils.getReferencedGcsObject(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId());
+    assertEquals(sourceResourceName, gotResource.getMetadata().getName());
   }
 
   @Test

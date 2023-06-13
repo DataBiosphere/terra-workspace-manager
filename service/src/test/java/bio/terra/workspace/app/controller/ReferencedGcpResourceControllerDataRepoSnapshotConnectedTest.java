@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
+import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiDataRepoEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -20,6 +21,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -173,6 +175,35 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         sourceSnapshot,
         sourceInstanceName,
         ApiCloningInstructionsEnum.NOTHING);
+  }
+
+  @Test
+  public void update_throws409() throws Exception {
+    var newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
+    mockMvcUtils.createReferencedDataRepoSnapshot(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        ApiCloningInstructionsEnum.REFERENCE,
+        newName,
+        sourceInstanceName,
+        sourceSnapshot);
+
+    mockMvcUtils.postExpect(
+        userAccessUtils.defaultUserAuthRequest(),
+        objectMapper.writeValueAsString(
+            new ApiUpdateBigQueryDatasetReferenceRequestBody().name(newName)),
+        String.format(
+            REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT,
+            workspaceId,
+            sourceResource.getMetadata().getResourceId()),
+        HttpStatus.SC_CONFLICT);
+
+    ApiDataRepoSnapshotResource gotResource =
+        mockMvcUtils.getReferencedDataRepoSnapshot(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            sourceResource.getMetadata().getResourceId());
+    assertEquals(sourceResourceName, gotResource.getMetadata().getName());
   }
 
   @Test

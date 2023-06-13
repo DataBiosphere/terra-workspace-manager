@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GrantPetUsagePermissionStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -283,10 +284,10 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       throw new BadRequestException(
           "Access scope must be private. Shared AI Notebook instances are not yet implemented.");
     }
-    ResourceValidationUtils.checkFieldNonNull(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(getLocation(), "location", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
+    ResourceValidationUtils.checkStringNonEmpty(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(getLocation(), "location", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
+    GcpResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
   }
 
   @Override

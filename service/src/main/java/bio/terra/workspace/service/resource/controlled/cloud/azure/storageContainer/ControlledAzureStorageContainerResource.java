@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureStorageContainerAttributes;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -184,7 +184,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
           "Missing required storage container name field for ControlledAzureStorageContainer.");
     }
 
-    ResourceValidationUtils.validateStorageContainerName(getStorageContainerName());
+    AzureResourceValidationUtils.validateAzureStorageContainerName(getStorageContainerName());
   }
 
   @Override

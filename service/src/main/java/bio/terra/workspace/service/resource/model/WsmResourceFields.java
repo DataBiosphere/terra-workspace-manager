@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  */
 @JsonDeserialize(builder = WsmResourceFields.Builder.class)
 public class WsmResourceFields {
+  private static final String RESOURCE_DESCRIPTIOR = "WsmResourceFields";
   private final UUID workspaceUuid;
   private final UUID resourceId;
   private final String name;
@@ -228,13 +229,15 @@ public class WsmResourceFields {
     public Builder() {}
 
     public void validate() {
-      ResourceValidationUtils.checkFieldNonNull(workspaceUuid, "workspaceId");
-      ResourceValidationUtils.checkFieldNonNull(resourceId, "resourceId");
-      ResourceValidationUtils.checkFieldNonNull(name, "name");
-      ResourceValidationUtils.checkFieldNonNull(cloningInstructions, "cloningInstructions");
-      ResourceValidationUtils.checkFieldNonNull(properties, "properties");
-      ResourceValidationUtils.checkFieldNonNull(createdByEmail, "createdByEmail");
-      ResourceValidationUtils.checkFieldNonNull(state, "state");
+      ResourceValidationUtils.checkFieldNonNull(workspaceUuid, "workspaceId", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkFieldNonNull(resourceId, "resourceId", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkStringNonEmpty(name, "name", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkFieldNonNull(
+          cloningInstructions, "cloningInstructions", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkFieldNonNull(properties, "properties", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkStringNonEmpty(
+          createdByEmail, "createdByEmail", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkFieldNonNull(state, "state", RESOURCE_DESCRIPTIOR);
     }
 
     public WsmResourceFields build() {

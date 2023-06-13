@@ -10,7 +10,7 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolAttributes;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
@@ -250,8 +250,8 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected controlled AZURE_BATCH_POOL");
     }
-    ResourceValidationUtils.validateAzureBatchPoolId(getId());
-    ResourceValidationUtils.validateBatchPoolDisplayName(getDisplayName());
+    AzureResourceValidationUtils.validateAzureBatchPoolId(getId());
+    AzureResourceValidationUtils.validateAzureBatchPoolDisplayName(getDisplayName());
     if (deploymentConfiguration != null) {
       if (deploymentConfiguration.virtualMachineConfiguration() != null
           && deploymentConfiguration.cloudServiceConfiguration() != null) {

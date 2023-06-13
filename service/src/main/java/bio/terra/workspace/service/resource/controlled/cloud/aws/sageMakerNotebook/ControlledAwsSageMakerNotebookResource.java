@@ -208,9 +208,9 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
       throw new BadRequestException(
           "Access scope must be private. Shared Sagemaker Notebook instances are not yet implemented.");
     }
-    ResourceValidationUtils.checkFieldNonNull(instanceName, "instanceName", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(instanceType, "instanceType", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(getRegion(), "region", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(instanceName, "instanceName", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(instanceType, "instanceType", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(getRegion(), "region", RESOURCE_DESCRIPTOR);
     AwsResourceValidationUtils.validateAwsSageMakerNotebookName(instanceName);
   }
 

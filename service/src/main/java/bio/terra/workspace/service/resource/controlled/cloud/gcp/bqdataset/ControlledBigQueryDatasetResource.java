@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -239,7 +239,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required field projectId for BigQuery dataset");
     }
-    ResourceValidationUtils.validateBqDatasetName(getDatasetName());
+    GcpResourceValidationUtils.validateBqDatasetName(getDatasetName());
   }
 
   @Override

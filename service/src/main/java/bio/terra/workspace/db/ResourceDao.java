@@ -644,7 +644,15 @@ public class ResourceDao {
           .addValue("workspace_id", workspaceUuid.toString())
           .addValue("resource_id", resourceId.toString());
 
-      int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+      int rowsAffected = 0;
+      try {
+        rowsAffected = jdbcTemplate.update(sb.toString(), params);
+      } catch (DuplicateKeyException e) {
+        throw new DuplicateResourceException(
+            String.format(
+                "A resource already exists in the workspace that has the same name (%s)",
+                dbUpdater.getUpdatedName()));
+      }
       boolean updated = rowsAffected > 0;
 
       logger.info(
