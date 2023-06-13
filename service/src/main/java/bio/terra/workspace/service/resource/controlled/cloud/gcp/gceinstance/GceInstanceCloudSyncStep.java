@@ -48,10 +48,11 @@ public class GceInstanceCloudSyncStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT);
     GcpCloudContext cloudContext =
-        workingMap.get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(),
+            ControlledResourceKeys.GCP_CLOUD_CONTEXT,
+            GcpCloudContext.class);
     String projectId = cloudContext.getGcpProjectId();
     List<Binding> newBindings = createBindings(cloudContext, flightContext.getWorkingMap());
 
