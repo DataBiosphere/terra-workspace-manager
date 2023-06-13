@@ -28,6 +28,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.compute.model.AcceleratorConfig;
+import com.google.api.services.compute.model.AccessConfig;
 import com.google.api.services.compute.model.AttachedDisk;
 import com.google.api.services.compute.model.AttachedDiskInitializeParams;
 import com.google.api.services.compute.model.Instance;
@@ -249,7 +250,9 @@ public class CreateGceInstanceStep implements Step {
                         + "/regions/"
                         + region
                         + "/subnetworks/"
-                        + subnetworkName)));
+                        + subnetworkName)
+                .setAccessConfigs(
+                    List.of(new AccessConfig().setType("ONE_TO_ONE_NAT").setName("External IP")))));
   }
 
   @Override
