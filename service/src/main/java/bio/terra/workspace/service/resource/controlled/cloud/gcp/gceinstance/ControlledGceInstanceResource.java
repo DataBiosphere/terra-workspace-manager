@@ -15,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiGcpGceInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GrantPetUsagePermissionStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
@@ -259,7 +260,7 @@ public class ControlledGceInstanceResource extends ControlledResource {
     ResourceValidationUtils.checkFieldNonNull(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
     ResourceValidationUtils.checkFieldNonNull(getZone(), "zone", RESOURCE_DESCRIPTOR);
     ResourceValidationUtils.checkFieldNonNull(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.validateGceInstanceId(getInstanceId());
+    GcpResourceValidationUtils.validateGceInstanceId(getInstanceId());
   }
 
   @Override
