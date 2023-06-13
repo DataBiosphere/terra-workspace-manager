@@ -14,7 +14,7 @@ public class AwsResourceValidationUtils {
       Pattern.compile("[{}^%`<>~#|@*+\\[\\]\"\'\\\\/]");
 
   // https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateNotebookInstance.html#sagemaker-CreateNotebookInstance-request-NotebookInstanceName
-  protected static final Pattern sageMakerInstanceNamePattern =
+  private static final Pattern sageMakerInstanceNamePattern =
       Pattern.compile("^[a-zA-Z0-9](-*[a-zA-Z0-9])*");
 
   /**

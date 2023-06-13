@@ -262,7 +262,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
-    AzureResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
+    AzureResourceValidationUtils.validate(body.getAzureVm());
     ControlledAzureVmResource resource =
         buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 

@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceAttributes;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
@@ -323,7 +324,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     ResourceValidationUtils.checkFieldNonNull(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
     ResourceValidationUtils.checkFieldNonNull(getLocation(), "location", RESOURCE_DESCRIPTOR);
     ResourceValidationUtils.checkFieldNonNull(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
+    GcpResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
   }
 
   @Override
