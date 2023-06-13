@@ -224,11 +224,9 @@ public class CreateGceInstanceStep implements Step {
     if (metadata.containsKey(WORKSPACE_ID_METADATA_KEY)
         || metadata.containsKey(SERVER_ID_METADATA_KEY)) {
       throw new ReservedMetadataKeyException(
-          "The metadata keys "
-              + WORKSPACE_ID_METADATA_KEY
-              + " and "
-              + SERVER_ID_METADATA_KEY
-              + " are reserved for Terra.");
+          String.format(
+              "The metadata keys %s and %s are reserved for Terra.",
+              WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY));
     }
     metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
     if (!StringUtils.isEmpty(cliServer)) {
@@ -243,14 +241,10 @@ public class CreateGceInstanceStep implements Step {
     instance.setNetworkInterfaces(
         List.of(
             new NetworkInterface()
-                .setNetwork("projects/" + projectId + "/global/networks/" + networkName)
+                .setNetwork(String.format("projects/%s/global/networks/%s", projectId, networkName))
                 .setSubnetwork(
-                    "projects/"
-                        + projectId
-                        + "/regions/"
-                        + region
-                        + "/subnetworks/"
-                        + subnetworkName)
+                    String.format(
+                        "projects/%s/regions/%s/subnetworks/%s", projectId, region, subnetworkName))
                 .setAccessConfigs(
                     List.of(new AccessConfig().setType("ONE_TO_ONE_NAT").setName("External IP")))));
   }
