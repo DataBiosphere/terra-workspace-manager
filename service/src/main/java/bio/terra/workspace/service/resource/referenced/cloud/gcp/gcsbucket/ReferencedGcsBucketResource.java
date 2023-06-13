@@ -12,7 +12,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -135,7 +135,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     }
     // Validate in case there's a typo and user gave wrong name. This gives a slightly more usable
     // error message than "You do not have access to bucket".
-    ResourceValidationUtils.validateBucketNameAllowsUnderscore(getBucketName());
+    GcpResourceValidationUtils.validateGcsBucketNameAllowsUnderscore(getBucketName());
   }
 
   @Override

@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureVmAttributes;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -239,7 +239,7 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required valid vmImage field for ControlledAzureVm.");
     }
-    ResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
+    AzureResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
   }
 
   @Override

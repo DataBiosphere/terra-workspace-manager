@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
  * <p>See {@link ControlledResource} for details on the meaning of the fields
  */
 public class ControlledResourceFields extends WsmResourceFields {
+  private static final String RESOURCE_DESCRIPTIOR = "ControlledResourceFields";
   private final WsmControlledResourceFields wsmControlledResourceFields;
   // We hold the iamRole to simplify the controller flow. It is not retained in the
   // controlled object.
@@ -161,8 +162,8 @@ public class ControlledResourceFields extends WsmResourceFields {
     @Override
     public void validate() {
       super.validate();
-      ResourceValidationUtils.checkFieldNonNull(accessScope, "accessScope");
-      ResourceValidationUtils.checkFieldNonNull(managedBy, "managedBy");
+      ResourceValidationUtils.checkFieldNonNull(accessScope, "accessScope", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkFieldNonNull(managedBy, "managedBy", RESOURCE_DESCRIPTIOR);
     }
 
     public Builder assignedUser(@Nullable String assignedUser) {
@@ -208,7 +209,7 @@ public class ControlledResourceFields extends WsmResourceFields {
       if (privateResourceState != null) {
         return;
       }
-      ResourceValidationUtils.checkFieldNonNull(accessScope, "accessScope");
+      ResourceValidationUtils.checkFieldNonNull(accessScope, "accessScope", RESOURCE_DESCRIPTIOR);
       privateResourceState =
           (accessScope == AccessScopeType.ACCESS_SCOPE_PRIVATE
               ? PrivateResourceState.INITIALIZING

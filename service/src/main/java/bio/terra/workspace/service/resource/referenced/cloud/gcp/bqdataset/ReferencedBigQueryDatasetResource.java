@@ -12,7 +12,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -151,7 +151,7 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceBigQueryDatasetAttributes.");
     }
-    ResourceValidationUtils.validateBqDatasetName(getDatasetName());
+    GcpResourceValidationUtils.validateBqDatasetName(getDatasetName());
   }
 
   @Override

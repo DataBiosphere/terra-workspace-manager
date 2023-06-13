@@ -185,9 +185,9 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected CONTROLLED_AWS_S3_STORAGE_FOLDER");
     }
-    ResourceValidationUtils.checkFieldNonNull(bucketName, "bucketName", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(prefix, "prefix", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(getRegion(), "region", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(bucketName, "bucketName", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(prefix, "prefix", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(getRegion(), "region", RESOURCE_DESCRIPTOR);
     AwsResourceValidationUtils.validateAwsS3StorageFolderName(prefix);
   }
 

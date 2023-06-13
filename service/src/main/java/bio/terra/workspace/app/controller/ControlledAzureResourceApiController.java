@@ -40,6 +40,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -261,7 +262,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
-    ResourceValidationUtils.validateApiAzureVmCreationParameters(body.getAzureVm());
+    AzureResourceValidationUtils.validate(body.getAzureVm());
     ControlledAzureVmResource resource =
         buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
