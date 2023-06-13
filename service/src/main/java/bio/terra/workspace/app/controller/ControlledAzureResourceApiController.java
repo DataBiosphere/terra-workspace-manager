@@ -30,7 +30,7 @@ import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContai
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedAzureStorageContainerSasToken;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureBatchPool;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDatabase;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDatabaseResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureManagedIdentity;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorageContainer;
@@ -73,6 +73,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -275,13 +276,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
     final String jobId =
-        controlledResourceService.createAzureVm(
+        controlledResourceService.createControlledResourceAsync(
             resource,
-            body.getAzureVm(),
             commonFields.getIamRole(),
+            userRequest,
+            body.getAzureVm(),
             body.getJobControl(),
-            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
-            userRequest);
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result")
+            );
 
     final ApiCreatedControlledAzureVmResult result = fetchCreateControlledAzureVmResult(jobId);
 
@@ -585,7 +587,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Traced
   @Override
-  public ResponseEntity<ApiCreatedControlledAzureDatabase> createAzureDatabase(
+  public ResponseEntity<ApiCreatedControlledAzureDatabaseResult> createAzureDatabase(
       UUID workspaceUuid, ApiCreateControlledAzureDatabaseRequestBody body) {
     features.azureEnabledCheck();
 
@@ -610,17 +612,43 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .k8sNamespace(body.getAzureDatabase().getK8sNamespace())
             .build();
 
-    final ControlledAzureDatabaseResource createdDatabase =
-        controlledResourceService
-            .createControlledResourceSync(
-                resource, commonFields.getIamRole(), userRequest, body.getAzureDatabase())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE);
+    var jobId = controlledResourceService.createControlledResourceAsync(
+        resource,
+        commonFields.getIamRole(),
+        userRequest,
+        body.getAzureDatabase(),
+        body.getJobControl(),
+        getAsyncResultEndpoint(body.getJobControl().getId(), "create-result")
+    );
 
-    var response =
-        new ApiCreatedControlledAzureDatabase()
-            .resourceId(createdDatabase.getResourceId())
-            .azureDatabase(createdDatabase.toApiResource());
-    return new ResponseEntity<>(response, HttpStatus.OK);
+    return new ResponseEntity<>(fetchCreateControlledAzureDatabaseResult(jobId), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureDatabaseResult> getCreateAzureDatabaseResult(
+      UUID workspaceId, String jobId) {
+    features.azureEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    var result = fetchCreateControlledAzureDatabaseResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ApiCreatedControlledAzureDatabaseResult fetchCreateControlledAzureDatabaseResult(
+      String jobId) {
+    final JobApiUtils.AsyncJobResult<ControlledAzureDatabaseResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureDatabaseResource.class);
+
+    ApiAzureDatabaseResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      var resource = jobResult.getResult();
+      apiResource = resource.toApiResource();
+    }
+    return new ApiCreatedControlledAzureDatabaseResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .azureDatabase(apiResource);
   }
 
   @Traced
@@ -663,16 +691,29 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Traced
   @Override
-  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDatabase(
-      UUID workspaceId, UUID resourceId, ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceId, resourceId, body, "Azure Database");
+  public ResponseEntity<Void> deleteAzureDatabase(
+      UUID workspaceId, UUID resourceId) {
+    return deleteControlledResourceSync(workspaceId, resourceId);
+  }
+
+  @NotNull
+  private ResponseEntity<Void> deleteControlledResourceSync(UUID workspaceUuid, UUID resourceUuid) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
+    controlledResourceService.deleteControlledResourceSync(
+        workspaceUuid, resourceUuid, userRequest);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @Traced
   @Override
-  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureManagedIdentity(
-      UUID workspaceId, UUID resourceId, ApiDeleteControlledAzureResourceRequest body) {
-    return deleteHelper(workspaceId, resourceId, body, "Azure Managed Identity");
+  public ResponseEntity<Void> deleteAzureManagedIdentity(
+      UUID workspaceId, UUID resourceId) {
+    return deleteControlledResourceSync(workspaceId, resourceId);
   }
 
   @Traced
@@ -685,7 +726,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
@@ -699,27 +740,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
                 userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
-  }
-
-  @Traced
-  @Override
-  public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureDatabaseResult(
-      UUID workspaceId, String jobId) {
-    features.azureEnabledCheck();
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
-    return getJobDeleteResult(jobId);
-  }
-
-  @Traced
-  @Override
-  public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureManagedIdentityResult(
-      UUID workspaceId, String jobId) {
-    features.azureEnabledCheck();
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
-    return getJobDeleteResult(jobId);
   }
 }

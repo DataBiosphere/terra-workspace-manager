@@ -11,7 +11,6 @@ import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.grant.GrantService;
@@ -27,7 +26,6 @@ import bio.terra.workspace.service.resource.controlled.ControlledResourceSyncMap
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
@@ -526,13 +524,13 @@ public class ControlledResourceService {
 
   // Azure
 
-  public String createAzureVm(
-      ControlledAzureVmResource resource,
-      ApiAzureVmCreationParameters creationParameters,
+  public <T> String createControlledResourceAsync(
+      ControlledResource resource,
       ControlledResourceIamRole privateResourceIamRole,
-      ApiJobControl jobControl,
-      String resultPath,
-      AuthenticatedUserRequest userRequest) {
+      AuthenticatedUserRequest userRequest,
+      T creationParameters,      ApiJobControl jobControl,
+      String resultPath
+      ) {
     JobBuilder jobBuilder =
         commonCreationJobBuilder(
                 resource, privateResourceIamRole, jobControl, resultPath, userRequest)

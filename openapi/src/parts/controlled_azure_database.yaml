@@ -14,11 +14,25 @@ paths:
               $ref: '#/components/schemas/CreateControlledAzureDatabaseRequestBody'
       responses:
         '200':
-          description: Response to create controlled Azure database
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreatedControlledAzureDatabase'
+          $ref: '#/components/responses/CreateControlledAzureDatabaseResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/databases/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure Database create job.
+      operationId: getCreateAzureDatabaseResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureDatabaseResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureDatabaseResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -45,24 +59,13 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-    post:
-      summary: |
-        Delete a controlled Azure Database resource. This is async, because the 
-        operation can take a few minutes. OpenAPI does not support request body 
-        in DELETE, but async state requires it. Hence this is a POST.
+    delete:
+      summary: Delete a controlled Azure Database resource.
       operationId: deleteAzureDatabase
       tags: [ ControlledAzureResource ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
       responses:
-        '200':
-          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
-        '202':
-          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '204':
+          description: Success
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
@@ -70,26 +73,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-
-  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/databases/delete-result/{jobId}:
-    parameters:
-      - $ref: '#/components/parameters/WorkspaceId'
-      - $ref: '#/components/parameters/JobId'
-    get:
-      summary: Retrieve information about an azure database deletion job.
-      operationId: getDeleteAzureDatabaseResult
-      tags: [ ControlledAzureResource ]
-      responses:
-        '200':
-          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
-        '202':
-          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '404':
-          $ref: '#components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
 
 components:
   schemas:
@@ -112,7 +95,7 @@ components:
           description: The kubernetes namespace from which the database will be accessed
           type: string
 
-    CreatedControlledAzureDatabase:
+    CreatedControlledAzureDatabaseResult:
       description: Response payload for requesting a new Azure database
       type: object
       properties:
@@ -122,6 +105,10 @@ components:
           format: uuid
         azureDatabase:
           $ref: '#/components/schemas/AzureDatabaseResource'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
 
     CreateControlledAzureDatabaseRequestBody:
       description: Payload for requesting a new controlled Azure Database resource.
@@ -131,3 +118,13 @@ components:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         azureDatabase:
           $ref: '#/components/schemas/AzureDatabaseCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+  responses:
+    CreateControlledAzureDatabaseResponse:
+      description: Response to create controlled Azure Database
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureDatabaseResult'

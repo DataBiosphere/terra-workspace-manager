@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -11,6 +12,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -64,12 +66,8 @@ public class GetFederatedIdentityStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-    ControlledAzureManagedIdentityResource managedIdentityResource =
-        resourceDao
-            .getResource(workspaceId, managedIdentityId)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
 
-    var uamiName = managedIdentityResource.getManagedIdentityName();
+    var uamiName = getAzureManagedIdentityResource().getManagedIdentityName();
 
     final AzureCloudContext azureCloudContext =
         context
@@ -106,6 +104,21 @@ public class GetFederatedIdentityStep implements Step {
         .put(FEDERATED_IDENTITY_EXISTS, k8sServiceAccountExists && federatedIdentityExists);
 
     return StepResult.getStepResultSuccess();
+  }
+
+  private ControlledAzureManagedIdentityResource getAzureManagedIdentityResource() {
+    try {
+      ControlledAzureManagedIdentityResource managedIdentityResource =
+          resourceDao
+              .getResource(workspaceId, managedIdentityId)
+              .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
+      return managedIdentityResource;
+    } catch (ResourceNotFoundException rnfe) {
+      throw new BadRequestException(
+          String.format(
+              "Could not find managed identity resource with id %s in workspace %s",
+              managedIdentityId, workspaceId));
+    }
   }
 
   private boolean federatedIdentityExists(
