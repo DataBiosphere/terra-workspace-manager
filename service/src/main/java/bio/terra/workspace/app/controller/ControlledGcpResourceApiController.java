@@ -772,6 +772,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.EDIT_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
     CommonUpdateParameters commonUpdateParameters =
         new CommonUpdateParameters()
             .setName(requestBody.getName())
@@ -816,6 +817,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     controlledResourceMetadataManager.validateControlledResourceAndAction(
         userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
     ApiJobControl jobControl = body.getJobControl();
     logger.info(
         "deleteGceInstance workspace {} resource {}",
