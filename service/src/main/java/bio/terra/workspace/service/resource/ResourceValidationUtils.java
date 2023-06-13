@@ -50,15 +50,19 @@ public class ResourceValidationUtils {
 
   // General validation functions
 
-  public static <T> void checkFieldNonNull(@Nullable T fieldValue, String fieldName) {
-    checkFieldNonNull(fieldValue, fieldName, "Resource");
-  }
-
   public static <T> void checkFieldNonNull(
       @Nullable T fieldValue, String fieldName, String resourceDescriptor) {
     if (fieldValue == null) {
       throw new MissingRequiredFieldException(
           String.format("Missing required field '%s' for %s", fieldName, resourceDescriptor));
+    }
+  }
+
+  public static void checkStringNonEmpty(
+      @Nullable String fieldValue, String fieldName, String resourceDescriptor) {
+    if (StringUtils.isEmpty(fieldValue)) {
+      throw new MissingRequiredFieldException(
+          String.format("Missing required string '%s' for %s", fieldName, resourceDescriptor));
     }
   }
 

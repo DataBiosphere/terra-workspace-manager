@@ -321,9 +321,9 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
       throw new BadRequestException(
           "Access scope must be private. Shared AI Notebook instances are not yet implemented.");
     }
-    ResourceValidationUtils.checkFieldNonNull(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(getLocation(), "location", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(getLocation(), "location", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
     GcpResourceValidationUtils.validateAiNotebookInstanceId(getInstanceId());
   }
 

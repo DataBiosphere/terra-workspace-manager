@@ -168,7 +168,8 @@ public class AzureResourceValidationUtils {
             && !StringUtils.isEmpty(vmImage.getOffer())
             && !StringUtils.isEmpty(vmImage.getSku())
             && !StringUtils.isEmpty(vmImage.getVersion()))) {
-      ResourceValidationUtils.checkFieldNonNull(apiAzureVmCreationParameters.getVmUser(), "vmUser");
+      ResourceValidationUtils.checkFieldNonNull(
+          apiAzureVmCreationParameters.getVmUser(), "vmUser", "ApiAzureVmCreationParameters");
     }
   }
 }
