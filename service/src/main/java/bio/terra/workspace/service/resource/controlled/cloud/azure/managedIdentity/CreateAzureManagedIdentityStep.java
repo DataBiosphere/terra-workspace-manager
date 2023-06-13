@@ -64,8 +64,7 @@ public class CreateAzureManagedIdentityStep implements Step {
                       .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
                       .build()));
     } catch (ManagementException e) {
-      // Stairway steps may run multiple times, so we may already have created this resource. In all
-      // other cases, surface the exception and attempt to retry.
+      // Stairway steps may run multiple times, so we may already have created this resource
       if (AzureManagementExceptionUtils.isExceptionCode(
           e, AzureManagementExceptionUtils.CONFLICT)) {
         logger.info(
@@ -74,7 +73,7 @@ public class CreateAzureManagedIdentityStep implements Step {
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
       }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(e), e);
     }
 
     return StepResult.getStepResultSuccess();
@@ -103,7 +102,7 @@ public class CreateAzureManagedIdentityStep implements Step {
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
       }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(e), e);
     }
     return StepResult.getStepResultSuccess();
   }
