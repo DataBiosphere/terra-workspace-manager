@@ -388,7 +388,8 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         MissingRequiredFieldException.class,
         () ->
-            ResourceValidationUtils.validateApiAzureVmCreationParameters(apiVmCreationParameters));
+            AzureResourceValidationUtils.validateApiAzureVmCreationParameters(
+                apiVmCreationParameters));
   }
 
   @Test
@@ -401,7 +402,8 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         MissingRequiredFieldException.class,
         () ->
-            ResourceValidationUtils.validateApiAzureVmCreationParameters(apiVmCreationParameters));
+            AzureResourceValidationUtils.validateApiAzureVmCreationParameters(
+                apiVmCreationParameters));
   }
 
   @Test
@@ -418,7 +420,8 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         MissingRequiredFieldException.class,
         () ->
-            ResourceValidationUtils.validateApiAzureVmCreationParameters(apiVmCreationParameters));
+            AzureResourceValidationUtils.validateApiAzureVmCreationParameters(
+                apiVmCreationParameters));
   }
 
   @Test
@@ -435,7 +438,8 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
     assertThrows(
         MissingRequiredFieldException.class,
         () ->
-            ResourceValidationUtils.validateApiAzureVmCreationParameters(apiVmCreationParameters));
+            AzureResourceValidationUtils.validateApiAzureVmCreationParameters(
+                apiVmCreationParameters));
   }
 
   @Test
