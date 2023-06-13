@@ -50,10 +50,7 @@ public class DeleteCloudContextStartStep implements Step {
             .get(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_STATE_CHANGED, Boolean.class);
     if (TRUE.equals(resourceStateChanged)) {
       workspaceDao.deleteCloudContextFailure(
-          workspaceUuid,
-          cloudPlatform,
-          flightContext.getFlightId(),
-          flightContext.getResult().getException().orElse(null));
+          workspaceUuid, cloudPlatform, flightContext.getFlightId());
     }
     return StepResult.getStepResultSuccess();
   }
