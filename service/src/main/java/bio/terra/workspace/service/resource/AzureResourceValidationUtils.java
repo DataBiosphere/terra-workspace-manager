@@ -145,6 +145,28 @@ public class AzureResourceValidationUtils {
     }
   }
 
+  public static final Pattern AZURE_MANAGED_IDENTITY_NAME_PATTERN =
+      Pattern.compile("^[a-zA-Z0-9][-a-zA-Z0-9_]{2,127}$");
+
+  public static void validateAzureManagedIdentityName(String name) {
+    if (!AZURE_MANAGED_IDENTITY_NAME_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid Managed Identity name {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Managed Identity name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
+  public static final Pattern AZURE_DATABASE_NAME_PATTERN =
+      Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]{0,62}$");
+
+  public static void validateAzureDatabaseName(String name) {
+    if (!AZURE_DATABASE_NAME_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid Database name {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Database name specified. See documentation for full specification https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules.");
+    }
+  }
+
   public static void validate(ApiAzureVmCreationParameters apiAzureVmCreationParameters) {
     var vmImage = apiAzureVmCreationParameters.getVmImage();
     if (StringUtils.isEmpty(vmImage.getUri())

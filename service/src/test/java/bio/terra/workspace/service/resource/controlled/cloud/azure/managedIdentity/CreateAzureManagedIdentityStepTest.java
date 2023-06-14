@@ -13,7 +13,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -84,9 +84,10 @@ public class CreateAzureManagedIdentityStepTest {
   @Test
   void testSuccess() throws InterruptedException {
     var workspaceId = UUID.randomUUID();
-    var creationParameters = ControlledResourceFixtures.getAzureManagedIdentityCreationParameters();
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
     var identityResource =
-        ControlledResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 
@@ -108,9 +109,10 @@ public class CreateAzureManagedIdentityStepTest {
   @Test
   void testUndoSuccess() throws InterruptedException {
     var workspaceId = UUID.randomUUID();
-    var creationParameters = ControlledResourceFixtures.getAzureManagedIdentityCreationParameters();
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
     var identityResource =
-        ControlledResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 
@@ -142,9 +144,10 @@ public class CreateAzureManagedIdentityStepTest {
 
   private StepResult testUndoError(HttpStatus httpStatus) throws InterruptedException {
     var workspaceId = UUID.randomUUID();
-    var creationParameters = ControlledResourceFixtures.getAzureManagedIdentityCreationParameters();
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
     var identityResource =
-        ControlledResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 
@@ -161,9 +164,10 @@ public class CreateAzureManagedIdentityStepTest {
 
   private StepResult testWithError(HttpStatus httpStatus) throws InterruptedException {
     var workspaceId = UUID.randomUUID();
-    var creationParameters = ControlledResourceFixtures.getAzureManagedIdentityCreationParameters();
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
     var identityResource =
-        ControlledResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 

@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureDatabaseAttributes;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProviderImpl;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
@@ -252,7 +252,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureDatabase.");
     }
-    ResourceValidationUtils.validateAzureDatabaseName(getDatabaseName());
+    AzureResourceValidationUtils.validateAzureDatabaseName(getDatabaseName());
   }
 
   @Override

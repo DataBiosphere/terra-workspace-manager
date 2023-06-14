@@ -14,7 +14,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
@@ -82,14 +82,15 @@ public class CreateAzureDatabaseStepTest {
   private final UUID workspaceId = UUID.randomUUID();
   private final String uamiName = UUID.randomUUID().toString();
   private final ControlledAzureManagedIdentityResource ownerIdentityResource =
-      ControlledResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
-              ControlledResourceFixtures.getAzureManagedIdentityCreationParameters(), workspaceId)
+      ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
+              ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters(),
+              workspaceId)
           .build();
   private final ApiAzureDatabaseCreationParameters creationParameters =
-      ControlledResourceFixtures.getAzureDatabaseCreationParameters(
+      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
           ownerIdentityResource.getResourceId());
   private final ControlledAzureDatabaseResource databaseResource =
-      ControlledResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
+      ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
               creationParameters, workspaceId)
           .build();
 

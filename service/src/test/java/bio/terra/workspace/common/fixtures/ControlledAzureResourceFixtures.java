@@ -11,7 +11,9 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolDeploymentConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineImageReference;
+import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureManagedIdentityCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtension;
@@ -21,7 +23,9 @@ import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiAzureVmUser;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -44,6 +48,8 @@ public class ControlledAzureResourceFixtures {
 
   public static final String AZURE_NAME_PREFIX = "az";
   public static final String DEFAULT_AZURE_RESOURCE_REGION = Region.US_EAST2.name();
+  private static final String AZURE_UAMI_NAME_PREFIX = "uami";
+  private static final String AZURE_DATABASE_NAME_PREFIX = "db";
 
   public static String uniqueAzureName(String resourcePrefix) {
     return TestUtils.appendRandomNumber(AZURE_NAME_PREFIX + "-" + resourcePrefix);
@@ -373,5 +379,52 @@ public class ControlledAzureResourceFixtures {
                                 .withSku("18.04-lts")
                                 .withPublisher("canonical"))))
         .build();
+  }
+
+  public static ApiAzureManagedIdentityCreationParameters
+      getAzureManagedIdentityCreationParameters() {
+    return new ApiAzureManagedIdentityCreationParameters()
+        .name(uniqueAzureName(AZURE_UAMI_NAME_PREFIX));
+  }
+
+  public static ControlledAzureManagedIdentityResource.Builder
+      makeDefaultControlledAzureManagedIdentityResourceBuilder(
+          ApiAzureManagedIdentityCreationParameters creationParameters, UUID workspaceId) {
+    return ControlledAzureManagedIdentityResource.builder()
+        .common(
+            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("uami"))
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .build())
+        .managedIdentityName(creationParameters.getName());
+  }
+
+  public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(UUID owner) {
+    return new ApiAzureDatabaseCreationParameters()
+        .name(uniqueAzureName(AZURE_DATABASE_NAME_PREFIX))
+        .k8sNamespace("default")
+        .owner(owner);
+  }
+
+  public static ControlledAzureDatabaseResource.Builder
+      makeDefaultControlledAzureDatabaseResourceBuilder(
+          ApiAzureDatabaseCreationParameters creationParameters, UUID workspaceId) {
+    return ControlledAzureDatabaseResource.builder()
+        .common(
+            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("db"))
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .build())
+        .databaseName(creationParameters.getName())
+        .databaseOwner(creationParameters.getOwner())
+        .k8sNamespace(creationParameters.getK8sNamespace());
   }
 }

@@ -11,7 +11,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
@@ -84,9 +84,9 @@ public class GetAzureDatabaseStepTest {
   void testAlreadyExists() throws InterruptedException {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
-        ControlledResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
     var databaseResource =
-        ControlledResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 
@@ -116,9 +116,9 @@ public class GetAzureDatabaseStepTest {
   private StepResult testWithError(HttpStatus httpStatus) throws InterruptedException {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
-        ControlledResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
     var databaseResource =
-        ControlledResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 

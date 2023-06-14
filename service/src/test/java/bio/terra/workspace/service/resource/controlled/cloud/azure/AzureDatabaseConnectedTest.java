@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -152,10 +152,11 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
       AuthenticatedUserRequest userRequest, ControlledAzureManagedIdentityResource uamiResource)
       throws InterruptedException {
     var dbCreationParameters =
-        ControlledResourceFixtures.getAzureDatabaseCreationParameters(uamiResource.getResourceId());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            uamiResource.getResourceId());
 
     var dbResource =
-        ControlledResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
                 dbCreationParameters, workspaceUuid)
             .build();
 
@@ -171,10 +172,10 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
   private ControlledAzureManagedIdentityResource createManagedIdentity(
       AuthenticatedUserRequest userRequest) throws InterruptedException {
     var uamiCreationParameters =
-        ControlledResourceFixtures.getAzureManagedIdentityCreationParameters();
+        ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
 
     var uamiResource =
-        ControlledResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
                 uamiCreationParameters, workspaceUuid)
             .build();
 

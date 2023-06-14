@@ -13,7 +13,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
@@ -57,8 +57,9 @@ public class CreateFederatedIdentityStepTest {
   @Mock private ResourceDao mockResourceDao;
   @Mock private AzureCloudContext mockAzureCloudContext;
   private final ControlledAzureManagedIdentityResource identityResource =
-      ControlledResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
-              ControlledResourceFixtures.getAzureManagedIdentityCreationParameters(), workspaceId)
+      ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
+              ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters(),
+              workspaceId)
           .build();
   @Mock private MsiManager mockMsiManager;
   @Mock private CoreV1Api mockCoreV1Api;

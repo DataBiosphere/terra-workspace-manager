@@ -13,7 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureManagedIdentityAttributes;
 import bio.terra.workspace.generated.model.ApiAzureManagedIdentityResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -175,7 +175,7 @@ public class ControlledAzureManagedIdentityResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureManagedIdentity.");
     }
-    ResourceValidationUtils.validateAzureManagedIdentityName(getManagedIdentityName());
+    AzureResourceValidationUtils.validateAzureManagedIdentityName(getManagedIdentityName());
   }
 
   @Override
