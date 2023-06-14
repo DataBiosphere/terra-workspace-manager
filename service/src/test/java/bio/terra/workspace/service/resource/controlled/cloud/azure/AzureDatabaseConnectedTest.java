@@ -80,22 +80,27 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
 
     // wait for azure to sync then make sure the resources actually exist
     TimeUnit.SECONDS.sleep(5);
-    var actualUami = getManagedIdentityFunction().apply(
-        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-        uamiResource.getManagedIdentityName());
+    var actualUami =
+        getManagedIdentityFunction()
+            .apply(
+                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                uamiResource.getManagedIdentityName());
     assertNotNull(actualUami);
 
-    var actualDatabase = getDatabaseFunction().apply(
-        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-        dbResource.getDatabaseName());
+    var actualDatabase =
+        getDatabaseFunction()
+            .apply(
+                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                dbResource.getDatabaseName());
     assertNotNull(actualDatabase);
 
     deleteDatabase(userRequest, dbResource);
     deleteManagedIdentity(userRequest, uamiResource);
   }
 
-  private void deleteDatabase(AuthenticatedUserRequest userRequest,
-      ControlledAzureDatabaseResource dbResource) throws InterruptedException {
+  private void deleteDatabase(
+      AuthenticatedUserRequest userRequest, ControlledAzureDatabaseResource dbResource)
+      throws InterruptedException {
     azureUtils.submitControlledResourceDeletionFlight(
         workspaceUuid,
         userRequest,
@@ -117,16 +122,18 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
                   return parts[parts.length - 1];
                 })
             .orElseThrow();
-    final BiFunction<String, String, Database> getDatabaseFunction = (resourceGroup, resourceName) ->
-        azureTestUtils
-            .getPostgreSqlManager()
-            .databases()
-            .get(resourceGroup, dbServerName, resourceName);
+    final BiFunction<String, String, Database> getDatabaseFunction =
+        (resourceGroup, resourceName) ->
+            azureTestUtils
+                .getPostgreSqlManager()
+                .databases()
+                .get(resourceGroup, dbServerName, resourceName);
     return getDatabaseFunction;
   }
 
-  private void deleteManagedIdentity(AuthenticatedUserRequest userRequest,
-      ControlledAzureManagedIdentityResource uamiResource) throws InterruptedException {
+  private void deleteManagedIdentity(
+      AuthenticatedUserRequest userRequest, ControlledAzureManagedIdentityResource uamiResource)
+      throws InterruptedException {
     azureUtils.submitControlledResourceDeletionFlight(
         workspaceUuid,
         userRequest,

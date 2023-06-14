@@ -12,6 +12,7 @@ import bio.terra.workspace.service.resource.exception.DuplicateResourceException
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
+import org.springframework.http.HttpStatus;
 
 /**
  * Gets an Azure Managed Identity, and fails if it already exists. This step is designed to run
@@ -51,11 +52,10 @@ public class GetAzureManagedIdentityStep implements Step {
                   "An Azure Managed Identity with name %s already exists in resource group %s",
                   azureCloudContext.getAzureResourceGroupId(), resource.getManagedIdentityName())));
     } catch (ManagementException e) {
-      if (AzureManagementExceptionUtils.isExceptionCode(
-          e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (e.getResponse().getStatusCode() == HttpStatus.NOT_FOUND.value()) {
         return StepResult.getStepResultSuccess();
       }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(e), e);
     }
   }
 

@@ -5,7 +5,6 @@ import bio.terra.cloudres.azure.resourcemanager.msi.data.CreateUserAssignedManag
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
@@ -16,6 +15,7 @@ import com.azure.core.management.Region;
 import com.azure.core.management.exception.ManagementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
 /**
  * Creates an Azure Managed Identity. Designed to run directly after {@link
@@ -65,8 +65,7 @@ public class CreateAzureManagedIdentityStep implements Step {
                       .build()));
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have created this resource
-      if (AzureManagementExceptionUtils.isExceptionCode(
-          e, AzureManagementExceptionUtils.CONFLICT)) {
+      if (e.getResponse().getStatusCode() == HttpStatus.CONFLICT.value()) {
         logger.info(
             "Azure Managed Identity {} in managed resource group {} already exists",
             resource.getManagedIdentityName(),
@@ -94,8 +93,7 @@ public class CreateAzureManagedIdentityStep implements Step {
               azureCloudContext.getAzureResourceGroupId(), resource.getManagedIdentityName());
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (AzureManagementExceptionUtils.isExceptionCode(
-          e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (e.getResponse().getStatusCode() == HttpStatus.NOT_FOUND.value()) {
         logger.info(
             "Azure Managed Identity {} in managed resource group {} already deleted",
             resource.getManagedIdentityName(),

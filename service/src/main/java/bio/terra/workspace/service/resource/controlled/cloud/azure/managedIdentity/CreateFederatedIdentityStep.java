@@ -22,6 +22,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.fluent.models.FederatedIdentityCredentialInner;
+import com.google.common.annotations.VisibleForTesting;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
@@ -124,7 +125,20 @@ public class CreateFederatedIdentityStep implements Step {
 
     // the code above was lookup and setup, now we are ready to create the federated identity and
     // k8s service account
-    createFederatedCredentials(msiManager, azureCloudContext, k8sNamespace, uamiName, oidcIssuer);
+    return createFederatedIdentityAndK8sServiceAccount(
+        uamiName, azureCloudContext, msiManager, aksApi, oidcIssuer, uamiClientId);
+  }
+
+  @VisibleForTesting
+  StepResult createFederatedIdentityAndK8sServiceAccount(
+      String uamiName,
+      AzureCloudContext azureCloudContext,
+      MsiManager msiManager,
+      CoreV1Api aksApi,
+      String oidcIssuer,
+      String uamiClientId) {
+    createOrUpdateFederatedCredentials(
+        msiManager, azureCloudContext, k8sNamespace, uamiName, oidcIssuer);
     try {
       createK8sServiceAccount(aksApi, k8sNamespace, uamiName, uamiClientId);
     } catch (ApiException e) {
@@ -163,7 +177,7 @@ public class CreateFederatedIdentityStep implements Step {
         uamiName, k8sNamespace, null, null, null, null, null, new V1DeleteOptions());
   }
 
-  private void createFederatedCredentials(
+  private void createOrUpdateFederatedCredentials(
       MsiManager msiManager,
       AzureCloudContext context,
       String k8sNamespace,

@@ -139,7 +139,13 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
 
     flight.addStep(
         new GetAzureDatabaseStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getSamService(),
+            flightBeanBag.getLandingZoneApiDispatch(),
+            flightBeanBag.getWorkspaceService(),
+            getWorkspaceId()),
         cloudRetry);
 
     flight.addStep(
