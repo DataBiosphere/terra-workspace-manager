@@ -1,7 +1,7 @@
 dependencies {
   ext {
     jerseyVersion = "2.32"
-    jacksonDatatypeVersion = "2.11.3"
+    jacksonDatatypeVersion = "2.14.2"
   }
 
   // Swagger deps, versions controlled by dependencyManagement in root project
