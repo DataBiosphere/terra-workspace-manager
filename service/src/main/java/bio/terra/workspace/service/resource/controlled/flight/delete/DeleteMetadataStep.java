@@ -27,7 +27,7 @@ public class DeleteMetadataStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    resourceDao.deleteResourceSuccess(workspaceUuid, resourceId);
+    resourceDao.deleteResourceSuccess(workspaceUuid, resourceId, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 
