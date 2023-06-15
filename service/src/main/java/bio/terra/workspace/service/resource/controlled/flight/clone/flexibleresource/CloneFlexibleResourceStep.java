@@ -127,7 +127,7 @@ public class CloneFlexibleResourceStep implements Step {
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
 
     controlledResourceService.deleteControlledResourceSync(
-        destinationWorkspaceId, destinationResourceId, userRequest);
+        destinationWorkspaceId, destinationResourceId, /* forceDelete= */ false, userRequest);
     return StepResult.getStepResultSuccess();
   }
 }

@@ -16,7 +16,6 @@ import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredExce
 import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateCustomGcpRolesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreatePetSaStep;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteCloudContextResourceFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.GcpCloudSyncStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.GenerateRbsRequestIdStep;
@@ -143,22 +142,19 @@ public class GcpCloudContextService implements CloudContextService {
   }
 
   @Override
-  public void launchDeleteFlight(
+  public void launchDeleteResourceFlight(
       ControlledResourceService controlledResourceService,
       UUID workspaceUuid,
       UUID resourceId,
       String flightId,
       AuthenticatedUserRequest userRequest) {
-    controlledResourceService
-        .flexibleDeletionJobBuilder(
-            flightId,
-            workspaceUuid,
-            resourceId,
-            /* forceDelete= */ false,
-            /* resultPath= */ null,
-            userRequest,
-            DeleteCloudContextResourceFlight.class)
-        .submit();
+    controlledResourceService.deleteControlledResourceAsync(
+        flightId,
+        workspaceUuid,
+        resourceId,
+        /* forceDelete= */ true,
+        /* resultPath= */ null,
+        userRequest);
   }
 
   /**
