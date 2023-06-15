@@ -192,9 +192,6 @@ public class ControlledAzureManagedIdentityResource extends ControlledResource {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
-      return false;
-    }
     ControlledAzureManagedIdentityResource that = (ControlledAzureManagedIdentityResource) o;
     return Objects.equals(managedIdentityName, that.managedIdentityName);
   }

@@ -269,9 +269,6 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
-      return false;
-    }
     ControlledAzureDatabaseResource that = (ControlledAzureDatabaseResource) o;
     return Objects.equals(databaseName, that.databaseName)
         && Objects.equals(databaseOwner, that.databaseOwner)

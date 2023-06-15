@@ -149,6 +149,11 @@ public class AzureResourceValidationUtils {
       Pattern.compile("^[a-zA-Z0-9][-a-zA-Z0-9_]{2,127}$");
 
   public static void validateAzureManagedIdentityName(String name) {
+    if (name.toLowerCase().startsWith("pet-")) {
+      // pet- is reserved for pet identities created by sam
+      logger.warn("Invalid Managed Identity name {}", name);
+      throw new InvalidReferenceException("Managed Identity name cannot start with 'pet-'.");
+    }
     if (!AZURE_MANAGED_IDENTITY_NAME_PATTERN.matcher(name).matches()) {
       logger.warn("Invalid Managed Identity name {}", name);
       throw new InvalidReferenceException(

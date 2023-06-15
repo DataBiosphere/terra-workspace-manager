@@ -188,9 +188,10 @@ public class CreateAzureDatabaseStep implements Step {
                   "apt update",
                   "apt -y install curl",
                   "curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
+                  "apt install -y postgresql-client",
                   "az login --federated-token \"$(cat $AZURE_FEDERATED_TOKEN_FILE)\" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID --allow-no-subscriptions",
                   "psql \"host=${DB_SERVER_NAME}.postgres.database.azure.com port=5432 dbname=postgres user=${ADMIN_DB_USER_NAME} password=$(az account get-access-token --query accessToken -otsv) sslmode=require\" --command \"CREATE DATABASE ${NEW_DB_NAME};\"",
-                  "psql \"host=${DB_SERVER_NAME}.postgres.database.azure.com port=5432 dbname=postgres user=${ADMIN_DB_USER_NAME} password=$(az account get-access-token --query accessToken -otsv) sslmode=require\" --command \"SELECT case when exists(select * FROM pg_roles where rolname='${NEW_DB_USER_NAME}') then 'exists' else pgaadauth_create_principal_with_oid('${NEW_DB_USER_NAME}', '${NEW_DB_USER_OID}', 'service', false, false) end; GRANT ALL PRIVILEGES on DATABASE ${NEW_DB_NAME} to ${NEW_DB_USER_NAME};\""));
+                  "psql \"host=${DB_SERVER_NAME}.postgres.database.azure.com port=5432 dbname=postgres user=${ADMIN_DB_USER_NAME} password=$(az account get-access-token --query accessToken -otsv) sslmode=require\" --command \"SELECT case when exists(select * FROM pg_roles where rolname='${NEW_DB_USER_NAME}') then 'exists' else pgaadauth_create_principal_with_oid('${NEW_DB_USER_NAME}', '${NEW_DB_USER_OID}', 'service', false, false) end; GRANT ALL PRIVILEGES on DATABASE ${NEW_DB_NAME} to \\\"${NEW_DB_USER_NAME}\\\";\""));
       String dbServerName =
           getResourceName(
               landingZoneApiDispatch
@@ -214,8 +215,8 @@ public class CreateAzureDatabaseStep implements Step {
                       .restartPolicy("Never")
                       .addContainersItem(
                           new V1Container()
-                              .name("postgres")
-                              .image("postgres")
+                              .name("createdb")
+                              .image("ubuntu")
                               .env(
                                   List.of(
                                       /*
