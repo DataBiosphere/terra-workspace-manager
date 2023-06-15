@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -257,31 +258,29 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    ControlledAzureDatabaseResource that = (ControlledAzureDatabaseResource) o;
-
-    return databaseName.equals(that.getDatabaseName());
+    return super.equals(o) && partialEqual(o);
   }
 
   @Override
   public boolean partialEqual(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.partialEqual(o)) return false;
-
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
     ControlledAzureDatabaseResource that = (ControlledAzureDatabaseResource) o;
-
-    return databaseName.equals(that.getDatabaseName());
+    return Objects.equals(databaseName, that.databaseName)
+        && Objects.equals(databaseOwner, that.databaseOwner)
+        && Objects.equals(k8sNamespace, that.k8sNamespace);
   }
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + databaseName.hashCode();
-    return result;
+    return Objects.hash(super.hashCode(), databaseName, databaseOwner, k8sNamespace);
   }
 
   public static class Builder {

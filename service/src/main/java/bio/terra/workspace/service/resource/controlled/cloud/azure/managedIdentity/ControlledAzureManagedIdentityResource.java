@@ -27,6 +27,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ControlledAzureManagedIdentityResource extends ControlledResource {
@@ -180,31 +181,27 @@ public class ControlledAzureManagedIdentityResource extends ControlledResource {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    ControlledAzureManagedIdentityResource that = (ControlledAzureManagedIdentityResource) o;
-
-    return managedIdentityName.equals(that.getManagedIdentityName());
+    return super.equals(o) && partialEqual(o);
   }
 
   @Override
   public boolean partialEqual(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.partialEqual(o)) return false;
-
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
     ControlledAzureManagedIdentityResource that = (ControlledAzureManagedIdentityResource) o;
-
-    return managedIdentityName.equals(that.getManagedIdentityName());
+    return Objects.equals(managedIdentityName, that.managedIdentityName);
   }
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + managedIdentityName.hashCode();
-    return result;
+    return Objects.hash(super.hashCode(), managedIdentityName);
   }
 
   public static class Builder {

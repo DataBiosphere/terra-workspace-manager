@@ -25,6 +25,7 @@ import java.util.function.BiFunction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @Profile("azure-test")
 @Component
@@ -110,12 +111,17 @@ public class AzureConnectedTestUtils {
     assertEquals(FlightStatus.SUCCESS, deleteControlledResourceFlightState.getFlightStatus());
 
     if (findResource != null) {
-      TimeUnit.SECONDS.sleep(5);
-      com.azure.core.exception.HttpResponseException exception =
-          assertThrows(
-              com.azure.core.exception.HttpResponseException.class,
-              () -> findResource.apply(azureResourceGroupId, resourceName));
-      assertEquals(404, exception.getResponse().getStatusCode());
+      Awaitility.await()
+          .atMost(1, TimeUnit.MINUTES)
+          .pollInterval(5, TimeUnit.SECONDS)
+          .untilAsserted(
+              () -> {
+                com.azure.core.exception.HttpResponseException exception =
+                    assertThrows(
+                        com.azure.core.exception.HttpResponseException.class,
+                        () -> findResource.apply(azureResourceGroupId, resourceName));
+                assertEquals(404, exception.getResponse().getStatusCode());
+              });
     }
   }
 

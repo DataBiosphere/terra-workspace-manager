@@ -11,9 +11,7 @@ import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -35,15 +33,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
-// @Tag("azureConnected") - this test is tagged at the individual test level
+@Tag("azureConnected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
 
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private JobService jobService;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private WsmResourceService wsmResourceService;
   @Autowired private LandingZoneApiDispatch landingZoneApiDispatch;
   @Autowired private SamService samService;
@@ -65,7 +62,6 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
     workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
   }
 
-  @Tag("azureConnected")
   @Test
   public void createAndDeleteAzureManagedIdAndDatabase() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
@@ -79,20 +75,25 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
     checkForResource(resourceList, dbResource);
 
     // wait for azure to sync then make sure the resources actually exist
-    TimeUnit.SECONDS.sleep(5);
-    var actualUami =
-        getManagedIdentityFunction()
-            .apply(
-                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-                uamiResource.getManagedIdentityName());
-    assertNotNull(actualUami);
+    Awaitility.await()
+        .atMost(1, TimeUnit.MINUTES)
+        .pollInterval(5, TimeUnit.SECONDS)
+        .untilAsserted(
+            () -> {
+              var actualUami =
+                  getManagedIdentityFunction()
+                      .apply(
+                          azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                          uamiResource.getManagedIdentityName());
+              assertNotNull(actualUami);
 
-    var actualDatabase =
-        getDatabaseFunction()
-            .apply(
-                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-                dbResource.getDatabaseName());
-    assertNotNull(actualDatabase);
+              var actualDatabase =
+                  getDatabaseFunction()
+                      .apply(
+                          azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                          dbResource.getDatabaseName());
+              assertNotNull(actualDatabase);
+            });
 
     deleteDatabase(userRequest, dbResource);
     deleteManagedIdentity(userRequest, uamiResource);
