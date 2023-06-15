@@ -117,7 +117,7 @@ public class DeleteResourcesStep implements Step {
 
   private void launchFlightAndWait(ResourceDeleteFlightPair pair, Stairway stairway)
       throws InterruptedException {
-    cloudContextService.launchDeleteFlight(
+    cloudContextService.launchDeleteResourceFlight(
         controlledResourceService, workspaceUuid, pair.resourceId(), pair.flightId(), userRequest);
     waitForFlight(pair, stairway);
   }
