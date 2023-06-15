@@ -7,7 +7,6 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.AzureTestConfiguration;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -27,6 +26,8 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.msi.MsiManager;
+import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
 import com.azure.resourcemanager.storage.StorageManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +62,14 @@ public class AzureTestUtils {
     return crlService.getComputeManager(getAzureCloudContext(), this.azureConfiguration);
   }
 
+  public MsiManager getMsiManager() {
+    return crlService.getMsiManager(getAzureCloudContext(), this.azureConfiguration);
+  }
+
+  public PostgreSqlManager getPostgreSqlManager() {
+    return crlService.getPostgreSqlManager(getAzureCloudContext(), this.azureConfiguration);
+  }
+
   public StorageManager getStorageManager() {
     return crlService.getStorageManager(getAzureCloudContext(), this.azureConfiguration);
   }
@@ -90,11 +99,11 @@ public class AzureTestUtils {
     return inputs;
   }
 
-  public FlightMap createControlledResourceInputParameters(
+  public <T> FlightMap createControlledResourceInputParameters(
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest,
       ControlledResource resource,
-      ApiAzureVmCreationParameters creationParameters) {
+      T creationParameters) {
     var inputs = createControlledResourceInputParameters(workspaceUuid, userRequest, resource);
     if (creationParameters != null) {
       inputs.put(

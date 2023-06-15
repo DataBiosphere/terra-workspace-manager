@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -52,6 +53,12 @@ public class LandingZoneApiDispatch {
   private static final String AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE =
       "Microsoft.Storage/storageAccounts";
   private static final String AZURE_BATCH_ACCOUNT_RESOURCE_TYPE = "Microsoft.Batch/batchAccounts";
+  private static final String AZURE_KUBERNETES_CLUSTER_RESOURCE_TYPE =
+      "Microsoft.ContainerService/managedClusters";
+  private static final String AZURE_DATABASE_RESOURCE_TYPE =
+      "Microsoft.DBforPostgreSQL/flexibleServers";
+  private static final String AZURE_UAMI_RESOURCE_TYPE =
+      "Microsoft.ManagedIdentity/userAssignedIdentities";
 
   private final LandingZoneService landingZoneService;
   private final FeatureConfiguration features;
@@ -190,6 +197,23 @@ public class LandingZoneApiDispatch {
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedBatchAccount(
       BearerToken bearerToken, UUID landingZoneId) {
     return getSharedResourceByType(bearerToken, landingZoneId, AZURE_BATCH_ACCOUNT_RESOURCE_TYPE);
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedKubernetesCluster(
+      BearerToken bearerToken, UUID landingZoneId) {
+    return getSharedResourceByType(
+        bearerToken, landingZoneId, AZURE_KUBERNETES_CLUSTER_RESOURCE_TYPE);
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedDatabase(
+      BearerToken bearerToken, UUID landingZoneId) {
+    return getSharedResourceByType(bearerToken, landingZoneId, AZURE_DATABASE_RESOURCE_TYPE);
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedDatabaseAdminIdentity(
+      BearerToken bearerToken, UUID landingZoneId) {
+    return getResourceByTypeAndPurpose(
+        bearerToken, landingZoneId, AZURE_UAMI_RESOURCE_TYPE, ResourcePurpose.POSTGRES_ADMIN);
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
@@ -373,8 +397,14 @@ public class LandingZoneApiDispatch {
 
   private Optional<ApiAzureLandingZoneDeployedResource> getSharedResourceByType(
       BearerToken bearerToken, UUID landingZoneId, String resourceType) {
-    return listAzureLandingZoneResourcesByPurpose(
-            bearerToken, landingZoneId, ResourcePurpose.SHARED_RESOURCE)
+    return getResourceByTypeAndPurpose(
+        bearerToken, landingZoneId, resourceType, ResourcePurpose.SHARED_RESOURCE);
+  }
+
+  @NotNull
+  private Optional<ApiAzureLandingZoneDeployedResource> getResourceByTypeAndPurpose(
+      BearerToken bearerToken, UUID landingZoneId, String resourceType, ResourcePurpose purpose) {
+    return listAzureLandingZoneResourcesByPurpose(bearerToken, landingZoneId, purpose)
         .getResources()
         .stream()
         .flatMap(r -> r.getDeployedResources().stream())

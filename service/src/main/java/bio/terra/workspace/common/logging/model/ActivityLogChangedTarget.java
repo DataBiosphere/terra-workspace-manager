@@ -19,6 +19,8 @@ public enum ActivityLogChangedTarget {
   REFERENCED_GCP_BIG_QUERY_DATASET(/*isResource=*/ true),
   REFERENCED_GCP_BIG_QUERY_DATA_TABLE(/*isResource=*/ true),
   // Azure
+  CONTROLLED_AZURE_MANAGED_IDENTITY(/*isResource=*/ true),
+  CONTROLLED_AZURE_DATABASE(/*isResource=*/ true),
   CONTROLLED_AZURE_DISK(/*isResource=*/ true),
   CONTROLLED_AZURE_VM(/*isResource=*/ true),
   CONTROLLED_AZURE_STORAGE_CONTAINER(/*isResource=*/ true),

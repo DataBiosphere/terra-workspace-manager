@@ -11,6 +11,8 @@ components:
         - DATA_REPO_SNAPSHOT
         - GCS_BUCKET
         - GCS_OBJECT
+        - AZURE_MANAGED_IDENTITY
+        - AZURE_DATABASE
         - AZURE_DISK
         - AZURE_VM
         - AZURE_STORAGE_CONTAINER
@@ -40,6 +42,10 @@ components:
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
         gcpAiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
+        azureManagedIdentity:
+          $ref: '#/components/schemas/AzureManagedIdentityAttributes'
+        azureDatabase:
+          $ref: '#/components/schemas/AzureDatabaseAttributes'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskAttributes'
         azureStorageContainer:

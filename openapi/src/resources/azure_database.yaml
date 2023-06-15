@@ -1,0 +1,25 @@
+components:
+  schemas:
+    AzureDatabaseAttributes:
+      description: >-
+        Database properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        databaseName:
+          description: Name of created database (not the resource name).
+          type: string
+        databaseOwner:
+          description: Identity of database owner.
+          type: string
+          format: uuid
+
+    AzureDatabaseResource:
+      type: object
+      description: Description of an Azure database
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureDatabaseAttributes'

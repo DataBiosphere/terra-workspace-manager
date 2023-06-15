@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.crl;
 
+import bio.terra.cloudres.azure.resourcemanager.common.AzureResourceCleanupRecorder;
+import bio.terra.cloudres.azure.resourcemanager.common.AzureResponseLogger;
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
 import bio.terra.cloudres.google.api.services.common.Defaults;
@@ -22,13 +24,17 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.credential.TokenCredential;
+import com.azure.core.http.policy.HttpLogDetailLevel;
+import com.azure.core.http.policy.HttpLogOptions;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.batch.BatchManager;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.containerservice.ContainerServiceManager;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.msi.MsiManager;
+import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.resources.ResourceManager;
 import com.azure.resourcemanager.storage.StorageManager;
@@ -228,6 +234,34 @@ public class CrlService {
     final var azureProfile = getAzureProfile(azureCloudContext);
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, MonitorManager.configure())
+        .authenticate(azureCreds, azureProfile);
+  }
+
+  public ContainerServiceManager getContainerServiceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+            clientConfig, ContainerServiceManager.configure())
+        .authenticate(azureCreds, azureProfile);
+  }
+
+  public PostgreSqlManager getPostgreSqlManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+    // PostgreSqlManager.configure does not return the right type, so inline
+    // bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure
+    return PostgreSqlManager.configure()
+        .withLogOptions(
+            new HttpLogOptions()
+                .setRequestLogger(new AzureResourceCleanupRecorder(clientConfig))
+                .setResponseLogger(new AzureResponseLogger(clientConfig))
+                // Since we are providing our own loggers this value isn't actually used; however it
+                // does need to be set to a value other than NONE for the loggers to fire.
+                .setLogLevel(HttpLogDetailLevel.BASIC))
         .authenticate(azureCreds, azureProfile);
   }
 
