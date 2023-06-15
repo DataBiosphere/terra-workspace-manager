@@ -704,7 +704,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
     workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
     controlledResourceService.deleteControlledResourceSync(
-        workspaceUuid, resourceUuid, userRequest);
+        workspaceUuid, resourceUuid, /* forceDelete= */ false, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
