@@ -39,8 +39,8 @@ public class UpdateGceInstanceAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final FlightMap inputParameters = context.getInputParameters();
-    final ApiGcpGceUpdateParameters updateParameters =
+    FlightMap inputParameters = context.getInputParameters();
+    ApiGcpGceUpdateParameters updateParameters =
         inputParameters.get(UPDATE_PARAMETERS, ApiGcpGceUpdateParameters.class);
     if (updateParameters == null) {
       return StepResult.getStepResultSuccess();
@@ -59,8 +59,8 @@ public class UpdateGceInstanceAttributesStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    final FlightMap workingMap = context.getWorkingMap();
-    final ApiGcpGceUpdateParameters prevParameters =
+    FlightMap workingMap = context.getWorkingMap();
+    ApiGcpGceUpdateParameters prevParameters =
         FlightUtils.getRequired(
             workingMap, PREVIOUS_UPDATE_PARAMETERS, ApiGcpGceUpdateParameters.class);
     try {

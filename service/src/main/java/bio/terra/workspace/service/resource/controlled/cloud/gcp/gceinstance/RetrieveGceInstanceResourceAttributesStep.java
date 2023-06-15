@@ -31,7 +31,7 @@ public class RetrieveGceInstanceResourceAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    final FlightMap workingMap = context.getWorkingMap();
+    FlightMap workingMap = context.getWorkingMap();
     CloudComputeCow cloudComputeCow = crlService.getCloudComputeCow();
     try {
       Instance instance =
