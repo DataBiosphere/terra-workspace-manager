@@ -259,7 +259,7 @@ public class ControlledResourceServiceBucketTest extends BaseConnectedTest {
             UUID.randomUUID().toString(),
             workspaceId,
             createdBucket.getResourceId(),
-            /* forceDelete= */ false,
+            false,
             "fake result path",
             user.getAuthenticatedRequest());
     jobService.waitForJob(jobId);

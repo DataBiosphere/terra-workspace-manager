@@ -111,7 +111,7 @@ public class AwsCloudContextService implements CloudContextService {
   }
 
   @Override
-  public void launchDeleteFlight( // TODO-Dex
+  public void launchDeleteFlight(
       ControlledResourceService controlledResourceService,
       UUID workspaceUuid,
       UUID resourceId,
