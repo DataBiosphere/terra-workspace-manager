@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_ZONE;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
 
 import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.stairway.FlightContext;
@@ -59,7 +59,7 @@ public class GceInstanceCloudSyncStep implements Step {
     CloudComputeCow cloudComputeCow = crlService.getCloudComputeCow();
     String zone =
         FlightUtils.getRequired(
-            flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_ZONE, String.class);
+            flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
     try {
       Policy policy =
           cloudComputeCow

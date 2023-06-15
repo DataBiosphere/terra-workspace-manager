@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
 
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
@@ -58,7 +58,7 @@ public class NotebookCloudSyncStep implements Step {
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     String requestedLocation =
         FlightUtils.getRequired(
-            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
+            flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
     InstanceName instanceName = resource.toInstanceName(requestedLocation);
     try {
       Policy policy = notebooks.instances().getIamPolicy(instanceName).execute();

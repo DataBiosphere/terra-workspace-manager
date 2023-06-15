@@ -43,18 +43,17 @@ public final class WorkspaceFlightMapKeys {
 
     public static final String CLOUD_PET_SERVICE_ACCOUNT = "cloudPetServiceAccount";
 
-    // Notebooks keys
-    public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
-    public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
-    public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
-    public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
-
-    // GCE Instance keys
+    // Shared Instance Keys
     public static final String CREATE_GCE_INSTANCE_NETWORK_NAME = "createGceInstanceNetworkName";
-    public static final String CREATE_GCE_INSTANCE_PARAMETERS = "createGceInstanceParameters";
-    public static final String CREATE_GCE_INSTANCE_ZONE = "createGceInstanceZone";
+    public static final String CREATE_GCE_INSTANCE_LOCATION = "createGceInstanceLocation";
     public static final String CREATE_GCE_INSTANCE_SUBNETWORK_NAME =
         "createGceInstanceSubnetworkName";
+
+    // Notebooks keys
+    public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
+
+    // GCE Instance keys
+    public static final String CREATE_GCE_INSTANCE_PARAMETERS = "createGceInstanceParameters";
 
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";

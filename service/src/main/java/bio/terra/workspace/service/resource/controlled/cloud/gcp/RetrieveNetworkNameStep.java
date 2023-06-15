@@ -1,20 +1,26 @@
-package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SUBNETWORK_NAME;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_NETWORK_NAME;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_SUBNETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
 
 import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.landingzone.stairway.flight.utils.FlightUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.compute.model.Subnetwork;
@@ -25,18 +31,17 @@ import java.io.IOException;
 import org.springframework.http.HttpStatus;
 
 /**
- * A {@link Step} for retrieving the network and subnetwork to use for the AI notebook instance from
- * Google.
+ * A {@link Step} for retrieving the network and subnetwork to use for the GCE instance from Google.
  */
 public class RetrieveNetworkNameStep implements Step {
 
   private final CrlService crlService;
-  private final ControlledAiNotebookInstanceResource resource;
+  private final ControlledResource resource;
   private final GcpCloudContextService gcpCloudContextService;
 
   public RetrieveNetworkNameStep(
       CrlService crlService,
-      ControlledAiNotebookInstanceResource resource,
+      ControlledResource resource,
       GcpCloudContextService gcpCloudContextService) {
     this.crlService = crlService;
     this.resource = resource;
@@ -47,12 +52,25 @@ public class RetrieveNetworkNameStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     CloudComputeCow compute = crlService.getCloudComputeCow();
-    String projectId = resource.getProjectId();
+    String projectId =
+        switch (resource.getResourceType()) {
+          case CONTROLLED_GCP_GCE_INSTANCE -> {
+            ControlledGceInstanceResource gceInstance =
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
+            yield gceInstance.getProjectId();
+          }
+          case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE -> {
+            ControlledAiNotebookInstanceResource aiNotebookInstance =
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+            yield aiNotebookInstance.getProjectId();
+          }
+          default -> throw new InternalLogicException("Bad resource type passed to step.");
+        };
     SubnetworkList subnetworks;
     try {
-      String location = maybeGetValidZone(projectId);
-      flightContext.getWorkingMap().put(CREATE_NOTEBOOK_LOCATION, location);
-      String region = getRegionForNotebook(projectId, location);
+      String zone = maybeGetValidZone(projectId);
+      flightContext.getWorkingMap().put(CREATE_GCE_INSTANCE_LOCATION, zone);
+      String region = getRegionForInstance(projectId, zone);
       flightContext.getWorkingMap().put(CREATE_RESOURCE_REGION, region);
       subnetworks = compute.subnetworks().list(projectId, region).execute();
     } catch (IOException e) {
@@ -63,11 +81,24 @@ public class RetrieveNetworkNameStep implements Step {
   }
 
   /**
-   * Fetches the valid zone given resource location. If none is found, returns the Ai notebook
-   * location attributes.
+   * Fetches the valid zone given resource "zone", since the default workspace region might be
+   * passed in if no zone is specified. If none is found, returns the resource zone attributes.
    */
   private String maybeGetValidZone(String projectId) throws IOException {
-    String location = resource.getLocation();
+    String location =
+        switch (resource.getResourceType()) {
+          case CONTROLLED_GCP_GCE_INSTANCE -> {
+            ControlledGceInstanceResource gceInstance =
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
+            yield gceInstance.getZone();
+          }
+          case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE -> {
+            ControlledAiNotebookInstanceResource aiNotebookInstance =
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+            yield aiNotebookInstance.getLocation();
+          }
+          default -> throw new InternalLogicException("Bad resource type passed to step.");
+        };
     ZoneList zoneList = crlService.getCloudComputeCow().zones().list(projectId).execute();
 
     return zoneList.getItems().stream()
@@ -78,16 +109,14 @@ public class RetrieveNetworkNameStep implements Step {
         .orElse(location);
   }
 
-  private String getRegionForNotebook(String projectId, String location) throws IOException {
+  private String getRegionForInstance(String projectId, String zoneName) throws IOException {
     try {
-      // GCP is a little loose with its zone/location naming. An AI notebook location has the
-      // same id as a GCE zone. Use the location to look up the zone.
-      Zone zone = crlService.getCloudComputeCow().zones().get(projectId, location).execute();
+      Zone zone = crlService.getCloudComputeCow().zones().get(projectId, zoneName).execute();
       return extractNameFromUrl(zone.getRegion());
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
         // Throw a better error message if the location isn't known.
-        throw new BadRequestException(String.format("Unsupported location '%s'", location));
+        throw new BadRequestException(String.format("Unsupported zone '%s'", zoneName));
       }
       throw e;
     }
@@ -96,13 +125,15 @@ public class RetrieveNetworkNameStep implements Step {
   private void pickAndStoreNetwork(SubnetworkList subnetworks, FlightMap workingMap) {
     if (subnetworks.getItems() == null || subnetworks.getItems().isEmpty()) {
       throw new BadRequestException(
-          String.format("No subnetworks available for location '%s'", resource.getLocation()));
+          String.format(
+              "No subnetworks available for zone '%s'",
+              FlightUtils.getRequired(workingMap, CREATE_GCE_INSTANCE_LOCATION, String.class)));
     }
     // Arbitrarily grab the first subnetwork. We don't have a use case for multiple subnetworks or
     // them mattering yet, so use any available subnetwork.
     Subnetwork subnetwork = subnetworks.getItems().get(0);
-    workingMap.put(CREATE_NOTEBOOK_NETWORK_NAME, extractNameFromUrl(subnetwork.getNetwork()));
-    workingMap.put(CREATE_NOTEBOOK_SUBNETWORK_NAME, subnetwork.getName());
+    workingMap.put(CREATE_GCE_INSTANCE_NETWORK_NAME, extractNameFromUrl(subnetwork.getNetwork()));
+    workingMap.put(CREATE_GCE_INSTANCE_SUBNETWORK_NAME, subnetwork.getName());
   }
 
   /**

@@ -21,10 +21,12 @@ import com.google.auth.oauth2.IdTokenProvider;
 import com.google.cloud.ServiceOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
+import com.google.common.collect.ImmutableList;
 import io.grpc.Status.Code;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -257,5 +259,21 @@ public class GcpUtils {
               instanceName));
     }
     return generatedName;
+  }
+
+  /** Service account for the instance needs to contain these scopes to interact with SAM. */
+  public static final List<String> INSTANCE_SERVICE_ACCOUNT_SCOPES =
+      ImmutableList.of(
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/userinfo.profile");
+
+  public static String toNetworkString(String projectId, String networkName) {
+    return String.format("projects/%s/global/networks/%s", projectId, networkName);
+  }
+
+  public static String toSubnetworkString(String projectId, String region, String subnetworkName) {
+    return String.format(
+        "projects/%s/regions/%s/subnetworks/%s", projectId, region, subnetworkName);
   }
 }

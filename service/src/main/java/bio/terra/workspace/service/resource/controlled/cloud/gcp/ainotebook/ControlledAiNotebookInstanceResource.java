@@ -19,6 +19,8 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GrantPetUsagePermissionStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.RetrieveNetworkNameStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.UpdateInstanceResourceLocationAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
@@ -201,7 +203,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             userRequest),
         longSyncRetryRule);
     flight.addStep(
-        new UpdateNotebookResourceLocationAttributesStep(this, flightBeanBag.getResourceDao()),
+        new UpdateInstanceResourceLocationAttributesStep(this, flightBeanBag.getResourceDao()),
         shortDatabaseRetryRule);
     flight.addStep(
         new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),

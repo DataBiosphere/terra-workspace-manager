@@ -1,11 +1,12 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance;
 
+import static bio.terra.workspace.common.utils.GcpUtils.INSTANCE_SERVICE_ACCOUNT_SCOPES;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource.SERVER_ID_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource.WORKSPACE_ID_METADATA_KEY;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_SUBNETWORK_NAME;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_ZONE;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
 
 import bio.terra.cloudres.google.api.services.common.OperationCow;
@@ -38,7 +39,6 @@ import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.Operation;
 import com.google.api.services.compute.model.ServiceAccount;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
@@ -57,13 +57,6 @@ import org.springframework.http.HttpStatus;
  * <p>Undo deletes the created instance.
  */
 public class CreateGceInstanceStep implements Step {
-  /** Service account for the instance needs to contain these scopes to interact with SAM. */
-  private static final List<String> SERVICE_ACCOUNT_SCOPES =
-      ImmutableList.of(
-          "https://www.googleapis.com/auth/cloud-platform",
-          "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/userinfo.profile");
-
   private final Logger logger = LoggerFactory.getLogger(CreateGceInstanceStep.class);
   private final ControlledGceInstanceResource resource;
   private final String petEmail;
@@ -71,6 +64,9 @@ public class CreateGceInstanceStep implements Step {
   private final CrlService crlService;
   private final CliConfiguration cliConfiguration;
   private final VersionConfiguration versionConfiguration;
+
+  private static final String EXTERNAL_IP_TYPE = "ONE_TO_ONE_NAT";
+  private static final String EXTERNAL_IP_NAME = "External IP";
 
   public CreateGceInstanceStep(
       ControlledGceInstanceResource resource,
@@ -98,7 +94,7 @@ public class CreateGceInstanceStep implements Step {
     String projectId = gcpCloudContext.getGcpProjectId();
     String zone =
         FlightUtils.getRequired(
-            flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_ZONE, String.class);
+            flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
 
     Instance instance =
         createInstanceModel(
@@ -193,7 +189,9 @@ public class CreateGceInstanceStep implements Step {
 
     instance.setServiceAccounts(
         List.of(
-            new ServiceAccount().setEmail(serviceAccountEmail).setScopes(SERVICE_ACCOUNT_SCOPES)));
+            new ServiceAccount()
+                .setEmail(serviceAccountEmail)
+                .setScopes(INSTANCE_SERVICE_ACCOUNT_SCOPES)));
 
     List<ApiGcpGceInstanceGuestAccelerator> guestAccelerators =
         creationParameters.getGuestAccelerators();
@@ -242,24 +240,23 @@ public class CreateGceInstanceStep implements Step {
     instance.setNetworkInterfaces(
         List.of(
             new NetworkInterface()
-                .setNetwork(String.format("projects/%s/global/networks/%s", projectId, networkName))
-                .setSubnetwork(
-                    String.format(
-                        "projects/%s/regions/%s/subnetworks/%s", projectId, region, subnetworkName))
+                .setNetwork(GcpUtils.toNetworkString(projectId, networkName))
+                .setSubnetwork(GcpUtils.toSubnetworkString(projectId, region, subnetworkName))
                 .setAccessConfigs(
-                    List.of(new AccessConfig().setType("ONE_TO_ONE_NAT").setName("External IP")))));
+                    List.of(
+                        new AccessConfig().setType(EXTERNAL_IP_TYPE).setName(EXTERNAL_IP_NAME)))));
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    final GcpCloudContext gcpCloudContext =
+    GcpCloudContext gcpCloudContext =
         flightContext
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
     String projectId = gcpCloudContext.getGcpProjectId();
     String zone =
         FlightUtils.getRequired(
-            flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_ZONE, String.class);
+            flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
 
     CloudComputeCow cloudComputeCow = crlService.getCloudComputeCow();
     try {

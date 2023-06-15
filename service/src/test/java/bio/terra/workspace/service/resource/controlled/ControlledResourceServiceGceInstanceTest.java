@@ -36,14 +36,14 @@ import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GrantPetUsagePermissionStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.RetrieveNetworkNameStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.UpdateInstanceResourceLocationAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.CreateGceInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.DeleteGceInstanceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.GceInstanceCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.RetrieveGceInstanceResourceAttributesStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.UpdateGceInstanceAttributesStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.UpdateGceInstanceResourceZoneAttributesStep;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
@@ -195,7 +195,7 @@ public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest 
     retrySteps.put(CreateGceInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(GceInstanceCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        UpdateGceInstanceResourceZoneAttributesStep.class.getName(),
+        UpdateInstanceResourceLocationAttributesStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
