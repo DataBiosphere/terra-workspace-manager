@@ -57,6 +57,8 @@ import javax.annotation.Nullable;
 /** A series of static objects useful for testing controlled resources. */
 public class ControlledGcpResourceFixtures {
 
+  public static final String DEFAULT_RESOURCE_ZONE = "us-east1-b";
+
   public static final ControlledResourceFields DEFAULT_GCP_CONTROLLED_RESOURCE_FIELDS =
       ControlledResourceFields.builder()
           .workspaceUuid(WORKSPACE_ID)
@@ -305,7 +307,7 @@ public class ControlledGcpResourceFixtures {
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
     return new ApiGcpAiNotebookInstanceCreationParameters()
         .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
-        .location("us-east1-b")
+        .location(DEFAULT_RESOURCE_ZONE)
         .machineType("e2-standard-2")
         .vmImage(
             new ApiGcpAiNotebookInstanceVmImage()
@@ -338,7 +340,7 @@ public class ControlledGcpResourceFixtures {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
-        .location("us-east1-b")
+        .location(DEFAULT_RESOURCE_ZONE)
         .projectId("my-project-id");
   }
 
@@ -347,7 +349,7 @@ public class ControlledGcpResourceFixtures {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceId).build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
-        .location("us-east1-b")
+        .location(DEFAULT_RESOURCE_ZONE)
         .projectId("my-project-id");
   }
 
@@ -363,8 +365,8 @@ public class ControlledGcpResourceFixtures {
   public static ApiGcpGceInstanceCreationParameters defaultGceInstanceCreationParameters() {
     return new ApiGcpGceInstanceCreationParameters()
         .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
-        .zone("us-central1-a")
-        .machineType("zones/us-central1-a/machineTypes/n1-standard-1")
+        .zone(DEFAULT_RESOURCE_ZONE)
+        .machineType(String.format("zones/%s/machineTypes/n1-standard-1", DEFAULT_RESOURCE_ZONE))
         .vmImage("projects/debian-cloud/global/images/family/debian-11");
   }
 
@@ -392,7 +394,7 @@ public class ControlledGcpResourceFixtures {
     return ControlledGceInstanceResource.builder()
         .common(makeGceInstanceCommonFieldsBuilder().build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
-        .zone("us-east1-b")
+        .zone(DEFAULT_RESOURCE_ZONE)
         .projectId("my-project-id");
   }
 
@@ -400,7 +402,7 @@ public class ControlledGcpResourceFixtures {
     return ControlledGceInstanceResource.builder()
         .common(makeGceInstanceCommonFieldsBuilder().workspaceUuid(workspaceId).build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
-        .zone("us-east1-b")
+        .zone(DEFAULT_RESOURCE_ZONE)
         .projectId("my-project-id");
   }
 }
