@@ -83,7 +83,7 @@ import org.springframework.http.HttpStatus;
 // time creating and deleting GCP contexts.
 @Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
-public class ControlledResourceServiceGceInstanceTest extends BaseConnectedTest {
+public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConnectedTest {
   /** The default roles to use when creating user private GCE instance resources */
   private static final ControlledResourceIamRole DEFAULT_ROLE = ControlledResourceIamRole.WRITER;
   /** The default GCP location to create instancess for this test. */
