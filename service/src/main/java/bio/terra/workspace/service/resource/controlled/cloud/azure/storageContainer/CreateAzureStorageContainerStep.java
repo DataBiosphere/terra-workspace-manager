@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
+import bio.terra.cloudres.azure.resourcemanager.storage.data.CreateStorageContainerRequestData;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -9,7 +10,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data.CreateStorageContainerRequestData;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
@@ -67,7 +67,10 @@ public class CreateAzureStorageContainerStep implements Step {
               Defaults.buildContext(
                   CreateStorageContainerRequestData.builder()
                       .setStorageContainerName(resource.getStorageContainerName())
+                      .setStorageAccountName(storageAccountName)
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                      .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
+                      .setTenantId(azureCloudContext.getAzureTenantId())
                       .build()));
     } catch (ManagementException e) {
       logger.error(

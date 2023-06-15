@@ -15,6 +15,7 @@ import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.resourcemanager.storage.models.StorageAccounts;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 
@@ -41,6 +42,8 @@ public class BaseStorageStepTest extends BaseAzureUnitTest {
   @BeforeEach
   public void setup() {
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(STUB_STRING_RETURN);
+    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn(UUID.randomUUID().toString());
+    when(mockAzureCloudContext.getAzureTenantId()).thenReturn(UUID.randomUUID().toString());
     when(mockCrlService.getStorageManager(mockAzureCloudContext, mockAzureConfig))
         .thenReturn(mockStorageManager);
 

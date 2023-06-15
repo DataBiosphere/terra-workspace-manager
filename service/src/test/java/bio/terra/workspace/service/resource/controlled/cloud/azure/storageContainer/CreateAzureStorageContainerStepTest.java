@@ -6,12 +6,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import bio.terra.cloudres.azure.resourcemanager.storage.data.CreateStorageContainerRequestData;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data.CreateStorageContainerRequestData;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
@@ -96,7 +96,10 @@ public class CreateAzureStorageContainerStepTest extends BaseStorageStepTest {
     CreateStorageContainerRequestData expected =
         CreateStorageContainerRequestData.builder()
             .setStorageContainerName(creationParameters.getStorageContainerName())
+            .setStorageAccountName(storageAccountName)
             .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
+            .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
+            .setTenantId(mockAzureCloudContext.getAzureTenantId())
             .build();
 
     assertThat(storageContainerRequestDataOpt, equalTo(Optional.of(expected)));
