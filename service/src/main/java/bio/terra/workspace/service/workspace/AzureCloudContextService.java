@@ -138,7 +138,7 @@ public class AzureCloudContextService implements CloudContextService {
   }
 
   @Override
-  public void launchDeleteFlight(
+  public void launchDeleteResourceFlight(
       ControlledResourceService controlledResourceService,
       UUID workspaceUuid,
       UUID resourceId,

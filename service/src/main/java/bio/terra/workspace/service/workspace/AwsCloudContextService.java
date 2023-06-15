@@ -23,7 +23,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.MakeAwsCloudContextStep;
-import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteCloudContextResourceFlight;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -111,22 +110,19 @@ public class AwsCloudContextService implements CloudContextService {
   }
 
   @Override
-  public void launchDeleteFlight(
+  public void launchDeleteResourceFlight(
       ControlledResourceService controlledResourceService,
       UUID workspaceUuid,
       UUID resourceId,
       String flightId,
       AuthenticatedUserRequest userRequest) {
-    controlledResourceService
-        .flexibleDeletionJobBuilder(
-            flightId,
-            workspaceUuid,
-            resourceId,
-            /* forceDelete= */ true,
-            /* resultPath= */ null,
-            userRequest,
-            DeleteCloudContextResourceFlight.class)
-        .submit();
+    controlledResourceService.deleteControlledResourceAsync(
+        flightId,
+        workspaceUuid,
+        resourceId,
+        /* forceDelete= */ true,
+        /* resultPath= */ null,
+        userRequest);
   }
 
   /** Returns authentication from configuration */

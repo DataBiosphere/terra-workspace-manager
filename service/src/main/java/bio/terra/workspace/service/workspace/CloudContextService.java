@@ -45,7 +45,7 @@ public interface CloudContextService {
    * <p>We cannot autowire the controlled resource service into the cloud context services, because
    * it makes an autowire loop in Spring.
    */
-  void launchDeleteFlight(
+  void launchDeleteResourceFlight(
       ControlledResourceService controlledResourceService,
       UUID workspaceUuid,
       UUID resourceId,
