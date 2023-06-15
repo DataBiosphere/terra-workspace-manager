@@ -154,7 +154,7 @@ public class GcpCloudContextService implements CloudContextService {
             flightId,
             workspaceUuid,
             resourceId,
-            /* forceDelete= */ false,
+            /* forceDelete= */ true,
             /* resultPath= */ null,
             userRequest,
             DeleteCloudContextResourceFlight.class)

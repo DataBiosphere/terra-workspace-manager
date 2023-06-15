@@ -183,6 +183,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             jobControl.getId(),
             workspaceUuid,
             resourceUuid,
+            /* forceDelete= */ false,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     return getDeleteResult(jobId);
@@ -447,7 +448,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         resourceUuid.toString(),
         workspaceUuid.toString());
     controlledResourceService.deleteControlledResourceSync(
-        workspaceUuid, resourceUuid, userRequest);
+        workspaceUuid, resourceUuid, /* forceDelete= */ false, userRequest);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
@@ -648,6 +649,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             jobControl.getId(),
             workspaceUuid,
             resourceUuid,
+            /* forceDelete= */ false,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     ApiDeleteControlledGcpAiNotebookInstanceResult result =

@@ -138,14 +138,19 @@ public class AzureCloudContextService implements CloudContextService {
   }
 
   @Override
-  public void launchDeleteFlight(
+  public void launchDeleteFlight( // TODO-Dex
       ControlledResourceService controlledResourceService,
       UUID workspaceUuid,
       UUID resourceId,
       String flightId,
       AuthenticatedUserRequest userRequest) {
     controlledResourceService.deleteControlledResourceAsync(
-        flightId, workspaceUuid, resourceId, null, userRequest);
+        flightId,
+        workspaceUuid,
+        resourceId,
+        /* forceDelete= */ true,
+        /* resultPath= */ null,
+        userRequest);
   }
 
   /**

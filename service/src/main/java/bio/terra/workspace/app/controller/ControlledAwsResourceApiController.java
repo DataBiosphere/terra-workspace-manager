@@ -169,6 +169,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             jobControl.getId(),
             workspaceUuid,
             resourceUuid,
+            /* forceDelete= */ false,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
 
