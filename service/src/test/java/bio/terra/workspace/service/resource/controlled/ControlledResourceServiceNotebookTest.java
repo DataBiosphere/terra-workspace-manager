@@ -709,7 +709,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
+        resource.getWorkspaceId(), resource.getResourceId(), false, user.getAuthenticatedRequest());
     assertNotFound(instanceName, notebooks);
     assertThrows(
         ResourceNotFoundException.class,
@@ -733,6 +733,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
             controlledResourceService.deleteControlledResourceSync(
                 resource.getWorkspaceId(),
                 resource.getResourceId(),
+                false,
                 user.getAuthenticatedRequest()));
   }
 

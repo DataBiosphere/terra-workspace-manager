@@ -182,6 +182,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     var result = step.undoStep(flightContext);
 
     assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
-    verify(controlledResourceService).deleteControlledResourceSync(any(), any(), any());
+    verify(controlledResourceService).deleteControlledResourceSync(any(), any(), any(), any());
   }
 }

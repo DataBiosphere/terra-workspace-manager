@@ -117,7 +117,7 @@ public class PrivateResourceCleanupServiceTest extends BaseConnectedTest {
     // workspace.
     if (appOwnedResource != null) {
       controlledResourceService.deleteControlledResourceSync(
-          workspace.workspaceId(), appOwnedResource.getResourceId(), testAppRequest);
+          workspace.workspaceId(), appOwnedResource.getResourceId(), false, testAppRequest);
     }
     workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
     deleteGroup(groupName, ownerGroupApi);

@@ -161,7 +161,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
         updatedDatasetFromCloud.getDefaultPartitionExpirationMs());
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
+        resource.getWorkspaceId(), resource.getResourceId(), false, user.getAuthenticatedRequest());
 
     assertThrows(
         ResourceNotFoundException.class,
@@ -293,7 +293,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
+        resource.getWorkspaceId(), resource.getResourceId(), false, user.getAuthenticatedRequest());
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
     GoogleJsonResponseException getException =
@@ -340,6 +340,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
             controlledResourceService.deleteControlledResourceSync(
                 resource.getWorkspaceId(),
                 resource.getResourceId(),
+                false,
                 user.getAuthenticatedRequest()));
 
     BigQueryCow bqCow = crlService.createWsmSaBigQueryCow();
@@ -562,7 +563,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
     } finally {
       // Remove dataset to not conflict with other test that checks for empty lifetime
       controlledResourceService.deleteControlledResourceSync(
-          workspaceId, resource.getResourceId(), userAccessUtils.defaultUserAuthRequest());
+          workspaceId, resource.getResourceId(), false, userAccessUtils.defaultUserAuthRequest());
     }
   }
 
