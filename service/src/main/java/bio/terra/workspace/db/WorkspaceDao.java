@@ -2,7 +2,6 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
-import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
@@ -113,10 +112,7 @@ public class WorkspaceDao {
               .contextJson(rs.getString("context"))
               .state(WsmResourceState.fromDb(rs.getString("state")))
               .flightId(rs.getString("flight_id"))
-              .error(
-                  Optional.ofNullable(rs.getString("error"))
-                      .map(errorJson -> DbSerDes.fromJson(errorJson, ErrorReportException.class))
-                      .orElse(null));
+              .error(StateDao.deserializeException(rs.getString("error")));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final ApplicationDao applicationDao;
@@ -789,17 +785,13 @@ public class WorkspaceDao {
    * @param workspaceUuid workspace of the cloud context
    * @param cloudPlatform cloud platform of the cloud context
    * @param flightId flight id performing the delete
-   * @param exception that caused the failure
    */
   @WriteTransaction
   public void deleteCloudContextFailure(
-      UUID workspaceUuid,
-      CloudPlatform cloudPlatform,
-      String flightId,
-      @Nullable Exception exception) {
+      UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
     stateDao.updateState(
-        cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
+        cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, null);
   }
 
   /**

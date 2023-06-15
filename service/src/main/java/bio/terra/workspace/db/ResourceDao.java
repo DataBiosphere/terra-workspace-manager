@@ -165,9 +165,12 @@ public class ResourceDao {
    * @param resourceId resource id
    */
   @WriteTransaction
-  public void deleteResourceSuccess(UUID workspaceUuid, UUID resourceId) {
+  public void deleteResourceSuccess(UUID workspaceUuid, UUID resourceId, String flightId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
     if (!stateDao.isResourceInState(dbResource, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
+      // Validate the state transition to not exists
+      stateDao.updateState(
+          dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
       deleteResourceWorker(workspaceUuid, resourceId, /*resourceType=*/ null);
     }
   }

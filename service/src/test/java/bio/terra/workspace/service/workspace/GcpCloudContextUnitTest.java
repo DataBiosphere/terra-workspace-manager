@@ -7,12 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.common.exception.ErrorReportException;
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -22,6 +24,7 @@ import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,9 +36,7 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
   private static final String POLICY_READER = "policy-reader";
   private static final String POLICY_APPLICATION = "policy-application";
 
-  @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceDao workspaceDao;
-  @Autowired private ResourceDao resourceDao;
 
   private DbCloudContext makeDbCloudContext(String json) {
     return new DbCloudContext()
@@ -108,6 +109,33 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     assertNull(cloudContext.getContextFields());
 
     workspaceDao.createWorkspaceSuccess(workspaceUuid, flightId);
+    WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
+  }
+
+  @Test
+  void testErrorSerdes_errorReportExceptionWorks() {
+    var ex = new ForbiddenException("this operation is strictly forbidden");
+
+    // Create a broken cloud context in DB
+    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    UUID workspaceUuid = workspace.workspaceId();
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    String flightId = UUID.randomUUID().toString();
+    workspaceDao.createCloudContextStart(
+        workspaceUuid, CloudPlatform.GCP, new SpendProfileId("fake"), flightId);
+    workspaceDao.createCloudContextFailure(
+        workspaceUuid, CloudPlatform.GCP, flightId, ex, WsmResourceStateRule.BROKEN_ON_FAILURE);
+
+    // Retrieve the broken cloud context which should have the error logged.
+    Optional<DbCloudContext> maybeContext =
+        workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP);
+    assertTrue(maybeContext.isPresent());
+    assertEquals(WsmResourceState.BROKEN, maybeContext.get().getState());
+
+    ErrorReportException exceptionFromDb = maybeContext.get().getError();
+    assertEquals(ex.getStatusCode(), exceptionFromDb.getStatusCode());
+    assertTrue(StringUtils.contains(exceptionFromDb.getMessage(), ex.getMessage()));
+
     WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
   }
 
