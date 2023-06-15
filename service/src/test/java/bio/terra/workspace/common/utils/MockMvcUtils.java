@@ -286,6 +286,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/create-result/%s";
   public static final String CONTROLLED_GCP_GCE_INSTANCES_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/gce-instances";
+  public static final String CONTROLLED_GCP_GCE_INSTANCE_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/gce-instances/%s";
   public static final String CONTROLLED_GCP_GCE_INSTANCES_V1_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/gce-instances/create-result/%s";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
