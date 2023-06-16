@@ -29,6 +29,7 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.RawDaoTestFixture;
 import bio.terra.workspace.db.ResourceDao;
@@ -53,7 +54,6 @@ import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCl
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

@@ -13,6 +13,7 @@ import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiAccessScope;
@@ -27,7 +28,6 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
