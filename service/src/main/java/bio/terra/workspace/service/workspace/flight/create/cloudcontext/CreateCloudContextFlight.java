@@ -63,6 +63,12 @@ public class CreateCloudContextFlight extends Flight {
         this, appContext, workspaceUuid, spendProfile, userRequest);
 
     addStep(
-        new CreateCloudContextFinishStep(workspaceUuid, workspaceDao, cloudPlatform), cloudRetry);
+        new CreateCloudContextFinishStep(
+            userRequest,
+            workspaceUuid,
+            workspaceDao,
+            cloudPlatform,
+            appContext.getWorkspaceActivityLogService()),
+        cloudRetry);
   }
 }

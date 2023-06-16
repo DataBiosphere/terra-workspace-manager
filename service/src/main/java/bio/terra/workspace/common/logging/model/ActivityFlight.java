@@ -40,9 +40,13 @@ public enum ActivityFlight {
 
   // Cloud context
   CLOUD_CONTEXT_CREATE_FLIGHT(
-      CreateCloudContextFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT),
+      CreateCloudContextFlight.class.getName(),
+      ActivityLogChangedTarget.CLOUD_CONTEXT,
+      /*logInFlight=*/ true),
   CLOUD_CONTEXT_DELETE_FLIGHT(
-      DeleteCloudContextFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT),
+      DeleteCloudContextFlight.class.getName(),
+      ActivityLogChangedTarget.CLOUD_CONTEXT,
+      /*logInFlight=*/ true),
   DELETE_CLOUD_CONTEXT_RESOURCE_FLIGHT(
       DeleteCloudContextResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
 
@@ -75,7 +79,7 @@ public enum ActivityFlight {
   GCP_WORKSPACE_CLONE_FLIGHT(
       CloneWorkspaceFlight.class.getName(), ActivityLogChangedTarget.WORKSPACE),
   SYNC_GCP_IAM_ROLES_FLIGHT(
-      SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.CLOUD_CONTEXT),
+      SyncGcpIamRolesFlight.class.getName(), ActivityLogChangedTarget.GCP_CLOUD_CONTEXT),
   CONTROLLED_GCS_BUCKET_CLONE_FLIGHT(
       CloneControlledGcsBucketResourceFlight.class.getName(),
       ActivityLogChangedTarget.CONTROLLED_GCP_GCS_BUCKET),
@@ -95,9 +99,23 @@ public enum ActivityFlight {
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;
 
+  /**
+   * If true, write to activity log at the last step of the flight. If false, write to activity log
+   * in the activity log hook.
+   */
+  private final boolean logInFlight;
+
   ActivityFlight(String flightClassName, ActivityLogChangedTarget changedTarget) {
     this.flightClassName = flightClassName;
     this.changedTarget = changedTarget;
+    this.logInFlight = false;
+  }
+
+  ActivityFlight(
+      String flightClassName, ActivityLogChangedTarget changedTarget, boolean logInFlight) {
+    this.flightClassName = flightClassName;
+    this.changedTarget = changedTarget;
+    this.logInFlight = logInFlight;
   }
 
   public static ActivityFlight fromFlightClassName(String flightClassName) {
@@ -118,5 +136,10 @@ public enum ActivityFlight {
 
   public boolean isResourceFlight() {
     return changedTarget.isResource();
+  }
+
+  /** Should skip logging in {@link bio.terra.workspace.common.logging.WorkspaceActivityLogHook}. */
+  public boolean shouldSkipLogInHook() {
+    return logInFlight;
   }
 }
