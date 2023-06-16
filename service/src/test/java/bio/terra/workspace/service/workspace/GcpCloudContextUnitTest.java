@@ -40,19 +40,11 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
   @Test
   void serdesTest() {
-    final String v2Json =
+    // Case 1: successful V2 deserialization
+    String v2Json =
         String.format(
             "{\"version\": 2, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
             GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
-    final String badV2Json =
-        String.format(
-            "{\"version\": 3, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
-            GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
-    final String incompleteV2Json =
-        String.format("{\"version\": 2, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
-    final String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
-
-    // Case 1: successful V2 deserialization
     DbCloudContext dbCloudContext = makeDbCloudContext(CloudPlatform.GCP, v2Json);
     GcpCloudContext goodV2 = GcpCloudContext.deserialize(dbCloudContext);
     assertEquals(goodV2.getGcpProjectId(), GCP_PROJECT_ID);
@@ -62,21 +54,28 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     assertEquals(goodV2.getSamPolicyApplication(), POLICY_APPLICATION);
 
     // Case 2: bad V2 format
+    String badV2Json =
+        String.format(
+            "{\"version\": 3, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
+            GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
     assertThrows(
         InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(makeDbCloudContext(CloudPlatform.GCP, v2Json)),
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(CloudPlatform.GCP, badV2Json)),
         "Bad V2 JSON should throw");
 
     // Case 3: incomplete V2
+    String incompleteV2Json =
+        String.format("{\"version\": 2, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
     assertThrows(
         InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(makeDbCloudContext(CloudPlatform.GCP, v2Json)),
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(CloudPlatform.GCP, incompleteV2Json)),
         "Incomplete V2 JSON should throw");
 
     // Case 4: junk input
+    String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
     assertThrows(
         InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(makeDbCloudContext(CloudPlatform.GCP, v2Json)),
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(CloudPlatform.GCP, junkJson)),
         "Junk JSON should throw");
   }
 

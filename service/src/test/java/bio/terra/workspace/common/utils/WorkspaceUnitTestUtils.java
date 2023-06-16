@@ -18,7 +18,6 @@ import java.util.UUID;
 
 /** Utilities for working with workspaces in unit tests. */
 public class WorkspaceUnitTestUtils {
-  public static final String PROJECT_ID = "my-project-id";
   public static final SpendProfileId SPEND_PROFILE_ID = new SpendProfileId("my-spend-profile");
   public static final String POLICY_OWNER = "policy-owner";
   public static final String POLICY_WRITER = "policy-writer";
@@ -49,13 +48,15 @@ public class WorkspaceUnitTestUtils {
 
   // GCP cloud context
 
+  public static final String GCP_PROJECT_ID = "my-project-id";
+
   /**
    * Creates a workspaces with a GCP cloud context and stores it in the database. Returns the
    * workspace id.
    */
   public static UUID createWorkspaceWithGcpContext(WorkspaceDao workspaceDao) {
     UUID workspaceId = createWorkspaceWithoutCloudContext(workspaceDao);
-    createGcpCloudContextInDatabase(workspaceDao, workspaceId, PROJECT_ID);
+    createGcpCloudContextInDatabase(workspaceDao, workspaceId, GCP_PROJECT_ID);
     return workspaceId;
   }
 

@@ -57,7 +57,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
         "Bad V1 JSON should throw");
 
     // Case 3: incomplete V2
-    final String incompleteV2Json =
+    String incompleteV2Json =
         String.format("{\"version\": 2, \"organizationId\": \"%s\"}", V1_VERSION, ORGANIZATION_ID);
     assertThrows(
         InvalidSerializedVersionException.class,
@@ -65,7 +65,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
         "Incomplete V1 JSON should throw");
 
     // Case 4: junk input
-    final String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
+    String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
     assertThrows(
         InvalidSerializedVersionException.class,
         () -> AwsCloudContext.deserialize(makeDbCloudContext(CloudPlatform.AWS, junkJson)),

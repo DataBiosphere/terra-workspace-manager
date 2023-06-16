@@ -46,7 +46,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
-        workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.PROJECT_ID);
+        workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.GCP_PROJECT_ID);
 
     ControlledGcsBucketResource bucketResource =
         ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
