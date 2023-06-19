@@ -1176,9 +1176,8 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<Void> deleteTerraWorkspaceReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.DELETE_REFERENCE);
     referencedResourceService.deleteReferenceResourceForResourceType(
         workspaceUuid, resourceUuid, WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE, userRequest);
     return new ResponseEntity<>(HttpStatus.OK);

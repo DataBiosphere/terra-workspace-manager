@@ -238,9 +238,7 @@ public class RevokeStep implements Step {
       // Update policy to remove members
       com.google.cloud.Policy.Builder updatedPolicyBuilder = policy.toBuilder();
       updatedPolicyBuilder.setBindings(bindings).setVersion(3);
-      com.google.cloud.Policy updatedPolicy =
-          wsmSaStorageCow.setIamPolicy(
-              bucketResource.getBucketName(), updatedPolicyBuilder.build());
+      wsmSaStorageCow.setIamPolicy(bucketResource.getBucketName(), updatedPolicyBuilder.build());
     }
   }
 

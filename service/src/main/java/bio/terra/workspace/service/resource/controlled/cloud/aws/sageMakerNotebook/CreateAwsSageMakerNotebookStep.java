@@ -12,7 +12,6 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
@@ -75,12 +74,6 @@ public class CreateAwsSageMakerNotebookStep implements Step {
     AwsUtils.appendUserTags(tags, samUser);
     AwsUtils.appendResourceTags(tags, cloudContext, resource);
     tags.add(Tag.builder().key("CliServerName").value(cliConfiguration.getServerName()).build());
-
-    // TODO(TERRA-550): creationParameters may be used later
-    ApiAwsSageMakerNotebookCreationParameters creationParameters =
-        inputParameters.get(
-            ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
-            ApiAwsSageMakerNotebookCreationParameters.class);
 
     AwsUtils.createSageMakerNotebook(
         credentialsProvider,
