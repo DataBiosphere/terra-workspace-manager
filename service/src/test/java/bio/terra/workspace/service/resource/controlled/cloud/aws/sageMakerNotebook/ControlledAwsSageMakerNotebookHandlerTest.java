@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 public class ControlledAwsSageMakerNotebookHandlerTest extends BaseAwsUnitTest {
 
   @Test
-  public void generateCloudName() {
+  public void generateCloudNameTest() {
     String workspaceUserFacingId = "workspaceUserFacingId";
     String resourceName = "resource";
     String generatedName = resourceName + '-' + workspaceUserFacingId;
