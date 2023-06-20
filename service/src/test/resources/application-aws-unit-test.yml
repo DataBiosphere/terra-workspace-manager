@@ -1,0 +1,12 @@
+workspace:
+  aws:
+    discovery:
+      role-arn: "arn:aws:iam::112233445566:role/RoleName"
+      bucket:
+        name: "test-bucket-name"
+        region: "us-east-1"
+    authentication:
+      google-jwt-audience: "google-jwt-audience"
+
+feature:
+  aws-enabled: true

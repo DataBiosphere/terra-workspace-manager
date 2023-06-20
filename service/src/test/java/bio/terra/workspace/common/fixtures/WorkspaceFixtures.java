@@ -2,6 +2,8 @@ package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
@@ -40,6 +42,9 @@ public class WorkspaceFixtures {
   public static final String DEFAULT_SPEND_PROFILE = "wm-default-spend-profile";
   public static final SpendProfileId DEFAULT_SPEND_PROFILE_ID =
       new SpendProfileId(DEFAULT_SPEND_PROFILE);
+
+  public static final SamUser SAM_USER =
+      new SamUser("example@example.com", "123ABC", new BearerToken("token"));
 
   /**
    * Generate the request body for creating an MC_WORKSPACE stage workspace.

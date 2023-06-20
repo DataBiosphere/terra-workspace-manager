@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -10,6 +11,7 @@ import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
 import bio.terra.workspace.generated.model.ApiDeleteCloudContextV2Request;
 import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -103,6 +105,7 @@ public class MvcWorkspaceApi {
       TimeUnit.SECONDS.sleep(POLLING_INTERVAL.getSeconds());
       jobResult = createWorkspaceAsyncResult(userRequest, jobId);
     }
+    assertEquals(StatusEnum.SUCCEEDED, jobResult.getJobReport().getStatus());
     return jobResult;
   }
 
