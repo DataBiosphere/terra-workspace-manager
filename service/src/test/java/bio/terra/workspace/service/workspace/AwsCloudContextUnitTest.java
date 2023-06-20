@@ -1,7 +1,12 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.ACCOUNT_ID;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.ENVIRONMENT_ALIAS;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.MAJOR_VERSION;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.ORGANIZATION_ID;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.TENANT_ALIAS;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.V1_VERSION;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.makeDbCloudContext;
-import static bio.terra.workspace.service.workspace.model.AwsCloudContextFields.AwsCloudContextV1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -13,13 +18,6 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import org.junit.jupiter.api.Test;
 
 public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
-  private static final long V1_VERSION = AwsCloudContextV1.getVersion();
-  private static final String MAJOR_VERSION = "v0.5.8";
-  private static final String ORGANIZATION_ID = "o-organization";
-  private static final String ACCOUNT_ID = "1245893245";
-  private static final String TENANT_ALIAS = "tenant-saas";
-  private static final String ENVIRONMENT_ALIAS = "unit-test-env";
-
   @Test
   void serdesTest() {
     // Case 1: successful V2 deserialization

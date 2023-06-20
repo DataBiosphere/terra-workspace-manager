@@ -129,7 +129,7 @@ public class AwsUtils {
             .build());
   }
 
-  private static StsClient getStsClient() {
+  public static StsClient getStsClient() {
     return getStsClient(AnonymousCredentialsProvider.create());
   }
 
@@ -338,8 +338,7 @@ public class AwsUtils {
         .credentials();
   }
 
-  private static S3Client getS3Client(
-      AwsCredentialsProvider awsCredentialsProvider, Region region) {
+  public static S3Client getS3Client(AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
 
@@ -428,7 +427,7 @@ public class AwsUtils {
    * @param key object (key)
    * @param tags collection of {@link Tag} to be attached to the folder
    */
-  private static void putS3Object(
+  public static void putS3Object(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -485,7 +484,7 @@ public class AwsUtils {
    * @param prefix common prefix
    * @param limit max count of results
    */
-  private static List<String> getS3ObjectKeysByPrefix(
+  public static List<String> getS3ObjectKeysByPrefix(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -538,7 +537,7 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param keys list of objects (keys)
    */
-  private static void deleteS3Objects(
+  public static void deleteS3Objects(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
