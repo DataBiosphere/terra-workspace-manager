@@ -46,14 +46,14 @@ import org.springframework.http.HttpStatus;
 @Tag("azure-unit")
 public class CreateFederatedIdentityStepTest {
   private MockitoSession mockito;
-  private String k8sNamespace = UUID.randomUUID().toString();
+  private final String k8sNamespace = UUID.randomUUID().toString();
   @Mock private AzureConfiguration mockAzureConfig;
   @Mock private CrlService mockCrlService;
   @Mock private KubernetesClientProvider mockKubernetesClientProvider;
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
   @Mock private SamService mockSamService;
   @Mock private WorkspaceService mockWorkspaceService;
-  private UUID workspaceId = UUID.randomUUID();
+  private final UUID workspaceId = UUID.randomUUID();
   @Mock private ResourceDao mockResourceDao;
   @Mock private AzureCloudContext mockAzureCloudContext;
   private final ControlledAzureManagedIdentityResource identityResource =
@@ -63,8 +63,8 @@ public class CreateFederatedIdentityStepTest {
           .build();
   @Mock private MsiManager mockMsiManager;
   @Mock private CoreV1Api mockCoreV1Api;
-  private String oidcIssuer = UUID.randomUUID().toString();
-  private String uamiClientId = UUID.randomUUID().toString();
+  private final String oidcIssuer = UUID.randomUUID().toString();
+  private final String uamiClientId = UUID.randomUUID().toString();
   @Mock private Identities mockIdentities;
   @Mock private MsiManager mockManager;
   @Mock private ManagedServiceIdentityClient mockServiceClient;
@@ -192,15 +192,13 @@ public class CreateFederatedIdentityStepTest {
             mockWorkspaceService,
             workspaceId,
             mockResourceDao);
-    var result =
-        step.createFederatedIdentityAndK8sServiceAccount(
-            identityResource.getManagedIdentityName(),
-            mockAzureCloudContext,
-            mockMsiManager,
-            mockCoreV1Api,
-            oidcIssuer,
-            uamiClientId);
-    return result;
+    return step.createFederatedIdentityAndK8sServiceAccount(
+        identityResource.getManagedIdentityName(),
+        mockAzureCloudContext,
+        mockMsiManager,
+        mockCoreV1Api,
+        oidcIssuer,
+        uamiClientId);
   }
 
   private void setupMocks() {

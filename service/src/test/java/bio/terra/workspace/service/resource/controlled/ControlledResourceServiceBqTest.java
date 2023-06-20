@@ -219,7 +219,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createBqDatasetUndo() throws Exception {
+  void createBqDatasetUndo() {
     String datasetId = ControlledGcpResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
@@ -265,7 +265,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteBqDatasetDo() throws Exception {
+  void deleteBqDatasetDo() {
     String datasetId = ControlledGcpResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 
@@ -310,7 +310,7 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteBqDatasetUndo() throws Exception {
+  void deleteBqDatasetUndo() {
     String datasetId = ControlledGcpResourceFixtures.uniqueDatasetId();
     String location = "us-central1";
 

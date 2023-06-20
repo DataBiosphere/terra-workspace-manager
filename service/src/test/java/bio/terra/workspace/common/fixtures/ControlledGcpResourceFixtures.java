@@ -44,7 +44,6 @@ import com.google.cloud.storage.StorageClass;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -184,7 +183,7 @@ public class ControlledGcpResourceFixtures {
                   .addMatchesStorageClassItem(ApiGcpGcsBucketDefaultStorageClass.STANDARD));
   // list must not be immutable if deserialization is to work
   public static final List<ApiGcpGcsBucketLifecycleRule> LIFECYCLE_RULES =
-      new ArrayList<>(List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2));
+      List.of(LIFECYCLE_RULE_1, LIFECYCLE_RULE_2);
 
   public static final ApiGcpGcsBucketUpdateParameters BUCKET_UPDATE_PARAMETERS_1 =
       new ApiGcpGcsBucketUpdateParameters()

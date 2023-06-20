@@ -45,7 +45,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
   @MockBean private WorkspaceDao mockWorkspaceDao;
   @MockBean private AzureConfiguration mockAzureConfiguration;
 
-  private AuthenticatedUserRequest userRequest =
+  private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest("email", "id", Optional.of("token"));
 
   @Test
