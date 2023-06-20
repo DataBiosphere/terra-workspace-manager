@@ -40,7 +40,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
   @BeforeEach
-  public void setup() throws IOException {
+  public void setup() {
     when(mockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
   }
 
@@ -59,7 +59,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
     assertNull(dbResource);
   }
 
-  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule) throws Exception {
+  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule) {
     when(mockFeatureConfiguration().getStateRule()).thenReturn(rule);
 
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);

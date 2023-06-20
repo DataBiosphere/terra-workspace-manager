@@ -14,7 +14,6 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,8 +50,6 @@ public class CloneWorkspaceFlight extends Flight {
     var spendProfile =
         FlightUtils.getRequired(
             inputParameters, WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
-
-    Workspace sourceWorkspace = flightBeanBag.getWorkspaceDao().getWorkspace(sourceWorkspaceId);
 
     addStep(
         new CloneAllFoldersStep(flightBeanBag.getSamService(), flightBeanBag.getFolderDao()),

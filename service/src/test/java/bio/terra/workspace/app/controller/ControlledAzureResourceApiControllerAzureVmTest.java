@@ -39,7 +39,7 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
   @Autowired ControlledAzureResourceApiController controller;
 
   @BeforeEach
-  void setUp() throws InterruptedException {
+  void setUp() {
     when(mockSamService()
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);

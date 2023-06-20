@@ -123,7 +123,7 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
                   return parts[parts.length - 1];
                 })
             .orElseThrow();
-    final BiFunction<String, String, Database> getDatabaseFunction =
+    BiFunction<String, String, Database> getDatabaseFunction =
         (resourceGroup, resourceName) ->
             azureTestUtils
                 .getPostgreSqlManager()
