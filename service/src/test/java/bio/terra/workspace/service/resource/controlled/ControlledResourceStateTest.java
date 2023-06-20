@@ -12,7 +12,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
@@ -24,6 +23,7 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
+import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +40,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
   @BeforeEach
-  public void setup() {
+  public void setup() throws IOException {
     when(mockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
   }
 
@@ -59,7 +59,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
     assertNull(dbResource);
   }
 
-  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule) {
+  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule) throws Exception {
     when(mockFeatureConfiguration().getStateRule()).thenReturn(rule);
 
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);

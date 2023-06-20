@@ -145,7 +145,8 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createsProjectAndContext_emptySpendProfile_flightFailsAndGcpProjectNotCreated() {
+  void createsProjectAndContext_emptySpendProfile_flightFailsAndGcpProjectNotCreated()
+      throws Exception {
     UUID workspaceUuid = createWorkspace(null);
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());

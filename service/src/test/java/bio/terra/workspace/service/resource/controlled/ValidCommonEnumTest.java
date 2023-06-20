@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 public class ValidCommonEnumTest extends BaseUnitTest {
 
   @Test
-  public void accessScopeValidityTest() {
+  public void accessScopeValidityTest() throws Exception {
     assertThat(
         AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS),
         equalTo(AccessScopeType.ACCESS_SCOPE_PRIVATE));
@@ -42,7 +42,7 @@ public class ValidCommonEnumTest extends BaseUnitTest {
   }
 
   @Test
-  public void managedByValidityTest() {
+  public void managedByValidityTest() throws Exception {
     assertThat(
         ManagedByType.fromApi(ApiManagedBy.APPLICATION),
         equalTo(ManagedByType.MANAGED_BY_APPLICATION));

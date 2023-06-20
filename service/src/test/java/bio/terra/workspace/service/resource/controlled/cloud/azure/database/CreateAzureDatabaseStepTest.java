@@ -180,16 +180,18 @@ public class CreateAzureDatabaseStepTest {
 
     when(mockSamService.getWsmServiceAccountToken()).thenReturn(UUID.randomUUID().toString());
 
-    return new CreateAzureDatabaseStep(
-        mockAzureConfig,
-        mockCrlService,
-        databaseResource,
-        mockLandingZoneApiDispatch,
-        mockSamService,
-        mockWorkspaceService,
-        workspaceId,
-        mockKubernetesClient,
-        mockResourceDao);
+    var step =
+        new CreateAzureDatabaseStep(
+            mockAzureConfig,
+            mockCrlService,
+            databaseResource,
+            mockLandingZoneApiDispatch,
+            mockSamService,
+            mockWorkspaceService,
+            workspaceId,
+            mockKubernetesClient,
+            mockResourceDao);
+    return step;
   }
 
   @NotNull
@@ -241,16 +243,18 @@ public class CreateAzureDatabaseStepTest {
             any()))
         .thenReturn(new V1Pod());
 
-    return new CreateAzureDatabaseStep(
-        mockAzureConfig,
-        mockCrlService,
-        databaseResource,
-        mockLandingZoneApiDispatch,
-        mockSamService,
-        mockWorkspaceService,
-        workspaceId,
-        mockKubernetesClient,
-        mockResourceDao);
+    var step =
+        new CreateAzureDatabaseStep(
+            mockAzureConfig,
+            mockCrlService,
+            databaseResource,
+            mockLandingZoneApiDispatch,
+            mockSamService,
+            mockWorkspaceService,
+            workspaceId,
+            mockKubernetesClient,
+            mockResourceDao);
+    return step;
   }
 
   private FlightContext createMockFlightContext() {

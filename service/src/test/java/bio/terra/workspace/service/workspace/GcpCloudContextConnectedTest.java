@@ -117,8 +117,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(null);
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
-    workspaceId =
-        mockMvcUtils.createWorkspaceWithCloudContext(userRequest, apiCloudPlatform).getId();
+    workspaceId = mockMvcUtils.createWorkspaceWithCloudContext(userRequest).getId();
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     workspaceId2 = null;
   }

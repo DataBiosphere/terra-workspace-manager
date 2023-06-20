@@ -152,6 +152,10 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     referenceResourceService.createReferenceResource(referencedResource, USER_REQUEST);
 
     UUID resourceId = referencedResource.getResourceId();
+    ReferencedDataRepoSnapshotResource originalResource =
+        referenceResourceService
+            .getReferenceResource(workspaceUuid, resourceId)
+            .castByEnum(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT);
     String originalName = referencedResource.getName();
     String originalDescription = referencedResource.getDescription();
 
@@ -442,7 +446,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
   class GcpBucketReference {
 
     @BeforeEach
-    void setup() {
+    void setup() throws Exception {
       // Make the Verify step always succeed
       doReturn(true).when(mockCrlService()).canReadGcsBucket(any(), any());
       doReturn(true).when(mockCrlService()).canReadGcsObject(any(), any(), any());
@@ -629,7 +633,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     private static final String DATA_TABLE_NAME = "testbq datatablename";
 
     @BeforeEach
-    void setup() {
+    void setup() throws Exception {
       // Make the Verify step always succeed
       doReturn(true).when(mockCrlService()).canReadBigQueryDataset(any(), any(), any());
       doReturn(true).when(mockCrlService()).canReadBigQueryDataTable(any(), any(), any(), any());
@@ -880,6 +884,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
     @Test
     void createReferencedBigQueryDataTableResource_missesDataTableName_throwsException() {
+      UUID resourceId = UUID.randomUUID();
+      String resourceName = "testdatarepo-" + resourceId;
+
       assertThrows(
           MissingRequiredFieldException.class,
           () ->
@@ -945,7 +952,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
 
   @Nested
   class TerraWorkspaceReference {
-    final UUID referencedWorkspaceId = UUID.randomUUID();
+    UUID referencedWorkspaceId = UUID.randomUUID();
 
     @BeforeEach
     void setup() throws Exception {
@@ -953,6 +960,9 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     }
 
     private ReferencedTerraWorkspaceResource makeTerraWorkspaceReference() {
+      UUID resourceId = UUID.randomUUID();
+      String resourceName = "terra-workspace-" + resourceId;
+
       return ReferencedTerraWorkspaceResource.builder()
           .wsmResourceFields(ReferenceResourceFixtures.makeDefaultWsmResourceFields(workspaceUuid))
           .referencedWorkspaceId(referencedWorkspaceId)

@@ -38,6 +38,7 @@ import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDataTableReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateBigQueryDatasetReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -281,6 +282,7 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
         workspaceUuid, bqTable.getResourceId(), REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT);
 
     // GCP-Referenced Bucket
+    var bucketUpdateRequest = new ApiUpdateGcsBucketReferenceRequestBody().bucketName("foo");
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         bqResource.getResourceId(),

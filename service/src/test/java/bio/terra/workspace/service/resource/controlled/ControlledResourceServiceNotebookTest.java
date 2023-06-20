@@ -457,11 +457,13 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
 
-    crlService
-        .getAIPlatformNotebooksCow()
-        .instances()
-        .get(fetchedInstance.toInstanceName())
-        .execute();
+    var instanceFromCloud =
+        crlService
+            .getAIPlatformNotebooksCow()
+            .instances()
+            .get(fetchedInstance.toInstanceName())
+            .execute();
+    var metadata = instanceFromCloud.getMetadata();
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -661,7 +663,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createAiNotebookInstanceNoWriterRoleThrowsBadRequest() {
+  void createAiNotebookInstanceNoWriterRoleThrowsBadRequest() throws Exception {
     String instanceId = "create-ai-notebook-instance-shared";
 
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
@@ -692,7 +694,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteAiNotebookInstanceDo() {
+  void deleteAiNotebookInstanceDo() throws Exception {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-do", user);
     InstanceName instanceName = resource.toInstanceName();
@@ -718,7 +720,7 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void deleteAiNotebookInstanceUndoIsDismalFailure() {
+  void deleteAiNotebookInstanceUndoIsDismalFailure() throws Exception {
     ControlledAiNotebookInstanceResource resource =
         createDefaultPrivateAiNotebookInstance("delete-ai-notebook-instance-undo", user);
 

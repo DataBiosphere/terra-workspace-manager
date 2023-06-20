@@ -64,7 +64,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
   private AzureStorageAccessService azureStorageAccessService;
 
   @BeforeEach
-  public void setup() {
+  public void setup() throws InterruptedException {
     var keyProvider = mock(StorageAccountKeyProvider.class);
     var cred = new StorageSharedKeyCredential("fake", "fake");
     when(keyProvider.getStorageAccountKey(any(), any())).thenReturn(cred);

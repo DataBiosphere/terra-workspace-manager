@@ -9,6 +9,7 @@ import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFOR
 
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
+import java.io.IOException;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +26,7 @@ public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudCont
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
   @BeforeEach
-  public void setup() {
+  public void setup() throws IOException {
     when(mockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
   }
 

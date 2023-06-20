@@ -55,9 +55,9 @@ public class CreateAzureNetworkInterfaceStepTest extends BaseAzureUnitTest {
 
   @Mock private AzureCloudContext azureCloudContext;
 
-  private static final String STUB_MRG = "RG";
+  private final String STUB_MRG = "RG";
 
-  private static final String STUB_SUBNET = "SUBNET";
+  private final String STUB_SUBNET = "SUBNET";
 
   private CreateAzureNetworkInterfaceStep networkInterfaceStep;
 
