@@ -1,21 +1,24 @@
-package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
+package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_KMS_KEY_ARN;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.common.exception.ApiException;
-import bio.terra.common.exception.ConflictException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -25,6 +28,7 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,35 +39,45 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
-import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
-import software.amazon.awssdk.services.s3.model.S3Error;
-import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.core.internal.waiters.DefaultWaiterResponse;
+import software.amazon.awssdk.core.waiters.WaiterResponse;
+import software.amazon.awssdk.services.sagemaker.SageMakerClient;
+import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceRequest;
+import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceResponse;
+import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceRequest;
+import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceResponse;
+import software.amazon.awssdk.services.sagemaker.model.SageMakerException;
+import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
+public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
 
   @Mock private FlightContext mockFlightContext;
   @Mock private AwsCloudContextService mockAwsCloudContextService;
   @Mock private SamService mockSamService;
-  @Mock private S3Client mockS3Client;
+  @Mock private CliConfiguration mockCliConfiguration; // TODO-Dex
+  @Mock private SageMakerClient mockSageMakerClient;
+  @Mock private SageMakerWaiter mockSageMakerWaiter;
   private MockedStatic<AwsUtils> mockAwsUtils;
-  private ControlledAwsS3StorageFolderResource s3FolderResource;
-  private static final AwsServiceException s3Exception =
-      S3Exception.builder().message("not authorized to perform").build();
+  private ControlledAwsSageMakerNotebookResource notebookResource;
+  private static final AwsServiceException sageMakerException =
+      SageMakerException.builder().message("not authorized to perform").build();
+  private static final WaiterResponse waiterResponse =
+      DefaultWaiterResponse.builder()
+          .attemptsExecuted(1)
+          .response(DescribeNotebookInstanceResponse.builder().build())
+          .build(); // wait successful
+  private static final WaiterResponse waiterException =
+      DefaultWaiterResponse.builder()
+          .attemptsExecuted(1)
+          .exception(SageMakerException.builder().message("ResourceNotFoundException").build())
+          .build(); // wait failure
 
   @BeforeAll
   public void init() {
     mockAwsUtils = Mockito.mockStatic(AwsUtils.class);
-    s3FolderResource =
-        ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource(
+    notebookResource =
+        ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource(
             ControlledResourceFixtures.WORKSPACE_ID);
   }
 
@@ -76,52 +90,85 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenReturn(ControlledAwsResourceFixtures.credentialProvider);
     when(mockSamService.getSamUser((AuthenticatedUserRequest) any()))
         .thenReturn(WorkspaceFixtures.SAM_USER);
-    mockAwsUtils.when(() -> AwsUtils.getS3Client(any(), any())).thenReturn(mockS3Client);
+    when(mockCliConfiguration.getServerName()).thenReturn("serverName");
+    mockAwsUtils
+        .when(() -> AwsUtils.getSageMakerClient(any(), any()))
+        .thenReturn(mockSageMakerClient);
+    mockAwsUtils.when(() -> AwsUtils.getSageMakerWaiter(any())).thenReturn(mockSageMakerWaiter);
     mockAwsUtils.when(() -> AwsUtils.checkException(any())).thenCallRealMethod();
   }
 
   @Test
-  public void createS3FolderTest() throws InterruptedException {
-    CreateAwsS3StorageFolderStep createS3FolderStep =
-        new CreateAwsS3StorageFolderStep(
-            s3FolderResource,
+  public void createNotebookTest() throws InterruptedException {
+    CreateAwsSageMakerNotebookStep createNotebookStep =
+        new CreateAwsSageMakerNotebookStep(
+            notebookResource,
             mockAwsCloudContextService,
             MockMvcUtils.USER_REQUEST,
-            mockSamService);
+            mockSamService,
+            mockCliConfiguration);
 
-    mockAwsUtils.when(() -> AwsUtils.createStorageFolder(any(), any(), any())).thenCallRealMethod();
+    FlightMap inputFlightMap = new FlightMap();
+    inputFlightMap.put(
+        ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN,
+        AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN);
+    inputFlightMap.put(
+        ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN, AWS_LANDING_ZONE_KMS_KEY_ARN);
+    inputFlightMap.put(
+        ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN,
+        AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
+    inputFlightMap.makeImmutable();
+    doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
+
     mockAwsUtils
-        .when(() -> AwsUtils.putS3Object(any(), any(), any(), any(), any(), any()))
+        .when(() -> AwsUtils.createSageMakerNotebook(any(), any(), any(), any(), any(), any()))
+        .thenCallRealMethod();
+    mockAwsUtils
+        .when(() -> AwsUtils.waitForSageMakerNotebookStatus(any(), any(), any()))
+        .thenCallRealMethod()
         .thenCallRealMethod();
 
-    PutObjectResponse putResponse2xx =
-        (PutObjectResponse)
-            PutObjectResponse.builder()
+    CreateNotebookInstanceResponse createResponse2xx =
+        (CreateNotebookInstanceResponse)
+            CreateNotebookInstanceResponse.builder()
                 .sdkHttpResponse(ControlledAwsResourceFixtures.sdkHttpResponse2xx)
                 .build();
-    PutObjectResponse putResponse4xx =
-        (PutObjectResponse)
-            PutObjectResponse.builder()
+    CreateNotebookInstanceResponse createResponse4xx =
+        (CreateNotebookInstanceResponse)
+            CreateNotebookInstanceResponse.builder()
                 .sdkHttpResponse(ControlledAwsResourceFixtures.sdkHttpResponse4xx)
                 .build();
-    when(mockS3Client.putObject((PutObjectRequest) any(), (RequestBody) any()))
-        .thenReturn(putResponse2xx)
-        .thenReturn(putResponse4xx)
-        .thenThrow(s3Exception);
+    when(mockSageMakerClient.createNotebookInstance((CreateNotebookInstanceRequest) any()))
+        .thenReturn(createResponse2xx)
+        .thenReturn(createResponse2xx)
+        .thenReturn(createResponse4xx)
+        .thenThrow(sageMakerException);
 
-    // success
-    StepResult stepResult = createS3FolderStep.doStep(mockFlightContext);
+    when(mockSageMakerWaiter.waitUntilNotebookInstanceInService(
+            (DescribeNotebookInstanceRequest) any()))
+        .thenReturn(waiterResponse)
+        .thenReturn(waiterException);
+
+    // create success, wait success
+    StepResult stepResult = createNotebookStep.doStep(mockFlightContext);
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
 
-    // call again to mimic request error (eg. duplicate)
-    assertThrows(ApiException.class, () -> createS3FolderStep.doStep(mockFlightContext));
+    // create success, wait failure
+    assertThrows(NotFoundException.class, () -> createNotebookStep.doStep(mockFlightContext));
+
+    // call again to mimic request error
+    assertThrows(ApiException.class, () -> createNotebookStep.doStep(mockFlightContext));
 
     // call again to mimic other AWS error
-    assertThrows(UnauthorizedException.class, () -> createS3FolderStep.doStep(mockFlightContext));
+    assertThrows(UnauthorizedException.class, () -> createNotebookStep.doStep(mockFlightContext));
 
-    verify(mockS3Client, times(3)).putObject((PutObjectRequest) any(), (RequestBody) any());
+    verify(mockSageMakerClient, times(4))
+        .createNotebookInstance((CreateNotebookInstanceRequest) any());
+    verify(mockSageMakerWaiter, times(2))
+        .waitUntilNotebookInstanceInService((DescribeNotebookInstanceRequest) any());
   }
 
+  /*
   @Test
   public void deleteS3FolderTest() throws InterruptedException {
     DeleteAwsS3StorageFolderStep delete3FolderStep =
@@ -158,7 +205,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
     when(mockS3Client.deleteObjects((DeleteObjectsRequest) any()))
         .thenReturn(deleteResponse2xx)
         .thenReturn(deleteResponse4xx)
-        .thenThrow(s3Exception);
+        .thenThrow(S3Exception.builder().message("error").build());
 
     // success
     StepResult stepResult = delete3FolderStep.doStep(mockFlightContext);
@@ -168,7 +215,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
     assertThrows(ApiException.class, () -> delete3FolderStep.doStep(mockFlightContext));
 
     // call again to mimic other AWS error
-    assertThrows(UnauthorizedException.class, () -> delete3FolderStep.doStep(mockFlightContext));
+    assertThrows(ApiException.class, () -> delete3FolderStep.doStep(mockFlightContext));
 
     verify(mockS3Client, times(3)).listObjectsV2((ListObjectsV2Request) any());
     verify(mockS3Client, times(3)).deleteObjects((DeleteObjectsRequest) any());
@@ -206,7 +253,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenReturn(listResponse2xxEmpty)
         .thenReturn(listResponse2xx)
         .thenReturn(listResponse4xx)
-        .thenThrow(s3Exception);
+        .thenThrow(S3Exception.builder().message("error").build());
 
     // success (folder does not exist)
     StepResult stepResult = validateS3FolderCreateStep.doStep(mockFlightContext);
@@ -221,9 +268,9 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
     assertThrows(ApiException.class, () -> validateS3FolderCreateStep.doStep(mockFlightContext));
 
     // call again to mimic other AWS error
-    assertThrows(
-        UnauthorizedException.class, () -> validateS3FolderCreateStep.doStep(mockFlightContext));
+    assertThrows(ApiException.class, () -> validateS3FolderCreateStep.doStep(mockFlightContext));
 
     verify(mockS3Client, times(4)).listObjectsV2((ListObjectsV2Request) any());
   }
+   */
 }

@@ -26,6 +26,12 @@ public class ControlledAwsResourceFixtures {
   public static final String TENANT_ALIAS = "tenant-saas";
   public static final String ENVIRONMENT_ALIAS = "unit-test-env";
   public static final String AWS_REGION = "us-east-1";
+  public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN =
+      "arn:aws:iam::01234567890:role/NotebookRole";
+  public static final String AWS_LANDING_ZONE_KMS_KEY_ARN =
+      "arn:aws:iam::12345678900:role/KmsKeyRole";
+  public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
+      "arn:aws:iam::23456789001:role/KmsKeyRole";
 
   public static final SdkHttpResponse sdkHttpResponse2xx =
       SdkHttpResponse.builder().statusCode(200).build();

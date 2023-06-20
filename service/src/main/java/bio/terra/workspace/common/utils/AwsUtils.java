@@ -342,11 +342,21 @@ public class AwsUtils {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
 
-  private static SageMakerClient getSageMakerClient(
+  public static SageMakerClient getSageMakerClient(
       AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return SageMakerClient.builder()
         .region(region)
         .credentialsProvider(awsCredentialsProvider)
+        .build();
+  }
+
+  public static SageMakerWaiter getSageMakerWaiter(SageMakerClient sageMakerClient) {
+    return SageMakerWaiter.builder()
+        .client(sageMakerClient)
+        .overrideConfiguration(
+            WaiterOverrideConfiguration.builder()
+                .waitTimeout(AwsResourceConstants.SAGEMAKER_CLIENT_WAITER_TIMEOUT)
+                .build())
         .build();
   }
 
@@ -806,15 +816,7 @@ public class AwsUtils {
       NotebookInstanceStatus desiredStatus) {
     Region region = Region.of(notebookResource.getRegion());
     SageMakerClient sageMakerClient = getSageMakerClient(awsCredentialsProvider, region);
-
-    SageMakerWaiter sageMakerWaiter =
-        SageMakerWaiter.builder()
-            .client(sageMakerClient)
-            .overrideConfiguration(
-                WaiterOverrideConfiguration.builder()
-                    .waitTimeout(AwsResourceConstants.SAGEMAKER_CLIENT_WAITER_TIMEOUT)
-                    .build())
-            .build();
+    SageMakerWaiter sageMakerWaiter = getSageMakerWaiter(sageMakerClient);
 
     logger.info(
         "Waiting on notebook with name {}, desired status {}.",
@@ -858,7 +860,7 @@ public class AwsUtils {
     }
   }
 
-  private static void checkException(SdkException ex)
+  public static void checkException(SdkException ex)
       throws NotFoundException, UnauthorizedException, BadRequestException {
     String message = ex.getMessage();
     if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
