@@ -26,7 +26,6 @@ public class GcsBucketCloneTestFixtures {
   public static final String SOURCE_PROJECT_ID = "popular-strawberry-1234";
   public static final String DESTINATION_PROJECT_ID = "hairless-kiwi-5678";
   public static final String SOURCE_BUCKET_NAME = "source-bucket";
-  public static final String SOURCE_BUCKET_DESCRIPTION = "A bucket with a hole in it.";
   public static final String DESTINATION_BUCKET_NAME = "destination-bucket";
   public static final String SOURCE_RESOURCE_NAME = "source_bucket";
   public static final ApiGcpGcsBucketCreationParameters SOURCE_BUCKET_CREATION_PARAMETERS =
@@ -86,5 +85,4 @@ public class GcsBucketCloneTestFixtures {
               Role.of(DESTINATION_ROLE_NAMES.get(0)),
               Identity.serviceAccount(STORAGE_TRANSFER_SERVICE_SA_EMAIL))
           .build();
-  public static final String CONTROL_PLANE_PROJECT_ID = "terra-control-plane-2468";
 }
