@@ -33,14 +33,12 @@ public class ControlledAwsResourceFixtures {
   public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
       "arn:aws:iam::23456789001:role/KmsKeyRole";
 
-  public static final SdkHttpResponse sdkHttpResponse2xx =
+  public static final SdkHttpResponse SDK_HTTP_RESPONSE_2XX =
       SdkHttpResponse.builder().statusCode(200).build();
-  public static final SdkHttpResponse sdkHttpResponse4xx =
-      SdkHttpResponse.builder().statusCode(409).build();
-  public static final SdkHttpResponse sdkHttpResponse5xx =
-      SdkHttpResponse.builder().statusCode(500).build();
+  public static final SdkHttpResponse SDK_HTTP_RESPONSE_4XX =
+      SdkHttpResponse.builder().statusCode(400).build();
 
-  public static final AwsCredentialsProvider credentialProvider =
+  public static final AwsCredentialsProvider AWS_CREDENTIALS_PROVIDER =
       AnonymousCredentialsProvider.create();
 
   // Cloud context

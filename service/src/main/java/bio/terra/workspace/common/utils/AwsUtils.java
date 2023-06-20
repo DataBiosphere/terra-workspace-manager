@@ -370,6 +370,8 @@ public class AwsUtils {
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param storageResource {@link ControlledAwsS3StorageFolderResource}
    * @return True if the folder exists
+   * @throws ApiException ApiException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static boolean checkFolderExists(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -391,6 +393,8 @@ public class AwsUtils {
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param storageResource {@link ControlledAwsS3StorageFolderResource}
    * @param tags collection of {@link Tag} to be attached to the folder
+   * @throws ApiException ApiException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static void createStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -413,6 +417,9 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param storageResource {@link ControlledAwsS3StorageFolderResource}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static void deleteStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -436,6 +443,8 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param key object (key)
    * @param tags collection of {@link Tag} to be attached to the folder
+   * @throws ApiException ApiException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static void putS3Object(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -493,6 +502,8 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param prefix common prefix
    * @param limit max count of results
+   * @throws ApiException ApiException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static List<String> getS3ObjectKeysByPrefix(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -546,6 +557,9 @@ public class AwsUtils {
    * @param region {@link Region}
    * @param bucketName bucket name
    * @param keys list of objects (keys)
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static void deleteS3Objects(
       AwsCredentialsProvider awsCredentialsProvider,
