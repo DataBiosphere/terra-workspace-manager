@@ -268,6 +268,10 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    final GcpCloudContext gcpCloudContext =
+        flightContext
+            .getWorkingMap()
+            .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
     String requestedLocation =
         FlightUtils.getRequired(
             flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);

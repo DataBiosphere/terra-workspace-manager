@@ -184,8 +184,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         userAccessUtils.secondUser().getEmail());
 
     // Create the cloud contexts
-    mockMvcUtils.createCloudContextAndWait(defaultUserRequest, workspaceId, apiCloudPlatform);
-    mockMvcUtils.createCloudContextAndWait(defaultUserRequest, workspaceId2, apiCloudPlatform);
+    mockMvcUtils.createGcpCloudContextAndWait(defaultUserRequest, workspaceId);
+    mockMvcUtils.createGcpCloudContextAndWait(defaultUserRequest, workspaceId2);
 
     ApiWorkspaceDescription workspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
@@ -396,8 +396,9 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   public void update_throws409() throws Exception {
     var oldName = sourceBucket.getMetadata().getName();
     var newName = TestUtils.appendRandomNumber("newbucketresourcename");
-    mockMvcUtils.createReferencedGcsBucket(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId, newName, sourceBucketName);
+    var unused =
+        mockMvcUtils.createReferencedGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(), workspaceId, newName, sourceBucketName);
 
     mockMvcUtils.updateResource(
         ApiGcpGcsBucketResource.class,

@@ -71,8 +71,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   public void setup() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(
-                userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
+            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
             .getId();
     workspaceId2 =
         mockMvcUtils

@@ -80,16 +80,17 @@ public class FolderApiController extends ControllerBase implements FolderApi {
             userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     workspaceService.validateWorkspaceState(workspace);
     var folderId = UUID.randomUUID();
-    folderService.createFolder(
-        new Folder(
-            folderId,
-            workspaceUuid,
-            body.getDisplayName(),
-            body.getDescription(),
-            body.getParentFolderId(),
-            convertApiPropertyToMap(body.getProperties()),
-            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
-            /*createdDate=*/ null));
+    Folder folder =
+        folderService.createFolder(
+            new Folder(
+                folderId,
+                workspaceUuid,
+                body.getDisplayName(),
+                body.getDescription(),
+                body.getParentFolderId(),
+                convertApiPropertyToMap(body.getProperties()),
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+                /*createdDate=*/ null));
     workspaceActivityLogService.writeActivity(
         userRequest,
         workspaceUuid,

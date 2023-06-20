@@ -37,7 +37,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
   @Autowired ControlledAzureResourceApiController controller;
 
   @BeforeEach
-  void setUp() {
+  void setUp() throws InterruptedException {
     when(mockSamService()
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);

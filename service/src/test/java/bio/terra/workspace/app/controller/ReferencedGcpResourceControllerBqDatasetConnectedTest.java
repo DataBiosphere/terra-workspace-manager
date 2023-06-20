@@ -76,8 +76,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
   public void setup() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(
-                userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
+            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
             .getId();
     ApiWorkspaceDescription workspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);

@@ -53,8 +53,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
   public void setup() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(
-                userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
+            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
             .getId();
   }
 

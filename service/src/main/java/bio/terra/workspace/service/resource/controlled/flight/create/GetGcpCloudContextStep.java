@@ -7,6 +7,9 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import java.util.UUID;
@@ -30,6 +33,11 @@ public class GetGcpCloudContextStep implements Step {
       throws InterruptedException, RetryException {
     FlightMap workingMap = flightContext.getWorkingMap();
     if (workingMap.get(GCP_CLOUD_CONTEXT, GcpCloudContext.class) == null) {
+      AuthenticatedUserRequest userRequest =
+          FlightUtils.getRequired(
+              flightContext.getInputParameters(),
+              JobMapKeys.AUTH_USER_INFO.getKeyName(),
+              AuthenticatedUserRequest.class);
       workingMap.put(
           GCP_CLOUD_CONTEXT, gcpCloudContextService.getRequiredGcpCloudContext(workspaceUuid));
     }

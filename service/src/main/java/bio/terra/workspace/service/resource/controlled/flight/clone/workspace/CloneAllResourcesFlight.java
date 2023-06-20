@@ -114,7 +114,7 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceCloneInputs.getFlightId()),
                 RetryRules.shortDatabase());
           }
-          default ->
+          case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE ->
           // Can't throw in a flight constructor
           logger.error(
               "Unsupported controlled resource type {}",

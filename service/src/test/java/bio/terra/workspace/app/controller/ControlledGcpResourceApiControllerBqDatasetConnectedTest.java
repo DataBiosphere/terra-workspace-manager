@@ -131,8 +131,8 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
         userAccessUtils.secondUser().getEmail());
 
     // Create the cloud contexts
-    mockMvcUtils.createCloudContextAndWait(defaultUserRequest, workspaceId, apiCloudPlatform);
-    mockMvcUtils.createCloudContextAndWait(defaultUserRequest, workspaceId2, apiCloudPlatform);
+    mockMvcUtils.createGcpCloudContextAndWait(defaultUserRequest, workspaceId);
+    mockMvcUtils.createGcpCloudContextAndWait(defaultUserRequest, workspaceId2);
 
     ApiWorkspaceDescription workspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
@@ -290,12 +290,13 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
     var oldName = sourceResource.getMetadata().getName();
     var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
 
-    mockMvcUtils.createReferencedBqDataset(
-        userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
-        newName,
-        projectId,
-        sourceDatasetName);
+    var unused =
+        mockMvcUtils.createReferencedBqDataset(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            newName,
+            projectId,
+            sourceDatasetName);
 
     mockMvcUtils.updateResource(
         ApiGcpBigQueryDatasetResource.class,
