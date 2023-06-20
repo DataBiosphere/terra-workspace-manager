@@ -42,7 +42,7 @@ public class PolicyFixtures {
           .name(REGION_CONSTRAINT)
           .addAdditionalDataItem(new ApiWsmPolicyPair().key(REGION).value(IOWA_REGION));
 
-  public static final ApiWsmPolicyInput REGION_POLICY_NEVADA =
+  public static ApiWsmPolicyInput REGION_POLICY_NEVADA =
       new ApiWsmPolicyInput()
           .namespace(NAMESPACE)
           .name(REGION_CONSTRAINT)

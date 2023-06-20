@@ -1,7 +1,7 @@
 package bio.terra.workspace.db;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext;
+import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -435,9 +435,9 @@ public class FolderDaoTest extends BaseUnitTest {
     // second and third folders are under folder foo.
     var secondFolder = getFolder("bar", workspaceUuid, folder.id());
     var thirdFolder = getFolder("garrr", workspaceUuid, folder.id());
-    folderDao.createFolder(folder);
-    folderDao.createFolder(secondFolder);
-    folderDao.createFolder(thirdFolder);
+    var createdFolder = folderDao.createFolder(folder);
+    var createdSecondFolder = folderDao.createFolder(secondFolder);
+    var createdThirdFolder = folderDao.createFolder(thirdFolder);
 
     assertTrue(folderDao.deleteAllFolders(workspaceUuid));
 
