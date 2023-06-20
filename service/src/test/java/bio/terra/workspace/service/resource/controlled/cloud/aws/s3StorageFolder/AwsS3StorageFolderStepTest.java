@@ -173,9 +173,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @Test
   public void validateS3FolderCreateTest() throws InterruptedException {
     ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
-        new ValidateAwsS3StorageFolderCreateStep(
-            s3FolderResource,
-            mockAwsCloudContextService);
+        new ValidateAwsS3StorageFolderCreateStep(s3FolderResource, mockAwsCloudContextService);
 
     mockAwsUtils.when(() -> AwsUtils.checkFolderExists(any(), any())).thenCallRealMethod();
     mockAwsUtils
@@ -200,9 +198,9 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
             ListObjectsV2Response.builder()
                 .sdkHttpResponse(ControlledAwsResourceFixtures.sdkHttpResponse4xx)
                 .build();
-    when(mockS3Client.listObjectsV2((ListObjectsV2Request) any())).
-        thenReturn(listResponse2xxEmpty).
-        thenReturn(listResponse2xx)
+    when(mockS3Client.listObjectsV2((ListObjectsV2Request) any()))
+        .thenReturn(listResponse2xxEmpty)
+        .thenReturn(listResponse2xx)
         .thenReturn(listResponse4xx)
         .thenThrow(S3Exception.builder().message("error").build());
 
