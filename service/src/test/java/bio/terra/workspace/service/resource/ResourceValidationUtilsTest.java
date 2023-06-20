@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
@@ -513,7 +512,6 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
   @Test
   public void validateRegion_invalid_throws() throws Exception {
     UUID workspaceId = UUID.randomUUID();
-    TpsPaoGetResult pao = new TpsPaoGetResult().objectId(workspaceId);
     when(mockTpsApiDispatch().listValidRegions(workspaceId, CloudPlatform.GCP))
         .thenReturn(List.of("us-central1", "us-east1"));
 

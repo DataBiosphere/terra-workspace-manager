@@ -22,7 +22,7 @@ import org.mockito.Mock;
 /** Base class for storage account and storage container tests. */
 public class BaseStorageStepTest extends BaseAzureUnitTest {
 
-  protected final String STUB_STRING_RETURN = "stubbed-return";
+  protected static final String STUB_STRING_RETURN = "stubbed-return";
 
   @Mock protected FlightContext mockFlightContext;
   @Mock protected CrlService mockCrlService;

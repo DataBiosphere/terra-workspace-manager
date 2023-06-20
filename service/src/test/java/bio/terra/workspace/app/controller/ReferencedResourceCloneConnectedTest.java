@@ -66,7 +66,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
   private ApiGcpGcsBucketResource sourceResource;
 
   @BeforeEach
-  public void setup() throws Exception {
+  public void setup() {
     sourceWorkspaceId = null;
     destinationWorkspaceId = null;
   }

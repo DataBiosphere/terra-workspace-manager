@@ -24,7 +24,6 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -40,7 +39,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 
   @BeforeEach
-  public void setup() throws IOException {
+  public void setup() {
     when(mockGcpCloudContextService().getRequiredGcpProject(any())).thenReturn(FAKE_PROJECT_ID);
   }
 
@@ -59,7 +58,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
     assertNull(dbResource);
   }
 
-  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule) throws Exception {
+  private WsmResource testCreateBucketFailedState(WsmResourceStateRule rule) {
     when(mockFeatureConfiguration().getStateRule()).thenReturn(rule);
 
     UUID workspaceId = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);

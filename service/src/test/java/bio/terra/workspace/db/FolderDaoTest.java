@@ -435,9 +435,9 @@ public class FolderDaoTest extends BaseUnitTest {
     // second and third folders are under folder foo.
     var secondFolder = getFolder("bar", workspaceUuid, folder.id());
     var thirdFolder = getFolder("garrr", workspaceUuid, folder.id());
-    var createdFolder = folderDao.createFolder(folder);
-    var createdSecondFolder = folderDao.createFolder(secondFolder);
-    var createdThirdFolder = folderDao.createFolder(thirdFolder);
+    folderDao.createFolder(folder);
+    folderDao.createFolder(secondFolder);
+    folderDao.createFolder(thirdFolder);
 
     assertTrue(folderDao.deleteAllFolders(workspaceUuid));
 
