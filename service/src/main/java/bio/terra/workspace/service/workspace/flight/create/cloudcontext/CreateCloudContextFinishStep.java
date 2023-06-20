@@ -12,10 +12,13 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -30,15 +33,24 @@ import org.springframework.http.HttpStatus;
  */
 public class CreateCloudContextFinishStep implements Step {
 
+  private final AuthenticatedUserRequest userRequest;
   private final WorkspaceDao workspaceDao;
   private final UUID workspaceUuid;
   private final CloudPlatform cloudPlatform;
 
+  private final WorkspaceActivityLogService workspaceActivityLogService;
+
   public CreateCloudContextFinishStep(
-      UUID workspaceUuid, WorkspaceDao workspaceDao, CloudPlatform cloudPlatform) {
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceUuid,
+      WorkspaceDao workspaceDao,
+      CloudPlatform cloudPlatform,
+      WorkspaceActivityLogService workspaceActivityLogService) {
+    this.userRequest = userRequest;
     this.workspaceDao = workspaceDao;
     this.cloudPlatform = cloudPlatform;
     this.workspaceUuid = workspaceUuid;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
@@ -68,6 +80,12 @@ public class CreateCloudContextFinishStep implements Step {
             .getCloudContextService()
             .makeCloudContextFromDb(dbCloudContext);
 
+    workspaceActivityLogService.writeActivity(
+        userRequest,
+        workspaceUuid,
+        OperationType.CREATE,
+        workspaceUuid.toString(),
+        cloudContext.getCloudPlatform().toActivityLogChangeTarget());
     FlightUtils.setResponse(flightContext, fullCloudContext, HttpStatus.OK);
     return StepResult.getStepResultSuccess();
   }

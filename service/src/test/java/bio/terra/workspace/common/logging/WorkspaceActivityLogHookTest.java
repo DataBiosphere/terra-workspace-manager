@@ -44,14 +44,11 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.Clone
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
-import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
@@ -261,62 +258,6 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             WorkspaceDeleteFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getWorkspaceIfExists(workspaceUuid).isPresent());
-    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
-    assertTrue(changeDetailsAfterFailedFlight.isEmpty());
-  }
-
-  @Test
-  void deleteCloudContextFlightFails_cloudContextNotExist_logChangeDetails()
-      throws InterruptedException {
-    var workspaceUuid = UUID.randomUUID();
-    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
-    assertTrue(emptyChangeDetails.isEmpty());
-
-    FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
-    hook.endFlight(
-        new FakeFlightContext(
-            DeleteCloudContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
-
-    assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());
-    ActivityLogChangeDetails changeDetailsAfterFailedFlight =
-        activityLogDao.getLastUpdatedDetails(workspaceUuid).get();
-    assertEquals(
-        changeDetailsAfterFailedFlight,
-        new ActivityLogChangeDetails(
-            changeDetailsAfterFailedFlight.changeDate(),
-            USER_REQUEST.getEmail(),
-            USER_REQUEST.getSubjectId(),
-            DELETE,
-            workspaceUuid.toString(),
-            ActivityLogChangedTarget.WORKSPACE));
-  }
-
-  @Test
-  void deleteGcpCloudContextFlightFails_cloudContextStillExist_notLogChangeDetails()
-      throws InterruptedException {
-    String fakeCloudContextJson =
-        "{\"version\": 2, \"gcpProjectId\": \"terra-wsm-t-clean-berry-5152\", \"samPolicyOwner\": \"policy-owner\", \"samPolicyReader\": \"policy-reader\", \"samPolicyWriter\": \"policy-writer\", \"samPolicyApplication\": \"policy-application\"}";
-
-    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
-    var workspaceUuid = workspace.getWorkspaceId();
-    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
-    assertTrue(emptyChangeDetails.isEmpty());
-
-    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
-
-    var flightId = UUID.randomUUID().toString();
-    var spendProfileId = new SpendProfileId("fake-spend-profile-id");
-    workspaceDao.createCloudContextStart(
-        workspaceUuid, CloudPlatform.GCP, spendProfileId, flightId);
-    workspaceDao.createCloudContextSuccess(
-        workspaceUuid, CloudPlatform.GCP, fakeCloudContextJson, flightId);
-
-    FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
-    hook.endFlight(
-        new FakeFlightContext(
-            DeleteCloudContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
-
-    assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isPresent());
     var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }

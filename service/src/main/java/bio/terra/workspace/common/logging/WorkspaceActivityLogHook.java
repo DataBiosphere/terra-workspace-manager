@@ -23,7 +23,6 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
-import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -35,13 +34,11 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,6 +100,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     var subjectId = userStatusInfo.getUserSubjectId();
 
     ActivityFlight af = ActivityFlight.fromFlightClassName(flightClassName);
+    if (af.shouldSkipLogInHook()) {
+      return HookAction.CONTINUE;
+    }
     if (workspaceId == null) {
       return maybeLogFlightWithoutWorkspaceId(
           context, flightClassName, operationType, userEmail, subjectId);
@@ -113,8 +113,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     if (operationType == OperationType.DELETE) {
       switch (af.getActivityLogChangedTarget()) {
         case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid, userEmail, subjectId);
-        case CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-            CloudPlatform.GCP, workspaceUuid, userEmail, subjectId);
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);
         default -> {
           if (af.isResourceFlight()) {
@@ -132,7 +130,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     // Always log when the flight succeeded.
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       switch (af.getActivityLogChangedTarget()) {
-        case WORKSPACE, CLOUD_CONTEXT -> activityLogDao.writeActivity(
+        case WORKSPACE -> activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(
                 userEmail,
@@ -284,27 +282,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               OperationType.DELETE,
               workspaceUuid.toString(),
               ActivityLogChangedTarget.WORKSPACE));
-    }
-  }
-
-  private void maybeLogCloudContextDeletionFlight(
-      CloudPlatform cloudPlatform, UUID workspaceUuid, String userEmail, String subjectId) {
-    Optional<DbCloudContext> cloudContext =
-        workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
-    if (cloudContext.isEmpty()) {
-      activityLogDao.writeActivity(
-          workspaceUuid,
-          new DbWorkspaceActivityLog(
-              userEmail,
-              subjectId,
-              OperationType.DELETE,
-              workspaceUuid.toString(),
-              ActivityLogChangedTarget.WORKSPACE));
-    } else {
-      logger.warn(
-          "CloudContext in workspace {} deletion fails; not writing deletion "
-              + "to workspace activity log",
-          workspaceUuid);
     }
   }
 

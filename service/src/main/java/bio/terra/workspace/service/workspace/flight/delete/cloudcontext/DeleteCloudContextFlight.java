@@ -74,6 +74,13 @@ public class DeleteCloudContextFlight extends Flight {
     // Add the delete steps for the appropriate cloud type
     cloudContextService.addDeleteCloudContextSteps(this, appContext, workspaceUuid, userRequest);
 
-    addStep(new DeleteCloudContextFinishStep(workspaceUuid, workspaceDao, cloudPlatform), dbRetry);
+    addStep(
+        new DeleteCloudContextFinishStep(
+            userRequest,
+            workspaceUuid,
+            workspaceDao,
+            cloudPlatform,
+            appContext.getWorkspaceActivityLogService()),
+        dbRetry);
   }
 }
