@@ -228,11 +228,6 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", serverName));
     assertThat(
         instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", workspaceUserFacingId));
-    ServiceAccountName serviceAccountName =
-        ServiceAccountName.builder()
-            .projectId(instanceName.projectId())
-            .email(instance.getServiceAccount())
-            .build();
 
     // Creating a controlled resource with a duplicate underlying notebook instance is not allowed.
     ControlledAiNotebookInstanceResource duplicateResource =

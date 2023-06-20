@@ -432,7 +432,6 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void mergeCheck_existingResourceNoPolicyOnSource() throws Exception {
     var userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
-    UUID sourceWorkspaceId = null;
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =

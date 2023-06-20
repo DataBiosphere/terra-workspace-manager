@@ -27,20 +27,15 @@ public class ControlledResourceFixtures {
       OffsetDateTime.parse("2017-12-03T10:15:30+01:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
   public static final OffsetDateTime OFFSET_DATE_TIME_2 =
       OffsetDateTime.parse("2017-12-03T10:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-
   public static final DateTime DATE_TIME_1 = DateTime.parseRfc3339("1985-04-12T23:20:50.52Z");
   public static final DateTime DATE_TIME_2 = DateTime.parseRfc3339("1996-12-19T16:39:57-08:00");
-
   public static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
-  public static final String OWNER_EMAIL = "jay@all-the-bits-thats-fit-to-blit.dev";
-
   public static final UUID RESOURCE_ID = UUID.fromString("11111111-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String RESOURCE_NAME = "my_first_bucket";
   public static final String RESOURCE_DESCRIPTION =
       "A bucket that had beer in it, briefly. \uD83C\uDF7B";
   public static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
   public static final String DEFAULT_RESOURCE_REGION = "us-central1";
-  public static final CloningInstructions CLONING_INSTRUCTIONS = CloningInstructions.COPY_RESOURCE;
 
   /** Returns a {@link ControlledResourceFields.Builder} with the fields filled in */
   public static ControlledResourceFields.Builder makeDefaultControlledResourceFieldsBuilder() {

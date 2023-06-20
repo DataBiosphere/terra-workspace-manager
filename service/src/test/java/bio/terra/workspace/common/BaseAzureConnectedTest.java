@@ -4,7 +4,6 @@ import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.AzureConnectedTestUtils;
 import bio.terra.workspace.connected.LandingZoneTestUtils;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.TestLandingZoneManager;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
@@ -29,7 +28,6 @@ public class BaseAzureConnectedTest extends BaseTest {
   @Autowired protected AzureConnectedTestUtils azureUtils;
   @Autowired private LandingZoneTestUtils landingZoneTestUtils;
   @Autowired private LandingZoneDao landingZoneDao;
-  @Autowired private WorkspaceDao workspaceDao;
 
   protected TestLandingZoneManager testLandingZoneManager;
   protected UUID landingZoneId;
@@ -50,8 +48,7 @@ public class BaseAzureConnectedTest extends BaseTest {
 
     // create quasi landing zone with no resources, tests can add any they need
     landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
-    testLandingZoneManager =
-        new TestLandingZoneManager(landingZoneDao, workspaceDao, azureTestUtils);
+    testLandingZoneManager = new TestLandingZoneManager(landingZoneDao, azureTestUtils);
     testLandingZoneManager.createLandingZoneDbRecord(landingZoneId);
 
     azureUtils.createCloudContext(workspace.getWorkspaceId(), userRequest);

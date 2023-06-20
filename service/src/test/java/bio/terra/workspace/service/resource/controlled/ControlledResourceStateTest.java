@@ -24,7 +24,6 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -45,7 +44,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   }
 
   @Test
-  public void testCreateBucketFailBroken() throws Exception {
+  public void testCreateBucketFailBroken() {
     // Get the resource from database and check state
     WsmResource dbResource = testCreateBucketFailedState(WsmResourceStateRule.BROKEN_ON_FAILURE);
     assertNotNull(dbResource);
@@ -53,7 +52,7 @@ public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContext
   }
 
   @Test
-  public void testCreateBucketFailDeleted() throws Exception {
+  public void testCreateBucketFailDeleted() {
     // Get the resource from database and check state
     WsmResource dbResource = testCreateBucketFailedState(WsmResourceStateRule.DELETE_ON_FAILURE);
     assertNull(dbResource);
