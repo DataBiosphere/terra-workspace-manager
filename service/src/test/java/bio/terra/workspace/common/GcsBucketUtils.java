@@ -65,10 +65,7 @@ public class GcsBucketUtils {
     // Define resource
     BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
 
-    URL url =
-        storage.signUrl(blobInfo, 12, TimeUnit.HOURS, Storage.SignUrlOption.withV4Signature());
-
-    return url;
+    return storage.signUrl(blobInfo, 12, TimeUnit.HOURS, Storage.SignUrlOption.withV4Signature());
   }
 
   /**
@@ -158,7 +155,7 @@ public class GcsBucketUtils {
 
   /** Asserts table is populated as per populateBqTable(). */
   public void assertBucketHasNoFiles(
-      AuthenticatedUserRequest userRequest, String projectId, String bucketName) throws Exception {
+      AuthenticatedUserRequest userRequest, String projectId, String bucketName) {
     StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
     int numFiles = 0;
     for (BlobCow blob : storageCow.get(bucketName).list().iterateAll()) {

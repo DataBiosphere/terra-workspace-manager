@@ -46,12 +46,12 @@ public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
   @Mock private GcpCloudContextService mockGcpCloudContextService;
 
   UpdateBigQueryDatasetStep updateBigQueryDatasetStep;
-  Dataset mockExistingDataset = new Dataset();
-  ControlledBigQueryDatasetResource baseDatasetResource =
+  final Dataset mockExistingDataset = new Dataset();
+  final ControlledBigQueryDatasetResource baseDatasetResource =
       ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(null)
           .projectId(PROJECT_ID)
           .build();
-  FlightMap workingMap = new FlightMap();
+  final FlightMap workingMap = new FlightMap();
   DbUpdater dbUpdater;
 
   @Captor private ArgumentCaptor<Dataset> datasetCaptor;
