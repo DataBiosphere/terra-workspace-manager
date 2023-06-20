@@ -8,14 +8,18 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreateCustomGcpRolesStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.CreatePetSaStep;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteCloudContextResourceFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.DeleteGcpProjectStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.GcpCloudSyncStep;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.GenerateRbsRequestIdStep;
@@ -29,6 +33,7 @@ import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCl
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
@@ -52,11 +57,14 @@ public class GcpCloudContextService implements CloudContextService {
 
   private final WorkspaceDao workspaceDao;
   private final ResourceDao resourceDao;
+  private final JobService jobService;
 
   @Autowired
-  public GcpCloudContextService(WorkspaceDao workspaceDao, ResourceDao resourceDao) {
+  public GcpCloudContextService(
+      WorkspaceDao workspaceDao, ResourceDao resourceDao, JobService jobService) {
     this.workspaceDao = workspaceDao;
     this.resourceDao = resourceDao;
+    this.jobService = jobService;
   }
 
   // Set up static accessor for use by CloudPlatform
@@ -148,13 +156,21 @@ public class GcpCloudContextService implements CloudContextService {
       UUID resourceId,
       String flightId,
       AuthenticatedUserRequest userRequest) {
-    controlledResourceService.deleteControlledResourceAsync(
-        flightId,
-        workspaceUuid,
-        resourceId,
-        /* forceDelete= */ true,
-        /* resultPath= */ null,
-        userRequest);
+    jobService
+        .newJob()
+        .description(
+            String.format("Delete GCP resource %s in workspace %s", resourceId, workspaceUuid))
+        .jobId(flightId)
+        .flightClass(DeleteCloudContextResourceFlight.class)
+        .userRequest(userRequest)
+        .workspaceId(workspaceUuid.toString())
+        .operationType(OperationType.DELETE)
+        // Ignore setting resourceType, resourceName, stewardshipType for delete context flight
+        .workspaceId(workspaceUuid.toString())
+        .addParameter(WorkspaceFlightMapKeys.ControlledResourceKeys.FORCE_DELETE, true)
+        .addParameter(JobMapKeys.RESULT_PATH.getKeyName(), null)
+        .addParameter(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, resourceId.toString())
+        .submit();
   }
 
   /**

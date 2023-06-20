@@ -15,7 +15,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.core.type.TypeReference;
-import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -24,11 +23,6 @@ import org.slf4j.LoggerFactory;
 public class RunDeleteCloudContextFlightStep implements Step {
   private static final Logger logger =
       LoggerFactory.getLogger(RunDeleteCloudContextFlightStep.class);
-  private static final Duration TOTAL_DURATION = Duration.ofHours(1);
-  private static final Duration INITIAL_SLEEP = Duration.ofSeconds(10);
-  private static final double FACTOR_INCREASE = 0.7;
-  private static final Duration MAX_SLEEP = Duration.ofMinutes(2);
-
   private final UUID workspaceUuid;
   private final CloudPlatform cloudPlatform;
   private final AuthenticatedUserRequest userRequest;

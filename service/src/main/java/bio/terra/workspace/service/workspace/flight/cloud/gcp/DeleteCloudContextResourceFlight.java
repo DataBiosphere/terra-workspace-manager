@@ -3,17 +3,13 @@ package bio.terra.workspace.service.workspace.flight.cloud.gcp;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
-import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStartStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteMetadataStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteSamResourceStep;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import com.fasterxml.jackson.core.type.TypeReference;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -34,25 +30,17 @@ public class DeleteCloudContextResourceFlight extends Flight {
         UUID.fromString(
             FlightUtils.getRequired(
                 inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
-    List<ControlledResource> controlledResources =
-        FlightUtils.getRequired(
-            inputParameters,
-            WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE,
-            new TypeReference<>() {});
-
-    if (controlledResources.size() != 1) {
-      throw new InternalLogicException(
-          "Unexpected number of resources: " + controlledResources.size());
-    }
-    ControlledResource resource = controlledResources.get(0);
+    UUID resourceId =
+        UUID.fromString(
+            FlightUtils.getRequired(
+                inputParameters, WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_ID, String.class));
 
     RetryRule cloudRetry = RetryRules.cloud();
     RetryRule dbRetry = RetryRules.shortDatabase();
 
     // Mark the resource as in the deleting step to avoid concurrency issues.
     addStep(
-        new DeleteMetadataStartStep(
-            flightBeanBag.getResourceDao(), workspaceUuid, resource.getResourceId()),
+        new DeleteMetadataStartStep(flightBeanBag.getResourceDao(), workspaceUuid, resourceId),
         dbRetry);
 
     // Delete the Sam resource. That will make the object inaccessible.
@@ -61,13 +49,11 @@ public class DeleteCloudContextResourceFlight extends Flight {
             flightBeanBag.getResourceDao(),
             flightBeanBag.getSamService(),
             workspaceUuid,
-            resource.getResourceId()),
+            resourceId),
         cloudRetry);
 
     // Delete the metadata
     addStep(
-        new DeleteMetadataStep(
-            flightBeanBag.getResourceDao(), workspaceUuid, resource.getResourceId()),
-        dbRetry);
+        new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceUuid, resourceId), dbRetry);
   }
 }

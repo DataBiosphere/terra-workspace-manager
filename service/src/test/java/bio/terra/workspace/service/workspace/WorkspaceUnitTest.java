@@ -46,6 +46,7 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   @MockBean private WorkspaceActivityLogService mockWorkspaceActivityLogService;
 
   @Autowired private WorkspaceService workspaceService;
+  @Autowired private WorkspaceDao workspaceDao;
 
   @Test
   void testErrorSerdes_errorReportExceptionWorks() {
