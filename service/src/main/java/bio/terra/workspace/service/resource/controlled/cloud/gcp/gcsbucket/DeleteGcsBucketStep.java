@@ -5,6 +5,7 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.exception.BucketDeleteTimeoutException;
@@ -53,8 +54,11 @@ public class DeleteGcsBucketStep implements Step {
     // If the bucket is already deleted (e.g. this step is being retried), storageCow.get() will
     // return null.
     BucketCow bucket = storageCow.get(resource.getBucketName());
-    boolean bucketExists = bucket != null;
-    while (bucketExists) {
+    if (bucket == null) {
+      return StepResult.getStepResultSuccess();
+    }
+
+    for (int i = 0; i < MAX_DELETE_TRIES; i++) {
       // We always replace the lifecycle rules. This covers the case where the step is rerun
       // and covers the case where the rules are changed out of band of this operation.
       BucketCow bucketCow =
@@ -68,35 +72,39 @@ public class DeleteGcsBucketStep implements Step {
                               .build())))
               .build();
       bucket = bucketCow.update();
-      bucketExists = tryBucketDelete(bucket);
-      if (bucketExists) {
-        TimeUnit.HOURS.sleep(1);
+      if (tryBucketDelete(bucket, flightContext.getFlightId())) {
+        return StepResult.getStepResultSuccess();
       }
-      deleteTries++;
-      if (deleteTries >= MAX_DELETE_TRIES) {
-        // This will cause the flight to fail.
-        throw new BucketDeleteTimeoutException(
-            String.format("Failed to delete bucket after %d tries", MAX_DELETE_TRIES));
-      }
+      // Delete is not complete; take a timeout
+      TimeUnit.HOURS.sleep(1);
     }
-    return StepResult.getStepResultSuccess();
+
+    return new StepResult(
+        StepStatus.STEP_RESULT_FAILURE_FATAL,
+        new BucketDeleteTimeoutException(
+            String.format("Failed to delete bucket after %d tries", MAX_DELETE_TRIES)));
   }
 
   /**
    * Try deleting the bucket. It will fail if there are objects still in the bucket.
    *
    * @param bucket bucket we should try to delete
-   * @return bucket existence: true if the bucket still exists; false if we deleted it
+   * @return true if we deleted it, false if we failed to delete for some reason
    */
-  private boolean tryBucketDelete(BucketCow bucket) {
+  private boolean tryBucketDelete(BucketCow bucket, String flightId) {
     try {
-      logger.info("Attempting to delete bucket " + bucket.getBucketInfo().getName());
+      logger.info(
+          "Flight {} attempting to delete bucket {}", flightId, bucket.getBucketInfo().getName());
       bucket.delete();
-      return false;
+      logger.info("Flight {} deleted bucket {}", flightId, bucket.getBucketInfo().getName());
+      return true;
     } catch (StorageException ex) {
       logger.info(
-          "Attempt to delete bucket failed on this try: " + bucket.getBucketInfo().getName(), ex);
-      return true;
+          "Flight {} failed to delete bucket {} on this try: ",
+          flightId,
+          bucket.getBucketInfo().getName(),
+          ex);
+      return false;
     }
   }
 
