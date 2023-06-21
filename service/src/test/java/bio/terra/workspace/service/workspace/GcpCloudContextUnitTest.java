@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.makeDbCloudContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,7 +21,6 @@ import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersion
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,32 +38,14 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
 
   @Autowired private WorkspaceDao workspaceDao;
 
-  private DbCloudContext makeDbCloudContext(String json) {
-    return new DbCloudContext()
-        .cloudPlatform(CloudPlatform.GCP)
-        .spendProfile(WorkspaceUnitTestUtils.SPEND_PROFILE_ID)
-        .contextJson(json)
-        .state(WsmResourceState.READY)
-        .flightId(null)
-        .error(null);
-  }
-
   @Test
   void serdesTest() {
-    final String v2Json =
+    // Case 1: successful V2 deserialization
+    String v2Json =
         String.format(
             "{\"version\": 2, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
             GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
-    final String badV2Json =
-        String.format(
-            "{\"version\": 3, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
-            GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
-    final String incompleteV2Json =
-        String.format("{\"version\": 2, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
-    final String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
-
-    // Case 1: successful V2 deserialization
-    DbCloudContext dbCloudContext = makeDbCloudContext(v2Json);
+    DbCloudContext dbCloudContext = makeDbCloudContext(CloudPlatform.GCP, v2Json);
     GcpCloudContext goodV2 = GcpCloudContext.deserialize(dbCloudContext);
     assertEquals(goodV2.getGcpProjectId(), GCP_PROJECT_ID);
     assertEquals(goodV2.getSamPolicyOwner(), POLICY_OWNER);
@@ -72,21 +54,28 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     assertEquals(goodV2.getSamPolicyApplication(), POLICY_APPLICATION);
 
     // Case 2: bad V2 format
+    String badV2Json =
+        String.format(
+            "{\"version\": 3, \"gcpProjectId\": \"%s\", \"samPolicyOwner\": \"%s\", \"samPolicyWriter\": \"%s\", \"samPolicyReader\": \"%s\", \"samPolicyApplication\": \"%s\" }",
+            GCP_PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
     assertThrows(
         InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(makeDbCloudContext(badV2Json)),
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(CloudPlatform.GCP, badV2Json)),
         "Bad V2 JSON should throw");
 
     // Case 3: incomplete V2
+    String incompleteV2Json =
+        String.format("{\"version\": 2, \"gcpProjectId\": \"%s\"}", GCP_PROJECT_ID);
     assertThrows(
         InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(makeDbCloudContext(incompleteV2Json)),
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(CloudPlatform.GCP, incompleteV2Json)),
         "Incomplete V2 JSON should throw");
 
     // Case 4: junk input
+    String junkJson = "{\"foo\": 15, \"bar\": \"xyzzy\"}";
     assertThrows(
         InvalidSerializedVersionException.class,
-        () -> GcpCloudContext.deserialize(makeDbCloudContext(junkJson)),
+        () -> GcpCloudContext.deserialize(makeDbCloudContext(CloudPlatform.GCP, junkJson)),
         "Junk JSON should throw");
   }
 

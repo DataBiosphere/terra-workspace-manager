@@ -1,11 +1,11 @@
 package bio.terra.workspace.db;
 
 import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_APPLICATION;
-import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_OWNER;
-import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_READER;
-import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.POLICY_WRITER;
-import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_APPLICATION;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_OWNER;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_READER;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_WRITER;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.SPEND_PROFILE_ID;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbCloudContext;
@@ -32,7 +33,6 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.GcpCloudContextFields;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;

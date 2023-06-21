@@ -61,16 +61,6 @@ public class GcpCloudContext implements CloudContext {
     return commonFields;
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(CloudPlatform cloudPlatform) {
-    if (cloudPlatform != getCloudPlatform()) {
-      throw new InternalLogicException(
-          String.format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
-    }
-    return (T) this;
-  }
-
   public ApiGcpContext toApi() {
     var gcpContext = new ApiGcpContext();
     gcpContext.operationState(commonFields.toApi());

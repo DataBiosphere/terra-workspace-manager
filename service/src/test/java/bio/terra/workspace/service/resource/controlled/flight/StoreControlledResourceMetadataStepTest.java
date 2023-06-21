@@ -12,6 +12,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -23,7 +24,6 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -46,7 +46,7 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
-        workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.PROJECT_ID);
+        workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.GCP_PROJECT_ID);
 
     ControlledGcsBucketResource bucketResource =
         ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();

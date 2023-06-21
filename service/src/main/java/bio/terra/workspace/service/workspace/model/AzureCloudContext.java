@@ -51,16 +51,6 @@ public class AzureCloudContext implements CloudContext {
     return commonFields;
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(CloudPlatform cloudPlatform) {
-    if (cloudPlatform != getCloudPlatform()) {
-      throw new InternalLogicException(
-          String.format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
-    }
-    return (T) this;
-  }
-
   public ApiAzureContext toApi() {
     var azureContext = new ApiAzureContext();
     azureContext.operationState(commonFields.toApi());

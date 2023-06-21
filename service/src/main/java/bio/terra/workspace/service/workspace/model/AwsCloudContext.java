@@ -64,16 +64,6 @@ public class AwsCloudContext implements CloudContext {
     return contextFields;
   }
 
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(CloudPlatform cloudPlatform) {
-    if (cloudPlatform != getCloudPlatform()) {
-      throw new InternalLogicException(
-          String.format("Invalid cast from %s to %s", getCloudPlatform(), cloudPlatform));
-    }
-    return (T) this;
-  }
-
   public ApiAwsContext toApi() {
     var awsContext = new ApiAwsContext();
     awsContext.operationState(commonFields.toApi());
