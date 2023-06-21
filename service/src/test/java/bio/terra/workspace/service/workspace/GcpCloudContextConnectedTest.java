@@ -20,12 +20,13 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
@@ -35,6 +36,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiResourceType;
+import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -42,6 +44,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCloneAllResourcesFlightStep;
@@ -56,6 +59,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -104,7 +108,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
+  @Autowired private WorkspaceActivityLogService workspaceActivityLogService;
   @Autowired private WsmApplicationService appService;
   @Autowired private WorkspaceConnectedTestUtils workspaceConnectedTestUtils;
 
@@ -195,10 +199,36 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
-  void createGetDeleteGoogleContext() throws Exception {
+  void createGetDeleteGoogleContext_deleteGcpProjectAndLog() throws Exception {
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isPresent());
+
     mockMvcUtils.deleteGcpCloudContext(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId).get();
+    assertEquals(OperationType.DELETE, changeDetails.operationType());
+    assertEquals(workspaceId.toString(), changeDetails.changeSubjectId());
+    assertEquals(ActivityLogChangedTarget.GCP_CLOUD_CONTEXT, changeDetails.changeSubjectType());
+  }
+
+  @Test
+  @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
+  void createGoogleContext_logCreation() throws Exception {
+    workspaceId2 =
+        mockMvcUtils
+            .createWorkspaceWithoutCloudContext(
+                userAccessUtils.defaultUserAuthRequest(), ApiWorkspaceStageModel.MC_WORKSPACE)
+            .getId();
+    mockMvcUtils.createCloudContextAndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId2, apiCloudPlatform);
+
+    assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId2).isPresent());
+    ActivityLogChangeDetails changeDetails =
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceId2).get();
+    assertEquals(OperationType.CREATE, changeDetails.operationType());
+    assertEquals(workspaceId2.toString(), changeDetails.changeSubjectId());
+    assertEquals(ActivityLogChangedTarget.GCP_CLOUD_CONTEXT, changeDetails.changeSubjectType());
   }
 
   private ApiGcpGcsBucketResource createControlledBucket() throws Exception {

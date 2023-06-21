@@ -51,7 +51,7 @@ public class DeleteResourcesStep implements Step {
   @Override
   //  @SuppressWarnings("unchecked")
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    // Jackson does not deserialize the list properly with a TypeReference. The unchecked for works.
+    // Jackson does not deserialize the list properly with a TypeReference. The array form works.
     ResourceDeleteFlightPair[] resourcePairs =
         FlightUtils.getRequired(
             context.getWorkingMap(),

@@ -7,24 +7,33 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** A step for deleting the metadata that WSM stores for a controlled resource. */
 public class DeleteCloudContextFinishStep implements Step {
+
+  private final AuthenticatedUserRequest userRequest;
   private final UUID workspaceUuid;
   private final WorkspaceDao workspaceDao;
   private final CloudPlatform cloudPlatform;
 
-  private final Logger logger = LoggerFactory.getLogger(DeleteCloudContextFinishStep.class);
+  private final WorkspaceActivityLogService workspaceActivityLogService;
 
   public DeleteCloudContextFinishStep(
-      UUID workspaceUuid, WorkspaceDao workspaceDao, CloudPlatform cloudPlatform) {
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceUuid,
+      WorkspaceDao workspaceDao,
+      CloudPlatform cloudPlatform,
+      WorkspaceActivityLogService workspaceActivityLogService) {
+    this.userRequest = userRequest;
     this.workspaceDao = workspaceDao;
     this.workspaceUuid = workspaceUuid;
     this.cloudPlatform = cloudPlatform;
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
@@ -32,6 +41,12 @@ public class DeleteCloudContextFinishStep implements Step {
       throws InterruptedException, RetryException {
     workspaceDao.deleteCloudContextSuccess(
         workspaceUuid, cloudPlatform, flightContext.getFlightId());
+    workspaceActivityLogService.writeActivity(
+        userRequest,
+        workspaceUuid,
+        OperationType.DELETE,
+        workspaceUuid.toString(),
+        cloudPlatform.toActivityLogChangeTarget());
     return StepResult.getStepResultSuccess();
   }
 

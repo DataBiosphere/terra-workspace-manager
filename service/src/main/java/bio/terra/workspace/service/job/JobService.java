@@ -22,6 +22,7 @@ import bio.terra.workspace.app.configuration.external.JobConfiguration;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.logging.WorkspaceActivityLogHook;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
@@ -143,11 +144,9 @@ public class JobService {
 
   public void waitForJob(String jobId) {
     try {
-      int pollSeconds = jobConfig.getPollingIntervalSeconds();
-      int pollCycles = jobConfig.getTimeoutSeconds() / jobConfig.getPollingIntervalSeconds();
-      stairwayComponent.get().waitForFlight(jobId, pollSeconds, pollCycles);
-    } catch (InterruptedException | StairwayException stairwayEx) {
-      throw new InternalStairwayException(stairwayEx);
+      FlightUtils.waitForJobFlightCompletion(stairwayComponent.get(), jobId);
+    } catch (Exception ex) {
+      throw new InternalStairwayException(ex);
     }
   }
 

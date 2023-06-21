@@ -7,15 +7,12 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +30,12 @@ public final class FlightUtils {
   private static final Duration SUBFLIGHT_INITIAL_SLEEP = Duration.ofSeconds(10);
   private static final double SUBFLIGHT_FACTOR_INCREASE = 0.7;
   private static final Duration SUBFLIGHT_MAX_SLEEP = Duration.ofMinutes(2);
+
+  // Parameters for waiting for JobService flight completion
+  private static final Duration JOB_TOTAL_DURATION = Duration.ofHours(1);
+  private static final Duration JOB_INITIAL_SLEEP = Duration.ofSeconds(1);
+  private static final double JOB_FACTOR_INCREASE = 1;
+  private static final Duration JOB_MAX_SLEEP = Duration.ofMinutes(2);
 
   private FlightUtils() {}
 
@@ -179,22 +182,28 @@ public final class FlightUtils {
       Duration initialInterval,
       Duration maxInterval,
       Duration maxWait)
-      throws InterruptedException {
-    final Instant endTime = Instant.now().plus(maxWait);
-    Duration sleepInterval = initialInterval;
-    do {
-      FlightState flightState = stairway.getFlightState(flightId);
-      if (flightState.getCompleted().isPresent()) {
-        return flightState;
-      }
-      TimeUnit.MILLISECONDS.sleep(sleepInterval.toMillis());
-      // double the interval
-      sleepInterval = sleepInterval.plus(sleepInterval);
-      if (sleepInterval.compareTo(maxInterval) > 0) {
-        sleepInterval = maxInterval;
-      }
-    } while (Instant.now().isBefore(endTime));
-    throw new FlightWaitTimedOutException("Timed out waiting for flight to complete.");
+      throws Exception {
+    return waitForFlightCompletion(
+        stairway, flightId, maxWait, initialInterval, /* factorIncrease= */ 1.0, maxInterval);
+  }
+
+  /**
+   * Utility method to wait for a job to complete. It is intended to be used by job service to wait
+   * for flight completion.
+   *
+   * @param stairway stairway instance
+   * @param flightId flight id to wait for
+   * @return StepResult
+   */
+  public static FlightState waitForJobFlightCompletion(Stairway stairway, String flightId)
+      throws Exception {
+    return waitForFlightCompletion(
+        stairway,
+        flightId,
+        JOB_TOTAL_DURATION,
+        JOB_INITIAL_SLEEP,
+        JOB_FACTOR_INCREASE,
+        JOB_MAX_SLEEP);
   }
 
   /**
@@ -206,17 +215,17 @@ public final class FlightUtils {
    * @param flightId flight id to wait for
    * @return StepResult
    */
-  public static StepResult waitForSubflightCompletion(Stairway stairway, String flightId) {
+  public static StepResult waitForSubflightCompletion(Stairway stairway, String flightId)
+      throws InterruptedException {
     try {
       FlightState flightState =
-          RetryUtils.getWithRetry(
-              FlightUtils::flightComplete,
-              () -> stairway.getFlightState(flightId),
+          waitForFlightCompletion(
+              stairway,
+              flightId,
               SUBFLIGHT_TOTAL_DURATION,
               SUBFLIGHT_INITIAL_SLEEP,
               SUBFLIGHT_FACTOR_INCREASE,
               SUBFLIGHT_MAX_SLEEP);
-
       if (flightState.getFlightStatus() == FlightStatus.SUCCESS) {
         return StepResult.getStepResultSuccess();
       }
@@ -225,10 +234,38 @@ public final class FlightUtils {
           flightState
               .getException()
               .orElse(new RuntimeException("Flight failed with an empty exception")));
-
+    } catch (InterruptedException ie) {
+      // Propagate the interrupt
+      Thread.currentThread().interrupt();
+      throw ie;
     } catch (Exception e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
+  }
+
+  /**
+   * Utility method to wait for a flight to complete. It is intended to be used in steps that launch
+   * and then wait for flights. The StepReturn reflects the success or failure of the subflight.
+   *
+   * @param stairway stairway instance
+   * @param flightId flight id to wait for
+   * @return FlightState of completed flight
+   */
+  public static FlightState waitForFlightCompletion(
+      Stairway stairway,
+      String flightId,
+      Duration totalDuration,
+      Duration initialSleep,
+      double factorIncrease,
+      Duration maxSleep)
+      throws Exception {
+    return RetryUtils.getWithRetry(
+        FlightUtils::flightComplete,
+        () -> stairway.getFlightState(flightId),
+        totalDuration,
+        initialSleep,
+        factorIncrease,
+        maxSleep);
   }
 
   public static boolean flightComplete(FlightState flightState) {
