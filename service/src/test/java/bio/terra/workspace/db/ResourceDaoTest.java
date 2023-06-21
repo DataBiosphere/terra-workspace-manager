@@ -450,9 +450,6 @@ public class ResourceDaoTest extends BaseUnitTest {
     WsmResource resourceBeforeUpdate =
         resourceDao.getResource(resource.getWorkspaceId(), resource.getResourceId());
 
-    Map<String, String> expectedUpdatedProperties = new HashMap<>();
-    expectedUpdatedProperties.putAll(DEFAULT_RESOURCE_PROPERTIES);
-    expectedUpdatedProperties.putAll(properties);
     resourceDao.updateResourceProperties(workspaceUuid, resource.getResourceId(), properties);
     String userEmail = "foo";
     activityLogDao.writeActivity(

@@ -121,7 +121,8 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     jobService.setFlightDebugInfoForTest(null);
     doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
-    workspaceId = mockMvcUtils.createWorkspaceWithCloudContext(userRequest).getId();
+    workspaceId =
+        mockMvcUtils.createWorkspaceWithCloudContext(userRequest, apiCloudPlatform).getId();
     projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
     workspaceId2 = null;
   }
@@ -219,8 +220,8 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .createWorkspaceWithoutCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), ApiWorkspaceStageModel.MC_WORKSPACE)
             .getId();
-    mockMvcUtils.createGcpCloudContextAndWait(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.createCloudContextAndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId2, apiCloudPlatform);
 
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId2).isPresent());
     ActivityLogChangeDetails changeDetails =

@@ -94,9 +94,7 @@ public class ApplicationServiceTest extends BaseUnitTest {
   @Autowired ResourceDao resourceDao;
   @Autowired WorkspaceDao workspaceDao;
 
-  private UUID workspaceId1;
   private Workspace workspace;
-  private UUID workspaceId2;
   private Workspace workspace2;
 
   @BeforeEach

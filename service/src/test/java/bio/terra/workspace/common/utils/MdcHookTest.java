@@ -7,8 +7,6 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.job.JobService;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -118,7 +116,6 @@ class MdcHookTest extends BaseUnitTest {
   }
   /** A step that asserts the MDC context is what's expected on do and undo. */
   public static class CheckMdc implements Step {
-    private final Logger logger = LoggerFactory.getLogger(CheckMdc.class);
     private final ImmutableMap<String, String> expectedContext;
 
     public CheckMdc(ImmutableMap<String, String> expectedContext) {

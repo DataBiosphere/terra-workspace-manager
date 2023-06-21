@@ -62,7 +62,6 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   private Workspace sharedWorkspace;
   private UUID workspaceUuid;
   private ControlledAzureDiskResource diskResource;
-  private String networkName;
 
   @BeforeAll
   public void setup() throws InterruptedException {

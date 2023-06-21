@@ -26,9 +26,6 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
   @Test
   public void constructResourceNullLineage_resourceLineageEmptyArray() {
     UUID randomId = UUID.randomUUID();
-    String resourceName = "testdatarepo-" + randomId;
-    Map<String, String> propertyMap = new HashMap<>();
-
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
             .wsmResourceFields(
@@ -74,8 +71,6 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
   @Test
   public void constructResourceWithLineage_matchingLineageArray() {
     UUID randomId = UUID.randomUUID();
-    String resourceName = "testdatarepo-" + randomId;
-    Map<String, String> propertyMap = new HashMap<>();
     var lineageEntry = new ResourceLineageEntry(randomId, randomId);
     var lineage = new ArrayList<ResourceLineageEntry>();
     lineage.add(lineageEntry);

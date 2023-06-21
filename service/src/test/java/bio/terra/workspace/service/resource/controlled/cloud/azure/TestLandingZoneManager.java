@@ -4,7 +4,6 @@ import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.landingzone.db.exception.DuplicateLandingZoneException;
 import bio.terra.landingzone.db.model.LandingZoneRecord;
 import bio.terra.workspace.common.utils.AzureTestUtils;
-import bio.terra.workspace.db.WorkspaceDao;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -18,13 +17,10 @@ import java.util.UUID;
  */
 public class TestLandingZoneManager {
   private final LandingZoneDao landingZoneDao;
-  private final WorkspaceDao workspaceDao;
   private final AzureTestUtils azureTestUtils;
 
-  public TestLandingZoneManager(
-      LandingZoneDao landingZoneDao, WorkspaceDao workspaceDao, AzureTestUtils azureTestUtils) {
+  public TestLandingZoneManager(LandingZoneDao landingZoneDao, AzureTestUtils azureTestUtils) {
     this.landingZoneDao = landingZoneDao;
-    this.workspaceDao = workspaceDao;
     this.azureTestUtils = azureTestUtils;
   }
 

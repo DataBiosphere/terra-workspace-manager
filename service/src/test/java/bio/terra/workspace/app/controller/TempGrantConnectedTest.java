@@ -8,9 +8,7 @@ import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
@@ -50,7 +48,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   private boolean timeToFinish;
 
   @Before
-  public void startup() throws Exception {
+  public void startup() {
     timeToFinish = false;
   }
 
@@ -63,7 +61,8 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   public void setupAndWaitBucket() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithCloudContext(
+                userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
@@ -73,17 +72,16 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
 
     String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
     String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
-    ApiGcpGcsBucketResource sourceBucket =
-        mockMvcUtils
-            .createControlledGcsBucket(
-                userAccessUtils.defaultUserAuthRequest(),
-                workspaceId,
-                sourceResourceName,
-                sourceBucketName,
-                null,
-                null,
-                null)
-            .getGcpBucket();
+    mockMvcUtils
+        .createControlledGcsBucket(
+            userAccessUtils.defaultUserAuthRequest(),
+            workspaceId,
+            sourceResourceName,
+            sourceBucketName,
+            null,
+            null,
+            null)
+        .getGcpBucket();
     addFileToBucket(
         userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
 
@@ -97,7 +95,8 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   public void setupAndWaitNotebook() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithCloudContext(
+                userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
@@ -105,10 +104,9 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
 
-    ApiGcpAiNotebookInstanceResource notebook =
-        mockMvcUtils
-            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
-            .getAiNotebookInstance();
+    mockMvcUtils
+        .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+        .getAiNotebookInstance();
 
     // So I can end the test and run cleanup when I'm done debugging
     while (!timeToFinish) {
@@ -120,7 +118,8 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   public void setupAndWaitBigQuery() throws Exception {
     workspaceId =
         mockMvcUtils
-            .createWorkspaceWithCloudContext(userAccessUtils.defaultUserAuthRequest())
+            .createWorkspaceWithCloudContext(
+                userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);

@@ -159,6 +159,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -442,10 +443,10 @@ public class MockMvcUtils {
     return cloneWorkspace;
   }
 
-  public ApiCreatedWorkspace createWorkspaceWithCloudContext(AuthenticatedUserRequest userRequest)
-      throws Exception {
+  public ApiCreatedWorkspace createWorkspaceWithCloudContext(
+      AuthenticatedUserRequest userRequest, ApiCloudPlatform apiCloudPlatform) throws Exception {
     ApiCreatedWorkspace createdWorkspace = createWorkspaceWithoutCloudContext(userRequest);
-    createGcpCloudContextAndWait(userRequest, createdWorkspace.getId());
+    createCloudContextAndWait(userRequest, createdWorkspace.getId(), apiCloudPlatform);
     return createdWorkspace;
   }
 
@@ -531,26 +532,32 @@ public class MockMvcUtils {
     }
   }
 
-  public void createGcpCloudContextAndWait(AuthenticatedUserRequest userRequest, UUID workspaceId)
+  public void createCloudContextAndWait(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, ApiCloudPlatform apiCloudPlatform)
       throws Exception {
-    ApiCreateCloudContextResult result = createGcpCloudContext(userRequest, workspaceId);
+    ApiCreateCloudContextResult result =
+        createCloudContext(userRequest, workspaceId, apiCloudPlatform);
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       TimeUnit.SECONDS.sleep(15);
       result = getCreateCloudContextResult(userRequest, workspaceId, jobId);
     }
     assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
-    logger.info(
-        "Created project %s for workspace %s"
-            .formatted(result.getGcpContext().getProjectId(), workspaceId));
+
+    if (Objects.requireNonNull(apiCloudPlatform) == ApiCloudPlatform.GCP) {
+      logger.info(
+          "Created project %s for workspace %s"
+              .formatted(result.getGcpContext().getProjectId(), workspaceId));
+    }
   }
 
-  private ApiCreateCloudContextResult createGcpCloudContext(
-      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
+  private ApiCreateCloudContextResult createCloudContext(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, ApiCloudPlatform apiCloudPlatform)
+      throws Exception {
     String jobId = UUID.randomUUID().toString();
     ApiCreateCloudContextRequest request =
         new ApiCreateCloudContextRequest()
-            .cloudPlatform(ApiCloudPlatform.GCP)
+            .cloudPlatform(apiCloudPlatform)
             .jobControl(new ApiJobControl().id(jobId));
     String serializedResponse =
         getSerializedResponseForPost(
@@ -762,9 +769,10 @@ public class MockMvcUtils {
   }
 
   public UUID createWorkspaceWithRegionConstraintAndCloudContext(
-      AuthenticatedUserRequest userRequest, String regionName) throws Exception {
+      AuthenticatedUserRequest userRequest, ApiCloudPlatform apiCloudPlatform, String regionName)
+      throws Exception {
     UUID resultWorkspaceId = createWorkspaceWithRegionConstraint(userRequest, regionName);
-    createGcpCloudContextAndWait(userRequest, resultWorkspaceId);
+    createCloudContextAndWait(userRequest, resultWorkspaceId, apiCloudPlatform);
 
     return resultWorkspaceId;
   }
@@ -2642,7 +2650,6 @@ public class MockMvcUtils {
   private ResultActions removeRoleInternal(
       AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
       throws Exception {
-    var request = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
     return mockMvc.perform(
         addAuth(
             delete(String.format(REMOVE_ROLE_PATH_FORMAT, workspaceId, role.name(), memberEmail)),

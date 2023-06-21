@@ -188,12 +188,7 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
 
   private static String[] generateFilenames(int numberOfFiles) {
     return Stream.range(0, numberOfFiles)
-        .map(
-            idx -> {
-              var fileId = UUID.randomUUID();
-              var blobName = idx + "/it-blob-" + fileId;
-              return blobName;
-            })
+        .map(idx -> idx + "/it-blob-" + UUID.randomUUID())
         .collect(Collectors.toList())
         .toArray(new String[0]);
   }

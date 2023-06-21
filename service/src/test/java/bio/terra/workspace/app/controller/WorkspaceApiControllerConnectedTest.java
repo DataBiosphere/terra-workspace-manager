@@ -397,7 +397,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
           mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(
-              userRequest, PolicyFixtures.US_REGION);
+              userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
       mockMvcUtils.createControlledGcsBucket(
@@ -432,12 +432,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void mergeCheck_existingResourceNoPolicyOnSource() throws Exception {
     var userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
-    UUID sourceWorkspaceId = null;
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
           mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(
-              userRequest, PolicyFixtures.US_REGION);
+              userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
       mockMvcUtils.createControlledGcsBucket(
@@ -470,7 +469,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
           mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(
-              userRequest, PolicyFixtures.US_REGION);
+              userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
       mockMvcUtils.createControlledGcsBucket(
