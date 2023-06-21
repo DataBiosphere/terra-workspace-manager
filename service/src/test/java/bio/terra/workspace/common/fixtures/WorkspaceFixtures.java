@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightMap;
@@ -47,6 +48,8 @@ public class WorkspaceFixtures {
       new SamUser("example@example.com", "123ABC", new BearerToken("token"));
   public static final ApiException API_EXCEPTION = new ApiException("error");
   public static final NotFoundException NOT_FOUND_EXCEPTION = new NotFoundException("not found");
+  public static final UnauthorizedException UNAUTHORIZED_EXCEPTION =
+      new UnauthorizedException("unauthorized");
 
   /**
    * Generate the request body for creating an MC_WORKSPACE stage workspace.

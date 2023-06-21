@@ -56,7 +56,7 @@ public class StopAwsSageMakerNotebookStep implements Step {
             throw new ApiException(
                 String.format(
                     "AWS SageMaker Notebook resource %s, being deleted.",
-                    resource.getResourceId(), notebookStatus));
+                    resource.getResourceId()));
           }
           // else: being deleted
         }
@@ -91,7 +91,6 @@ public class StopAwsSageMakerNotebookStep implements Step {
     try {
       NotebookInstanceStatus notebookStatus =
           AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
-
       switch (notebookStatus) {
         case STOPPED, FAILED -> {
           AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);

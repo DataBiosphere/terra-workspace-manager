@@ -109,9 +109,7 @@ public class AwsUtils {
       Collection<Tag> tags, AwsCloudContext awsCloudContext, T awsResource) {
     tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
 
-    if (awsResource instanceof ControlledAwsS3StorageFolderResource) {
-      ControlledAwsS3StorageFolderResource resource =
-          (ControlledAwsS3StorageFolderResource) awsResource;
+    if (awsResource instanceof ControlledAwsS3StorageFolderResource resource) {
       tags.add(Tag.builder().key("S3BucketID").value(resource.getBucketName()).build());
       tags.add(Tag.builder().key("TerraBucketID").value(resource.getPrefix()).build());
     } else if (awsResource instanceof ControlledAwsSageMakerNotebookResource) {
@@ -624,6 +622,8 @@ public class AwsUtils {
    * @param notebookLifecycleConfigArn {@link Arn} for the notebookLifecycleConfig in the landing
    *     zone (region)
    * @param tags collection of {@link Tag} to be attached to the folder
+   * @throws ApiException ApiException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static void createSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -687,6 +687,9 @@ public class AwsUtils {
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
    * @return {@link NotebookInstanceStatus}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static NotebookInstanceStatus getSageMakerNotebookStatus(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -720,6 +723,10 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
    */
   public static void startSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -754,6 +761,10 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
    */
   public static void stopSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -788,6 +799,10 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
    */
   public static void deleteSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -823,6 +838,10 @@ public class AwsUtils {
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
    * @param desiredStatus {@link NotebookInstanceStatus}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
    */
   public static void waitForSageMakerNotebookStatus(
       AwsCredentialsProvider awsCredentialsProvider,
