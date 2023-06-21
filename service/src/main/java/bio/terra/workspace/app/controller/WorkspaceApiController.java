@@ -246,22 +246,19 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       minimumHighestRole = ApiIamRole.READER;
     }
 
-    // Unlike other operations, there's no Sam permission required to list workspaces. As long as
+    // Unlike most other operations, there's no Sam permission required to list workspaces. As long
+    // as
     // a user is enabled, they can call this endpoint, though they may not have any workspaces they
     // can read.
-    List<WorkspaceDescription> workspacesAndHighestRoles =
+    List<WorkspaceDescription> workspaceDescriptions =
         workspaceService.getWorkspaceDescriptions(
             userRequest, offset, limit, WsmIamRole.fromApiModel(minimumHighestRole));
+
     var response =
         new ApiWorkspaceDescriptionList()
             .workspaces(
-                workspacesAndHighestRoles.stream()
-                    .map(
-                        workspaceAndHighestRole ->
-                            workspaceApiUtils.buildWorkspaceDescription(
-                                workspaceAndHighestRole.workspace(),
-                                workspaceAndHighestRole.highestRole(),
-                                workspaceAndHighestRole.missingAuthDomains()))
+                workspaceDescriptions.stream()
+                    .map(workspaceApiUtils::buildApiWorkspaceDescription)
                     .toList());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }

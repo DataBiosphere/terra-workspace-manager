@@ -42,8 +42,7 @@ public class MergePolicyAttributesDryRunStep implements Step {
       throws InterruptedException, RetryException {
     // Create PAOs if they don't exist; catch TPS exceptions and retry
     try {
-      tpsApiDispatch.getOrCreatePao(
-          sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+      tpsApiDispatch.getOrCreatePao(sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
       tpsApiDispatch.getOrCreatePao(
           destinationWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
     } catch (Exception ex) {

@@ -7,9 +7,11 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoDescription;
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.Rethrow;
@@ -17,6 +19,7 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.db.model.DbWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
@@ -55,6 +58,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -87,6 +91,7 @@ public class WorkspaceService {
   private final WorkspaceActivityLogService workspaceActivityLogService;
   private final TpsApiDispatch tpsApiDispatch;
   private final PolicyValidator policyValidator;
+  private final FeatureConfiguration features;
 
   @Autowired
   public WorkspaceService(
@@ -98,7 +103,8 @@ public class WorkspaceService {
       ResourceDao resourceDao,
       WorkspaceActivityLogService workspaceActivityLogService,
       TpsApiDispatch tpsApiDispatch,
-      PolicyValidator policyValidator) {
+      PolicyValidator policyValidator,
+      FeatureConfiguration features) {
     this.jobService = jobService;
     this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
@@ -108,6 +114,7 @@ public class WorkspaceService {
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.policyValidator = policyValidator;
+    this.features = features;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -417,21 +424,50 @@ public class WorkspaceService {
     // From Sam, retrieve the workspace id, highest role, and missing auth domain groups for all
     // workspaces the user has access to.
     Map<UUID, AccessibleWorkspace> accessibleWorkspaces =
-      Rethrow.onInterrupted(
-        () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
-        "listWorkspaceIds");
+        Rethrow.onInterrupted(
+            () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
+            "listWorkspaceIds");
 
     // From DAO, retrieve the workspace metadata
-    List<Workspace> workspaces =
-      workspaceDao.getWorkspacesMatchingList(accessibleWorkspaces.keySet(), offset, limit);
+    Map<UUID, DbWorkspaceDescription> dbWorkspaceDescriptions =
+        workspaceDao.getWorkspacesMatchingList(accessibleWorkspaces.keySet(), offset, limit);
 
-    // Join the DAO workspaces with the Sam info to generate a list of workspace descriptions
-    return workspaces.stream().map(w -> {
-        AccessibleWorkspace accessibleWorkspace = accessibleWorkspaces.get(w.getWorkspaceId());
-        return new WorkspaceDescription(w,
-          accessibleWorkspace.highestRole(),
-          accessibleWorkspace.missingAuthDomainGroups());
-      }).toList();
+    // TODO: PF-2710(part 2): make a batch getOrCreatePao in TPS and use it here
+    Map<UUID, TpsPaoGetResult> paoMap = new HashMap<>();
+    if (features.isTpsEnabled()) {
+      for (DbWorkspaceDescription dbWorkspaceDescription : dbWorkspaceDescriptions.values()) {
+        TpsPaoGetResult workspacePao =
+            Rethrow.onInterrupted(
+                () ->
+                    tpsApiDispatch.getOrCreatePao(
+                        dbWorkspaceDescription.getWorkspace().workspaceId(),
+                        TpsComponent.WSM,
+                        TpsObjectType.WORKSPACE),
+                "getOrCreatePao");
+        paoMap.put(dbWorkspaceDescription.getWorkspace().workspaceId(), workspacePao);
+      }
+    }
+
+    // Join the DAO workspace descriptions with the Sam info to generate a list of
+    // workspace descriptions
+    return dbWorkspaceDescriptions.values().stream()
+        .map(
+            w -> {
+              AccessibleWorkspace accessibleWorkspace =
+                  accessibleWorkspaces.get(w.getWorkspace().getWorkspaceId());
+              TpsPaoGetResult pao = paoMap.get(w.getWorkspace().getWorkspaceId());
+              return new WorkspaceDescription(
+                  w.getWorkspace(),
+                  accessibleWorkspace.highestRole(),
+                  accessibleWorkspace.missingAuthDomainGroups(),
+                  w.getLastUpdatedByEmail(),
+                  w.getLastUpdatedByDate(),
+                  w.getAwsCloudContext(),
+                  w.getAzureCloudContext(),
+                  w.getGcpCloudContext(),
+                  pao);
+            })
+        .toList();
   }
 
   /** Retrieves an existing workspace by ID */
@@ -761,9 +797,7 @@ public class WorkspaceService {
                 sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType()),
         "getOrCreatePao");
     Rethrow.onInterrupted(
-        () ->
-            tpsApiDispatch.getOrCreatePao(
-                workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+        () -> tpsApiDispatch.getOrCreatePao(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
         "getOrCreatePao");
 
     TpsPaoUpdateResult dryRun =

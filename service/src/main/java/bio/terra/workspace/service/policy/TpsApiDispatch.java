@@ -98,9 +98,10 @@ public class TpsApiDispatch {
 
   /**
    * Get a PAO. Create an empty PAO if it does not exist.
-   * <p>Since policy attributes were added later in development, not all existing
-   * workspaces have an associated policy attribute object. This function creates
-   * an empty one if it does not exist.
+   *
+   * <p>Since policy attributes were added later in development, not all existing workspaces have an
+   * associated policy attribute object. This function creates an empty one if it does not exist.
+   *
    * @param objectId TPS object to get
    * @param component component name
    * @param objectType object type
@@ -108,8 +109,8 @@ public class TpsApiDispatch {
    * @throws InterruptedException on timer interrupt
    */
   @Traced
-  public TpsPaoGetResult getOrCreatePao(UUID objectId, TpsComponent component, TpsObjectType objectType)
-      throws InterruptedException {
+  public TpsPaoGetResult getOrCreatePao(
+      UUID objectId, TpsComponent component, TpsObjectType objectType) throws InterruptedException {
     Optional<TpsPaoGetResult> pao = getPaoIfExists(objectId);
     if (pao.isPresent()) {
       return pao.get();

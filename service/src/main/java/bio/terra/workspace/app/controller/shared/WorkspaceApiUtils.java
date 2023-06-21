@@ -34,9 +34,11 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -156,11 +158,11 @@ public class WorkspaceApiUtils {
     List<ApiWsmPolicyInput> workspacePolicies = null;
     if (features.isTpsEnabled()) {
       TpsPaoGetResult workspacePao =
-        Rethrow.onInterrupted(
-          () ->
-            tpsApiDispatch.getOrCreatePao(
-              workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE),
-          "getOrCreatePao");
+          Rethrow.onInterrupted(
+              () ->
+                  tpsApiDispatch.getOrCreatePao(
+                      workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+              "getOrCreatePao");
       workspacePolicies = TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(workspacePao);
     }
 
@@ -199,5 +201,50 @@ public class WorkspaceApiUtils {
                 .orElse(workspace.createdByEmail()))
         .policies(workspacePolicies)
         .missingAuthDomains(missingAuthDomains);
+  }
+
+  public ApiWorkspaceDescription buildApiWorkspaceDescription(
+      WorkspaceDescription workspaceDescriptions) {
+    Workspace workspace = workspaceDescriptions.workspace();
+    if (workspaceDescriptions.highestRole() == WsmIamRole.DISCOVERER) {
+      workspace = Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace);
+    }
+
+    // Convert the property map to API format
+    ApiProperties apiProperties = convertMapToApiProperties(workspace.getProperties());
+
+    return new ApiWorkspaceDescription()
+        .id(workspace.workspaceId())
+        .userFacingId(workspace.getUserFacingId())
+        .displayName(workspace.getDisplayName().orElse(null))
+        .description(workspace.getDescription().orElse(null))
+        .highestRole(workspaceDescriptions.highestRole().toApiModel())
+        .properties(apiProperties)
+        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
+        .stage(workspace.getWorkspaceStage().toApiModel())
+        .gcpContext(
+            Optional.ofNullable(workspaceDescriptions.gcpCloudContext())
+                .map(GcpCloudContext::toApi)
+                .orElse(null))
+        .azureContext(
+            Optional.ofNullable(workspaceDescriptions.azureCloudContext())
+                .map(AzureCloudContext::toApi)
+                .orElse(null))
+        .awsContext(
+            Optional.ofNullable(workspaceDescriptions.awsCloudContext())
+                .map(AwsCloudContext::toApi)
+                .orElse(null))
+        .createdDate(workspace.createdDate())
+        .createdBy(workspace.createdByEmail())
+        .lastUpdatedDate(
+            Optional.ofNullable(workspaceDescriptions.lastUpdatedByDate())
+                .orElse(workspace.createdDate()))
+        .lastUpdatedBy(
+            Optional.ofNullable(workspaceDescriptions.lastUpdatedByEmail())
+                .orElse(workspace.createdByEmail()))
+        .policies(
+            TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(
+                workspaceDescriptions.workspacePolicies()))
+        .missingAuthDomains(workspaceDescriptions.missingAuthDomains());
   }
 }

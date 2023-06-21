@@ -46,11 +46,10 @@ public class MergePolicyAttributesStep implements Step {
     // Create PAOs if they don't exist; catch TPS exceptions and retry
     TpsPaoGetResult destinationPao;
     try {
-      tpsApiDispatch.getOrCreatePao(
-          sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+      tpsApiDispatch.getOrCreatePao(sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
       destinationPao =
-        tpsApiDispatch.getOrCreatePao(
-          destinationWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+          tpsApiDispatch.getOrCreatePao(
+              destinationWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
     } catch (Exception ex) {
       logger.info("Attempt to create a PAO for workspace failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);

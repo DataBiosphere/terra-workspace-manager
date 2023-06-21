@@ -4,11 +4,14 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.exception.CloudContextNotFoundException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.db.model.DbWorkspace;
+import bio.terra.workspace.db.model.DbWorkspaceContextPair;
+import bio.terra.workspace.db.model.DbWorkspaceDescription;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
@@ -16,6 +19,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateUserFacingIdException;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
+import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -114,16 +118,68 @@ public class WorkspaceDao {
               .flightId(rs.getString("flight_id"))
               .error(StateDao.deserializeException(rs.getString("error")));
 
+  /** Row mapper for the combo workspace+cloud context query */
+  private static final RowMapper<DbWorkspaceContextPair> WORKSPACE_CONTEXT_ROW_MAPPER =
+      (rs, rowNum) -> {
+        DbWorkspace dbWorkspace =
+            new DbWorkspace()
+                .workspaceId(UUID.fromString(rs.getString("workspace_id")))
+                .userFacingId(rs.getString("user_facing_id"))
+                .displayName(rs.getString("display_name"))
+                .description(rs.getString("description"))
+                .spendProfileId(
+                    Optional.ofNullable(rs.getString("spend_profile"))
+                        .map(SpendProfileId::new)
+                        .orElse(null))
+                .properties(
+                    Optional.ofNullable(rs.getString("properties"))
+                        .map(DbSerDes::jsonToProperties)
+                        .orElse(Collections.emptyMap()))
+                .workspaceStage(WorkspaceStage.valueOf(rs.getString("workspace_stage")))
+                .createdByEmail(rs.getString("created_by_email"))
+                .createdDate(
+                    OffsetDateTime.ofInstant(
+                        rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
+                .state(WsmResourceState.fromDb(rs.getString("wstate")))
+                .flightId(rs.getString("wflightid"))
+                .error(StateDao.deserializeException(rs.getString("werror")));
+        DbCloudContext dbCloudContext = null;
+        if (rs.getString("cloud_platform") != null) {
+          dbCloudContext =
+              new DbCloudContext()
+                  .workspaceUuid(UUID.fromString(rs.getString("workspace_id")))
+                  .cloudPlatform(CloudPlatform.fromSql(rs.getString("cloud_platform")))
+                  .spendProfile(
+                      Optional.ofNullable(rs.getString("spend_profile"))
+                          .map(SpendProfileId::new)
+                          .orElse(null))
+                  .contextJson(rs.getString("context"))
+                  .state(WsmResourceState.fromDb(rs.getString("cstate")))
+                  .flightId(rs.getString("cflightid"))
+                  .error(
+                      Optional.ofNullable(rs.getString("cerror"))
+                          .map(
+                              errorJson -> DbSerDes.fromJson(errorJson, ErrorReportException.class))
+                          .orElse(null));
+        }
+        return new DbWorkspaceContextPair(dbWorkspace, dbCloudContext);
+      };
+
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final ApplicationDao applicationDao;
   private final StateDao stateDao;
+  private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
   @Autowired
   public WorkspaceDao(
-      ApplicationDao applicationDao, NamedParameterJdbcTemplate jdbcTemplate, StateDao stateDao) {
+      ApplicationDao applicationDao,
+      NamedParameterJdbcTemplate jdbcTemplate,
+      StateDao stateDao,
+      WorkspaceActivityLogDao workspaceActivityLogDao) {
     this.applicationDao = applicationDao;
     this.jdbcTemplate = jdbcTemplate;
     this.stateDao = stateDao;
+    this.workspaceActivityLogDao = workspaceActivityLogDao;
   }
 
   /**
@@ -520,27 +576,93 @@ public class WorkspaceDao {
    * @param idList List of workspaceIds to query for
    * @param offset The number of items to skip before starting to collect the result set.
    * @param limit The maximum number of items to return.
-   * @return list of Workspaces corresponding to input IDs.
+   * @return map of Workspaces descriptions indexed by workspace id
    */
   @Traced
   @ReadTransaction
-  public List<Workspace> getWorkspacesMatchingList(Set<UUID> idList, int offset, int limit) {
+  public Map<UUID, DbWorkspaceDescription> getWorkspacesMatchingList(
+      Set<UUID> idList, int offset, int limit) {
     // If the incoming list is empty, the caller does not have permission to see any
     // workspaces, so we return an empty list.
     if (idList.isEmpty()) {
-      return Collections.emptyList();
+      return Collections.emptyMap();
     }
     String sql =
-        WORKSPACE_SELECT_SQL
-            + " WHERE workspace_id IN (:workspace_ids) ORDER BY workspace_id OFFSET :offset LIMIT :limit";
+        """
+        SELECT
+          W.workspace_id,
+          W.user_facing_id,
+          W.display_name,
+          W.description,
+          W.spend_profile,
+          W.properties,
+          W.workspace_stage,
+          W.created_by_email,
+          W.created_date,
+          W.state AS wstate,
+          W.flight_id AS wflightid,
+          W.error AS werror,
+          C.cloud_platform,
+          C.context,
+          C.spend_profile,
+          C.state AS cstate,
+          C.flight_id AS cflightid,
+          C.error AS cerror
+        FROM workspace W LEFT OUTER JOIN cloud_context C ON W.workspace_id = C.workspace_id
+        WHERE W.workspace_id IN (:workspace_ids)
+        ORDER BY W.workspace_id
+        OFFSET :offset
+        LIMIT :limit
+        """;
+
     var params =
         new MapSqlParameterSource()
             .addValue(
                 "workspace_ids", idList.stream().map(UUID::toString).collect(Collectors.toList()))
             .addValue("offset", offset)
             .addValue("limit", limit);
-    List<DbWorkspace> dbWorkspaces = jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER);
-    return dbWorkspaces.stream().map(Workspace::makeFromDb).toList();
+    List<DbWorkspaceContextPair> dbWorkspaceContextPairs =
+        jdbcTemplate.query(sql, params, WORKSPACE_CONTEXT_ROW_MAPPER);
+
+    // Build a map indexed by workspaceId that holds a workspace description.
+    // If the cloud context is present, add it to the workspace description
+    // It can be null for workspaces without any cloud context. We can see the
+    // same workspace more than once if it has more than one cloud context.
+    Map<UUID, DbWorkspaceDescription> workspaceContextMap = new HashMap<>();
+    for (DbWorkspaceContextPair pair : dbWorkspaceContextPairs) {
+      DbWorkspaceDescription dbWorkspaceDescription =
+          workspaceContextMap.get(pair.dbWorkspace().getWorkspaceId());
+      // If we don't have a workspace description for this workspace id, then make one
+      if (dbWorkspaceDescription == null) {
+        dbWorkspaceDescription =
+            new DbWorkspaceDescription(Workspace.makeFromDb(pair.dbWorkspace()));
+        workspaceContextMap.put(pair.dbWorkspace().getWorkspaceId(), dbWorkspaceDescription);
+      }
+      // If we have a cloud context, add it to the description
+      if (pair.dbCloudContext() != null) {
+        CloudContext cloudContext =
+            pair.dbCloudContext()
+                .getCloudPlatform()
+                .getCloudContextService()
+                .makeCloudContextFromDb(pair.dbCloudContext());
+        dbWorkspaceDescription.setCloudContext(cloudContext);
+      }
+    }
+
+    // Get the last update details for all of the workspaces and merge them
+    // into the workspace descriptions
+    List<ActivityLogChangeDetails> activityLogChangeDetails =
+        workspaceActivityLogDao.getLastUpdatedDetailsForList(workspaceContextMap.keySet());
+
+    for (ActivityLogChangeDetails details : activityLogChangeDetails) {
+      DbWorkspaceDescription dbWorkspaceDescription =
+          workspaceContextMap.get(details.workspaceId());
+      dbWorkspaceDescription
+          .setLastUpdatedByDate(details.changeDate())
+          .setLastUpdatedByEmail(details.actorEmail());
+    }
+
+    return workspaceContextMap;
   }
 
   /** List cloud platforms of all cloud contexts in a workspace. */
@@ -917,10 +1039,10 @@ public class WorkspaceDao {
   public void backfillCloudContextSpendProfile() {
     String sql =
         """
-      UPDATE cloud_context SET spend_profile =
-       (SELECT spend_profile FROM workspace WHERE workspace_id = cloud_context.workspace_id)
-      WHERE cloud_context.spend_profile IS NULL
-      """;
+        UPDATE cloud_context SET spend_profile =
+         (SELECT spend_profile FROM workspace WHERE workspace_id = cloud_context.workspace_id)
+        WHERE cloud_context.spend_profile IS NULL
+        """;
     jdbcTemplate.update(sql, new MapSqlParameterSource());
   }
 
@@ -933,8 +1055,8 @@ public class WorkspaceDao {
   public void backfillWorkspaceState() {
     String sql =
         """
-    UPDATE workspace SET state = 'READY' WHERE state IS NULL AND flight_id IS NULL
-    """;
+        UPDATE workspace SET state = 'READY' WHERE state IS NULL AND flight_id IS NULL
+        """;
     jdbcTemplate.update(sql, new MapSqlParameterSource());
   }
 }

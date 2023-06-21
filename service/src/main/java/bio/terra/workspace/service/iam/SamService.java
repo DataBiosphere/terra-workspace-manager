@@ -13,7 +13,6 @@ import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.common.utils.Rethrow;
-import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
@@ -52,7 +51,6 @@ import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEn
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
-import org.broadinstitute.dsde.workbench.client.sam.model.RolesAndActions;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -369,14 +367,18 @@ public class SamService {
           // Skip workspaces with no roles. (That means there's a role this WSM doesn't know
           // about.)
           WsmIamRole.getHighestRole(workspaceId, roles)
-            .ifPresent(
-              highestRole -> {
-                if (minimumHighestRoleFromRequest.roleAtLeastAsHighAs(highestRole)) {
-                  result.put(workspaceId,
-                    new AccessibleWorkspace(workspaceId, highestRole, ImmutableList.copyOf(
-                      userResourcesResponse.getMissingAuthDomainGroups())));
-                }
-              });
+              .ifPresent(
+                  highestRole -> {
+                    if (minimumHighestRoleFromRequest.roleAtLeastAsHighAs(highestRole)) {
+                      result.put(
+                          workspaceId,
+                          new AccessibleWorkspace(
+                              workspaceId,
+                              highestRole,
+                              ImmutableList.copyOf(
+                                  userResourcesResponse.getMissingAuthDomainGroups())));
+                    }
+                  });
         } catch (IllegalArgumentException e) {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is

@@ -9,7 +9,6 @@ import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.SPEND_PROF
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.in;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -23,6 +22,7 @@ import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.db.model.DbWorkspaceDescription;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -33,7 +33,6 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.GcpCloudContextFields;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -139,15 +137,15 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace realWorkspace = defaultRawlsWorkspace(workspaceUuid);
     WorkspaceFixtures.createWorkspaceInDb(realWorkspace, workspaceDao);
     UUID fakeWorkspaceId = UUID.randomUUID();
-    List<Workspace> workspaceList =
+    Map<UUID, DbWorkspaceDescription> workspaceList =
         workspaceDao.getWorkspacesMatchingList(
             ImmutableSet.of(realWorkspace.getWorkspaceId(), fakeWorkspaceId), 0, 1);
     // The DAO should return all workspaces this user has access to, including realWorkspace but
     // not including the fake workspace id.
-    assertThat(workspaceList, hasItem(equalTo(realWorkspace)));
-    List<UUID> workspaceIdList =
-        workspaceList.stream().map(Workspace::getWorkspaceId).collect(Collectors.toList());
-    assertThat(workspaceIdList, not(hasItem(equalTo(fakeWorkspaceId))));
+    DbWorkspaceDescription realWorkspaceDescription =
+        workspaceList.get(realWorkspace.getWorkspaceId());
+    assertEquals(realWorkspaceDescription.getWorkspace(), realWorkspace);
+    assertThat(workspaceList.keySet(), not(hasItem(equalTo(fakeWorkspaceId))));
   }
 
   @Test
@@ -193,13 +191,15 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace secondWorkspace =
         WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
     WorkspaceFixtures.createWorkspaceInDb(secondWorkspace, workspaceDao);
-    List<Workspace> workspaceList =
+    Map<UUID, DbWorkspaceDescription> workspaceMap =
         workspaceDao.getWorkspacesMatchingList(
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             1,
             10);
-    assertEquals(1, workspaceList.size());
-    assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
+    assertEquals(1, workspaceMap.size());
+    assertTrue(
+        workspaceMap.containsKey(firstWorkspace.getWorkspaceId())
+            || workspaceMap.containsKey(secondWorkspace.getWorkspaceId()));
   }
 
   @Test
@@ -209,13 +209,15 @@ class WorkspaceDaoTest extends BaseUnitTest {
     Workspace secondWorkspace =
         WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
     WorkspaceFixtures.createWorkspaceInDb(secondWorkspace, workspaceDao);
-    List<Workspace> workspaceList =
+    Map<UUID, DbWorkspaceDescription> workspaceMap =
         workspaceDao.getWorkspacesMatchingList(
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             0,
             1);
-    assertEquals(1, workspaceList.size());
-    assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
+    assertEquals(1, workspaceMap.size());
+    assertTrue(
+        workspaceMap.containsKey(firstWorkspace.getWorkspaceId())
+            || workspaceMap.containsKey(secondWorkspace.getWorkspaceId()));
   }
 
   @Test
