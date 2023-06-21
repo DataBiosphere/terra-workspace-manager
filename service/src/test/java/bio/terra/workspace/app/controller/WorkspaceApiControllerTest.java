@@ -420,7 +420,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
-    assertNull(gotWorkspace.getPolicies());
+    assertEquals(0, gotWorkspace.getPolicies().size());
   }
 
   @Test
@@ -501,7 +501,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
-    assertNull(gotWorkspace.getPolicies());
+    assertEquals(0, gotWorkspace.getPolicies().size());
   }
 
   @Test

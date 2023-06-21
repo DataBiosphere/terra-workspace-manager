@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -117,6 +116,49 @@ public class WorkspaceDao {
               .state(WsmResourceState.fromDb(rs.getString("state")))
               .flightId(rs.getString("flight_id"))
               .error(StateDao.deserializeException(rs.getString("error")));
+
+  private static final String WORKSPACE_CONTEXT_SELECT =
+      """
+    SELECT
+      W.workspace_id,
+      W.user_facing_id,
+      W.display_name,
+      W.description,
+      W.spend_profile,
+      W.properties,
+      W.workspace_stage,
+      W.created_by_email,
+      W.created_date,
+      W.state AS wstate,
+      W.flight_id AS wflightid,
+      W.error AS werror,
+      C.cloud_platform,
+      C.context,
+      C.spend_profile,
+      C.state AS cstate,
+      C.flight_id AS cflightid,
+      C.error AS cerror
+    FROM workspace W LEFT OUTER JOIN cloud_context C ON W.workspace_id = C.workspace_id
+    """;
+
+  private static final String WORKSPACE_CONTEXT_LIST_QUERY =
+      WORKSPACE_CONTEXT_SELECT
+          + """
+      WHERE W.workspace_id IN (:workspace_ids)
+      ORDER BY W.workspace_id
+      OFFSET :offset
+      LIMIT :limit
+      """;
+
+  private static final String WORKSPACE_CONTEXT_BY_WORKSPACE_ID_QUERY =
+      WORKSPACE_CONTEXT_SELECT + """
+      WHERE W.workspace_id = :workspace_id
+      """;
+
+  private static final String WORKSPACE_CONTEXT_BY_USER_FACING_ID_QUERY =
+      WORKSPACE_CONTEXT_SELECT + """
+      WHERE user_facing_id = :user_facing_id
+      """;
 
   /** Row mapper for the combo workspace+cloud context query */
   private static final RowMapper<DbWorkspaceContextPair> WORKSPACE_CONTEXT_ROW_MAPPER =
@@ -431,24 +473,67 @@ public class WorkspaceDao {
     return Workspace.makeFromDb(dbWorkspace);
   }
 
-  /** Retrieves a workspace from database by userFacingId. */
-  public Workspace getWorkspaceByUserFacingId(String userFacingId) {
+  /** Retrieves a workspace description by workspace id */
+  public DbWorkspaceDescription getWorkspaceDescription(UUID workspaceId) {
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("workspace_id", workspaceId.toString());
+    DbWorkspaceDescription dbWorkspaceDescription =
+        getWorkspaceDescriptionWorker(WORKSPACE_CONTEXT_BY_WORKSPACE_ID_QUERY, params);
+    if (dbWorkspaceDescription == null) {
+      throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", workspaceId));
+    }
+    return dbWorkspaceDescription;
+  }
+
+  /** Retrieves a workspace description by userFacingId. */
+  public DbWorkspaceDescription getWorkspaceByUserFacingId(String userFacingId) {
     if (userFacingId == null || userFacingId.isEmpty()) {
       throw new MissingRequiredFieldException("userFacingId is required");
     }
-    String sql = WORKSPACE_SELECT_SQL + " WHERE user_facing_id = :user_facing_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("user_facing_id", userFacingId);
-    DbWorkspace result;
-    try {
-      result =
-          DataAccessUtils.requiredSingleResult(
-              jdbcTemplate.query(sql, params, WORKSPACE_ROW_MAPPER));
-      logger.info("Retrieved workspace record {}", result);
-      return Workspace.makeFromDb(result);
-    } catch (EmptyResultDataAccessException e) {
+    DbWorkspaceDescription dbWorkspaceDescription =
+        getWorkspaceDescriptionWorker(WORKSPACE_CONTEXT_BY_USER_FACING_ID_QUERY, params);
+    if (dbWorkspaceDescription == null) {
       throw new WorkspaceNotFoundException(String.format("Workspace %s not found.", userFacingId));
     }
+    return dbWorkspaceDescription;
+  }
+
+  private @Nullable DbWorkspaceDescription getWorkspaceDescriptionWorker(
+      String sql, MapSqlParameterSource params) {
+    List<DbWorkspaceContextPair> dbWorkspaceContextPairs =
+        jdbcTemplate.query(sql, params, WORKSPACE_CONTEXT_ROW_MAPPER);
+    if (dbWorkspaceContextPairs.size() == 0) {
+      return null; // let upper layers generate the right error
+    }
+    // Build the workspace description
+    DbWorkspaceDescription dbWorkspaceDescription =
+        new DbWorkspaceDescription(
+            Workspace.makeFromDb(dbWorkspaceContextPairs.get(0).dbWorkspace()));
+    // Populate any cloud contexts
+    for (DbCloudContext dbCloudContext :
+        dbWorkspaceContextPairs.stream().map(DbWorkspaceContextPair::dbCloudContext).toList()) {
+      if (dbCloudContext != null) {
+        CloudContext cloudContext =
+            dbCloudContext
+                .getCloudPlatform()
+                .getCloudContextService()
+                .makeCloudContextFromDb(dbCloudContext);
+        dbWorkspaceDescription.setCloudContext(cloudContext);
+      }
+    }
+    // Fill in the last activity if any
+    Optional<ActivityLogChangeDetails> optionalDetails =
+        workspaceActivityLogDao.getLastUpdatedDetails(
+            dbWorkspaceDescription.getWorkspace().workspaceId());
+    optionalDetails.ifPresent(
+        details ->
+            dbWorkspaceDescription
+                .setLastUpdatedByDate(details.changeDate())
+                .setLastUpdatedByEmail(details.actorEmail()));
+
+    return dbWorkspaceDescription;
   }
 
   @WriteTransaction
@@ -587,33 +672,6 @@ public class WorkspaceDao {
     if (idList.isEmpty()) {
       return Collections.emptyMap();
     }
-    String sql =
-        """
-        SELECT
-          W.workspace_id,
-          W.user_facing_id,
-          W.display_name,
-          W.description,
-          W.spend_profile,
-          W.properties,
-          W.workspace_stage,
-          W.created_by_email,
-          W.created_date,
-          W.state AS wstate,
-          W.flight_id AS wflightid,
-          W.error AS werror,
-          C.cloud_platform,
-          C.context,
-          C.spend_profile,
-          C.state AS cstate,
-          C.flight_id AS cflightid,
-          C.error AS cerror
-        FROM workspace W LEFT OUTER JOIN cloud_context C ON W.workspace_id = C.workspace_id
-        WHERE W.workspace_id IN (:workspace_ids)
-        ORDER BY W.workspace_id
-        OFFSET :offset
-        LIMIT :limit
-        """;
 
     var params =
         new MapSqlParameterSource()
@@ -622,7 +680,7 @@ public class WorkspaceDao {
             .addValue("offset", offset)
             .addValue("limit", limit);
     List<DbWorkspaceContextPair> dbWorkspaceContextPairs =
-        jdbcTemplate.query(sql, params, WORKSPACE_CONTEXT_ROW_MAPPER);
+        jdbcTemplate.query(WORKSPACE_CONTEXT_LIST_QUERY, params, WORKSPACE_CONTEXT_ROW_MAPPER);
 
     // Build a map indexed by workspaceId that holds a workspace description.
     // If the cloud context is present, add it to the workspace description
@@ -649,7 +707,7 @@ public class WorkspaceDao {
       }
     }
 
-    // Get the last update details for all of the workspaces and merge them
+    // Get the last update details for all workspaces in the list and merge them
     // into the workspace descriptions
     List<ActivityLogChangeDetails> activityLogChangeDetails =
         workspaceActivityLogDao.getLastUpdatedDetailsForList(workspaceContextMap.keySet());

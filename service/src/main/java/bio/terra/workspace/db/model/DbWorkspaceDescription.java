@@ -19,7 +19,7 @@ import java.time.OffsetDateTime;
 public class DbWorkspaceDescription {
   private Workspace workspace;
   private String lastUpdatedByEmail;
-  private OffsetDateTime LastUpdatedByDate;
+  private OffsetDateTime lastUpdatedByDate;
   private AwsCloudContext awsCloudContext;
   private AzureCloudContext azureCloudContext;
   private GcpCloudContext gcpCloudContext;
@@ -47,11 +47,11 @@ public class DbWorkspaceDescription {
   }
 
   public OffsetDateTime getLastUpdatedByDate() {
-    return LastUpdatedByDate;
+    return lastUpdatedByDate;
   }
 
   public DbWorkspaceDescription setLastUpdatedByDate(OffsetDateTime lastUpdatedByDate) {
-    LastUpdatedByDate = lastUpdatedByDate;
+    this.lastUpdatedByDate = lastUpdatedByDate;
     return this;
   }
 

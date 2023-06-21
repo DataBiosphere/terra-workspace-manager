@@ -266,19 +266,46 @@ public class WorkspaceService {
   @Traced
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
-    logger.info(
-        "validateWorkspaceAndAction - userRequest: {}\nworkspaceUuid: {}\naction: {}",
-        userRequest,
-        workspaceUuid,
-        action);
+    logWorkspaceAction(userRequest, workspaceUuid, action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
-    Rethrow.onInterrupted(
-        () ->
-            samService.checkAuthz(
-                userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
-        "checkAuthz");
-
+    checkWorkspaceAuthz(userRequest, workspaceUuid, action);
     return workspace;
+  }
+
+  /**
+   * Like validateWorkspaceAndAction, but returns the full workspace description
+   *
+   * @param userRequest the user's authenticated request
+   * @param workspaceUuid id of the workspace in question
+   * @param action the action to authorize against the workspace
+   * @return the workspace description
+   */
+  @Traced
+  public WorkspaceDescription validateWorkspaceAndActionReturningDescription(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
+    logWorkspaceAction(userRequest, workspaceUuid, action);
+    DbWorkspaceDescription dbWorkspaceDescription =
+        workspaceDao.getWorkspaceDescription(workspaceUuid);
+    checkWorkspaceAuthz(userRequest, workspaceUuid, action);
+    return makeWorkspaceDescription(userRequest, dbWorkspaceDescription);
+  }
+
+  /**
+   * Like validateWorkspaceAndAction, but finds the workspace by user facing id.
+   *
+   * @param userRequest the user's authenticated request
+   * @param userFacingId user facing id of the workspace in question
+   * @param action the action to authorize against the workspace
+   * @return the workspace description
+   */
+  @Traced
+  public WorkspaceDescription validateWorkspaceAndActionReturningDescription(
+      AuthenticatedUserRequest userRequest, String userFacingId, String action) {
+    DbWorkspaceDescription dbWorkspaceDescription =
+        workspaceDao.getWorkspaceByUserFacingId(userFacingId);
+    logWorkspaceAction(userRequest, dbWorkspaceDescription.getWorkspace().workspaceId(), action);
+    checkWorkspaceAuthz(userRequest, dbWorkspaceDescription.getWorkspace().workspaceId(), action);
+    return makeWorkspaceDescription(userRequest, dbWorkspaceDescription);
   }
 
   /**
@@ -294,6 +321,51 @@ public class WorkspaceService {
     return workspace;
   }
 
+  // -- private methods supporting validateWorkspaceAndAction methods --
+  private void logWorkspaceAction(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
+    logger.info(
+        "validateWorkspaceAndAction - userRequest: {}\nworkspaceUuid: {}\naction: {}",
+        userRequest,
+        workspaceUuid,
+        action);
+  }
+
+  private void checkWorkspaceAuthz(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
+    Rethrow.onInterrupted(
+        () ->
+            samService.checkAuthz(
+                userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
+        "checkAuthz");
+  }
+
+  private WorkspaceDescription makeWorkspaceDescription(
+      AuthenticatedUserRequest userRequest, DbWorkspaceDescription dbWorkspaceDescription) {
+    TpsPaoGetResult workspacePao = null;
+    if (features.isTpsEnabled()) {
+      workspacePao =
+          Rethrow.onInterrupted(
+              () ->
+                  tpsApiDispatch.getOrCreatePao(
+                      dbWorkspaceDescription.getWorkspace().workspaceId(),
+                      TpsComponent.WSM,
+                      TpsObjectType.WORKSPACE),
+              "getOrCreatePao");
+    }
+    return new WorkspaceDescription(
+        dbWorkspaceDescription.getWorkspace(),
+        getHighestRole(dbWorkspaceDescription.getWorkspace().workspaceId(), userRequest),
+        /* missingAuthDomainGroups= */ null,
+        dbWorkspaceDescription.getLastUpdatedByEmail(),
+        dbWorkspaceDescription.getLastUpdatedByDate(),
+        dbWorkspaceDescription.getAwsCloudContext(),
+        dbWorkspaceDescription.getAzureCloudContext(),
+        dbWorkspaceDescription.getGcpCloudContext(),
+        workspacePao);
+  }
+
+  @Traced
   public void validateWorkspaceState(UUID workspaceUuid) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
     validateWorkspaceState(workspace);
@@ -476,31 +548,6 @@ public class WorkspaceService {
     return workspaceDao.getWorkspace(uuid);
   }
 
-  /** Retrieves an existing workspace by userFacingId */
-  @Traced
-  public Workspace getWorkspaceByUserFacingId(
-      String userFacingId,
-      AuthenticatedUserRequest userRequest,
-      WsmIamRole minimumHighestRoleFromRequest) {
-    logger.info(
-        "getWorkspaceByUserFacingId - userRequest: {}\nuserFacingId: {}",
-        userRequest,
-        userFacingId);
-    Workspace workspace = workspaceDao.getWorkspaceByUserFacingId(userFacingId);
-    // This is one exception where we need to do an authz check inside a service instead of a
-    // controller. This is because checks with Sam require the workspace ID, but until we read from
-    // WSM's database we only have the user-facing ID.
-    Rethrow.onInterrupted(
-        () ->
-            samService.checkAuthz(
-                userRequest,
-                SamConstants.SamResource.WORKSPACE,
-                workspace.getWorkspaceId().toString(),
-                minimumHighestRoleFromRequest.toSamAction()),
-        "checkAuthz");
-    return workspace;
-  }
-
   @Traced
   public WsmIamRole getHighestRole(UUID uuid, AuthenticatedUserRequest userRequest) {
     logger.info("getHighestRole - userRequest: {}\nuserFacingId: {}", userRequest, uuid.toString());
@@ -523,9 +570,10 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param name name to change - may be null
    * @param description description to change - may be null
+   * @return workspace description
    */
   @Traced
-  public Workspace updateWorkspace(
+  public WorkspaceDescription updateWorkspace(
       UUID workspaceUuid,
       @Nullable String userFacingId,
       @Nullable String name,
@@ -539,7 +587,9 @@ public class WorkspaceService {
           workspaceUuid.toString(),
           ActivityLogChangedTarget.WORKSPACE);
     }
-    return workspaceDao.getWorkspace(workspaceUuid);
+    DbWorkspaceDescription dbWorkspaceDescription =
+        workspaceDao.getWorkspaceDescription(workspaceUuid);
+    return makeWorkspaceDescription(userRequest, dbWorkspaceDescription);
   }
 
   /**

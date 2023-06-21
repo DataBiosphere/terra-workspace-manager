@@ -246,10 +246,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       minimumHighestRole = ApiIamRole.READER;
     }
 
-    // Unlike most other operations, there's no Sam permission required to list workspaces. As long
-    // as
-    // a user is enabled, they can call this endpoint, though they may not have any workspaces they
-    // can read.
+    // Unlike most other operations, there's no Sam permission required to list workspaces.
+    // As long as a user is enabled, they can call this endpoint, though they may not have
+    // any workspaces they can read.
     List<WorkspaceDescription> workspaceDescriptions =
         workspaceService.getWorkspaceDescriptions(
             userRequest, offset, limit, WsmIamRole.fromApiModel(minimumHighestRole));
@@ -274,11 +273,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       minimumHighestRole = ApiIamRole.READER;
     }
     String samAction = WsmIamRole.fromApiModel(minimumHighestRole).toSamAction();
-    Workspace workspace = workspaceService.validateWorkspaceAndAction(userRequest, uuid, samAction);
+    WorkspaceDescription workspaceDescription =
+        workspaceService.validateWorkspaceAndActionReturningDescription(
+            userRequest, uuid, samAction);
 
-    WsmIamRole highestRole = workspaceService.getHighestRole(uuid, userRequest);
     ApiWorkspaceDescription desc =
-        workspaceApiUtils.buildWorkspaceDescription(workspace, highestRole);
+        workspaceApiUtils.buildApiWorkspaceDescription(workspaceDescription);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -294,16 +294,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     if (minimumHighestRole == null) {
       minimumHighestRole = ApiIamRole.READER;
     }
-    // Authz check is inside workspaceService here as we would need the UUID to check Sam, but
-    // we only have the UFID at this point.
-
-    Workspace workspace =
-        workspaceService.getWorkspaceByUserFacingId(
-            userFacingId, userRequest, WsmIamRole.fromApiModel(minimumHighestRole));
-    WsmIamRole highestRole =
-        workspaceService.getHighestRole(workspace.getWorkspaceId(), userRequest);
+    String samAction = WsmIamRole.fromApiModel(minimumHighestRole).toSamAction();
+    WorkspaceDescription workspaceDescription =
+        workspaceService.validateWorkspaceAndActionReturningDescription(
+            userRequest, userFacingId, samAction);
     ApiWorkspaceDescription desc =
-        workspaceApiUtils.buildWorkspaceDescription(workspace, highestRole);
+        workspaceApiUtils.buildApiWorkspaceDescription(workspaceDescription);
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
@@ -325,16 +321,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
     workspaceService.validateWorkspaceState(workspace);
 
-    workspace =
+    WorkspaceDescription workspaceDescription =
         workspaceService.updateWorkspace(
             workspaceUuid,
             body.getUserFacingId(),
             body.getDisplayName(),
             body.getDescription(),
             userRequest);
-    WsmIamRole highestRole = workspaceService.getHighestRole(workspaceUuid, userRequest);
     ApiWorkspaceDescription desc =
-        workspaceApiUtils.buildWorkspaceDescription(workspace, highestRole);
+        workspaceApiUtils.buildApiWorkspaceDescription(workspaceDescription);
     logger.info("Updated workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);

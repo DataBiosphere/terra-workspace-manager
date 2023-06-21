@@ -2,21 +2,12 @@ package bio.terra.workspace.app.controller.shared;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 
-import bio.terra.policy.model.TpsComponent;
-import bio.terra.policy.model.TpsObjectType;
-import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
-import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
-import bio.terra.workspace.common.utils.Rethrow;
-import bio.terra.workspace.generated.model.ApiAwsContext;
-import bio.terra.workspace.generated.model.ApiAzureContext;
-import bio.terra.workspace.generated.model.ApiGcpContext;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -36,10 +27,7 @@ import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -126,81 +114,6 @@ public class WorkspaceApiUtils {
           "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
     }
     return TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(policyInputs);
-  }
-
-  public ApiWorkspaceDescription buildWorkspaceDescription(
-      Workspace workspace, WsmIamRole highestRole) {
-    return buildWorkspaceDescription(
-        workspace, highestRole, /*missingAuthDomains=*/ Collections.emptyList());
-  }
-
-  public ApiWorkspaceDescription buildWorkspaceDescription(
-      Workspace workspace, WsmIamRole highestRole, List<String> missingAuthDomains) {
-    UUID workspaceUuid = workspace.getWorkspaceId();
-    ApiGcpContext gcpContext =
-        gcpCloudContextService
-            .getGcpCloudContext(workspaceUuid)
-            .map(GcpCloudContext::toApi)
-            .orElse(null);
-
-    ApiAzureContext azureContext =
-        azureCloudContextService
-            .getAzureCloudContext(workspaceUuid)
-            .map(AzureCloudContext::toApi)
-            .orElse(null);
-
-    ApiAwsContext awsContext =
-        awsCloudContextService
-            .getAwsCloudContext(workspaceUuid)
-            .map(AwsCloudContext::toApi)
-            .orElse(null);
-
-    List<ApiWsmPolicyInput> workspacePolicies = null;
-    if (features.isTpsEnabled()) {
-      TpsPaoGetResult workspacePao =
-          Rethrow.onInterrupted(
-              () ->
-                  tpsApiDispatch.getOrCreatePao(
-                      workspaceUuid, TpsComponent.WSM, TpsObjectType.WORKSPACE),
-              "getOrCreatePao");
-      workspacePolicies = TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(workspacePao);
-    }
-
-    // When we have another cloud context, we will need to do a similar retrieval for it.
-    var lastChangeDetailsOptional =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid);
-
-    if (highestRole == WsmIamRole.DISCOVERER) {
-      workspace = Workspace.stripWorkspaceForRequesterWithOnlyDiscovererRole(workspace);
-    }
-
-    // Convert the property map to API format
-    ApiProperties apiProperties = convertMapToApiProperties(workspace.getProperties());
-
-    return new ApiWorkspaceDescription()
-        .id(workspaceUuid)
-        .userFacingId(workspace.getUserFacingId())
-        .displayName(workspace.getDisplayName().orElse(null))
-        .description(workspace.getDescription().orElse(null))
-        .highestRole(highestRole.toApiModel())
-        .properties(apiProperties)
-        .spendProfile(workspace.getSpendProfileId().map(SpendProfileId::getId).orElse(null))
-        .stage(workspace.getWorkspaceStage().toApiModel())
-        .gcpContext(gcpContext)
-        .azureContext(azureContext)
-        .awsContext(awsContext)
-        .createdDate(workspace.createdDate())
-        .createdBy(workspace.createdByEmail())
-        .lastUpdatedDate(
-            lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::changeDate)
-                .orElse(workspace.createdDate()))
-        .lastUpdatedBy(
-            lastChangeDetailsOptional
-                .map(ActivityLogChangeDetails::actorEmail)
-                .orElse(workspace.createdByEmail()))
-        .policies(workspacePolicies)
-        .missingAuthDomains(missingAuthDomains);
   }
 
   public ApiWorkspaceDescription buildApiWorkspaceDescription(
