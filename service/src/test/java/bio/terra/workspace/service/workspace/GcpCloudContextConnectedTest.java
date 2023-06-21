@@ -220,8 +220,8 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .createWorkspaceWithoutCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), ApiWorkspaceStageModel.MC_WORKSPACE)
             .getId();
-    mockMvcUtils.createGcpCloudContextAndWait(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.createCloudContextAndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId2, apiCloudPlatform);
 
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId2).isPresent());
     ActivityLogChangeDetails changeDetails =
