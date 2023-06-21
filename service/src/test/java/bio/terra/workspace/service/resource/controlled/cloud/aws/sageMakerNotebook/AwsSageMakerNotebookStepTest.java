@@ -58,27 +58,27 @@ import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 @TestInstance(Lifecycle.PER_CLASS)
 public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
 
-  @Mock private FlightContext mockFlightContext;
-  @Mock private AwsCloudContextService mockAwsCloudContextService;
-  @Mock private SamService mockSamService;
-  @Mock private CliConfiguration mockCliConfiguration;
-  @Mock private SageMakerClient mockSageMakerClient;
-  @Mock private SageMakerWaiter mockSageMakerWaiter;
-  private MockedStatic<AwsUtils> mockAwsUtils;
-  private ControlledAwsSageMakerNotebookResource notebookResource;
-  private static final AwsServiceException sageMakerException1 =
+  @Mock protected FlightContext mockFlightContext;
+  @Mock protected AwsCloudContextService mockAwsCloudContextService;
+  @Mock protected SamService mockSamService;
+  @Mock protected CliConfiguration mockCliConfiguration;
+  @Mock protected SageMakerClient mockSageMakerClient;
+  @Mock protected SageMakerWaiter mockSageMakerWaiter;
+  protected MockedStatic<AwsUtils> mockAwsUtils;
+  protected ControlledAwsSageMakerNotebookResource notebookResource;
+  protected static final AwsServiceException sageMakerException1 =
       SageMakerException.builder().message("not authorized to perform").build();
-  private static final AwsServiceException sageMakerException2 =
+  protected static final AwsServiceException sageMakerException2 =
       SageMakerException.builder().message("ResourceNotFoundException").build();
-  private static final AwsServiceException sageMakerException3 =
+  protected static final AwsServiceException sageMakerException3 =
       SageMakerException.builder().message("Unable to transition to").build();
 
-  private static final WaiterResponse waiterResponse =
+  protected static final WaiterResponse waiterResponse =
       DefaultWaiterResponse.builder()
           .attemptsExecuted(1)
           .response(DescribeNotebookInstanceResponse.builder().build())
           .build(); // wait successful
-  private static final WaiterResponse waiterException =
+  protected static final WaiterResponse waiterException =
       DefaultWaiterResponse.builder()
           .attemptsExecuted(1)
           .exception(sageMakerException3)
@@ -116,7 +116,7 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
     mockAwsUtils.when(() -> AwsUtils.checkException(any())).thenCallRealMethod();
   }
 
-  private FlightMap setupFlightMapForCreateNotebookStep() {
+  protected FlightMap setupFlightMapForCreateNotebookStep() {
     FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(
         ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN,
@@ -166,7 +166,7 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
         WorkspaceFixtures.API_EXCEPTION.getClass(),
         () -> createNotebookStep.doStep(mockFlightContext));
 
-    // TODO-undo create
+    // TODO(BENCH-717) undo create
   }
 
   @Test
@@ -218,174 +218,6 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
             .getException()
             .orElse(new Exception())
             .getClass());
-  }
-
-  @Test
-  public void stopInServiceNotebookTest() throws InterruptedException {
-    // not resource deletion
-    StopAwsSageMakerNotebookStep stopNotebookStep =
-        new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, false);
-
-    mockAwsUtils
-        .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
-        .thenReturn(NotebookInstanceStatus.IN_SERVICE);
-    mockAwsUtils
-        .when(() -> AwsUtils.stopSageMakerNotebook(any(), any()))
-        .thenAnswer(invocation -> null) /* success */
-        .thenThrow(WorkspaceFixtures.API_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.UNAUTHORIZED_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION);
-    mockAwsUtils
-        .when(() -> AwsUtils.waitForSageMakerNotebookStatus(any(), any(), any()))
-        .thenAnswer(invocation -> null); /* success */
-
-    // do: stop success, wait success
-    assertThat(
-        stopNotebookStep.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
-
-    // do: stop error
-    StepResult stepResult = stopNotebookStep.doStep(mockFlightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
-    assertEquals(
-        WorkspaceFixtures.API_EXCEPTION.getClass(), stepResult.getException().get().getClass());
-
-    // do: stop failure (not found)
-    stepResult = stopNotebookStep.doStep(mockFlightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
-    assertEquals(
-        WorkspaceFixtures.NOT_FOUND_EXCEPTION.getClass(),
-        stepResult.getException().get().getClass());
-
-    // do: stop error
-    assertThrows(
-        WorkspaceFixtures.UNAUTHORIZED_EXCEPTION.getClass(),
-        () -> stopNotebookStep.doStep(mockFlightContext));
-
-    // resource deletion
-    StopAwsSageMakerNotebookStep stopNotebookStepDeletion =
-        new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, true);
-
-    // do: stop error (not found)
-    assertThat(
-        stopNotebookStepDeletion.doStep(mockFlightContext),
-        equalTo(StepResult.getStepResultSuccess()));
-  }
-
-  @Test
-  public void stopStoppedNotebookTest() throws InterruptedException {
-    // not resource deletion
-    StopAwsSageMakerNotebookStep stopNotebookStep =
-        new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, false);
-
-    mockAwsUtils
-        .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
-        .thenReturn(NotebookInstanceStatus.STOPPING);
-    mockAwsUtils
-        .when(() -> AwsUtils.waitForSageMakerNotebookStatus(any(), any(), any()))
-        .thenAnswer(invocation -> null) /* success */
-        .thenThrow(WorkspaceFixtures.API_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.UNAUTHORIZED_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION);
-
-    // do: wait success
-    assertThat(
-        stopNotebookStep.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
-
-    // do: wait error
-    StepResult stepResult = stopNotebookStep.doStep(mockFlightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
-    assertEquals(
-        WorkspaceFixtures.API_EXCEPTION.getClass(), stepResult.getException().get().getClass());
-
-    // do: wait failure (not found)
-    stepResult = stopNotebookStep.doStep(mockFlightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
-    assertEquals(
-        WorkspaceFixtures.NOT_FOUND_EXCEPTION.getClass(),
-        stepResult.getException().get().getClass());
-
-    // do: wait error
-    assertThrows(
-        WorkspaceFixtures.UNAUTHORIZED_EXCEPTION.getClass(),
-        () -> stopNotebookStep.doStep(mockFlightContext));
-
-    // resource deletion
-    StopAwsSageMakerNotebookStep stopNotebookStepDeletion =
-        new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, true);
-
-    // do: wait failure (not found)
-    assertThat(
-        stopNotebookStepDeletion.doStep(mockFlightContext),
-        equalTo(StepResult.getStepResultSuccess()));
-  }
-
-  @Test
-  public void stopNotebookTest() throws InterruptedException {
-    // not resource deletion
-    StopAwsSageMakerNotebookStep stopNotebookStep =
-        new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, false);
-
-    mockAwsUtils
-        .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
-        .thenReturn(NotebookInstanceStatus.DELETING)
-        .thenThrow(WorkspaceFixtures.API_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.UNAUTHORIZED_EXCEPTION)
-        .thenReturn(NotebookInstanceStatus.DELETING)
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
-        .thenReturn(NotebookInstanceStatus.PENDING)
-        .thenReturn(NotebookInstanceStatus.STOPPED);
-
-    // do: getStatus error (not to be deleted)
-    StepResult stepResult = stopNotebookStep.doStep(mockFlightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
-    assertEquals(
-        WorkspaceFixtures.API_EXCEPTION.getClass(), stepResult.getException().get().getClass());
-
-    // do: getStatus error (other)
-    stepResult = stopNotebookStep.doStep(mockFlightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
-    assertEquals(
-        WorkspaceFixtures.API_EXCEPTION.getClass(), stepResult.getException().get().getClass());
-
-    // do: getStatus error (not found)
-    stepResult = stopNotebookStep.doStep(mockFlightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
-    assertEquals(
-        WorkspaceFixtures.NOT_FOUND_EXCEPTION.getClass(),
-        stepResult.getException().get().getClass());
-
-    // do: getStatus error
-    assertThrows(
-        WorkspaceFixtures.UNAUTHORIZED_EXCEPTION.getClass(),
-        () -> stopNotebookStep.doStep(mockFlightContext));
-
-    // resource deletion
-    StopAwsSageMakerNotebookStep stopNotebookStepDeletion =
-        new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, true);
-
-    // do: getStatus success (to be deleted)
-    assertThat(
-        stopNotebookStepDeletion.doStep(mockFlightContext),
-        equalTo(StepResult.getStepResultSuccess()));
-
-    // do: getStatus failure (not found)
-    assertThat(
-        stopNotebookStepDeletion.doStep(mockFlightContext),
-        equalTo(StepResult.getStepResultSuccess()));
-
-    // do: pending / other statuses error
-    stepResult = stopNotebookStep.doStep(mockFlightContext);
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
-    assertEquals(
-        WorkspaceFixtures.API_EXCEPTION.getClass(), stepResult.getException().get().getClass());
-
-    // do: getStatus success (stopped)
-    assertThat(
-        stopNotebookStepDeletion.doStep(mockFlightContext),
-        equalTo(StepResult.getStepResultSuccess()));
   }
 
   @Test
@@ -494,7 +326,7 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
     verify(mockSageMakerWaiter, times(2))
         .waitUntilNotebookInstanceInService((DescribeNotebookInstanceRequest) any());
 
-    // TODO-undo create
+    // TODO(BENCH-717) undo create
   }
 
   @Test
