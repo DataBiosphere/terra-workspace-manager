@@ -22,25 +22,33 @@ public class WorkspaceStateUnitTest extends BaseUnitTest {
   @Autowired private WorkspaceDao workspaceDao;
 
   @Test
-  void createDeleteStateTest() throws Exception {
-    Workspace workspace1 = WorkspaceFixtures.buildMcWorkspace();
-    var flightId1 = UUID.randomUUID().toString();
-    final var flightId2 = UUID.randomUUID().toString();
-    workspaceDao.createWorkspaceStart(workspace1, /* applicationIds */ null, flightId1);
+  void create_modifyStateWithDifferentFlightId_throwResourceStateConflict() throws Exception {
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    String flightId1 = UUID.randomUUID().toString();
+    final String flightId2 = UUID.randomUUID().toString();
+    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ null, flightId1);
     assertThrows(
         ResourceStateConflictException.class,
-        () -> workspaceDao.createWorkspaceSuccess(workspace1.workspaceId(), flightId2));
+        () -> workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId2));
 
-    workspaceDao.createWorkspaceSuccess(workspace1.workspaceId(), flightId1);
+    workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId1);
+  }
 
-    var deleteFlightId1 = UUID.randomUUID().toString();
-    final var deleteFlightId2 = UUID.randomUUID().toString();
+  @Test
+  void delete_modifyStateWithDifferentFlightId_throwResourceStateConflict() throws Exception {
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    String flightId1 = UUID.randomUUID().toString();
+    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ null, flightId1);
+    workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId1);
 
-    workspaceDao.deleteWorkspaceStart(workspace1.workspaceId(), deleteFlightId1);
+    String deleteFlightId1 = UUID.randomUUID().toString();
+    final String deleteFlightId2 = UUID.randomUUID().toString();
+
+    workspaceDao.deleteWorkspaceStart(workspace.workspaceId(), deleteFlightId1);
     assertThrows(
         ResourceStateConflictException.class,
-        () -> workspaceDao.deleteWorkspaceStart(workspace1.workspaceId(), deleteFlightId2));
+        () -> workspaceDao.deleteWorkspaceStart(workspace.workspaceId(), deleteFlightId2));
 
-    workspaceDao.deleteWorkspaceSuccess(workspace1.workspaceId(), deleteFlightId1);
+    workspaceDao.deleteWorkspaceSuccess(workspace.workspaceId(), deleteFlightId1);
   }
 }
