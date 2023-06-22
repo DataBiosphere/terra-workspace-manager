@@ -57,7 +57,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
 
     // Case 3: incomplete V2
     String incompleteV2Json =
-        String.format("{\"version\": %d, \"organizationId\": \"%s\"}", V1_VERSION, ORGANIZATION_ID);
+        String.format("{\"version\": 2, \"organizationId\": \"%s\"}", ORGANIZATION_ID);
     assertThrows(
         InvalidSerializedVersionException.class,
         () -> AwsCloudContext.deserialize(makeDbCloudContext(CloudPlatform.AWS, incompleteV2Json)),
