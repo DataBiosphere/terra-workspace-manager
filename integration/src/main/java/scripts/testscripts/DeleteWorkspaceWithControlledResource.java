@@ -8,7 +8,9 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.DeleteWorkspaceV2Request;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
+import bio.terra.workspace.model.JobControl;
 import java.util.List;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -72,7 +74,8 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
   public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     try {
-      workspaceApi.deleteWorkspace(getWorkspaceId());
+      workspaceApi.deleteWorkspaceV2(
+          new DeleteWorkspaceV2Request().jobControl(new JobControl().id(UUID.randomUUID().toString())), getWorkspaceId());
     } catch (ApiException e) {
       if (e.getCode() != HttpStatus.SC_NOT_FOUND) {
         throw e;

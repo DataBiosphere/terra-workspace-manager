@@ -6,12 +6,17 @@ import static org.hamcrest.Matchers.equalTo;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.CloneWorkspaceResult;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
+import bio.terra.workspace.model.DeleteWorkspaceV2Request;
+import bio.terra.workspace.model.JobControl;
+import bio.terra.workspace.model.JobResult;
 import bio.terra.workspace.model.Properties;
 import bio.terra.workspace.model.Property;
 import bio.terra.workspace.model.WorkspaceStageModel;
 import bio.terra.workspace.model.WsmPolicyInputs;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -112,7 +117,20 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
-    workspaceApi.deleteWorkspace(workspaceUuid);
+    deleteWorkspaceAsync(workspaceApi, workspaceUuid);
+  }
+
+  public static void deleteWorkspaceAsync(WorkspaceApi workspaceApi, UUID workspaceUuid) throws ApiException, InterruptedException {
+    var jobId = UUID.randomUUID().toString();
+    JobResult deleteResult = workspaceApi.deleteWorkspaceV2(new DeleteWorkspaceV2Request().jobControl(new JobControl().id(jobId)), workspaceUuid);
+    deleteResult =
+        ClientTestUtils.pollWhileRunning(
+            deleteResult,
+            () -> workspaceApi.getDeleteWorkspaceV2Result(workspaceUuid, jobId),
+            JobResult::getJobReport,
+            Duration.ofSeconds(10));
+    ClientTestUtils.assertJobSuccess(
+        "Clone Workspace", deleteResult.getJobReport(), deleteResult.getErrorReport());
   }
 
   /**

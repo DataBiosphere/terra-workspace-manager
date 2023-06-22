@@ -966,7 +966,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     super.doCleanup(testUsers, workspaceApi);
     // Delete the cloned workspace (will delete context and resources)
     if (null != destinationWorkspaceId) {
-      cloningUserWorkspaceApi.deleteWorkspace(destinationWorkspaceId);
+      WorkspaceAllocateTestScriptBase.deleteWorkspaceAsync(cloningUserWorkspaceApi, destinationWorkspaceId);
     }
   }
 
