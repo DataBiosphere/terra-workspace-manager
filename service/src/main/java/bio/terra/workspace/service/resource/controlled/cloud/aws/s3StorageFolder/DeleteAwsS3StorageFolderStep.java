@@ -10,6 +10,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -43,6 +44,7 @@ public class DeleteAwsS3StorageFolderStep implements Step {
                 resource.getResourceId(), resource.getWorkspaceId())));
   }
 
+  @VisibleForTesting
   static StepResult executeDeleteAwsS3StorageFolder(
       AwsCloudContextService awsCloudContextService,
       ControlledAwsS3StorageFolderResource resource) {
