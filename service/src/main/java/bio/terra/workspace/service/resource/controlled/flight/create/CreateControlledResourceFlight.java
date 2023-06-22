@@ -51,7 +51,7 @@ public class CreateControlledResourceFlight extends Flight {
             ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, ControlledResourceIamRole.class);
     // PetSA is optional for some resources
     var petSaEmail =
-        inputParameters.get(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, String.class);
+        inputParameters.get(ControlledResourceKeys.CLOUD_PET_SERVICE_ACCOUNT, String.class);
     var resourceStateRule =
         FlightUtils.getRequired(
             inputParameters, ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);

@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -9,13 +9,13 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
-public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
+public class ControlledGceInstanceHandlerTest extends BaseUnitTest {
 
   @Test
   public void generateInstanceId() {
     String instanceName = "yuhuyoyo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
+        ControlledGceInstanceHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
@@ -24,7 +24,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
   public void generateInstanceId_instanceNameHasUnderscore_removeUnderscores() {
     String instanceName = "yu_hu_yo_yo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
+        ControlledGceInstanceHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
@@ -33,7 +33,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
   public void generateInstanceId_instanceNameHasStartingUnderscore_removeStartingUnderscores() {
     String instanceName = "___________________yu_hu_yo_yo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
+        ControlledGceInstanceHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
@@ -42,7 +42,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
   public void generateInstanceId_instanceNameHasEndingUnderscore_removeEndingUnderscores() {
     String instanceName = "yu_hu_yo_yo__________________";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
+        ControlledGceInstanceHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
@@ -51,7 +51,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
   public void generateInstanceId_instanceNameHasStartingNumbers_removeStartingNumbers() {
     String instanceName = "1234_______yuhuyoyo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
+        ControlledGceInstanceHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
@@ -60,7 +60,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
   public void generateInstanceId_instanceNameHasUppercase_toLowerCase() {
     String instanceName = "YUHUYOYO";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
+        ControlledGceInstanceHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals("yuhuyoyo", instanceId);
   }
@@ -70,7 +70,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceName =
         "yuhuyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyoyo";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
+        ControlledGceInstanceHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals(GcpUtils.MAX_INSTANCE_NAME_LENGTH, instanceId.length());
     assertEquals(instanceId.substring(0, GcpUtils.MAX_INSTANCE_NAME_LENGTH), instanceId);
@@ -83,7 +83,7 @@ public class ControlledAiNotebookHandlerTest extends BaseUnitTest {
     String instanceName =
         StringUtils.repeat("a", GcpUtils.MAX_INSTANCE_NAME_LENGTH - 1) + "-" + "andSomeMoreText";
     String instanceId =
-        ControlledAiNotebookHandler.getHandler().generateCloudName((UUID) null, instanceName);
+        ControlledGceInstanceHandler.getHandler().generateCloudName((UUID) null, instanceName);
 
     assertEquals(GcpUtils.MAX_INSTANCE_NAME_LENGTH - 1, instanceId.length());
     assertNotEquals('-', instanceId.charAt(instanceId.length() - 1));

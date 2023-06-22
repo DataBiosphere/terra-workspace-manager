@@ -12,6 +12,7 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -29,6 +30,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
@@ -422,7 +424,7 @@ public class ControlledResourceService {
                     resource.getProjectId(), userRequest.getRequiredToken()),
             "enablePet");
     jobBuilder.addParameter(ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS, creationParameters);
-    jobBuilder.addParameter(ControlledResourceKeys.NOTEBOOK_PET_SERVICE_ACCOUNT, petSaEmail);
+    jobBuilder.addParameter(ControlledResourceKeys.CLOUD_PET_SERVICE_ACCOUNT, petSaEmail);
     String jobId = jobBuilder.submit();
     jobService.waitForMetadataOrJob(
         jobId,
@@ -682,5 +684,40 @@ public class ControlledResourceService {
             .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     return jobBuilder.submit();
+  }
+
+  /** Starts a create controlled GCP GCE instance resource job, returning the job id. */
+  public String createGceInstance(
+      ControlledGceInstanceResource resource,
+      ApiGcpGceInstanceCreationParameters creationParameters,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+
+    // Special check for instances: READER is not a useful role
+    if (privateResourceIamRole == ControlledResourceIamRole.READER) {
+      throw new BadRequestException(
+          "A private, controlled compute instance must have the writer or editor role or else it is not useful.");
+    }
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+            resource, privateResourceIamRole, jobControl, resultPath, userRequest);
+    String petSaEmail =
+        Rethrow.onInterrupted(
+            () ->
+                samService.getOrCreatePetSaEmail(
+                    resource.getProjectId(), userRequest.getRequiredToken()),
+            "enablePet");
+    jobBuilder.addParameter(
+        ControlledResourceKeys.CREATE_GCE_INSTANCE_PARAMETERS, creationParameters);
+    jobBuilder.addParameter(ControlledResourceKeys.CLOUD_PET_SERVICE_ACCOUNT, petSaEmail);
+    String jobId = jobBuilder.submit();
+    jobService.waitForMetadataOrJob(
+        jobId,
+        () -> resourceDao.resourceExists(resource.getWorkspaceId(), resource.getResourceId()));
+
+    return jobId;
   }
 }

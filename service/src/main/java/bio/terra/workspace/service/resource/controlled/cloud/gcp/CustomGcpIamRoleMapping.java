@@ -95,6 +95,27 @@ public class CustomGcpIamRoleMapping {
               "notebooks.operations.get",
               "notebooks.operations.list")
           .build();
+  static final ImmutableList<String> GCE_INSTANCE_READER_PERMISSIONS =
+      ImmutableList.of("compute.instances.get", "compute.instances.list");
+  static final ImmutableList<String> GCE_INSTANCE_WRITER_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(GCE_INSTANCE_READER_PERMISSIONS)
+          .add(
+              "compute.instances.start",
+              "compute.instances.stop",
+              "compute.instances.use",
+              "compute.instances.reset",
+              "compute.instances.setMachineType")
+          .build();
+  static final ImmutableList<String> GCE_INSTANCE_EDITOR_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(GCE_INSTANCE_WRITER_PERMISSIONS)
+          .add(
+              "compute.instances.getIamPolicy",
+              "compute.zoneOperations.get",
+              "compute.zoneOperations.delete",
+              "compute.zoneOperations.list")
+          .build();
   public static final Table<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>
       CUSTOM_GCP_RESOURCE_IAM_ROLES =
           new ImmutableTable.Builder<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>()
@@ -164,6 +185,28 @@ public class CustomGcpIamRoleMapping {
                       WsmResourceFamily.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.EDITOR,
                       AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS))
+              // GCE instance
+              .put(
+                  WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE,
+                  ControlledResourceIamRole.READER,
+                  CustomGcpIamRole.ofResource(
+                      WsmResourceFamily.GCE_INSTANCE,
+                      ControlledResourceIamRole.READER,
+                      GCE_INSTANCE_READER_PERMISSIONS))
+              .put(
+                  WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE,
+                  ControlledResourceIamRole.WRITER,
+                  CustomGcpIamRole.ofResource(
+                      WsmResourceFamily.GCE_INSTANCE,
+                      ControlledResourceIamRole.WRITER,
+                      GCE_INSTANCE_WRITER_PERMISSIONS))
+              .put(
+                  WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE,
+                  ControlledResourceIamRole.EDITOR,
+                  CustomGcpIamRole.ofResource(
+                      WsmResourceFamily.GCE_INSTANCE,
+                      ControlledResourceIamRole.EDITOR,
+                      GCE_INSTANCE_EDITOR_PERMISSIONS))
               .build();
 
   private CustomGcpIamRoleMapping() {}

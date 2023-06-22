@@ -54,12 +54,7 @@ public class CreateAwsS3StorageFolderStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    AwsCredentialsProvider credentialsProvider =
-        AwsUtils.createWsmCredentialProvider(
-            awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
-
-    AwsUtils.deleteStorageFolder(credentialsProvider, resource);
-    return StepResult.getStepResultSuccess();
+    return DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(
+        awsCloudContextService, resource);
   }
 }

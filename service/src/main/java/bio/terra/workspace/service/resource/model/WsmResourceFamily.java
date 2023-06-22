@@ -47,6 +47,11 @@ public enum WsmResourceFamily {
       ApiResourceType.BIG_QUERY_DATA_TABLE,
       WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
       null), // no controlled type for BQ data table
+  GCE_INSTANCE(
+      "GCE_INSTANCE",
+      ApiResourceType.GCE_INSTANCE,
+      null, // no reference type for instances
+      WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE),
 
   // AZURE
   AZURE_MANAGED_IDENTITY(

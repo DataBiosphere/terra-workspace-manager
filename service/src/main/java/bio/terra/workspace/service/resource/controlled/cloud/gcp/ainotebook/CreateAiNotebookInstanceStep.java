@@ -1,13 +1,14 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import static bio.terra.workspace.common.utils.GcpUtils.INSTANCE_SERVICE_ACCOUNT_SCOPES;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.NOTEBOOK_DISABLE_ROOT_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.PROXY_MODE_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.SERVER_ID_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.WORKSPACE_ID_METADATA_KEY;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_LOCATION;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_NETWORK_NAME;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_NETWORK_NAME;
+import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_SUBNETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_NOTEBOOK_SUBNETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
 
 import bio.terra.cloudres.google.api.services.common.OperationCow;
@@ -38,11 +39,9 @@ import com.google.api.services.notebooks.v1.model.Instance;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.api.services.notebooks.v1.model.VmImage;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -65,15 +64,6 @@ public class CreateAiNotebookInstanceStep implements Step {
   /** The Notebook instance metadata value used to set the service account proxy mode. */
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
-
-  /**
-   * Service account for the notebook instance needs to contain these scopes to interact with SAM.
-   */
-  private static final List<String> SERVICE_ACCOUNT_SCOPES =
-      ImmutableList.of(
-          "https://www.googleapis.com/auth/cloud-platform",
-          "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/userinfo.profile");
 
   private final Logger logger = LoggerFactory.getLogger(CreateAiNotebookInstanceStep.class);
   private final ControlledAiNotebookInstanceResource resource;
@@ -108,7 +98,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     String projectId = gcpCloudContext.getGcpProjectId();
     String requestedLocation =
         FlightUtils.getRequired(
-            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
+            flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
     InstanceName instanceName = resource.toInstanceName(requestedLocation);
 
     Instance instance =
@@ -193,7 +183,7 @@ public class CreateAiNotebookInstanceStep implements Step {
         .setDataDiskSizeGb(creationParameters.getDataDiskSizeGb());
 
     instance.setServiceAccount(serviceAccountEmail);
-    instance.setServiceAccountScopes(SERVICE_ACCOUNT_SCOPES);
+    instance.setServiceAccountScopes(INSTANCE_SERVICE_ACCOUNT_SCOPES);
 
     ApiGcpAiNotebookInstanceAcceleratorConfig acceleratorConfig =
         creationParameters.getAcceleratorConfig();
@@ -259,18 +249,17 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   private static void setNetworks(Instance instance, String projectId, FlightMap workingMap) {
     String region = workingMap.get(CREATE_RESOURCE_REGION, String.class);
-    String networkName = workingMap.get(CREATE_NOTEBOOK_NETWORK_NAME, String.class);
-    String subnetworkName = workingMap.get(CREATE_NOTEBOOK_SUBNETWORK_NAME, String.class);
-    instance.setNetwork("projects/" + projectId + "/global/networks/" + networkName);
-    instance.setSubnet(
-        "projects/" + projectId + "/regions/" + region + "/subnetworks/" + subnetworkName);
+    String networkName = workingMap.get(CREATE_GCE_INSTANCE_NETWORK_NAME, String.class);
+    String subnetworkName = workingMap.get(CREATE_GCE_INSTANCE_SUBNETWORK_NAME, String.class);
+    instance.setNetwork(GcpUtils.toNetworkString(projectId, networkName));
+    instance.setSubnet(GcpUtils.toSubnetworkString(projectId, region, subnetworkName));
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     String requestedLocation =
         FlightUtils.getRequired(
-            flightContext.getWorkingMap(), CREATE_NOTEBOOK_LOCATION, String.class);
+            flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
     InstanceName instanceName = resource.toInstanceName(requestedLocation);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
