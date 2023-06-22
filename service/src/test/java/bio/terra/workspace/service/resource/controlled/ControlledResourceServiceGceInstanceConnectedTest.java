@@ -735,7 +735,7 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
         FlightDebugInfo.newBuilder().doStepFailures(retrySteps).build());
 
     controlledResourceService.deleteControlledResourceSync(
-        resource.getWorkspaceId(), resource.getResourceId(), user.getAuthenticatedRequest());
+        resource.getWorkspaceId(), resource.getResourceId(), false, user.getAuthenticatedRequest());
     assertNotFound(
         resource.getProjectId(), resource.getZone(), resource.getInstanceId(), cloudComputeCow);
     assertThrows(
@@ -760,6 +760,7 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
             controlledResourceService.deleteControlledResourceSync(
                 resource.getWorkspaceId(),
                 resource.getResourceId(),
+                false,
                 user.getAuthenticatedRequest()));
   }
 
