@@ -106,6 +106,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
           RESOURCE_DESCRIPTION,
           sourceBucketName,
           ApiCloningInstructionsEnum.NOTHING);
+      bucketIsUpdated = false;
     }
   }
 
@@ -146,6 +147,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     var newBucketName = TestUtils.appendRandomNumber("newcloudbucketname");
     var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
 
+    bucketIsUpdated = true;
     ApiGcpGcsBucketResource updatedResource =
         mockMvcUtils.updateReferencedGcsBucket(
             userAccessUtils.secondUserAuthRequest(),
@@ -155,7 +157,6 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
             newDescription,
             newBucketName,
             newCloningInstruction);
-    bucketIsUpdated = true;
 
     assertGcsBucket(
         updatedResource,
@@ -185,6 +186,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     var newDescription = "This is an updated description";
     var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
 
+    bucketIsUpdated = true;
     ApiGcpGcsBucketResource updatedResource =
         mockMvcUtils.updateReferencedGcsBucket(
             userAccessUtils.secondUserAuthRequest(),
@@ -194,7 +196,6 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
             newDescription,
             /*newBucketName=*/ null,
             newCloningInstruction);
-    bucketIsUpdated = true;
 
     // Update the sourceResource to the updated one as all the tests are sharing
     // the same resource.
