@@ -57,7 +57,6 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @Mock private S3Client mockS3Client;
 
   private MockedStatic<AwsUtils> mockAwsUtils;
-  private MockedStatic<DeleteAwsS3StorageFolderStep> mockDeleteAwsS3StorageFolderStep;
   private ControlledAwsS3StorageFolderResource s3FolderResource;
   private static final AwsServiceException s3Exception1 =
       S3Exception.builder().message("not authorized to perform").build();
@@ -65,7 +64,6 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @BeforeAll
   public void init() {
     mockAwsUtils = Mockito.mockStatic(AwsUtils.class);
-    mockDeleteAwsS3StorageFolderStep = Mockito.mockStatic(DeleteAwsS3StorageFolderStep.class);
     s3FolderResource =
         ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource(
             ControlledResourceFixtures.WORKSPACE_ID);
@@ -74,7 +72,6 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @AfterAll
   public void terminate() {
     mockAwsUtils.close();
-    mockDeleteAwsS3StorageFolderStep.close();
   }
 
   @BeforeEach
@@ -94,11 +91,6 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenReturn(ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER);
     mockAwsUtils.when(() -> AwsUtils.getS3Client(any(), any())).thenReturn(mockS3Client);
     mockAwsUtils.when(() -> AwsUtils.checkException(any())).thenCallRealMethod();
-
-    mockDeleteAwsS3StorageFolderStep.clearInvocations();
-    mockDeleteAwsS3StorageFolderStep
-        .when(() -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()))
-        .thenReturn(StepResult.getStepResultSuccess());
   }
 
   @Test
@@ -125,10 +117,18 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         () -> createS3FolderStep.doStep(mockFlightContext));
 
     // undo: same as tests for DeleteAwsS3StorageFolderStep, verify that wrapper is called
-    assertThat(
-        createS3FolderStep.undoStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
-    mockDeleteAwsS3StorageFolderStep.verify(
-        () -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()));
+    try (MockedStatic<DeleteAwsS3StorageFolderStep> mockDeleteStep =
+        Mockito.mockStatic(DeleteAwsS3StorageFolderStep.class)) {
+      mockDeleteStep
+          .when(() -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()))
+          .thenReturn(StepResult.getStepResultSuccess());
+
+      assertThat(
+          createS3FolderStep.undoStep(mockFlightContext),
+          equalTo(StepResult.getStepResultSuccess()));
+      mockDeleteStep.verify(
+          () -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()));
+    }
   }
 
   @Test
@@ -244,10 +244,18 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
     verify(mockS3Client, times(3)).putObject((PutObjectRequest) any(), (RequestBody) any());
 
     // undo: same as tests for DeleteAwsS3StorageFolderStep, verify that wrapper is called
-    assertThat(
-        createS3FolderStep.undoStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
-    mockDeleteAwsS3StorageFolderStep.verify(
-        () -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()));
+    try (MockedStatic<DeleteAwsS3StorageFolderStep> mockDeleteStep =
+        Mockito.mockStatic(DeleteAwsS3StorageFolderStep.class)) {
+      mockDeleteStep
+          .when(() -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()))
+          .thenReturn(StepResult.getStepResultSuccess());
+
+      assertThat(
+          createS3FolderStep.undoStep(mockFlightContext),
+          equalTo(StepResult.getStepResultSuccess()));
+      mockDeleteStep.verify(
+          () -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()));
+    }
   }
 
   @Test
