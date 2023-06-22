@@ -1,0 +1,305 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/gce-instances:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled GCP GCE Instance
+      operationId: createGceInstance
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGcpGceInstanceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpGceInstanceResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcpGceInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/gce-instances/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a GCP GCE create instance job.
+      operationId: getCreateGceInstanceResult
+      tags: [ ControlledGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpGceInstanceResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcpGceInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/gce-instances/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled GCP GCE instance resource
+      operationId: getGceInstance
+      tags: [ ControlledGcpResource ]
+      responses:
+        '200':
+          description: Response to get GCE instance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GcpGceInstanceResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled GCP GCE instance resource. This is async, 
+        because the operation can take ~5 minutes. OpenAPI does not support 
+        request body in DELETE, but async state requires it. Hence this is a POST.
+      operationId: deleteGceInstance
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledGcpGceInstanceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpGceInstanceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpGceInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled GCP GCE instance resource
+      operationId: updateGceInstance
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledGcpGceInstanceRequestBody'
+      responses:
+        '200':
+          description: Response to update an GCE instance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GcpGceInstanceResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/gce-instances/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a GCP GCE delete instance job.
+      operationId: getDeleteGceInstanceResult
+      tags: [ ControlledGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpGceInstanceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpGceInstanceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/gce-instances/generateName:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a controlled GCP GCE instance name
+      operationId: generateGceInstanceCloudId
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateGcpGceInstanceCloudIdRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/GceInstanceCloudIdResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreateControlledGcpGceInstanceRequestBody:
+      description: Payload for requesting a new controlled GCP GCE instance.
+      type: object
+      required: [ common, gceInstance, jobControl ]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        gceInstance:
+          $ref: '#/components/schemas/GcpGceInstanceCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    CreatedControlledGcpGceInstanceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        gceInstance:
+          $ref: '#/components/schemas/GcpGceInstanceResource'
+
+    GcpGceInstanceCreationParameters:
+      description: >-
+        GCE instance specific properties to be set on creation. These are a subset of the
+        values accepted by the GCP Compute API. See https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert
+      type: object
+      required: [ machineType ]
+      properties:
+        instanceId:
+          description: >-
+            An instanceId unique to this project and location. Must be 1-63 characters, using lower
+            case letters, numbers, and dashes. The first character must be a lower case letter,
+            and the last character must not be a dash.
+          type: string
+        zone:
+          description: The name of the zone for this request. For example, \'us-east1-b\'.
+          type: string
+        machineType:
+          description: The Compute Engine machine type of this instance, see
+            https://cloud.google.com/compute/docs/machine-types
+          type: string
+        guestAccelerators:
+          type: array
+          items:
+            $ref: '#/components/schemas/GcpGceInstanceGuestAccelerator'
+        metadata:
+          description: >-
+            Custom metadata to apply to this instance. Some metadata keys are reserved by Terra and
+            will throw a bad request error if specified: \'terra-workspace-id\', \'terra-cli-server\'.
+          type: object
+          additionalProperties:
+            type: string
+        vmImage:
+          description: >-
+            Custom Compute Engine virtual machine image for starting the instance with the
+            environment installed directly on the VM. Specify the image by its family name, or
+            use a specific version of a public operating system image.
+          type: string
+
+    GcpGceInstanceGuestAccelerator:
+      description: >-
+        The hardware accelerator used on this instance. If you use accelerators, make sure that your
+        configuration has enough vCPUs and memory to support the machineType you have selected.
+      type: object
+      required: [ type, cardCount ]
+      properties:
+        type:
+          description: Type of this accelerator
+          type: string
+        cardCount:
+          description: Count of cards of this accelerator.
+          type: integer
+
+    DeleteControlledGcpGceInstanceRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledGcpGceInstanceResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    GcpGceUpdateParameters:
+      description: >-
+        Parameters that may be changed by a user.
+      properties:
+        metadata:
+          description: >-
+            A map of custom metadata to apply to this instance. Some metadata 
+            keys are reserved by Terra and will throw a bad request error if 
+            specified: 'terra-workspace-id', 'terra-cli-server'.
+          type: object
+          additionalProperties:
+            type: string
+
+    UpdateControlledGcpGceInstanceRequestBody:
+      type: object
+      description: Update an GCE instance metadata
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+        updateParameters:
+          $ref: '#/components/schemas/GcpGceUpdateParameters'
+
+    GceInstanceCloudId:
+      description: GCE instance native ID
+      type: object
+      required: [ generatedGceInstanceCloudId ]
+      properties:
+        generatedGceInstanceCloudId:
+          type: string
+
+    GenerateGcpGceInstanceCloudIdRequestBody:
+      type: object
+      required: [ instanceName ]
+      properties:
+        instanceName:
+          type: string
+
+  responses:    
+    CreatedControlledGcpGceInstanceResponse:
+      description: Response to Create controlled resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledGcpGceInstanceResult'
+
+    DeleteControlledGcpGceInstanceResponse:
+      description: Response Payload for deleting a GCP GCE instance
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledGcpGceInstanceResult'
+
+    GceInstanceCloudIdResponse:
+      description: A valid GCE instance name per https://cloud.google.com/compute/docs/reference/rest/v1/instances.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GceInstanceCloudId'

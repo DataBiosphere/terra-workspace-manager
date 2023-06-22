@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
 import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
@@ -17,9 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Step to grant a user permission to use their pet service account. Controlled Notebooks run as a
- * pet service account, and only users with the 'iam.serviceAccounts.actAs' permission on the pet
- * are allowed through the proxy. GCP automatically de-deduplicates IAM bindings so this step is
+ * Step to grant a user permission to use their pet service account. Compute instances run as a pet
+ * service account, and only users with the 'iam.serviceAccounts.actAs' permission on the pet are
+ * allowed through the proxy. GCP automatically de-deduplicates IAM bindings so this step is
  * idempotent, even across flights.
  *
  * <p>There is a small window where this step may fail to undo: specifically if the do step modifies

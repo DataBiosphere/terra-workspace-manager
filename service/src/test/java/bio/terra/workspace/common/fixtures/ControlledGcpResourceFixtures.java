@@ -18,6 +18,8 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketLifecycle;
@@ -29,6 +31,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -52,6 +55,8 @@ import javax.annotation.Nullable;
 
 /** A series of static objects useful for testing controlled resources. */
 public class ControlledGcpResourceFixtures {
+
+  public static final String DEFAULT_RESOURCE_ZONE = "us-east1-b";
 
   public static final ControlledResourceFields DEFAULT_GCP_CONTROLLED_RESOURCE_FIELDS =
       ControlledResourceFields.builder()
@@ -301,7 +306,7 @@ public class ControlledGcpResourceFixtures {
   public static ApiGcpAiNotebookInstanceCreationParameters defaultNotebookCreationParameters() {
     return new ApiGcpAiNotebookInstanceCreationParameters()
         .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
-        .location("us-east1-b")
+        .location(DEFAULT_RESOURCE_ZONE)
         .machineType("e2-standard-2")
         .vmImage(
             new ApiGcpAiNotebookInstanceVmImage()
@@ -334,7 +339,7 @@ public class ControlledGcpResourceFixtures {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
-        .location("us-east1-b")
+        .location(DEFAULT_RESOURCE_ZONE)
         .projectId("my-project-id");
   }
 
@@ -343,7 +348,60 @@ public class ControlledGcpResourceFixtures {
     return ControlledAiNotebookInstanceResource.builder()
         .common(makeNotebookCommonFieldsBuilder().workspaceUuid(workspaceId).build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
-        .location("us-east1-b")
+        .location(DEFAULT_RESOURCE_ZONE)
+        .projectId("my-project-id");
+  }
+
+  // GCE instance
+
+  public static final ApiGcpGceUpdateParameters GCE_INSTANCE_PREV_PARAMETERS =
+      new ApiGcpGceUpdateParameters()
+          .metadata(ImmutableMap.of("sky", "blue", "rose", "red", "foo", "bar2", "count", "0"));
+
+  public static final ApiGcpGceUpdateParameters GCE_INSTANCE_UPDATE_PARAMETERS =
+      new ApiGcpGceUpdateParameters().metadata(ImmutableMap.of("foo", "bar", "count", "3"));
+
+  public static ApiGcpGceInstanceCreationParameters defaultGceInstanceCreationParameters() {
+    return new ApiGcpGceInstanceCreationParameters()
+        .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
+        .zone(DEFAULT_RESOURCE_ZONE)
+        .machineType(String.format("zones/%s/machineTypes/n1-standard-1", DEFAULT_RESOURCE_ZONE))
+        .vmImage("projects/debian-cloud/global/images/family/debian-11");
+  }
+
+  /**
+   * Returns a {@link ControlledGceInstanceResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
+  public static ControlledResourceFields.Builder makeGceInstanceCommonFieldsBuilder() {
+    return ControlledResourceFields.builder()
+        .workspaceUuid(UUID.randomUUID())
+        .resourceId(UUID.randomUUID())
+        .name(TestUtils.appendRandomNumber("my-instance"))
+        .description("my description")
+        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+        .assignedUser("myusername@mydomain.mine")
+        .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+        .region(DEFAULT_RESOURCE_REGION);
+  }
+
+  public static ControlledGceInstanceResource.Builder makeDefaultGceInstance() {
+    return ControlledGceInstanceResource.builder()
+        .common(makeGceInstanceCommonFieldsBuilder().build())
+        .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
+        .zone(DEFAULT_RESOURCE_ZONE)
+        .projectId("my-project-id");
+  }
+
+  public static ControlledGceInstanceResource.Builder makeDefaultGceInstance(UUID workspaceId) {
+    return ControlledGceInstanceResource.builder()
+        .common(makeGceInstanceCommonFieldsBuilder().workspaceUuid(workspaceId).build())
+        .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
+        .zone(DEFAULT_RESOURCE_ZONE)
         .projectId("my-project-id");
   }
 }
