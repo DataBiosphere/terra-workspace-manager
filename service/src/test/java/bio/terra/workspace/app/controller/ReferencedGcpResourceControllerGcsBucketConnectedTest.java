@@ -33,8 +33,8 @@ import com.google.common.collect.ImmutableList;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -63,8 +63,6 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
   private final String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
   private ApiGcpGcsBucketResource sourceResource;
 
-  boolean bucketIsUpdated = false;
-
   // See here for how to skip workspace creation for local runs:
   // https://github.com/DataBiosphere/terra-workspace-manager/blob/main/DEVELOPMENT.md#for-local-runs-skip-workspacecontext-creation
   @BeforeAll
@@ -80,7 +78,10 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
+  }
 
+  @BeforeEach
+  public void setUpPerTest() throws Exception {
     sourceResource =
         mockMvcUtils.createReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -95,24 +96,9 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
-  @AfterEach
-  public void reset() throws Exception {
-    if (bucketIsUpdated) {
-      mockMvcUtils.updateReferencedGcsBucket(
-          userAccessUtils.defaultUserAuthRequest(),
-          workspaceId,
-          sourceResource.getMetadata().getResourceId(),
-          sourceResourceName,
-          RESOURCE_DESCRIPTION,
-          sourceBucketName,
-          ApiCloningInstructionsEnum.NOTHING);
-      bucketIsUpdated = false;
-    }
-  }
-
   @Test
   public void create() throws Exception {
-    // Resource was created in setup()
+    // Resource was created in setupPerTest()
 
     // Assert resource returned by create
     assertGcsBucket(
@@ -147,7 +133,6 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     var newBucketName = TestUtils.appendRandomNumber("newcloudbucketname");
     var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
 
-    bucketIsUpdated = true;
     ApiGcpGcsBucketResource updatedResource =
         mockMvcUtils.updateReferencedGcsBucket(
             userAccessUtils.secondUserAuthRequest(),
@@ -186,7 +171,6 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     var newDescription = "This is an updated description";
     var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
 
-    bucketIsUpdated = true;
     ApiGcpGcsBucketResource updatedResource =
         mockMvcUtils.updateReferencedGcsBucket(
             userAccessUtils.secondUserAuthRequest(),
