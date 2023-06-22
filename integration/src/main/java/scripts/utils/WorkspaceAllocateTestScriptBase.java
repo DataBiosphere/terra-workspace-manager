@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.equalTo;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.CloneWorkspaceResult;
 import bio.terra.workspace.model.CreateWorkspaceRequestBody;
 import bio.terra.workspace.model.CreatedWorkspace;
 import bio.terra.workspace.model.DeleteWorkspaceV2Request;
@@ -120,9 +119,12 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
     deleteWorkspaceAsync(workspaceApi, workspaceUuid);
   }
 
-  public static void deleteWorkspaceAsync(WorkspaceApi workspaceApi, UUID workspaceUuid) throws ApiException, InterruptedException {
+  public static void deleteWorkspaceAsync(WorkspaceApi workspaceApi, UUID workspaceUuid)
+      throws ApiException, InterruptedException {
     var jobId = UUID.randomUUID().toString();
-    JobResult deleteResult = workspaceApi.deleteWorkspaceV2(new DeleteWorkspaceV2Request().jobControl(new JobControl().id(jobId)), workspaceUuid);
+    JobResult deleteResult =
+        workspaceApi.deleteWorkspaceV2(
+            new DeleteWorkspaceV2Request().jobControl(new JobControl().id(jobId)), workspaceUuid);
     deleteResult =
         ClientTestUtils.pollWhileRunning(
             deleteResult,
