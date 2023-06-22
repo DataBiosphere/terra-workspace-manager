@@ -1,9 +1,8 @@
-package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
+package bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance;
 
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
 
-import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
-import bio.terra.cloudres.google.notebooks.InstanceName;
+import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -16,9 +15,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
-import com.google.api.services.notebooks.v1.model.Binding;
-import com.google.api.services.notebooks.v1.model.Policy;
-import com.google.api.services.notebooks.v1.model.SetIamPolicyRequest;
+import com.google.api.services.compute.model.Binding;
+import com.google.api.services.compute.model.Policy;
+import com.google.api.services.compute.model.ZoneSetPolicyRequest;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.util.List;
@@ -28,17 +27,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Step to sync Sam policy groups for the resource to GCP permissions. */
-public class NotebookCloudSyncStep implements Step {
-  private final Logger logger = LoggerFactory.getLogger(NotebookCloudSyncStep.class);
+public class GceInstanceCloudSyncStep implements Step {
+  private final Logger logger = LoggerFactory.getLogger(GceInstanceCloudSyncStep.class);
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
-  private final ControlledAiNotebookInstanceResource resource;
+  private final ControlledGceInstanceResource resource;
   private final AuthenticatedUserRequest userRequest;
 
-  public NotebookCloudSyncStep(
+  public GceInstanceCloudSyncStep(
       ControlledResourceService controlledResourceService,
       CrlService crlService,
-      ControlledAiNotebookInstanceResource resource,
+      ControlledGceInstanceResource resource,
       AuthenticatedUserRequest userRequest) {
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
@@ -49,25 +48,34 @@ public class NotebookCloudSyncStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT);
     GcpCloudContext cloudContext =
-        workingMap.get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(),
+            ControlledResourceKeys.GCP_CLOUD_CONTEXT,
+            GcpCloudContext.class);
+    String projectId = cloudContext.getGcpProjectId();
     List<Binding> newBindings = createBindings(cloudContext, flightContext.getWorkingMap());
 
-    AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
-    String requestedLocation =
+    CloudComputeCow cloudComputeCow = crlService.getCloudComputeCow();
+    String zone =
         FlightUtils.getRequired(
             flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
-    InstanceName instanceName = resource.toInstanceName(requestedLocation);
     try {
-      Policy policy = notebooks.instances().getIamPolicy(instanceName).execute();
+      Policy policy =
+          cloudComputeCow
+              .instances()
+              .getIamPolicy(projectId, zone, resource.getInstanceId())
+              .execute();
       // Duplicating bindings is harmless (e.g. on retry). GCP de-duplicates.
       Optional.ofNullable(policy.getBindings()).ifPresent(newBindings::addAll);
       policy.setBindings(newBindings);
-      notebooks
+      cloudComputeCow
           .instances()
-          .setIamPolicy(instanceName, new SetIamPolicyRequest().setPolicy(policy))
+          .setIamPolicy(
+              projectId,
+              zone,
+              resource.getInstanceId(),
+              new ZoneSetPolicyRequest().setPolicy(policy))
           .execute();
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
@@ -76,12 +84,12 @@ public class NotebookCloudSyncStep implements Step {
   }
 
   /**
-   * Creates the bindings to set on the Notebook instance.
+   * Creates the bindings to set on the compute instance.
    *
    * <p>{@link
    * bio.terra.workspace.service.resource.controlled.ControlledResourceService#configureGcpPolicyForResource}
-   * works in com.google.cloud.Policy objects, but these are not used by the notebooks API.
-   * Transform the com.google.cloud.Policy into a list of bindings to use for the GCP Notebooks API.
+   * works in com.google.cloud.Policy objects, but these are not used by the compute engine API.
+   * Transform the com.google.cloud.Policy into a list of bindings to use for the GCP GCE API.
    */
   private List<Binding> createBindings(GcpCloudContext cloudContext, FlightMap workingMap)
       throws InterruptedException {
@@ -91,7 +99,7 @@ public class NotebookCloudSyncStep implements Step {
             resource, cloudContext, currentPolicy, userRequest);
 
     return newPolicy.getBindingsList().stream()
-        .map(NotebookCloudSyncStep::convertBinding)
+        .map(GceInstanceCloudSyncStep::convertBinding)
         .collect(Collectors.toList());
   }
 

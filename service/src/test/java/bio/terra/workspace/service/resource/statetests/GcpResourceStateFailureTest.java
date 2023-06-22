@@ -4,6 +4,8 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NO
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCE_INSTANCES_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCE_INSTANCE_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
@@ -23,8 +25,10 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGceInstanceRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
@@ -35,6 +39,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -92,6 +97,23 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
         createContextFlightId);
 
+    // GCP-Controlled Instance
+    var instanceRequest =
+        new ApiCreateControlledGcpGceInstanceRequestBody()
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
+                    .name(TestUtils.appendRandomNumber("gce-instance")))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
+            .gceInstance(
+                ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
+                    .instanceId(TestUtils.appendRandomNumber("instance-id")));
+    mockMvcUtils.postExpect(
+        USER_REQUEST,
+        objectMapper.writeValueAsString(instanceRequest),
+        CONTROLLED_GCP_GCE_INSTANCES_V1_PATH_FORMAT.formatted(workspace.workspaceId()),
+        HttpStatus.SC_CONFLICT);
+
     // GCP-Controlled Notebook
     var notebookRequest =
         new ApiCreateControlledGcpAiNotebookInstanceRequestBody()
@@ -143,6 +165,11 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     UUID workspaceUuid = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
 
     // Create the resources in the database
+    // GCP-Controlled Instance
+    var instanceResource =
+        ControlledGcpResourceFixtures.makeDefaultGceInstance(workspaceUuid).build();
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, instanceResource);
+
     // GCP-Controlled Notebook
     var notebookResource =
         ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder(workspaceUuid).build();
@@ -161,6 +188,23 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     // Set cloud context info deleting state
     var flightId = UUID.randomUUID().toString();
     workspaceDao.deleteCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
+
+    // GCP-Controlled Instance
+    var instanceRequestBody = new ApiUpdateControlledGcpGceInstanceRequestBody().name("foobar");
+    stateTestUtils.updateControlledResource(
+        ApiGcpBigQueryDatasetResource.class,
+        workspaceUuid,
+        instanceResource.getResourceId(),
+        CONTROLLED_GCP_GCE_INSTANCE_V1_PATH_FORMAT,
+        objectMapper.writeValueAsString(instanceRequestBody));
+    var instanceDeleteBody =
+        new ApiDeleteControlledGcpGceInstanceRequest()
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+    stateTestUtils.postResourceExpectConflict(
+        workspaceUuid,
+        instanceResource.getResourceId(),
+        CONTROLLED_GCP_GCE_INSTANCE_V1_PATH_FORMAT,
+        objectMapper.writeValueAsString(instanceDeleteBody));
 
     // GCP-Controlled Notebook
     var notebookRequestBody =

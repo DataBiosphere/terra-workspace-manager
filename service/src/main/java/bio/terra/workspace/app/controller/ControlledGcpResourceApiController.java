@@ -15,28 +15,36 @@ import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGceInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceResult;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGceInstanceRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGceInstanceResult;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketResult;
+import bio.terra.workspace.generated.model.ApiGceInstanceCloudId;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpGceInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
 import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
+import bio.terra.workspace.generated.model.ApiGenerateGcpGceInstanceCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpGcsBucketCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -54,6 +62,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -661,7 +671,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiDeleteControlledGcpAiNotebookInstanceResult>
       getDeleteAiNotebookInstanceResult(UUID workspaceUuid, String jobId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiDeleteControlledGcpAiNotebookInstanceResult result =
         fetchNotebookInstanceDeleteResult(jobId);
@@ -687,6 +697,173 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledGcpGceInstanceResult> createGceInstance(
+      UUID workspaceUuid, @Valid ApiCreateControlledGcpGceInstanceRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
+    String resourceLocation = getResourceLocation(workspace, body.getGceInstance().getZone());
+    ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            // A GCE instance is a zonal resource. It's set here so that we can validate it against
+            // policy. However, the creation flight will compute a final location, which
+            // could be a zone if a region is passed here. The assumption for policy is that a zone
+            // is included inside of a region. The db entry is updated as part of the flight.
+            resourceLocation,
+            userRequest,
+            WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
+    CloudContext cloudContext =
+        workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.GCP);
+    GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
+    String projectId = gcpCloudContext.getGcpProjectId();
+
+    ControlledGceInstanceResource resource =
+        ControlledGceInstanceResource.builder()
+            .common(commonFields)
+            .zone(resourceLocation)
+            .projectId(projectId)
+            .instanceId(
+                Optional.ofNullable(body.getGceInstance().getInstanceId())
+                    .orElse(
+                        ControlledGceInstanceHandler.getHandler()
+                            .generateCloudName(workspaceUuid, commonFields.getName())))
+            .build();
+
+    String jobId =
+        controlledResourceService.createGceInstance(
+            resource,
+            body.getGceInstance(),
+            commonFields.getIamRole(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
+            userRequest);
+
+    ApiCreatedControlledGcpGceInstanceResult result = fetchGceInstanceCreateResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
+  }
+
+  @Override
+  public ResponseEntity<ApiGceInstanceCloudId> generateGceInstanceCloudId(
+      UUID workspaceUuid, ApiGenerateGcpGceInstanceCloudIdRequestBody name) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
+    String generatedGceInstanceName =
+        ControlledGceInstanceHandler.getHandler()
+            .generateCloudName(workspaceUuid, name.getInstanceName());
+    var response =
+        new ApiGceInstanceCloudId().generatedGceInstanceCloudId(generatedGceInstanceName);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiGcpGceInstanceResource> updateGceInstance(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiUpdateControlledGcpGceInstanceRequestBody requestBody) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledGceInstanceResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.EDIT_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+    CommonUpdateParameters commonUpdateParameters =
+        new CommonUpdateParameters()
+            .setName(requestBody.getName())
+            .setDescription(requestBody.getDescription());
+    wsmResourceService.updateResource(
+        userRequest, resource, commonUpdateParameters, requestBody.getUpdateParameters());
+    ControlledGceInstanceResource updatedResource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledGcpGceInstanceResult> getCreateGceInstanceResult(
+      UUID workspaceUuid, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiCreatedControlledGcpGceInstanceResult result = fetchGceInstanceCreateResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ApiCreatedControlledGcpGceInstanceResult fetchGceInstanceCreateResult(String jobId) {
+    JobApiUtils.AsyncJobResult<ControlledGceInstanceResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledGceInstanceResource.class);
+
+    ApiGcpGceInstanceResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      ControlledGceInstanceResource resource = jobResult.getResult();
+      apiResource = resource.toApiResource();
+    }
+    return new ApiCreatedControlledGcpGceInstanceResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .gceInstance(apiResource);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcpGceInstanceResult> deleteGceInstance(
+      UUID workspaceUuid, UUID resourceUuid, @Valid ApiDeleteControlledGcpGceInstanceRequest body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+    ApiJobControl jobControl = body.getJobControl();
+    logger.info(
+        "deleteGceInstance workspace {} resource {}",
+        workspaceUuid.toString(),
+        resourceUuid.toString());
+    String jobId =
+        controlledResourceService.deleteControlledResourceAsync(
+            jobControl.getId(),
+            workspaceUuid,
+            resourceUuid,
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
+            userRequest);
+    ApiDeleteControlledGcpGceInstanceResult result = fetchGceInstanceDeleteResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcpGceInstanceResult> getDeleteGceInstanceResult(
+      UUID workspaceUuid, String jobId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiDeleteControlledGcpGceInstanceResult result = fetchGceInstanceDeleteResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ApiDeleteControlledGcpGceInstanceResult fetchGceInstanceDeleteResult(String jobId) {
+    JobApiUtils.AsyncJobResult<Void> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
+    return new ApiDeleteControlledGcpGceInstanceResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport());
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiGcpGceInstanceResource> getGceInstance(
+      UUID workspaceUuid, UUID resourceUuid) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledGceInstanceResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 }

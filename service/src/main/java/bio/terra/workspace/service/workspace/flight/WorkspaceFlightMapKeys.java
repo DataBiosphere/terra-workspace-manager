@@ -41,12 +41,19 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
+    public static final String CLOUD_PET_SERVICE_ACCOUNT = "cloudPetServiceAccount";
+
+    // Shared Instance Keys
+    public static final String CREATE_GCE_INSTANCE_NETWORK_NAME = "createGceInstanceNetworkName";
+    public static final String CREATE_GCE_INSTANCE_LOCATION = "createGceInstanceLocation";
+    public static final String CREATE_GCE_INSTANCE_SUBNETWORK_NAME =
+        "createGceInstanceSubnetworkName";
+
     // Notebooks keys
-    public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
-    public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
-    public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
-    public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
+
+    // GCE Instance keys
+    public static final String CREATE_GCE_INSTANCE_PARAMETERS = "createGceInstanceParameters";
 
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";

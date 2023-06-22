@@ -9,6 +9,7 @@ components:
         - BIG_QUERY_DATASET
         - BIG_QUERY_DATA_TABLE
         - DATA_REPO_SNAPSHOT
+        - GCE_INSTANCE
         - GCS_BUCKET
         - GCS_OBJECT
         - AZURE_MANAGED_IDENTITY
@@ -36,6 +37,8 @@ components:
           $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
         gcpDataRepoSnapshot:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
+        gcpGceInstance:
+          $ref: '#/components/schemas/GcpGceInstanceAttributes'
         gcpGcsBucket:
           $ref: '#/components/schemas/GcpGcsBucketAttributes'
         gcpGcsObject:
@@ -78,6 +81,8 @@ components:
           $ref: '#/components/schemas/GcpBigQueryDataTableResource'
         gcpDataRepoSnapshot:
           $ref: '#/components/schemas/DataRepoSnapshotResource'
+        gcpGceInstance:
+          $ref: '#/components/schemas/GcpGceInstanceResource'
         gcpGcsBucket:
           $ref: '#/components/schemas/GcpGcsBucketResource'
         gcpGcsObject:

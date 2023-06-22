@@ -3,6 +3,7 @@ package bio.terra.workspace.common.utils;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.RetryRuleExponentialBackoff;
 import bio.terra.stairway.RetryRuleFixedInterval;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A selection of retry rule instantiators for use with Stairway flight steps. Each static method
@@ -47,5 +48,46 @@ public class RetryRules {
   /** Use for short database operations which may fail due to transaction conflicts. */
   public static RetryRule shortDatabase() {
     return new RetryRuleFixedInterval(/*intervalSeconds= */ 1, /* maxCount= */ 5);
+  }
+
+  private static class LongSyncRetryRule implements RetryRule {
+    private static final int SHORT_INTERVAL_COUNT = 6;
+    private static final int SHORT_INTERVAL_SECONDS = 10;
+    private static final int LONG_INTERVAL_COUNT = 16;
+    private static final int LONG_INTERVAL_SECONDS = 30;
+    private int shortIntervalCounter;
+    private int longIntervalCounter;
+
+    @Override
+    public void initialize() {
+      shortIntervalCounter = 0;
+      longIntervalCounter = 0;
+    }
+
+    @Override
+    public boolean retrySleep() throws InterruptedException {
+      if (shortIntervalCounter < SHORT_INTERVAL_COUNT) {
+        shortIntervalCounter++;
+        TimeUnit.SECONDS.sleep(SHORT_INTERVAL_SECONDS);
+        return true;
+      }
+      if (longIntervalCounter < LONG_INTERVAL_COUNT) {
+        longIntervalCounter++;
+        TimeUnit.SECONDS.sleep(LONG_INTERVAL_SECONDS);
+        return true;
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Special retry rule for the instance permission sync. We are seeing very long propagation times
+   * in environments with Domain Restricted Sharing. This rule tries not to penalize non-DRS
+   * environments by running an initial phase of retries with the usual "cloud" interval of 10
+   * seconds. Then after a minute it switches to a longer interval. Currently set to wait 8 more
+   * minutes.
+   */
+  public static RetryRule longSync() {
+    return new LongSyncRetryRule();
   }
 }
