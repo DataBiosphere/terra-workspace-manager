@@ -830,6 +830,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             jobControl.getId(),
             workspaceUuid,
             resourceUuid,
+            /*forceDelete=*/true,
             getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
             userRequest);
     ApiDeleteControlledGcpGceInstanceResult result = fetchGceInstanceDeleteResult(jobId);
