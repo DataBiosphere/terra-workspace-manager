@@ -109,14 +109,10 @@ public class AwsUtils {
       Collection<Tag> tags, AwsCloudContext awsCloudContext, T awsResource) {
     tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
 
-    if (awsResource instanceof ControlledAwsS3StorageFolderResource) {
-      ControlledAwsS3StorageFolderResource resource =
-          (ControlledAwsS3StorageFolderResource) awsResource;
+    if (awsResource instanceof ControlledAwsS3StorageFolderResource resource) {
       tags.add(Tag.builder().key("S3BucketID").value(resource.getBucketName()).build());
       tags.add(Tag.builder().key("TerraBucketID").value(resource.getPrefix()).build());
-    } else if (awsResource instanceof ControlledAwsSageMakerNotebookResource) {
-      ControlledAwsSageMakerNotebookResource resource =
-          (ControlledAwsSageMakerNotebookResource) awsResource;
+    } else if (awsResource instanceof ControlledAwsSageMakerNotebookResource resource) {
       // TODO(TERRA-550) Add sageMaker tags
     }
   }
@@ -338,8 +334,7 @@ public class AwsUtils {
         .credentials();
   }
 
-  private static S3Client getS3Client(
-      AwsCredentialsProvider awsCredentialsProvider, Region region) {
+  public static S3Client getS3Client(AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
 
@@ -361,6 +356,8 @@ public class AwsUtils {
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param storageResource {@link ControlledAwsS3StorageFolderResource}
    * @return True if the folder exists
+   * @throws ApiException ApiException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static boolean checkFolderExists(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -382,6 +379,8 @@ public class AwsUtils {
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param storageResource {@link ControlledAwsS3StorageFolderResource}
    * @param tags collection of {@link Tag} to be attached to the folder
+   * @throws ApiException ApiException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static void createStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -404,6 +403,9 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param storageResource {@link ControlledAwsS3StorageFolderResource}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static void deleteStorageFolder(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -427,8 +429,10 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param key object (key)
    * @param tags collection of {@link Tag} to be attached to the folder
+   * @throws ApiException ApiException
+   * @throws UnauthorizedException UnauthorizedException
    */
-  private static void putS3Object(
+  public static void putS3Object(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -484,8 +488,10 @@ public class AwsUtils {
    * @param bucketName bucket name
    * @param prefix common prefix
    * @param limit max count of results
+   * @throws ApiException ApiException
+   * @throws UnauthorizedException UnauthorizedException
    */
-  private static List<String> getS3ObjectKeysByPrefix(
+  public static List<String> getS3ObjectKeysByPrefix(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -537,8 +543,11 @@ public class AwsUtils {
    * @param region {@link Region}
    * @param bucketName bucket name
    * @param keys list of objects (keys)
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
    */
-  private static void deleteS3Objects(
+  public static void deleteS3Objects(
       AwsCredentialsProvider awsCredentialsProvider,
       Region region,
       String bucketName,
@@ -859,7 +868,7 @@ public class AwsUtils {
     }
   }
 
-  private static void checkException(SdkException ex)
+  public static void checkException(SdkException ex)
       throws NotFoundException, UnauthorizedException, BadRequestException {
     String message = ex.getMessage();
     if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
