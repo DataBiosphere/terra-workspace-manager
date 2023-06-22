@@ -45,11 +45,14 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.Clone
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
+import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.ArrayList;
 import java.util.List;
@@ -280,18 +283,8 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             DeleteCloudContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
 
     assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());
-    ActivityLogChangeDetails changeDetailsAfterFailedFlight =
-        activityLogDao.getLastUpdatedDetails(workspaceUuid).get();
-    assertEquals(
-        changeDetailsAfterFailedFlight,
-        new ActivityLogChangeDetails(
-            workspaceUuid,
-            changeDetailsAfterFailedFlight.changeDate(),
-            USER_REQUEST.getEmail(),
-            USER_REQUEST.getSubjectId(),
-            DELETE,
-            workspaceUuid.toString(),
-            ActivityLogChangedTarget.WORKSPACE));
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
+    assertTrue(changeDetailsAfterFailedFlight.isEmpty());
   }
 
   @Test

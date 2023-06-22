@@ -189,9 +189,7 @@ public class ResourceValidationUtils {
   public static void validateRegion(
       TpsApiDispatch tpsApiDispatch, UUID workspaceId, String region, CloudPlatform cloudPlatform) {
     Rethrow.onInterrupted(
-        () ->
-            tpsApiDispatch.createPaoIfNotExist(
-                workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+        () -> tpsApiDispatch.getOrCreatePao(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
         "createPaoIfNotExist");
 
     // Get the list of valid locations for this workspace from TPS. If there are no regional
