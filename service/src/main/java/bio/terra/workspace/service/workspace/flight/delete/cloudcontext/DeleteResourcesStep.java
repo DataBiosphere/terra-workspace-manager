@@ -22,6 +22,8 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.CloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextDeleteException;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -52,11 +54,17 @@ public class DeleteResourcesStep implements Step {
   //  @SuppressWarnings("unchecked")
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // Jackson does not deserialize the list properly with a TypeReference. The array form works.
-    ResourceDeleteFlightPair[] resourcePairs =
+    ResourceDeleteFlightPair[] resourcePairsArray =
         FlightUtils.getRequired(
             context.getWorkingMap(),
             RESOURCE_DELETE_FLIGHT_PAIR_LIST,
             ResourceDeleteFlightPair[].class);
+
+    List<ResourceDeleteFlightPair> resourcePairs = Arrays.asList(resourcePairsArray);
+    logger.info(
+        "Flight {} DeleteResourcesStep found {} resources to delete",
+        context.getFlightId(),
+        resourcePairs.size());
 
     Stairway stairway = context.getStairway();
     // Loop through the resources, deleting them one at a time

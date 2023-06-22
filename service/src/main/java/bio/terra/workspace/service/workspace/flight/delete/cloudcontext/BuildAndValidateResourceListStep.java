@@ -57,6 +57,10 @@ public class BuildAndValidateResourceListStep implements Step {
       resourcePairs.add(
           new ResourceDeleteFlightPair(resource.getResourceId(), UUID.randomUUID().toString()));
     }
+    logger.info(
+        "Flight {} BuildAndValidateResourceListStep found {} resources to delete",
+        context.getFlightId(),
+        resourcePairs.size());
     context
         .getWorkingMap()
         .put(
