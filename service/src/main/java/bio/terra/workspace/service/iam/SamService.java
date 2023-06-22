@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import okhttp3.OkHttpClient;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.api.AdminApi;
@@ -419,6 +420,28 @@ public class SamService {
             "Sam error was NOT_FOUND on a deletion call. "
                 + "This just means the deletion was tried twice so no error thrown.");
         return;
+      }
+
+      // Diagnostic: if the error was "Cannot delete a resource with children" then fetch and
+      // dump the remaining children.
+      if (apiException.getCode() == HttpStatus.BAD_REQUEST.value()
+          && StringUtils.contains(
+              apiException.getMessage(), "Cannot delete a resource with children")) {
+        try {
+          List<FullyQualifiedResourceId> children =
+              resourceApi.listResourceChildren(SamConstants.SamResource.WORKSPACE, uuid.toString());
+          logger.error(
+              "Found {} child resources in Sam while deleting workspace {}", children.size(), uuid);
+          for (FullyQualifiedResourceId child : children) {
+            logger.error(
+                "  Workspace {} child {} ({})",
+                uuid,
+                child.getResourceTypeName(),
+                child.getResourceId());
+          }
+        } catch (ApiException innerApiException) {
+          logger.error("Failed to retrieve the list of workspace children", innerApiException);
+        }
       }
       throw SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
     }
