@@ -130,7 +130,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
             JobResult::getJobReport,
             Duration.ofSeconds(10));
     ClientTestUtils.assertJobSuccess(
-        "Clone Workspace", deleteResult.getJobReport(), deleteResult.getErrorReport());
+        "Delete Workspace v2", deleteResult.getJobReport(), deleteResult.getErrorReport());
   }
 
   /**
