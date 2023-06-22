@@ -5,7 +5,6 @@ import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
 import bio.terra.workspace.common.utils.AwsUtils;
-import bio.terra.workspace.service.features.FeatureService;
 import java.io.IOException;
 import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -22,8 +20,6 @@ import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 @Tag("aws-connected")
 public class AwsConfigurationTest extends BaseAwsConnectedTest {
   private static final Logger logger = LoggerFactory.getLogger(AwsConfigurationTest.class);
-  @Autowired private AwsConfiguration awsConfiguration;
-  @Autowired private FeatureService featureService;
 
   private void logEnvironmentMetadata(Metadata metadata) {
     logger.info("AWS Environment Infrastructure Details:");
@@ -35,7 +31,7 @@ public class AwsConfigurationTest extends BaseAwsConnectedTest {
   }
 
   @Test
-  void hello_bucket() throws IOException {
+  void discoverEnvironmentTest() throws IOException {
     Assertions.assertDoesNotThrow(() -> featureService.awsEnabledCheck());
 
     // Log the AWS config

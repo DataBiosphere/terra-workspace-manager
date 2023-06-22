@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 public class AwsResourceValidationUtilsTest extends BaseAwsUnitTest {
 
   @Test
-  public void awsS3StorageFolderName() {
+  public void awsS3StorageFolderNameTest() {
     AwsResourceValidationUtils.validateAwsS3StorageFolderName("valid-s3-storage-folder");
 
     for (char c : AwsResourceValidationUtils.s3ObjectKeyDisallowedChars.pattern().toCharArray()) {
@@ -35,7 +35,7 @@ public class AwsResourceValidationUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void awsSageMakerNotebookName() {
+  public void awsSageMakerNotebookNameTest() {
     AwsResourceValidationUtils.validateAwsSageMakerNotebookName("valid-s3-sageMaker-instance");
 
     assertThrows(
@@ -68,7 +68,7 @@ public class AwsResourceValidationUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void awsCredentialDurationSecond() {
+  public void awsCredentialDurationSecondTest() {
     assertThrows(
         InvalidNameException.class,
         () -> AwsResourceValidationUtils.validateAwsCredentialDurationSecond(9),
