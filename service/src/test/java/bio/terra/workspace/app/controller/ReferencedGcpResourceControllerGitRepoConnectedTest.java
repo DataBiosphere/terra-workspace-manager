@@ -32,6 +32,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -79,7 +80,10 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
+  }
 
+  @BeforeEach
+  void setUpPerTest() throws Exception {
     sourceResource =
         mockMvcUtils.createReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
@@ -164,14 +168,6 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.updateReferencedGitRepo(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        sourceResourceName,
-        RESOURCE_DESCRIPTION,
-        sourceGitRepoUrl,
-        ApiCloningInstructionsEnum.NOTHING,
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test

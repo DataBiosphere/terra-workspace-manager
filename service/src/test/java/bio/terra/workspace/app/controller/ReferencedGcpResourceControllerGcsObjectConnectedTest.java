@@ -33,6 +33,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -80,7 +81,10 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
+  }
 
+  @BeforeEach
+  void setUpPerTest() throws Exception {
     sourceResource =
         mockMvcUtils.createReferencedGcsObject(
             userAccessUtils.defaultUserAuthRequest(),
@@ -169,15 +173,6 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.updateReferencedGcsObject(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        sourceResourceName,
-        RESOURCE_DESCRIPTION,
-        sourceBucketName,
-        sourceFileName,
-        ApiCloningInstructionsEnum.NOTHING,
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
