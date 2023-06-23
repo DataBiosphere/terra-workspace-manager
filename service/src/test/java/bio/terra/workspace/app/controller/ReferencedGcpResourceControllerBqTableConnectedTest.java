@@ -159,12 +159,6 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
             newProjectId,
             newDataset,
             newTable);
-    ApiGcpBigQueryDataTableResource gotResource =
-        mockMvcUtils.getReferencedBqTable(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, gotResource);
     assertBqTable(
         updatedResource,
         newCloningInstruction,

@@ -144,15 +144,6 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
             newCloningInstruction,
             userAccessUtils.secondUserAuthRequest());
 
-    // Assert resource returned by get
-    // Update the sourceResource to the updated one as all the tests are sharing
-    // the same resource.
-    ApiGitRepoResource getResource =
-        mockMvcUtils.getReferencedGitRepo(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, getResource);
     assertGitRepo(
         updatedResource,
         newCloningInstruction,

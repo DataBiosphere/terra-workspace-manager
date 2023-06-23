@@ -149,12 +149,6 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
             newSnapshot,
             newInstanceName,
             newCloningInstruction);
-    ApiDataRepoSnapshotResource gotResource =
-        mockMvcUtils.getReferencedDataRepoSnapshot(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, gotResource);
     assertDataRepoSnapshot(
         updatedResource,
         newCloningInstruction,

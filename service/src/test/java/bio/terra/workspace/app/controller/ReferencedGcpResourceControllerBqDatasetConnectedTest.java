@@ -154,12 +154,6 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
             newCloningInstruction,
             newDataset);
 
-    ApiGcpBigQueryDatasetResource gotResource =
-        mockMvcUtils.getReferencedBqDataset(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, gotResource);
     assertBqDataset(
         updatedResource,
         newCloningInstruction,

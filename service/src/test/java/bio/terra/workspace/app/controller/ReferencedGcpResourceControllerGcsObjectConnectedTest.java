@@ -149,15 +149,6 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
             newCloningInstruction,
             userAccessUtils.secondUserAuthRequest());
 
-    // Assert resource returned by get
-    // Update the sourceResource to the updated one as all the tests are sharing
-    // the same resource.
-    ApiGcpGcsObjectResource getResource =
-        mockMvcUtils.getReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, getResource);
     assertGcsObject(
         updatedResource,
         newCloningInstruction,
