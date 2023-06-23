@@ -138,8 +138,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
           createS3FolderStep.undoStep(mockFlightContext),
           equalTo(StepResult.getStepResultSuccess()));
       mockDeleteStep.verify(
-          () -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()),
-          times(1));
+          () -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()));
     }
   }
 
