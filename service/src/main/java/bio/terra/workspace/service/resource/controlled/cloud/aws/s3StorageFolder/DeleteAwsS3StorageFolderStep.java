@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolde
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -33,7 +34,7 @@ public class DeleteAwsS3StorageFolderStep implements Step {
       AwsCredentialsProvider credentialsProvider, ControlledAwsS3StorageFolderResource resource) {
     try {
       AwsUtils.deleteStorageFolder(credentialsProvider, resource);
-    } catch (ApiException e) {
+    } catch (ApiException | UnauthorizedException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     } catch (NotFoundException e) {
       logger.debug("No storage folder {} to delete.", resource.getName());
