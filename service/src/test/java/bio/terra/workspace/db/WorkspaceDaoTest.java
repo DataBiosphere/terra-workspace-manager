@@ -138,7 +138,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     WorkspaceFixtures.createWorkspaceInDb(realWorkspace, workspaceDao);
     UUID fakeWorkspaceId = UUID.randomUUID();
     Map<UUID, DbWorkspaceDescription> workspaceList =
-        workspaceDao.getWorkspacesMatchingList(
+        workspaceDao.getWorkspaceDescriptionMapFromIdList(
             ImmutableSet.of(realWorkspace.getWorkspaceId(), fakeWorkspaceId), 0, 1);
     // The DAO should return all workspaces this user has access to, including realWorkspace but
     // not including the fake workspace id.
@@ -192,7 +192,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
         WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
     WorkspaceFixtures.createWorkspaceInDb(secondWorkspace, workspaceDao);
     Map<UUID, DbWorkspaceDescription> workspaceMap =
-        workspaceDao.getWorkspacesMatchingList(
+        workspaceDao.getWorkspaceDescriptionMapFromIdList(
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             1,
             10);
@@ -210,7 +210,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
         WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
     WorkspaceFixtures.createWorkspaceInDb(secondWorkspace, workspaceDao);
     Map<UUID, DbWorkspaceDescription> workspaceMap =
-        workspaceDao.getWorkspacesMatchingList(
+        workspaceDao.getWorkspaceDescriptionMapFromIdList(
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             0,
             1);

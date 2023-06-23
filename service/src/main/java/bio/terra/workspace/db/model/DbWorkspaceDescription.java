@@ -1,5 +1,6 @@
 package bio.terra.workspace.db.model;
 
+import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContext;
@@ -88,6 +89,7 @@ public class DbWorkspaceDescription {
       case AWS -> awsCloudContext = cloudContext.castByEnum(CloudPlatform.AWS);
       case AZURE -> azureCloudContext = cloudContext.castByEnum(CloudPlatform.AZURE);
       case GCP -> gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
+      default -> throw new InternalLogicException("Unknown cloud platform");
     }
     return this;
   }

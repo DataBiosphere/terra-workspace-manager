@@ -487,7 +487,7 @@ public class WorkspaceDao {
   }
 
   /** Retrieves a workspace description by userFacingId. */
-  public DbWorkspaceDescription getWorkspaceByUserFacingId(String userFacingId) {
+  public DbWorkspaceDescription getWorkspaceDescriptionByUserFacingId(String userFacingId) {
     if (userFacingId == null || userFacingId.isEmpty()) {
       throw new MissingRequiredFieldException("userFacingId is required");
     }
@@ -666,7 +666,7 @@ public class WorkspaceDao {
    */
   @Traced
   @ReadTransaction
-  public Map<UUID, DbWorkspaceDescription> getWorkspacesMatchingList(
+  public Map<UUID, DbWorkspaceDescription> getWorkspaceDescriptionMapFromIdList(
       Set<UUID> idList, int offset, int limit) {
     // If the incoming list is empty, the caller does not have permission to see any
     // workspaces, so we return an empty list.

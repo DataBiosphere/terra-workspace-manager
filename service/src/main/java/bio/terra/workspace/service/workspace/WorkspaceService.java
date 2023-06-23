@@ -266,7 +266,7 @@ public class WorkspaceService {
   @Traced
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
-    logWorkspaceAction(userRequest, workspaceUuid, action);
+    logWorkspaceAction(userRequest, workspaceUuid.toString(), action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
     checkWorkspaceAuthz(userRequest, workspaceUuid, action);
     return workspace;
@@ -283,7 +283,7 @@ public class WorkspaceService {
   @Traced
   public WorkspaceDescription validateWorkspaceAndActionReturningDescription(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
-    logWorkspaceAction(userRequest, workspaceUuid, action);
+    logWorkspaceAction(userRequest, workspaceUuid.toString(), action);
     DbWorkspaceDescription dbWorkspaceDescription =
         workspaceDao.getWorkspaceDescription(workspaceUuid);
     checkWorkspaceAuthz(userRequest, workspaceUuid, action);
@@ -301,9 +301,9 @@ public class WorkspaceService {
   @Traced
   public WorkspaceDescription validateWorkspaceAndActionReturningDescription(
       AuthenticatedUserRequest userRequest, String userFacingId, String action) {
+    logWorkspaceAction(userRequest, userFacingId, action);
     DbWorkspaceDescription dbWorkspaceDescription =
-        workspaceDao.getWorkspaceByUserFacingId(userFacingId);
-    logWorkspaceAction(userRequest, dbWorkspaceDescription.getWorkspace().workspaceId(), action);
+        workspaceDao.getWorkspaceDescriptionByUserFacingId(userFacingId);
     checkWorkspaceAuthz(userRequest, dbWorkspaceDescription.getWorkspace().workspaceId(), action);
     return makeWorkspaceDescription(userRequest, dbWorkspaceDescription);
   }
@@ -323,11 +323,11 @@ public class WorkspaceService {
 
   // -- private methods supporting validateWorkspaceAndAction methods --
   private void logWorkspaceAction(
-      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
+      AuthenticatedUserRequest userRequest, String idString, String action) {
     logger.info(
-        "validateWorkspaceAndAction - userRequest: {}\nworkspaceUuid: {}\naction: {}",
+        "validateWorkspaceAndAction - userRequest: {}\nworkspace UUID/UFID: {}\naction: {}",
         userRequest,
-        workspaceUuid,
+        idString,
         action);
   }
 
@@ -502,7 +502,8 @@ public class WorkspaceService {
 
     // From DAO, retrieve the workspace metadata
     Map<UUID, DbWorkspaceDescription> dbWorkspaceDescriptions =
-        workspaceDao.getWorkspacesMatchingList(accessibleWorkspaces.keySet(), offset, limit);
+        workspaceDao.getWorkspaceDescriptionMapFromIdList(
+            accessibleWorkspaces.keySet(), offset, limit);
 
     // TODO: PF-2710(part 2): make a batch getOrCreatePao in TPS and use it here
     Map<UUID, TpsPaoGetResult> paoMap = new HashMap<>();
