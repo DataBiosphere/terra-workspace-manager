@@ -51,6 +51,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
+import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.SamConstants.SamSpendProfileAction;
@@ -60,7 +61,6 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
-import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
@@ -400,6 +400,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .attributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY))
             .effectiveAttributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY));
     when(mockTpsApiDispatch().getPao(eq(workspace.getId()))).thenReturn(getPolicyResult);
+    when(mockTpsApiDispatch().getOrCreatePao(eq(workspace.getId()), any(), any()))
+        .thenReturn(getPolicyResult);
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
@@ -418,7 +420,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
-    assertNull(gotWorkspace.getPolicies());
+    assertEquals(0, gotWorkspace.getPolicies().size());
   }
 
   @Test
@@ -433,15 +435,10 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         .thenReturn(
             ImmutableMap.of(
                 workspace.getId(),
-                new WorkspaceDescription(
-                    workspaceDao.getWorkspace(workspace.getId()),
-                    WsmIamRole.OWNER,
-                    missingAuthDomains),
+                new AccessibleWorkspace(workspace.getId(), WsmIamRole.OWNER, missingAuthDomains),
                 noPolicyWorkspace.getId(),
-                new WorkspaceDescription(
-                    workspaceDao.getWorkspace(noPolicyWorkspace.getId()),
-                    WsmIamRole.OWNER,
-                    Collections.emptyList())));
+                new AccessibleWorkspace(
+                    noPolicyWorkspace.getId(), WsmIamRole.OWNER, Collections.emptyList())));
     TpsPaoGetResult getPolicyResult =
         new TpsPaoGetResult()
             .attributes(new TpsPolicyInputs().addInputsItem(TPS_GROUP_POLICY))
@@ -452,6 +449,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .sourcesObjectIds(Collections.emptyList());
     // Return a policy object for the first workspace
     when(mockTpsApiDispatch().getPao(eq(workspace.getId()))).thenReturn(getPolicyResult);
+    when(mockTpsApiDispatch().getOrCreatePao(eq(workspace.getId()), any(), any()))
+        .thenReturn(getPolicyResult);
     // Treat the second workspace like it was created before policy existed. It should receive an
     // empty Pao.
     TpsPaoGetResult emptyPao =
@@ -497,14 +496,12 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         .thenReturn(
             ImmutableMap.of(
                 workspace.getId(),
-                new WorkspaceDescription(
-                    workspaceDao.getWorkspace(workspace.getId()),
-                    WsmIamRole.OWNER,
-                    Collections.emptyList())));
+                new AccessibleWorkspace(
+                    workspace.getId(), WsmIamRole.OWNER, Collections.emptyList())));
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
-    assertNull(gotWorkspace.getPolicies());
+    assertEquals(0, gotWorkspace.getPolicies().size());
   }
 
   @Test

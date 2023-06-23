@@ -59,6 +59,7 @@ import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorks
 import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspacePoliciesStep;
 import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceStartStep;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -186,12 +187,11 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         WorkspaceFixtures.defaultWorkspaceBuilder(null).userFacingId(userFacingId).build();
     workspaceService.createWorkspace(request, null, null, USER_REQUEST);
 
-    assertEquals(
-        request.getWorkspaceId(),
-        workspaceService
-            .getWorkspaceByUserFacingId(
-                userFacingId, USER_REQUEST, /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER)
-            .getWorkspaceId());
+    WorkspaceDescription workspaceDescription =
+        workspaceService.validateWorkspaceAndActionReturningDescription(
+            USER_REQUEST, userFacingId, WsmIamRole.READER.toSamAction());
+
+    assertEquals(request.getWorkspaceId(), workspaceDescription.workspace().workspaceId());
   }
 
   @Test
@@ -199,10 +199,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         WorkspaceNotFoundException.class,
         () ->
-            workspaceService.getWorkspaceByUserFacingId(
-                "missing-workspace",
-                USER_REQUEST,
-                /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER));
+            workspaceService.validateWorkspaceAndActionReturningDescription(
+                USER_REQUEST, "missing-workspace", WsmIamRole.READER.toSamAction()));
   }
 
   @Test
@@ -236,8 +234,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertThrows(
         ForbiddenException.class,
         () ->
-            workspaceService.getWorkspaceByUserFacingId(
-                userFacingId, USER_REQUEST, /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER));
+            workspaceService.validateWorkspaceAndActionReturningDescription(
+                USER_REQUEST,
+                userFacingId,
+                /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER.toSamAction()));
   }
 
   @Test
@@ -359,9 +359,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     String name = "My workspace";
     String description = "The greatest workspace";
 
-    Workspace updatedWorkspace =
+    WorkspaceDescription updatedWorkspaceDescription =
         workspaceService.updateWorkspace(
             workspaceUuid, userFacingId, name, description, USER_REQUEST);
+    Workspace updatedWorkspace = updatedWorkspaceDescription.workspace();
 
     var workspaceUpdateChangeDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
@@ -380,10 +381,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     String otherDescription = "The deprecated workspace";
 
-    Workspace secondUpdatedWorkspace =
+    WorkspaceDescription secondUpdatedWorkspaceDescription =
         workspaceService.updateWorkspace(
             workspaceUuid, /*userFacingId=*/ null, /*name=*/ null, otherDescription, USER_REQUEST);
-
+    Workspace secondUpdatedWorkspace = secondUpdatedWorkspaceDescription.workspace();
     var secondUpdateChangeDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
         workspaceUpdateChangeDetails
@@ -399,8 +400,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     assertEquals(otherDescription, secondUpdatedWorkspace.getDescription().get());
 
     // Sending through empty strings and an empty map clears the values.
-    Workspace thirdUpdatedWorkspace =
+    WorkspaceDescription thirdUpdatedWorkspaceDescription =
         workspaceService.updateWorkspace(workspaceUuid, userFacingId, "", "", USER_REQUEST);
+    Workspace thirdUpdatedWorkspace = thirdUpdatedWorkspaceDescription.workspace();
 
     var thirdUpdatedDateAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);

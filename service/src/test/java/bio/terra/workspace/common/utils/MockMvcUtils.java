@@ -2654,6 +2654,7 @@ public class MockMvcUtils {
         getLastChangeDetails(workspaceId, expectedChangeSubjectId);
     assertEquals(
         new ActivityLogChangeDetails(
+            workspaceId,
             actualChangedDetails.changeDate(),
             expectedActorEmail,
             expectedActorSubjectId,

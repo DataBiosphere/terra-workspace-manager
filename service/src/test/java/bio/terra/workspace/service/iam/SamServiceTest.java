@@ -28,6 +28,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -45,7 +46,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
@@ -331,13 +331,13 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void listWorkspaceIdsAndHighestRoles() throws Exception {
-    Map<UUID, WorkspaceDescription> actual =
+    Map<UUID, AccessibleWorkspace> actual =
         samService.listWorkspaceIdsAndHighestRoles(
             userAccessUtils.defaultUserAuthRequest(), WsmIamRole.READER);
 
-    WorkspaceDescription match = actual.get(workspaceUuid);
+    AccessibleWorkspace match = actual.get(workspaceUuid);
     assertEquals(WsmIamRole.OWNER, match.highestRole());
-    assertTrue(match.missingAuthDomains().isEmpty());
+    assertTrue(match.missingAuthDomainGroups().isEmpty());
   }
 
   @Test

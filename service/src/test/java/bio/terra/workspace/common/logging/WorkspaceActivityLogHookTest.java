@@ -45,11 +45,14 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.Clone
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
+import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +96,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertEquals(
         changeDetails,
         new ActivityLogChangeDetails(
+            workspaceUuid,
             changeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -124,6 +128,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertEquals(
         changeDetails,
         new ActivityLogChangeDetails(
+            destinationWorkspaceId,
             changeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -152,6 +157,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertEquals(
         changeDetails,
         new ActivityLogChangeDetails(
+            destinationWorkspaceId,
             changeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -177,6 +183,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertEquals(
         changeDetails,
         new ActivityLogChangeDetails(
+            workspaceUuid,
             changeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -235,6 +242,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertEquals(
         changeDetailsAfterFailedFlight,
         new ActivityLogChangeDetails(
+            workspaceUuid,
             changeDetailsAfterFailedFlight.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -263,6 +271,53 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   }
 
   @Test
+  void deleteCloudContextFlightFails_cloudContextNotExist_logChangeDetails()
+      throws InterruptedException {
+    var workspaceUuid = UUID.randomUUID();
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
+    hook.endFlight(
+        new FakeFlightContext(
+            DeleteCloudContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
+
+    assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isEmpty());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
+    assertTrue(changeDetailsAfterFailedFlight.isEmpty());
+  }
+
+  @Test
+  void deleteGcpCloudContextFlightFails_cloudContextStillExist_notLogChangeDetails()
+      throws InterruptedException {
+    String fakeCloudContextJson =
+        "{\"version\": 2, \"gcpProjectId\": \"terra-wsm-t-clean-berry-5152\", \"samPolicyOwner\": \"policy-owner\", \"samPolicyReader\": \"policy-reader\", \"samPolicyWriter\": \"policy-writer\", \"samPolicyApplication\": \"policy-application\"}";
+
+    var workspace = WorkspaceFixtures.createDefaultMcWorkspace();
+    var workspaceUuid = workspace.getWorkspaceId();
+    var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
+    assertTrue(emptyChangeDetails.isEmpty());
+
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+
+    var flightId = UUID.randomUUID().toString();
+    var spendProfileId = new SpendProfileId("fake-spend-profile-id");
+    workspaceDao.createCloudContextStart(
+        workspaceUuid, CloudPlatform.GCP, spendProfileId, flightId);
+    workspaceDao.createCloudContextSuccess(
+        workspaceUuid, CloudPlatform.GCP, fakeCloudContextJson, flightId);
+
+    FlightMap inputParams = buildInputParams(workspaceUuid, DELETE);
+    hook.endFlight(
+        new FakeFlightContext(
+            DeleteCloudContextFlight.class.getName(), inputParams, FlightStatus.ERROR));
+
+    assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isPresent());
+    var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
+    assertTrue(changeDetailsAfterFailedFlight.isEmpty());
+  }
+
+  @Test
   void deleteResourceFlightFails_resourceNotExist_logChangeDetails() throws InterruptedException {
     var workspaceUuid = UUID.randomUUID();
     var emptyChangeDetails = activityLogDao.getLastUpdatedDetails(workspaceUuid);
@@ -282,6 +337,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertEquals(
         changeDetailsAfterFailedFlight,
         new ActivityLogChangeDetails(
+            workspaceUuid,
             changeDetailsAfterFailedFlight.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -347,6 +403,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
         activityLogDao.getLastUpdatedDetails(workspaceId, dataset.getResourceId().toString()).get();
     assertEquals(
         new ActivityLogChangeDetails(
+            workspaceId,
             datasetLastLog.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -397,6 +454,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     assertEquals(
         changeDetails,
         new ActivityLogChangeDetails(
+            workspaceId,
             changeDetails.changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -481,6 +539,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
             .toList(),
         containsInAnyOrder(
             new ActivityLogChangeDetails(
+                workspaceUuid,
                 null,
                 USER_REQUEST.getEmail(),
                 USER_REQUEST.getSubjectId(),
@@ -488,6 +547,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
                 resourceToDelete.get(0).getResourceId().toString(),
                 ActivityLogChangedTarget.RESOURCE),
             new ActivityLogChangeDetails(
+                workspaceUuid,
                 null,
                 USER_REQUEST.getEmail(),
                 USER_REQUEST.getSubjectId(),
