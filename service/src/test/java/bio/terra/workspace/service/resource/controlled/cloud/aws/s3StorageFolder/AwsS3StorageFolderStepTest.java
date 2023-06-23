@@ -143,7 +143,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void deleteS3FolderTest() throws InterruptedException {
+  public void deleteS3Folder_doTest() throws InterruptedException {
     DeleteAwsS3StorageFolderStep delete3FolderStep =
         new DeleteAwsS3StorageFolderStep(s3FolderResource, mockAwsCloudContextService);
 
