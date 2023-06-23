@@ -94,7 +94,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void createS3FolderTest() throws InterruptedException {
+  public void createS3Folder_doTest() throws InterruptedException {
     CreateAwsS3StorageFolderStep createS3FolderStep =
         new CreateAwsS3StorageFolderStep(
             s3FolderResource,
@@ -107,16 +107,27 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenAnswer(invocation -> null) /* success */
         .thenThrow(WorkspaceFixtures.API_EXCEPTION);
 
-    // do: success
+    // success
     assertThat(
         createS3FolderStep.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
-    // do: error
+    // error
     assertThrows(
         WorkspaceFixtures.API_EXCEPTION.getClass(),
         () -> createS3FolderStep.doStep(mockFlightContext));
+  }
 
-    // undo: same as tests for DeleteAwsS3StorageFolderStep, verify that wrapper is called
+  @Test
+  public void createS3Folder_undoTest() throws InterruptedException {
+    CreateAwsS3StorageFolderStep createS3FolderStep =
+        new CreateAwsS3StorageFolderStep(
+            s3FolderResource,
+            mockAwsCloudContextService,
+            MockMvcUtils.USER_REQUEST,
+            mockSamService());
+
+    // same as tests for DeleteAwsS3StorageFolderStep, verify that internal function
+    // executeDeleteAwsS3StorageFolder is called
     try (MockedStatic<DeleteAwsS3StorageFolderStep> mockDeleteStep =
         Mockito.mockStatic(DeleteAwsS3StorageFolderStep.class)) {
       mockDeleteStep
@@ -142,22 +153,28 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenThrow(WorkspaceFixtures.API_EXCEPTION)
         .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION);
 
-    // do: success
+    // success
     assertThat(
         delete3FolderStep.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
-    // do: error
+    // error
     StepResult stepResult = delete3FolderStep.doStep(mockFlightContext);
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
     assertEquals(
         WorkspaceFixtures.API_EXCEPTION.getClass(),
         stepResult.getException().orElse(new Exception()).getClass());
 
-    // do: not found (success)
+    // not found (success)
     assertThat(
         delete3FolderStep.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
+  }
 
-    // undo: always error
+  @Test
+  public void deleteS3Folder_undoTest() throws InterruptedException {
+    DeleteAwsS3StorageFolderStep delete3FolderStep =
+        new DeleteAwsS3StorageFolderStep(s3FolderResource, mockAwsCloudContextService);
+
+    // always error
     assertEquals(
         InternalLogicException.class,
         delete3FolderStep
@@ -168,7 +185,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void validateS3FolderCreateTest() throws InterruptedException {
+  public void validateS3FolderCreate_doTest() throws InterruptedException {
     ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
         new ValidateAwsS3StorageFolderCreateStep(s3FolderResource, mockAwsCloudContextService);
 
@@ -178,23 +195,29 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenReturn(true) /* failure */
         .thenThrow(WorkspaceFixtures.API_EXCEPTION);
 
-    // do: success (not exists)
+    // success (not exists)
     assertThat(
         validateS3FolderCreateStep.doStep(mockFlightContext),
         equalTo(StepResult.getStepResultSuccess()));
 
-    // do: failure (exists)
+    // failure (exists)
     StepResult stepResult = validateS3FolderCreateStep.doStep(mockFlightContext);
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
     assertEquals(
         ConflictException.class, stepResult.getException().orElse(new Exception()).getClass());
 
-    // do: error
+    // error
     assertThrows(
         WorkspaceFixtures.API_EXCEPTION.getClass(),
         () -> validateS3FolderCreateStep.doStep(mockFlightContext));
+  }
 
-    // undo: always success
+  @Test
+  public void validateS3FolderCreate_undoTest() throws InterruptedException {
+    ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
+        new ValidateAwsS3StorageFolderCreateStep(s3FolderResource, mockAwsCloudContextService);
+
+    // always success
     assertThat(
         validateS3FolderCreateStep.undoStep(mockFlightContext),
         equalTo(StepResult.getStepResultSuccess()));
@@ -203,7 +226,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   // Below are white-box tests until util functions are moved to CRL
 
   @Test
-  public void createS3FolderTestFull() throws InterruptedException {
+  public void createS3Folder_doTestFull() throws InterruptedException {
     CreateAwsS3StorageFolderStep createS3FolderStep =
         new CreateAwsS3StorageFolderStep(
             s3FolderResource,
@@ -231,35 +254,21 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenReturn(putResponse400)
         .thenThrow(s3Exception1);
 
-    // do: success
+    // success
     assertThat(
         createS3FolderStep.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
-    // do:  call again to mimic request error
+    // call again to mimic request error
     assertThrows(ApiException.class, () -> createS3FolderStep.doStep(mockFlightContext));
 
-    // do: call again to mimic other AWS error
+    // call again to mimic other AWS error
     assertThrows(UnauthorizedException.class, () -> createS3FolderStep.doStep(mockFlightContext));
 
     verify(mockS3Client, times(3)).putObject((PutObjectRequest) any(), (RequestBody) any());
-
-    // undo: same as tests for DeleteAwsS3StorageFolderStep, verify that wrapper is called
-    try (MockedStatic<DeleteAwsS3StorageFolderStep> mockDeleteStep =
-        Mockito.mockStatic(DeleteAwsS3StorageFolderStep.class)) {
-      mockDeleteStep
-          .when(() -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()))
-          .thenReturn(StepResult.getStepResultSuccess());
-
-      assertThat(
-          createS3FolderStep.undoStep(mockFlightContext),
-          equalTo(StepResult.getStepResultSuccess()));
-      mockDeleteStep.verify(
-          () -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()));
-    }
   }
 
   @Test
-  public void deleteS3FolderTestFull() throws InterruptedException {
+  public void deleteS3Folder_doTestFull() throws InterruptedException {
     DeleteAwsS3StorageFolderStep delete3FolderStep =
         new DeleteAwsS3StorageFolderStep(s3FolderResource, mockAwsCloudContextService);
 
@@ -296,33 +305,24 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenReturn(deleteResponse400)
         .thenThrow(s3Exception1);
 
-    // do: success
+    // success
     assertThat(
         delete3FolderStep.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
-    // do: call again to mimic request error
+    // call again to mimic request error
     StepResult stepResult = delete3FolderStep.doStep(mockFlightContext);
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
     assertEquals(ApiException.class, stepResult.getException().get().getClass());
 
-    // do: call again to mimic other AWS error
+    // call again to mimic other AWS error
     assertThrows(UnauthorizedException.class, () -> delete3FolderStep.doStep(mockFlightContext));
 
     verify(mockS3Client, times(3)).listObjectsV2((ListObjectsV2Request) any());
     verify(mockS3Client, times(3)).deleteObjects((DeleteObjectsRequest) any());
-
-    // undo: always error
-    assertEquals(
-        InternalLogicException.class,
-        delete3FolderStep
-            .undoStep(mockFlightContext)
-            .getException()
-            .orElse(new Exception())
-            .getClass());
   }
 
   @Test
-  public void validateS3FolderCreateTestFull() throws InterruptedException {
+  public void validateS3FolderCreate_doTestFull() throws InterruptedException {
     ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
         new ValidateAwsS3StorageFolderCreateStep(s3FolderResource, mockAwsCloudContextService);
 
@@ -355,28 +355,23 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenReturn(listResponse400)
         .thenThrow(s3Exception1);
 
-    // do: success (folder does not exist)
+    // success (folder does not exist)
     assertThat(
         validateS3FolderCreateStep.doStep(mockFlightContext),
         equalTo(StepResult.getStepResultSuccess()));
 
-    // do: failure (folder exists)
+    // failure (folder exists)
     StepResult stepResult = validateS3FolderCreateStep.doStep(mockFlightContext);
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
     assertEquals(ConflictException.class, stepResult.getException().get().getClass());
 
-    // do: call again to mimic request error
+    // call again to mimic request error
     assertThrows(ApiException.class, () -> validateS3FolderCreateStep.doStep(mockFlightContext));
 
-    // do: call again to mimic other AWS error
+    // call again to mimic other AWS error
     assertThrows(
         UnauthorizedException.class, () -> validateS3FolderCreateStep.doStep(mockFlightContext));
 
     verify(mockS3Client, times(4)).listObjectsV2((ListObjectsV2Request) any());
-
-    // undo: always success
-    assertThat(
-        validateS3FolderCreateStep.undoStep(mockFlightContext),
-        equalTo(StepResult.getStepResultSuccess()));
   }
 }
