@@ -34,6 +34,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -77,7 +78,10 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
+  }
 
+  @BeforeEach
+  public void setUpPerTest() throws Exception {
     sourceResource =
         mockMvcUtils.createReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -94,7 +98,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
 
   @Test
   public void create() throws Exception {
-    // Resource was created in setup()
+    // Resource was created in setupPerTest()
 
     // Assert resource returned by create
     assertGcsBucket(
@@ -138,14 +142,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
             newDescription,
             newBucketName,
             newCloningInstruction);
-    // Update the sourceResource to the updated one as all the tests are sharing
-    // the same resource.
-    ApiGcpGcsBucketResource getResource =
-        mockMvcUtils.getReferencedGcsBucket(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, getResource);
+
     assertGcsBucket(
         updatedResource,
         newCloningInstruction,
@@ -160,14 +157,6 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.updateReferencedGcsBucket(
-        userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        sourceResourceName,
-        RESOURCE_DESCRIPTION,
-        sourceBucketName,
-        ApiCloningInstructionsEnum.NOTHING);
   }
 
   @Test
@@ -194,12 +183,6 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
 
     // Update the sourceResource to the updated one as all the tests are sharing
     // the same resource.
-    ApiGcpGcsBucketResource getResource =
-        mockMvcUtils.getReferencedGcsBucket(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, getResource);
     assertGcsBucket(
         updatedResource,
         newCloningInstruction,
@@ -209,14 +192,6 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
         sourceBucketName,
         userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.updateReferencedGcsBucket(
-        userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        sourceResourceName,
-        RESOURCE_DESCRIPTION,
-        sourceBucketName,
-        ApiCloningInstructionsEnum.NOTHING);
   }
 
   @Test
