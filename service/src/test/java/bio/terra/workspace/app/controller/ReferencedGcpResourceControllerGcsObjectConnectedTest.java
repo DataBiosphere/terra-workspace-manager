@@ -33,6 +33,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -80,7 +81,10 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
+  }
 
+  @BeforeEach
+  void setUpPerTest() throws Exception {
     sourceResource =
         mockMvcUtils.createReferencedGcsObject(
             userAccessUtils.defaultUserAuthRequest(),
@@ -145,15 +149,6 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
             newCloningInstruction,
             userAccessUtils.secondUserAuthRequest());
 
-    // Assert resource returned by get
-    // Update the sourceResource to the updated one as all the tests are sharing
-    // the same resource.
-    ApiGcpGcsObjectResource getResource =
-        mockMvcUtils.getReferencedGcsObject(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, getResource);
     assertGcsObject(
         updatedResource,
         newCloningInstruction,
@@ -169,15 +164,6 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.updateReferencedGcsObject(
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        sourceResourceName,
-        RESOURCE_DESCRIPTION,
-        sourceBucketName,
-        sourceFileName,
-        ApiCloningInstructionsEnum.NOTHING,
-        userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test

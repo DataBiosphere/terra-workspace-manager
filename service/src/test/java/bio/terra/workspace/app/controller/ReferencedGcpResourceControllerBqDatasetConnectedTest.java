@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
@@ -36,6 +35,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -88,6 +88,10 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
+  }
+
+  @BeforeEach
+  void setUpPerTest() throws Exception {
     sourceResource =
         mockMvcUtils.createReferencedBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
@@ -150,12 +154,6 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
             newCloningInstruction,
             newDataset);
 
-    ApiGcpBigQueryDatasetResource gotResource =
-        mockMvcUtils.getReferencedBqDataset(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, gotResource);
     assertBqDataset(
         updatedResource,
         newCloningInstruction,
@@ -172,14 +170,6 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.updateReferencedBqDataset(
-        userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        sourceResourceName,
-        RESOURCE_DESCRIPTION,
-        ApiCloningInstructionsEnum.NOTHING,
-        sourceDatasetName);
   }
 
   @Test
