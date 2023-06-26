@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -10,6 +12,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -30,20 +33,15 @@ public class DeleteAwsSageMakerNotebookStep implements Step {
     this.awsCloudContextService = awsCloudContextService;
   }
 
-  @Override
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
-    AwsCredentialsProvider credentialsProvider =
-        AwsUtils.createWsmCredentialProvider(
-            awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
-
+  @VisibleForTesting
+  static StepResult executeDeleteAwsSageMakerNotebook(
+      AwsCredentialsProvider credentialsProvider, ControlledAwsSageMakerNotebookResource resource) {
     try {
       AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);
       AwsUtils.waitForSageMakerNotebookStatus(
           credentialsProvider, resource, NotebookInstanceStatus.DELETING);
 
-    } catch (ApiException e) {
+    } catch (ApiException | UnauthorizedException | BadRequestException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
 
     } catch (NotFoundException e) {
@@ -51,6 +49,16 @@ public class DeleteAwsSageMakerNotebookStep implements Step {
     }
 
     return StepResult.getStepResultSuccess();
+  }
+
+  @Override
+  public StepResult doStep(FlightContext flightContext)
+      throws InterruptedException, RetryException {
+    return executeDeleteAwsSageMakerNotebook(
+        AwsUtils.createWsmCredentialProvider(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment()),
+        resource);
   }
 
   @Override

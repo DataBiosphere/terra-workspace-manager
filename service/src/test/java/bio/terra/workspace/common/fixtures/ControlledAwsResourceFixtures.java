@@ -15,6 +15,7 @@ import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import java.util.UUID;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.http.SdkHttpResponse;
 
 public class ControlledAwsResourceFixtures {
@@ -25,13 +26,22 @@ public class ControlledAwsResourceFixtures {
   public static final String TENANT_ALIAS = "tenant-saas";
   public static final String ENVIRONMENT_ALIAS = "unit-test-env";
   public static final String AWS_REGION = "us-east-1";
-
+  public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN =
+      "arn:aws:iam::01234567890:role/NotebookRole";
+  public static final String AWS_LANDING_ZONE_KMS_KEY_ARN =
+      "arn:aws:iam::12345678900:role/KmsKeyRole";
+  public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
+      "arn:aws:iam::23456789001:role/KmsKeyRole";
   public static final SdkHttpResponse SDK_HTTP_RESPONSE_200 =
       SdkHttpResponse.builder().statusCode(200).build();
   public static final SdkHttpResponse SDK_HTTP_RESPONSE_400 =
       SdkHttpResponse.builder().statusCode(400).build();
   public static final AwsCredentialsProvider AWS_CREDENTIALS_PROVIDER =
       AnonymousCredentialsProvider.create();
+  public static final AwsServiceException AWS_SERVICE_EXCEPTION_1 =
+      AwsServiceException.builder().message("ResourceNotFoundException").build();
+  public static final AwsServiceException AWS_SERVICE_EXCEPTION_2 =
+      AwsServiceException.builder().message("not authorized to perform").build();
 
   // Cloud context
 
@@ -74,14 +84,29 @@ public class ControlledAwsResourceFixtures {
 
   public static ControlledAwsSageMakerNotebookResource makeDefaultAwsSagemakerNotebookResource(
       UUID workspaceUuid) {
+    return makeAwsSageMakerNotebookResourceBuilder(
+            workspaceUuid, "sagemaker-resource", "foo-instance")
+        .build();
+  }
+
+  public static ControlledAwsSageMakerNotebookResource.Builder
+      makeAwsSageMakerNotebookResourceBuilder(String instanceName) {
+    return makeAwsSageMakerNotebookResourceBuilder(
+        WORKSPACE_ID, "sagemaker-resource", instanceName);
+  }
+
+  public static ControlledAwsSageMakerNotebookResource.Builder
+      makeAwsSageMakerNotebookResourceBuilder(
+          UUID workspaceUuid, String resourceName, String instanceName) {
     return ControlledAwsSageMakerNotebookResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
+                .name(resourceName)
                 .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+                .region(AWS_REGION)
                 .build())
-        .instanceType(ML_T2_MEDIUM.toString())
-        .instanceName("foo")
-        .build();
+        .instanceName(instanceName)
+        .instanceType(ML_T2_MEDIUM.toString());
   }
 }

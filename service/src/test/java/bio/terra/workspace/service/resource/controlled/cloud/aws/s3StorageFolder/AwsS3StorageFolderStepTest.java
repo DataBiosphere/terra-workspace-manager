@@ -27,7 +27,6 @@ import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
-import java.util.Optional;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,9 +64,12 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
 
   @BeforeAll
   public void init() {
-    mockAwsUtils = Mockito.mockStatic(AwsUtils.class);
+    mockAwsUtils = Mockito.mockStatic(AwsUtils.class, Mockito.CALLS_REAL_METHODS);
     s3FolderResource =
         ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource(WORKSPACE_ID);
+
+    when(mockSamService().getSamUser((AuthenticatedUserRequest) any()))
+        .thenReturn(WorkspaceFixtures.SAM_USER);
   }
 
   @AfterAll
@@ -80,18 +82,13 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
     when(mockFlightContext.getResult())
         .thenReturn(new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL));
 
-    when(mockAwsCloudContextService.getAwsCloudContext(any()))
-        .thenReturn(Optional.of(ControlledAwsResourceFixtures.makeAwsCloudContext()));
+    when(mockAwsCloudContextService.getRequiredAwsCloudContext(any()))
+        .thenReturn(ControlledAwsResourceFixtures.makeAwsCloudContext());
 
-    when(mockSamService().getSamUser((AuthenticatedUserRequest) any()))
-        .thenReturn(WorkspaceFixtures.SAM_USER);
-
-    mockAwsUtils.clearInvocations();
     mockAwsUtils
         .when(() -> AwsUtils.createWsmCredentialProvider(any(), any()))
         .thenReturn(AWS_CREDENTIALS_PROVIDER);
     mockAwsUtils.when(() -> AwsUtils.getS3Client(any(), any())).thenReturn(mockS3Client);
-    mockAwsUtils.when(() -> AwsUtils.checkException(any())).thenCallRealMethod();
   }
 
   @Test
