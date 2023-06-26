@@ -1,8 +1,8 @@
 package bio.terra.workspace.db;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_SUBJECT_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_SUBJECT_ID;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.createWorkspaceWithGcpContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

@@ -8,10 +8,10 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.OFF
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_ID;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_NAME;
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 
 import bio.terra.stairway.ShortUUID;
-import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
@@ -67,7 +67,7 @@ public class ControlledGcpResourceFixtures {
           .cloningInstructions(CloningInstructions.COPY_RESOURCE)
           .resourceLineage(null)
           .properties(Map.of())
-          .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+          .createdByEmail(DEFAULT_USER_EMAIL)
           .createdDate(null)
           .lastUpdatedByEmail(null)
           .lastUpdatedDate(null)
@@ -330,7 +330,7 @@ public class ControlledGcpResourceFixtures {
         .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+        .createdByEmail(DEFAULT_USER_EMAIL)
         .region(DEFAULT_RESOURCE_REGION);
   }
 
@@ -385,7 +385,7 @@ public class ControlledGcpResourceFixtures {
         .assignedUser("myusername@mydomain.mine")
         .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
         .managedBy(ManagedByType.MANAGED_BY_USER)
-        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
+        .createdByEmail(DEFAULT_USER_EMAIL)
         .region(DEFAULT_RESOURCE_REGION);
   }
 
