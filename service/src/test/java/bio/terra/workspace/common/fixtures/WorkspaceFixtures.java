@@ -1,7 +1,5 @@
 package bio.terra.workspace.common.fixtures;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
@@ -32,6 +30,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class WorkspaceFixtures {
 
+  public static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String WORKSPACE_NAME = "TestWorkspace";
   public static final ApiProperty TYPE_PROPERTY =
       new ApiProperty().key(Properties.TYPE).value("type");
@@ -44,6 +43,8 @@ public class WorkspaceFixtures {
   public static final String DEFAULT_SPEND_PROFILE = "wm-default-spend-profile";
   public static final SpendProfileId DEFAULT_SPEND_PROFILE_ID =
       new SpendProfileId(DEFAULT_SPEND_PROFILE);
+  public static final String DEFAULT_USER_EMAIL = "fake@gmail.com";
+  public static final String DEFAULT_USER_SUBJECT_ID = "subjectId123456";
   public static final SamUser SAM_USER =
       new SamUser("example@example.com", "123ABC", new BearerToken("token"));
   public static final ApiException API_EXCEPTION = new ApiException("error");

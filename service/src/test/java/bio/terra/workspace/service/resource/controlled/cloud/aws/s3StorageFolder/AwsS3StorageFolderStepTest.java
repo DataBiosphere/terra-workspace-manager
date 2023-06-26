@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolde
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.SDK_HTTP_RESPONSE_200;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.SDK_HTTP_RESPONSE_400;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static bio.terra.workspace.common.utils.TestUtils.assertStepResultFatal;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -21,7 +22,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -67,8 +67,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   public void init() {
     mockAwsUtils = Mockito.mockStatic(AwsUtils.class);
     s3FolderResource =
-        ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource(
-            ControlledResourceFixtures.WORKSPACE_ID);
+        ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource(WORKSPACE_ID);
   }
 
   @AfterAll

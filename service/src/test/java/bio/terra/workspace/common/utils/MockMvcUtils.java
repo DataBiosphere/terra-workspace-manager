@@ -1,6 +1,8 @@
 package bio.terra.workspace.common.utils;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_SUBJECT_ID;
 import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
@@ -355,8 +357,6 @@ public class MockMvcUtils {
 
   public static final String LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT =
       "/api/workspaces/alpha1/%s/resources/controlled/gcp/buckets/%s/load/result/%s";
-  public static final String DEFAULT_USER_EMAIL = "fake@gmail.com";
-  public static final String DEFAULT_USER_SUBJECT_ID = "subjectId123456";
   // Only use this if you are mocking SAM. If you're using real SAM,
   // use userAccessUtils.defaultUserAuthRequest() instead.
   public static final AuthenticatedUserRequest USER_REQUEST =
