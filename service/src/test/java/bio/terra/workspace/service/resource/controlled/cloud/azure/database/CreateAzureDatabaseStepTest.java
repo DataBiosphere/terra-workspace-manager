@@ -127,11 +127,11 @@ public class CreateAzureDatabaseStepTest {
   }
 
   @Test
-  void testFail() throws InterruptedException, ApiException {
+  void testRetry() throws InterruptedException, ApiException {
     var step = setupStepTest(CreateAzureDatabaseStep.POD_FAILED);
     assertThat(
         step.doStep(mockFlightContext).getStepStatus(),
-        equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
+        equalTo(StepStatus.STEP_RESULT_FAILURE_RETRY));
   }
 
   @Test
