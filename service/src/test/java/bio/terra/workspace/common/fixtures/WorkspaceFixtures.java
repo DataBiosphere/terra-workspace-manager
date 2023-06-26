@@ -46,7 +46,7 @@ public class WorkspaceFixtures {
   public static final String DEFAULT_USER_EMAIL = "fake@gmail.com";
   public static final String DEFAULT_USER_SUBJECT_ID = "subjectId123456";
   public static final SamUser SAM_USER =
-      new SamUser("example@example.com", "123ABC", new BearerToken("token"));
+      new SamUser(DEFAULT_USER_EMAIL, DEFAULT_USER_SUBJECT_ID, new BearerToken("token"));
   public static final ApiException API_EXCEPTION = new ApiException("error");
   public static final NotFoundException NOT_FOUND_EXCEPTION = new NotFoundException("not found");
   public static final UnauthorizedException UNAUTHORIZED_EXCEPTION =
