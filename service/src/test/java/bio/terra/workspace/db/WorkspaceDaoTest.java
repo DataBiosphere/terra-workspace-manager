@@ -1,6 +1,6 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_APPLICATION;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_OWNER;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_READER;

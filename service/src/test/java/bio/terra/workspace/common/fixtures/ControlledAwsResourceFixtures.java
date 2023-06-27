@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WORKSPACE_ID;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2_MEDIUM;
 
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;

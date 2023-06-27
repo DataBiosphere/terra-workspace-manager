@@ -1,8 +1,8 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 
+import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
@@ -29,6 +29,7 @@ public class ControlledResourceFixtures {
       OffsetDateTime.parse("2017-12-03T10:15:30-05:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME);
   public static final DateTime DATE_TIME_1 = DateTime.parseRfc3339("1985-04-12T23:20:50.52Z");
   public static final DateTime DATE_TIME_2 = DateTime.parseRfc3339("1996-12-19T16:39:57-08:00");
+  public static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
   public static final UUID RESOURCE_ID = UUID.fromString("11111111-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String RESOURCE_NAME = "my_first_bucket";
   public static final String RESOURCE_DESCRIPTION =
@@ -50,7 +51,7 @@ public class ControlledResourceFixtures {
         .managedBy(ManagedByType.MANAGED_BY_USER)
         .privateResourceState(PrivateResourceState.NOT_APPLICABLE)
         .properties(DEFAULT_RESOURCE_PROPERTIES)
-        .createdByEmail(DEFAULT_USER_EMAIL)
+        .createdByEmail(MockMvcUtils.DEFAULT_USER_EMAIL)
         .region(DEFAULT_RESOURCE_REGION);
   }
 
