@@ -64,10 +64,9 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
   private UUID workspaceId;
   private String projectId;
   private UUID workspaceId2;
-
-  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private final String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
-  private final String sourceTableId = TestUtils.appendRandomNumber("source-table-id");
+  private String sourceResourceName;
+  private String sourceDatasetName;
+  private String sourceTableId;
   private ApiGcpBigQueryDataTableResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -92,6 +91,9 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
   @BeforeEach
   void setUpPerTest() throws Exception {
+    sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+    sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
+    sourceTableId = TestUtils.appendRandomNumber("source-table-id");
     sourceResource =
         mockMvcUtils.createReferencedBqTable(
             userAccessUtils.defaultUserAuthRequest(),

@@ -125,6 +125,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     when(mockSamService.getUserEmailFromSamAndRethrowOnInterrupt(
             any(AuthenticatedUserRequest.class)))
         .thenReturn(USER_REQUEST.getEmail());
+    when(mockSamService.listRequesterRoles(any(), eq(SamResource.WORKSPACE), any()))
+        .thenReturn(List.of(WsmIamRole.OWNER));
   }
 
   /**

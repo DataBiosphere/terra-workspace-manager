@@ -61,10 +61,9 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   private UUID workspaceId;
   private UUID workspaceId2;
-
-  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private final String sourceInstanceName = TestUtils.appendRandomNumber("source-instance-name");
-  private final String sourceSnapshot = UUID.randomUUID().toString();
+  private String sourceResourceName;
+  private String sourceInstanceName;
+  private String sourceSnapshot;
   private ApiDataRepoSnapshotResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -85,6 +84,9 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   @BeforeEach
   void setUpPerTest() throws Exception {
+    sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+    sourceInstanceName = TestUtils.appendRandomNumber("source-instance-name");
+    sourceSnapshot = UUID.randomUUID().toString();
     sourceResource =
         mockMvcUtils.createReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
