@@ -127,7 +127,13 @@ public class CreateAzureDatabaseStep implements Step {
           managedIdentity.name(),
           managedIdentity.principalId(),
           podName);
-      waitForCreateDatabaseContainer(aksApi, podName);
+      var finalPhase = waitForCreateDatabaseContainer(aksApi, podName);
+      if (finalPhase.stream().anyMatch(phase -> phase.equals(POD_FAILED))) {
+        logger.info("Create database pod failed with phase {}", finalPhase);
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
+      }
+    } catch (ApiException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (Exception e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     } finally {
@@ -145,18 +151,15 @@ public class CreateAzureDatabaseStep implements Step {
     }
   }
 
-  private void waitForCreateDatabaseContainer(CoreV1Api aksApi, String podName) throws Exception {
-    var finalPhase =
-        RetryUtils.getWithRetry(
-            this::isPodDone,
-            () -> getPodStatus(aksApi, podName),
-            Duration.ofMinutes(10),
-            Duration.ofSeconds(10),
-            0.0,
-            Duration.ofSeconds(10));
-    if (finalPhase.stream().anyMatch(phase -> phase.equals(POD_FAILED))) {
-      throw new RuntimeException("Create database pod failed");
-    }
+  private Optional<String> waitForCreateDatabaseContainer(CoreV1Api aksApi, String podName)
+      throws Exception {
+    return RetryUtils.getWithRetry(
+        this::isPodDone,
+        () -> getPodStatus(aksApi, podName),
+        Duration.ofMinutes(10),
+        Duration.ofSeconds(10),
+        0.0,
+        Duration.ofSeconds(10));
   }
 
   private Optional<String> getPodStatus(CoreV1Api aksApi, String podName) throws ApiException {
@@ -241,9 +244,6 @@ public class CreateAzureDatabaseStep implements Step {
 
     } catch (ApiException e) {
       var status = Optional.ofNullable(HttpStatus.resolve(e.getCode()));
-      if (status.stream().anyMatch(HttpStatus::is5xxServerError)) {
-        throw new RetryException(e);
-      }
       // If the pod already exists, assume this is a retry, monitor the already running pod
       if (status.stream().noneMatch(s -> s == HttpStatus.CONFLICT)) {
         throw e;
