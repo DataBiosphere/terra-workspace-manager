@@ -101,6 +101,7 @@ public class CreateGceInstanceStep implements Step {
             flightContext,
             resource.getInstanceId(),
             projectId,
+            zone,
             petEmail,
             workspaceUserFacingId,
             cliConfiguration.getServerName(),
@@ -145,6 +146,7 @@ public class CreateGceInstanceStep implements Step {
       FlightContext flightContext,
       String instanceId,
       String projectId,
+      String zone,
       String serviceAccountEmail,
       String workspaceUserFacingId,
       String cliServer,
@@ -157,6 +159,7 @@ public class CreateGceInstanceStep implements Step {
     setFields(
         creationParameters,
         instanceId,
+        zone,
         serviceAccountEmail,
         workspaceUserFacingId,
         cliServer,
@@ -170,12 +173,15 @@ public class CreateGceInstanceStep implements Step {
   static Instance setFields(
       ApiGcpGceInstanceCreationParameters creationParameters,
       String instanceId,
+      String zone,
       String serviceAccountEmail,
       String workspaceUserFacingId,
       String cliServer,
       Instance instance,
       String gitHash) {
-    instance.setName(instanceId).setMachineType(creationParameters.getMachineType());
+    String machineType =
+        String.format("zones/%s/machineTypes/%s", zone, creationParameters.getMachineType());
+    instance.setName(instanceId).setMachineType(machineType);
 
     instance.setDisks(
         List.of(
