@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -68,14 +69,15 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
   @Mock protected SageMakerClient mockSageMakerClient;
   @Mock protected SageMakerWaiter mockSageMakerWaiter;
   protected MockedStatic<AwsUtils> mockAwsUtils;
-  protected ControlledAwsSageMakerNotebookResource notebookResource;
 
-  protected static final WaiterResponse waiterResponse =
+  protected final ControlledAwsSageMakerNotebookResource notebookResource =
+      ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource(WORKSPACE_ID);
+  protected final WaiterResponse waiterResponse =
       DefaultWaiterResponse.builder()
           .attemptsExecuted(1)
           .response(DescribeNotebookInstanceResponse.builder().build())
           .build(); // wait successful
-  protected static final WaiterResponse waiterException =
+  protected final WaiterResponse waiterException =
       DefaultWaiterResponse.builder()
           .attemptsExecuted(1)
           .exception(AWS_SERVICE_EXCEPTION_2)
@@ -84,8 +86,6 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
   @BeforeAll
   public void init() {
     mockAwsUtils = mockStatic(AwsUtils.class, Mockito.CALLS_REAL_METHODS);
-    notebookResource =
-        ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource(WORKSPACE_ID);
 
     when(mockSamService().getSamUser((AuthenticatedUserRequest) any()))
         .thenReturn(WorkspaceFixtures.SAM_USER);
@@ -100,6 +100,9 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
 
   @BeforeEach
   public void setup() {
+    reset(mockSageMakerClient);
+    reset(mockSageMakerWaiter);
+
     when(mockFlightContext.getResult())
         .thenReturn(new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL));
 
