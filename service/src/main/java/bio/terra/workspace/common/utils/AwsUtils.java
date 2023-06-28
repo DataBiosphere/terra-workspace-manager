@@ -73,7 +73,15 @@ public class AwsUtils {
 
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
   private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
-  private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
+  static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
+  static final String TAG_KEY_USER_ID = "UserID";
+  static final String TAG_KEY_VERSION = "Version";
+  static final String TAG_KEY_TENANT = "Tenant";
+  static final String TAG_KEY_ENVIRONMENT = "Environment";
+  static final String TAG_KEY_WORKSPACE_ID = "WorkspaceId";
+  static final String TAG_KEY_S3_BUCKET_ID = "S3BucketID";
+  static final String TAG_KEY_TERRA_BUCKET_ID = "TerraBucketID";
+  static final String TAG_KEY_WORKSPACE_ROLE = "WorkspaceRole";
 
   /**
    * Truncate a passed string for use as an STS session name
@@ -87,42 +95,48 @@ public class AwsUtils {
         : value;
   }
 
+  private static void addOrUpdateTag(Collection<Tag> tags, String key, String value) {
+    // cannot in-place update, hence remove and re-add
+    Collection<Tag> removeTags =
+        tags.stream().filter(t -> key.equals(t.key())).collect(Collectors.toSet());
+    tags.removeAll(removeTags);
+    tags.add(Tag.builder().key(key).value(value).build());
+  }
+
   public static void appendUserTags(Collection<Tag> tags, SamUser user) {
     if (user != null) {
-      tags.add(Tag.builder().key("UserID").value(user.getSubjectId()).build());
+      addOrUpdateTag(tags, TAG_KEY_USER_ID, user.getSubjectId());
     }
   }
 
   public static <T extends ControlledResource> void appendResourceTags(
       Collection<Tag> tags, AwsCloudContext awsCloudContext, @Nullable T awsResource) {
-    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
-    tags.add(Tag.builder().key("Tenant").value(awsCloudContext.getTenantAlias()).build());
-    tags.add(Tag.builder().key("Environment").value(awsCloudContext.getEnvironmentAlias()).build());
+    addOrUpdateTag(tags, TAG_KEY_VERSION, awsCloudContext.getMajorVersion());
+    addOrUpdateTag(tags, TAG_KEY_TENANT, awsCloudContext.getTenantAlias());
+    addOrUpdateTag(tags, TAG_KEY_ENVIRONMENT, awsCloudContext.getEnvironmentAlias());
 
     if (awsResource != null) {
-      tags.add(
-          Tag.builder().key("WorkspaceId").value(awsResource.getWorkspaceId().toString()).build());
+      addOrUpdateTag(tags, TAG_KEY_WORKSPACE_ID, awsResource.getWorkspaceId().toString());
     }
   }
 
   public static <T extends ControlledResource> void appendPrincipalTags(
       Collection<Tag> tags, AwsCloudContext awsCloudContext, T awsResource) {
-    tags.add(Tag.builder().key("Version").value(awsCloudContext.getMajorVersion()).build());
+    addOrUpdateTag(tags, TAG_KEY_VERSION, awsCloudContext.getMajorVersion());
 
     if (awsResource instanceof ControlledAwsS3StorageFolderResource resource) {
-      tags.add(Tag.builder().key("S3BucketID").value(resource.getBucketName()).build());
-      tags.add(Tag.builder().key("TerraBucketID").value(resource.getPrefix()).build());
+      addOrUpdateTag(tags, TAG_KEY_S3_BUCKET_ID, resource.getBucketName());
+      addOrUpdateTag(tags, TAG_KEY_TERRA_BUCKET_ID, resource.getPrefix());
     } else if (awsResource instanceof ControlledAwsSageMakerNotebookResource resource) {
       // TODO(TERRA-550) Add sageMaker tags
     }
   }
 
   public static void appendRoleTags(Collection<Tag> tags, ApiAwsCredentialAccessScope accessScope) {
-    tags.add(
-        Tag.builder()
-            .key("WorkspaceRole")
-            .value((accessScope == ApiAwsCredentialAccessScope.WRITE_READ) ? "writer" : "reader")
-            .build());
+    addOrUpdateTag(
+        tags,
+        TAG_KEY_WORKSPACE_ROLE,
+        (accessScope == ApiAwsCredentialAccessScope.WRITE_READ) ? "writer" : "reader");
   }
 
   private static StsClient getStsClient() {
@@ -408,6 +422,7 @@ public class AwsUtils {
         tags);
   }
 
+  // TODO(BENCH-727): make idempotent
   /**
    * Delete AWS storage objects (as a folder) including all objects under it
    *
@@ -428,7 +443,10 @@ public class AwsUtils {
     List<String> objectKeys =
         getS3ObjectKeysByPrefix(
             awsCredentialsProvider, region, bucketName, folderKey, Integer.MAX_VALUE);
-    deleteS3Objects(awsCredentialsProvider, region, bucketName, objectKeys);
+
+    if (CollectionUtils.isNotEmpty(objectKeys)) {
+      deleteS3Objects(awsCredentialsProvider, region, bucketName, objectKeys);
+    }
   }
 
   /**
@@ -513,7 +531,7 @@ public class AwsUtils {
     ListObjectsV2Request.Builder requestBuilder =
         ListObjectsV2Request.builder().bucket(bucketName).prefix(folderKey);
 
-    int limitRemaining = limit;
+    int limitRemaining = limit <= 0 ? Integer.MAX_VALUE : limit;
     String continuationToken = null;
     List<String> objectKeys = new ArrayList<>();
     try {
@@ -546,6 +564,7 @@ public class AwsUtils {
     }
   }
 
+  // TODO(BENCH-727): make idempotent
   /**
    * Delete AWS storage objects by their keys
    *
@@ -596,7 +615,7 @@ public class AwsUtils {
                 // Errors with individual objects are captured here (including 404)
                 deleteResponse
                     .errors()
-                    .forEach(err -> logger.warn("Failed to delete storage objects: {}", err));
+                    .forEach(err -> logger.error("Failed to delete storage objects: {}", err));
               });
 
     } catch (SdkException e) {
@@ -714,7 +733,7 @@ public class AwsUtils {
 
     } catch (SdkException e) {
       checkException(e);
-      throw new ApiException("Error getting notebook instance", e);
+      throw new ApiException("Error getting notebook instance + " + e.getMessage(), e);
     }
   }
 
@@ -794,6 +813,7 @@ public class AwsUtils {
     }
   }
 
+  // TODO(BENCH-727): make idempotent
   /**
    * Delete a AWS SageMaker Notebook
    *
