@@ -56,7 +56,9 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
     assertEquals("foo@bar.com", instance.getServiceAccounts().get(0).getEmail());
     assertEquals(SA_SCOPES, instance.getServiceAccounts().get(0).getScopes());
     assertEquals(1, instance.getGuestAccelerators().size());
-    assertEquals("accelerator-type", instance.getGuestAccelerators().get(0).getAcceleratorType());
+    assertEquals(
+        "projects/project-id/zones/zone/acceleratorTypes/accelerator-type",
+        instance.getGuestAccelerators().get(0).getAcceleratorType());
     assertEquals(
         "project-id/image-family/image-name",
         instance.getDisks().get(0).getInitializeParams().getSourceImage());
