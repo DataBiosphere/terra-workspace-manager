@@ -40,6 +40,7 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
         CreateGceInstanceStep.setFields(
             creationParameters,
             "instance-name",
+            "project-id",
             "zone",
             "foo@bar.com",
             WORKSPACE_ID,
@@ -68,6 +69,7 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
         CreateGceInstanceStep.setFields(
             new ApiGcpGceInstanceCreationParameters(),
             "instance-name",
+            "project-id",
             "zone",
             "foo@bar.com",
             WORKSPACE_ID,
@@ -101,6 +103,7 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
                     // "terra-workspace-id" is a reserved metadata key.
                     .metadata(Map.of("terra-workspace-id", "fakeworkspaceid")),
                 "instance-name",
+                "project-id",
                 "zone",
                 "foo@bar.com",
                 "workspaceId",
@@ -115,6 +118,7 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
                     // "terra-cli-server" is a reserved metadata key.
                     .metadata(Map.of("terra-cli-server", "fakeserver")),
                 "isntance-name",
+                "project-id",
                 "zone",
                 "foo@bar.com",
                 "workspaceId",

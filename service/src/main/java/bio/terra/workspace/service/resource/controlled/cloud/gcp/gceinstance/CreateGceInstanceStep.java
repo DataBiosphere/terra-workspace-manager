@@ -159,6 +159,7 @@ public class CreateGceInstanceStep implements Step {
     setFields(
         creationParameters,
         instanceId,
+        projectId,
         zone,
         serviceAccountEmail,
         workspaceUserFacingId,
@@ -173,14 +174,14 @@ public class CreateGceInstanceStep implements Step {
   static Instance setFields(
       ApiGcpGceInstanceCreationParameters creationParameters,
       String instanceId,
+      String projectId,
       String zone,
       String serviceAccountEmail,
       String workspaceUserFacingId,
       String cliServer,
       Instance instance,
       String gitHash) {
-    String machineType =
-        String.format("zones/%s/machineTypes/%s", zone, creationParameters.getMachineType());
+    String machineType = GcpUtils.toMachineTypeString(zone, creationParameters.getMachineType());
     instance.setName(instanceId).setMachineType(machineType);
 
     instance.setDisks(
@@ -207,7 +208,9 @@ public class CreateGceInstanceStep implements Step {
               .map(
                   accelerator ->
                       new AcceleratorConfig()
-                          .setAcceleratorType(accelerator.getType())
+                          .setAcceleratorType(
+                              GcpUtils.toAcceleratorTypeString(
+                                  projectId, zone, accelerator.getType()))
                           .setAcceleratorCount(accelerator.getCardCount()))
               .collect(Collectors.toList()));
     }
