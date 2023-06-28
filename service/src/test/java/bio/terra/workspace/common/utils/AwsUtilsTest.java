@@ -610,7 +610,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
     when(mockSageMakerWaiter.waitUntilNotebookInstanceInService(
             (DescribeNotebookInstanceRequest) any()))
         .thenReturn(ControlledAwsResourceFixtures.waiterNotebookResponse)
-        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException);
+        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException_1);
 
     // success
     assertDoesNotThrow(
@@ -631,9 +631,9 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
     // error (client exception)
     when(mockSageMakerWaiter.waitUntilNotebookInstanceStopped(
             (DescribeNotebookInstanceRequest) any()))
-        .thenThrow(AWS_SERVICE_EXCEPTION_2);
+        .thenThrow(AWS_SERVICE_EXCEPTION_1);
     assertThrows(
-        UnauthorizedException.class,
+        NotFoundException.class,
         () ->
             AwsUtils.waitForSageMakerNotebookStatus(
                 AWS_CREDENTIALS_PROVIDER, notebookResource, NotebookInstanceStatus.STOPPED));
@@ -644,7 +644,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
     // failure (waiter exception, not found)
     when(mockSageMakerWaiter.waitUntilNotebookInstanceDeleted(
             (DescribeNotebookInstanceRequest) any()))
-        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException);
+        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException_1);
     assertDoesNotThrow(
         () ->
             AwsUtils.waitForSageMakerNotebookStatus(

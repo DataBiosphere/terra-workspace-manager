@@ -4,8 +4,8 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEN
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2_MEDIUM;
 
-import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -111,7 +111,6 @@ public class ControlledAwsResourceFixtures {
               .isTruncated(false)
               .sdkHttpResponse(SDK_HTTP_RESPONSE_200)
               .build();
-
   public static final ListObjectsV2Response listFolderResponse200_0 =
       (ListObjectsV2Response)
           ListObjectsV2Response.builder()
@@ -212,7 +211,12 @@ public class ControlledAwsResourceFixtures {
           .attemptsExecuted(1)
           .response(DescribeNotebookInstanceResponse.builder().build())
           .build(); // wait successful
-  public static final WaiterResponse waiterNotebookException =
+  public static final WaiterResponse waiterNotebookException_1 =
+      DefaultWaiterResponse.builder()
+          .attemptsExecuted(1)
+          .exception(AWS_SERVICE_EXCEPTION_1)
+          .build(); // wait failure
+  public static final WaiterResponse waiterNotebookException_2 =
       DefaultWaiterResponse.builder()
           .attemptsExecuted(1)
           .exception(AWS_SERVICE_EXCEPTION_2)

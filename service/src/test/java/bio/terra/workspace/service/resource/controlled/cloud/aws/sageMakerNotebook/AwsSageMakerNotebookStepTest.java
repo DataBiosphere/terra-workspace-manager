@@ -323,7 +323,7 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
     when(mockSageMakerWaiter.waitUntilNotebookInstanceInService(
             (DescribeNotebookInstanceRequest) any()))
         .thenReturn(ControlledAwsResourceFixtures.waiterNotebookResponse)
-        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException);
+        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException_2);
 
     // create success, wait success
     assertThat(
@@ -364,7 +364,7 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
             (DescribeNotebookInstanceRequest) any()))
         .thenReturn(ControlledAwsResourceFixtures.waiterNotebookResponse)
         .thenThrow(AWS_SERVICE_EXCEPTION_1)
-        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException);
+        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException_2);
 
     // delete success, wait success
     assertThat(

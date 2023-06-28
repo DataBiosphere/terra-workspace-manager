@@ -733,7 +733,7 @@ public class AwsUtils {
 
     } catch (SdkException e) {
       checkException(e);
-      throw new ApiException("Error getting notebook instance + " + e.getMessage(), e);
+      throw new ApiException("Error getting notebook instance", e);
     }
   }
 
