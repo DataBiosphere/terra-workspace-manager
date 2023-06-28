@@ -68,7 +68,7 @@ public class CreateGceInstanceStep implements Step {
 
   private static final String EXTERNAL_IP_TYPE = "ONE_TO_ONE_NAT";
   private static final String EXTERNAL_IP_NAME = "External IP";
-  private static final String GPU_HOST_MAINTENANCE_BEHAVIOUR = "TERMINATE";
+  private static final String HOST_MAINTENANCE_BEHAVIOUR = "TERMINATE";
 
   public CreateGceInstanceStep(
       ControlledGceInstanceResource resource,
@@ -215,9 +215,9 @@ public class CreateGceInstanceStep implements Step {
                                   projectId, zone, accelerator.getType()))
                           .setAcceleratorCount(accelerator.getCardCount()))
               .collect(Collectors.toList()));
-      // Instances with guest accelerators do not support live migration
-      instance.setScheduling(new Scheduling().setOnHostMaintenance(GPU_HOST_MAINTENANCE_BEHAVIOUR));
     }
+    // Instances with guest accelerators do not support live migration
+    instance.setScheduling(new Scheduling().setOnHostMaintenance(HOST_MAINTENANCE_BEHAVIOUR));
     // Set metadata
     Map<String, String> metadata = new HashMap<>();
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
