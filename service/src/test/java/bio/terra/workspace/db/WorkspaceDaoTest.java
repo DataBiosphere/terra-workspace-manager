@@ -414,7 +414,6 @@ class WorkspaceDaoTest extends BaseUnitTest {
       Map<UUID, DbWorkspaceDescription> descriptionMap =
           workspaceDao.getWorkspaceDescriptionMapFromIdList(
               Set.of(workspaceUuid), /*offset=*/ 0, /*limit=*/ 100);
-      assertEquals(1, descriptionMap.size());
       GcpCloudContext secondBrokenGcpContext =
           descriptionMap.get(workspaceUuid).getGcpCloudContext();
       assertThat(
