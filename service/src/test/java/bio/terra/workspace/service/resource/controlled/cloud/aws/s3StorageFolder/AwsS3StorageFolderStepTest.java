@@ -1,8 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.SDK_HTTP_RESPONSE_200;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.SDK_HTTP_RESPONSE_400;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static bio.terra.workspace.common.utils.TestUtils.assertStepResultFatal;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,14 +37,9 @@ import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
-import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
-import software.amazon.awssdk.services.s3.model.S3Error;
 import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.model.S3Object;
 
 public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
 
@@ -223,15 +216,9 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .when(() -> AwsUtils.putS3Object(any(), any(), any(), any(), any(), any()))
         .thenCallRealMethod();
 
-    PutObjectResponse putResponse200 =
-        (PutObjectResponse)
-            PutObjectResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_200).build();
-    PutObjectResponse putResponse400 =
-        (PutObjectResponse)
-            PutObjectResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_400).build();
     when(mockS3Client.putObject((PutObjectRequest) any(), (RequestBody) any()))
-        .thenReturn(putResponse200)
-        .thenReturn(putResponse400);
+        .thenReturn(ControlledAwsResourceFixtures.putFolderResponse200)
+        .thenReturn(ControlledAwsResourceFixtures.putFolderResponse400);
 
     // success
     assertThat(
@@ -256,27 +243,11 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .when(() -> AwsUtils.deleteS3Objects(any(), any(), any(), any()))
         .thenCallRealMethod();
 
-    ListObjectsV2Response listResponse200 =
-        (ListObjectsV2Response)
-            ListObjectsV2Response.builder()
-                .contents(S3Object.builder().key("k1").build())
-                .isTruncated(false)
-                .sdkHttpResponse(SDK_HTTP_RESPONSE_200)
-                .build();
-    when(mockS3Client.listObjectsV2((ListObjectsV2Request) any())).thenReturn(listResponse200);
-
-    DeleteObjectsResponse deleteResponse200 =
-        (DeleteObjectsResponse)
-            DeleteObjectsResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_200).build();
-    DeleteObjectsResponse deleteResponse400 =
-        (DeleteObjectsResponse)
-            DeleteObjectsResponse.builder()
-                .errors(S3Error.builder().key("key1").message("message1").build())
-                .sdkHttpResponse(SDK_HTTP_RESPONSE_400)
-                .build();
+    when(mockS3Client.listObjectsV2((ListObjectsV2Request) any()))
+        .thenReturn(ControlledAwsResourceFixtures.listFolderResponse200_1_obj2);
     when(mockS3Client.deleteObjects((DeleteObjectsRequest) any()))
-        .thenReturn(deleteResponse200)
-        .thenReturn(deleteResponse400)
+        .thenReturn(ControlledAwsResourceFixtures.deleteFolderResponse200)
+        .thenReturn(ControlledAwsResourceFixtures.deleteFolderResponse400)
         .thenThrow(s3Exception1);
 
     // success
@@ -300,26 +271,10 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .when(() -> AwsUtils.getS3ObjectKeysByPrefix(any(), any(), any(), any(), anyInt()))
         .thenCallRealMethod();
 
-    ListObjectsV2Response listResponse200Empty =
-        (ListObjectsV2Response)
-            ListObjectsV2Response.builder()
-                .isTruncated(false)
-                .sdkHttpResponse(SDK_HTTP_RESPONSE_200)
-                .build();
-    ListObjectsV2Response listResponse200 =
-        (ListObjectsV2Response)
-            ListObjectsV2Response.builder()
-                .contents(S3Object.builder().key("k1").build())
-                .isTruncated(false)
-                .sdkHttpResponse(SDK_HTTP_RESPONSE_200)
-                .build();
-    ListObjectsV2Response listResponse400 =
-        (ListObjectsV2Response)
-            ListObjectsV2Response.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_400).build();
     when(mockS3Client.listObjectsV2((ListObjectsV2Request) any()))
-        .thenReturn(listResponse200Empty)
-        .thenReturn(listResponse200)
-        .thenReturn(listResponse400);
+        .thenReturn(ControlledAwsResourceFixtures.listFolderResponse200_0)
+        .thenReturn(ControlledAwsResourceFixtures.listFolderResponse200_1_obj2)
+        .thenReturn(ControlledAwsResourceFixtures.listFolderResponse400);
 
     // success (folder does not exist)
     assertThat(
