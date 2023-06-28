@@ -37,6 +37,7 @@ import com.google.api.services.compute.model.Metadata;
 import com.google.api.services.compute.model.Metadata.Items;
 import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.Operation;
+import com.google.api.services.compute.model.Scheduling;
 import com.google.api.services.compute.model.ServiceAccount;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -67,6 +68,7 @@ public class CreateGceInstanceStep implements Step {
 
   private static final String EXTERNAL_IP_TYPE = "ONE_TO_ONE_NAT";
   private static final String EXTERNAL_IP_NAME = "External IP";
+  private static final String GPU_HOST_MAINTENANCE_BEHAVIOUR = "TERMINATE";
 
   public CreateGceInstanceStep(
       ControlledGceInstanceResource resource,
@@ -213,6 +215,8 @@ public class CreateGceInstanceStep implements Step {
                                   projectId, zone, accelerator.getType()))
                           .setAcceleratorCount(accelerator.getCardCount()))
               .collect(Collectors.toList()));
+      // Instances with guest accelerators do not support live migration
+      instance.setScheduling(new Scheduling().setOnHostMaintenance(GPU_HOST_MAINTENANCE_BEHAVIOUR));
     }
     // Set metadata
     Map<String, String> metadata = new HashMap<>();
