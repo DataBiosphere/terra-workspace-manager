@@ -338,11 +338,21 @@ public class AwsUtils {
     return S3Client.builder().region(region).credentialsProvider(awsCredentialsProvider).build();
   }
 
-  private static SageMakerClient getSageMakerClient(
+  public static SageMakerClient getSageMakerClient(
       AwsCredentialsProvider awsCredentialsProvider, Region region) {
     return SageMakerClient.builder()
         .region(region)
         .credentialsProvider(awsCredentialsProvider)
+        .build();
+  }
+
+  public static SageMakerWaiter getSageMakerWaiter(SageMakerClient sageMakerClient) {
+    return SageMakerWaiter.builder()
+        .client(sageMakerClient)
+        .overrideConfiguration(
+            WaiterOverrideConfiguration.builder()
+                .waitTimeout(AwsResourceConstants.SAGEMAKER_CLIENT_WAITER_TIMEOUT)
+                .build())
         .build();
   }
 
@@ -610,6 +620,10 @@ public class AwsUtils {
    * @param notebookLifecycleConfigArn {@link Arn} for the notebookLifecycleConfig in the landing
    *     zone (region)
    * @param tags collection of {@link Tag} to be attached to the folder
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
    */
   public static void createSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -673,6 +687,9 @@ public class AwsUtils {
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
    * @return {@link NotebookInstanceStatus}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
    */
   public static NotebookInstanceStatus getSageMakerNotebookStatus(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -706,6 +723,10 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
    */
   public static void startSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -740,6 +761,10 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
    */
   public static void stopSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -774,6 +799,10 @@ public class AwsUtils {
    *
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
    */
   public static void deleteSageMakerNotebook(
       AwsCredentialsProvider awsCredentialsProvider,
@@ -809,22 +838,18 @@ public class AwsUtils {
    * @param awsCredentialsProvider {@link AwsCredentialsProvider}
    * @param notebookResource {@link ControlledAwsSageMakerNotebookResource}
    * @param desiredStatus {@link NotebookInstanceStatus}
+   * @throws ApiException ApiException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
    */
   public static void waitForSageMakerNotebookStatus(
       AwsCredentialsProvider awsCredentialsProvider,
       ControlledAwsSageMakerNotebookResource notebookResource,
       NotebookInstanceStatus desiredStatus) {
     Region region = Region.of(notebookResource.getRegion());
-    SageMakerClient sageMakerClient = getSageMakerClient(awsCredentialsProvider, region);
-
     SageMakerWaiter sageMakerWaiter =
-        SageMakerWaiter.builder()
-            .client(sageMakerClient)
-            .overrideConfiguration(
-                WaiterOverrideConfiguration.builder()
-                    .waitTimeout(AwsResourceConstants.SAGEMAKER_CLIENT_WAITER_TIMEOUT)
-                    .build())
-            .build();
+        getSageMakerWaiter(getSageMakerClient(awsCredentialsProvider, region));
 
     logger.info(
         "Waiting on notebook with name {}, desired status {}.",
