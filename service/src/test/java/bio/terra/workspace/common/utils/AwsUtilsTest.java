@@ -242,6 +242,8 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
         () ->
             AwsUtils.deleteStorageFolder(
                 ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER, s3FolderResource));
+    verify(mockS3Client, times(1)).listObjectsV2((ListObjectsV2Request) any());
+    verify(mockS3Client, times(0)).deleteObjects((DeleteObjectsRequest) any());
 
     // get keys success, delete success
     assertDoesNotThrow(
