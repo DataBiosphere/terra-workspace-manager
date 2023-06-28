@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.iam;
 
 import bio.terra.cloudres.google.iam.ServiceAccountName;
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.BearerToken;
@@ -413,10 +414,13 @@ public class SamService {
       }
 
       // Diagnostic: if the error was "Cannot delete a resource with children" then fetch and
-      // dump the remaining children.
+      // dump the remaining children. Make the Sam exception first, so we get the error message
+      // text from inside the Sam response.
+      ErrorReportException samException =
+          SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
       if (apiException.getCode() == HttpStatus.BAD_REQUEST.value()
           && StringUtils.contains(
-              apiException.getMessage(), "Cannot delete a resource with children")) {
+              samException.getMessage(), "Cannot delete a resource with children")) {
         try {
           List<FullyQualifiedResourceId> children =
               resourceApi.listResourceChildren(SamConstants.SamResource.WORKSPACE, uuid.toString());
@@ -433,7 +437,7 @@ public class SamService {
           logger.error("Failed to retrieve the list of workspace children", innerApiException);
         }
       }
-      throw SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
+      throw samException;
     }
   }
 

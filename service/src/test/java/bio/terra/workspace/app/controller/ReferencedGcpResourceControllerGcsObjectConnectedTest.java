@@ -61,9 +61,9 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   private UUID workspaceId;
   private UUID workspaceId2;
 
-  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private final String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
-  private final String sourceFileName = TestUtils.appendRandomNumber("source-file-name");
+  private String sourceResourceName;
+  private String sourceBucketName;
+  private String sourceFileName;
   private ApiGcpGcsObjectResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -85,6 +85,9 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
 
   @BeforeEach
   void setUpPerTest() throws Exception {
+    sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+    sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
+    sourceFileName = TestUtils.appendRandomNumber("source-file-name");
     sourceResource =
         mockMvcUtils.createReferencedGcsObject(
             userAccessUtils.defaultUserAuthRequest(),
