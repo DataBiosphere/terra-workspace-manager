@@ -90,9 +90,11 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
 
   @BeforeEach
   public void setup() {
-    when(AwsUtils.getS3Client(any(), any())).thenReturn(mockS3Client);
-    when(AwsUtils.getSageMakerClient(any(), any())).thenReturn(mockSageMakerClient);
-    when(AwsUtils.getSageMakerWaiter(any())).thenReturn(mockSageMakerWaiter);
+    mockAwsUtils.when(() -> AwsUtils.getS3Client(any(), any())).thenReturn(mockS3Client);
+    mockAwsUtils
+        .when(() -> AwsUtils.getSageMakerClient(any(), any()))
+        .thenReturn(mockSageMakerClient);
+    mockAwsUtils.when(() -> AwsUtils.getSageMakerWaiter(any())).thenReturn(mockSageMakerWaiter);
   }
 
   private void assertContainsTagByKey(Collection<Tag> tags, String key) {
