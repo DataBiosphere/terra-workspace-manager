@@ -10,7 +10,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,8 +31,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -51,13 +48,12 @@ import software.amazon.awssdk.services.s3.model.S3Error;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
-@TestInstance(Lifecycle.PER_CLASS)
 public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
 
   @MockBean private FlightContext mockFlightContext;
   @MockBean private AwsCloudContextService mockAwsCloudContextService;
   @Mock private S3Client mockS3Client;
-  private MockedStatic<AwsUtils> mockAwsUtils;
+  private static MockedStatic<AwsUtils> mockAwsUtils;
 
   private final ControlledAwsS3StorageFolderResource folderResource =
       ControlledAwsResourceFixtures.makeDefaultAwsS3StorageFolderResource(WORKSPACE_ID);
@@ -65,24 +61,22 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
       S3Exception.builder().message("not authorized to perform").build();
 
   @BeforeAll
-  public void init() {
+  public static void init() {
     mockAwsUtils = Mockito.mockStatic(AwsUtils.class, Mockito.CALLS_REAL_METHODS);
-
-    when(mockSamService().getSamUser((AuthenticatedUserRequest) any()))
-        .thenReturn(WorkspaceFixtures.SAM_USER);
   }
 
   @AfterAll
-  public void terminate() {
+  public static void terminate() {
     mockAwsUtils.close();
   }
 
   @BeforeEach
   public void setup() {
-    reset(mockS3Client);
-
     when(mockFlightContext.getResult())
         .thenReturn(new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL));
+
+    when(mockSamService().getSamUser((AuthenticatedUserRequest) any()))
+        .thenReturn(WorkspaceFixtures.SAM_USER);
 
     when(mockAwsCloudContextService.getRequiredAwsCloudContext(any()))
         .thenReturn(ControlledAwsResourceFixtures.makeAwsCloudContext());

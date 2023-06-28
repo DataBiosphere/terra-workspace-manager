@@ -5,9 +5,6 @@ import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_KMS_KEY_ARN;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_1;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_2;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.SDK_HTTP_RESPONSE_200;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.SDK_HTTP_RESPONSE_400;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static bio.terra.workspace.common.utils.TestUtils.assertStepResultFatal;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -16,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,25 +38,17 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import software.amazon.awssdk.core.internal.waiters.DefaultWaiterResponse;
-import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
 import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceRequest;
-import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceResponse;
 import software.amazon.awssdk.services.sagemaker.model.DeleteNotebookInstanceRequest;
-import software.amazon.awssdk.services.sagemaker.model.DeleteNotebookInstanceResponse;
 import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceRequest;
-import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceResponse;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 
-@TestInstance(Lifecycle.PER_CLASS)
 public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
 
   @MockBean protected FlightContext mockFlightContext;
@@ -68,43 +56,30 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
   @MockBean protected CliConfiguration mockCliConfiguration;
   @Mock protected SageMakerClient mockSageMakerClient;
   @Mock protected SageMakerWaiter mockSageMakerWaiter;
-  protected MockedStatic<AwsUtils> mockAwsUtils;
+  protected static MockedStatic<AwsUtils> mockAwsUtils;
 
   protected final ControlledAwsSageMakerNotebookResource notebookResource =
       ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource(WORKSPACE_ID);
-  protected final WaiterResponse waiterResponse =
-      DefaultWaiterResponse.builder()
-          .attemptsExecuted(1)
-          .response(DescribeNotebookInstanceResponse.builder().build())
-          .build(); // wait successful
-  protected final WaiterResponse waiterException =
-      DefaultWaiterResponse.builder()
-          .attemptsExecuted(1)
-          .exception(AWS_SERVICE_EXCEPTION_2)
-          .build(); // wait failure
 
   @BeforeAll
-  public void init() {
+  public static void init() {
     mockAwsUtils = mockStatic(AwsUtils.class, Mockito.CALLS_REAL_METHODS);
-
-    when(mockSamService().getSamUser((AuthenticatedUserRequest) any()))
-        .thenReturn(WorkspaceFixtures.SAM_USER);
-
-    when(mockCliConfiguration.getServerName()).thenReturn("serverName");
   }
 
   @AfterAll
-  public void terminate() {
+  public static void terminate() {
     mockAwsUtils.close();
   }
 
   @BeforeEach
   public void setup() {
-    reset(mockSageMakerClient);
-    reset(mockSageMakerWaiter);
-
     when(mockFlightContext.getResult())
         .thenReturn(new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL));
+
+    when(mockSamService().getSamUser((AuthenticatedUserRequest) any()))
+        .thenReturn(WorkspaceFixtures.SAM_USER);
+
+    when(mockCliConfiguration.getServerName()).thenReturn("serverName");
 
     when(mockAwsCloudContextService.getRequiredAwsCloudContext(any()))
         .thenReturn(ControlledAwsResourceFixtures.makeAwsCloudContext());
@@ -340,21 +315,15 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
         .thenCallRealMethod()
         .thenCallRealMethod();
 
-    CreateNotebookInstanceResponse createResponse200 =
-        (CreateNotebookInstanceResponse)
-            CreateNotebookInstanceResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_200).build();
-    CreateNotebookInstanceResponse createResponse400 =
-        (CreateNotebookInstanceResponse)
-            CreateNotebookInstanceResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_400).build();
     when(mockSageMakerClient.createNotebookInstance((CreateNotebookInstanceRequest) any()))
-        .thenReturn(createResponse200)
-        .thenReturn(createResponse200)
-        .thenReturn(createResponse400);
+        .thenReturn(ControlledAwsResourceFixtures.createNotebookResponse200)
+        .thenReturn(ControlledAwsResourceFixtures.createNotebookResponse200)
+        .thenReturn(ControlledAwsResourceFixtures.createNotebookResponse400);
 
     when(mockSageMakerWaiter.waitUntilNotebookInstanceInService(
             (DescribeNotebookInstanceRequest) any()))
-        .thenReturn(waiterResponse)
-        .thenReturn(waiterException);
+        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookResponse)
+        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException);
 
     // create success, wait success
     assertThat(
@@ -384,24 +353,18 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
         .thenCallRealMethod()
         .thenCallRealMethod();
 
-    DeleteNotebookInstanceResponse deleteResponse200 =
-        (DeleteNotebookInstanceResponse)
-            DeleteNotebookInstanceResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_200).build();
-    DeleteNotebookInstanceResponse deleteResponse400 =
-        (DeleteNotebookInstanceResponse)
-            DeleteNotebookInstanceResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_400).build();
     when(mockSageMakerClient.deleteNotebookInstance((DeleteNotebookInstanceRequest) any()))
-        .thenReturn(deleteResponse200)
-        .thenReturn(deleteResponse200)
-        .thenReturn(deleteResponse200)
+        .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse200)
+        .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse200)
+        .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse200)
         .thenThrow(AWS_SERVICE_EXCEPTION_1)
-        .thenReturn(deleteResponse400);
+        .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse400);
 
     when(mockSageMakerWaiter.waitUntilNotebookInstanceDeleted(
             (DescribeNotebookInstanceRequest) any()))
-        .thenReturn(waiterResponse)
+        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookResponse)
         .thenThrow(AWS_SERVICE_EXCEPTION_1)
-        .thenReturn(waiterException);
+        .thenReturn(ControlledAwsResourceFixtures.waiterNotebookException);
 
     // delete success, wait success
     assertThat(
@@ -435,28 +398,11 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
 
     mockAwsUtils.when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any())).thenCallRealMethod();
 
-    DescribeNotebookInstanceResponse describeResponse200Stopped =
-        (DescribeNotebookInstanceResponse)
-            DescribeNotebookInstanceResponse.builder()
-                .notebookInstanceStatus(NotebookInstanceStatus.STOPPED)
-                .sdkHttpResponse(SDK_HTTP_RESPONSE_200)
-                .build();
-    DescribeNotebookInstanceResponse describeResponse200InService =
-        (DescribeNotebookInstanceResponse)
-            DescribeNotebookInstanceResponse.builder()
-                .notebookInstanceStatus(NotebookInstanceStatus.IN_SERVICE)
-                .sdkHttpResponse(SDK_HTTP_RESPONSE_200)
-                .build();
-    DescribeNotebookInstanceResponse describeResponse400 =
-        (DescribeNotebookInstanceResponse)
-            DescribeNotebookInstanceResponse.builder()
-                .sdkHttpResponse(SDK_HTTP_RESPONSE_400)
-                .build();
     when(mockSageMakerClient.describeNotebookInstance((DescribeNotebookInstanceRequest) any()))
-        .thenReturn(describeResponse200Stopped)
-        .thenReturn(describeResponse200InService)
+        .thenReturn(ControlledAwsResourceFixtures.describeNotebookResponse200Stopped)
+        .thenReturn(ControlledAwsResourceFixtures.describeNotebookResponse200InService)
         .thenThrow(AWS_SERVICE_EXCEPTION_1)
-        .thenReturn(describeResponse400);
+        .thenReturn(ControlledAwsResourceFixtures.describeNotebookResponse400);
 
     // success (Stopped)
     assertThat(
