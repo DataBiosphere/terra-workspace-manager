@@ -25,6 +25,7 @@ import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpGceInstanceGuestAccelerator;
 import bio.terra.workspace.generated.model.ApiGcpGceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.crl.CrlService;
@@ -182,7 +183,9 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
     ApiGcpGceInstanceCreationParameters creationParameters =
         ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
-            .zone(DEFAULT_INSTANCE_ZONE);
+            .zone(DEFAULT_INSTANCE_ZONE)
+            .addGuestAcceleratorsItem(
+                new ApiGcpGceInstanceGuestAccelerator().cardCount(1).type("nvidia-tesla-p100"));
 
     ControlledGceInstanceResource resource =
         makeInstanceTestResource(workspaceId, "initial-instance-name", instanceId);

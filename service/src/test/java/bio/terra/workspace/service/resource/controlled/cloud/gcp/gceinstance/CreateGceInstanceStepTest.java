@@ -40,6 +40,7 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
         CreateGceInstanceStep.setFields(
             creationParameters,
             "instance-name",
+            "project-id",
             "zone",
             "foo@bar.com",
             WORKSPACE_ID,
@@ -55,7 +56,9 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
     assertEquals("foo@bar.com", instance.getServiceAccounts().get(0).getEmail());
     assertEquals(SA_SCOPES, instance.getServiceAccounts().get(0).getScopes());
     assertEquals(1, instance.getGuestAccelerators().size());
-    assertEquals("accelerator-type", instance.getGuestAccelerators().get(0).getAcceleratorType());
+    assertEquals(
+        "projects/project-id/zones/zone/acceleratorTypes/accelerator-type",
+        instance.getGuestAccelerators().get(0).getAcceleratorType());
     assertEquals(
         "project-id/image-family/image-name",
         instance.getDisks().get(0).getInitializeParams().getSourceImage());
@@ -68,6 +71,7 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
         CreateGceInstanceStep.setFields(
             new ApiGcpGceInstanceCreationParameters(),
             "instance-name",
+            "project-id",
             "zone",
             "foo@bar.com",
             WORKSPACE_ID,
@@ -101,6 +105,7 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
                     // "terra-workspace-id" is a reserved metadata key.
                     .metadata(Map.of("terra-workspace-id", "fakeworkspaceid")),
                 "instance-name",
+                "project-id",
                 "zone",
                 "foo@bar.com",
                 "workspaceId",
@@ -115,6 +120,7 @@ public class CreateGceInstanceStepTest extends BaseUnitTest {
                     // "terra-cli-server" is a reserved metadata key.
                     .metadata(Map.of("terra-cli-server", "fakeserver")),
                 "isntance-name",
+                "project-id",
                 "zone",
                 "foo@bar.com",
                 "workspaceId",

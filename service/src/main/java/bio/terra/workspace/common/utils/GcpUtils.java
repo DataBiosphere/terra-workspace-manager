@@ -276,4 +276,14 @@ public class GcpUtils {
     return String.format(
         "projects/%s/regions/%s/subnetworks/%s", projectId, region, subnetworkName);
   }
+
+  public static String toMachineTypeString(String zone, String machineType) {
+    return String.format("zones/%s/machineTypes/%s", zone, machineType);
+  }
+
+  public static String toAcceleratorTypeString(
+      String projectId, String zone, String acceleratorType) {
+    return String.format(
+        "projects/%s/zones/%s/acceleratorTypes/%s", projectId, zone, acceleratorType);
+  }
 }

@@ -37,6 +37,7 @@ import com.google.api.services.compute.model.Metadata;
 import com.google.api.services.compute.model.Metadata.Items;
 import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.Operation;
+import com.google.api.services.compute.model.Scheduling;
 import com.google.api.services.compute.model.ServiceAccount;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -67,6 +68,7 @@ public class CreateGceInstanceStep implements Step {
 
   private static final String EXTERNAL_IP_TYPE = "ONE_TO_ONE_NAT";
   private static final String EXTERNAL_IP_NAME = "External IP";
+  private static final String HOST_MAINTENANCE_BEHAVIOUR = "TERMINATE";
 
   public CreateGceInstanceStep(
       ControlledGceInstanceResource resource,
@@ -159,6 +161,7 @@ public class CreateGceInstanceStep implements Step {
     setFields(
         creationParameters,
         instanceId,
+        projectId,
         zone,
         serviceAccountEmail,
         workspaceUserFacingId,
@@ -173,14 +176,14 @@ public class CreateGceInstanceStep implements Step {
   static Instance setFields(
       ApiGcpGceInstanceCreationParameters creationParameters,
       String instanceId,
+      String projectId,
       String zone,
       String serviceAccountEmail,
       String workspaceUserFacingId,
       String cliServer,
       Instance instance,
       String gitHash) {
-    String machineType =
-        String.format("zones/%s/machineTypes/%s", zone, creationParameters.getMachineType());
+    String machineType = GcpUtils.toMachineTypeString(zone, creationParameters.getMachineType());
     instance.setName(instanceId).setMachineType(machineType);
 
     instance.setDisks(
@@ -207,10 +210,14 @@ public class CreateGceInstanceStep implements Step {
               .map(
                   accelerator ->
                       new AcceleratorConfig()
-                          .setAcceleratorType(accelerator.getType())
+                          .setAcceleratorType(
+                              GcpUtils.toAcceleratorTypeString(
+                                  projectId, zone, accelerator.getType()))
                           .setAcceleratorCount(accelerator.getCardCount()))
               .collect(Collectors.toList()));
     }
+    // Instances with guest accelerators do not support live migration
+    instance.setScheduling(new Scheduling().setOnHostMaintenance(HOST_MAINTENANCE_BEHAVIOUR));
     // Set metadata
     Map<String, String> metadata = new HashMap<>();
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
