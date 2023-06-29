@@ -1,13 +1,16 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
 
+import bio.terra.landingzone.library.landingzones.definition.factories.ManagedNetworkWithSharedResourcesFactory;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +51,15 @@ public class DeleteAzureDiskStep implements Step {
 
       computeManager.disks().deleteById(azureResourceId);
       return StepResult.getStepResultSuccess();
+    } catch (ManagementException ex) {
+      logger.warn("Attempt to delete Azure disk failed on this try [resource_id={}]", azureResourceId, ex);
+      if (AzureManagementExceptionUtils.isExceptionCode(ex, AzureManagementExceptionUtils.OPERATION_NOT_ALLOWED)) {
+        // this error occurs when the parent VM is still running, no sense in retrying
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
+      }
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     } catch (Exception ex) {
-      logger.info("Attempt to delete Azure disk failed on this try: " + azureResourceId, ex);
+      logger.warn("Attempt to delete Azure disk failed on this try [resource_id={}]", azureResourceId, ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
   }

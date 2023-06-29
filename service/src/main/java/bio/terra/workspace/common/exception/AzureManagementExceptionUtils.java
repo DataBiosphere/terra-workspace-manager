@@ -21,6 +21,7 @@ public class AzureManagementExceptionUtils {
   public static final String SUBNETS_NOT_IN_SAME_VNET = "SubnetsNotInSameVnet";
   public static final String NIC_RESERVED_FOR_ANOTHER_VM = "NicReservedForAnotherVm";
   public static final String VM_EXTENSION_PROVISIONING_ERROR = "VMExtensionProvisioningError";
+  public static final String OPERATION_NOT_ALLOWED= "OperationNotAllowed";
 
   /** Returns true iff the exception's code matches the supplied value. */
   public static boolean isExceptionCode(ManagementException ex, String exceptionCode) {
