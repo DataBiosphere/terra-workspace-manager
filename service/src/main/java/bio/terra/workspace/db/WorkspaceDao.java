@@ -2,7 +2,6 @@ package bio.terra.workspace.db;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
-import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
@@ -201,8 +200,7 @@ public class WorkspaceDao {
                   .flightId(rs.getString("cflightid"))
                   .error(
                       Optional.ofNullable(rs.getString("cerror"))
-                          .map(
-                              errorJson -> DbSerDes.fromJson(errorJson, ErrorReportException.class))
+                          .map(StateDao::deserializeException)
                           .orElse(null));
         }
         return new DbWorkspaceContextPair(dbWorkspace, dbCloudContext);
