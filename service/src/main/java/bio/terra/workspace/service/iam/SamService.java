@@ -999,13 +999,17 @@ public class SamService {
   public void deleteControlledResource(ControlledResource resource, String token)
       throws InterruptedException {
 
+    logger.info("Deleting controlled resource {}", resource.getResourceId());
     ResourcesApi resourceApi = samResourcesApi(token);
+    logger.info("Deleting controlled resource {} - got api", resource.getResourceId());
     try {
+      logger.info("Deleting controlled resource {} - launch retry", resource.getResourceId());
       SamRetry.retry(
-          () ->
-              resourceApi.deleteResourceV2(
-                  resource.getCategory().getSamResourceName(),
-                  resource.getResourceId().toString()));
+          () -> {
+            logger.info("Deleting controlled resource {} - call Sam API", resource.getResourceId());
+            resourceApi.deleteResourceV2(
+                resource.getCategory().getSamResourceName(), resource.getResourceId().toString());
+          });
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
       // Do nothing if the resource to delete is not found, this may not be the first time delete is
@@ -1019,6 +1023,8 @@ public class SamService {
         return;
       }
       throw SamExceptionFactory.create("Error deleting controlled resource in Sam", apiException);
+    } catch (Exception e) {
+      logger.error("Caught unexpected exception deleting controlled resource", e);
     }
   }
 
