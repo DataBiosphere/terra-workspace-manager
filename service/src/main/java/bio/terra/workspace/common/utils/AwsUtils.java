@@ -502,8 +502,7 @@ public class AwsUtils {
       }
 
     } catch (SdkException e) {
-      checkException(e);
-      throw new ApiException("Error creating storage object", e);
+      checkException(e, "Error creating storage object");
     }
   }
 
@@ -555,12 +554,12 @@ public class AwsUtils {
         }
         continuationToken = listResponse.continuationToken();
       }
-      return objectKeys;
 
     } catch (SdkException e) {
-      checkException(e);
-      throw new ApiException("Error listing storage objects", e);
+      checkException(e, "Error listing storage objects");
     }
+
+    return objectKeys;
   }
 
   /**
@@ -618,8 +617,7 @@ public class AwsUtils {
 
     } catch (SdkException e) {
       // Bulk delete operation would not fail with NotFound error, overall op is idempotent
-      checkException(e);
-      throw new ApiException("Error deleting storage objects", e);
+      checkException(e, "Error deleting storage objects");
     }
   }
 
@@ -693,8 +691,7 @@ public class AwsUtils {
       }
 
     } catch (SdkException e) {
-      checkException(e);
-      throw new ApiException("Error creating AWS SageMaker Notebook,", e);
+      checkException(e, "Error creating AWS SageMaker Notebook");
     }
   }
 
@@ -730,9 +727,11 @@ public class AwsUtils {
       return describeResponse.notebookInstanceStatus();
 
     } catch (SdkException e) {
-      checkException(e);
-      throw new ApiException("Error getting notebook instance", e);
+      checkException(e, "Error getting notebook instance");
     }
+
+    // dummy return, exception thrown and control never reaches here
+    return NotebookInstanceStatus.UNKNOWN_TO_SDK_VERSION;
   }
 
   /**
@@ -768,8 +767,7 @@ public class AwsUtils {
       }
 
     } catch (SdkException e) {
-      checkException(e);
-      throw new ApiException("Error starting notebook instance", e);
+      checkException(e, "Error starting notebook instance");
     }
   }
 
@@ -806,8 +804,7 @@ public class AwsUtils {
       }
 
     } catch (SdkException e) {
-      checkException(e);
-      throw new ApiException("Error stopping notebook instance", e);
+      checkException(e, "Error stopping notebook instance");
     }
   }
 
@@ -845,8 +842,7 @@ public class AwsUtils {
       }
 
     } catch (SdkException e) {
-      checkException(e, /* ignoreNotFound= */ true);
-      throw new ApiException("Error deleting notebook instance", e);
+      checkException(e, "Error deleting notebook instance", /* ignoreNotFound= */ true);
     }
   }
 
@@ -894,8 +890,7 @@ public class AwsUtils {
       if (responseOrException.exception().isPresent()) {
         Throwable t = responseOrException.exception().get();
         if (t instanceof SdkException e) {
-          checkException(e);
-          throw new ApiException("Error polling notebook instance status", e);
+          checkException(e, "Error polling notebook instance status");
         }
       }
 
@@ -906,31 +901,32 @@ public class AwsUtils {
       }
 
     } catch (SdkException e) {
-      checkException(e);
-      throw new ApiException("Error waiting for desired AWS SageMaker Notebook status,", e);
+      checkException(e, "Error waiting for desired AWS SageMaker Notebook status");
     }
   }
 
-  public static void checkException(SdkException ex) {
-    checkException(ex, /*ignoreNotFound= */ false);
+  public static void checkException(SdkException ex, String altMessage) {
+    checkException(ex, altMessage, /*ignoreNotFound= */ false);
   }
 
   /**
    * Check AWS SdkException and rethrow appropriate terra-friendly exception
    *
    * @param ex {@link SdkException}
+   * @param altMessage alternate message for ApiException
    * @param ignoreNotFound if true, do not rethrow if NotFoundException
    * @throws NotFoundException NotFoundException
    * @throws UnauthorizedException UnauthorizedException
    * @throws BadRequestException BadRequestException
    */
-  public static void checkException(SdkException ex, boolean ignoreNotFound)
-      throws NotFoundException, UnauthorizedException, BadRequestException {
+  public static void checkException(SdkException ex, String altMessage, boolean ignoreNotFound)
+      throws NotFoundException, UnauthorizedException, BadRequestException, ApiException {
     String message = ex.getMessage();
     if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
-      if (!ignoreNotFound) {
-        throw new NotFoundException("Resource deleted or no longer accessible", ex);
+      if (ignoreNotFound) {
+        return;
       }
+      throw new NotFoundException("Resource deleted or no longer accessible", ex);
 
     } else if (message.contains("not authorized to perform")) {
       throw new UnauthorizedException(
@@ -939,5 +935,7 @@ public class AwsUtils {
     } else if (message.contains("Unable to transition to")) {
       throw new BadRequestException("Unable to perform resource lifecycle operation", ex);
     }
+
+    throw new ApiException(altMessage, ex);
   }
 }
