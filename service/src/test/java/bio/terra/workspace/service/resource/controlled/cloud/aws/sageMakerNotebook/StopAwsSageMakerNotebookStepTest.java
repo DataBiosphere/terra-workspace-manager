@@ -15,12 +15,9 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AwsUtils;
 import io.vavr.collection.List;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
-@TestInstance(Lifecycle.PER_CLASS)
-public class StopAwsSageMakerNotebookStepTest extends AwsSageMakerNotebookStepTest {
+public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookStepTest {
 
   @Test
   void executeStopAwsSageMakerNotebook_InService_Test() {

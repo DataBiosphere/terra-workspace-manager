@@ -1,11 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_KMS_KEY_ARN;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_1;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static bio.terra.workspace.common.utils.TestUtils.assertStepResultFatal;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -20,78 +18,23 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
-import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.app.configuration.external.CliConfiguration;
-import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import software.amazon.awssdk.services.sagemaker.SageMakerClient;
 import software.amazon.awssdk.services.sagemaker.model.CreateNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.model.DeleteNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.model.DescribeNotebookInstanceRequest;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
-import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 
-public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
-
-  @MockBean protected FlightContext mockFlightContext;
-  @MockBean protected AwsCloudContextService mockAwsCloudContextService;
-  @MockBean protected CliConfiguration mockCliConfiguration;
-  @Mock protected SageMakerClient mockSageMakerClient;
-  @Mock protected SageMakerWaiter mockSageMakerWaiter;
-  protected static MockedStatic<AwsUtils> mockAwsUtils;
-
-  protected final ControlledAwsSageMakerNotebookResource notebookResource =
-      ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource(WORKSPACE_ID);
-
-  @BeforeAll
-  public static void init() {
-    mockAwsUtils = mockStatic(AwsUtils.class, Mockito.CALLS_REAL_METHODS);
-  }
-
-  @AfterAll
-  public static void terminate() {
-    mockAwsUtils.close();
-  }
-
-  @BeforeEach
-  public void setup() {
-    when(mockFlightContext.getResult())
-        .thenReturn(new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL));
-
-    when(mockSamService().getSamUser((AuthenticatedUserRequest) any()))
-        .thenReturn(WorkspaceFixtures.SAM_USER);
-
-    when(mockCliConfiguration.getServerName()).thenReturn("serverName");
-
-    when(mockAwsCloudContextService.getRequiredAwsCloudContext(any()))
-        .thenReturn(ControlledAwsResourceFixtures.makeAwsCloudContext());
-
-    mockAwsUtils
-        .when(() -> AwsUtils.createWsmCredentialProvider(any(), any()))
-        .thenReturn(AWS_CREDENTIALS_PROVIDER);
-    mockAwsUtils
-        .when(() -> AwsUtils.getSageMakerClient(any(), any()))
-        .thenReturn(mockSageMakerClient);
-    mockAwsUtils.when(() -> AwsUtils.getSageMakerWaiter(any())).thenReturn(mockSageMakerWaiter);
-  }
+public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookStepTest {
 
   protected FlightMap setupFlightMapForCreateNotebookStep() {
     FlightMap inputFlightMap = new FlightMap();
@@ -357,7 +300,6 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
         .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse200)
         .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse200)
         .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse200)
-        .thenThrow(AWS_SERVICE_EXCEPTION_1)
         .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse400);
 
     when(mockSageMakerWaiter.waitUntilNotebookInstanceDeleted(
@@ -378,14 +320,10 @@ public class AwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
     assertStepResultFatal(
         deleteNotebookStep.doStep(mockFlightContext), UnauthorizedException.class);
 
-    // delete failure (not found)
-    assertThat(
-        deleteNotebookStep.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
-
     // delete error
     assertStepResultFatal(deleteNotebookStep.doStep(mockFlightContext), ApiException.class);
 
-    verify(mockSageMakerClient, times(5))
+    verify(mockSageMakerClient, times(4))
         .deleteNotebookInstance((DeleteNotebookInstanceRequest) any());
     verify(mockSageMakerWaiter, times(3))
         .waitUntilNotebookInstanceDeleted((DescribeNotebookInstanceRequest) any());

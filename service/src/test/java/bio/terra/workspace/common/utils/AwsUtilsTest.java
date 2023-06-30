@@ -48,6 +48,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.arns.Arn;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -576,7 +577,8 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
     when(mockSageMakerClient.deleteNotebookInstance((DeleteNotebookInstanceRequest) any()))
         .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse200)
         .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse400)
-        .thenThrow(AWS_SERVICE_EXCEPTION_1);
+        .thenThrow(AWS_SERVICE_EXCEPTION_1)
+        .thenThrow(AWS_SERVICE_EXCEPTION_2);
 
     // success
     assertDoesNotThrow(
@@ -591,14 +593,20 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
             AwsUtils.deleteSageMakerNotebook(
                 ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER, notebookResource));
 
-    // exception from AWS
-    assertThrows(
-        NotFoundException.class,
+    // failure (notFound exception from AWS)
+    assertDoesNotThrow(
         () ->
             AwsUtils.deleteSageMakerNotebook(
                 ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER, notebookResource));
 
-    verify(mockSageMakerClient, times(3))
+    // other exception from AWS
+    assertThrows(
+        UnauthorizedException.class,
+        () ->
+            AwsUtils.deleteSageMakerNotebook(
+                ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER, notebookResource));
+
+    verify(mockSageMakerClient, times(4))
         .deleteNotebookInstance((DeleteNotebookInstanceRequest) any());
   }
 
@@ -665,23 +673,23 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
             NotFoundException.class,
             () ->
                 AwsUtils.checkException(
-                    S3Exception.builder().message("a ResourceNotFoundException b").build()));
+                    S3Exception.builder().message("a ResourceNotFoundException b").build(), "err"));
     assertThat(ex.getMessage(), equalTo("Resource deleted or no longer accessible"));
 
-    ex =
-        assertThrows(
-            NotFoundException.class,
-            () ->
-                AwsUtils.checkException(
-                    S3Exception.builder().message("a RecordNotFound b").build()));
+    // defaults ignoreNotFound=false
+    SdkException notFound = S3Exception.builder().message("a RecordNotFound b").build();
+    ex = assertThrows(NotFoundException.class, () -> AwsUtils.checkException(notFound, "err"));
     assertThat(ex.getMessage(), equalTo("Resource deleted or no longer accessible"));
+
+    // set ignoreNotFound=true
+    assertDoesNotThrow(() -> AwsUtils.checkException(notFound, "err", /* ignoreNotFound= */ true));
 
     ex =
         assertThrows(
             UnauthorizedException.class,
             () ->
                 AwsUtils.checkException(
-                    S3Exception.builder().message("a not authorized to perform b").build()));
+                    S3Exception.builder().message("a not authorized to perform b").build(), "err"));
     assertThat(
         ex.getMessage(),
         equalTo("Error performing resource operation, check the name / permissions and retry"));
@@ -691,10 +699,14 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
             BadRequestException.class,
             () ->
                 AwsUtils.checkException(
-                    S3Exception.builder().message("a Unable to transition to b").build()));
+                    S3Exception.builder().message("a Unable to transition to b").build(), "err"));
     assertThat(ex.getMessage(), equalTo("Unable to perform resource lifecycle operation"));
 
-    assertDoesNotThrow(
-        () -> AwsUtils.checkException(S3Exception.builder().message("text").build()));
+    // does not match expected errors
+    ex =
+        assertThrows(
+            ApiException.class,
+            () -> AwsUtils.checkException(S3Exception.builder().message("text").build(), "err"));
+    assertThat(ex.getMessage(), equalTo("err"));
   }
 }
