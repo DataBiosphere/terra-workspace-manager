@@ -48,6 +48,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.arns.Arn;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -668,13 +669,13 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
                     S3Exception.builder().message("a ResourceNotFoundException b").build()));
     assertThat(ex.getMessage(), equalTo("Resource deleted or no longer accessible"));
 
-    ex =
-        assertThrows(
-            NotFoundException.class,
-            () ->
-                AwsUtils.checkException(
-                    S3Exception.builder().message("a RecordNotFound b").build()));
+    // defaults ignoreNotFound=false
+    SdkException notFound = S3Exception.builder().message("a RecordNotFound b").build();
+    ex = assertThrows(NotFoundException.class, () -> AwsUtils.checkException(notFound));
     assertThat(ex.getMessage(), equalTo("Resource deleted or no longer accessible"));
+
+    // set ignoreNotFound=true
+    assertDoesNotThrow(() -> AwsUtils.checkException(notFound, /* ignoreNotFound= */ true));
 
     ex =
         assertThrows(

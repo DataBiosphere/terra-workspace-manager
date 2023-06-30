@@ -422,7 +422,6 @@ public class AwsUtils {
         tags);
   }
 
-  // TODO(BENCH-727): make idempotent
   /**
    * Delete AWS storage objects (as a folder) including all objects under it
    *
@@ -564,7 +563,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(BENCH-727): make idempotent
   /**
    * Delete AWS storage objects by their keys
    *
@@ -847,7 +845,7 @@ public class AwsUtils {
       }
 
     } catch (SdkException e) {
-      checkException(e);
+      checkException(e, /* ignoreNotFound= */ true);
       throw new ApiException("Error deleting notebook instance", e);
     }
   }
@@ -913,11 +911,26 @@ public class AwsUtils {
     }
   }
 
-  public static void checkException(SdkException ex)
+  public static void checkException(SdkException ex) {
+    checkException(ex, /*ignoreNotFound= */ false);
+  }
+
+  /**
+   * Check AWS SdkException and rethrow appropriate terra-friendly exception
+   *
+   * @param ex {@link SdkException}
+   * @param ignoreNotFound if true, do not rethrow if NotFoundException
+   * @throws NotFoundException NotFoundException
+   * @throws UnauthorizedException UnauthorizedException
+   * @throws BadRequestException BadRequestException
+   */
+  public static void checkException(SdkException ex, boolean ignoreNotFound)
       throws NotFoundException, UnauthorizedException, BadRequestException {
     String message = ex.getMessage();
     if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
-      throw new NotFoundException("Resource deleted or no longer accessible", ex);
+      if (!ignoreNotFound) {
+        throw new NotFoundException("Resource deleted or no longer accessible", ex);
+      }
 
     } else if (message.contains("not authorized to perform")) {
       throw new UnauthorizedException(
