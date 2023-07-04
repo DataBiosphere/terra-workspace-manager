@@ -70,4 +70,14 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
         () -> AwsCloudContext.deserialize(makeDbCloudContext(CloudPlatform.AWS, junkJson)),
         "Junk JSON should throw");
   }
+
+  /* TODO(BENCH-319)
+     Requires: Environment object (builder is not exposed, needs change in library)
+
+     AwsCloudContextService.discoverEnvironment
+     AwsCloudContextService.createCloudContext
+     AwsCloudContextService.getLandingZone
+     AwsCloudContext.verifyCloudContext
+     AwsCloudContextFields.verifyCloudContext
+  */
 }

@@ -11,16 +11,13 @@ import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.workspace.AwsCloudContextService;
-import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("aws-connected")
-public class CreateAwsWorkspaceFlightTest extends BaseAwsConnectedTest {
-  @Autowired private AwsCloudContextService awsCloudContextService;
+public class CreateAwsWorkspaceV2FlightTest extends BaseAwsConnectedTest {
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired MvcWorkspaceApi mvcWorkspaceApi;
   @Autowired UserAccessUtils userAccessUtils;
@@ -37,19 +34,9 @@ public class CreateAwsWorkspaceFlightTest extends BaseAwsConnectedTest {
 
     // flight should have created a cloud context
     assertTrue(awsCloudContextService.getAwsCloudContext(workspaceUuid).isPresent());
-    AwsCloudContext awsCloudContext =
-        awsCloudContextService.getAwsCloudContext(workspaceUuid).get();
-
     assertEquals(
-        awsCloudContext.getMajorVersion(), awsTestUtils.getAwsCloudContext().getMajorVersion());
-    assertEquals(
-        awsCloudContext.getOrganizationId(), awsTestUtils.getAwsCloudContext().getOrganizationId());
-    assertEquals(awsCloudContext.getAccountId(), awsTestUtils.getAwsCloudContext().getAccountId());
-    assertEquals(
-        awsCloudContext.getTenantAlias(), awsTestUtils.getAwsCloudContext().getTenantAlias());
-    assertEquals(
-        awsCloudContext.getEnvironmentAlias(),
-        awsTestUtils.getAwsCloudContext().getEnvironmentAlias());
+        /* expected */ awsConnectedTestUtils.getAwsCloudContext(),
+        awsCloudContextService.getAwsCloudContext(workspaceUuid).get());
 
     // TODO(BENCH-715) add storage bucket
 
