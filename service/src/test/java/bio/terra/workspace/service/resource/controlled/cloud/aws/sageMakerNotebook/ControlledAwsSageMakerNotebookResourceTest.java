@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 public class ControlledAwsSageMakerNotebookResourceTest extends BaseAwsUnitTest {
 
   @Test
-  public void validateResourceTest() {
+  void validateResourceTest() {
     // success
     ControlledAwsSageMakerNotebookResource.Builder resourceBuilder =
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder("instance");

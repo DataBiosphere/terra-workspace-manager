@@ -43,8 +43,8 @@ public abstract class BaseAwsSageMakerNotebookFlightTest extends BaseAwsConnecte
   protected AwsCredentialsProvider awsCredentialsProvider;
 
   @BeforeAll
-  public void setup() throws Exception {
-    super.setup();
+  public void init() throws Exception {
+    super.init();
     userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
     workspaceUuid =
         mvcWorkspaceApi.createWorkspaceAndWait(userRequest, apiCloudPlatform).getWorkspaceId();
