@@ -25,7 +25,7 @@ public class BaseAwsConnectedTest extends BaseTest {
   @MockBean protected FeatureService featureService;
 
   @BeforeAll
-  public void init() {
+  public void init() throws Exception {
     Mockito.when(featureService.awsEnabled()).thenReturn(true);
   }
 }
