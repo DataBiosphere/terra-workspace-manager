@@ -25,56 +25,6 @@ import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebookFlightTest {
 
   @Test
-  void forceDeleteSageMakerNotebookTest() throws InterruptedException {
-    String resourceName = UUID.randomUUID().toString();
-    ApiAwsSageMakerNotebookCreationParameters creationParameters =
-        ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
-            ControlledAwsResourceFixtures.getUniqueInstanceName(resourceName));
-    ControlledAwsSageMakerNotebookResource resource =
-        makeResource(creationParameters, resourceName);
-
-    // create & verify resource status
-    String jobId =
-        controlledResourceService.createAwsSageMakerNotebookInstance(
-            resource,
-            creationParameters,
-            environment,
-            ControlledResourceIamRole.WRITER,
-            new ApiJobControl().id(UUID.randomUUID().toString()),
-            "create-result-path",
-            userRequest);
-    jobService.waitForJob(jobId);
-    assertEquals(
-        FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
-    assertEquals(
-        NotebookInstanceStatus.IN_SERVICE,
-        AwsUtils.getSageMakerNotebookStatus(awsCredentialsProvider, resource));
-
-    // delete resource (force delete)
-    jobId =
-        controlledResourceService.deleteControlledResourceAsync(
-            UUID.randomUUID().toString(),
-            workspaceUuid,
-            resource.getResourceId(),
-            /* forceDelete= */ true,
-            "force-delete-result-path",
-            userRequest);
-    jobService.waitForJob(jobId);
-    assertEquals(
-        FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
-
-    // verify resource deleted
-    assertThrows(
-        NotFoundException.class,
-        () -> AwsUtils.getSageMakerNotebookStatus(awsCredentialsProvider, resource));
-    assertThrows(
-        ResourceNotFoundException.class,
-        () ->
-            controlledResourceService.getControlledResource(
-                workspaceUuid, resource.getResourceId()));
-  }
-
-  @Test
   void createSageMakerNotebookUndoTest() throws InterruptedException {
     String resourceName = UUID.randomUUID().toString();
     ApiAwsSageMakerNotebookCreationParameters creationParameters =
@@ -116,7 +66,7 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
   }
 
   @Test
-  void deleteS3StorageFolderUndoTest() throws InterruptedException {
+  void forceDeleteSageMakerNotebookUndoTest() throws InterruptedException {
     String resourceName = UUID.randomUUID().toString();
     ApiAwsSageMakerNotebookCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
@@ -124,7 +74,7 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
     ControlledAwsSageMakerNotebookResource resource =
         makeResource(creationParameters, resourceName);
 
-    // create resource
+    // create & verify resource status
     String jobId =
         controlledResourceService.createAwsSageMakerNotebookInstance(
             resource,
@@ -137,6 +87,9 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
     jobService.waitForJob(jobId);
     assertEquals(
         FlightStatus.SUCCESS, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
+    assertEquals(
+        NotebookInstanceStatus.IN_SERVICE,
+        AwsUtils.getSageMakerNotebookStatus(awsCredentialsProvider, resource));
 
     // None of the steps on this flight are undoable, so even with lastStepFailure set to true we
     // should expect the resource to really be deleted.
@@ -150,13 +103,13 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
             workspaceUuid,
             resource.getResourceId(),
             /* forceDelete= */ true,
-            "delete-result-path",
+            "force-delete-result-path",
             userRequest);
     jobService.waitForJob(jobId);
     assertEquals(
         FlightStatus.FATAL, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    // validate resource does not exist.
+    // validate resource deleted
     assertThrows(
         NotFoundException.class,
         () -> AwsUtils.getSageMakerNotebookStatus(awsCredentialsProvider, resource));

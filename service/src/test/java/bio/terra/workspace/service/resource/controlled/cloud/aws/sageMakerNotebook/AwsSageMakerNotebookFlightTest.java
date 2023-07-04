@@ -7,9 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
-import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
@@ -18,8 +16,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
