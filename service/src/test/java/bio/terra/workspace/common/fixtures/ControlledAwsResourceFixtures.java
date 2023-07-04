@@ -6,6 +6,7 @@ import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2
 
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -162,6 +163,8 @@ public class ControlledAwsResourceFixtures {
 
   // Sagemaker Notebook
 
+  public static final String SAGEMAKER_INSTANCE_TYPE = ML_T2_MEDIUM.toString();
+
   public static final CreateNotebookInstanceResponse createNotebookResponse200 =
       (CreateNotebookInstanceResponse)
           CreateNotebookInstanceResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_200).build();
@@ -206,38 +209,57 @@ public class ControlledAwsResourceFixtures {
       (DeleteNotebookInstanceResponse)
           DeleteNotebookInstanceResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_400).build();
 
-  public static final WaiterResponse waiterNotebookResponse =
-      DefaultWaiterResponse.builder()
+  public static final WaiterResponse<DescribeNotebookInstanceResponse> waiterNotebookResponse =
+      DefaultWaiterResponse.<DescribeNotebookInstanceResponse>builder()
           .attemptsExecuted(1)
           .response(DescribeNotebookInstanceResponse.builder().build())
           .build(); // wait successful
-  public static final WaiterResponse waiterNotebookException_1 =
-      DefaultWaiterResponse.builder()
+  public static final WaiterResponse<DescribeNotebookInstanceResponse> waiterNotebookException_1 =
+      DefaultWaiterResponse.<DescribeNotebookInstanceResponse>builder()
           .attemptsExecuted(1)
           .exception(AWS_SERVICE_EXCEPTION_1)
           .build(); // wait failure
-  public static final WaiterResponse waiterNotebookException_2 =
-      DefaultWaiterResponse.builder()
+  public static final WaiterResponse<DescribeNotebookInstanceResponse> waiterNotebookException_2 =
+      DefaultWaiterResponse.<DescribeNotebookInstanceResponse>builder()
           .attemptsExecuted(1)
           .exception(AWS_SERVICE_EXCEPTION_2)
           .build(); // wait failure
 
+  public static String getUniqueInstanceName(String resourceName) {
+    return "wsm-test-" + resourceName;
+  }
+
+  public static ApiAwsSageMakerNotebookCreationParameters
+      makeAwsSageMakerNotebookCreationParameters(String instanceName) {
+    return new ApiAwsSageMakerNotebookCreationParameters()
+        .instanceName(instanceName)
+        .instanceType(SAGEMAKER_INSTANCE_TYPE)
+        .region(AWS_REGION);
+  }
+
   public static ControlledAwsSageMakerNotebookResource makeDefaultAwsSagemakerNotebookResource(
       UUID workspaceUuid) {
+    String resourceName = UUID.randomUUID().toString();
     return makeAwsSageMakerNotebookResourceBuilder(
-            workspaceUuid, TestUtils.appendRandomNumber("sagemaker-resource"), "foo-instance")
+            workspaceUuid,
+            resourceName,
+            getUniqueInstanceName(resourceName),
+            WorkspaceFixtures.DEFAULT_USER_EMAIL)
         .build();
   }
 
   public static ControlledAwsSageMakerNotebookResource.Builder
       makeAwsSageMakerNotebookResourceBuilder(String instanceName) {
     return makeAwsSageMakerNotebookResourceBuilder(
-        WORKSPACE_ID, TestUtils.appendRandomNumber("sagemaker-resource"), instanceName);
+        WORKSPACE_ID,
+        UUID.randomUUID().toString(),
+        instanceName,
+        WorkspaceFixtures.DEFAULT_USER_EMAIL);
   }
 
   public static ControlledAwsSageMakerNotebookResource.Builder
       makeAwsSageMakerNotebookResourceBuilder(
-          UUID workspaceUuid, String resourceName, String instanceName) {
+          UUID workspaceUuid, String resourceName, String instanceName, String userEmail) {
     return ControlledAwsSageMakerNotebookResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
@@ -245,8 +267,9 @@ public class ControlledAwsResourceFixtures {
                 .name(resourceName)
                 .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                 .region(AWS_REGION)
+                .assignedUser(userEmail)
                 .build())
         .instanceName(instanceName)
-        .instanceType(ML_T2_MEDIUM.toString());
+        .instanceType(SAGEMAKER_INSTANCE_TYPE);
   }
 }

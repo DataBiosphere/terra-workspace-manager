@@ -808,7 +808,6 @@ public class AwsUtils {
     }
   }
 
-  // TODO(BENCH-727): make idempotent
   /**
    * Delete a AWS SageMaker Notebook
    *

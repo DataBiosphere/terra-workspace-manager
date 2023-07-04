@@ -1,10 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.SAGEMAKER_INSTANCE_TYPE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2_MEDIUM;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
@@ -29,7 +29,7 @@ public class ControlledAwsSageMakerNotebookResourceTest extends BaseAwsUnitTest 
         ControlledAwsSageMakerNotebookResource.builder()
             .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder().build())
             .instanceName("instanceName")
-            .instanceType(ML_T2_MEDIUM.toString());
+            .instanceType(SAGEMAKER_INSTANCE_TYPE);
     Exception ex =
         assertThrows(
             BadRequestException.class,
@@ -70,7 +70,7 @@ public class ControlledAwsSageMakerNotebookResourceTest extends BaseAwsUnitTest 
                     .region(null)
                     .build())
             .instanceName("instanceName")
-            .instanceType(ML_T2_MEDIUM.toString());
+            .instanceType(SAGEMAKER_INSTANCE_TYPE);
     ex =
         assertThrows(
             MissingRequiredFieldException.class,
