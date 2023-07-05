@@ -202,6 +202,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  */
 @Component
 public class MockMvcUtils {
+  private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
+
   public static final String AUTH_HEADER = "Authorization";
   public static final String WORKSPACES_V1_PATH = "/api/workspaces/v1";
   public static final String WORKSPACES_V1_BY_UUID_PATH_FORMAT = "/api/workspaces/v1/%s";
@@ -351,10 +353,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources/%s/clone";
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
   public static final String POLICY_V1_GET_REGION_INFO_PATH = "/api/policies/v1/getLocationInfo";
-
   public static final String LOAD_SIGNED_URL_LIST_PATH_FORMAT =
       "/api/workspaces/alpha1/%s/resources/controlled/gcp/buckets/%s/load";
-
   public static final String LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT =
       "/api/workspaces/alpha1/%s/resources/controlled/gcp/buckets/%s/load/result/%s";
   // Only use this if you are mocking SAM. If you're using real SAM,
@@ -363,20 +363,18 @@ public class MockMvcUtils {
       new AuthenticatedUserRequest(
           DEFAULT_USER_EMAIL, DEFAULT_USER_SUBJECT_ID, Optional.of("ThisIsNotARealBearerToken"));
   public static final String DEFAULT_GCP_RESOURCE_REGION = "us-central1";
-  private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
-  private static final String DEST_BUCKET_RESOURCE_NAME =
+  public static final String DEST_BUCKET_RESOURCE_NAME =
       TestUtils.appendRandomNumber("i-am-the-cloned-bucket");
-
-  private static final List<Integer> JOB_SUCCESS_CODES =
+  public static final List<Integer> JOB_SUCCESS_CODES =
       List.of(HttpStatus.SC_OK, HttpStatus.SC_ACCEPTED);
 
   // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
-  @Autowired private MockMvc mockMvc;
-  @Autowired private ObjectMapper objectMapper;
-  @Autowired private JobService jobService;
-  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
-  @Autowired private SamService samService;
+  @Autowired protected MockMvc mockMvc;
+  @Autowired protected ObjectMapper objectMapper;
+  @Autowired protected JobService jobService;
+  @Autowired protected NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired protected SamService samService;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -2757,7 +2755,7 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
-  private String getSerializedResponseForGet(
+  protected String getSerializedResponseForGet(
       AuthenticatedUserRequest userRequest, String path, UUID workspaceId, UUID resourceId)
       throws Exception {
     return mockMvc

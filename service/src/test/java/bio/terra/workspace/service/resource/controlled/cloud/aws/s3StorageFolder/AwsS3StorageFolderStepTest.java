@@ -81,7 +81,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void createS3Folder_doTest() throws InterruptedException {
+  void createS3Folder_doTest() throws InterruptedException {
     CreateAwsS3StorageFolderStep createS3FolderStep =
         new CreateAwsS3StorageFolderStep(
             folderResource,
@@ -103,7 +103,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void createS3Folder_undoTest() throws InterruptedException {
+  void createS3Folder_undoTest() throws InterruptedException {
     CreateAwsS3StorageFolderStep createS3FolderStep =
         new CreateAwsS3StorageFolderStep(
             folderResource,
@@ -128,7 +128,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void deleteS3Folder_doTest() throws InterruptedException {
+  void deleteS3Folder_doTest() throws InterruptedException {
     DeleteAwsS3StorageFolderStep delete3FolderStep =
         new DeleteAwsS3StorageFolderStep(folderResource, mockAwsCloudContextService);
 
@@ -151,7 +151,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void deleteS3Folder_undoTest() throws InterruptedException {
+  void deleteS3Folder_undoTest() throws InterruptedException {
     DeleteAwsS3StorageFolderStep delete3FolderStep =
         new DeleteAwsS3StorageFolderStep(folderResource, mockAwsCloudContextService);
 
@@ -166,7 +166,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void validateS3FolderCreate_doTest() throws InterruptedException {
+  void validateS3FolderCreate_doTest() throws InterruptedException {
     ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
         new ValidateAwsS3StorageFolderCreateStep(folderResource, mockAwsCloudContextService);
 
@@ -190,7 +190,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void validateS3FolderCreate_undoTest() throws InterruptedException {
+  void validateS3FolderCreate_undoTest() throws InterruptedException {
     ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
         new ValidateAwsS3StorageFolderCreateStep(folderResource, mockAwsCloudContextService);
 
@@ -203,7 +203,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   // Below are white-box tests until util functions are moved to CRL
 
   @Test
-  public void createS3Folder_doTestFull() throws InterruptedException {
+  void createS3Folder_doTestFull() throws InterruptedException {
     CreateAwsS3StorageFolderStep createS3FolderStep =
         new CreateAwsS3StorageFolderStep(
             folderResource,
@@ -231,7 +231,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void deleteS3Folder_doTestFull() throws InterruptedException {
+  void deleteS3Folder_doTestFull() throws InterruptedException {
     DeleteAwsS3StorageFolderStep delete3FolderStep =
         new DeleteAwsS3StorageFolderStep(folderResource, mockAwsCloudContextService);
 
@@ -262,7 +262,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void validateS3FolderCreate_doTestFull() throws InterruptedException {
+  void validateS3FolderCreate_doTestFull() throws InterruptedException {
     ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
         new ValidateAwsS3StorageFolderCreateStep(folderResource, mockAwsCloudContextService);
 
