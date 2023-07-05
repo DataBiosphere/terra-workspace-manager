@@ -19,6 +19,8 @@ import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -26,7 +28,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
 import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 
-public class BaseAwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
+@TestInstance(Lifecycle.PER_CLASS)
+public abstract class BaseAwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
 
   @MockBean protected FlightContext mockFlightContext;
   @MockBean protected AwsCloudContextService mockAwsCloudContextService;
