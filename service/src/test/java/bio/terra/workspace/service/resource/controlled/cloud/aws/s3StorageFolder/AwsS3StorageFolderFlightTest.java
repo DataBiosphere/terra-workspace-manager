@@ -89,10 +89,9 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
   }
 
   private ControlledAwsS3StorageFolderResource makeResource(
-      ApiAwsS3StorageFolderCreationParameters creationParameters, String resourceName) {
+      ApiAwsS3StorageFolderCreationParameters creationParameters) {
     return ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
             workspaceUuid,
-            resourceName,
             landingZone.getStorageBucket().name(),
             creationParameters.getFolderName())
         .build();
@@ -100,11 +99,10 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
 
   @Test
   void createGetUpdateDeleteS3StorageFolderTest() throws InterruptedException {
-    String resourceName = UUID.randomUUID().toString();
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
-            ControlledAwsResourceFixtures.uniqueS3StorageFolderName(resourceName));
-    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters, resourceName);
+            ControlledAwsResourceFixtures.uniqueStorageName());
+    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters);
 
     // create resource
     ControlledAwsS3StorageFolderResource createdResource =
@@ -158,12 +156,11 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
   }
 
   @Test
-  void createS3StorageFolderUndoTest() {
-    String resourceName = UUID.randomUUID().toString();
+  void createS3StorageFolder_undo_deletedTest() {
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
-            ControlledAwsResourceFixtures.uniqueS3StorageFolderName(resourceName));
-    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters, resourceName);
+            ControlledAwsResourceFixtures.uniqueStorageName());
+    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters);
 
     // test idempotency of s3-folder-specific undo step by retrying once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -189,12 +186,11 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
   }
 
   @Test
-  void deleteS3StorageFolderUndoTest() throws InterruptedException {
-    String resourceName = UUID.randomUUID().toString();
+  void deleteS3StorageFolder_undo_stillDeletedTest() throws InterruptedException {
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
-            ControlledAwsResourceFixtures.uniqueS3StorageFolderName(resourceName));
-    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters, resourceName);
+            ControlledAwsResourceFixtures.uniqueStorageName());
+    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters);
 
     ControlledAwsS3StorageFolderResource createdResource =
         controlledResourceService

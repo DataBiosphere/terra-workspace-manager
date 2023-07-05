@@ -18,14 +18,13 @@ public class MvcAwsApi extends MockMvcUtils {
   public ApiCreatedControlledAwsS3StorageFolder createControlledAwsS3StorageFolder(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
-      String resourceName,
       ApiAwsS3StorageFolderCreationParameters creationParameters)
       throws Exception {
     ApiCreateControlledAwsS3StorageFolderRequestBody requestBody =
         new ApiCreateControlledAwsS3StorageFolderRequestBody()
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
-                    .name(resourceName))
+                    .name(creationParameters.getFolderName()))
             .awsS3StorageFolder(creationParameters);
 
     String serializedResponse =

@@ -27,12 +27,10 @@ public class AwsSageMakerNotebookFlightTest extends BaseAwsSageMakerNotebookFlig
 
   @Test
   void createGetUpdateStartStopDeleteSageMakerNotebookTest() throws InterruptedException {
-    String resourceName = UUID.randomUUID().toString();
     ApiAwsSageMakerNotebookCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
-            ControlledAwsResourceFixtures.getUniqueInstanceName(resourceName));
-    ControlledAwsSageMakerNotebookResource resource =
-        makeResource(creationParameters, resourceName);
+            ControlledAwsResourceFixtures.getUniqueNotebookName());
+    ControlledAwsSageMakerNotebookResource resource = makeResource(creationParameters);
 
     // create resource
     String jobId =

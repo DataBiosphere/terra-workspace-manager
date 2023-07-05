@@ -136,40 +136,37 @@ public class ControlledAwsResourceFixtures {
       (DeleteObjectsResponse)
           DeleteObjectsResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_400).build();
 
-  public static String uniqueS3StorageFolderName(String resourceName) {
-    return "wsm-test-" + resourceName;
+  public static String uniqueStorageName() {
+    return TestUtils.appendRandomNumber("wsmTestAwsS3Folder");
   }
 
   public static ApiAwsS3StorageFolderCreationParameters makeAwsS3StorageFolderCreationParameters(
-      String folderName) {
-    return new ApiAwsS3StorageFolderCreationParameters().folderName(folderName).region(AWS_REGION);
+      String storageName) {
+    return new ApiAwsS3StorageFolderCreationParameters().folderName(storageName).region(AWS_REGION);
   }
 
   public static ControlledAwsS3StorageFolderResource makeDefaultAwsS3StorageFolderResource(
       UUID workspaceUuid) {
-    String resourceName = UUID.randomUUID().toString();
-    return makeAwsS3StorageFolderResourceBuilder(
-            workspaceUuid, resourceName, "foo-bucket", uniqueS3StorageFolderName(resourceName))
+    return makeAwsS3StorageFolderResourceBuilder(workspaceUuid, "foo-bucket", uniqueStorageName())
         .build();
   }
 
   public static ControlledAwsS3StorageFolderResource.Builder makeAwsS3StorageFolderResourceBuilder(
-      String bucket, String prefix) {
-    return makeAwsS3StorageFolderResourceBuilder(
-        WORKSPACE_ID, UUID.randomUUID().toString(), bucket, prefix);
+      String bucket, String storageName) {
+    return makeAwsS3StorageFolderResourceBuilder(WORKSPACE_ID, bucket, storageName);
   }
 
   public static ControlledAwsS3StorageFolderResource.Builder makeAwsS3StorageFolderResourceBuilder(
-      UUID workspaceUuid, String resourceName, String bucket, String prefix) {
+      UUID workspaceUuid, String bucket, String storageName) {
     return ControlledAwsS3StorageFolderResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
-                .name(resourceName)
+                .name(storageName)
                 .region(AWS_REGION)
                 .build())
         .bucketName(bucket)
-        .prefix(prefix);
+        .prefix(storageName);
   }
 
   // Sagemaker Notebook
@@ -236,8 +233,8 @@ public class ControlledAwsResourceFixtures {
           .exception(AWS_SERVICE_EXCEPTION_2)
           .build(); // wait failure
 
-  public static String getUniqueInstanceName(String resourceName) {
-    return "wsm-test-" + resourceName;
+  public static String getUniqueNotebookName() {
+    return TestUtils.appendRandomNumber("wsmTestAwsSageMaker");
   }
 
   public static ApiAwsSageMakerNotebookCreationParameters
@@ -250,37 +247,30 @@ public class ControlledAwsResourceFixtures {
 
   public static ControlledAwsSageMakerNotebookResource makeDefaultAwsSagemakerNotebookResource(
       UUID workspaceUuid) {
-    String resourceName = UUID.randomUUID().toString();
     return makeAwsSageMakerNotebookResourceBuilder(
-            workspaceUuid,
-            resourceName,
-            getUniqueInstanceName(resourceName),
-            WorkspaceFixtures.DEFAULT_USER_EMAIL)
+            workspaceUuid, getUniqueNotebookName(), WorkspaceFixtures.DEFAULT_USER_EMAIL)
         .build();
   }
 
   public static ControlledAwsSageMakerNotebookResource.Builder
-      makeAwsSageMakerNotebookResourceBuilder(String instanceName) {
+      makeAwsSageMakerNotebookResourceBuilder(String notebookName) {
     return makeAwsSageMakerNotebookResourceBuilder(
-        WORKSPACE_ID,
-        UUID.randomUUID().toString(),
-        instanceName,
-        WorkspaceFixtures.DEFAULT_USER_EMAIL);
+        WORKSPACE_ID, notebookName, WorkspaceFixtures.DEFAULT_USER_EMAIL);
   }
 
   public static ControlledAwsSageMakerNotebookResource.Builder
       makeAwsSageMakerNotebookResourceBuilder(
-          UUID workspaceUuid, String resourceName, String instanceName, String userEmail) {
+          UUID workspaceUuid, String notebookName, String userEmail) {
     return ControlledAwsSageMakerNotebookResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
-                .name(resourceName)
+                .name(notebookName)
                 .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                 .region(AWS_REGION)
                 .assignedUser(userEmail)
                 .build())
-        .instanceName(instanceName)
+        .instanceName(notebookName)
         .instanceType(SAGEMAKER_INSTANCE_TYPE);
   }
 }

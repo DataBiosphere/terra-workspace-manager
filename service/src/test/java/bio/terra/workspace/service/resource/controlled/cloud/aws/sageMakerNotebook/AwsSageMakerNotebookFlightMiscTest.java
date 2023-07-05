@@ -25,13 +25,11 @@ import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebookFlightTest {
 
   @Test
-  void createSageMakerNotebookUndoTest() throws InterruptedException {
-    String resourceName = UUID.randomUUID().toString();
+  void createSageMakerNotebook_undo_deletedTest() throws InterruptedException {
     ApiAwsSageMakerNotebookCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
-            ControlledAwsResourceFixtures.getUniqueInstanceName(resourceName));
-    ControlledAwsSageMakerNotebookResource resource =
-        makeResource(creationParameters, resourceName);
+            ControlledAwsResourceFixtures.getUniqueNotebookName());
+    ControlledAwsSageMakerNotebookResource resource = makeResource(creationParameters);
 
     // test idempotency of s3-folder-specific undo step by retrying once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -66,13 +64,11 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
   }
 
   @Test
-  void forceDeleteSageMakerNotebookUndoTest() throws InterruptedException {
-    String resourceName = UUID.randomUUID().toString();
+  void forceDeleteSageMakerNotebook_undo_stillDeletedTest() throws InterruptedException {
     ApiAwsSageMakerNotebookCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
-            ControlledAwsResourceFixtures.getUniqueInstanceName(resourceName));
-    ControlledAwsSageMakerNotebookResource resource =
-        makeResource(creationParameters, resourceName);
+            ControlledAwsResourceFixtures.getUniqueNotebookName());
+    ControlledAwsSageMakerNotebookResource resource = makeResource(creationParameters);
 
     // create & verify resource status
     String jobId =
