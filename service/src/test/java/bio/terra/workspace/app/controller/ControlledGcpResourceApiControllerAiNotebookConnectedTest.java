@@ -70,7 +70,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test

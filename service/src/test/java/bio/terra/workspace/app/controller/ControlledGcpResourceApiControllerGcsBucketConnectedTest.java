@@ -261,8 +261,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   public void cleanup() throws Exception {
     AuthenticatedUserRequest defaultUserRequest =
         userAccessUtils.defaultUser().getAuthenticatedRequest();
-    mockMvcUtils.deleteWorkspace(defaultUserRequest, workspaceId);
-    mockMvcUtils.deleteWorkspace(defaultUserRequest, workspaceId2);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test

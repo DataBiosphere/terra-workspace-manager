@@ -34,9 +34,16 @@ public class DeleteSamResourceStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     WsmResource wsmResource = resourceDao.getResource(workspaceUuid, resourceId);
+    logger.info(">>Retrieved wsmResource: {}", wsmResource);
     ControlledResource resource = wsmResource.castToControlledResource();
-    logger.info("Try to delete Sam controlled resource: {}", resource);
-    samService.deleteControlledResource(resource, samService.getWsmServiceAccountToken());
+    logger.info(">>Try to delete Sam controlled resource: {}", resource);
+    try {
+      samService.deleteControlledResource(resource, samService.getWsmServiceAccountToken());
+      logger.info(">>Success return from Sam delete controlled resource: {}", resource);
+    } catch (Exception e) {
+      logger.error(">>Caught exception from Sam delete controlled resource", e);
+      throw e;
+    }
     return StepResult.getStepResultSuccess();
   }
 
