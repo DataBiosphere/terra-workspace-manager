@@ -71,7 +71,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   }
 
   @Test
-  public void executeStopAwsSageMakerNotebook_Stopping_Test() {
+  void executeStopAwsSageMakerNotebook_Stopping_Test() {
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
         .thenReturn(NotebookInstanceStatus.STOPPING);
@@ -102,7 +102,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   }
 
   @Test
-  public void executeStopAwsSageMakerNotebook_Deleting_Test() {
+  void executeStopAwsSageMakerNotebook_Deleting_Test() {
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
         .thenReturn(NotebookInstanceStatus.DELETING);
@@ -116,7 +116,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   }
 
   @Test
-  public void executeStopAwsSageMakerNotebook_OtherError_Test() {
+  void executeStopAwsSageMakerNotebook_OtherError_Test() {
     for (NotebookInstanceStatus status :
         List.of(
             NotebookInstanceStatus.PENDING,
@@ -134,7 +134,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   }
 
   @Test
-  public void executeStopAwsSageMakerNotebook_OtherSuccess_Test() {
+  void executeStopAwsSageMakerNotebook_OtherSuccess_Test() {
     for (NotebookInstanceStatus status :
         List.of(NotebookInstanceStatus.STOPPED, NotebookInstanceStatus.FAILED)) {
       mockAwsUtils.when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any())).thenReturn(status);
@@ -149,7 +149,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   }
 
   @Test
-  public void executeStopAwsSageMakerNotebook_GetStatusError_Test() {
+  void executeStopAwsSageMakerNotebook_GetStatusError_Test() {
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
         .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
@@ -170,7 +170,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   }
 
   @Test
-  public void stopAwsSageMakerNotebook_NotResourceDeletion_doTest() throws InterruptedException {
+  void stopAwsSageMakerNotebook_NotResourceDeletion_doTest() throws InterruptedException {
     // not part of resource deletion
     StopAwsSageMakerNotebookStep stopNotebookStep =
         new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, false);
@@ -193,7 +193,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   }
 
   @Test
-  public void stopAwsSageMakerNotebook_ResourceDeletion_doTest() throws InterruptedException {
+  void stopAwsSageMakerNotebook_ResourceDeletion_doTest() throws InterruptedException {
     // part of resource deletion
     StopAwsSageMakerNotebookStep stopNotebookStep =
         new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, true);
@@ -318,7 +318,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   }
 
   @Test
-  public void stopAwsSageMakerNotebook_undoTest() throws InterruptedException {
+  void stopAwsSageMakerNotebook_undoTest() throws InterruptedException {
     for (Boolean resourceDeletion :
         List.of(/*  part of resource deletion */ true, /* not part of resource deletion */ false)) {
       StopAwsSageMakerNotebookStep stopNotebookStep =

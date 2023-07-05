@@ -178,7 +178,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
         AwsUtils.checkFolderExists(
             AWS_CREDENTIALS_PROVIDER,
             ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
-                    "bucket", ControlledAwsResourceFixtures.s3Obj1.key())
+                    WORKSPACE_ID, "resource", "bucket", ControlledAwsResourceFixtures.s3Obj1.key())
                 .build()));
 
     // does not exist
@@ -191,7 +191,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
             AwsUtils.checkFolderExists(
                 AWS_CREDENTIALS_PROVIDER,
                 ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
-                        "bucket", "exception")
+                        WORKSPACE_ID, "resource", "bucket", "exception")
                     .build()));
 
     verify(mockS3Client, times(3)).listObjectsV2((ListObjectsV2Request) any());

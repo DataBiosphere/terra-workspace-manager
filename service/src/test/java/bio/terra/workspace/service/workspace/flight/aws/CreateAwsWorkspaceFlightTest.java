@@ -59,14 +59,13 @@ public class CreateAwsWorkspaceFlightTest extends BaseAwsConnectedTest {
         awsTestUtils.getAwsCloudContext().getEnvironmentAlias());
 
     // create resource and verify
-    String resourceName = UUID.randomUUID().toString();
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
-            ControlledAwsResourceFixtures.uniqueS3StorageFolderName(resourceName));
+            ControlledAwsResourceFixtures.uniqueStorageName());
+
     UUID resourceUuid =
         mvcAwsApi
-            .createControlledAwsS3StorageFolder(
-                userRequest, workspaceUuid, resourceName, creationParameters)
+            .createControlledAwsS3StorageFolder(userRequest, workspaceUuid, creationParameters)
             .getAwsS3StorageFolder()
             .getMetadata()
             .getResourceId();

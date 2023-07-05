@@ -1,12 +1,13 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2_MEDIUM;
 
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
+import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -135,31 +136,28 @@ public class ControlledAwsResourceFixtures {
       (DeleteObjectsResponse)
           DeleteObjectsResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_400).build();
 
-  public static String uniqueS3StorageFolderName(String resourceName) {
-    return "wsm-test-" + resourceName;
+  public static String uniqueStorageName() {
+    return TestUtils.appendRandomNumber("wsmTestAwsS3Folder");
   }
 
   public static ApiAwsS3StorageFolderCreationParameters makeAwsS3StorageFolderCreationParameters(
-      String folderName) {
-    return new ApiAwsS3StorageFolderCreationParameters().folderName(folderName).region(AWS_REGION);
+      String storageName) {
+    return new ApiAwsS3StorageFolderCreationParameters().folderName(storageName).region(AWS_REGION);
   }
 
   public static ControlledAwsS3StorageFolderResource makeDefaultAwsS3StorageFolderResource(
       UUID workspaceUuid) {
-    String resourceName = UUID.randomUUID().toString();
+    String storageName = uniqueStorageName();
     return makeAwsS3StorageFolderResourceBuilder(
-            workspaceUuid, resourceName, "foo-bucket", uniqueS3StorageFolderName(resourceName))
+            workspaceUuid,
+            /* resourceName= */ storageName,
+            "foo-bucket",
+            /* folderName= */ storageName)
         .build();
   }
 
   public static ControlledAwsS3StorageFolderResource.Builder makeAwsS3StorageFolderResourceBuilder(
-      String bucket, String prefix) {
-    return makeAwsS3StorageFolderResourceBuilder(
-        WORKSPACE_ID, UUID.randomUUID().toString(), bucket, prefix);
-  }
-
-  public static ControlledAwsS3StorageFolderResource.Builder makeAwsS3StorageFolderResourceBuilder(
-      UUID workspaceUuid, String resourceName, String bucket, String prefix) {
+      UUID workspaceUuid, String resourceName, String bucket, String folderName) {
     return ControlledAwsS3StorageFolderResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
@@ -168,10 +166,12 @@ public class ControlledAwsResourceFixtures {
                 .region(AWS_REGION)
                 .build())
         .bucketName(bucket)
-        .prefix(prefix);
+        .prefix(folderName);
   }
 
   // Sagemaker Notebook
+
+  public static final String SAGEMAKER_INSTANCE_TYPE = ML_T2_MEDIUM.toString();
 
   public static final CreateNotebookInstanceResponse createNotebookResponse200 =
       (CreateNotebookInstanceResponse)
@@ -217,38 +217,48 @@ public class ControlledAwsResourceFixtures {
       (DeleteNotebookInstanceResponse)
           DeleteNotebookInstanceResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_400).build();
 
-  public static final WaiterResponse waiterNotebookResponse =
-      DefaultWaiterResponse.builder()
+  public static final WaiterResponse<DescribeNotebookInstanceResponse> waiterNotebookResponse =
+      DefaultWaiterResponse.<DescribeNotebookInstanceResponse>builder()
           .attemptsExecuted(1)
           .response(DescribeNotebookInstanceResponse.builder().build())
           .build(); // wait successful
-  public static final WaiterResponse waiterNotebookException_1 =
-      DefaultWaiterResponse.builder()
+  public static final WaiterResponse<DescribeNotebookInstanceResponse> waiterNotebookException_1 =
+      DefaultWaiterResponse.<DescribeNotebookInstanceResponse>builder()
           .attemptsExecuted(1)
           .exception(AWS_SERVICE_EXCEPTION_1)
           .build(); // wait failure
-  public static final WaiterResponse waiterNotebookException_2 =
-      DefaultWaiterResponse.builder()
+  public static final WaiterResponse<DescribeNotebookInstanceResponse> waiterNotebookException_2 =
+      DefaultWaiterResponse.<DescribeNotebookInstanceResponse>builder()
           .attemptsExecuted(1)
           .exception(AWS_SERVICE_EXCEPTION_2)
           .build(); // wait failure
 
+  public static String getUniqueNotebookName() {
+    return TestUtils.appendRandomNumber("wsmTestAwsSageMaker");
+  }
+
+  public static ApiAwsSageMakerNotebookCreationParameters
+      makeAwsSageMakerNotebookCreationParameters(String instanceName) {
+    return new ApiAwsSageMakerNotebookCreationParameters()
+        .instanceName(instanceName)
+        .instanceType(SAGEMAKER_INSTANCE_TYPE)
+        .region(AWS_REGION);
+  }
+
   public static ControlledAwsSageMakerNotebookResource makeDefaultAwsSagemakerNotebookResource(
       UUID workspaceUuid) {
+    String notebookName = getUniqueNotebookName();
     return makeAwsSageMakerNotebookResourceBuilder(
-            workspaceUuid, TestUtils.appendRandomNumber("sagemaker-resource"), "foo-instance")
+            workspaceUuid,
+            /* resourceName= */ notebookName,
+            /* instanceName= */ notebookName,
+            DEFAULT_USER_EMAIL)
         .build();
   }
 
   public static ControlledAwsSageMakerNotebookResource.Builder
-      makeAwsSageMakerNotebookResourceBuilder(String instanceName) {
-    return makeAwsSageMakerNotebookResourceBuilder(
-        WORKSPACE_ID, TestUtils.appendRandomNumber("sagemaker-resource"), instanceName);
-  }
-
-  public static ControlledAwsSageMakerNotebookResource.Builder
       makeAwsSageMakerNotebookResourceBuilder(
-          UUID workspaceUuid, String resourceName, String instanceName) {
+          UUID workspaceUuid, String resourceName, String instanceName, String userEmail) {
     return ControlledAwsSageMakerNotebookResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
@@ -256,8 +266,9 @@ public class ControlledAwsResourceFixtures {
                 .name(resourceName)
                 .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                 .region(AWS_REGION)
+                .assignedUser(userEmail)
                 .build())
         .instanceName(instanceName)
-        .instanceType(ML_T2_MEDIUM.toString());
+        .instanceType(SAGEMAKER_INSTANCE_TYPE);
   }
 }
