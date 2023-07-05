@@ -6,6 +6,7 @@ import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2
 
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.TestUtils;
+import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -134,17 +135,27 @@ public class ControlledAwsResourceFixtures {
       (DeleteObjectsResponse)
           DeleteObjectsResponse.builder().sdkHttpResponse(SDK_HTTP_RESPONSE_400).build();
 
+  public static String uniqueS3StorageFolderName(String resourceName) {
+    return "wsm-test-" + resourceName;
+  }
+
+  public static ApiAwsS3StorageFolderCreationParameters makeAwsS3StorageFolderCreationParameters(
+      String folderName) {
+    return new ApiAwsS3StorageFolderCreationParameters().folderName(folderName).region(AWS_REGION);
+  }
+
   public static ControlledAwsS3StorageFolderResource makeDefaultAwsS3StorageFolderResource(
       UUID workspaceUuid) {
+    String resourceName = UUID.randomUUID().toString();
     return makeAwsS3StorageFolderResourceBuilder(
-            workspaceUuid, TestUtils.appendRandomNumber("s3-resource"), "foo-bucket", "bar-prefix")
+            workspaceUuid, resourceName, "foo-bucket", uniqueS3StorageFolderName(resourceName))
         .build();
   }
 
   public static ControlledAwsS3StorageFolderResource.Builder makeAwsS3StorageFolderResourceBuilder(
       String bucket, String prefix) {
     return makeAwsS3StorageFolderResourceBuilder(
-        WORKSPACE_ID, TestUtils.appendRandomNumber("s3-resource"), bucket, prefix);
+        WORKSPACE_ID, UUID.randomUUID().toString(), bucket, prefix);
   }
 
   public static ControlledAwsS3StorageFolderResource.Builder makeAwsS3StorageFolderResourceBuilder(

@@ -1,16 +1,22 @@
 package bio.terra.workspace.service.workspace.flight.aws;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseAwsConnectedTest;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
+import bio.terra.workspace.common.utils.MvcAwsApi;
 import bio.terra.workspace.common.utils.MvcWorkspaceApi;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
+import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import java.util.UUID;
@@ -21,8 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Tag("aws-connected")
 public class CreateAwsWorkspaceFlightTest extends BaseAwsConnectedTest {
   @Autowired private AwsCloudContextService awsCloudContextService;
-  @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired private ControlledResourceService controlledResourceService;
   @Autowired MvcWorkspaceApi mvcWorkspaceApi;
+  @Autowired MvcAwsApi mvcAwsApi;
   @Autowired UserAccessUtils userAccessUtils;
 
   @Test
@@ -51,7 +58,21 @@ public class CreateAwsWorkspaceFlightTest extends BaseAwsConnectedTest {
         awsCloudContext.getEnvironmentAlias(),
         awsTestUtils.getAwsCloudContext().getEnvironmentAlias());
 
-    // TODO(BENCH-715) add storage bucket
+    // create resource and verify
+    String resourceName = UUID.randomUUID().toString();
+    ApiAwsS3StorageFolderCreationParameters creationParameters =
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
+            ControlledAwsResourceFixtures.uniqueS3StorageFolderName(resourceName));
+    UUID resourceUuid =
+        mvcAwsApi
+            .createControlledAwsS3StorageFolder(
+                userRequest, workspaceUuid, resourceName, creationParameters)
+            .getAwsS3StorageFolder()
+            .getMetadata()
+            .getResourceId();
+    ApiAwsS3StorageFolderResource fetchedResource =
+        mvcAwsApi.getControlledAwsS3StorageFolder(userRequest, workspaceUuid, resourceUuid);
+    assertEquals(creationParameters.getFolderName(), fetchedResource.getAttributes().getPrefix());
 
     // delete workspace (with cloud context)
     ApiJobResult deleteResult = mvcWorkspaceApi.deleteWorkspaceAndWait(userRequest, workspaceUuid);
@@ -60,6 +81,9 @@ public class CreateAwsWorkspaceFlightTest extends BaseAwsConnectedTest {
     // cloud context should have been deleted
     assertTrue(awsCloudContextService.getAwsCloudContext(workspaceUuid).isEmpty());
 
-    // TODO(BENCH-715) check storage bucket deleted
+    // resource should have been deleted
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> controlledResourceService.getControlledResource(workspaceUuid, resourceUuid));
   }
 }

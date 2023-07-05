@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 public class ControlledAwsS3StorageFolderResourceTest extends BaseAwsUnitTest {
 
   @Test
-  public void validateResourceTest() {
+  void validateResourceTest() {
     // success
     ControlledAwsS3StorageFolderResource.Builder resourceBuilder =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder("bucket", "prefix");
