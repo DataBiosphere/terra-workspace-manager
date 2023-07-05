@@ -1,7 +1,7 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2_MEDIUM;
 
 import bio.terra.workspace.common.utils.AwsUtils;
@@ -147,26 +147,26 @@ public class ControlledAwsResourceFixtures {
 
   public static ControlledAwsS3StorageFolderResource makeDefaultAwsS3StorageFolderResource(
       UUID workspaceUuid) {
-    return makeAwsS3StorageFolderResourceBuilder(workspaceUuid, "foo-bucket", uniqueStorageName())
+    String storageName = uniqueStorageName();
+    return makeAwsS3StorageFolderResourceBuilder(
+            workspaceUuid,
+            /* resourceName= */ storageName,
+            "foo-bucket",
+            /* folderName= */ storageName)
         .build();
   }
 
   public static ControlledAwsS3StorageFolderResource.Builder makeAwsS3StorageFolderResourceBuilder(
-      String bucket, String storageName) {
-    return makeAwsS3StorageFolderResourceBuilder(WORKSPACE_ID, bucket, storageName);
-  }
-
-  public static ControlledAwsS3StorageFolderResource.Builder makeAwsS3StorageFolderResourceBuilder(
-      UUID workspaceUuid, String bucket, String storageName) {
+      UUID workspaceUuid, String resourceName, String bucket, String folderName) {
     return ControlledAwsS3StorageFolderResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
-                .name(storageName)
+                .name(resourceName)
                 .region(AWS_REGION)
                 .build())
         .bucketName(bucket)
-        .prefix(storageName);
+        .prefix(folderName);
   }
 
   // Sagemaker Notebook
@@ -247,30 +247,28 @@ public class ControlledAwsResourceFixtures {
 
   public static ControlledAwsSageMakerNotebookResource makeDefaultAwsSagemakerNotebookResource(
       UUID workspaceUuid) {
+    String notebookName = getUniqueNotebookName();
     return makeAwsSageMakerNotebookResourceBuilder(
-            workspaceUuid, getUniqueNotebookName(), WorkspaceFixtures.DEFAULT_USER_EMAIL)
+            workspaceUuid,
+            /* resourceName= */ notebookName,
+            /* instanceName= */ notebookName,
+            DEFAULT_USER_EMAIL)
         .build();
   }
 
   public static ControlledAwsSageMakerNotebookResource.Builder
-      makeAwsSageMakerNotebookResourceBuilder(String notebookName) {
-    return makeAwsSageMakerNotebookResourceBuilder(
-        WORKSPACE_ID, notebookName, WorkspaceFixtures.DEFAULT_USER_EMAIL);
-  }
-
-  public static ControlledAwsSageMakerNotebookResource.Builder
       makeAwsSageMakerNotebookResourceBuilder(
-          UUID workspaceUuid, String notebookName, String userEmail) {
+          UUID workspaceUuid, String resourceName, String instanceName, String userEmail) {
     return ControlledAwsSageMakerNotebookResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceUuid)
-                .name(notebookName)
+                .name(resourceName)
                 .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                 .region(AWS_REGION)
                 .assignedUser(userEmail)
                 .build())
-        .instanceName(notebookName)
+        .instanceName(instanceName)
         .instanceType(SAGEMAKER_INSTANCE_TYPE);
   }
 }

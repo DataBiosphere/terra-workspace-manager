@@ -92,8 +92,9 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
       ApiAwsS3StorageFolderCreationParameters creationParameters) {
     return ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
             workspaceUuid,
+            /* resourceName= */ creationParameters.getFolderName(),
             landingZone.getStorageBucket().name(),
-            creationParameters.getFolderName())
+            /* folderName= */ creationParameters.getFolderName())
         .build();
   }
 

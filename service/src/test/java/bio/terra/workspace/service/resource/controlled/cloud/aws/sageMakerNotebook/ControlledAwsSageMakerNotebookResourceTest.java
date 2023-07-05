@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.SAGEMAKER_INSTANCE_TYPE;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -21,13 +23,17 @@ public class ControlledAwsSageMakerNotebookResourceTest extends BaseAwsUnitTest 
   void validateResourceTest() {
     // success
     ControlledAwsSageMakerNotebookResource.Builder resourceBuilder =
-        ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder("instance");
+        ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder(
+            WORKSPACE_ID, "resource", "instance", DEFAULT_USER_EMAIL);
     assertDoesNotThrow(resourceBuilder::build);
 
     // invalid accessScope
     resourceBuilder =
         ControlledAwsSageMakerNotebookResource.builder()
-            .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder().build())
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+                    .build())
             .instanceName("instanceName")
             .instanceType(SAGEMAKER_INSTANCE_TYPE);
     Exception ex =
@@ -38,11 +44,13 @@ public class ControlledAwsSageMakerNotebookResourceTest extends BaseAwsUnitTest 
     assertThat(ex.getMessage(), containsString("Access scope must be private"));
 
     // missing instanceName
-    resourceBuilder = ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder(null);
     ex =
         assertThrows(
             MissingRequiredFieldException.class,
-            resourceBuilder::build,
+            () ->
+                ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder(
+                        WORKSPACE_ID, "resource", null, DEFAULT_USER_EMAIL)
+                    .build(),
             "validation fails with empty instanceName");
     assertThat(ex.getMessage(), containsString("instanceName"));
 
@@ -79,12 +87,13 @@ public class ControlledAwsSageMakerNotebookResourceTest extends BaseAwsUnitTest 
     assertThat(ex.getMessage(), containsString("region"));
 
     // invalid instanceName
-    resourceBuilder =
-        ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder("-instanceName-");
     ex =
         assertThrows(
             InvalidNameException.class,
-            resourceBuilder::build,
+            () ->
+                ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder(
+                        WORKSPACE_ID, "resource", "-instanceName-", DEFAULT_USER_EMAIL)
+                    .build(),
             "validation fails with invalid sagemaker instance name");
     assertThat(
         ex.getMessage(),

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -17,32 +18,36 @@ public class ControlledAwsS3StorageFolderResourceTest extends BaseAwsUnitTest {
   @Test
   void validateResourceTest() {
     // success
-    ControlledAwsS3StorageFolderResource.Builder resourceBuilder =
-        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder("bucket", "prefix");
-    assertDoesNotThrow(resourceBuilder::build);
+    assertDoesNotThrow(
+        () ->
+            ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
+                    WORKSPACE_ID, "resource", "bucket", "prefix")
+                .build());
 
     // missing bucket
-    resourceBuilder =
-        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder("", "prefix");
     Exception ex =
         assertThrows(
             MissingRequiredFieldException.class,
-            resourceBuilder::build,
+            () ->
+                ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
+                        WORKSPACE_ID, "resource", "", "prefix")
+                    .build(),
             "validation fails with empty bucketName");
     assertThat(ex.getMessage(), containsString("bucketName"));
 
     // missing prefix
-    resourceBuilder =
-        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder("bucket", null);
     ex =
         assertThrows(
             MissingRequiredFieldException.class,
-            resourceBuilder::build,
+            () ->
+                ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
+                        WORKSPACE_ID, "resource", "bucket", null)
+                    .build(),
             "validation fails with empty prefix");
     assertThat(ex.getMessage(), containsString("prefix"));
 
     // missing region
-    resourceBuilder =
+    ControlledAwsS3StorageFolderResource.Builder resourceBuilder =
         ControlledAwsS3StorageFolderResource.builder()
             .common(
                 ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
@@ -58,12 +63,13 @@ public class ControlledAwsS3StorageFolderResourceTest extends BaseAwsUnitTest {
     assertThat(ex.getMessage(), containsString("region"));
 
     // invalid prefix
-    resourceBuilder =
-        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder("bucket", "pr%fix");
     ex =
         assertThrows(
             InvalidNameException.class,
-            resourceBuilder::build,
+            () ->
+                ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
+                        WORKSPACE_ID, "resource", "bucket", "pr%fix")
+                    .build(),
             "validation fails with invalid s3 storage folder name");
     assertThat(
         ex.getMessage(),

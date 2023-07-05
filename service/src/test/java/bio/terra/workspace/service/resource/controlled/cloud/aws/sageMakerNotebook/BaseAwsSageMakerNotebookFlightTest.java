@@ -73,7 +73,10 @@ public abstract class BaseAwsSageMakerNotebookFlightTest extends BaseAwsConnecte
   protected ControlledAwsSageMakerNotebookResource makeResource(
       ApiAwsSageMakerNotebookCreationParameters creationParameters) {
     return ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder(
-            workspaceUuid, creationParameters.getInstanceName(), userRequest.getEmail())
+            workspaceUuid,
+            /* resourceName= */ creationParameters.getInstanceName(),
+            /* instanceName= */ creationParameters.getInstanceName(),
+            userRequest.getEmail())
         .build();
   }
 }
