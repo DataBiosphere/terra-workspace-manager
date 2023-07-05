@@ -74,6 +74,7 @@ import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
+import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
@@ -214,6 +215,9 @@ public class MockMvcUtils {
   public static final String CLONE_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s/clone";
   public static final String CLONE_WORKSPACE_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/clone-result/%s";
+  public static final String DELETE_WORKSPACE_V2_FORMAT = "/api/workspaces/v2/%s/delete";
+  public static final String GET_DELETE_WORKSPACE_V2_RESULT_FORMAT =
+      "/api/workspaces/v2/%s/delete-result/%s";
   public static final String UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/properties";
   public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
@@ -660,6 +664,43 @@ public class MockMvcUtils {
                     .content(objectMapper.writeValueAsString(apiPropertyKeys)),
                 userRequest))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public ApiJobResult deleteWorkspaceV2Async(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    ApiDeleteWorkspaceV2Request request =
+        new ApiDeleteWorkspaceV2Request()
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+    String content =
+        getSerializedResponseForPost(
+            userRequest,
+            DELETE_WORKSPACE_V2_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(content, ApiJobResult.class);
+  }
+
+  public ApiJobResult getDeleteWorkspaceV2Result(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
+    String serializedResponse =
+        getSerializedResponseForGetJobResult(
+            userRequest, GET_DELETE_WORKSPACE_V2_RESULT_FORMAT, workspaceId, jobId);
+    return objectMapper.readValue(serializedResponse, ApiJobResult.class);
+  }
+
+  public void deleteWorkspaceV2AndWait(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    ApiJobResult result = deleteWorkspaceV2Async(userRequest, workspaceId);
+    String jobId = result.getJobReport().getId();
+    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
+      TimeUnit.SECONDS.sleep(15);
+      result = getDeleteWorkspaceV2Result(userRequest, workspaceId, jobId);
+    }
+    if (result.getJobReport().getStatus() != StatusEnum.SUCCEEDED) {
+      logger.error("Delete workspace failed: {}", result.getErrorReport());
+    } else {
+      logger.info("Deleted workspace {}", workspaceId);
+    }
   }
 
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID workspaceId)

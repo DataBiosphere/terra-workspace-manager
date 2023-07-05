@@ -101,7 +101,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   /** Clean up workspaces from Broad dev SAM. */
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.cleanupWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    mockMvcUtils.deleteWorkspaceV2AndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspace.getId());
   }
 
   @Test
