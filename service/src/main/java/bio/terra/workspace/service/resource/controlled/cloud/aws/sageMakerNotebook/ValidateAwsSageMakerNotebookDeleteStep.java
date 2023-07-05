@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNoteb
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -47,11 +48,12 @@ public class ValidateAwsSageMakerNotebookDeleteStep implements Step {
         } // can delete
         default -> { // all other cases
           // TODO(TERRA-560) Store this as a Validation exception in Step result
-          logger.error(
-              String.format(
-                  "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
-                  resource.getResourceId(), notebookStatus));
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
+          return new StepResult(
+              StepStatus.STEP_RESULT_FAILURE_FATAL,
+              new ValidationException(
+                  String.format(
+                      "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
+                      resource.getResourceId(), notebookStatus)));
         }
       }
 
