@@ -17,15 +17,13 @@ import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.workspace.AwsCloudContextService;
-import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("aws-connected")
-public class CreateAwsWorkspaceFlightTest extends BaseAwsConnectedTest {
+public class CreateAwsWorkspaceV2FlightTest extends BaseAwsConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired MvcWorkspaceApi mvcWorkspaceApi;
   @Autowired MvcAwsApi mvcAwsApi;

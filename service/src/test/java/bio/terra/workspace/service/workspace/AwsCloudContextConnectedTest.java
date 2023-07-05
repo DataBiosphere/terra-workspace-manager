@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.workspace;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -112,8 +110,6 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
       } catch (Exception exception) {
         fail(String.format("HeadBucket request failed: %s", exception), exception);
       }
-
-      logger.info("Confirmed access to bucket {} in AWS Region {}", bucketName, region);
     }
   }
 
@@ -136,7 +132,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
     CloudContextCommonFields commonFields = createdCloudContext.getCommonFields();
     assertNotNull(commonFields);
     assertEquals("flightId", commonFields.flightId());
-    assertThat(commonFields.spendProfileId(), equalTo(WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID));
+    assertEquals(WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID, commonFields.spendProfileId());
     assertEquals(WsmResourceState.CREATING, commonFields.state());
     assertNull(commonFields.error());
   }

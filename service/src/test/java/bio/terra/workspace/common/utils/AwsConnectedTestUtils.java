@@ -11,7 +11,7 @@ import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-// Test Utils for both connected tests
+// Test Utils for connected tests
 @Component
 public class AwsConnectedTestUtils {
   @Autowired private AwsConfiguration awsConfiguration;
