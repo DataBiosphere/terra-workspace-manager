@@ -2,26 +2,24 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles("aws-connected-test")
+// Test Utils for connected tests
 @Component
-public class AwsTestUtils {
+public class AwsConnectedTestUtils {
   @Autowired private AwsConfiguration awsConfiguration;
-
   @Autowired MvcWorkspaceApi mvcWorkspaceApi;
 
   private Environment environment;
 
-  public AwsTestUtils(AwsConfiguration awsConfiguration) {
+  public AwsConnectedTestUtils(AwsConfiguration awsConfiguration) {
     this.awsConfiguration = awsConfiguration;
   }
 
@@ -38,7 +36,7 @@ public class AwsTestUtils {
             environment.getMetadata().getTenantAlias(),
             environment.getMetadata().getEnvironmentAlias()),
         new CloudContextCommonFields(
-            new SpendProfileId("spend-profile-id"),
+            WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
             WsmResourceState.READY,
             /*flightId=*/ null,
             /*error=*/ null));
