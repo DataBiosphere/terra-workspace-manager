@@ -58,10 +58,12 @@ jobs:
 
       # Run tests
       - name: Run tests
-        run: ./gradlew :azureDatabaseUtils:test :azureDatabaseUtils:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain --scan
+        run: ./gradlew --build-cache :azureDatabaseUtils:test --scan
+
+      - name: Publish docker
+        run: ./gradlew --build-cache :azureDatabaseUtils:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain --scan
 
       - name: SonarQube scan
-        if: steps.skiptest.outputs.is-bump == 'no'
         run: ./gradlew --build-cache :azureDatabaseUtils:sonarqube
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
