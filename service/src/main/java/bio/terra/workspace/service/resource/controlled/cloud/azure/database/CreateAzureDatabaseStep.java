@@ -10,6 +10,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
@@ -54,6 +55,7 @@ public class CreateAzureDatabaseStep implements Step {
   private final UUID workspaceId;
   private final KubernetesClientProvider kubernetesClientProvider;
   private final ResourceDao resourceDao;
+  private final VersionConfiguration versionConfiguration;
 
   // namespace where we create the pod to create the database
   private final String aksNamespace = "default";
@@ -67,7 +69,8 @@ public class CreateAzureDatabaseStep implements Step {
       WorkspaceService workspaceService,
       UUID workspaceId,
       KubernetesClientProvider kubernetesClientProvider,
-      ResourceDao resourceDao) {
+      ResourceDao resourceDao,
+      VersionConfiguration versionConfiguration) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -77,6 +80,7 @@ public class CreateAzureDatabaseStep implements Step {
     this.workspaceId = workspaceId;
     this.kubernetesClientProvider = kubernetesClientProvider;
     this.resourceDao = resourceDao;
+    this.versionConfiguration = versionConfiguration;
   }
 
   private String getPodName(String newDbUserName) {
@@ -182,19 +186,6 @@ public class CreateAzureDatabaseStep implements Step {
       String podName)
       throws ApiException {
     try {
-      // TODO: One day we should create our own image for this, but for now we'll use the published
-      // postgres image, install the az cli, and run a script to create the database
-      var shellCommand =
-          String.join(
-              " && ",
-              List.of(
-                  "apt update",
-                  "apt -y install curl",
-                  "curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
-                  "apt install -y postgresql-client",
-                  "az login --federated-token \"$(cat $AZURE_FEDERATED_TOKEN_FILE)\" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID --allow-no-subscriptions",
-                  "psql \"host=${DB_SERVER_NAME}.postgres.database.azure.com port=5432 dbname=postgres user=${ADMIN_DB_USER_NAME} password=$(az account get-access-token --query accessToken -otsv) sslmode=require\" --command \"CREATE DATABASE ${NEW_DB_NAME};\"",
-                  "psql \"host=${DB_SERVER_NAME}.postgres.database.azure.com port=5432 dbname=postgres user=${ADMIN_DB_USER_NAME} password=$(az account get-access-token --query accessToken -otsv) sslmode=require\" --command \"SELECT case when exists(select * FROM pg_roles where rolname='${NEW_DB_USER_NAME}') then 'exists' else pgaadauth_create_principal_with_oid('${NEW_DB_USER_NAME}', '${NEW_DB_USER_OID}', 'service', false, false) end; GRANT ALL PRIVILEGES on DATABASE ${NEW_DB_NAME} to \\\"${NEW_DB_USER_NAME}\\\";\""));
       String dbServerName =
           getResourceName(
               landingZoneApiDispatch
@@ -219,16 +210,16 @@ public class CreateAzureDatabaseStep implements Step {
                       .addContainersItem(
                           new V1Container()
                               .name("createdb")
-                              .image("ubuntu")
+                              .image(
+                                  "%s:%s"
+                                      .formatted(
+                                          azureConfig.getAzureDatabaseUtilImage(),
+                                          versionConfiguration.getGitHash()))
                               .env(
                                   List.of(
-                                      /*
-                                       * WARNING: There is a command and sql injection vulnerability here.
-                                       * These environment variables are used in the shell command above.
-                                       * newDbUserName and resource.getDatabaseName are user input,
-                                       * but they have been validated. The others are system generated.
-                                       * Be careful if you change this code.
-                                       */
+                                      new V1EnvVar()
+                                          .name("spring_profiles_active")
+                                          .value("CreateDatabase"),
                                       new V1EnvVar().name("DB_SERVER_NAME").value(dbServerName),
                                       new V1EnvVar()
                                           .name("ADMIN_DB_USER_NAME")
@@ -237,8 +228,7 @@ public class CreateAzureDatabaseStep implements Step {
                                       new V1EnvVar().name("NEW_DB_USER_OID").value(newDbUserOid),
                                       new V1EnvVar()
                                           .name("NEW_DB_NAME")
-                                          .value(resource.getDatabaseName())))
-                              .command(List.of("sh", "-c", shellCommand))));
+                                          .value(resource.getDatabaseName())))));
 
       aksApi.createNamespacedPod(aksNamespace, pod, null, null, null, null);
 

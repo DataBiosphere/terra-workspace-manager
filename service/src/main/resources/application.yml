@@ -138,6 +138,7 @@ workspace:
     azure-monitor-linux-agent-version: "1.22"
     cors-allowed-origins:
     protected-data-landing-zone-defs: ["ProtectedDataResourcesFactory"]
+    azure-database-util-image: "gcr.io/broad-dsp-gcr-public/azure-database-utils"
 
 terra.common:
   kubernetes:
