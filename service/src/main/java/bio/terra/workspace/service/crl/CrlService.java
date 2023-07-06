@@ -9,6 +9,7 @@ import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.compute.CloudComputeCow;
+import bio.terra.cloudres.google.dataproc.DataprocCow;
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
@@ -75,6 +76,7 @@ public class CrlService {
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
   private final AIPlatformNotebooksCow crlNotebooksCow;
+  private final DataprocCow crlDataprocCow;
   private final CloudResourceManagerCow crlResourceManagerCow;
   private final CloudBillingClientCow crlBillingClientCow;
   private final CloudComputeCow crlComputeCow;
@@ -90,6 +92,7 @@ public class CrlService {
       clientConfig = buildClientConfig();
       try {
         this.crlNotebooksCow = AIPlatformNotebooksCow.create(clientConfig, creds);
+        this.crlDataprocCow = DataprocCow.create(clientConfig, creds);
         this.crlResourceManagerCow = CloudResourceManagerCow.create(clientConfig, creds);
         this.crlBillingClientCow = new CloudBillingClientCow(clientConfig, creds);
         this.crlComputeCow = CloudComputeCow.create(clientConfig, creds);
@@ -102,6 +105,7 @@ public class CrlService {
     } else {
       clientConfig = null;
       crlNotebooksCow = null;
+      crlDataprocCow = null;
       crlResourceManagerCow = null;
       crlBillingClientCow = null;
       crlComputeCow = null;
@@ -114,6 +118,12 @@ public class CrlService {
   public AIPlatformNotebooksCow getAIPlatformNotebooksCow() {
     assertCrlInUse();
     return crlNotebooksCow;
+  }
+
+  /** @return CRL {@link DataprocCow} which wraps Google Dataproc API */
+  public DataprocCow getDataprocCow() {
+    assertCrlInUse();
+    return crlDataprocCow;
   }
 
   /** @return CRL {@link CloudResourceManagerCow} which wraps Google Cloud Resource Manager API */

@@ -55,6 +55,10 @@ public final class WorkspaceFlightMapKeys {
     // GCE Instance keys
     public static final String CREATE_GCE_INSTANCE_PARAMETERS = "createGceInstanceParameters";
 
+    // Dataproc Cluster keys
+    public static final String CREATE_DATAPROC_CLUSTER_PARAMETERS =
+        "createDataprocClusterParameters";
+
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";
     public static final String CLONE_DEFINITION_RESULT = "cloneDefinitionResult";

@@ -12,6 +12,7 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpDataprocClusterCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.grant.GrantService;
@@ -30,6 +31,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpPolicyBuilder;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
@@ -713,6 +715,47 @@ public class ControlledResourceService {
     jobBuilder.addParameter(
         ControlledResourceKeys.CREATE_GCE_INSTANCE_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.CLOUD_PET_SERVICE_ACCOUNT, petSaEmail);
+    String jobId = jobBuilder.submit();
+    jobService.waitForMetadataOrJob(
+        jobId,
+        () -> resourceDao.resourceExists(resource.getWorkspaceId(), resource.getResourceId()));
+
+    return jobId;
+  }
+
+  /** Starts a create controlled GCP Dataproc cluster resource job, returning the job id. */
+  public String createDataprocCluster(
+      ControlledDataprocClusterResource resource,
+      ApiGcpDataprocClusterCreationParameters creationParameters,
+      @Nullable ControlledResourceIamRole privateResourceIamRole,
+      @Nullable ApiJobControl jobControl,
+      String resultPath,
+      AuthenticatedUserRequest userRequest) {
+
+    // Special check for compute resources: READER is not a useful role
+    if (privateResourceIamRole == ControlledResourceIamRole.READER) {
+      throw new BadRequestException(
+          "A private, controlled dataproc cluster must have the writer or editor role or else it is not useful.");
+    }
+
+    JobBuilder jobBuilder =
+        commonCreationJobBuilder(
+            resource, privateResourceIamRole, jobControl, resultPath, userRequest);
+    String petSaEmail =
+        Rethrow.onInterrupted(
+            () ->
+                samService.getOrCreatePetSaEmail(
+                    resource.getProjectId(), userRequest.getRequiredToken()),
+            "enablePet");
+
+    // Add flight map keys
+    jobBuilder.addParameter(WorkspaceFlightMapKeys.GCP_PROJECT_ID, resource.getProjectId());
+    jobBuilder.addParameter(
+        ControlledResourceKeys.CREATE_DATAPROC_CLUSTER_PARAMETERS, creationParameters);
+    jobBuilder.addParameter(ControlledResourceKeys.CLOUD_PET_SERVICE_ACCOUNT, petSaEmail);
+    jobBuilder.addParameter(
+        ControlledResourceKeys.CREATE_RESOURCE_REGION, creationParameters.getRegion());
+
     String jobId = jobBuilder.submit();
     jobService.waitForMetadataOrJob(
         jobId,

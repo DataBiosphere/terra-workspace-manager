@@ -24,6 +24,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
@@ -87,6 +89,14 @@ public enum WsmResourceType {
       ControlledAiNotebookInstanceResource.class,
       ControlledAiNotebookHandler::getHandler,
       ActivityLogChangedTarget.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE),
+  CONTROLLED_GCP_DATAPROC_CLUSTER(
+      CloudPlatform.GCP,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_GCP_DATAPROC_CLUSTER",
+      ApiResourceType.DATAPROC_CLUSTER,
+      ControlledDataprocClusterResource.class,
+      ControlledDataprocClusterHandler::getHandler,
+      ActivityLogChangedTarget.CONTROLLED_GCP_DATAPROC_CLUSTER),
   REFERENCED_GCP_GCS_BUCKET(
       CloudPlatform.GCP,
       StewardshipType.REFERENCED,
