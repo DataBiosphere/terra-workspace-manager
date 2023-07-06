@@ -2,6 +2,7 @@ package bio.terra.workspace.common;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 public class BaseUnitTestMocks extends BaseTest {
   @MockBean private CrlService mockCrlService;
   @MockBean private FeatureConfiguration mockFeatureConfiguration;
+  @MockBean private FeatureService mockFeatureService;
   @MockBean private SamService mockSamService;
   @MockBean private TpsApiDispatch mockTpsApiDispatch;
 
@@ -21,6 +23,10 @@ public class BaseUnitTestMocks extends BaseTest {
 
   public FeatureConfiguration mockFeatureConfiguration() {
     return mockFeatureConfiguration;
+  }
+
+  public FeatureService mockFeatureService() {
+    return mockFeatureService;
   }
 
   public SamService mockSamService() {

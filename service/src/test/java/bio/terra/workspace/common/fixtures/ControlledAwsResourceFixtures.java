@@ -47,8 +47,14 @@ public class ControlledAwsResourceFixtures {
   public static final String TENANT_ALIAS = "tenant-saas";
   public static final String ENVIRONMENT_ALIAS = "unit-test-env";
   public static final String AWS_REGION = "us-east-1";
+  public static final String AWS_ENVIRONMENT_WSM_ROLE_ARN =
+      "arn:aws:iam::34567890012:role/WorkspaceManagerRole";
+  public static final String AWS_ENVIRONMENT_USER_ROLE_ARN =
+      "arn:aws:iam::45678900123:role/UserRole";
   public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN =
       "arn:aws:iam::01234567890:role/NotebookRole";
+  public static final String AWS_LANDING_ZONE_STORAGE_BUCKET_ARN =
+      "arn:aws:iam::56789001234:role/StorageBucket";
   public static final String AWS_LANDING_ZONE_KMS_KEY_ARN =
       "arn:aws:iam::12345678900:role/KmsKeyRole";
   public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
