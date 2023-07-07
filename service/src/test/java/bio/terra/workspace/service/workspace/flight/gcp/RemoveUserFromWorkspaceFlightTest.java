@@ -253,7 +253,6 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
                     secondaryUserPetServiceEmail)));
 
     // Cleanup
-    logger.info(">>Test thinks SamService is {}", System.identityHashCode(samService));
     workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
   }
 
