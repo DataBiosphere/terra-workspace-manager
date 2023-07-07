@@ -54,7 +54,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
 
   @After
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test

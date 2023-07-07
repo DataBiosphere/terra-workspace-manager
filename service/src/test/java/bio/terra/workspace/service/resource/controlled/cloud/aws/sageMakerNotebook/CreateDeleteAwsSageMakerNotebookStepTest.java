@@ -51,7 +51,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   }
 
   @Test
-  public void createNotebook_doTest() throws InterruptedException {
+  void createNotebook_doTest() throws InterruptedException {
     CreateAwsSageMakerNotebookStep createNotebookStep =
         new CreateAwsSageMakerNotebookStep(
             notebookResource,
@@ -84,7 +84,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   }
 
   @Test
-  public void createNotebook_undoTest() throws InterruptedException {
+  void createNotebook_undoTest() throws InterruptedException {
     CreateAwsSageMakerNotebookStep createNotebookStep =
         new CreateAwsSageMakerNotebookStep(
             notebookResource,
@@ -147,7 +147,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   }
 
   @Test
-  public void deleteNotebook_doTest() throws InterruptedException {
+  void deleteNotebook_doTest() throws InterruptedException {
     DeleteAwsSageMakerNotebookStep deleteNotebookStep =
         new DeleteAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService);
 
@@ -185,7 +185,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   }
 
   @Test
-  public void deleteNotebook_undoTest() throws InterruptedException {
+  void deleteNotebook_undoTest() throws InterruptedException {
     DeleteAwsSageMakerNotebookStep deleteNotebookStep =
         new DeleteAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService);
 
@@ -195,7 +195,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   }
 
   @Test
-  public void validateNotebookDelete_doTest() throws InterruptedException {
+  void validateNotebookDelete_doTest() throws InterruptedException {
     ValidateAwsSageMakerNotebookDeleteStep validateNotebookDeleteStep =
         new ValidateAwsSageMakerNotebookDeleteStep(notebookResource, mockAwsCloudContextService);
 
@@ -226,7 +226,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   }
 
   @Test
-  public void validateNotebookDelete_undoTest() throws InterruptedException {
+  void validateNotebookDelete_undoTest() throws InterruptedException {
     ValidateAwsSageMakerNotebookDeleteStep validateNotebookDeleteStep =
         new ValidateAwsSageMakerNotebookDeleteStep(notebookResource, mockAwsCloudContextService);
 
@@ -239,7 +239,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   // Below are white-box tests until util functions are moved to CRL
 
   @Test
-  public void createNotebook_doTestFull() throws InterruptedException {
+  void createNotebook_doTestFull() throws InterruptedException {
     CreateAwsSageMakerNotebookStep createNotebookStep =
         new CreateAwsSageMakerNotebookStep(
             notebookResource,
@@ -286,7 +286,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   }
 
   @Test
-  public void deleteNotebook_doTestFull() throws InterruptedException {
+  void deleteNotebook_doTestFull() throws InterruptedException {
     DeleteAwsSageMakerNotebookStep deleteNotebookStep =
         new DeleteAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService);
 
@@ -330,7 +330,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   }
 
   @Test
-  public void validateNotebookDelete_undoTestFull() throws InterruptedException {
+  void validateNotebookDelete_undoTestFull() throws InterruptedException {
     ValidateAwsSageMakerNotebookDeleteStep validateNotebookDeleteStep =
         new ValidateAwsSageMakerNotebookDeleteStep(notebookResource, mockAwsCloudContextService);
 

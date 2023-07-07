@@ -95,7 +95,8 @@ public class GrantService {
       logger.info("User grant allowed: {}", userEmail);
       return true;
     }
-    boolean endsWithDomain = userEmail.endsWith(configuration.getRestrictUserDomain());
+    // End with "@domain.com" to avoid matching "foo@definitely.not.domain.com"
+    boolean endsWithDomain = userEmail.endsWith("@" + configuration.getRestrictUserDomain());
     logger.info("User grant {}allowed: {}", endsWithDomain ? "" : "not ", userEmail);
     return endsWithDomain;
   }
