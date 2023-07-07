@@ -57,6 +57,7 @@ import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpDataprocClusterRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
@@ -69,6 +70,7 @@ import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpDataprocClusterResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGceInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
@@ -277,6 +279,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/ai-notebook-instances/generateName";
   public static final String GENERATE_GCP_GCE_INSTANCE_NAME_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/gce-instances/generateName";
+  public static final String GENERATE_GCP_DATAPROC_CLUSTER_NAME_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/dataproc-clusters/generateName";
   public static final String FOLDERS_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders";
   public static final String FOLDER_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders/%s";
   public static final String FOLDER_PROPERTIES_V1_PATH_FORMAT =
@@ -295,6 +299,12 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/gcp/gce-instances/%s";
   public static final String CONTROLLED_GCP_GCE_INSTANCES_V1_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/gce-instances/create-result/%s";
+  public static final String CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/dataproc-clusters";
+  public static final String CONTROLLED_GCP_DATAPROC_CLUSTER_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/dataproc-clusters/%s";
+  public static final String CONTROLLED_GCP_DATAPROC_CLUSTERS_RESULT_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/gcp/dataproc-clusters/create-result/%s";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/gcp/bqdatasets";
   public static final String CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT =
@@ -932,6 +942,71 @@ public class MockMvcUtils {
             userRequest, CONTROLLED_GCP_GCE_INSTANCES_V1_RESULT_PATH_FORMAT, workspaceId, jobId);
     return objectMapper.readValue(
         serializedResponse, ApiCreatedControlledGcpGceInstanceResult.class);
+  }
+
+  public ApiCreatedControlledGcpDataprocClusterResult createDataprocCluster(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String zone)
+      throws Exception {
+    return createDataprocClusterAndWait(userRequest, workspaceId, /*clusterId=*/ null, zone);
+  }
+
+  public ApiCreatedControlledGcpDataprocClusterResult createDataprocClusterAndWait(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String clusterId,
+      @Nullable String region)
+      throws Exception {
+    return createDataprocClusterAndExpect(
+        userRequest, workspaceId, clusterId, region, StatusEnum.SUCCEEDED);
+  }
+
+  public ApiCreatedControlledGcpDataprocClusterResult createDataprocClusterAndExpect(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String clusterId,
+      @Nullable String region,
+      StatusEnum jobStatus)
+      throws Exception {
+    ApiCreateControlledGcpDataprocClusterRequestBody request =
+        new ApiCreateControlledGcpDataprocClusterRequestBody()
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi()
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE.toApiModel())
+                    .name(TestUtils.appendRandomNumber("dataproc-cluster")))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()))
+            .dataprocCluster(
+                ControlledGcpResourceFixtures.defaultDataprocClusterCreationParameters()
+                    .region(region)
+                    .clusterId(
+                        Optional.ofNullable(clusterId)
+                            .orElse(TestUtils.appendRandomNumber("cluster-id"))));
+
+    String serializedResponse =
+        getSerializedResponseForPost(
+            userRequest,
+            CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    ApiCreatedControlledGcpDataprocClusterResult result =
+        objectMapper.readValue(
+            serializedResponse, ApiCreatedControlledGcpDataprocClusterResult.class);
+    String jobId = result.getJobReport().getId();
+    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
+      Thread.sleep(/*millis=*/ 5000);
+      result = getDataprocClusterResult(userRequest, workspaceId, jobId);
+    }
+    assertEquals(jobStatus, result.getJobReport().getStatus());
+
+    return result;
+  }
+
+  private ApiCreatedControlledGcpDataprocClusterResult getDataprocClusterResult(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
+    String serializedResponse =
+        getSerializedResponseForGetJobResult(
+            userRequest, CONTROLLED_GCP_DATAPROC_CLUSTERS_RESULT_PATH_FORMAT, workspaceId, jobId);
+    return objectMapper.readValue(
+        serializedResponse, ApiCreatedControlledGcpDataprocClusterResult.class);
   }
 
   public ApiCreatedControlledGcpBigQueryDataset createControlledBqDataset(

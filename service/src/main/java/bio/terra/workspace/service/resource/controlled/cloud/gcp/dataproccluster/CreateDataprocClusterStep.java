@@ -29,6 +29,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.model.AcceleratorConfig;
+import com.google.api.services.dataproc.model.AutoscalingConfig;
 import com.google.api.services.dataproc.model.Cluster;
 import com.google.api.services.dataproc.model.ClusterConfig;
 import com.google.api.services.dataproc.model.DiskConfig;
@@ -41,7 +42,6 @@ import com.google.api.services.dataproc.model.SoftwareConfig;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -150,12 +150,6 @@ public class CreateDataprocClusterStep implements Step {
       String cliServer,
       Cluster cluster) {
 
-    // Construct a list of components to add to the cluster. Always add jupyter web interface.
-    List<String> components = new ArrayList<>(List.of("JUPYTER"));
-    if (creationParameters.getComponents() != null) {
-      components.addAll(creationParameters.getComponents());
-    }
-
     cluster
         .setClusterName(creationParameters.getClusterId())
         .setConfig(
@@ -175,16 +169,21 @@ public class CreateDataprocClusterStep implements Step {
                             creationParameters.getPrimaryWorkerConfig(), false))
                 .setGceClusterConfig(
                     new GceClusterConfig()
-                        // TODO PF-2878: remove once new dataproc network is in place
+                        // TODO PF-2878: replace leonardo tag once new dataproc firewall rule is in
+                        // place
                         .setTags(List.of("leonardo"))
                         .setServiceAccount(serviceAccountEmail)
                         .setServiceAccountScopes(INSTANCE_SERVICE_ACCOUNT_SCOPES))
-                // Enable dataproc component gateway. See
+                .setAutoscalingConfig(
+                    new AutoscalingConfig().setPolicyUri(creationParameters.getAutoscalingPolicy()))
+                // Enable dataproc component gateway to set up reverse proxy and web interfaces. See
                 // https://cloud.google.com/dataproc/docs/concepts/accessing/dataproc-gateways
                 .setEndpointConfig(new EndpointConfig().setEnableHttpPortAccess(true))
-                .setSoftwareConfig(new SoftwareConfig().setOptionalComponents(components)));
+                .setSoftwareConfig(
+                    new SoftwareConfig()
+                        .setOptionalComponents(creationParameters.getComponents())));
 
-    // Set lifecycle config
+    // Configure cluster lifecycle
     ApiGcpDataprocClusterLifecycleConfig lifecycleConfig = creationParameters.getLifecycleConfig();
     if (lifecycleConfig != null) {
       cluster
@@ -210,7 +209,7 @@ public class CreateDataprocClusterStep implements Step {
       }
     }
 
-    // Set metadata
+    // Set first manager node vm metadata
     Map<String, String> metadata = new HashMap<>();
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
     addDefaultMetadata(metadata, workspaceUserFacingId, cliServer);

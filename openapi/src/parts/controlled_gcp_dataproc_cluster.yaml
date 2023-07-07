@@ -204,7 +204,7 @@ components:
         softwareFramework:
           type: string
           enum: ["HAIL"]
-          description: Software framework to setup the cluster with. Currently supported values are 'hail'.
+          description: Software framework to setup the cluster with. Currently supported values are ['hail'].
         configBucket:
           type: string
           description: Staging bucket controlled resource id.
