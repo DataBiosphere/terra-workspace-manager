@@ -885,6 +885,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
+    CloudContext cloudContext =
+        workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.GCP);
+    GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
+
+    String resourceRegion = getResourceLocation(workspace, body.getDataprocCluster().getRegion());
 
     // Validate existence and user write access to provided staging and temp buckets
     controlledResourceMetadataManager.validateControlledResourceAndAction(
@@ -897,12 +902,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         workspaceUuid,
         body.getDataprocCluster().getTempBucket(),
         SamControlledResourceActions.WRITE_ACTION);
-
-    CloudContext cloudContext =
-        workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.GCP);
-    GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
-
-    String resourceRegion = getResourceLocation(workspace, body.getDataprocCluster().getRegion());
 
     ControlledResourceFields commonFields =
         toCommonFields(
