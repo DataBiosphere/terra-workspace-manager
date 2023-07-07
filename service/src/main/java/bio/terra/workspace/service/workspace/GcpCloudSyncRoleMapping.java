@@ -118,7 +118,6 @@ public class GcpCloudSyncRoleMapping {
 
   private final List<String> additionalDataprocReaderPermissions =
       ImmutableList.of(
-          "dataproc.clusters.get",
           "dataproc.clusters.list",
           "dataproc.jobs.get",
           "dataproc.jobs.list",
@@ -141,15 +140,8 @@ public class GcpCloudSyncRoleMapping {
           "monitoring.metricDescriptors.list",
           "monitoring.monitoredResourceDescriptors.get",
           "monitoring.monitoredResourceDescriptors.list");
-
   private final List<String> additionalDataprocOwnerPermissions =
       ImmutableList.of(
-          "dataproc.clusters.create",
-          "dataproc.clusters.update",
-          "dataproc.clusters.delete",
-          "dataproc.clusters.use",
-          "dataproc.clusters.start",
-          "dataproc.clusters.stop",
           "dataproc.jobs.create",
           "dataproc.jobs.update",
           "dataproc.jobs.delete",
@@ -174,8 +166,6 @@ public class GcpCloudSyncRoleMapping {
           "dataproc.agents.create",
           "dataproc.agents.update",
           "dataproc.agents.delete",
-          "compute.networks.get",
-          "compute.networks.list",
           "compute.projects.get",
           "logging.logEntries.create",
           "monitoring.metricDescriptors.create",
