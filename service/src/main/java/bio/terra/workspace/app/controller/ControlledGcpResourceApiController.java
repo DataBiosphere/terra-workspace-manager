@@ -885,6 +885,19 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
+
+    // Validate existence and user write access to provided staging and temp buckets
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        workspaceUuid,
+        body.getDataprocCluster().getConfigBucket(),
+        SamControlledResourceActions.WRITE_ACTION);
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        workspaceUuid,
+        body.getDataprocCluster().getTempBucket(),
+        SamControlledResourceActions.WRITE_ACTION);
+
     CloudContext cloudContext =
         workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.GCP);
     GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);

@@ -24,7 +24,10 @@ import bio.terra.workspace.generated.model.ApiGcpDataprocClusterCreationParamete
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterInstanceGroupConfig;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterLifecycleConfig;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -58,6 +61,7 @@ import org.springframework.http.HttpStatus;
  */
 public class CreateDataprocClusterStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(CreateDataprocClusterStep.class);
+  private final ControlledResourceService controlledResourceService;
   private final ControlledDataprocClusterResource resource;
   private final String petEmail;
   private final String workspaceUserFacingId;
@@ -65,6 +69,7 @@ public class CreateDataprocClusterStep implements Step {
   private final CliConfiguration cliConfiguration;
 
   public CreateDataprocClusterStep(
+      ControlledResourceService controlledResourceService,
       ControlledDataprocClusterResource resource,
       String petEmail,
       String workspaceUserFacingId,
@@ -73,6 +78,7 @@ public class CreateDataprocClusterStep implements Step {
     this.petEmail = petEmail;
     this.resource = resource;
     this.workspaceUserFacingId = workspaceUserFacingId;
+    this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.cliConfiguration = cliConfiguration;
   }
@@ -85,9 +91,24 @@ public class CreateDataprocClusterStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
     String projectId = gcpCloudContext.getGcpProjectId();
+
     String region =
         FlightUtils.getRequired(
             flightContext.getWorkingMap(), CREATE_RESOURCE_REGION, String.class);
+
+    ApiGcpDataprocClusterCreationParameters creationParameters =
+        flightContext
+            .getInputParameters()
+            .get(CREATE_DATAPROC_CLUSTER_PARAMETERS, ApiGcpDataprocClusterCreationParameters.class);
+
+    ControlledGcsBucketResource stagingBucket =
+        controlledResourceService
+            .getControlledResource(resource.getWorkspaceId(), creationParameters.getConfigBucket())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    ControlledGcsBucketResource tempBucket =
+        controlledResourceService
+            .getControlledResource(resource.getWorkspaceId(), creationParameters.getTempBucket())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
 
     ClusterName clusterName = resource.toClusterName(region);
     Cluster cluster =
@@ -96,6 +117,9 @@ public class CreateDataprocClusterStep implements Step {
             projectId,
             petEmail,
             workspaceUserFacingId,
+            creationParameters,
+            stagingBucket.getBucketName(),
+            tempBucket.getBucketName(),
             cliConfiguration.getServerName());
 
     DataprocCow dataprocCow = crlService.getDataprocCow();
@@ -131,13 +155,19 @@ public class CreateDataprocClusterStep implements Step {
       String projectId,
       String serviceAccountEmail,
       String workspaceUserFacingId,
+      ApiGcpDataprocClusterCreationParameters creationParameters,
+      String stagingBucketName,
+      String tempBucketName,
       String cliServer) {
     Cluster cluster = new Cluster();
-    ApiGcpDataprocClusterCreationParameters creationParameters =
-        flightContext
-            .getInputParameters()
-            .get(CREATE_DATAPROC_CLUSTER_PARAMETERS, ApiGcpDataprocClusterCreationParameters.class);
-    setFields(creationParameters, serviceAccountEmail, workspaceUserFacingId, cliServer, cluster);
+    setFields(
+        creationParameters,
+        stagingBucketName,
+        tempBucketName,
+        serviceAccountEmail,
+        workspaceUserFacingId,
+        cliServer,
+        cluster);
     setNetworks(cluster, projectId, flightContext.getWorkingMap());
     return cluster;
   }
@@ -145,6 +175,8 @@ public class CreateDataprocClusterStep implements Step {
   @VisibleForTesting
   static Cluster setFields(
       ApiGcpDataprocClusterCreationParameters creationParameters,
+      String stagingBucketName,
+      String tempBucketName,
       String serviceAccountEmail,
       String workspaceUserFacingId,
       String cliServer,
@@ -154,8 +186,8 @@ public class CreateDataprocClusterStep implements Step {
         .setClusterName(creationParameters.getClusterId())
         .setConfig(
             new ClusterConfig()
-                .setConfigBucket(creationParameters.getConfigBucket())
-                .setTempBucket(creationParameters.getTempBucket())
+                .setConfigBucket(stagingBucketName)
+                .setTempBucket(tempBucketName)
                 // TODO PF-2828: Add post-startup script
                 .setMasterConfig(
                     getInstanceGroupConfig(creationParameters.getManagerNodeConfig(), false))

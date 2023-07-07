@@ -989,27 +989,27 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       String region,
-      String stagingBucket,
-      String tempBucket)
+      UUID stagingBucketId,
+      UUID tempBucketId)
       throws Exception {
     return createDataprocClusterAndWait(
-        userRequest, workspaceId, region, stagingBucket, tempBucket, /*clusterId=*/ null);
+        userRequest, workspaceId, region, stagingBucketId, tempBucketId, /*clusterId=*/ null);
   }
 
   public ApiCreatedControlledGcpDataprocClusterResult createDataprocClusterAndWait(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       String region,
-      String stagingBucket,
-      String tempBucket,
+      UUID stagingBucketId,
+      UUID tempBucketId,
       @Nullable String clusterId)
       throws Exception {
     return createDataprocClusterAndExpect(
         userRequest,
         workspaceId,
         region,
-        stagingBucket,
-        tempBucket,
+        stagingBucketId,
+        tempBucketId,
         clusterId,
         StatusEnum.SUCCEEDED);
   }
@@ -1018,8 +1018,8 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
       String region,
-      String stagingBucket,
-      String tempBucket,
+      UUID stagingBucketId,
+      UUID tempBucketId,
       @Nullable String clusterId,
       StatusEnum jobStatus)
       throws Exception {
@@ -1036,8 +1036,8 @@ public class MockMvcUtils {
                     .clusterId(
                         Optional.ofNullable(clusterId)
                             .orElse(TestUtils.appendRandomNumber("cluster-id")))
-                    .configBucket(stagingBucket)
-                    .tempBucket(tempBucket));
+                    .configBucket(stagingBucketId)
+                    .tempBucket(tempBucketId));
 
     String serializedResponse =
         getSerializedResponseForPost(

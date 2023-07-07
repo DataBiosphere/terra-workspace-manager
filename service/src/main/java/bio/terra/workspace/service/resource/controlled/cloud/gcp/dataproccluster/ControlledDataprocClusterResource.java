@@ -153,7 +153,6 @@ public class ControlledDataprocClusterResource extends ControlledResource {
     WorkspaceDao workspaceDao = flightBeanBag.getWorkspaceDao();
     String workspaceUserFacingId = workspaceDao.getWorkspace(getWorkspaceId()).getUserFacingId();
 
-    RetryRule longSyncRetryRule = RetryRules.longSync();
     RetryRule gcpRetryRule = RetryRules.cloud();
 
     flight.addStep(
@@ -169,6 +168,7 @@ public class ControlledDataprocClusterResource extends ControlledResource {
         gcpRetryRule);
     flight.addStep(
         new CreateDataprocClusterStep(
+            flightBeanBag.getControlledResourceService(),
             this,
             petSaEmail,
             workspaceUserFacingId,
@@ -181,7 +181,7 @@ public class ControlledDataprocClusterResource extends ControlledResource {
             flightBeanBag.getCrlService(),
             this,
             userRequest),
-        longSyncRetryRule);
+        RetryRules.longSync());
   }
 
   /** {@inheritDoc} */

@@ -14,6 +14,7 @@ import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.generated.model.ApiPrivateResourceState;
@@ -54,8 +55,8 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
   @Autowired JobService jobService;
 
   private UUID workspaceId;
-  private String STAGING_BUCKET;
-  private String TEMP_BUCKET;
+  private UUID STAGING_BUCKET_ID;
+  private UUID TEMP_BUCKET_ID;
 
   @BeforeAll
   public void setup() throws Exception {
@@ -68,32 +69,34 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
     // Create staging and temp controlled resource buckets
     String stagingBucketResourceName = TestUtils.appendRandomNumber("dataproc-staging-bucket");
     String stagingBucketCloudName = TestUtils.appendRandomNumber("dataproc-staging-bucket");
-    mockMvcUtils
-        .createControlledGcsBucket(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            stagingBucketResourceName,
-            stagingBucketCloudName,
-            null,
-            null,
-            null)
-        .getGcpBucket();
+    ApiGcpGcsBucketResource stagingBucketResource =
+        mockMvcUtils
+            .createControlledGcsBucket(
+                userAccessUtils.defaultUserAuthRequest(),
+                workspaceId,
+                stagingBucketResourceName,
+                stagingBucketCloudName,
+                null,
+                null,
+                null)
+            .getGcpBucket();
 
     String tempBucketResourceName = TestUtils.appendRandomNumber("dataproc-temp-bucket");
     String tempBucketCloudName = TestUtils.appendRandomNumber("dataproc-temp-bucket");
-    mockMvcUtils
-        .createControlledGcsBucket(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            tempBucketResourceName,
-            tempBucketCloudName,
-            null,
-            null,
-            null)
-        .getGcpBucket();
+    ApiGcpGcsBucketResource tempBucketResource =
+        mockMvcUtils
+            .createControlledGcsBucket(
+                userAccessUtils.defaultUserAuthRequest(),
+                workspaceId,
+                tempBucketResourceName,
+                tempBucketCloudName,
+                null,
+                null,
+                null)
+            .getGcpBucket();
 
-    STAGING_BUCKET = stagingBucketCloudName;
-    TEMP_BUCKET = tempBucketCloudName;
+    STAGING_BUCKET_ID = stagingBucketResource.getMetadata().getResourceId();
+    TEMP_BUCKET_ID = tempBucketResource.getMetadata().getResourceId();
   }
 
   /**
@@ -127,8 +130,8 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,
                 "asia-east1",
-                STAGING_BUCKET,
-                TEMP_BUCKET)
+                STAGING_BUCKET_ID,
+                TEMP_BUCKET_ID)
             .getDataprocCluster();
 
     assertDataprocCluster(
@@ -152,8 +155,8 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             "asia-east1",
-            STAGING_BUCKET,
-            TEMP_BUCKET,
+            STAGING_BUCKET_ID,
+            TEMP_BUCKET_ID,
             duplicateName)
         .getDataprocCluster();
 
@@ -163,8 +166,8 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,
                 "asia-east1",
-                STAGING_BUCKET,
-                TEMP_BUCKET,
+                STAGING_BUCKET_ID,
+                TEMP_BUCKET_ID,
                 duplicateName,
                 StatusEnum.FAILED)
             .getErrorReport();

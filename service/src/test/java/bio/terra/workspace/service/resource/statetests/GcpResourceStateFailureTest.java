@@ -146,8 +146,8 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
             .dataprocCluster(
                 ControlledGcpResourceFixtures.defaultDataprocClusterCreationParameters()
                     .clusterId(TestUtils.appendRandomNumber("cluster-id"))
-                    .configBucket("test-staging-bucket")
-                    .tempBucket("test-temp-bucket"));
+                    .configBucket(UUID.randomUUID())
+                    .tempBucket(UUID.randomUUID()));
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(clusterRequest),

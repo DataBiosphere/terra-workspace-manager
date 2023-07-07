@@ -47,7 +47,13 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
   public void setFields() {
     Cluster cluster =
         CreateDataprocClusterStep.setFields(
-            creationParameters, SERVICE_ACCOUNT, WORKSPACE_ID, SERVER_ID, new Cluster());
+            creationParameters,
+            "my-staging-bucket",
+            "my-temp-bucket",
+            SERVICE_ACCOUNT,
+            WORKSPACE_ID,
+            SERVER_ID,
+            new Cluster());
 
     Map<String, String> metadata = cluster.getConfig().getGceClusterConfig().getMetadata();
     assertThat(metadata, Matchers.aMapWithSize(3));
@@ -83,6 +89,8 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
                 creationParameters
                     // "terra-workspace-id" is a reserved metadata key.
                     .metadata(Map.of("terra-workspace-id", "fakeworkspaceid")),
+                "my-staging-bucket",
+                "my-temp-bucket",
                 SERVICE_ACCOUNT,
                 WORKSPACE_ID,
                 SERVER_ID,
@@ -94,6 +102,8 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
                 creationParameters
                     // "terra-cli-server" is a reserved metadata key.
                     .metadata(Map.of("terra-cli-server", "fakeserver")),
+                "my-staging-bucket",
+                "my-temp-bucket",
                 SERVICE_ACCOUNT,
                 WORKSPACE_ID,
                 SERVER_ID,
