@@ -63,14 +63,12 @@ jobs:
         run: ./gradlew --build-cache :azureDatabaseUtils:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain --scan
 
       - name: Run Trivy vulnerability scanner
-        if: steps.skiptest.outputs.is-bump == 'no'
         # Link to the github location of the action https://github.com/broadinstitute/dsp-appsec-trivy-action
         uses: broadinstitute/dsp-appsec-trivy-action@v1
         with:
           image: ${{ steps.image-name.outputs.name }}
 
       - name: Push GCR image
-        if: steps.skiptest.outputs.is-bump == 'no'
         run: "docker push ${{ steps.image-name.outputs.name }}"
 
       - name: SonarQube scan
