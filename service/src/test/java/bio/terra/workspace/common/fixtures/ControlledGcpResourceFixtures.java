@@ -416,7 +416,6 @@ public class ControlledGcpResourceFixtures {
     return new ApiGcpDataprocClusterCreationParameters()
         .clusterId(TestUtils.appendRandomNumber("default-cluster-id"))
         .region(DEFAULT_RESOURCE_REGION)
-        // We let dataproc auto create the staging and temp buckets by not specifying them.
         .managerNodeConfig(
             new ApiGcpDataprocClusterInstanceGroupConfig()
                 .numInstances(1)

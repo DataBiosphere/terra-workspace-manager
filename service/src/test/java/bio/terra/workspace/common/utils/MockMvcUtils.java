@@ -945,26 +945,41 @@ public class MockMvcUtils {
   }
 
   public ApiCreatedControlledGcpDataprocClusterResult createDataprocCluster(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String zone)
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      String region,
+      String stagingBucket,
+      String tempBucket)
       throws Exception {
-    return createDataprocClusterAndWait(userRequest, workspaceId, /*clusterId=*/ null, zone);
+    return createDataprocClusterAndWait(
+        userRequest, workspaceId, region, stagingBucket, tempBucket, /*clusterId=*/ null);
   }
 
   public ApiCreatedControlledGcpDataprocClusterResult createDataprocClusterAndWait(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
-      @Nullable String clusterId,
-      @Nullable String region)
+      String region,
+      String stagingBucket,
+      String tempBucket,
+      @Nullable String clusterId)
       throws Exception {
     return createDataprocClusterAndExpect(
-        userRequest, workspaceId, clusterId, region, StatusEnum.SUCCEEDED);
+        userRequest,
+        workspaceId,
+        region,
+        stagingBucket,
+        tempBucket,
+        clusterId,
+        StatusEnum.SUCCEEDED);
   }
 
   public ApiCreatedControlledGcpDataprocClusterResult createDataprocClusterAndExpect(
       AuthenticatedUserRequest userRequest,
       UUID workspaceId,
+      String region,
+      String stagingBucket,
+      String tempBucket,
       @Nullable String clusterId,
-      @Nullable String region,
       StatusEnum jobStatus)
       throws Exception {
     ApiCreateControlledGcpDataprocClusterRequestBody request =
@@ -979,7 +994,9 @@ public class MockMvcUtils {
                     .region(region)
                     .clusterId(
                         Optional.ofNullable(clusterId)
-                            .orElse(TestUtils.appendRandomNumber("cluster-id"))));
+                            .orElse(TestUtils.appendRandomNumber("cluster-id")))
+                    .configBucket(stagingBucket)
+                    .tempBucket(tempBucket));
 
     String serializedResponse =
         getSerializedResponseForPost(
