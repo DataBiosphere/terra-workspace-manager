@@ -15,7 +15,9 @@ import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.V1_VERSION;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.SPEND_PROFILE_ID;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.makeDbCloudContext;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,18 +32,20 @@ import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
 import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
+import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -80,11 +84,8 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
           .notebookRoleArn(Arn.fromString(AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN))
           .addLandingZone(landingZone.getMetadata().getRegion(), landingZone)
           .build();
-
-  @BeforeAll
-  public void init() throws Exception {
-    when(mockEnvironmentDiscovery.discoverEnvironment()).thenReturn(environment);
-  }
+  private final AwsCloudContext awsCloudContext =
+      AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, environment);
 
   @Test
   void serdesTest() {
@@ -139,8 +140,9 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   }
 
   @Test
-  void discoverEnvironmentTest() {
+  void discoverEnvironmentTest() throws Exception {
     try (MockedStatic<AwsUtils> mockAwsUtils = mockStatic(AwsUtils.class)) {
+      when(mockEnvironmentDiscovery.discoverEnvironment()).thenReturn(environment);
       mockAwsUtils
           .when(() -> AwsUtils.createEnvironmentDiscovery(any()))
           .thenReturn(null)
@@ -167,79 +169,62 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
 
   @Test
   void createCloudContextTest() {
-    try (MockedStatic<AwsUtils> mockAwsUtils = mockStatic(AwsUtils.class)) {
-      mockAwsUtils
-          .when(() -> AwsUtils.createEnvironmentDiscovery(any()))
-          .thenReturn(mockEnvironmentDiscovery);
+    AwsCloudContext createdAwsCloudContext =
+        AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, environment);
+    assertNotNull(createdAwsCloudContext);
 
-      AwsCloudContext awsCloudContext =
-          AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, environment);
-      assertNotNull(awsCloudContext);
+    AwsCloudContextFields contextFields = createdAwsCloudContext.getContextFields();
+    assertNotNull(contextFields);
+    assertEquals(metadata.getMajorVersion(), contextFields.getMajorVersion());
+    assertEquals(metadata.getOrganizationId(), contextFields.getOrganizationId());
+    assertEquals(metadata.getAccountId(), contextFields.getAccountId());
+    assertEquals(metadata.getTenantAlias(), contextFields.getTenantAlias());
+    assertEquals(metadata.getEnvironmentAlias(), contextFields.getEnvironmentAlias());
 
-      AwsCloudContextFields contextFields = awsCloudContext.getContextFields();
-      assertNotNull(contextFields);
-      assertEquals(metadata.getMajorVersion(), contextFields.getMajorVersion());
-      assertEquals(metadata.getOrganizationId(), contextFields.getOrganizationId());
-      assertEquals(metadata.getAccountId(), contextFields.getAccountId());
-      assertEquals(metadata.getTenantAlias(), contextFields.getTenantAlias());
-      assertEquals(metadata.getEnvironmentAlias(), contextFields.getEnvironmentAlias());
-
-      CloudContextCommonFields commonFields = awsCloudContext.getCommonFields();
-      assertNotNull(commonFields);
-      assertEquals(SPEND_PROFILE_ID, commonFields.spendProfileId());
-      assertEquals(WsmResourceState.CREATING, commonFields.state());
-      assertEquals("flightId", commonFields.flightId());
-      assertNull(commonFields.error());
-    }
+    CloudContextCommonFields commonFields = createdAwsCloudContext.getCommonFields();
+    assertNotNull(commonFields);
+    assertEquals(SPEND_PROFILE_ID, commonFields.spendProfileId());
+    assertEquals(WsmResourceState.CREATING, commonFields.state());
+    assertEquals("flightId", commonFields.flightId());
+    assertNull(commonFields.error());
   }
 
-  /*
-  void getLandingZoneTest() throws IOException {
-    try (MockedStatic<AwsUtils> mockAwsUtils =
-        mockStatic(AwsUtils.class)) {
-      mockAwsUtils
-          .when(() -> AwsUtils.createEnvironmentDiscovery(any()))
-          .thenReturn(mockEnvironmentDiscovery);
-   // AwsCloudContext cloudContext = awsConnectedTestUtils.getAwsCloudContext();
-
+  @Test
+  void getLandingZoneTest() {
     // success
-    Optional<LandingZone> landingZone =
-        awsCloudContextService.getLandingZone(
-            cloudContext,
-            awsCloudContextService.discoverEnvironment().getSupportedRegions().iterator().next());
-    assertTrue(landingZone.isPresent(), "landing zone expected for valid region");
+    Optional<LandingZone> fetchedLandingZone =
+        AwsCloudContextService.getLandingZone(
+            environment, awsCloudContext, landingZone.getMetadata().getRegion());
+    assertTrue(fetchedLandingZone.isPresent(), "landing zone expected for valid region");
 
     // failure - no landing zone for region
-    landingZone = awsCloudContextService.getLandingZone(cloudContext, Region.of("cloud"));
-    assertFalse(landingZone.isPresent(), "landing zone not expected for invalid region");
+    fetchedLandingZone =
+        AwsCloudContextService.getLandingZone(environment, awsCloudContext, Region.of("cloud"));
+    assertFalse(fetchedLandingZone.isPresent(), "landing zone not expected for invalid region");
+  }
 
-    CloudContextCommonFields commonFields =
-        new CloudContextCommonFields(
-            WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID, WsmResourceState.READY, "i", null);
+  @Test
+  void verifyCloudContextTest() {
+    // success
+    assertDoesNotThrow(() -> awsCloudContext.verifyCloudContext(environment));
 
     // error - bad cloud context
     assertThrows(
         InvalidCloudContextStateException.class,
-        () ->
-            awsCloudContextService.getLandingZone(
-                new AwsCloudContext(null, commonFields), Region.of("cloud")));
+        () -> (new AwsCloudContext(null, null)).verifyCloudContext(environment));
+  }
+
+  @Test
+  void verifyCloudContextFieldsTest() {
+    // success
+    assertDoesNotThrow(
+        () -> awsCloudContext.getContextFields().verifyCloudContextFields(environment));
 
     // error - cloud context mismatch
     assertThrows(
         StaleConfigurationException.class,
         () ->
-            awsCloudContextService.getLandingZone(
-                new AwsCloudContext(
-                    new AwsCloudContextFields("a", "b", "c", "d", "e"), commonFields),
-                Region.of("cloud")));
-
+            (new AwsCloudContextFields("a", "b", "c", "d", "e"))
+                .verifyCloudContextFields(environment));
   }
-
-
-  AwsCloudContextService.getLandingZone
-
-  AwsCloudContext.verifyCloudContext
-
-  AwsCloudContextFields.verifyCloudContext
-     */
 }
