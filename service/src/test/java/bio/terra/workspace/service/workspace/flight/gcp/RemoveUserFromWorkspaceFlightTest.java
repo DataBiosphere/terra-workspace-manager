@@ -77,8 +77,10 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 
 @Tag("connectedPlus")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   private static final Logger logger = LoggerFactory.getLogger(RemoveUserFromWorkspaceFlightTest.class);
 
