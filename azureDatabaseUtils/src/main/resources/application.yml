@@ -5,7 +5,7 @@ env:
   params:
     newDbUserName: ${NEW_DB_USER_NAME:newuser}
     newDbUserOid: ${NEW_DB_USER_OID:newuseroid}
-    newDbName: ${DB_NAME:newdb}
+    newDbName: ${NEW_DB_NAME:newdb}
 
 spring:
   datasource:
