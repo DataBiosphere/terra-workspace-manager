@@ -54,7 +54,7 @@ jobs:
 
       - name: Construct docker image name and tag
         id: image-name
-        run: echo name=gcr.io/broad-dsp-gcr-public/azure-database-utils:${GITHUB_SHA} >> $GITHUB_OUTPUT
+        run: echo name=us.gcr.io/broad-dsp-gcr-public/azure-database-utils:${GITHUB_SHA} >> $GITHUB_OUTPUT
 
       - name: Run tests
         run: ./gradlew --build-cache :azureDatabaseUtils:test --scan
