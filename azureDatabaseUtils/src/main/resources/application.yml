@@ -1,7 +1,7 @@
 env:
   db:
-    host: ${DB_SERVER_NAME:127.0.0.1}:5432
-    user: ${ADMIN_DB_USER_NAME:postgres}
+    host: ${DB_SERVER_NAME}.postgres.database.azure.com:5432
+    user: ${ADMIN_DB_USER_NAME}
   params:
     newDbUserName: ${NEW_DB_USER_NAME:newuser}
     newDbUserOid: ${NEW_DB_USER_OID:newuseroid}
