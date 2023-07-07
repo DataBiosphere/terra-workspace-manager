@@ -200,7 +200,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder(workspaceUuid).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
 
-    // GCP-Controlled Notebook
+    // GCP-Controlled Dataproc cluster
     var clusterResource =
         ControlledGcpResourceFixtures.makeDefaultDataprocCluster(workspaceUuid).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, clusterResource);

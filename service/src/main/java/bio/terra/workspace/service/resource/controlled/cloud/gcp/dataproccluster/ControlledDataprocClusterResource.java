@@ -34,31 +34,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 /** A {@link ControlledResource} for a Google Dataproc clusters */
 public class ControlledDataprocClusterResource extends ControlledResource {
 
   /** The Dataproc cluster metadata key used to set the terra workspace. */
   protected static final String WORKSPACE_ID_METADATA_KEY = "terra-workspace-id";
-  /**
-   * The VM instance metadata key used to point the terra CLI at the correct WSM and SAM instances
-   * given a CLI specific name.
-   */
-  protected static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
-  /**
-   * When notebook has a custom image, disable root access and requires user to log in as Jupyter.
-   * <a
-   * href="https://github.com/hashicorp/terraform-provider-google/issues/7900#issuecomment-1067097275">...</a>.
-   */
-  protected static final String NOTEBOOK_DISABLE_ROOT_METADATA_KEY = "notebook-disable-root";
 
   private static final String RESOURCE_DESCRIPTOR = "ControlledDataprocCluster";
-
-  /** Metadata keys that are reserved by terra. User cannot modify those. */
-  public static final Set<String> RESERVED_METADATA_KEYS =
-      Set.of(WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
-
   private final String clusterId;
   private final String region;
   private final String projectId;

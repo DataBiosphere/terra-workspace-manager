@@ -329,7 +329,7 @@ components:
 
     UpdateControlledGcpDataprocClusterRequestBody:
       type: object
-      description: Update an AI notebook's metadata
+      description: Update a Dataproc cluster's metadata
       properties:
         name:
           description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
