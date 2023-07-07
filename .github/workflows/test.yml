@@ -56,13 +56,23 @@ jobs:
         id: image-name
         run: echo name=gcr.io/broad-dsp-gcr-public/azure-database-utils:${{ github.event.pull_request.head.sha && github.event.pull_request.head.sha || env.GITHUB_SHA }} >> $GITHUB_OUTPUT
 
-      # Run tests
       - name: Run tests
         run: ./gradlew --build-cache :azureDatabaseUtils:test --scan
 
-      - name: Publish docker
+      - name: Build docker
         run: ./gradlew --build-cache :azureDatabaseUtils:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain --scan
 
+      - name: Run Trivy vulnerability scanner
+        if: steps.skiptest.outputs.is-bump == 'no'
+        # Link to the github location of the action https://github.com/broadinstitute/dsp-appsec-trivy-action
+        uses: broadinstitute/dsp-appsec-trivy-action@v1
+        with:
+          image: ${{ steps.image-name.outputs.name }}
+
+      - name: Push GCR image
+        if: steps.skiptest.outputs.is-bump == 'no'
+        run: "docker push ${{ steps.image-name.outputs.name }}"
+        
       - name: SonarQube scan
         run: ./gradlew --build-cache :azureDatabaseUtils:sonarqube
         env:
