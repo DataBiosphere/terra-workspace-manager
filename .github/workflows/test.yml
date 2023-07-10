@@ -91,6 +91,7 @@ jobs:
 
   test-job:
     runs-on: ubuntu-latest
+    # the azure connected tests require azureDatabaseUtils to be built and published
     needs: build-test-publish-azureDatabaseUtils
 
     # A note on our use of a matrix here:

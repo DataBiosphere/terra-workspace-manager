@@ -17,6 +17,7 @@ public class CreateDatabaseDao {
 
   public void createDatabase(String databaseName) {
     // databaseName should already be validated by the service layer
+    // CREATE DATABASE does not like bind parameters
     jdbcTemplate.update("CREATE DATABASE " + databaseName, Map.of());
   }
 
@@ -35,12 +36,17 @@ public class CreateDatabaseDao {
   }
 
   public void grantAllPrivileges(String roleName, String databaseName) {
+    // databaseName should already be validated by the service layer
+    // roleName should already be validated by the service layer
+    // GRANT does not like bind parameters
     jdbcTemplate.update(
         "GRANT ALL PRIVILEGES ON DATABASE %s TO \"%s\"".formatted(databaseName, roleName),
         Map.of());
   }
 
   public void revokeAllPublicPrivileges(String databaseName) {
+    // databaseName should already be validated by the service layer
+    // REVOKE does not like bind parameters
     jdbcTemplate.update(
         "REVOKE ALL PRIVILEGES ON DATABASE %s FROM PUBLIC".formatted(databaseName), Map.of());
   }
