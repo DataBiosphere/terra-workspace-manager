@@ -15,7 +15,6 @@ import bio.terra.stairway.StairwayHook;
 import bio.terra.workspace.common.exception.UnhandledActivityLogException;
 import bio.terra.workspace.common.exception.UnhandledDeletionFlightException;
 import bio.terra.workspace.common.logging.model.ActivityFlight;
-import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
@@ -29,7 +28,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -114,11 +112,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       switch (af.getActivityLogChangedTarget()) {
         case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid, userEmail, subjectId);
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);
-        default ->
-          throw new UnhandledDeletionFlightException(
-                String.format(
-                    "Activity log should be updated for deletion flight %s failures",
-                    flightClassName));
+        default -> throw new UnhandledDeletionFlightException(
+            String.format(
+                "Activity log should be updated for deletion flight %s failures", flightClassName));
       }
       return HookAction.CONTINUE;
     }

@@ -48,8 +48,7 @@ public enum ActivityFlight {
       ActivityLogChangedTarget.CLOUD_CONTEXT,
       /*logInFlight=*/ true),
   DELETE_CLOUD_CONTEXT_RESOURCE_FLIGHT(
-      DeleteCloudContextResourceFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE),
+      DeleteCloudContextResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
 
   // Resources
   ALL_RESOURCES_CLONE_FLIGHT(
@@ -59,8 +58,7 @@ public enum ActivityFlight {
       ActivityLogChangedTarget.RESOURCE,
       /*logInFlight=*/ true),
   CONTROLLED_RESOURCE_DELETE_FLIGHT(
-      DeleteControlledResourcesFlight.class.getName(),
-      ActivityLogChangedTarget.RESOURCE),
+      DeleteControlledResourcesFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   RESOURCE_UPDATE_FLIGHT(
       UpdateResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE,

@@ -4,13 +4,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
-import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +18,7 @@ public class DeleteMetadataStep implements Step {
 
   private final Logger logger = LoggerFactory.getLogger(DeleteMetadataStep.class);
 
-  public DeleteMetadataStep(
-      ResourceDao resourceDao,
-      UUID workspaceUuid,
-      UUID resourceId) {
+  public DeleteMetadataStep(ResourceDao resourceDao, UUID workspaceUuid, UUID resourceId) {
     this.resourceDao = resourceDao;
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
