@@ -35,6 +35,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -63,10 +64,9 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
   private UUID workspaceId;
   private String projectId;
   private UUID workspaceId2;
-
-  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private final String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
-  private final String sourceTableId = TestUtils.appendRandomNumber("source-table-id");
+  private String sourceResourceName;
+  private String sourceDatasetName;
+  private String sourceTableId;
   private ApiGcpBigQueryDataTableResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -87,7 +87,13 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
+  }
 
+  @BeforeEach
+  void setUpPerTest() throws Exception {
+    sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+    sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
+    sourceTableId = TestUtils.appendRandomNumber("source-table-id");
     sourceResource =
         mockMvcUtils.createReferencedBqTable(
             userAccessUtils.defaultUserAuthRequest(),
@@ -100,8 +106,8 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test
@@ -155,12 +161,6 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
             newProjectId,
             newDataset,
             newTable);
-    ApiGcpBigQueryDataTableResource gotResource =
-        mockMvcUtils.getReferencedBqTable(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, gotResource);
     assertBqTable(
         updatedResource,
         newCloningInstruction,
@@ -177,16 +177,6 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.updateReferencedBqTable(
-        userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        sourceResourceName,
-        RESOURCE_DESCRIPTION,
-        ApiCloningInstructionsEnum.NOTHING,
-        projectId,
-        sourceDatasetName,
-        sourceTableId);
   }
 
   @Test

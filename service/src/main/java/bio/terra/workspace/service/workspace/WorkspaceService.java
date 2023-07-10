@@ -7,9 +7,11 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoDescription;
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsUpdateMode;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.Rethrow;
@@ -17,8 +19,10 @@ import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.db.model.DbWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
@@ -54,6 +58,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -86,6 +91,7 @@ public class WorkspaceService {
   private final WorkspaceActivityLogService workspaceActivityLogService;
   private final TpsApiDispatch tpsApiDispatch;
   private final PolicyValidator policyValidator;
+  private final FeatureConfiguration features;
 
   @Autowired
   public WorkspaceService(
@@ -97,7 +103,8 @@ public class WorkspaceService {
       ResourceDao resourceDao,
       WorkspaceActivityLogService workspaceActivityLogService,
       TpsApiDispatch tpsApiDispatch,
-      PolicyValidator policyValidator) {
+      PolicyValidator policyValidator,
+      FeatureConfiguration features) {
     this.jobService = jobService;
     this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
@@ -107,6 +114,7 @@ public class WorkspaceService {
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.tpsApiDispatch = tpsApiDispatch;
     this.policyValidator = policyValidator;
+    this.features = features;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -258,19 +266,46 @@ public class WorkspaceService {
   @Traced
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
-    logger.info(
-        "validateWorkspaceAndAction - userRequest: {}\nworkspaceUuid: {}\naction: {}",
-        userRequest,
-        workspaceUuid,
-        action);
+    logWorkspaceAction(userRequest, workspaceUuid.toString(), action);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
-    Rethrow.onInterrupted(
-        () ->
-            samService.checkAuthz(
-                userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
-        "checkAuthz");
-
+    checkWorkspaceAuthz(userRequest, workspaceUuid, action);
     return workspace;
+  }
+
+  /**
+   * Like validateWorkspaceAndAction, but returns the full workspace description
+   *
+   * @param userRequest the user's authenticated request
+   * @param workspaceUuid id of the workspace in question
+   * @param action the action to authorize against the workspace
+   * @return the workspace description
+   */
+  @Traced
+  public WorkspaceDescription validateWorkspaceAndActionReturningDescription(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
+    logWorkspaceAction(userRequest, workspaceUuid.toString(), action);
+    DbWorkspaceDescription dbWorkspaceDescription =
+        workspaceDao.getWorkspaceDescription(workspaceUuid);
+    checkWorkspaceAuthz(userRequest, workspaceUuid, action);
+    return makeWorkspaceDescription(userRequest, dbWorkspaceDescription);
+  }
+
+  /**
+   * Like validateWorkspaceAndAction, but finds the workspace by user facing id.
+   *
+   * @param userRequest the user's authenticated request
+   * @param userFacingId user facing id of the workspace in question
+   * @param action the action to authorize against the workspace
+   * @return the workspace description
+   */
+  @Traced
+  public WorkspaceDescription validateWorkspaceAndActionReturningDescription(
+      AuthenticatedUserRequest userRequest, String userFacingId, String action) {
+    logWorkspaceAction(userRequest, userFacingId, action);
+    DbWorkspaceDescription dbWorkspaceDescription =
+        workspaceDao.getWorkspaceDescriptionByUserFacingId(userFacingId);
+    checkWorkspaceAuthz(userRequest, dbWorkspaceDescription.getWorkspace().workspaceId(), action);
+    return makeWorkspaceDescription(userRequest, dbWorkspaceDescription);
   }
 
   /**
@@ -286,6 +321,51 @@ public class WorkspaceService {
     return workspace;
   }
 
+  // -- private methods supporting validateWorkspaceAndAction methods --
+  private void logWorkspaceAction(
+      AuthenticatedUserRequest userRequest, String idString, String action) {
+    logger.info(
+        "validateWorkspaceAndAction - userRequest: {}\nworkspace UUID/UFID: {}\naction: {}",
+        userRequest,
+        idString,
+        action);
+  }
+
+  private void checkWorkspaceAuthz(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
+    Rethrow.onInterrupted(
+        () ->
+            samService.checkAuthz(
+                userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid.toString(), action),
+        "checkAuthz");
+  }
+
+  private WorkspaceDescription makeWorkspaceDescription(
+      AuthenticatedUserRequest userRequest, DbWorkspaceDescription dbWorkspaceDescription) {
+    TpsPaoGetResult workspacePao = null;
+    if (features.isTpsEnabled()) {
+      workspacePao =
+          Rethrow.onInterrupted(
+              () ->
+                  tpsApiDispatch.getOrCreatePao(
+                      dbWorkspaceDescription.getWorkspace().workspaceId(),
+                      TpsComponent.WSM,
+                      TpsObjectType.WORKSPACE),
+              "getOrCreatePao");
+    }
+    return new WorkspaceDescription(
+        dbWorkspaceDescription.getWorkspace(),
+        getHighestRole(dbWorkspaceDescription.getWorkspace().workspaceId(), userRequest),
+        /* missingAuthDomainGroups= */ null,
+        dbWorkspaceDescription.getLastUpdatedByEmail(),
+        dbWorkspaceDescription.getLastUpdatedByDate(),
+        dbWorkspaceDescription.getAwsCloudContext(),
+        dbWorkspaceDescription.getAzureCloudContext(),
+        dbWorkspaceDescription.getGcpCloudContext(),
+        workspacePao);
+  }
+
+  @Traced
   public void validateWorkspaceState(UUID workspaceUuid) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
     validateWorkspaceState(workspace);
@@ -412,16 +492,54 @@ public class WorkspaceService {
   @Traced
   public List<WorkspaceDescription> getWorkspaceDescriptions(
       AuthenticatedUserRequest userRequest, int offset, int limit, WsmIamRole minimumHighestRole) {
-    // In general, highest SAM role should be fetched in controller. Fetch here to save a SAM call.
-    Map<UUID, WorkspaceDescription> samWorkspacesResponse =
+
+    // From Sam, retrieve the workspace id, highest role, and missing auth domain groups for all
+    // workspaces the user has access to.
+    Map<UUID, AccessibleWorkspace> accessibleWorkspaces =
         Rethrow.onInterrupted(
             () -> samService.listWorkspaceIdsAndHighestRoles(userRequest, minimumHighestRole),
             "listWorkspaceIds");
 
-    return workspaceDao
-        .getWorkspacesMatchingList(samWorkspacesResponse.keySet(), offset, limit)
-        .stream()
-        .map(w -> samWorkspacesResponse.get(w.getWorkspaceId()))
+    // From DAO, retrieve the workspace metadata
+    Map<UUID, DbWorkspaceDescription> dbWorkspaceDescriptions =
+        workspaceDao.getWorkspaceDescriptionMapFromIdList(
+            accessibleWorkspaces.keySet(), offset, limit);
+
+    // TODO: PF-2710(part 2): make a batch getOrCreatePao in TPS and use it here
+    Map<UUID, TpsPaoGetResult> paoMap = new HashMap<>();
+    if (features.isTpsEnabled()) {
+      for (DbWorkspaceDescription dbWorkspaceDescription : dbWorkspaceDescriptions.values()) {
+        TpsPaoGetResult workspacePao =
+            Rethrow.onInterrupted(
+                () ->
+                    tpsApiDispatch.getOrCreatePao(
+                        dbWorkspaceDescription.getWorkspace().workspaceId(),
+                        TpsComponent.WSM,
+                        TpsObjectType.WORKSPACE),
+                "getOrCreatePao");
+        paoMap.put(dbWorkspaceDescription.getWorkspace().workspaceId(), workspacePao);
+      }
+    }
+
+    // Join the DAO workspace descriptions with the Sam info to generate a list of
+    // workspace descriptions
+    return dbWorkspaceDescriptions.values().stream()
+        .map(
+            w -> {
+              AccessibleWorkspace accessibleWorkspace =
+                  accessibleWorkspaces.get(w.getWorkspace().getWorkspaceId());
+              TpsPaoGetResult pao = paoMap.get(w.getWorkspace().getWorkspaceId());
+              return new WorkspaceDescription(
+                  w.getWorkspace(),
+                  accessibleWorkspace.highestRole(),
+                  accessibleWorkspace.missingAuthDomainGroups(),
+                  w.getLastUpdatedByEmail(),
+                  w.getLastUpdatedByDate(),
+                  w.getAwsCloudContext(),
+                  w.getAzureCloudContext(),
+                  w.getGcpCloudContext(),
+                  pao);
+            })
         .toList();
   }
 
@@ -429,31 +547,6 @@ public class WorkspaceService {
   @Traced
   public Workspace getWorkspace(UUID uuid) {
     return workspaceDao.getWorkspace(uuid);
-  }
-
-  /** Retrieves an existing workspace by userFacingId */
-  @Traced
-  public Workspace getWorkspaceByUserFacingId(
-      String userFacingId,
-      AuthenticatedUserRequest userRequest,
-      WsmIamRole minimumHighestRoleFromRequest) {
-    logger.info(
-        "getWorkspaceByUserFacingId - userRequest: {}\nuserFacingId: {}",
-        userRequest,
-        userFacingId);
-    Workspace workspace = workspaceDao.getWorkspaceByUserFacingId(userFacingId);
-    // This is one exception where we need to do an authz check inside a service instead of a
-    // controller. This is because checks with Sam require the workspace ID, but until we read from
-    // WSM's database we only have the user-facing ID.
-    Rethrow.onInterrupted(
-        () ->
-            samService.checkAuthz(
-                userRequest,
-                SamConstants.SamResource.WORKSPACE,
-                workspace.getWorkspaceId().toString(),
-                minimumHighestRoleFromRequest.toSamAction()),
-        "checkAuthz");
-    return workspace;
   }
 
   @Traced
@@ -478,9 +571,10 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param name name to change - may be null
    * @param description description to change - may be null
+   * @return workspace description
    */
   @Traced
-  public Workspace updateWorkspace(
+  public WorkspaceDescription updateWorkspace(
       UUID workspaceUuid,
       @Nullable String userFacingId,
       @Nullable String name,
@@ -494,7 +588,9 @@ public class WorkspaceService {
           workspaceUuid.toString(),
           ActivityLogChangedTarget.WORKSPACE);
     }
-    return workspaceDao.getWorkspace(workspaceUuid);
+    DbWorkspaceDescription dbWorkspaceDescription =
+        workspaceDao.getWorkspaceDescription(workspaceUuid);
+    return makeWorkspaceDescription(userRequest, dbWorkspaceDescription);
   }
 
   /**
@@ -748,14 +844,12 @@ public class WorkspaceService {
 
     Rethrow.onInterrupted(
         () ->
-            tpsApiDispatch.createPaoIfNotExist(
+            tpsApiDispatch.getOrCreatePao(
                 sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType()),
-        "createPaoIfNotExist");
+        "getOrCreatePao");
     Rethrow.onInterrupted(
-        () ->
-            tpsApiDispatch.createPaoIfNotExist(
-                workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
-        "createPaoIfNotExist");
+        () -> tpsApiDispatch.getOrCreatePao(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+        "getOrCreatePao");
 
     TpsPaoUpdateResult dryRun =
         Rethrow.onInterrupted(

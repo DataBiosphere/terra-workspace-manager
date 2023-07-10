@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.fixtures;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static bio.terra.workspace.connected.AzureConnectedTestUtils.getAzureName;
 
 import bio.terra.workspace.common.utils.AzureUtils;

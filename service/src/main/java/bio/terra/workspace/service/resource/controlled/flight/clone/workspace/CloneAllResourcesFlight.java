@@ -89,6 +89,7 @@ public class CloneAllResourcesFlight extends Flight {
                 RetryRules.cloudLongRunning());
           }
             // CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE: not supported
+            // CONTROLLED_GCP_GCE_INSTANCE: not supported
 
             // Azure
           case CONTROLLED_AZURE_STORAGE_CONTAINER -> {

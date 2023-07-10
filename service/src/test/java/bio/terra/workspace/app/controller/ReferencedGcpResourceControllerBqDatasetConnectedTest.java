@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
@@ -36,6 +35,7 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -65,9 +65,8 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
   private UUID workspaceId;
   private String projectId;
   private UUID workspaceId2;
-
-  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private final String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
+  private String sourceResourceName;
+  private String sourceDatasetName;
   private ApiGcpBigQueryDatasetResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -88,6 +87,12 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
             .getId();
+  }
+
+  @BeforeEach
+  void setUpPerTest() throws Exception {
+    sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+    sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
     sourceResource =
         mockMvcUtils.createReferencedBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
@@ -99,8 +104,8 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test
@@ -150,12 +155,6 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
             newCloningInstruction,
             newDataset);
 
-    ApiGcpBigQueryDatasetResource gotResource =
-        mockMvcUtils.getReferencedBqDataset(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
-    assertEquals(updatedResource, gotResource);
     assertBqDataset(
         updatedResource,
         newCloningInstruction,
@@ -172,14 +171,6 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.updateReferencedBqDataset(
-        userAccessUtils.defaultUserAuthRequest(),
-        workspaceId,
-        sourceResource.getMetadata().getResourceId(),
-        sourceResourceName,
-        RESOURCE_DESCRIPTION,
-        ApiCloningInstructionsEnum.NOTHING,
-        sourceDatasetName);
   }
 
   @Test

@@ -634,6 +634,10 @@ We currently have these workflows:
 
 # Connected tests
 ./gradlew :service:connectedTest
+
+# ConnectedPlus tests
+./gradlew :service:connectedPlusTest
+
 ```
 
 For integration tests, see [Integration README](integration/README.md).
@@ -679,6 +683,11 @@ These tests let us act as if we're making HTTP calls against a local server
 and validate the full request lifecycle through all
 the [layers of WSM](#layering), whereas the previous style of
 service-only tests did not cover code in the controller layer.
+
+Some connected tests are tagged as `connectedPlus` tests primarily to control
+the subset of tests required to be run for pull requests. Typically,
+connectedTests are run as part of PR checks and connectedPlus tests run longer
+and executed as part of nightly sanity tests.
 
 ### Integration Tests
 Integration testing is done using

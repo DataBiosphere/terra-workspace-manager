@@ -1,9 +1,12 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
+import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -35,26 +38,34 @@ public class CreateAwsS3StorageFolderStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    SamUser samUser = samService.getSamUser(userRequest);
     AwsCloudContext cloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(resource.getWorkspaceId());
+
+    Collection<Tag> tags = new HashSet<>();
+    AwsUtils.appendUserTags(tags, samUser);
+    AwsUtils.appendResourceTags(tags, cloudContext, resource);
 
     AwsCredentialsProvider credentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    SamUser samUser = samService.getSamUser(userRequest);
-    Collection<Tag> tags = new HashSet<>();
-    AwsUtils.appendUserTags(tags, samUser);
-    AwsUtils.appendResourceTags(tags, cloudContext, resource);
+    try {
+      AwsUtils.createStorageFolder(credentialsProvider, resource, tags);
+    } catch (ApiException | UnauthorizedException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    }
 
-    AwsUtils.createStorageFolder(credentialsProvider, resource, tags);
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(
-        awsCloudContextService, resource);
+        AwsUtils.createWsmCredentialProvider(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment()),
+        resource);
   }
 }

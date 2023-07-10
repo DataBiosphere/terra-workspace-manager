@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolde
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -28,10 +29,28 @@ public class DeleteAwsS3StorageFolderStep implements Step {
     this.awsCloudContextService = awsCloudContextService;
   }
 
+  @VisibleForTesting
+  static StepResult executeDeleteAwsS3StorageFolder(
+      AwsCredentialsProvider credentialsProvider, ControlledAwsS3StorageFolderResource resource) {
+    try {
+      AwsUtils.deleteStorageFolder(credentialsProvider, resource);
+    } catch (ApiException | UnauthorizedException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    } catch (NotFoundException e) {
+      logger.debug("No storage folder {} to delete.", resource.getName());
+    }
+
+    return StepResult.getStepResultSuccess();
+  }
+
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    return executeDeleteAwsS3StorageFolder(awsCloudContextService, resource);
+    return executeDeleteAwsS3StorageFolder(
+        AwsUtils.createWsmCredentialProvider(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment()),
+        resource);
   }
 
   @Override
@@ -42,25 +61,5 @@ public class DeleteAwsS3StorageFolderStep implements Step {
             String.format(
                 "Cannot undo delete of AWS S3 Storage Folder resource %s in workspace %s.",
                 resource.getResourceId(), resource.getWorkspaceId())));
-  }
-
-  @VisibleForTesting
-  static StepResult executeDeleteAwsS3StorageFolder(
-      AwsCloudContextService awsCloudContextService,
-      ControlledAwsS3StorageFolderResource resource) {
-    AwsCredentialsProvider credentialsProvider =
-        AwsUtils.createWsmCredentialProvider(
-            awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
-
-    try {
-      AwsUtils.deleteStorageFolder(credentialsProvider, resource);
-    } catch (ApiException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-    } catch (NotFoundException e) {
-      logger.debug("No storage folder {} to delete.", resource.getName());
-    }
-
-    return StepResult.getStepResultSuccess();
   }
 }

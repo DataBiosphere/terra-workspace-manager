@@ -1,5 +1,10 @@
 package bio.terra.workspace.common.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -28,5 +33,16 @@ public class TestUtils {
         .toLowerCase(Locale.ROOT)
         .replace("-", "")
         .substring(0, length <= maxLength ? length - 1 : maxLength - 1);
+  }
+
+  public static void assertStepResultFatal(StepResult result, Class<?> exceptionClass) {
+    assertStepResultFatal(result, exceptionClass, null);
+  }
+
+  public static void assertStepResultFatal(
+      StepResult result, Class<?> exceptionClass, String message) {
+    assertTrue(result.getException().isPresent(), message);
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus(), message);
+    assertEquals(exceptionClass, result.getException().get().getClass(), message);
   }
 }

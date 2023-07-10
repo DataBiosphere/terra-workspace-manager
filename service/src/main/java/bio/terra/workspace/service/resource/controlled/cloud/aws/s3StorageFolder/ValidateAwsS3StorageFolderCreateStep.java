@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
+import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ConflictException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -29,14 +31,19 @@ public class ValidateAwsS3StorageFolderCreateStep implements Step {
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
-    if (AwsUtils.checkFolderExists(credentialsProvider, resource)) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new ConflictException(
-              String.format(
-                  "Storage folder %s/ already exists in bucket %s.",
-                  resource.getPrefix(), resource.getBucketName())));
+    try {
+      if (AwsUtils.checkFolderExists(credentialsProvider, resource)) {
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new ConflictException(
+                String.format(
+                    "Storage folder %s/ already exists in bucket %s.",
+                    resource.getPrefix(), resource.getBucketName())));
+      }
+    } catch (ApiException | UnauthorizedException e) {
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
+
     return StepResult.getStepResultSuccess();
   }
 

@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
@@ -56,75 +58,65 @@ public class CreateAwsSageMakerNotebookStep implements Step {
     FlightMap inputParameters = flightContext.getInputParameters();
     FlightUtils.validateRequiredEntries(
         inputParameters,
-        ControlledResourceKeys.CREATE_NOTEBOOK_PARAMETERS,
         ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN,
         ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
         ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
 
+    SamUser samUser = samService.getSamUser(userRequest);
     AwsCloudContext cloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(resource.getWorkspaceId());
 
-    AwsCredentialsProvider credentialsProvider =
-        AwsUtils.createWsmCredentialProvider(
-            awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
-
-    SamUser samUser = samService.getSamUser(userRequest);
     Collection<Tag> tags = new HashSet<>();
     AwsUtils.appendUserTags(tags, samUser);
     AwsUtils.appendResourceTags(tags, cloudContext, resource);
     tags.add(Tag.builder().key("CliServerName").value(cliConfiguration.getServerName()).build());
 
-    AwsUtils.createSageMakerNotebook(
-        credentialsProvider,
-        resource,
-        Arn.fromString(
-            inputParameters.get(
-                ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN, String.class)),
-        Arn.fromString(
-            inputParameters.get(ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN, String.class)),
-        Arn.fromString(
-            inputParameters.get(
-                ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN,
-                String.class)),
-        tags);
-    AwsUtils.waitForSageMakerNotebookStatus(
-        credentialsProvider, resource, NotebookInstanceStatus.IN_SERVICE);
-
-    return StepResult.getStepResultSuccess();
-  }
-
-  @Override
-  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     AwsCredentialsProvider credentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
             awsCloudContextService.discoverEnvironment());
 
     try {
-      NotebookInstanceStatus notebookStatus =
-          AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
-
-      switch (notebookStatus) {
-        case IN_SERVICE -> {
-          AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
-          AwsUtils.waitForSageMakerNotebookStatus(
-              credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
-        }
-        case STOPPING -> AwsUtils.waitForSageMakerNotebookStatus(
-            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
-        case PENDING, UPDATING, UNKNOWN_TO_SDK_VERSION -> throw new ApiException(
-            String.format(
-                "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
-                resource.getResourceId(), notebookStatus));
-      }
-
-      AwsUtils.deleteSageMakerNotebook(credentialsProvider, resource);
+      AwsUtils.createSageMakerNotebook(
+          credentialsProvider,
+          resource,
+          Arn.fromString(
+              inputParameters.get(
+                  ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN, String.class)),
+          Arn.fromString(
+              inputParameters.get(
+                  ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN, String.class)),
+          Arn.fromString(
+              inputParameters.get(
+                  ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN,
+                  String.class)),
+          tags);
       AwsUtils.waitForSageMakerNotebookStatus(
-          credentialsProvider, resource, NotebookInstanceStatus.DELETING);
+          credentialsProvider, resource, NotebookInstanceStatus.IN_SERVICE);
 
-    } catch (ApiException e) {
+    } catch (ApiException | NotFoundException | UnauthorizedException | BadRequestException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    }
+
+    return StepResult.getStepResultSuccess();
+  }
+
+  @Override
+  public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    try {
+      AwsCredentialsProvider credentialsProvider =
+          AwsUtils.createWsmCredentialProvider(
+              awsCloudContextService.getRequiredAuthentication(),
+              awsCloudContextService.discoverEnvironment());
+
+      StepResult result =
+          StopAwsSageMakerNotebookStep.executeStopAwsSageMakerNotebook(
+              credentialsProvider, resource);
+
+      return result.isSuccess()
+          ? DeleteAwsSageMakerNotebookStep.executeDeleteAwsSageMakerNotebook(
+              credentialsProvider, resource)
+          : result;
 
     } catch (NotFoundException e) {
       logger.debug("No notebook instance {} to delete.", resource.getName());

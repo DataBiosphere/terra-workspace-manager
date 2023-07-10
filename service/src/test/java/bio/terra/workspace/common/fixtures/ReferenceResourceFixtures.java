@@ -1,8 +1,9 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
 
 import bio.terra.workspace.common.utils.TestUtils;
@@ -16,11 +17,9 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.Refer
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
-import java.util.Map;
 import java.util.UUID;
 
 public class ReferenceResourceFixtures {
-  private static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
 
   public static WsmResourceFields.Builder<?> makeDefaultWsmResourceFieldBuilder(UUID workspaceId) {
     return WsmResourceFields.builder()

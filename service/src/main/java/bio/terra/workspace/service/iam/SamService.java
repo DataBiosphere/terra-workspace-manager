@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.iam;
 
 import bio.terra.cloudres.google.iam.ServiceAccountName;
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.iam.BearerToken;
@@ -13,15 +14,13 @@ import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.common.utils.Rethrow;
-import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -82,12 +81,10 @@ public class SamService {
   private final SamConfiguration samConfig;
   private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
-  private final WorkspaceDao workspaceDao;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(
-      SamConfiguration samConfig, SamUserFactory samUserFactory, WorkspaceDao workspaceDao) {
+  public SamService(SamConfiguration samConfig, SamUserFactory samUserFactory) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.wsmServiceAccountInitialized = false;
@@ -97,7 +94,6 @@ public class SamService {
             .newBuilder()
             .addInterceptor(new OkHttpClientTracingInterceptor(Tracing.getTracer()))
             .build();
-    this.workspaceDao = workspaceDao;
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -348,26 +344,22 @@ public class SamService {
    * <p>Additionally, Rawls may create additional roles that WSM does not know about. Those roles
    * will be ignored here.
    *
-   * @return map from workspace ID to highest SAM role
+   * @return map from workspace ID to AccessibleWorkspace record
    */
   @Traced
-  public Map<UUID, WorkspaceDescription> listWorkspaceIdsAndHighestRoles(
+  public Map<UUID, AccessibleWorkspace> listWorkspaceIdsAndHighestRoles(
       AuthenticatedUserRequest userRequest, WsmIamRole minimumHighestRoleFromRequest)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    Map<UUID, WorkspaceDescription> result = new HashMap<>();
+    Map<UUID, AccessibleWorkspace> result = new HashMap<>();
     try {
       List<UserResourcesResponse> userResourcesResponses =
           SamRetry.retry(
               () -> resourceApi.listResourcesAndPoliciesV2(SamConstants.SamResource.WORKSPACE));
+
       for (var userResourcesResponse : userResourcesResponses) {
         try {
-
           UUID workspaceId = UUID.fromString(userResourcesResponse.getResourceId());
-          Optional<Workspace> workspaceOptional = workspaceDao.getWorkspaceIfExists(workspaceId);
-          if (workspaceOptional.isEmpty()) {
-            continue;
-          }
           List<WsmIamRole> roles =
               userResourcesResponse.getDirect().getRoles().stream()
                   .map(WsmIamRole::fromSam)
@@ -382,8 +374,8 @@ public class SamService {
                     if (minimumHighestRoleFromRequest.roleAtLeastAsHighAs(highestRole)) {
                       result.put(
                           workspaceId,
-                          new WorkspaceDescription(
-                              workspaceOptional.get(),
+                          new AccessibleWorkspace(
+                              workspaceId,
                               highestRole,
                               ImmutableList.copyOf(
                                   userResourcesResponse.getMissingAuthDomainGroups())));
@@ -393,7 +385,6 @@ public class SamService {
           // WSM always uses UUIDs for workspace IDs, but this is not enforced in Sam and there are
           // old workspaces that don't use UUIDs. Any workspace with a non-UUID workspace ID is
           // ignored here.
-          continue;
         }
       }
     } catch (ApiException apiException) {
@@ -423,10 +414,13 @@ public class SamService {
       }
 
       // Diagnostic: if the error was "Cannot delete a resource with children" then fetch and
-      // dump the remaining children.
+      // dump the remaining children. Make the Sam exception first, so we get the error message
+      // text from inside the Sam response.
+      ErrorReportException samException =
+          SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
       if (apiException.getCode() == HttpStatus.BAD_REQUEST.value()
           && StringUtils.contains(
-              apiException.getMessage(), "Cannot delete a resource with children")) {
+              samException.getMessage(), "Cannot delete a resource with children")) {
         try {
           List<FullyQualifiedResourceId> children =
               resourceApi.listResourceChildren(SamConstants.SamResource.WORKSPACE, uuid.toString());
@@ -443,7 +437,7 @@ public class SamService {
           logger.error("Failed to retrieve the list of workspace children", innerApiException);
         }
       }
-      throw SamExceptionFactory.create("Error deleting a workspace in Sam", apiException);
+      throw samException;
     }
   }
 
@@ -1005,13 +999,19 @@ public class SamService {
   public void deleteControlledResource(ControlledResource resource, String token)
       throws InterruptedException {
 
+    // TODO: PF-2884 - remove this ridiculous level of logging
+    logger.info(">>Deleting controlled resource {}", resource.getResourceId());
     ResourcesApi resourceApi = samResourcesApi(token);
+    logger.info(">>Deleting controlled resource {} - got api", resource.getResourceId());
     try {
+      logger.info(">>Deleting controlled resource {} - launch retry", resource.getResourceId());
       SamRetry.retry(
-          () ->
-              resourceApi.deleteResourceV2(
-                  resource.getCategory().getSamResourceName(),
-                  resource.getResourceId().toString()));
+          () -> {
+            logger.info(
+                ">>Deleting controlled resource {} - call Sam API", resource.getResourceId());
+            resourceApi.deleteResourceV2(
+                resource.getCategory().getSamResourceName(), resource.getResourceId().toString());
+          });
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
       // Do nothing if the resource to delete is not found, this may not be the first time delete is
@@ -1025,6 +1025,8 @@ public class SamService {
         return;
       }
       throw SamExceptionFactory.create("Error deleting controlled resource in Sam", apiException);
+    } catch (Exception e) {
+      logger.error("Caught unexpected exception deleting controlled resource", e);
     }
   }
 

@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNoteb
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -54,7 +55,7 @@ public class ValidateAwsSageMakerNotebookDeleteStep implements Step {
         }
       }
 
-    } catch (ApiException e) {
+    } catch (ApiException | UnauthorizedException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
 
     } catch (NotFoundException e) {

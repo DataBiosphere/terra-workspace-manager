@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.referenced;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -133,6 +133,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             .isBefore(lastUpdateDetailsAfterResourceUpdate.get().changeDate()));
     assertEquals(
         new ActivityLogChangeDetails(
+            workspaceUuid,
             lastUpdateDetailsAfterResourceUpdate.get().changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -219,6 +220,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             .isBefore(lastUpdateDetailsAfterResourceUpdate.get().changeDate()));
     assertEquals(
         new ActivityLogChangeDetails(
+            workspaceUuid,
             lastUpdateDetailsAfterResourceUpdate.get().changeDate(),
             USER_REQUEST.getEmail(),
             USER_REQUEST.getSubjectId(),
@@ -351,6 +353,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterCreate.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
@@ -391,6 +394,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterDelete.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
@@ -479,6 +483,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterCreate.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
@@ -520,6 +525,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterDelete.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
@@ -688,6 +694,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterCreate.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
@@ -730,6 +737,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterDelete.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
@@ -764,6 +772,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterCreate.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
@@ -803,6 +812,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterDelete.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
@@ -981,6 +991,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterCreate.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterCreate.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
@@ -1022,6 +1033,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
               .isBefore(lastUpdateDetailsAfterDelete.get().changeDate()));
       assertEquals(
           new ActivityLogChangeDetails(
+              workspaceUuid,
               lastUpdateDetailsAfterDelete.get().changeDate(),
               USER_REQUEST.getEmail(),
               USER_REQUEST.getSubjectId(),
