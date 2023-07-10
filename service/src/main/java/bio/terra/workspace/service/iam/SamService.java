@@ -1002,8 +1002,10 @@ public class SamService {
     ResourcesApi resourceApi = samResourcesApi(token);
     try {
       SamRetry.retry(
-          () -> resourceApi.deleteResourceV2(
-                resource.getCategory().getSamResourceName(), resource.getResourceId().toString()));
+          () ->
+              resourceApi.deleteResourceV2(
+                  resource.getCategory().getSamResourceName(),
+                  resource.getResourceId().toString()));
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
       // Do nothing if the resource to delete is not found, this may not be the first time delete is
