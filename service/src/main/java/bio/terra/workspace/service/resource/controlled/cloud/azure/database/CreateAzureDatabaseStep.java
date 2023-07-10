@@ -210,11 +210,7 @@ public class CreateAzureDatabaseStep implements Step {
                       .addContainersItem(
                           new V1Container()
                               .name("createdb")
-                              .image(
-                                  "%s:%s"
-                                      .formatted(
-                                          azureConfig.getAzureDatabaseUtilImage(),
-                                          versionConfiguration.getGitHash()))
+                              .image(azureConfig.getAzureDatabaseUtilImage())
                               .env(
                                   List.of(
                                       new V1EnvVar()
