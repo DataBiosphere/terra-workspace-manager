@@ -76,9 +76,9 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
                 workspaceId,
                 stagingBucketResourceName,
                 stagingBucketCloudName,
-                null,
-                null,
-                null)
+                /*location*/ null,
+                /*storageClass*/ null,
+                /*lifecycle*/ null)
             .getGcpBucket();
 
     String tempBucketResourceName = TestUtils.appendRandomNumber("dataproc-temp-bucket");
@@ -90,9 +90,9 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
                 workspaceId,
                 tempBucketResourceName,
                 tempBucketCloudName,
-                null,
-                null,
-                null)
+                /*location*/ null,
+                /*storageClass*/ null,
+                /*lifecycle*/ null)
             .getGcpBucket();
 
     STAGING_BUCKET_ID = stagingBucketResource.getMetadata().getResourceId();
@@ -111,7 +111,7 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test

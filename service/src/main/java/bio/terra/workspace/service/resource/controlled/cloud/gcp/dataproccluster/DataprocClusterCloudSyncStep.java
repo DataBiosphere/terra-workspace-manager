@@ -51,9 +51,10 @@ public class DataprocClusterCloudSyncStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap workingMap = flightContext.getWorkingMap();
-    FlightUtils.validateRequiredEntries(workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT);
     GcpCloudContext cloudContext =
-        workingMap.get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+        FlightUtils.getRequired(
+            workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+
     ApiGcpDataprocClusterCreationParameters creationParameters =
         flightContext
             .getInputParameters()

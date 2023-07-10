@@ -278,16 +278,10 @@ public class RevokeStep implements Step {
       // Remove role-member
       for (com.google.api.services.notebooks.v1.model.Binding binding : bindings) {
         if (binding.getRole().equals(grantData.role())) {
-          List<String> currentMembers = binding.getMembers();
-          List<String> members = new ArrayList<>();
-          for (String member : currentMembers) {
-            if (StringUtils.equals(member, grantData.petSaMember())
-                || StringUtils.equals(member, grantData.userMember())) {
-              continue;
-            }
-            members.add(member);
-          }
-
+          List<String> members = binding.getMembers();
+          members.removeIf(
+              member ->
+                  member.equals(grantData.petSaMember()) || member.equals(grantData.userMember()));
           binding.setMembers(members);
         }
       }
@@ -325,15 +319,10 @@ public class RevokeStep implements Step {
       // Remove role-member
       for (com.google.api.services.compute.model.Binding binding : bindings) {
         if (binding.getRole().equals(grantData.role())) {
-          List<String> currentMembers = binding.getMembers();
-          List<String> members = new ArrayList<>();
-          for (String member : currentMembers) {
-            if (StringUtils.equals(member, grantData.petSaMember())
-                || StringUtils.equals(member, grantData.userMember())) {
-              continue;
-            }
-            members.add(member);
-          }
+          List<String> members = binding.getMembers();
+          members.removeIf(
+              member ->
+                  member.equals(grantData.petSaMember()) || member.equals(grantData.userMember()));
           binding.setMembers(members);
         }
       }
@@ -366,15 +355,10 @@ public class RevokeStep implements Step {
       // Remove role-member
       for (com.google.api.services.dataproc.model.Binding binding : bindings) {
         if (binding.getRole().equals(grantData.role())) {
-          List<String> currentMembers = binding.getMembers();
-          List<String> members = new ArrayList<>();
-          for (String member : currentMembers) {
-            if (StringUtils.equals(member, grantData.petSaMember())
-                || StringUtils.equals(member, grantData.userMember())) {
-              continue;
-            }
-            members.add(member);
-          }
+          List<String> members = binding.getMembers();
+          members.removeIf(
+              member ->
+                  member.equals(grantData.petSaMember()) || member.equals(grantData.userMember()));
           binding.setMembers(members);
         }
       }

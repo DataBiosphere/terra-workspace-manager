@@ -728,12 +728,12 @@ public class ControlledResourceService {
       ControlledDataprocClusterResource resource,
       ApiGcpDataprocClusterCreationParameters creationParameters,
       @Nullable ControlledResourceIamRole privateResourceIamRole,
-      @Nullable ApiJobControl jobControl,
+      ApiJobControl jobControl,
       String resultPath,
       AuthenticatedUserRequest userRequest) {
 
     // Special check for compute resources: READER is not a useful role
-    if (privateResourceIamRole == ControlledResourceIamRole.READER) {
+    if (ControlledResourceIamRole.READER == privateResourceIamRole) {
       throw new BadRequestException(
           "A private, controlled dataproc cluster must have the writer or editor role or else it is not useful.");
     }

@@ -710,6 +710,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledGcpGceInstanceResult> createGceInstance(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpGceInstanceRequestBody body) {
@@ -759,6 +760,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGceInstanceCloudId> generateGceInstanceCloudId(
       UUID workspaceUuid, ApiGenerateGcpGceInstanceCloudIdRequestBody name) {
@@ -773,6 +775,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGcpGceInstanceResource> updateGceInstance(
       UUID workspaceUuid,
@@ -798,6 +801,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledGcpGceInstanceResult> getCreateGceInstanceResult(
       UUID workspaceUuid, String jobId) {
@@ -878,6 +882,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledGcpDataprocClusterResult> createDataprocCluster(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpDataprocClusterRequestBody body) {
@@ -923,6 +928,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
                             .generateCloudName(workspaceUuid, commonFields.getName())))
             .build();
 
+    logger.info(
+        "createDataprocCluster workspace {} resource {}", workspaceUuid, resource.getResourceId());
     String jobId =
         controlledResourceService.createDataprocCluster(
             resource,
@@ -936,6 +943,17 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
   }
 
+  @Traced
+  @Override
+  public ResponseEntity<ApiCreatedControlledGcpDataprocClusterResult>
+      getCreateDataprocClusterResult(UUID workspaceUuid, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiCreatedControlledGcpDataprocClusterResult result = fetchDataprocClusterCreateResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Traced
   @Override
   public ResponseEntity<ApiDataprocClusterCloudId> generateDataprocClusterCloudId(
       UUID workspaceUuid, ApiGenerateGcpDataprocClusterCloudIdRequestBody name) {
@@ -951,6 +969,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGcpDataprocClusterResource> updateDataprocCluster(
       UUID workspaceUuid,
@@ -968,22 +987,18 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         new CommonUpdateParameters()
             .setName(requestBody.getName())
             .setDescription(requestBody.getDescription());
-    // TODO: Add update parameters when update is supported
+
+    // TODO: PF-2901 Add update parameters when update is supported
+    logger.info(
+        "updateDataprocCluster workspace {} resource {}",
+        workspaceUuid.toString(),
+        resourceUuid.toString());
     wsmResourceService.updateResource(userRequest, resource, commonUpdateParameters, null);
     ControlledDataprocClusterResource updatedResource =
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
-  }
-
-  @Override
-  public ResponseEntity<ApiCreatedControlledGcpDataprocClusterResult>
-      getCreateDataprocClusterResult(UUID workspaceUuid, String jobId) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
-    ApiCreatedControlledGcpDataprocClusterResult result = fetchDataprocClusterCreateResult(jobId);
-    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   private ApiCreatedControlledGcpDataprocClusterResult fetchDataprocClusterCreateResult(

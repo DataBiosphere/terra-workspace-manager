@@ -19,6 +19,8 @@ paths:
           $ref: '#/components/responses/CreatedControlledGcpDataprocClusterResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -83,6 +85,8 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
     patch:
@@ -252,8 +256,8 @@ components:
           $ref: '#/components/schemas/GcpDataprocClusterDiskConfig'
         preemptibility:
           type: string
-          enum: [ "SPOT", "PREEMPTIBLE" ]
-          description: Optionally specify "SPOT" or "PREEMPTIBLE" instances.
+          enum: [ "NON_PREEMPTIBLE", "PREEMPTIBLE", "SPOT" ]
+          description: Optionally specify instance preemptibility. Default is "NON_PREEMPTIBLE". See https://cloud.google.com/dataproc/docs/concepts/compute/secondary-vms.
 
     GcpDataprocClusterAcceleratorConfig:
       description: >-
@@ -305,13 +309,16 @@ components:
         idleDeleteTtl:
           type: string
           description: Duration of idling before cluster is deleted. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/scheduled-deletion.
+          example: 1800s
         autoDeleteTime:
           type: string
           format: date-time
-          description: Date of cluster deletion. Must not be specified if autoDeleteTtl is specified.
+          description: Date of cluster deletion in UTC "Zulu" format. Must not be specified if autoDeleteTtl is specified.
+          example: 2014-10-02T15:01:23.045123456Z
         autoDeleteTtl:
           type: string
-          description: Duration of cluster life. Must not be specified if autoDeleteTime is specified.
+          description: Duration of cluster life in seconds. Must not be specified if autoDeleteTime is specified.
+          example: 3.5s
 
 
     DeleteControlledGcpDataprocClusterRequest:
