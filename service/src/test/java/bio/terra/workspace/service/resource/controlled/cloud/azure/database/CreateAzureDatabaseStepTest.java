@@ -14,7 +14,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
@@ -56,8 +55,6 @@ import org.springframework.http.HttpStatus;
 
 @Tag("azure-unit")
 public class CreateAzureDatabaseStepTest {
-  private static final String TEST_GIT_HASH = UUID.randomUUID().toString();
-
   private MockitoSession mockito;
 
   @Mock private AzureConfiguration mockAzureConfig;
@@ -81,7 +78,6 @@ public class CreateAzureDatabaseStepTest {
   @Mock private PostgreSqlManager mockPostgreSqlManager;
   @Mock private Databases mockDatabases;
   @Mock private HttpResponse mockHttpResponse;
-  @Mock private VersionConfiguration mockVersionConfiguration;
 
   private final UUID workspaceId = UUID.randomUUID();
   private final String uamiName = UUID.randomUUID().toString();
@@ -128,9 +124,7 @@ public class CreateAzureDatabaseStepTest {
     assertThat(env.get("NEW_DB_USER_OID"), equalTo(mockIdentity.principalId()));
     assertThat(env.get("NEW_DB_NAME"), equalTo(databaseResource.getDatabaseName()));
 
-    assertThat(
-        container.getImage(),
-        equalTo(mockAzureConfig.getAzureDatabaseUtilImage() + ":" + TEST_GIT_HASH));
+    assertThat(container.getImage(), equalTo(mockAzureConfig.getAzureDatabaseUtilImage()));
 
     assertThat(spec.getServiceAccountName(), equalTo(mockAdminIdentity.getResourceId()));
   }
@@ -198,8 +192,7 @@ public class CreateAzureDatabaseStepTest {
         mockWorkspaceService,
         workspaceId,
         mockKubernetesClient,
-        mockResourceDao,
-        mockVersionConfiguration);
+        mockResourceDao);
   }
 
   @NotNull
@@ -252,7 +245,6 @@ public class CreateAzureDatabaseStepTest {
             any(),
             any()))
         .thenReturn(new V1Pod());
-    when(mockVersionConfiguration.getGitHash()).thenReturn(TEST_GIT_HASH);
 
     return new CreateAzureDatabaseStep(
         mockAzureConfig,
@@ -263,8 +255,7 @@ public class CreateAzureDatabaseStepTest {
         mockWorkspaceService,
         workspaceId,
         mockKubernetesClient,
-        mockResourceDao,
-        mockVersionConfiguration);
+        mockResourceDao);
   }
 
   private FlightContext createMockFlightContext() {

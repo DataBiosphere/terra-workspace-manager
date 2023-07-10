@@ -10,7 +10,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
@@ -55,7 +54,6 @@ public class CreateAzureDatabaseStep implements Step {
   private final UUID workspaceId;
   private final KubernetesClientProvider kubernetesClientProvider;
   private final ResourceDao resourceDao;
-  private final VersionConfiguration versionConfiguration;
 
   // namespace where we create the pod to create the database
   private final String aksNamespace = "default";
@@ -69,8 +67,7 @@ public class CreateAzureDatabaseStep implements Step {
       WorkspaceService workspaceService,
       UUID workspaceId,
       KubernetesClientProvider kubernetesClientProvider,
-      ResourceDao resourceDao,
-      VersionConfiguration versionConfiguration) {
+      ResourceDao resourceDao) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -80,7 +77,6 @@ public class CreateAzureDatabaseStep implements Step {
     this.workspaceId = workspaceId;
     this.kubernetesClientProvider = kubernetesClientProvider;
     this.resourceDao = resourceDao;
-    this.versionConfiguration = versionConfiguration;
   }
 
   private String getPodName(String newDbUserName) {

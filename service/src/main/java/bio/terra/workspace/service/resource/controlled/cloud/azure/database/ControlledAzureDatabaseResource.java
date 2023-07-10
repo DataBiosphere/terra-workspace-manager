@@ -186,8 +186,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
             new KubernetesClientProviderImpl(),
-            flightBeanBag.getResourceDao(),
-            flightBeanBag.getVersionConfiguration()),
+            flightBeanBag.getResourceDao()),
         cloudRetry);
   }
 
