@@ -22,39 +22,21 @@ public class DeleteMetadataStep implements Step {
   private final UUID workspaceUuid;
   private final UUID resourceId;
 
-  private final WorkspaceActivityLogService workspaceActivityLogService;
-
   private final Logger logger = LoggerFactory.getLogger(DeleteMetadataStep.class);
 
   public DeleteMetadataStep(
       ResourceDao resourceDao,
       UUID workspaceUuid,
-      UUID resourceId,
-      WorkspaceActivityLogService workspaceActivityLogService) {
+      UUID resourceId) {
     this.resourceDao = resourceDao;
     this.workspaceUuid = workspaceUuid;
     this.resourceId = resourceId;
-    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    // retrieve the resource type of the resource to be deleted for logging.
-    ActivityLogChangedTarget changedTarget =
-        resourceDao
-            .getResource(workspaceUuid, resourceId)
-            .getResourceType()
-            .getActivityLogChangedTarget();
     resourceDao.deleteResourceSuccess(workspaceUuid, resourceId, flightContext.getFlightId());
-
-    AuthenticatedUserRequest userRequest =
-        FlightUtils.getRequired(
-            flightContext.getInputParameters(),
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
-    workspaceActivityLogService.writeActivity(
-        userRequest, workspaceUuid, OperationType.DELETE, resourceId.toString(), changedTarget);
     return StepResult.getStepResultSuccess();
   }
 

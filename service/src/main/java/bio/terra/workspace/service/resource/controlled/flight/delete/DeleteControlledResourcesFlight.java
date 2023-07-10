@@ -101,8 +101,7 @@ public class DeleteControlledResourcesFlight extends Flight {
         new DeleteMetadataStep(
             flightBeanBag.getResourceDao(),
             workspaceUuid,
-            resource.getResourceId(),
-            flightBeanBag.getWorkspaceActivityLogService()),
+            resource.getResourceId()),
         RetryRules.shortDatabase());
   }
 }
