@@ -8,7 +8,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -23,7 +23,6 @@ import bio.terra.workspace.generated.model.ApiCreateControlledAwsS3StorageFolder
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsSageMakerNotebookRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -35,10 +34,9 @@ import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-public class AwsResourceStateFailureTest extends BaseUnitTest {
+public class AwsResourceStateFailureTest extends BaseAwsUnitTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
@@ -46,9 +44,6 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
   @Autowired ReferencedResourceService referencedResourceService;
   @Autowired ResourceDao resourceDao;
   @Autowired private WorkspaceDao workspaceDao;
-
-  @MockBean FeatureService mockFeatureService;
-
   private final UUID billingProfileUuid = UUID.randomUUID();
   private final SpendProfileId billingProfileId = new SpendProfileId(billingProfileUuid.toString());
   private StateTestUtils stateTestUtils;
@@ -56,9 +51,6 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
   @BeforeEach
   void setup() throws Exception {
     stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils);
-
-    // Force aws enabled on for unit test
-    when(mockFeatureService.awsEnabled()).thenReturn(true);
 
     // Everything is authorized!
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);
