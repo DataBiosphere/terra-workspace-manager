@@ -114,16 +114,11 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       switch (af.getActivityLogChangedTarget()) {
         case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid, userEmail, subjectId);
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);
-        default -> {
-          if (af.isResourceFlight()) {
-            maybeLogControlledResourcesDeletionFlight(context, workspaceUuid, userEmail, subjectId);
-          } else {
-            throw new UnhandledDeletionFlightException(
+        default ->
+          throw new UnhandledDeletionFlightException(
                 String.format(
                     "Activity log should be updated for deletion flight %s failures",
                     flightClassName));
-          }
-        }
       }
       return HookAction.CONTINUE;
     }
@@ -297,37 +292,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               OperationType.DELETE,
               folderId.toString(),
               ActivityLogChangedTarget.FOLDER));
-    }
-  }
-
-  private void maybeLogControlledResourcesDeletionFlight(
-      FlightContext context, UUID workspaceUuid, String userEmail, String subjectId) {
-    List<UUID> resourceIds = getControlledResourceToDeleteFromFlight(context);
-    for (var resourceId : resourceIds) {
-      try {
-        resourceDao.getResource(workspaceUuid, resourceId);
-        logger.warn(
-            "Controlled resource {} in workspace {} is failed to be deleted; "
-                + "not writing deletion to workspace activity log",
-            resourceId,
-            workspaceUuid);
-      } catch (ResourceNotFoundException e) {
-        // Cannot get the resource type from the resource since it's deleted. But we can still
-        // infer it from previous log entry.
-        var changeSubjectType =
-            activityLogDao
-                .getLastUpdatedDetails(workspaceUuid, resourceId.toString())
-                .map(ActivityLogChangeDetails::changeSubjectType)
-                .orElse(ActivityLogChangedTarget.RESOURCE);
-        activityLogDao.writeActivity(
-            workspaceUuid,
-            new DbWorkspaceActivityLog(
-                userEmail,
-                subjectId,
-                OperationType.DELETE,
-                resourceId.toString(),
-                changeSubjectType));
-      }
     }
   }
 
