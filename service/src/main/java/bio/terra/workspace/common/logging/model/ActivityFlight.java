@@ -48,18 +48,29 @@ public enum ActivityFlight {
       ActivityLogChangedTarget.CLOUD_CONTEXT,
       /*logInFlight=*/ true),
   DELETE_CLOUD_CONTEXT_RESOURCE_FLIGHT(
-      DeleteCloudContextResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+      DeleteCloudContextResourceFlight.class.getName(),
+      ActivityLogChangedTarget.RESOURCE,
+      /*logInFlight=*/ true),
 
   // Resources
   ALL_RESOURCES_CLONE_FLIGHT(
       CloneAllResourcesFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   CONTROLLED_RESOURCE_CREATE_FLIGHT(
-      CreateControlledResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+      CreateControlledResourceFlight.class.getName(),
+      ActivityLogChangedTarget.RESOURCE,
+      /*logInFlight=*/ true),
   CONTROLLED_RESOURCE_DELETE_FLIGHT(
-      DeleteControlledResourcesFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
-  RESOURCE_UPDATE_FLIGHT(UpdateResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+      DeleteControlledResourcesFlight.class.getName(),
+      ActivityLogChangedTarget.RESOURCE,
+      /*logInFlight=*/ true),
+  RESOURCE_UPDATE_FLIGHT(
+      UpdateResourceFlight.class.getName(),
+      ActivityLogChangedTarget.RESOURCE,
+      /*logInFlight=*/ true),
   CLONE_REFERENCED_RESOURCE_FLIGHT(
-      CloneReferencedResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
+      CloneReferencedResourceFlight.class.getName(),
+      ActivityLogChangedTarget.RESOURCE,
+      /*logInFlight=*/ true),
   CLONE_FLEX_RESOURCE_FLIGHT(
       CloneControlledFlexibleResourceFlight.class.getName(),
       ActivityLogChangedTarget.CONTROLLED_FLEXIBLE_RESOURCE),

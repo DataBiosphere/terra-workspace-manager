@@ -54,6 +54,11 @@ public class DeleteCloudContextResourceFlight extends Flight {
 
     // Delete the metadata
     addStep(
-        new DeleteMetadataStep(flightBeanBag.getResourceDao(), workspaceUuid, resourceId), dbRetry);
+        new DeleteMetadataStep(
+            flightBeanBag.getResourceDao(),
+            workspaceUuid,
+            resourceId,
+            flightBeanBag.getWorkspaceActivityLogService()),
+        dbRetry);
   }
 }

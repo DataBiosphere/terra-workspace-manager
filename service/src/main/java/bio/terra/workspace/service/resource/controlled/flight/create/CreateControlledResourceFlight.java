@@ -97,6 +97,12 @@ public class CreateControlledResourceFlight extends Flight {
     }
 
     // Complete the create and populate the return response
-    addStep(new SetCreateResponseStep(resource, flightBeanBag.getResourceDao(), resourceStateRule));
+    addStep(
+        new SetCreateResponseStep(
+            resource,
+            flightBeanBag.getResourceDao(),
+            resourceStateRule,
+            userRequest,
+            flightBeanBag.getWorkspaceActivityLogService()));
   }
 }
