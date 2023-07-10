@@ -48,17 +48,16 @@ public class ControlledAwsResourceFixtures {
   public static final String ENVIRONMENT_ALIAS = "unit-test-env";
   public static final String AWS_REGION = "us-east-1";
   public static final String AWS_ENVIRONMENT_WSM_ROLE_ARN =
-      "arn:aws:iam::34567890012:role/WorkspaceManagerRole";
+      "arn:aws:iam::10000000001:role/WorkspaceManagerRole";
   public static final String AWS_ENVIRONMENT_USER_ROLE_ARN =
-      "arn:aws:iam::45678900123:role/UserRole";
+      "arn:aws:iam::20000000002:role/UserRole";
   public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN =
-      "arn:aws:iam::01234567890:role/NotebookRole";
+      "arn:aws:iam::30000000003:role/NotebookRole";
   public static final String AWS_LANDING_ZONE_STORAGE_BUCKET_ARN =
-      "arn:aws:iam::56789001234:role/StorageBucket";
-  public static final String AWS_LANDING_ZONE_KMS_KEY_ARN =
-      "arn:aws:iam::12345678900:role/KmsKeyRole";
+      "arn:aws:iam::40000000004:role/StorageBucket";
+  public static final String AWS_LANDING_ZONE_KMS_KEY_ARN = "arn:aws:iam::50000000005:role/KmsKey";
   public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
-      "arn:aws:iam::23456789001:role/KmsKeyRole";
+      "arn:aws:iam::60000000006:role/NotebookLifecycleConfig";
   public static final SdkHttpResponse SDK_HTTP_RESPONSE_200 =
       SdkHttpResponse.builder().statusCode(200).statusText("Success").build();
   public static final SdkHttpResponse SDK_HTTP_RESPONSE_400 =
