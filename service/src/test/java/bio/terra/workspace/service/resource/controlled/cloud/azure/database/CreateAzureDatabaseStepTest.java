@@ -22,6 +22,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ManagedIdentityStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -63,7 +64,6 @@ public class CreateAzureDatabaseStepTest {
   @Mock private SamService mockSamService;
   @Mock private WorkspaceService mockWorkspaceService;
   @Mock private KubernetesClientProvider mockKubernetesClient;
-  @Mock private ResourceDao mockResourceDao;
   @Mock private FlightContext mockFlightContext;
   @Mock private AzureCloudContext mockAzureCloudContext;
   @Mock private FlightMap mockWorkingMap;
@@ -81,14 +81,8 @@ public class CreateAzureDatabaseStepTest {
 
   private final UUID workspaceId = UUID.randomUUID();
   private final String uamiName = UUID.randomUUID().toString();
-  private final ControlledAzureManagedIdentityResource ownerIdentityResource =
-      ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
-              ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters(),
-              workspaceId)
-          .build();
   private final ApiAzureDatabaseCreationParameters creationParameters =
-      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-          ownerIdentityResource.getResourceId());
+      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null);
   private final ControlledAzureDatabaseResource databaseResource =
       ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
               creationParameters, workspaceId)
@@ -188,24 +182,17 @@ public class CreateAzureDatabaseStepTest {
         mockSamService,
         mockWorkspaceService,
         workspaceId,
-        mockKubernetesClient,
-        mockResourceDao);
+        mockKubernetesClient
+    );
   }
 
   @NotNull
   private CreateAzureDatabaseStep setupStepTest(String podPhase) throws ApiException {
     createMockFlightContext();
 
-    when(mockResourceDao.getResource(workspaceId, ownerIdentityResource.getResourceId()))
-        .thenReturn(ownerIdentityResource);
-
     when(mockCrlService.getMsiManager(mockAzureCloudContext, mockAzureConfig))
         .thenReturn(mockMsiManager);
     when(mockMsiManager.identities()).thenReturn(mockIdentities);
-    when(mockIdentities.getByResourceGroup(
-            mockAzureCloudContext.getAzureResourceGroupId(),
-            ownerIdentityResource.getManagedIdentityName()))
-        .thenReturn(mockIdentity);
     when(mockIdentity.name()).thenReturn(uamiName);
     when(mockIdentity.principalId()).thenReturn(UUID.randomUUID().toString());
 
@@ -249,14 +236,15 @@ public class CreateAzureDatabaseStepTest {
         mockSamService,
         mockWorkspaceService,
         workspaceId,
-        mockKubernetesClient,
-        mockResourceDao);
+        mockKubernetesClient
+    );
   }
 
   private FlightContext createMockFlightContext() {
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
         .thenReturn(mockAzureCloudContext);
+    when(mockWorkingMap.get(ManagedIdentityStep.MANAGED_IDENTITY, Identity.class)).thenReturn(mockIdentity);
 
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn(UUID.randomUUID().toString());
 

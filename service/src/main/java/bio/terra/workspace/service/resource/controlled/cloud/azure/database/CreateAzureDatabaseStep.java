@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
 
 import bio.terra.common.iam.BearerToken;
+import bio.terra.landingzone.stairway.flight.utils.FlightUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -11,16 +12,15 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.RetryUtils;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ManagedIdentityStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
+import com.azure.resourcemanager.msi.models.Identity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
@@ -53,7 +53,6 @@ public class CreateAzureDatabaseStep implements Step {
   private final WorkspaceService workspaceService;
   private final UUID workspaceId;
   private final KubernetesClientProvider kubernetesClientProvider;
-  private final ResourceDao resourceDao;
 
   // namespace where we create the pod to create the database
   private final String aksNamespace = "default";
@@ -66,8 +65,7 @@ public class CreateAzureDatabaseStep implements Step {
       SamService samService,
       WorkspaceService workspaceService,
       UUID workspaceId,
-      KubernetesClientProvider kubernetesClientProvider,
-      ResourceDao resourceDao) {
+      KubernetesClientProvider kubernetesClientProvider) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.resource = resource;
@@ -76,7 +74,6 @@ public class CreateAzureDatabaseStep implements Step {
     this.workspaceService = workspaceService;
     this.workspaceId = workspaceId;
     this.kubernetesClientProvider = kubernetesClientProvider;
-    this.resourceDao = resourceDao;
   }
 
   private String getPodName(String newDbUserName) {
@@ -90,21 +87,12 @@ public class CreateAzureDatabaseStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
-    ControlledAzureManagedIdentityResource managedIdentityResource =
-        resourceDao
-            .getResource(workspaceId, resource.getDatabaseOwner())
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
+    var managedIdentity =
+        FlightUtils.getRequired(
+            context.getWorkingMap(), ManagedIdentityStep.MANAGED_IDENTITY, Identity.class);
 
     var containerServiceManager =
         crlService.getContainerServiceManager(azureCloudContext, azureConfig);
-    var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
-
-    var managedIdentity =
-        msiManager
-            .identities()
-            .getByResourceGroup(
-                azureCloudContext.getAzureResourceGroupId(),
-                managedIdentityResource.getManagedIdentityName());
 
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     UUID landingZoneId =

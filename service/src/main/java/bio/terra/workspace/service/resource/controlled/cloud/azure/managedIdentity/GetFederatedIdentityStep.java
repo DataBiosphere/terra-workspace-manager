@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.iam.BearerToken;
+import bio.terra.landingzone.stairway.flight.utils.FlightUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -12,13 +12,12 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
-import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.msi.MsiManager;
+import com.azure.resourcemanager.msi.models.Identity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import java.util.UUID;
@@ -67,7 +66,9 @@ public class GetFederatedIdentityStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
 
-    var uamiName = getAzureManagedIdentityResource().getManagedIdentityName();
+    var managedIdentity =
+        FlightUtils.getRequired(
+            context.getWorkingMap(), ManagedIdentityStep.MANAGED_IDENTITY, Identity.class);
 
     final AzureCloudContext azureCloudContext =
         context
@@ -89,9 +90,9 @@ public class GetFederatedIdentityStep implements Step {
         kubernetesClientProvider.createCoreApiClient(
             containerServiceManager, azureCloudContext.getAzureResourceGroupId(), aksCluster);
 
-    final boolean k8sServiceAccountExists = k8sServiceAccountExists(uamiName, aksApi);
+    final boolean k8sServiceAccountExists = k8sServiceAccountExists(managedIdentity.name(), aksApi);
     final boolean federatedIdentityExists =
-        federatedIdentityExists(uamiName, azureCloudContext, msiManager);
+        federatedIdentityExists(managedIdentity.name(), azureCloudContext, msiManager);
 
     // If both the k8s service account and federated identity exist, the next step will skip
     // creating them.
@@ -102,21 +103,6 @@ public class GetFederatedIdentityStep implements Step {
         .put(FEDERATED_IDENTITY_EXISTS, k8sServiceAccountExists && federatedIdentityExists);
 
     return StepResult.getStepResultSuccess();
-  }
-
-  private ControlledAzureManagedIdentityResource getAzureManagedIdentityResource() {
-    try {
-      ControlledAzureManagedIdentityResource managedIdentityResource =
-          resourceDao
-              .getResource(workspaceId, managedIdentityId)
-              .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
-      return managedIdentityResource;
-    } catch (ResourceNotFoundException rnfe) {
-      throw new BadRequestException(
-          String.format(
-              "Could not find managed identity resource with id %s in workspace %s",
-              managedIdentityId, workspaceId));
-    }
   }
 
   private boolean federatedIdentityExists(

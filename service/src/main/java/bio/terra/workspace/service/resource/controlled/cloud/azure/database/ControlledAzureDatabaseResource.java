@@ -17,6 +17,8 @@ import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProviderImpl;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -149,6 +151,25 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             getWorkspaceId()),
         cloudRetry);
 
+    switch (getAccessScope()) {
+      case ACCESS_SCOPE_SHARED -> flight.addStep(
+          new GetWorkspaceManagedIdentityStep(
+              flightBeanBag.getAzureConfig(),
+              flightBeanBag.getCrlService(),
+              getWorkspaceId(),
+              flightBeanBag.getResourceDao(),
+              getDatabaseOwner()),
+          cloudRetry);
+
+      case ACCESS_SCOPE_PRIVATE -> flight.addStep(
+          new GetPetManagedIdentityStep(
+              flightBeanBag.getAzureConfig(),
+              flightBeanBag.getCrlService(),
+              flightBeanBag.getSamService(),
+              getAssignedUser().orElseThrow()),
+          cloudRetry);
+    }
+
     flight.addStep(
         new GetFederatedIdentityStep(
             getK8sNamespace(),
@@ -168,13 +189,12 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             getK8sNamespace(),
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
-            getDatabaseOwner(),
             new KubernetesClientProviderImpl(),
             flightBeanBag.getLandingZoneApiDispatch(),
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
-            getWorkspaceId(),
-            flightBeanBag.getResourceDao()),
+            getWorkspaceId()
+        ),
         cloudRetry);
     flight.addStep(
         new CreateAzureDatabaseStep(
@@ -185,8 +205,8 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
-            new KubernetesClientProviderImpl(),
-            flightBeanBag.getResourceDao()),
+            new KubernetesClientProviderImpl()
+        ),
         cloudRetry);
   }
 

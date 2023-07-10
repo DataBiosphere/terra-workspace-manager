@@ -12,16 +12,15 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.fluent.models.FederatedIdentityCredentialInner;
+import com.azure.resourcemanager.msi.models.Identity;
 import com.google.common.annotations.VisibleForTesting;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -41,35 +40,29 @@ public class CreateFederatedIdentityStep implements Step {
   public final String k8sNamespace;
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
-  private final UUID managedIdentityId;
   private final KubernetesClientProvider kubernetesClientProvider;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;
   private final WorkspaceService workspaceService;
   private final UUID workspaceId;
-  private final ResourceDao resourceDao;
 
   public CreateFederatedIdentityStep(
       String k8sNamespace,
       AzureConfiguration azureConfig,
       CrlService crlService,
-      UUID managedIdentityId,
       KubernetesClientProvider kubernetesClientProvider,
       LandingZoneApiDispatch landingZoneApiDispatch,
       SamService samService,
       WorkspaceService workspaceService,
-      UUID workspaceId,
-      ResourceDao resourceDao) {
+      UUID workspaceId) {
     this.k8sNamespace = k8sNamespace;
     this.azureConfig = azureConfig;
     this.crlService = crlService;
-    this.managedIdentityId = managedIdentityId;
     this.kubernetesClientProvider = kubernetesClientProvider;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.workspaceId = workspaceId;
-    this.resourceDao = resourceDao;
   }
 
   @Override
@@ -80,12 +73,11 @@ public class CreateFederatedIdentityStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
+    var managedIdentity =
+        FlightUtils.getRequired(
+            context.getWorkingMap(), ManagedIdentityStep.MANAGED_IDENTITY, Identity.class);
+
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-    ControlledAzureManagedIdentityResource managedIdentityResource =
-        resourceDao
-            .getResource(workspaceId, managedIdentityId)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
-    var uamiName = managedIdentityResource.getManagedIdentityName();
 
     final AzureCloudContext azureCloudContext =
         context
@@ -117,16 +109,12 @@ public class CreateFederatedIdentityStep implements Step {
                     .oidcIssuerProfile()
                     .issuerUrl())
             .orElseThrow(() -> new RuntimeException("OIDC issuer not found"));
-    var uamiClientId =
-        msiManager
-            .identities()
-            .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), uamiName)
-            .clientId();
+    var uamiClientId = managedIdentity.clientId();
 
     // the code above was lookup and setup, now we are ready to create the federated identity and
     // k8s service account
     return createFederatedIdentityAndK8sServiceAccount(
-        uamiName, azureCloudContext, msiManager, aksApi, oidcIssuer, uamiClientId);
+        managedIdentity.name(), azureCloudContext, msiManager, aksApi, oidcIssuer, uamiClientId);
   }
 
   @VisibleForTesting
@@ -224,11 +212,9 @@ public class CreateFederatedIdentityStep implements Step {
     var containerServiceManager =
         crlService.getContainerServiceManager(azureCloudContext, azureConfig);
 
-    ControlledAzureManagedIdentityResource managedIdentityResource =
-        resourceDao
-            .getResource(workspaceId, managedIdentityId)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
-    var uamiName = managedIdentityResource.getManagedIdentityName();
+    var managedIdentity =
+        FlightUtils.getRequired(
+            context.getWorkingMap(), ManagedIdentityStep.MANAGED_IDENTITY, Identity.class);
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
@@ -243,13 +229,14 @@ public class CreateFederatedIdentityStep implements Step {
                         containerServiceManager,
                         azureCloudContext.getAzureResourceGroupId(),
                         aksCluster);
-                deleteK8sServiceAccount(aksApi, k8sNamespace, uamiName);
+                deleteK8sServiceAccount(aksApi, k8sNamespace, managedIdentity.name());
               } catch (ApiException e) {
                 logger.info("Failed to delete k8s service account", e);
               }
             });
 
-    deleteFederatedCredentials(msiManager, azureCloudContext.getAzureResourceGroupId(), uamiName);
+    deleteFederatedCredentials(
+        msiManager, azureCloudContext.getAzureResourceGroupId(), managedIdentity.name());
     return StepResult.getStepResultSuccess();
   }
 }
