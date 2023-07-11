@@ -19,12 +19,12 @@ import org.springframework.http.HttpStatus;
  * immediately before {@link CreateAzureManagedIdentityStep} to ensure idempotency of the create
  * operation.
  */
-public class GetAzureManagedIdentityStep implements Step {
+public class AzureManagedIdentityGuardStep implements Step {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureManagedIdentityResource resource;
 
-  public GetAzureManagedIdentityStep(
+  public AzureManagedIdentityGuardStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ControlledAzureManagedIdentityResource resource) {

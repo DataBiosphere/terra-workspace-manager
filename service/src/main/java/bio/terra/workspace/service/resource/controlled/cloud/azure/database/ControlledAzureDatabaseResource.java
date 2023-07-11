@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
@@ -151,24 +152,23 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             getWorkspaceId()),
         cloudRetry);
 
-    switch (getAccessScope()) {
-      case ACCESS_SCOPE_SHARED -> flight.addStep(
-          new GetWorkspaceManagedIdentityStep(
+    var getManagedIdentityStep =
+        switch (getAccessScope()) {
+          case ACCESS_SCOPE_SHARED -> new GetWorkspaceManagedIdentityStep(
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
               getWorkspaceId(),
               flightBeanBag.getResourceDao(),
-              getDatabaseOwner()),
-          cloudRetry);
+              getDatabaseOwner());
 
-      case ACCESS_SCOPE_PRIVATE -> flight.addStep(
-          new GetPetManagedIdentityStep(
+          case ACCESS_SCOPE_PRIVATE -> new GetPetManagedIdentityStep(
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
               flightBeanBag.getSamService(),
-              getAssignedUser().orElseThrow()),
-          cloudRetry);
-    }
+              getAssignedUser().orElseThrow());
+        };
+
+    flight.addStep(getManagedIdentityStep, cloudRetry);
 
     flight.addStep(
         new GetFederatedIdentityStep(
@@ -193,8 +193,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getLandingZoneApiDispatch(),
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
-            getWorkspaceId()
-        ),
+            getWorkspaceId()),
         cloudRetry);
     flight.addStep(
         new CreateAzureDatabaseStep(
@@ -205,8 +204,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
-            new KubernetesClientProviderImpl()
-        ),
+            new KubernetesClientProviderImpl()),
         cloudRetry);
   }
 
@@ -265,9 +263,9 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required databaseName field for ControlledAzureDatabase.");
     }
-    if (getDatabaseOwner() == null) {
+    if (getAccessScope() == AccessScopeType.ACCESS_SCOPE_SHARED && getDatabaseOwner() == null) {
       throw new MissingRequiredFieldException(
-          "Missing required databaseOwner field for ControlledAzureDatabase.");
+          "Missing required databaseOwner field for shared ControlledAzureDatabase.");
     }
     if (getRegion() == null) {
       throw new MissingRequiredFieldException(

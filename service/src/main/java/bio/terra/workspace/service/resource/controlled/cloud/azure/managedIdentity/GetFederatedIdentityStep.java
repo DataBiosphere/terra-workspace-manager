@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity;
 
 import bio.terra.common.iam.BearerToken;
-import bio.terra.landingzone.stairway.flight.utils.FlightUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -17,7 +16,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.msi.MsiManager;
-import com.azure.resourcemanager.msi.models.Identity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import java.util.UUID;
@@ -66,10 +64,6 @@ public class GetFederatedIdentityStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
 
-    var managedIdentity =
-        FlightUtils.getRequired(
-            context.getWorkingMap(), ManagedIdentityStep.MANAGED_IDENTITY, Identity.class);
-
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
@@ -90,9 +84,11 @@ public class GetFederatedIdentityStep implements Step {
         kubernetesClientProvider.createCoreApiClient(
             containerServiceManager, azureCloudContext.getAzureResourceGroupId(), aksCluster);
 
-    final boolean k8sServiceAccountExists = k8sServiceAccountExists(managedIdentity.name(), aksApi);
+    final boolean k8sServiceAccountExists =
+        k8sServiceAccountExists(GetManagedIdentityStep.getManagedIdentityName(context), aksApi);
     final boolean federatedIdentityExists =
-        federatedIdentityExists(managedIdentity.name(), azureCloudContext, msiManager);
+        federatedIdentityExists(
+            GetManagedIdentityStep.getManagedIdentityName(context), azureCloudContext, msiManager);
 
     // If both the k8s service account and federated identity exist, the next step will skip
     // creating them.

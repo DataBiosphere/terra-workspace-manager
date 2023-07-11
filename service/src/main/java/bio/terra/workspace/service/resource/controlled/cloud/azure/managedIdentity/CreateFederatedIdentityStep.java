@@ -20,7 +20,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.fluent.models.FederatedIdentityCredentialInner;
-import com.azure.resourcemanager.msi.models.Identity;
 import com.google.common.annotations.VisibleForTesting;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -73,10 +72,6 @@ public class CreateFederatedIdentityStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
-    var managedIdentity =
-        FlightUtils.getRequired(
-            context.getWorkingMap(), ManagedIdentityStep.MANAGED_IDENTITY, Identity.class);
-
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
 
     final AzureCloudContext azureCloudContext =
@@ -109,12 +104,17 @@ public class CreateFederatedIdentityStep implements Step {
                     .oidcIssuerProfile()
                     .issuerUrl())
             .orElseThrow(() -> new RuntimeException("OIDC issuer not found"));
-    var uamiClientId = managedIdentity.clientId();
+    var uamiClientId = GetManagedIdentityStep.getManagedIdentityClientId(context);
 
     // the code above was lookup and setup, now we are ready to create the federated identity and
     // k8s service account
     return createFederatedIdentityAndK8sServiceAccount(
-        managedIdentity.name(), azureCloudContext, msiManager, aksApi, oidcIssuer, uamiClientId);
+        GetManagedIdentityStep.getManagedIdentityName(context),
+        azureCloudContext,
+        msiManager,
+        aksApi,
+        oidcIssuer,
+        uamiClientId);
   }
 
   @VisibleForTesting
@@ -212,9 +212,6 @@ public class CreateFederatedIdentityStep implements Step {
     var containerServiceManager =
         crlService.getContainerServiceManager(azureCloudContext, azureConfig);
 
-    var managedIdentity =
-        FlightUtils.getRequired(
-            context.getWorkingMap(), ManagedIdentityStep.MANAGED_IDENTITY, Identity.class);
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
@@ -229,14 +226,17 @@ public class CreateFederatedIdentityStep implements Step {
                         containerServiceManager,
                         azureCloudContext.getAzureResourceGroupId(),
                         aksCluster);
-                deleteK8sServiceAccount(aksApi, k8sNamespace, managedIdentity.name());
+                deleteK8sServiceAccount(
+                    aksApi, k8sNamespace, GetManagedIdentityStep.getManagedIdentityName(context));
               } catch (ApiException e) {
                 logger.info("Failed to delete k8s service account", e);
               }
             });
 
     deleteFederatedCredentials(
-        msiManager, azureCloudContext.getAzureResourceGroupId(), managedIdentity.name());
+        msiManager,
+        azureCloudContext.getAzureResourceGroupId(),
+        GetManagedIdentityStep.getManagedIdentityName(context));
     return StepResult.getStepResultSuccess();
   }
 }

@@ -7,15 +7,17 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.management.exception.ManagementException;
 import java.util.UUID;
 
 /** Gets an Azure Managed Identity that exists in a workspace. */
-public class GetWorkspaceManagedIdentityStep implements Step, ManagedIdentityStep {
+public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentityStep {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final UUID workspaceId;
@@ -56,14 +58,18 @@ public class GetWorkspaceManagedIdentityStep implements Step, ManagedIdentitySte
     }
     var uamiName = managedIdentityResource.getManagedIdentityName();
 
-    var uami =
-        msiManager
-            .identities()
-            .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), uamiName);
+    try {
+      var uami =
+          msiManager
+              .identities()
+              .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), uamiName);
 
-    context.getWorkingMap().put(MANAGED_IDENTITY, uami);
+      putManagedIdentityInContext(context, uami);
 
-    return StepResult.getStepResultSuccess();
+      return StepResult.getStepResultSuccess();
+    } catch (ManagementException e) {
+      return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(e), e);
+    }
   }
 
   @Override

@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
 
 import bio.terra.common.iam.BearerToken;
-import bio.terra.landingzone.stairway.flight.utils.FlightUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -15,12 +14,11 @@ import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ManagedIdentityStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
-import com.azure.resourcemanager.msi.models.Identity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
@@ -87,10 +85,6 @@ public class CreateAzureDatabaseStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
-    var managedIdentity =
-        FlightUtils.getRequired(
-            context.getWorkingMap(), ManagedIdentityStep.MANAGED_IDENTITY, Identity.class);
-
     var containerServiceManager =
         crlService.getContainerServiceManager(azureCloudContext, azureConfig);
 
@@ -106,14 +100,14 @@ public class CreateAzureDatabaseStep implements Step {
     var aksApi =
         kubernetesClientProvider.createCoreApiClient(
             containerServiceManager, azureCloudContext.getAzureResourceGroupId(), clusterResource);
-    var podName = getPodName(managedIdentity.name());
+    var podName = getPodName(GetManagedIdentityStep.getManagedIdentityName(context));
     try {
       startCreateDatabaseContainer(
           aksApi,
           bearerToken,
           landingZoneId,
-          managedIdentity.name(),
-          managedIdentity.principalId(),
+          GetManagedIdentityStep.getManagedIdentityName(context),
+          GetManagedIdentityStep.getManagedIdentityPrincipalId(context),
           podName);
       var finalPhase = waitForCreateDatabaseContainer(aksApi, podName);
       if (finalPhase.stream().anyMatch(phase -> phase.equals(POD_FAILED))) {
