@@ -53,13 +53,9 @@ public class DeleteAzureDiskStep implements Step {
       return StepResult.getStepResultSuccess();
     } catch (Exception ex) {
       logger.info("Attempt to delete Azure disk failed on this try: " + azureResourceId, ex);
-      if (ex instanceof ManagementException e) {
-        if (isDiskAttachedToVmError(e)) {
-          // we don't need to retry in this case since disk could not be deleted
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
-        } else {
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
-        }
+      if (ex instanceof ManagementException e && isDiskAttachedToVmError(e)) {
+        // we don't need to retry in this case since disk could not be deleted
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
@@ -71,18 +67,14 @@ public class DeleteAzureDiskStep implements Step {
         "Cannot undo delete of Azure disk resource {} in workspace {}.",
         resource.getResourceId(),
         resource.getWorkspaceId());
-    if (flightContext.getResult().getStepStatus().equals(StepStatus.STEP_RESULT_FAILURE_FATAL)) {
-      if (flightContext.getResult().getException().isPresent()
-          && flightContext.getResult().getException().get() instanceof ManagementException e) {
-        if (isDiskAttachedToVmError(e)) {
-          // disk has not been deleted, and we need to return success here to allow
-          // DeleteMetadataStartStep successfully
-          // complete undo operation to return WSM resource in READY state.
-          return new StepResult(StepStatus.STEP_RESULT_SUCCESS);
-        } else {
-          return flightContext.getResult();
-        }
-      }
+    if (flightContext.getResult().getStepStatus().equals(StepStatus.STEP_RESULT_FAILURE_FATAL)
+        && flightContext.getResult().getException().isPresent()
+        && flightContext.getResult().getException().get() instanceof ManagementException e
+        && isDiskAttachedToVmError(e)) {
+      // disk has not been deleted, and we need to return success here to allow
+      // DeleteMetadataStartStep successfully
+      // complete undo operation to return WSM resource in READY state.
+      return new StepResult(StepStatus.STEP_RESULT_SUCCESS);
     }
     return flightContext.getResult();
   }
