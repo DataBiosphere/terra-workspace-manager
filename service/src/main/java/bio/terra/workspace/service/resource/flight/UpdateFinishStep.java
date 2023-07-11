@@ -7,10 +7,16 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.model.DbUpdater;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.UUID;
 
 public class UpdateFinishStep implements Step {
@@ -19,10 +25,19 @@ public class UpdateFinishStep implements Step {
   private final UUID workspaceUuid;
   private final UUID resourceId;
 
-  public UpdateFinishStep(ResourceDao resourceDao, UUID workspaceUuid, UUID resourceId) {
+  private final ActivityLogChangedTarget activityLogChangedTarget;
+
+  private final WorkspaceActivityLogService workspaceActivityLogService;
+
+  public UpdateFinishStep(
+      ResourceDao resourceDao,
+      WsmResource resource,
+      WorkspaceActivityLogService workspaceActivityLogService) {
     this.resourceDao = resourceDao;
-    this.resourceId = resourceId;
-    this.workspaceUuid = workspaceUuid;
+    this.resourceId = resource.getResourceId();
+    this.workspaceUuid = resource.getWorkspaceId();
+    this.activityLogChangedTarget = resource.getResourceType().getActivityLogChangedTarget();
+    this.workspaceActivityLogService = workspaceActivityLogService;
   }
 
   @Override
@@ -35,6 +50,17 @@ public class UpdateFinishStep implements Step {
     resourceDao.updateResourceSuccess(
         workspaceUuid, resourceId, dbUpdater, flightContext.getFlightId());
     flightContext.getWorkingMap().put(ResourceKeys.UPDATE_COMPLETE, TRUE);
+    AuthenticatedUserRequest userRequest =
+        FlightUtils.getRequired(
+            flightContext.getInputParameters(),
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
+    workspaceActivityLogService.writeActivity(
+        userRequest,
+        workspaceUuid,
+        OperationType.UPDATE,
+        resourceId.toString(),
+        activityLogChangedTarget);
     return StepResult.getStepResultSuccess();
   }
 

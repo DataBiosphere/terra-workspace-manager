@@ -106,7 +106,12 @@ public class CloneReferencedResourceFlight extends Flight {
     }
 
     addStep(
-        new CreateResourceInDbFinishStep(appContext.getResourceDao(), destinationResource),
+        new CreateResourceInDbFinishStep(
+            appContext.getResourceDao(),
+            destinationResource,
+            sourceResource,
+            userRequest,
+            appContext.getWorkspaceActivityLogService()),
         shortDatabaseRetryRule);
   }
 }
