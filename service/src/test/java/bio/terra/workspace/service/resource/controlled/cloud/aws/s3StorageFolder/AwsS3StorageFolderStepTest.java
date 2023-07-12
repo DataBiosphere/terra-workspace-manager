@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,12 +55,13 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
       S3Exception.builder().message("not authorized to perform").build();
 
   @BeforeAll
-  public static void init() {
-    mockAwsUtils = Mockito.mockStatic(AwsUtils.class, Mockito.CALLS_REAL_METHODS);
+  public void init() throws Exception {
+    super.init();
+    mockAwsUtils = mockStatic(AwsUtils.class, Mockito.CALLS_REAL_METHODS);
   }
 
   @AfterAll
-  public static void terminate() {
+  public void terminate() {
     mockAwsUtils.close();
   }
 
@@ -114,7 +116,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
     // same as tests for DeleteAwsS3StorageFolderStep, verify that internal function
     // executeDeleteAwsS3StorageFolder is called
     try (MockedStatic<DeleteAwsS3StorageFolderStep> mockDeleteStep =
-        Mockito.mockStatic(DeleteAwsS3StorageFolderStep.class)) {
+        mockStatic(DeleteAwsS3StorageFolderStep.class)) {
       mockDeleteStep
           .when(() -> DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(any(), any()))
           .thenReturn(StepResult.getStepResultSuccess());

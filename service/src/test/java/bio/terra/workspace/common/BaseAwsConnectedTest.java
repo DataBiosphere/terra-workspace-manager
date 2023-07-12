@@ -22,10 +22,10 @@ public class BaseAwsConnectedTest extends BaseTest {
   @Autowired protected AwsCloudContextService awsCloudContextService;
   @Autowired protected AwsConfiguration awsConfiguration;
   @Autowired protected AwsConnectedTestUtils awsConnectedTestUtils;
-  @MockBean protected FeatureService featureService;
+  @MockBean protected FeatureService mockFeatureService;
 
   @BeforeAll
   public void init() throws Exception {
-    Mockito.when(featureService.awsEnabled()).thenReturn(true);
+    Mockito.when(mockFeatureService.awsEnabled()).thenReturn(true);
   }
 }

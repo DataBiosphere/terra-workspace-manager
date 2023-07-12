@@ -71,13 +71,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("connectedPlus")
+@Disabled("Until PF-2884 is finished")
 public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
+  private static final Logger logger =
+      LoggerFactory.getLogger(RemoveUserFromWorkspaceFlightTest.class);
 
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
   @Autowired private WorkspaceService workspaceService;

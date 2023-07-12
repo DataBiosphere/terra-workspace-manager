@@ -52,7 +52,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
 
   @Test
   void discoverEnvironmentTest() throws IOException {
-    Assertions.assertDoesNotThrow(() -> featureService.awsEnabledCheck());
+    Assertions.assertDoesNotThrow(() -> mockFeatureService.awsEnabledCheck());
 
     // Log the AWS config
     logger.info("AWS Configuration: {}", awsConfiguration.toString());

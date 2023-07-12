@@ -85,7 +85,7 @@ public class AwsCloudContext implements CloudContext {
       throw new InvalidCloudContextStateException(
           "Cloud context is not in a valid state. Wait and try again.");
     }
-    contextFields.verifyCloudContext(environment);
+    contextFields.verifyCloudContextFields(environment);
   }
 
   @Override

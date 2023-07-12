@@ -998,20 +998,14 @@ public class SamService {
   @Traced
   public void deleteControlledResource(ControlledResource resource, String token)
       throws InterruptedException {
-
-    // TODO: PF-2884 - remove this ridiculous level of logging
-    logger.info(">>Deleting controlled resource {}", resource.getResourceId());
+    logger.info("Deleting controlled resource {}", resource.getResourceId());
     ResourcesApi resourceApi = samResourcesApi(token);
-    logger.info(">>Deleting controlled resource {} - got api", resource.getResourceId());
     try {
-      logger.info(">>Deleting controlled resource {} - launch retry", resource.getResourceId());
       SamRetry.retry(
-          () -> {
-            logger.info(
-                ">>Deleting controlled resource {} - call Sam API", resource.getResourceId());
-            resourceApi.deleteResourceV2(
-                resource.getCategory().getSamResourceName(), resource.getResourceId().toString());
-          });
+          () ->
+              resourceApi.deleteResourceV2(
+                  resource.getCategory().getSamResourceName(),
+                  resource.getResourceId().toString()));
       logger.info("Deleted Sam controlled resource {}", resource.getResourceId());
     } catch (ApiException apiException) {
       // Do nothing if the resource to delete is not found, this may not be the first time delete is

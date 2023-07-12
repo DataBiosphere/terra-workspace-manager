@@ -154,11 +154,9 @@ public class AwsCloudContextService implements CloudContextService {
    * @throws CloudContextRequiredException CloudContextRequiredException
    */
   public AwsCloudContext getRequiredAwsCloudContext(UUID workspaceUuid) {
-    AwsCloudContext cloudContext =
-        getAwsCloudContext(workspaceUuid)
-            .orElseThrow(
-                () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
-    return cloudContext;
+    return getAwsCloudContext(workspaceUuid)
+        .orElseThrow(
+            () -> new CloudContextRequiredException("Operation requires AWS cloud context"));
   }
 
   /**
@@ -177,7 +175,7 @@ public class AwsCloudContextService implements CloudContextService {
    * @param environment {@link Environment}
    * @return {@link AwsCloudContext}
    */
-  private static AwsCloudContext createCloudContext(
+  public static AwsCloudContext createCloudContext(
       String flightId, SpendProfileId spendProfileId, Environment environment) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
