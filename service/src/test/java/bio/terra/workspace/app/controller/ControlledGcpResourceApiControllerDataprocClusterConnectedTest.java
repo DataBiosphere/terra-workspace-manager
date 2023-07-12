@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Connected tests for controlled Dataproc clusters. */
@@ -43,9 +43,6 @@ import org.springframework.test.web.servlet.MockMvc;
 // time creating and deleting GCP contexts.
 
 @Tag("connectedPlus")
-@TestPropertySource(
-    locations = "classpath:application.yml",
-    properties = "feature.dataproc-enabled=true")
 @TestInstance(Lifecycle.PER_CLASS)
 public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
     extends BaseConnectedTest {
@@ -115,6 +112,7 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
   }
 
   @Test
+  @EnabledIf(expression = "${feature.dataproc-enabled}", loadContext = true)
   public void createDataprocCluster() throws Exception {
     mockMvcUtils.updateWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
@@ -148,6 +146,7 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
   }
 
   @Test
+  @EnabledIf(expression = "${feature.dataproc-enabled}", loadContext = true)
   public void createDataprocCluster_duplicateInstanceId() throws Exception {
     var duplicateName = "not-unique-name";
     mockMvcUtils

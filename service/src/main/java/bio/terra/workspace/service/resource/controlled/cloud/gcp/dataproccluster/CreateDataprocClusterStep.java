@@ -115,6 +115,7 @@ public class CreateDataprocClusterStep implements Step {
         createClusterModel(
             flightContext,
             projectId,
+            resource.getClusterId(),
             petEmail,
             workspaceUserFacingId,
             creationParameters,
@@ -153,6 +154,7 @@ public class CreateDataprocClusterStep implements Step {
   private static Cluster createClusterModel(
       FlightContext flightContext,
       String projectId,
+      String clusterId,
       String serviceAccountEmail,
       String workspaceUserFacingId,
       ApiGcpDataprocClusterCreationParameters creationParameters,
@@ -161,6 +163,7 @@ public class CreateDataprocClusterStep implements Step {
       String cliServer) {
     Cluster cluster = new Cluster();
     setFields(
+        clusterId,
         creationParameters,
         stagingBucketName,
         tempBucketName,
@@ -174,6 +177,7 @@ public class CreateDataprocClusterStep implements Step {
 
   @VisibleForTesting
   static Cluster setFields(
+      String clusterId,
       ApiGcpDataprocClusterCreationParameters creationParameters,
       String stagingBucketName,
       String tempBucketName,
@@ -183,7 +187,7 @@ public class CreateDataprocClusterStep implements Step {
       Cluster cluster) {
 
     cluster
-        .setClusterName(creationParameters.getClusterId())
+        .setClusterName(clusterId)
         .setConfig(
             new ClusterConfig()
                 .setConfigBucket(stagingBucketName)
@@ -213,6 +217,7 @@ public class CreateDataprocClusterStep implements Step {
                 .setEndpointConfig(new EndpointConfig().setEnableHttpPortAccess(true))
                 .setSoftwareConfig(
                     new SoftwareConfig()
+                        .setProperties(creationParameters.getProperties())
                         .setOptionalComponents(creationParameters.getComponents())));
 
     // Configure cluster lifecycle
@@ -241,7 +246,11 @@ public class CreateDataprocClusterStep implements Step {
       }
     }
 
-    // Set first manager node vm metadata
+    // Set additional cluster properties
+    Map<String, String> properties = new HashMap<>();
+    cluster.getConfig().getSoftwareConfig().setProperties(properties);
+
+    // Set metadata on all cluster vm nodes
     Map<String, String> metadata = new HashMap<>();
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
     addDefaultMetadata(metadata, workspaceUserFacingId, cliServer);

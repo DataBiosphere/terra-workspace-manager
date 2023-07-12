@@ -183,8 +183,6 @@ components:
     GcpDataprocClusterCreationParameters:
       type: object
       required:
-      - clusterId
-      - region
       - configBucket
       - tempBucket
       - managerNodeConfig
@@ -204,7 +202,12 @@ components:
           items:
               type: string
           uniqueItems: true
-          description: List of optional components to install on the cluster manager node. See full list of available components here https://cloud.google.com/dataproc/docs/concepts/components/overview
+          description: List of optional components to install on the cluster manager node. See full list of available components here https://cloud.google.com/dataproc/docs/concepts/components/overview.
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of additional properties to set on the cluster. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/cluster-properties.
         softwareFramework:
           type: string
           enum: ["HAIL"]

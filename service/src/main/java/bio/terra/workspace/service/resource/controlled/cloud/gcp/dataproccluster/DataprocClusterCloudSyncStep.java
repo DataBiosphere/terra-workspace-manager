@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster;
 
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_DATAPROC_CLUSTER_PARAMETERS;
-
 import bio.terra.cloudres.google.dataproc.ClusterName;
 import bio.terra.cloudres.google.dataproc.DataprocCow;
 import bio.terra.stairway.FlightContext;
@@ -11,7 +9,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.generated.model.ApiGcpDataprocClusterCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -54,16 +51,13 @@ public class DataprocClusterCloudSyncStep implements Step {
     GcpCloudContext cloudContext =
         FlightUtils.getRequired(
             workingMap, ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
-
-    ApiGcpDataprocClusterCreationParameters creationParameters =
-        flightContext
-            .getInputParameters()
-            .get(CREATE_DATAPROC_CLUSTER_PARAMETERS, ApiGcpDataprocClusterCreationParameters.class);
+    String region =
+        FlightUtils.getRequired(
+            workingMap, ControlledResourceKeys.CREATE_RESOURCE_REGION, String.class);
 
     DataprocCow dataprocCow = crlService.getDataprocCow();
 
     List<Binding> newBindings = createBindings(cloudContext);
-    String region = creationParameters.getRegion();
     ClusterName clusterName = resource.toClusterName(region);
     try {
       Policy policy = dataprocCow.clusters().getIamPolicy(clusterName).execute();

@@ -117,7 +117,7 @@ public class CustomGcpIamRoleMapping {
               "compute.zoneOperations.list")
           .build();
   static final ImmutableList<String> DATAPROC_CLUSTER_READER_PERMISSIONS =
-      ImmutableList.of("compute.instances.get", "compute.instances.list");
+      ImmutableList.of("compute.instances.get", "compute.instances.list", "dataproc.clusters.get");
   static final ImmutableList<String> DATAPROC_CLUSTER_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(DATAPROC_CLUSTER_READER_PERMISSIONS)

@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
+import bio.terra.testrunner.runner.config.ServiceAccountSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.ControlledFlexibleResourceApi;
@@ -28,6 +29,7 @@ import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.dataproc.Dataproc;
 import com.google.api.services.iam.v1.Iam;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import com.google.auth.http.HttpCredentialsAdapter;
@@ -127,6 +129,15 @@ public class ClientTestUtils {
   public static AIPlatformNotebooks getAIPlatformNotebooksClient(TestUserSpecification testUser)
       throws GeneralSecurityException, IOException {
     return new AIPlatformNotebooks(
+        GoogleNetHttpTransport.newTrustedTransport(),
+        JacksonFactory.getDefaultInstance(),
+        new HttpCredentialsAdapter(
+            AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES)));
+  }
+
+  public static Dataproc getDataprocClient(TestUserSpecification testUser)
+      throws GeneralSecurityException, IOException {
+    return new Dataproc(
         GoogleNetHttpTransport.newTrustedTransport(),
         JacksonFactory.getDefaultInstance(),
         new HttpCredentialsAdapter(
@@ -461,6 +472,18 @@ public class ClientTestUtils {
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(grantee.userEmail), workspaceUuid, roleToGrant);
     logger.info("Added {} as {} to workspace {}", grantee.userEmail, roleToGrant, workspaceUuid);
+  }
+
+  public static void grantSARole(
+      WorkspaceApi workspaceApi,
+      UUID workspaceUuid,
+      ServiceAccountSpecification grantee,
+      IamRole roleToGrant)
+      throws Exception {
+    // Have WSM do the grant
+    workspaceApi.grantRole(
+        new GrantRoleRequestBody().memberEmail(grantee.name), workspaceUuid, roleToGrant);
+    logger.info("Added {} as {} to workspace {}", grantee.name, roleToGrant, workspaceUuid);
   }
 
   public static void workspaceRoleWaitForPropagation(

@@ -47,6 +47,7 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
   public void setFields() {
     Cluster cluster =
         CreateDataprocClusterStep.setFields(
+            creationParameters.getClusterId(),
             creationParameters,
             "my-staging-bucket",
             "my-temp-bucket",
@@ -86,6 +87,7 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
         ReservedMetadataKeyException.class,
         () ->
             CreateDataprocClusterStep.setFields(
+                creationParameters.getClusterId(),
                 creationParameters
                     // "terra-workspace-id" is a reserved metadata key.
                     .metadata(Map.of("terra-workspace-id", "fakeworkspaceid")),
@@ -99,6 +101,7 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
         ReservedMetadataKeyException.class,
         () ->
             CreateDataprocClusterStep.setFields(
+                creationParameters.getClusterId(),
                 creationParameters
                     // "terra-cli-server" is a reserved metadata key.
                     .metadata(Map.of("terra-cli-server", "fakeserver")),

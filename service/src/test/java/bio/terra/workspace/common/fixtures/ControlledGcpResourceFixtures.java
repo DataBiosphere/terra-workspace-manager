@@ -20,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParamete
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterInstanceGroupConfig;
+import bio.terra.workspace.generated.model.ApiGcpDataprocClusterLifecycleConfig;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
@@ -423,7 +424,8 @@ public class ControlledGcpResourceFixtures {
         .primaryWorkerConfig(
             new ApiGcpDataprocClusterInstanceGroupConfig()
                 .numInstances(2)
-                .machineType("n2-standard-2"));
+                .machineType("n2-standard-2"))
+        .lifecycleConfig(new ApiGcpDataprocClusterLifecycleConfig().idleDeleteTtl("3600s"));
   }
 
   /**

@@ -76,7 +76,7 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
                         .get(WsmIamRole.READER)
                         .getIncludedPermissions())))));
     assertThat(
-        gcpCloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocWriterPermissions(),
         everyItem(
             not(
                 in(
@@ -85,7 +85,7 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
                         .get(WsmIamRole.WRITER)
                         .getIncludedPermissions())))));
     assertThat(
-        gcpCloudSyncRoleMapping.getAdditionalDataprocOwnerPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocWriterPermissions(),
         everyItem(
             not(
                 in(
@@ -108,7 +108,7 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
                     .get(WsmIamRole.READER)
                     .getIncludedPermissions()))));
     assertThat(
-        gcpCloudSyncRoleMapping.getAdditionalDataprocReaderPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocWriterPermissions(),
         everyItem(
             in(
                 (gcpCloudSyncRoleMapping
@@ -116,7 +116,7 @@ public class CloudSyncRoleMappingTest extends BaseUnitTest {
                     .get(WsmIamRole.WRITER)
                     .getIncludedPermissions()))));
     assertThat(
-        gcpCloudSyncRoleMapping.getAdditionalDataprocOwnerPermissions(),
+        gcpCloudSyncRoleMapping.getAdditionalDataprocWriterPermissions(),
         everyItem(
             in(
                 (gcpCloudSyncRoleMapping

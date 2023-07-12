@@ -753,8 +753,6 @@ public class ControlledResourceService {
     jobBuilder.addParameter(
         ControlledResourceKeys.CREATE_DATAPROC_CLUSTER_PARAMETERS, creationParameters);
     jobBuilder.addParameter(ControlledResourceKeys.CLOUD_PET_SERVICE_ACCOUNT, petSaEmail);
-    jobBuilder.addParameter(
-        ControlledResourceKeys.CREATE_RESOURCE_REGION, creationParameters.getRegion());
 
     String jobId = jobBuilder.submit();
     jobService.waitForMetadataOrJob(

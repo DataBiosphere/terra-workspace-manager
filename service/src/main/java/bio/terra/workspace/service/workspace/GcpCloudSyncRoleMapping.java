@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -140,9 +141,10 @@ public class GcpCloudSyncRoleMapping {
           "monitoring.metricDescriptors.list",
           "monitoring.monitoredResourceDescriptors.get",
           "monitoring.monitoredResourceDescriptors.list");
-  private final List<String> additionalDataprocOwnerPermissions =
+  private final List<String> additionalDataprocWriterPermissions =
       ImmutableList.of(
           "dataproc.jobs.create",
+          "dataproc.jobs.submit",
           "dataproc.jobs.update",
           "dataproc.jobs.delete",
           "dataproc.jobs.cancel",
@@ -181,6 +183,7 @@ public class GcpCloudSyncRoleMapping {
   private final List<String> projectWriterWithDataprocPermissions =
       new ImmutableList.Builder<String>()
           .addAll(projectWriterPermissions)
+          .addAll(additionalDataprocWriterPermissions)
           .addAll(projectReaderWithDataprocPermissions)
           .build();
 
@@ -188,16 +191,17 @@ public class GcpCloudSyncRoleMapping {
       new ImmutableList.Builder<String>()
           .addAll(projectOwnerPermissions)
           .addAll(projectWriterWithDataprocPermissions)
-          .addAll(additionalDataprocOwnerPermissions)
           .build();
 
   // Getters for testing permissions enabled by dataproc flag
+  @VisibleForTesting
   public List<String> getAdditionalDataprocReaderPermissions() {
     return additionalDataprocReaderPermissions;
   }
 
-  public List<String> getAdditionalDataprocOwnerPermissions() {
-    return additionalDataprocOwnerPermissions;
+  @VisibleForTesting
+  public List<String> getAdditionalDataprocWriterPermissions() {
+    return additionalDataprocWriterPermissions;
   }
 
   @Autowired
