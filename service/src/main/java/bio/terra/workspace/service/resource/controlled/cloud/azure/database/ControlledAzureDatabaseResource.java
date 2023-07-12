@@ -4,6 +4,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
@@ -33,6 +34,8 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,7 +43,6 @@ import java.util.UUID;
 public class ControlledAzureDatabaseResource extends ControlledResource {
   private final String databaseName;
   private final UUID databaseOwner;
-
   private final String k8sNamespace;
 
   @JsonCreator
@@ -141,17 +143,11 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
 
-    flight.addStep(
-        new GetAzureDatabaseStep(
-            flightBeanBag.getAzureConfig(),
-            flightBeanBag.getCrlService(),
-            this,
-            flightBeanBag.getSamService(),
-            flightBeanBag.getLandingZoneApiDispatch(),
-            flightBeanBag.getWorkspaceService(),
-            getWorkspaceId()),
-        cloudRetry);
+    getAddSteps(flightBeanBag).forEach(step -> flight.addStep(step, cloudRetry));
+  }
 
+  @VisibleForTesting
+  List<Step> getAddSteps(FlightBeanBag flightBeanBag) {
     var getManagedIdentityStep =
         switch (getAccessScope()) {
           case ACCESS_SCOPE_SHARED -> new GetWorkspaceManagedIdentityStep(
@@ -168,9 +164,16 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
               getAssignedUser().orElseThrow());
         };
 
-    flight.addStep(getManagedIdentityStep, cloudRetry);
-
-    flight.addStep(
+    return List.of(
+        new GetAzureDatabaseStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getSamService(),
+            flightBeanBag.getLandingZoneApiDispatch(),
+            flightBeanBag.getWorkspaceService(),
+            getWorkspaceId()),
+        getManagedIdentityStep,
         new GetFederatedIdentityStep(
             getK8sNamespace(),
             flightBeanBag.getAzureConfig(),
@@ -182,9 +185,6 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
             flightBeanBag.getResourceDao()),
-        cloudRetry);
-
-    flight.addStep(
         new CreateFederatedIdentityStep(
             getK8sNamespace(),
             flightBeanBag.getAzureConfig(),
@@ -194,8 +194,6 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId()),
-        cloudRetry);
-    flight.addStep(
         new CreateAzureDatabaseStep(
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
@@ -204,8 +202,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
-            new KubernetesClientProviderImpl()),
-        cloudRetry);
+            new KubernetesClientProviderImpl()));
   }
 
   /** {@inheritDoc} */
