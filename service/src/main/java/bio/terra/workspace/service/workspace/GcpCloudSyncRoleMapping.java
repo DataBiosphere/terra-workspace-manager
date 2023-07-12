@@ -144,7 +144,6 @@ public class GcpCloudSyncRoleMapping {
   private final List<String> additionalDataprocWriterPermissions =
       ImmutableList.of(
           "dataproc.jobs.create",
-          "dataproc.jobs.submit",
           "dataproc.jobs.update",
           "dataproc.jobs.delete",
           "dataproc.jobs.cancel",
@@ -179,7 +178,6 @@ public class GcpCloudSyncRoleMapping {
           .addAll(additionalDataprocReaderPermissions)
           .build();
 
-  // TODO: PF-2508 Remove Dataproc writer and owner permissions after adding WSM managed dataproc
   private final List<String> projectWriterWithDataprocPermissions =
       new ImmutableList.Builder<String>()
           .addAll(projectWriterPermissions)
