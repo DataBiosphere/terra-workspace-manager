@@ -59,7 +59,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     assertThat(
         "There must be at least three test users defined for this test.",
         testUsers != null && testUsers.size() > 2);
-    this.resourceUser = testUsers.get(1);
+    this.resourceUser = testUsers.get(0);
     this.otherWorkspaceUser = testUsers.get(2);
     assertNotEquals(
         resourceUser.userEmail, otherWorkspaceUser.userEmail, "The two test users are distinct");
@@ -70,7 +70,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
   @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE")
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), resourceUser, IamRole.WRITER);
+    // ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), resourceUser, IamRole.WRITER);
     ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), otherWorkspaceUser, IamRole.WRITER);
 
     String gcpProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);

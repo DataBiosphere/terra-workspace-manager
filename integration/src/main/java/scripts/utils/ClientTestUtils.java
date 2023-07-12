@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
-import bio.terra.testrunner.runner.config.ServiceAccountSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledAzureResourceApi;
 import bio.terra.workspace.api.ControlledFlexibleResourceApi;
@@ -472,18 +471,6 @@ public class ClientTestUtils {
     workspaceApi.grantRole(
         new GrantRoleRequestBody().memberEmail(grantee.userEmail), workspaceUuid, roleToGrant);
     logger.info("Added {} as {} to workspace {}", grantee.userEmail, roleToGrant, workspaceUuid);
-  }
-
-  public static void grantSARole(
-      WorkspaceApi workspaceApi,
-      UUID workspaceUuid,
-      ServiceAccountSpecification grantee,
-      IamRole roleToGrant)
-      throws Exception {
-    // Have WSM do the grant
-    workspaceApi.grantRole(
-        new GrantRoleRequestBody().memberEmail(grantee.name), workspaceUuid, roleToGrant);
-    logger.info("Added {} as {} to workspace {}", grantee.name, roleToGrant, workspaceUuid);
   }
 
   public static void workspaceRoleWaitForPropagation(
