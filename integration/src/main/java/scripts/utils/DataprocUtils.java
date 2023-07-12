@@ -215,7 +215,7 @@ public class DataprocUtils {
             .testIamPermissions(
                 clusterName,
                 new com.google.api.services.dataproc.model.TestIamPermissionsRequest()
-                    .setPermissions(List.of(actAsPermission)))
+                    .setPermissions(List.of(clusterUsePermission)))
             .execute()
             .getPermissions();
     boolean hasClusterUsePermission =
