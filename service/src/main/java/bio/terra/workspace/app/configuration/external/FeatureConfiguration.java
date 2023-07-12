@@ -19,7 +19,6 @@ public class FeatureConfiguration {
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
   private boolean temporaryGrantEnabled;
-  private boolean dataprocEnabled;
   private WsmResourceStateRule stateRule;
 
   public boolean isAzureEnabled() {
@@ -62,14 +61,6 @@ public class FeatureConfiguration {
     this.temporaryGrantEnabled = temporaryGrantEnabled;
   }
 
-  public boolean isDataprocEnabled() {
-    return dataprocEnabled;
-  }
-
-  public void setDataprocEnabled(boolean dataprocEnabled) {
-    this.dataprocEnabled = dataprocEnabled;
-  }
-
   public WsmResourceStateRule getStateRule() {
     return stateRule;
   }
@@ -108,7 +99,6 @@ public class FeatureConfiguration {
     logger.info("Feature: tps-enabled: {}", isTpsEnabled());
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());
     logger.info("Feature: temporary-grant-enabled: {}", isTemporaryGrantEnabled());
-    logger.info("Feature: dataproc-enabled: {}", isDataprocEnabled());
     logger.info("Feature: state-rule: {}", getStateRule());
   }
 }

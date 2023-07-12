@@ -55,7 +55,6 @@ reference:
 feature:
   tps-enabled: true
   temporary-grant-enabled: true
-  dataproc-enabled: true
 
 #Terra Landing Zone Service configuration
 landingzone:
