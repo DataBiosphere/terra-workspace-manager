@@ -27,6 +27,7 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.core.http.policy.HttpLogOptions;
+import com.azure.core.http.policy.UserAgentPolicy;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
@@ -63,6 +64,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -72,6 +74,9 @@ public class CrlService {
 
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
+
+  @Value("${azure.resource.usage-attribute}")
+  private String azureResourceUsageAttribute;
 
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
@@ -177,6 +182,7 @@ public class CrlService {
     // We must use FQDN because there are two `Defaults` symbols imported otherwise.
     return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
             clientConfig, ComputeManager.configure())
+        .withPolicy(new UserAgentPolicy(azureResourceUsageAttribute))
         .authenticate(azureCreds, azureProfile);
   }
 
