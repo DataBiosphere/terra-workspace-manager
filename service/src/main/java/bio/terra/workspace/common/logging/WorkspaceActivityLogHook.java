@@ -300,6 +300,15 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
+  private List<UUID> getControlledResourceToDeleteFromFlight(FlightContext context) {
+    List<ControlledResource> controlledResource =
+        checkNotNull(
+            context
+                .getInputParameters()
+                .get(CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {}));
+    return controlledResource.stream().map(WsmResource::getResourceId).toList();
+  }
+
   private void maybeLogControlledResourcesDeletionFlight(
       FlightContext context, UUID workspaceUuid, String userEmail, String subjectId) {
     List<UUID> resourceIds = getControlledResourceToDeleteFromFlight(context);
@@ -329,15 +338,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 changeSubjectType));
       }
     }
-  }
-
-  private List<UUID> getControlledResourceToDeleteFromFlight(FlightContext context) {
-    List<ControlledResource> controlledResource =
-        checkNotNull(
-            context
-                .getInputParameters()
-                .get(CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {}));
-    return controlledResource.stream().map(WsmResource::getResourceId).toList();
   }
 
   private void maybeLogForSyncGcpIamRolesFlight(

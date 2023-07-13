@@ -14,7 +14,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
@@ -54,7 +53,6 @@ public class CreateFederatedIdentityStepTest {
   @Mock private SamService mockSamService;
   @Mock private WorkspaceService mockWorkspaceService;
   private final UUID workspaceId = UUID.randomUUID();
-  @Mock private ResourceDao mockResourceDao;
   @Mock private AzureCloudContext mockAzureCloudContext;
   private final ControlledAzureManagedIdentityResource identityResource =
       ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
@@ -99,13 +97,11 @@ public class CreateFederatedIdentityStepTest {
             k8sNamespace,
             mockAzureConfig,
             mockCrlService,
-            identityResource.getResourceId(),
             mockKubernetesClientProvider,
             mockLandingZoneApiDispatch,
             mockSamService,
             mockWorkspaceService,
-            workspaceId,
-            mockResourceDao);
+            workspaceId);
     var result =
         step.createFederatedIdentityAndK8sServiceAccount(
             identityResource.getManagedIdentityName(),
@@ -163,13 +159,11 @@ public class CreateFederatedIdentityStepTest {
             k8sNamespace,
             mockAzureConfig,
             mockCrlService,
-            identityResource.getResourceId(),
             mockKubernetesClientProvider,
             mockLandingZoneApiDispatch,
             mockSamService,
             mockWorkspaceService,
-            workspaceId,
-            mockResourceDao);
+            workspaceId);
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
   }
 
@@ -185,13 +179,11 @@ public class CreateFederatedIdentityStepTest {
             k8sNamespace,
             mockAzureConfig,
             mockCrlService,
-            identityResource.getResourceId(),
             mockKubernetesClientProvider,
             mockLandingZoneApiDispatch,
             mockSamService,
             mockWorkspaceService,
-            workspaceId,
-            mockResourceDao);
+            workspaceId);
     return step.createFederatedIdentityAndK8sServiceAccount(
         identityResource.getManagedIdentityName(),
         mockAzureCloudContext,

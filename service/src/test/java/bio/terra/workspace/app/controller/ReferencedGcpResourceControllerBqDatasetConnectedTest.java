@@ -65,9 +65,8 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
   private UUID workspaceId;
   private String projectId;
   private UUID workspaceId2;
-
-  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private final String sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
+  private String sourceResourceName;
+  private String sourceDatasetName;
   private ApiGcpBigQueryDatasetResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -92,6 +91,8 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
 
   @BeforeEach
   void setUpPerTest() throws Exception {
+    sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+    sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
     sourceResource =
         mockMvcUtils.createReferencedBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
@@ -103,8 +104,8 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test

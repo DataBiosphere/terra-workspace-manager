@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -9,6 +11,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -31,14 +34,10 @@ public class StopAwsSageMakerNotebookStep implements Step {
     this.resourceDeletion = resourceDeletion;
   }
 
-  @Override
-  public StepResult doStep(FlightContext flightContext)
-      throws InterruptedException, RetryException {
-    AwsCredentialsProvider credentialsProvider =
-        AwsUtils.createWsmCredentialProvider(
-            awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
-
+  @VisibleForTesting
+  static StepResult executeStopAwsSageMakerNotebook(
+      AwsCredentialsProvider credentialsProvider, ControlledAwsSageMakerNotebookResource resource)
+      throws NotFoundException {
     try {
       NotebookInstanceStatus notebookStatus =
           AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
@@ -51,15 +50,10 @@ public class StopAwsSageMakerNotebookStep implements Step {
         }
         case STOPPING -> AwsUtils.waitForSageMakerNotebookStatus(
             credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
-        case DELETING -> {
-          if (!resourceDeletion) {
-            throw new ApiException(
-                String.format(
-                    "AWS SageMaker Notebook resource %s, being deleted.",
-                    resource.getResourceId(), notebookStatus));
-          }
-          // else: being deleted
-        }
+        case DELETING -> throw new NotFoundException(
+            String.format(
+                "AWS SageMaker Notebook resource %s, being deleted.", resource.getResourceId()));
+
         case PENDING, UPDATING, UNKNOWN_TO_SDK_VERSION -> throw new ApiException(
             String.format(
                 "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
@@ -68,9 +62,22 @@ public class StopAwsSageMakerNotebookStep implements Step {
         } // already stopped
       }
 
-    } catch (ApiException e) {
+    } catch (ApiException | UnauthorizedException | BadRequestException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+    }
 
+    return StepResult.getStepResultSuccess();
+  }
+
+  @Override
+  public StepResult doStep(FlightContext flightContext)
+      throws InterruptedException, RetryException {
+    try {
+      return executeStopAwsSageMakerNotebook(
+          AwsUtils.createWsmCredentialProvider(
+              awsCloudContextService.getRequiredAuthentication(),
+              awsCloudContextService.discoverEnvironment()),
+          resource);
     } catch (NotFoundException e) {
       if (!resourceDeletion) {
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
@@ -94,9 +101,9 @@ public class StopAwsSageMakerNotebookStep implements Step {
 
       switch (notebookStatus) {
         case STOPPED, FAILED -> {
-          AwsUtils.stopSageMakerNotebook(credentialsProvider, resource);
+          AwsUtils.startSageMakerNotebook(credentialsProvider, resource);
           AwsUtils.waitForSageMakerNotebookStatus(
-              credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+              credentialsProvider, resource, NotebookInstanceStatus.IN_SERVICE);
         }
         case PENDING, UPDATING -> AwsUtils.waitForSageMakerNotebookStatus(
             credentialsProvider, resource, NotebookInstanceStatus.IN_SERVICE);
@@ -109,7 +116,7 @@ public class StopAwsSageMakerNotebookStep implements Step {
         } // already started
       }
 
-    } catch (ApiException | NotFoundException e) {
+    } catch (ApiException | NotFoundException | UnauthorizedException | BadRequestException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 

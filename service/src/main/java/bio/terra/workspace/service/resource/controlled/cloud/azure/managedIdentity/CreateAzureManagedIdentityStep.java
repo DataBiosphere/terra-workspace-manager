@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 
 /**
  * Creates an Azure Managed Identity. Designed to run directly after {@link
- * GetAzureManagedIdentityStep}.
+ * AzureManagedIdentityGuardStep}.
  */
 public class CreateAzureManagedIdentityStep implements Step {
 

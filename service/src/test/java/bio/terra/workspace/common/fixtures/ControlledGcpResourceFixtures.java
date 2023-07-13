@@ -365,7 +365,7 @@ public class ControlledGcpResourceFixtures {
     return new ApiGcpGceInstanceCreationParameters()
         .instanceId(TestUtils.appendRandomNumber("default-instance-id"))
         .zone(DEFAULT_RESOURCE_ZONE)
-        .machineType(String.format("zones/%s/machineTypes/n1-standard-1", DEFAULT_RESOURCE_ZONE))
+        .machineType("n1-standard-1")
         .vmImage("projects/debian-cloud/global/images/family/debian-11");
   }
 

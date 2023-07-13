@@ -59,11 +59,8 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
 
   private UUID workspaceId;
   private UUID workspaceId2;
-
-  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private final String sourceGitRepoUrl =
-      "git@github.com:DataBiosphere/%s.git"
-          .formatted(TestUtils.appendRandomNumber("terra-workspace-manager"));
+  private String sourceResourceName;
+  private String sourceGitRepoUrl;
   private ApiGitRepoResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -84,6 +81,11 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
 
   @BeforeEach
   void setUpPerTest() throws Exception {
+    sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+    sourceGitRepoUrl =
+        "git@github.com:DataBiosphere/%s.git"
+            .formatted(TestUtils.appendRandomNumber("terra-workspace-manager"));
+
     sourceResource =
         mockMvcUtils.createReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
@@ -94,8 +96,8 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test

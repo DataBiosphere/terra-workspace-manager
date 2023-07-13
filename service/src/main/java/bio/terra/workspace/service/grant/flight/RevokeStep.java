@@ -5,6 +5,7 @@ import static java.lang.Boolean.TRUE;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
+import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
@@ -24,6 +25,7 @@ import bio.terra.workspace.service.petserviceaccount.PetSaUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -35,6 +37,7 @@ import com.google.api.services.cloudresourcemanager.v3.model.Binding;
 import com.google.api.services.cloudresourcemanager.v3.model.GetIamPolicyRequest;
 import com.google.api.services.cloudresourcemanager.v3.model.Policy;
 import com.google.api.services.cloudresourcemanager.v3.model.SetIamPolicyRequest;
+import com.google.api.services.compute.model.ZoneSetPolicyRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -176,6 +179,11 @@ public class RevokeStep implements Step {
             controlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
         revokeResourceBq(bqResource, grantData);
       }
+      case CONTROLLED_GCP_GCE_INSTANCE -> {
+        ControlledGceInstanceResource gceInstanceResource =
+            controlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
+        revokeResourceGceInstance(gceInstanceResource, grantData);
+      }
       default -> throw new InternalLogicException("Non-GCP resource got a temporary grant");
     }
   }
@@ -284,6 +292,52 @@ public class RevokeStep implements Step {
               instanceName,
               new com.google.api.services.notebooks.v1.model.SetIamPolicyRequest()
                   .setPolicy(policy))
+          .execute();
+    }
+  }
+
+  private void revokeResourceGceInstance(
+      ControlledGceInstanceResource gceInstanceResource, GrantData grantData) throws IOException {
+    logger.info(
+        "Revoke GCE Instance {} in project {}",
+        gceInstanceResource.getName(),
+        gceInstanceResource.getProjectId());
+
+    CloudComputeCow cloudComputeCow = crlService.getCloudComputeCow();
+    com.google.api.services.compute.model.Policy policy =
+        cloudComputeCow
+            .instances()
+            .getIamPolicy(
+                gceInstanceResource.getProjectId(),
+                gceInstanceResource.getZone(),
+                gceInstanceResource.getInstanceId())
+            .execute();
+    List<com.google.api.services.compute.model.Binding> bindings = policy.getBindings();
+
+    if (bindings != null) {
+      // Remove role-member
+      for (com.google.api.services.compute.model.Binding binding : bindings) {
+        if (binding.getRole().equals(grantData.role())) {
+          List<String> currentMembers = binding.getMembers();
+          List<String> members = new ArrayList<>();
+          for (String member : currentMembers) {
+            if (StringUtils.equals(member, grantData.petSaMember())
+                || StringUtils.equals(member, grantData.userMember())) {
+              continue;
+            }
+            members.add(member);
+          }
+          binding.setMembers(members);
+        }
+      }
+      // Update policy to remove members
+      cloudComputeCow
+          .instances()
+          .setIamPolicy(
+              gceInstanceResource.getProjectId(),
+              gceInstanceResource.getZone(),
+              gceInstanceResource.getInstanceId(),
+              new ZoneSetPolicyRequest().setPolicy(policy))
           .execute();
     }
   }

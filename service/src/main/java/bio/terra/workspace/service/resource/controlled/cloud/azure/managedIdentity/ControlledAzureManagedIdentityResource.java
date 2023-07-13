@@ -115,7 +115,7 @@ public class ControlledAzureManagedIdentityResource extends ControlledResource {
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     flight.addStep(
-        new GetAzureManagedIdentityStep(
+        new AzureManagedIdentityGuardStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(

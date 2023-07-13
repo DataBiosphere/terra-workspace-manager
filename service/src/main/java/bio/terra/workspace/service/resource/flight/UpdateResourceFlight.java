@@ -61,7 +61,9 @@ public class UpdateResourceFlight extends Flight {
     // Apply updates and reset state
     addStep(
         new UpdateFinishStep(
-            flightBeanBag.getResourceDao(), resource.getWorkspaceId(), resource.getResourceId()),
+            flightBeanBag.getResourceDao(),
+            resource,
+            flightBeanBag.getWorkspaceActivityLogService()),
         dbRetry);
   }
 }

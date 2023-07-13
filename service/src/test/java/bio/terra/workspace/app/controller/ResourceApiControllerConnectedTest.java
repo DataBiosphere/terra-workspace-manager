@@ -63,7 +63,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Nested

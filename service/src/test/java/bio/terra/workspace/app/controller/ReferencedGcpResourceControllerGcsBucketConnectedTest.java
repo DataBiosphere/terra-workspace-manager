@@ -58,9 +58,8 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
 
   private UUID workspaceId;
   private UUID workspaceId2;
-
-  private final String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
-  private final String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
+  private String sourceResourceName;
+  private String sourceBucketName;
   private ApiGcpGcsBucketResource sourceResource;
 
   // See here for how to skip workspace creation for local runs:
@@ -82,6 +81,8 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
 
   @BeforeEach
   public void setUpPerTest() throws Exception {
+    sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+    sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
     sourceResource =
         mockMvcUtils.createReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
@@ -92,8 +93,8 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test

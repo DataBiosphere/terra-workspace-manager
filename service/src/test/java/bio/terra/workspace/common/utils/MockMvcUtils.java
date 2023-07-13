@@ -74,6 +74,7 @@ import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
+import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiFlexibleResource;
 import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
@@ -202,6 +203,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  */
 @Component
 public class MockMvcUtils {
+  private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
+
   public static final String AUTH_HEADER = "Authorization";
   public static final String WORKSPACES_V1_PATH = "/api/workspaces/v1";
   public static final String WORKSPACES_V1_BY_UUID_PATH_FORMAT = "/api/workspaces/v1/%s";
@@ -212,6 +215,9 @@ public class MockMvcUtils {
   public static final String CLONE_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s/clone";
   public static final String CLONE_WORKSPACE_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/clone-result/%s";
+  public static final String DELETE_WORKSPACE_V2_FORMAT = "/api/workspaces/v2/%s/delete";
+  public static final String GET_DELETE_WORKSPACE_V2_RESULT_FORMAT =
+      "/api/workspaces/v2/%s/delete-result/%s";
   public static final String UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/properties";
   public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
@@ -351,10 +357,8 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources/%s/clone";
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
   public static final String POLICY_V1_GET_REGION_INFO_PATH = "/api/policies/v1/getLocationInfo";
-
   public static final String LOAD_SIGNED_URL_LIST_PATH_FORMAT =
       "/api/workspaces/alpha1/%s/resources/controlled/gcp/buckets/%s/load";
-
   public static final String LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT =
       "/api/workspaces/alpha1/%s/resources/controlled/gcp/buckets/%s/load/result/%s";
   // Only use this if you are mocking SAM. If you're using real SAM,
@@ -363,20 +367,18 @@ public class MockMvcUtils {
       new AuthenticatedUserRequest(
           DEFAULT_USER_EMAIL, DEFAULT_USER_SUBJECT_ID, Optional.of("ThisIsNotARealBearerToken"));
   public static final String DEFAULT_GCP_RESOURCE_REGION = "us-central1";
-  private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
-  private static final String DEST_BUCKET_RESOURCE_NAME =
+  public static final String DEST_BUCKET_RESOURCE_NAME =
       TestUtils.appendRandomNumber("i-am-the-cloned-bucket");
-
-  private static final List<Integer> JOB_SUCCESS_CODES =
+  public static final List<Integer> JOB_SUCCESS_CODES =
       List.of(HttpStatus.SC_OK, HttpStatus.SC_ACCEPTED);
 
   // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
-  @Autowired private MockMvc mockMvc;
-  @Autowired private ObjectMapper objectMapper;
-  @Autowired private JobService jobService;
-  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
-  @Autowired private SamService samService;
+  @Autowired protected MockMvc mockMvc;
+  @Autowired protected ObjectMapper objectMapper;
+  @Autowired protected JobService jobService;
+  @Autowired protected NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired protected SamService samService;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -662,6 +664,43 @@ public class MockMvcUtils {
                     .content(objectMapper.writeValueAsString(apiPropertyKeys)),
                 userRequest))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public ApiJobResult deleteWorkspaceV2Async(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    ApiDeleteWorkspaceV2Request request =
+        new ApiDeleteWorkspaceV2Request()
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+    String content =
+        getSerializedResponseForPost(
+            userRequest,
+            DELETE_WORKSPACE_V2_FORMAT,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(content, ApiJobResult.class);
+  }
+
+  public ApiJobResult getDeleteWorkspaceV2Result(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
+    String serializedResponse =
+        getSerializedResponseForGetJobResult(
+            userRequest, GET_DELETE_WORKSPACE_V2_RESULT_FORMAT, workspaceId, jobId);
+    return objectMapper.readValue(serializedResponse, ApiJobResult.class);
+  }
+
+  public void deleteWorkspaceV2AndWait(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    ApiJobResult result = deleteWorkspaceV2Async(userRequest, workspaceId);
+    String jobId = result.getJobReport().getId();
+    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
+      TimeUnit.SECONDS.sleep(15);
+      result = getDeleteWorkspaceV2Result(userRequest, workspaceId, jobId);
+    }
+    if (result.getJobReport().getStatus() != StatusEnum.SUCCEEDED) {
+      logger.error("Delete workspace failed: {}", result.getErrorReport());
+    } else {
+      logger.info("Deleted workspace {}", workspaceId);
+    }
   }
 
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID workspaceId)
@@ -2757,7 +2796,7 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
-  private String getSerializedResponseForGet(
+  protected String getSerializedResponseForGet(
       AuthenticatedUserRequest userRequest, String path, UUID workspaceId, UUID resourceId)
       throws Exception {
     return mockMvc

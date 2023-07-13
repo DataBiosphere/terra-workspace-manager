@@ -86,7 +86,7 @@ public class GetAzureDatabaseStepTest {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
     var databaseResource =
-        ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
+        ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 
@@ -118,7 +118,7 @@ public class GetAzureDatabaseStepTest {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
     var databaseResource =
-        ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
+        ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 
