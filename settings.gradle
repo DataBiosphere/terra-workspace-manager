@@ -23,6 +23,7 @@ include 'openapi'
 include 'client'
 include 'service'
 include 'integration'
+include 'azureDatabaseUtils'
 
 // -- Global Variables --
 // For defining shared state and common dependencies

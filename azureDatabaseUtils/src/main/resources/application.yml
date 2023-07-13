@@ -1,0 +1,19 @@
+env:
+  db:
+    host: ${DB_SERVER_NAME}.postgres.database.azure.com:5432
+    user: ${ADMIN_DB_USER_NAME}
+  params:
+    newDbUserName: ${NEW_DB_USER_NAME:newuser}
+    newDbUserOid: ${NEW_DB_USER_OID:newuseroid}
+    newDbName: ${NEW_DB_NAME:newdb}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${env.db.host}/postgres?authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin
+    username: ${env.db.user}
+
+azureDatabaseUtils:
+  create:
+    newDbUserName: ${env.params.newDbUserName}
+    newDbUserOid: ${env.params.newDbUserOid}
+    newDbName: ${env.params.newDbName}

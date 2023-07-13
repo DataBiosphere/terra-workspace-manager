@@ -98,19 +98,22 @@ public class CreateAzureDatabaseStepTest {
     var step = setupStepTest(CreateAzureDatabaseStep.POD_SUCCEEDED);
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
+    var spec = podCaptor.getValue().getSpec();
+    var container = spec.getContainers().get(0);
     var env =
-        podCaptor.getValue().getSpec().getContainers().get(0).getEnv().stream()
+        container.getEnv().stream()
             .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
 
+    assertThat(env.get("spring_profiles_active"), equalTo("CreateDatabase"));
     assertThat(env.get("DB_SERVER_NAME"), equalTo(mockDatabase.getResourceId()));
     assertThat(env.get("ADMIN_DB_USER_NAME"), equalTo(mockAdminIdentity.getResourceId()));
     assertThat(env.get("NEW_DB_USER_NAME"), equalTo(uamiName));
     assertThat(env.get("NEW_DB_USER_OID"), equalTo(uamiPrincipalId));
     assertThat(env.get("NEW_DB_NAME"), equalTo(databaseResource.getDatabaseName()));
 
-    assertThat(
-        podCaptor.getValue().getSpec().getServiceAccountName(),
-        equalTo(mockAdminIdentity.getResourceId()));
+    assertThat(container.getImage(), equalTo(mockAzureConfig.getAzureDatabaseUtilImage()));
+
+    assertThat(spec.getServiceAccountName(), equalTo(mockAdminIdentity.getResourceId()));
   }
 
   @Test
@@ -181,6 +184,8 @@ public class CreateAzureDatabaseStepTest {
   @NotNull
   private CreateAzureDatabaseStep setupStepTest(String podPhase) throws ApiException {
     createMockFlightContext();
+    when(mockAzureConfig.getAzureDatabaseUtilImage()).thenReturn(UUID.randomUUID().toString());
+
     when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, String.class))
         .thenReturn(uamiName);
     when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_PRINCIPAL_ID, String.class))

@@ -19,6 +19,7 @@ public class AzureConfiguration {
   private String corsAllowedOrigins;
   private String azureMonitorLinuxAgentVersion;
   private List<String> protectedDataLandingZoneDefs;
+  private String azureDatabaseUtilImage;
 
   public String getManagedAppClientId() {
     return managedAppClientId;
@@ -91,5 +92,13 @@ public class AzureConfiguration {
 
   public void setProtectedDataLandingZoneDefs(List<String> protectedDataLandingZoneDefs) {
     this.protectedDataLandingZoneDefs = protectedDataLandingZoneDefs;
+  }
+
+  public String getAzureDatabaseUtilImage() {
+    return azureDatabaseUtilImage;
+  }
+
+  public void setAzureDatabaseUtilImage(String azureDatabaseUtilImage) {
+    this.azureDatabaseUtilImage = azureDatabaseUtilImage;
   }
 }

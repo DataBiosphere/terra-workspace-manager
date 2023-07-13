@@ -164,19 +164,6 @@ public class CreateAzureDatabaseStep implements Step {
       String podName)
       throws ApiException {
     try {
-      // TODO: One day we should create our own image for this, but for now we'll use the published
-      // postgres image, install the az cli, and run a script to create the database
-      var shellCommand =
-          String.join(
-              " && ",
-              List.of(
-                  "apt update",
-                  "apt -y install curl",
-                  "curl -sL https://aka.ms/InstallAzureCLIDeb | bash",
-                  "apt install -y postgresql-client",
-                  "az login --federated-token \"$(cat $AZURE_FEDERATED_TOKEN_FILE)\" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID --allow-no-subscriptions",
-                  "psql \"host=${DB_SERVER_NAME}.postgres.database.azure.com port=5432 dbname=postgres user=${ADMIN_DB_USER_NAME} password=$(az account get-access-token --query accessToken -otsv) sslmode=require\" --command \"CREATE DATABASE ${NEW_DB_NAME};\"",
-                  "psql \"host=${DB_SERVER_NAME}.postgres.database.azure.com port=5432 dbname=postgres user=${ADMIN_DB_USER_NAME} password=$(az account get-access-token --query accessToken -otsv) sslmode=require\" --command \"SELECT case when exists(select * FROM pg_roles where rolname='${NEW_DB_USER_NAME}') then 'exists' else pgaadauth_create_principal_with_oid('${NEW_DB_USER_NAME}', '${NEW_DB_USER_OID}', 'service', false, false) end; GRANT ALL PRIVILEGES on DATABASE ${NEW_DB_NAME} to \\\"${NEW_DB_USER_NAME}\\\";\""));
       String dbServerName =
           getResourceName(
               landingZoneApiDispatch
@@ -201,16 +188,12 @@ public class CreateAzureDatabaseStep implements Step {
                       .addContainersItem(
                           new V1Container()
                               .name("createdb")
-                              .image("ubuntu")
+                              .image(azureConfig.getAzureDatabaseUtilImage())
                               .env(
                                   List.of(
-                                      /*
-                                       * WARNING: There is a command and sql injection vulnerability here.
-                                       * These environment variables are used in the shell command above.
-                                       * newDbUserName and resource.getDatabaseName are user input,
-                                       * but they have been validated. The others are system generated.
-                                       * Be careful if you change this code.
-                                       */
+                                      new V1EnvVar()
+                                          .name("spring_profiles_active")
+                                          .value("CreateDatabase"),
                                       new V1EnvVar().name("DB_SERVER_NAME").value(dbServerName),
                                       new V1EnvVar()
                                           .name("ADMIN_DB_USER_NAME")
@@ -219,8 +202,7 @@ public class CreateAzureDatabaseStep implements Step {
                                       new V1EnvVar().name("NEW_DB_USER_OID").value(newDbUserOid),
                                       new V1EnvVar()
                                           .name("NEW_DB_NAME")
-                                          .value(resource.getDatabaseName())))
-                              .command(List.of("sh", "-c", shellCommand))));
+                                          .value(resource.getDatabaseName())))));
 
       aksApi.createNamespacedPod(aksNamespace, pod, null, null, null, null);
 
