@@ -51,8 +51,8 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
   @Autowired JobService jobService;
 
   private UUID workspaceId;
-  private UUID STAGING_BUCKET_ID;
-  private UUID TEMP_BUCKET_ID;
+  private UUID stagingBucketUuid;
+  private UUID tempBucketUuid;
 
   @BeforeAll
   public void setup() throws Exception {
@@ -91,8 +91,8 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
                 /*lifecycle*/ null)
             .getGcpBucket();
 
-    STAGING_BUCKET_ID = stagingBucketResource.getMetadata().getResourceId();
-    TEMP_BUCKET_ID = tempBucketResource.getMetadata().getResourceId();
+    stagingBucketUuid = stagingBucketResource.getMetadata().getResourceId();
+    tempBucketUuid = tempBucketResource.getMetadata().getResourceId();
   }
 
   /**
@@ -126,8 +126,8 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,
                 "asia-east1",
-                STAGING_BUCKET_ID,
-                TEMP_BUCKET_ID)
+                stagingBucketUuid,
+                tempBucketUuid)
             .getDataprocCluster();
 
     assertDataprocCluster(
@@ -151,8 +151,8 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             "asia-east1",
-            STAGING_BUCKET_ID,
-            TEMP_BUCKET_ID,
+            stagingBucketUuid,
+            tempBucketUuid,
             duplicateName)
         .getDataprocCluster();
 
@@ -162,8 +162,8 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,
                 "asia-east1",
-                STAGING_BUCKET_ID,
-                TEMP_BUCKET_ID,
+                stagingBucketUuid,
+                tempBucketUuid,
                 duplicateName,
                 StatusEnum.FAILED)
             .getErrorReport();

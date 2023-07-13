@@ -15,7 +15,6 @@
     "integration/ListWorkspaces.json",
     "integration/MergeGroupPolicies.json",
     "integration/PrivateControlledAiNotebookInstanceLifecycle.json",
-    "integration/PrivateControlledDataprocClusterLifecycle.json",
     "integration/ReferencedBigQueryResourceLifecycle.json",
     "integration/ReferencedDataRepoSnapshotLifecycle.json",
     "integration/ReferencedGcsResourceLifecycle.json",

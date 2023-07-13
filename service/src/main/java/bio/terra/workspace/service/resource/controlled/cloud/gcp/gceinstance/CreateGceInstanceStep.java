@@ -1,8 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance;
 
 import static bio.terra.workspace.common.utils.GcpUtils.INSTANCE_SERVICE_ACCOUNT_SCOPES;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource.SERVER_ID_METADATA_KEY;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource.WORKSPACE_ID_METADATA_KEY;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_PARAMETERS;
@@ -24,6 +22,7 @@ import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceGuestAccelerator;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -233,16 +232,18 @@ public class CreateGceInstanceStep implements Step {
 
   private static void addDefaultMetadata(
       Map<String, String> metadata, String workspaceUserFacingId, String cliServer) {
-    if (metadata.containsKey(WORKSPACE_ID_METADATA_KEY)
-        || metadata.containsKey(SERVER_ID_METADATA_KEY)) {
+    if (metadata.containsKey(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY)
+        || metadata.containsKey(GcpResourceConstants.SERVER_ID_METADATA_KEY)) {
       throw new ReservedMetadataKeyException(
-          String.format(
-              "The metadata keys %s and %s are reserved for Terra.",
-              WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY));
+          "The metadata keys "
+              + GcpResourceConstants.WORKSPACE_ID_METADATA_KEY
+              + " and "
+              + GcpResourceConstants.SERVER_ID_METADATA_KEY
+              + " are reserved for Terra.");
     }
-    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
+    metadata.put(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
     if (!StringUtils.isEmpty(cliServer)) {
-      metadata.put(SERVER_ID_METADATA_KEY, cliServer);
+      metadata.put(GcpResourceConstants.SERVER_ID_METADATA_KEY, cliServer);
     }
   }
 

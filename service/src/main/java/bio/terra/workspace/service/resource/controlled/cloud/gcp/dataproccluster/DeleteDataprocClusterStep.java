@@ -9,6 +9,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.exception.ResourceIsDeletedException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.model.Operation;
 import java.io.IOException;
@@ -71,11 +72,9 @@ public class DeleteDataprocClusterStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    logger.error(
-        "Cannot undo delete of GCS Dataproc cluster {} in workspace {}.",
-        resource.getResourceId(),
-        resource.getWorkspaceId());
-    // Surface whatever error caused Stairway to begin undoing.
-    return flightContext.getResult();
+    throw new ResourceIsDeletedException(
+        String.format(
+            "Cannot undo delete of GCS Dataproc cluster %s in workspace %s.",
+            resource.getResourceId(), resource.getWorkspaceId()));
   }
 }

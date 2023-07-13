@@ -37,15 +37,6 @@ import java.util.Optional;
 
 /** A {@link ControlledResource} for a Google Dataproc clusters */
 public class ControlledDataprocClusterResource extends ControlledResource {
-
-  /** The Dataproc cluster metadata key used to set the terra workspace. */
-  protected static final String WORKSPACE_ID_METADATA_KEY = "terra-workspace-id";
-  /**
-   * The VM instance metadata key used to point the terra CLI at the correct WSM and SAM instances
-   * given a CLI specific name.
-   */
-  protected static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
-
   private static final String RESOURCE_DESCRIPTOR = "ControlledDataprocCluster";
   private final String clusterId;
   private final String region;

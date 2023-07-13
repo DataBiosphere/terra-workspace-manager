@@ -1,8 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster;
 
 import static bio.terra.workspace.common.utils.GcpUtils.INSTANCE_SERVICE_ACCOUNT_SCOPES;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource.SERVER_ID_METADATA_KEY;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource.WORKSPACE_ID_METADATA_KEY;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_DATAPROC_CLUSTER_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_SUBNETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
@@ -25,6 +23,7 @@ import bio.terra.workspace.generated.model.ApiGcpDataprocClusterInstanceGroupCon
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterLifecycleConfig;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -40,6 +39,7 @@ import com.google.api.services.dataproc.model.EndpointConfig;
 import com.google.api.services.dataproc.model.GceClusterConfig;
 import com.google.api.services.dataproc.model.InstanceGroupConfig;
 import com.google.api.services.dataproc.model.LifecycleConfig;
+import com.google.api.services.dataproc.model.NodeInitializationAction;
 import com.google.api.services.dataproc.model.Operation;
 import com.google.api.services.dataproc.model.SoftwareConfig;
 import com.google.common.annotations.VisibleForTesting;
@@ -192,7 +192,11 @@ public class CreateDataprocClusterStep implements Step {
             new ClusterConfig()
                 .setConfigBucket(stagingBucketName)
                 .setTempBucket(tempBucketName)
-                // TODO PF-2828: Add post-startup script
+                // TODO PF-2828: Add WSM default post-startup script
+                .setInitializationActions(
+                    List.of(
+                        new NodeInitializationAction()
+                            .setExecutableFile(creationParameters.getInitializationScript())))
                 .setMasterConfig(
                     getInstanceGroupConfig(creationParameters.getManagerNodeConfig(), false))
                 .setWorkerConfig(
@@ -294,18 +298,18 @@ public class CreateDataprocClusterStep implements Step {
 
   private static void addDefaultMetadata(
       Map<String, String> metadata, String workspaceUserFacingId, String cliServer) {
-    if (metadata.containsKey(WORKSPACE_ID_METADATA_KEY)
-        || metadata.containsKey(SERVER_ID_METADATA_KEY)) {
+    if (metadata.containsKey(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY)
+        || metadata.containsKey(GcpResourceConstants.SERVER_ID_METADATA_KEY)) {
       throw new ReservedMetadataKeyException(
           "The metadata keys "
-              + WORKSPACE_ID_METADATA_KEY
+              + GcpResourceConstants.WORKSPACE_ID_METADATA_KEY
               + " and "
-              + SERVER_ID_METADATA_KEY
+              + GcpResourceConstants.SERVER_ID_METADATA_KEY
               + " are reserved for Terra.");
     }
-    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
+    metadata.put(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
     if (!StringUtils.isEmpty(cliServer)) {
-      metadata.put(SERVER_ID_METADATA_KEY, cliServer);
+      metadata.put(GcpResourceConstants.SERVER_ID_METADATA_KEY, cliServer);
     }
   }
 

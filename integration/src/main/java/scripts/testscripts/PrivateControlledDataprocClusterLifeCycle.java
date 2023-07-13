@@ -70,7 +70,6 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
   @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE")
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
-    // ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), resourceUser, IamRole.WRITER);
     ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), otherWorkspaceUser, IamRole.WRITER);
 
     String gcpProjectId = CloudContextMaker.createGcpCloudContext(getWorkspaceId(), workspaceApi);
