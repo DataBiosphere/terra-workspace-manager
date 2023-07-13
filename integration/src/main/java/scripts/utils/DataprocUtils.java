@@ -153,7 +153,8 @@ public class DataprocUtils {
    * Check whether the user has access to the Jupyerlab component gateway proxy.
    *
    * <p>We can't directly test that we can go through the proxy to Jupyterlab without a real Google
-   * user auth flow, so instead we check that the proxy url is available and that
+   * user auth flow, so instead we check that the proxy url is available and that the user can both
+   * impersonate its service account and has use permission on the cluster.
    */
   public static boolean userHasProxyAccess(
       CreatedControlledGcpDataprocClusterResult createdCluster,

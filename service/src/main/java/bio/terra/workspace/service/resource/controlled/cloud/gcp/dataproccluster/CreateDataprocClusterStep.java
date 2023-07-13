@@ -192,7 +192,6 @@ public class CreateDataprocClusterStep implements Step {
             new ClusterConfig()
                 .setConfigBucket(stagingBucketName)
                 .setTempBucket(tempBucketName)
-                // TODO PF-2828: Add WSM default post-startup script
                 .setInitializationActions(
                     List.of(
                         new NodeInitializationAction()
@@ -223,6 +222,17 @@ public class CreateDataprocClusterStep implements Step {
                     new SoftwareConfig()
                         .setProperties(creationParameters.getProperties())
                         .setOptionalComponents(creationParameters.getComponents())));
+
+    // Set initialization script
+    // TODO PF-2828: Add WSM default post-startup script
+    if (!StringUtils.isEmpty(creationParameters.getInitializationScript())) {
+      cluster
+          .getConfig()
+          .setInitializationActions(
+              List.of(
+                  new NodeInitializationAction()
+                      .setExecutableFile(creationParameters.getInitializationScript())));
+    }
 
     // Configure cluster lifecycle
     ApiGcpDataprocClusterLifecycleConfig lifecycleConfig = creationParameters.getLifecycleConfig();
