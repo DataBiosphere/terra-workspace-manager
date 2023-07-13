@@ -81,14 +81,14 @@ components:
         Database-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [ name, owner ]
+      required: [ name ]
       properties:
         name:
           description: A valid database name
           type: string
           pattern: ^[a-zA-Z][a-zA-Z0-9_]{0,31}$
         owner:
-          description: Resource id of an azure managed identity in this workspace to be the owner of the database
+          description: Resource id of an azure managed identity in this workspace to be the owner of the database, required for shared databases. For private databases, the owner will be determined from privateResourceUser.
           type: string
           format: uuid
         k8sNamespace:

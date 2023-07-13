@@ -157,7 +157,7 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
             uamiResource.getResourceId());
 
     var dbResource =
-        ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
+        ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
                 dbCreationParameters, workspaceUuid)
             .build();
 

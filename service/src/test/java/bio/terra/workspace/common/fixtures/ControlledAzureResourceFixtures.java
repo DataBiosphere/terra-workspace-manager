@@ -22,6 +22,7 @@ import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtensionTag;
 import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.generated.model.ApiAzureVmUser;
 import bio.terra.workspace.generated.model.ApiManagedBy;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
@@ -411,7 +412,7 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ControlledAzureDatabaseResource.Builder
-      makeDefaultControlledAzureDatabaseResourceBuilder(
+      makeSharedControlledAzureDatabaseResourceBuilder(
           ApiAzureDatabaseCreationParameters creationParameters, UUID workspaceId) {
     return ControlledAzureDatabaseResource.builder()
         .common(
@@ -425,6 +426,27 @@ public class ControlledAzureResourceFixtures {
                 .build())
         .databaseName(creationParameters.getName())
         .databaseOwner(creationParameters.getOwner())
+        .k8sNamespace(creationParameters.getK8sNamespace());
+  }
+
+  public static ControlledAzureDatabaseResource.Builder
+      makePrivateControlledAzureDatabaseResourceBuilder(
+          ApiAzureDatabaseCreationParameters creationParameters,
+          UUID workspaceId,
+          String assignedUser) {
+    return ControlledAzureDatabaseResource.builder()
+        .common(
+            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("db"))
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .assignedUser(assignedUser)
+                .iamRole(ControlledResourceIamRole.EDITOR)
+                .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .build())
+        .databaseName(creationParameters.getName())
         .k8sNamespace(creationParameters.getK8sNamespace());
   }
 }
