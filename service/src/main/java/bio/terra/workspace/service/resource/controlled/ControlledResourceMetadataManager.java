@@ -79,8 +79,8 @@ public class ControlledResourceMetadataManager {
     ControlledResource controlledResource = resource.castToControlledResource();
     String samName = controlledResource.getCategory().getSamResourceName();
 
-    // Everyone who is a reader (or above) on the workspace can see all of the resources in a workspace.
-    // Thus the authorization check is againt the workspace and not the resource itself.
+    // Everyone who is a reader (or above) on the workspace can see all the resources in a
+    // workspace. Thus this authorization check is against the workspace and not the resource.
     if (StringUtils.equals(action, SamControlledResourceActions.READ_ACTION)) {
       checkResourceAuthz(userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid, action);
       return controlledResource;
