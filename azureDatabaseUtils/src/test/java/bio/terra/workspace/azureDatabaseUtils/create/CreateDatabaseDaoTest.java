@@ -70,18 +70,18 @@ public class CreateDatabaseDaoTest extends BaseUnitTest {
    * more than just creates a role.
    */
   private void createRoleFunction() {
-    var function =
-        "create or replace function pgaadauth_create_principal_with_oid(rolename text, oid text, foo text, bar boolean, baz boolean)"
-            + " returns text"
-            + " language plpgsql"
-            + " as"
-            + " $$"
-            + " declare"
-            + " begin"
-            + "    EXECUTE 'create role \"' || rolename || '\"';"
-            + "    return 'created';"
-            + " end;"
-            + " $$;";
+    var function = """
+            create or replace function pgaadauth_create_principal_with_oid(rolename text, oid text, foo text, bar boolean, baz boolean)
+            returns text
+            language plpgsql
+            as
+            $$
+            declare
+            begin
+                EXECUTE 'create role "' || rolename || '"';
+                return 'created';
+            end;
+            $$;""";
     jdbcTemplate.execute(function);
   }
 }
