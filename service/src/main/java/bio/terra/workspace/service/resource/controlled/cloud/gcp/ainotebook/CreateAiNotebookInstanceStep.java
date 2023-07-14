@@ -3,8 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 import static bio.terra.workspace.common.utils.GcpUtils.INSTANCE_SERVICE_ACCOUNT_SCOPES;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.NOTEBOOK_DISABLE_ROOT_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.PROXY_MODE_METADATA_KEY;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.SERVER_ID_METADATA_KEY;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.WORKSPACE_ID_METADATA_KEY;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_NETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_SUBNETWORK_NAME;
@@ -29,6 +27,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -225,21 +224,21 @@ public class CreateAiNotebookInstanceStep implements Step {
 
   private static void addDefaultMetadata(
       Map<String, String> metadata, String workspaceUserFacingId, String cliServer) {
-    if (metadata.containsKey(WORKSPACE_ID_METADATA_KEY)
-        || metadata.containsKey(SERVER_ID_METADATA_KEY)
+    if (metadata.containsKey(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY)
+        || metadata.containsKey(GcpResourceConstants.SERVER_ID_METADATA_KEY)
         || metadata.containsKey(PROXY_MODE_METADATA_KEY)) {
       throw new ReservedMetadataKeyException(
           "The metadata keys "
-              + WORKSPACE_ID_METADATA_KEY
+              + GcpResourceConstants.WORKSPACE_ID_METADATA_KEY
               + ", "
-              + SERVER_ID_METADATA_KEY
+              + GcpResourceConstants.SERVER_ID_METADATA_KEY
               + ", and "
               + PROXY_MODE_METADATA_KEY
               + " are reserved for Terra.");
     }
-    metadata.put(WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
+    metadata.put(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
     if (!StringUtils.isEmpty(cliServer)) {
-      metadata.put(SERVER_ID_METADATA_KEY, cliServer);
+      metadata.put(GcpResourceConstants.SERVER_ID_METADATA_KEY, cliServer);
     }
     // Create the AI Notebook instance in the service account proxy mode to control proxy access by
     // means of IAM permissions on the service account.

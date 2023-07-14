@@ -1,7 +1,6 @@
-package bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance;
+package bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster;
 
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.DEFAULT_ZONE;
-
+import bio.terra.cloudres.google.dataproc.ClusterName;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.stairway.RetryRule;
@@ -11,19 +10,16 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.generated.model.ApiGcpGceInstanceAttributes;
-import bio.terra.workspace.generated.model.ApiGcpGceInstanceResource;
+import bio.terra.workspace.generated.model.ApiGcpDataprocClusterAttributes;
+import bio.terra.workspace.generated.model.ApiGcpDataprocClusterResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GrantPetUsagePermissionStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.RetrieveNetworkNameStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.UpdateInstanceResourceLocationAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -38,44 +34,35 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import java.util.Optional;
-import java.util.Set;
-import javax.annotation.Nullable;
 
-/** A {@link ControlledResource} for a Google Compute Engine VM instance. */
-public class ControlledGceInstanceResource extends ControlledResource {
-  private static final String RESOURCE_DESCRIPTOR = "ControlledGceInstance";
-
-  /** Metadata keys that are reserved by terra. User cannot modify those. */
-  public static final Set<String> RESERVED_METADATA_KEYS =
-      Set.of(
-          GcpResourceConstants.WORKSPACE_ID_METADATA_KEY,
-          GcpResourceConstants.SERVER_ID_METADATA_KEY);
-
-  private final String instanceId;
-  private final String zone;
+/** A {@link ControlledResource} for a Google Dataproc clusters */
+public class ControlledDataprocClusterResource extends ControlledResource {
+  private static final String RESOURCE_DESCRIPTOR = "ControlledDataprocCluster";
+  private final String clusterId;
+  private final String region;
   private final String projectId;
 
   @JsonCreator
-  public ControlledGceInstanceResource(
+  public ControlledDataprocClusterResource(
       @JsonProperty("wsmResourceFields") WsmResourceFields resourceFields,
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
-      @JsonProperty("instanceId") String instanceId,
-      @JsonProperty("zone") String zone,
+      @JsonProperty("clusterId") String clusterId,
+      @JsonProperty("region") String region,
       @JsonProperty("projectId") String projectId) {
     super(resourceFields, controlledResourceFields);
-    this.instanceId = instanceId;
-    this.zone = zone;
+    this.clusterId = clusterId;
+    this.region = region;
     this.projectId = projectId;
     validate();
   }
 
   // Constructor for the builder
-  private ControlledGceInstanceResource(
-      ControlledResourceFields common, String instanceId, String zone, String projectId) {
+  private ControlledDataprocClusterResource(
+      ControlledResourceFields common, String clusterId, String region, String projectId) {
     super(common);
-    this.instanceId = instanceId;
-    this.zone = zone;
+    this.clusterId = clusterId;
+    this.region = region;
     this.projectId = projectId;
     validate();
   }
@@ -107,17 +94,17 @@ public class ControlledGceInstanceResource extends ControlledResource {
     return super.getWsmControlledResourceFields();
   }
 
-  /** The GCP zone of the instance, e.g. "us-east1-b". */
-  public String getZone() {
-    return zone;
+  /** The user specified id of the dataproc cluster. */
+  public String getClusterId() {
+    return clusterId;
   }
 
-  /** The user specified name of the instance. */
-  public String getInstanceId() {
-    return instanceId;
+  /** The Google Cloud Platform region of the dataproc cluster, e.g. "us-east1". */
+  public String getRegion() {
+    return region;
   }
 
-  /** The GCP project id where the instance is created */
+  /** The GCP project id where the cluster is created */
   public String getProjectId() {
     return projectId;
   }
@@ -127,13 +114,13 @@ public class ControlledGceInstanceResource extends ControlledResource {
   @Override
   @JsonIgnore
   public WsmResourceType getResourceType() {
-    return WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE;
+    return WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER;
   }
 
   @Override
   @JsonIgnore
   public WsmResourceFamily getResourceFamily() {
-    return WsmResourceFamily.GCE_INSTANCE;
+    return WsmResourceFamily.DATAPROC_CLUSTER;
   }
 
   /** {@inheritDoc} */
@@ -143,7 +130,7 @@ public class ControlledGceInstanceResource extends ControlledResource {
     return Optional.of(
         new UniquenessCheckAttributes()
             .uniquenessScope(UniquenessScope.WORKSPACE)
-            .addParameter("instanceId", getInstanceId()));
+            .addParameter("clusterId", getClusterId()));
   }
 
   /** {@inheritDoc} */
@@ -157,9 +144,8 @@ public class ControlledGceInstanceResource extends ControlledResource {
     WorkspaceDao workspaceDao = flightBeanBag.getWorkspaceDao();
     String workspaceUserFacingId = workspaceDao.getWorkspace(getWorkspaceId()).getUserFacingId();
 
-    RetryRule longSyncRetryRule = RetryRules.longSync();
     RetryRule gcpRetryRule = RetryRules.cloud();
-    RetryRule shortDatabaseRetryRule = RetryRules.shortDatabase();
+
     flight.addStep(
         new RetrieveNetworkNameStep(
             flightBeanBag.getCrlService(), this, flightBeanBag.getGcpCloudContextService()),
@@ -172,102 +158,95 @@ public class ControlledGceInstanceResource extends ControlledResource {
             flightBeanBag.getSamService()),
         gcpRetryRule);
     flight.addStep(
-        new CreateGceInstanceStep(
+        new CreateDataprocClusterStep(
+            flightBeanBag.getControlledResourceService(),
             this,
             petSaEmail,
             workspaceUserFacingId,
             flightBeanBag.getCrlService(),
-            flightBeanBag.getCliConfiguration(),
-            flightBeanBag.getVersionConfiguration()),
+            flightBeanBag.getCliConfiguration()),
         gcpRetryRule);
     flight.addStep(
-        new GceInstanceCloudSyncStep(
+        new DataprocClusterCloudSyncStep(
             flightBeanBag.getControlledResourceService(),
             flightBeanBag.getCrlService(),
             this,
             userRequest),
-        longSyncRetryRule);
-    flight.addStep(
-        new UpdateInstanceResourceLocationAttributesStep(this, flightBeanBag.getResourceDao()),
-        shortDatabaseRetryRule);
-    flight.addStep(
-        new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
-        shortDatabaseRetryRule);
+        RetryRules.longSync());
   }
 
   /** {@inheritDoc} */
   @Override
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new DeleteGceInstanceStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
+        new DeleteDataprocClusterStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    ControlledGceInstanceResource vmResource =
-        getResourceFromFlightInputParameters(flight, WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
-
-    // Retrieve existing attributes in case of undo later.
-    RetryRule gcpRetry = RetryRules.cloud();
-    flight.addStep(
-        new RetrieveGceInstanceResourceAttributesStep(vmResource, flightBeanBag.getCrlService()),
-        gcpRetry);
-
-    // Update the instance attributes.
-    flight.addStep(
-        new UpdateGceInstanceAttributesStep(vmResource, flightBeanBag.getCrlService()), gcpRetry);
+    // TODO PF-2901: Add update steps for setting autoscaling policy and manager node metadata.
   }
 
-  public ApiGcpGceInstanceResource toApiResource() {
-    return new ApiGcpGceInstanceResource().metadata(toApiMetadata()).attributes(toApiAttributes());
+  public ClusterName toClusterName() {
+    return toClusterName(getRegion());
   }
 
-  public ApiGcpGceInstanceAttributes toApiAttributes() {
-    return new ApiGcpGceInstanceAttributes()
-        .projectId(getProjectId())
-        .zone(getZone())
-        .instanceId(getInstanceId());
+  public ClusterName toClusterName(String region) {
+    return ClusterName.builder().projectId(getProjectId()).region(region).name(clusterId).build();
+  }
+
+  public ApiGcpDataprocClusterResource toApiResource() {
+    return new ApiGcpDataprocClusterResource()
+        .metadata(toApiMetadata())
+        .attributes(toApiAttributes());
+  }
+
+  public ApiGcpDataprocClusterAttributes toApiAttributes() {
+    return new ApiGcpDataprocClusterAttributes()
+        .projectId(projectId)
+        .region(getRegion())
+        .clusterId(getClusterId());
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
-        new ControlledGceInstanceAttributes(getProjectId(), getZone(), getInstanceId()));
+        new ControlledDataprocClusterAttributes(getClusterId(), getRegion(), getProjectId()));
   }
 
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     ApiResourceAttributesUnion union = new ApiResourceAttributesUnion();
-    union.gcpGceInstance(toApiAttributes());
+    union.gcpDataprocCluster(toApiAttributes());
     return union;
   }
 
   @Override
   public void validate() {
     super.validate();
-    if (getResourceType() != WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE
-        || getResourceFamily() != WsmResourceFamily.GCE_INSTANCE
+    if (getResourceType() != WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER
+        || getResourceFamily() != WsmResourceFamily.DATAPROC_CLUSTER
         || getStewardshipType() != StewardshipType.CONTROLLED) {
-      throw new InconsistentFieldsException("Expected controlled GCP GCE_INSTANCE");
+      throw new InconsistentFieldsException("Expected controlled GCP_DATAPROC_CLUSTER");
     }
     if (!getAccessScope().equals(AccessScopeType.ACCESS_SCOPE_PRIVATE)) {
       throw new BadRequestException(
-          "Access scope must be private. Shared GCE instances are not yet implemented.");
+          "Access scope must be private. Shared Dataproc clusters are not yet implemented.");
     }
-    ResourceValidationUtils.checkFieldNonNull(getInstanceId(), "instanceId", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(getZone(), "zone", RESOURCE_DESCRIPTOR);
-    ResourceValidationUtils.checkFieldNonNull(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
-    GcpResourceValidationUtils.validateGceInstanceId(getInstanceId());
+    ResourceValidationUtils.checkStringNonEmpty(getClusterId(), "clusterId", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(getRegion(), "region", RESOURCE_DESCRIPTOR);
+    ResourceValidationUtils.checkStringNonEmpty(getProjectId(), "projectId", RESOURCE_DESCRIPTOR);
+    GcpResourceValidationUtils.validateDataprocClusterId(getClusterId());
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ControlledGceInstanceResource)) return false;
+    if (!(o instanceof ControlledDataprocClusterResource)) return false;
     if (!super.equals(o)) return false;
-    ControlledGceInstanceResource resource = (ControlledGceInstanceResource) o;
-    return Objects.equal(instanceId, resource.instanceId)
-        && Objects.equal(zone, resource.zone)
+    ControlledDataprocClusterResource resource = (ControlledDataprocClusterResource) o;
+    return Objects.equal(clusterId, resource.clusterId)
+        && Objects.equal(region, resource.region)
         && Objects.equal(projectId, resource.projectId);
   }
 
@@ -277,21 +256,21 @@ public class ControlledGceInstanceResource extends ControlledResource {
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.partialEqual(o)) return false;
 
-    ControlledGceInstanceResource that = (ControlledGceInstanceResource) o;
+    ControlledDataprocClusterResource that = (ControlledDataprocClusterResource) o;
 
-    return instanceId.equals(that.instanceId) && zone.equals(that.zone);
+    return clusterId.equals(that.clusterId) && region.equals(that.region);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(super.hashCode(), projectId, zone, instanceId);
+    return Objects.hashCode(super.hashCode(), clusterId, region, projectId);
   }
 
-  /** Builder for {@link ControlledGceInstanceResource}. */
+  /** Builder for {@link ControlledDataprocClusterResource}. */
   public static class Builder {
     private ControlledResourceFields common;
-    private String instanceId;
-    private String zone;
+    private String clusterId;
+    private String region;
     private String projectId;
 
     public Builder common(ControlledResourceFields common) {
@@ -299,8 +278,13 @@ public class ControlledGceInstanceResource extends ControlledResource {
       return this;
     }
 
-    public Builder instanceId(String instanceId) {
-      this.instanceId = instanceId;
+    public Builder clusterId(String clusterId) {
+      this.clusterId = clusterId;
+      return this;
+    }
+
+    public Builder region(String region) {
+      this.region = region;
       return this;
     }
 
@@ -309,13 +293,8 @@ public class ControlledGceInstanceResource extends ControlledResource {
       return this;
     }
 
-    public Builder zone(@Nullable String zone) {
-      this.zone = Optional.ofNullable(zone).orElse(DEFAULT_ZONE);
-      return this;
-    }
-
-    public ControlledGceInstanceResource build() {
-      return new ControlledGceInstanceResource(common, instanceId, zone, projectId);
+    public ControlledDataprocClusterResource build() {
+      return new ControlledDataprocClusterResource(common, clusterId, region, projectId);
     }
   }
 }

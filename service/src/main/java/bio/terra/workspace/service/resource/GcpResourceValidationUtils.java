@@ -228,4 +228,21 @@ public class GcpResourceValidationUtils {
           "Invalid GCE instance ID specified. ID must be 1 to 63 alphanumeric lower case characters or dashes, where the first character is a lower case letter.");
     }
   }
+
+  /**
+   * Dataproc cluster names must be 1-52 characters, using lower case letters, numbers, and dashes.
+   * The first character must be a lower case letter, and the last character must not be a dash.
+   * See:
+   * https://cloud.google.com/dataproc/docs/guides/create-cluster#creating_a_cloud_dataproc_cluster.
+   */
+  public static final Pattern DATAPROC_CLUSTER_NAME_VALIDATION_PATTERN =
+      Pattern.compile("(?:[a-z](?:[-a-z0-9]{0,50}[a-z0-9])?)");
+
+  public static void validateDataprocClusterId(String name) {
+    if (!DATAPROC_CLUSTER_NAME_VALIDATION_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid Dataproc cluster ID {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Dataproc cluster ID specified. ID must be 1 to 52 alphanumeric lower case characters or dashes, where the first character is a lower case letter and the last character is not a dash.");
+    }
+  }
 }

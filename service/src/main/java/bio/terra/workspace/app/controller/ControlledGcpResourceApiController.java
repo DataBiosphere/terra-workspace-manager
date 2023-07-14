@@ -15,14 +15,19 @@ import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledGcpDataprocClusterRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpAiNotebookInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpBigQueryDataset;
+import bio.terra.workspace.generated.model.ApiCreatedControlledGcpDataprocClusterResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGceInstanceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiDataprocClusterCloudId;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceResult;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpDataprocClusterRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpDataprocClusterResult;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGceInstanceRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGceInstanceResult;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
@@ -32,18 +37,21 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpDataprocClusterResource;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcsBucketCloudName;
 import bio.terra.workspace.generated.model.ApiGenerateGcpAiNotebookCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpBigQueryDatasetCloudIDRequestBody;
+import bio.terra.workspace.generated.model.ApiGenerateGcpDataprocClusterCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpGceInstanceCloudIdRequestBody;
 import bio.terra.workspace.generated.model.ApiGenerateGcpGcsBucketCloudNameRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpDataprocClusterRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.service.features.FeatureService;
@@ -62,6 +70,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketHandler;
@@ -700,6 +710,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledGcpGceInstanceResult> createGceInstance(
       UUID workspaceUuid, @Valid ApiCreateControlledGcpGceInstanceRequestBody body) {
@@ -749,6 +760,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGceInstanceCloudId> generateGceInstanceCloudId(
       UUID workspaceUuid, ApiGenerateGcpGceInstanceCloudIdRequestBody name) {
@@ -763,6 +775,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiGcpGceInstanceResource> updateGceInstance(
       UUID workspaceUuid,
@@ -788,6 +801,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
+  @Traced
   @Override
   public ResponseEntity<ApiCreatedControlledGcpGceInstanceResult> getCreateGceInstanceResult(
       UUID workspaceUuid, String jobId) {
@@ -865,6 +879,201 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiCreatedControlledGcpDataprocClusterResult> createDataprocCluster(
+      UUID workspaceUuid, @Valid ApiCreateControlledGcpDataprocClusterRequestBody body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.getSamAction(body.getCommon()));
+    CloudContext cloudContext =
+        workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.GCP);
+    GcpCloudContext gcpCloudContext = cloudContext.castByEnum(CloudPlatform.GCP);
+
+    String resourceRegion = getResourceLocation(workspace, body.getDataprocCluster().getRegion());
+
+    // Validate existence and user write access to provided staging and temp buckets
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        workspaceUuid,
+        body.getDataprocCluster().getConfigBucket(),
+        SamControlledResourceActions.WRITE_ACTION);
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        workspaceUuid,
+        body.getDataprocCluster().getTempBucket(),
+        SamControlledResourceActions.WRITE_ACTION);
+
+    ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            resourceRegion,
+            userRequest,
+            WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
+
+    ControlledDataprocClusterResource resource =
+        ControlledDataprocClusterResource.builder()
+            .common(commonFields)
+            .region(resourceRegion)
+            .projectId(gcpCloudContext.getGcpProjectId())
+            .clusterId(
+                Optional.ofNullable(body.getDataprocCluster().getClusterId())
+                    .orElse(
+                        ControlledDataprocClusterHandler.getHandler()
+                            .generateCloudName(workspaceUuid, commonFields.getName())))
+            .build();
+
+    logger.info(
+        "createDataprocCluster workspace {} resource {}", workspaceUuid, resource.getResourceId());
+    String jobId =
+        controlledResourceService.createDataprocCluster(
+            resource,
+            body.getDataprocCluster(),
+            commonFields.getIamRole(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"),
+            userRequest);
+
+    ApiCreatedControlledGcpDataprocClusterResult result = fetchDataprocClusterCreateResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiCreatedControlledGcpDataprocClusterResult>
+      getCreateDataprocClusterResult(UUID workspaceUuid, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiCreatedControlledGcpDataprocClusterResult result = fetchDataprocClusterCreateResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDataprocClusterCloudId> generateDataprocClusterCloudId(
+      UUID workspaceUuid, ApiGenerateGcpDataprocClusterCloudIdRequestBody name) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    workspaceService.validateWorkspaceAndAction(
+        userRequest, workspaceUuid, SamWorkspaceAction.READ);
+    String generatedDataprocClusterCloudId =
+        ControlledDataprocClusterHandler.getHandler()
+            .generateCloudName(workspaceUuid, name.getDataprocClusterName());
+    var response =
+        new ApiDataprocClusterCloudId()
+            .generatedDataprocClusterCloudId(generatedDataprocClusterCloudId);
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiGcpDataprocClusterResource> updateDataprocCluster(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiUpdateControlledGcpDataprocClusterRequestBody requestBody) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledDataprocClusterResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.EDIT_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+
+    CommonUpdateParameters commonUpdateParameters =
+        new CommonUpdateParameters()
+            .setName(requestBody.getName())
+            .setDescription(requestBody.getDescription());
+
+    // TODO: PF-2901 Add update parameters when update is supported
+    logger.info(
+        "updateDataprocCluster workspace {} resource {}",
+        workspaceUuid.toString(),
+        resourceUuid.toString());
+    wsmResourceService.updateResource(userRequest, resource, commonUpdateParameters, null);
+    ControlledDataprocClusterResource updatedResource =
+        controlledResourceService
+            .getControlledResource(workspaceUuid, resourceUuid)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
+    return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
+  }
+
+  private ApiCreatedControlledGcpDataprocClusterResult fetchDataprocClusterCreateResult(
+      String jobId) {
+    JobApiUtils.AsyncJobResult<ControlledDataprocClusterResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledDataprocClusterResource.class);
+
+    ApiGcpDataprocClusterResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      ControlledDataprocClusterResource resource = jobResult.getResult();
+      apiResource = resource.toApiResource();
+    }
+    return new ApiCreatedControlledGcpDataprocClusterResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .dataprocCluster(apiResource);
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcpDataprocClusterResult> deleteDataprocCluster(
+      UUID workspaceUuid,
+      UUID resourceUuid,
+      @Valid ApiDeleteControlledGcpDataprocClusterRequest body) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.DELETE_ACTION);
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.GCP);
+
+    ApiJobControl jobControl = body.getJobControl();
+    logger.info(
+        "deleteDataprocCluster workspace {} resource {}",
+        workspaceUuid.toString(),
+        resourceUuid.toString());
+    String jobId =
+        controlledResourceService.deleteControlledResourceAsync(
+            jobControl.getId(),
+            workspaceUuid,
+            resourceUuid,
+            /* forceDelete= */ false,
+            getAsyncResultEndpoint(jobControl.getId(), "delete-result"),
+            userRequest);
+    ApiDeleteControlledGcpDataprocClusterResult result = fetchDataprocClusterDeleteResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiDeleteControlledGcpDataprocClusterResult> getDeleteDataprocClusterResult(
+      UUID workspaceUuid, String jobId) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiDeleteControlledGcpDataprocClusterResult result = fetchDataprocClusterDeleteResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  private ApiDeleteControlledGcpDataprocClusterResult fetchDataprocClusterDeleteResult(
+      String jobId) {
+    JobApiUtils.AsyncJobResult<Void> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, Void.class);
+    return new ApiDeleteControlledGcpDataprocClusterResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport());
+  }
+
+  @Traced
+  @Override
+  public ResponseEntity<ApiGcpDataprocClusterResource> getDataprocCluster(
+      UUID workspaceUuid, UUID resourceUuid) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledDataprocClusterResource resource =
+        controlledResourceMetadataManager
+            .validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 }

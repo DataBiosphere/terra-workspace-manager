@@ -18,6 +18,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -64,13 +65,25 @@ public class RetrieveNetworkNameStep implements Step {
                 resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
             yield aiNotebookInstance.getProjectId();
           }
+          case CONTROLLED_GCP_DATAPROC_CLUSTER -> {
+            ControlledDataprocClusterResource dataprocCluster =
+                resource.castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
+            yield dataprocCluster.getProjectId();
+          }
           default -> throw new InternalLogicException("Bad resource type passed to step.");
         };
     SubnetworkList subnetworks;
     try {
-      String zone = maybeGetValidZone(projectId);
-      flightContext.getWorkingMap().put(CREATE_GCE_INSTANCE_LOCATION, zone);
-      String region = getRegionForInstance(projectId, zone);
+      String region;
+      // If the resource is a dataproc cluster, we use the region in the resource. Otherwise, we
+      // compute the region from the zone.
+      if (WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER == resource.getResourceType()) {
+        region = resource.getRegion();
+      } else {
+        String zone = maybeGetValidZone(projectId);
+        flightContext.getWorkingMap().put(CREATE_GCE_INSTANCE_LOCATION, zone);
+        region = getRegionForInstance(projectId, zone);
+      }
       flightContext.getWorkingMap().put(CREATE_RESOURCE_REGION, region);
       subnetworks = compute.subnetworks().list(projectId, region).execute();
     } catch (IOException e) {

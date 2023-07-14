@@ -28,6 +28,7 @@ import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.dataproc.Dataproc;
 import com.google.api.services.iam.v1.Iam;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import com.google.auth.http.HttpCredentialsAdapter;
@@ -127,6 +128,15 @@ public class ClientTestUtils {
   public static AIPlatformNotebooks getAIPlatformNotebooksClient(TestUserSpecification testUser)
       throws GeneralSecurityException, IOException {
     return new AIPlatformNotebooks(
+        GoogleNetHttpTransport.newTrustedTransport(),
+        JacksonFactory.getDefaultInstance(),
+        new HttpCredentialsAdapter(
+            AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES)));
+  }
+
+  public static Dataproc getDataprocClient(TestUserSpecification testUser)
+      throws GeneralSecurityException, IOException {
+    return new Dataproc(
         GoogleNetHttpTransport.newTrustedTransport(),
         JacksonFactory.getDefaultInstance(),
         new HttpCredentialsAdapter(

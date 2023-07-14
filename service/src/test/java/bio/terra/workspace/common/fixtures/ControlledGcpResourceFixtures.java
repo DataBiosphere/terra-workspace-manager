@@ -18,6 +18,9 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpDataprocClusterCreationParameters;
+import bio.terra.workspace.generated.model.ApiGcpDataprocClusterInstanceGroupConfig;
+import bio.terra.workspace.generated.model.ApiGcpDataprocClusterLifecycleConfig;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
@@ -31,6 +34,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -402,6 +406,62 @@ public class ControlledGcpResourceFixtures {
         .common(makeGceInstanceCommonFieldsBuilder().workspaceUuid(workspaceId).build())
         .instanceId(TestUtils.appendRandomNumber("my-cloud-id"))
         .zone(DEFAULT_RESOURCE_ZONE)
+        .projectId("my-project-id");
+  }
+
+  // Dataproc Cluster
+
+  // TODO: PF-2901 Add fixtures for update metadata parameters
+
+  public static ApiGcpDataprocClusterCreationParameters defaultDataprocClusterCreationParameters() {
+    return new ApiGcpDataprocClusterCreationParameters()
+        .clusterId(TestUtils.appendRandomNumber("default-cluster-id"))
+        .region(DEFAULT_RESOURCE_REGION)
+        .managerNodeConfig(
+            new ApiGcpDataprocClusterInstanceGroupConfig()
+                .numInstances(1)
+                .machineType("n2-standard-2"))
+        .primaryWorkerConfig(
+            new ApiGcpDataprocClusterInstanceGroupConfig()
+                .numInstances(2)
+                .machineType("n2-standard-2"))
+        .lifecycleConfig(new ApiGcpDataprocClusterLifecycleConfig().idleDeleteTtl("3600s"));
+  }
+
+  /**
+   * Returns a {@link ControlledGceInstanceResource.Builder} that is ready to be built.
+   *
+   * <p>Tests should not rely on any particular value for the fields returned by this function and
+   * instead override the values that they care about.
+   */
+  public static ControlledResourceFields.Builder makeDataprocClusterCommonFieldsBuilder() {
+    return ControlledResourceFields.builder()
+        .workspaceUuid(UUID.randomUUID())
+        .resourceId(UUID.randomUUID())
+        .name(TestUtils.appendRandomNumber("my-cluster"))
+        .description("my description")
+        .cloningInstructions(CloningInstructions.COPY_NOTHING)
+        .assignedUser("myusername@mydomain.mine")
+        .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+        .managedBy(ManagedByType.MANAGED_BY_USER)
+        .createdByEmail(DEFAULT_USER_EMAIL)
+        .region(DEFAULT_RESOURCE_REGION);
+  }
+
+  public static ControlledDataprocClusterResource.Builder makeDefaultDataprocCluster() {
+    return ControlledDataprocClusterResource.builder()
+        .common(makeDataprocClusterCommonFieldsBuilder().build())
+        .clusterId(TestUtils.appendRandomNumber("my-cloud-id"))
+        .region(DEFAULT_RESOURCE_REGION)
+        .projectId("my-project-id");
+  }
+
+  public static ControlledDataprocClusterResource.Builder makeDefaultDataprocCluster(
+      UUID workspaceId) {
+    return ControlledDataprocClusterResource.builder()
+        .common(makeGceInstanceCommonFieldsBuilder().workspaceUuid(workspaceId).build())
+        .clusterId(TestUtils.appendRandomNumber("my-cloud-id"))
+        .region(DEFAULT_RESOURCE_REGION)
         .projectId("my-project-id");
   }
 }
