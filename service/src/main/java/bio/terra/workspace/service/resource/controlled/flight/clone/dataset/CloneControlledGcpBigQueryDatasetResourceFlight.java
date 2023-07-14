@@ -84,6 +84,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
               destLocation,
+              resolvedCloningInstructions,
               userRequest,
               flightBeanBag.getResourceDao(),
               flightBeanBag.getTpsApiDispatch()));

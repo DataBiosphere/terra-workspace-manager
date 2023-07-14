@@ -400,8 +400,62 @@ public class ImportDataCollection extends WorkspaceAllocateTestScriptBase {
 
     workspaceApi.deleteWorkspace(scenario8Workspace.getId());
 
+    /*
+     Scenario 9: Clone a reference where the controlled resource is in a location outside of policy.
+     Workspace (policy=us-east1) + Data Collection (policy=null, resource=us-central1) Should be allowed since
+     references have no region.
+     Result: OK & Workspace (policy=us-east1, gains reference to resource in us-central1).
+    */
+    CreatedWorkspace scenario9Workspace =
+        createWorkspaceWithRegionPolicy(workspaceApi, gcpEastLocation);
+
+    // Create a cloud context in the noPolicyDataCollection
+    projectId =
+        CloudContextMaker.createGcpCloudContext(noPolicyDataCollection.getId(), workspaceApi);
+    logger.info("Created project {} for noPolicyDataCollection", projectId);
+
+    // create a bucket in the noPolicyDataCollection
+    CreatedControlledGcpGcsBucket noPolicyBucket =
+        GcsBucketUtils.makeControlledGcsBucketUserShared(
+            resourceApi,
+            noPolicyDataCollection.getId(),
+            DATASET_RESOURCE_NAME,
+            CloningInstructionsEnum.REFERENCE);
+    GcpGcsBucketResource noPolicyBucketResource = noPolicyBucket.getGcpBucket();
+    logger.info("Created controlled bucket {}", noPolicyBucket.getResourceId());
+
+    final CloneControlledGcpGcsBucketRequest cloneReferenceRequest =
+        new CloneControlledGcpGcsBucketRequest()
+            .destinationWorkspaceId(scenario9Workspace.getId())
+            .cloningInstructions(CloningInstructionsEnum.REFERENCE)
+            .jobControl(new JobControl().id(UUID.randomUUID().toString()));
+
+    cloneResult =
+        controlledGcpResourceApi.cloneGcsBucket(
+            cloneReferenceRequest,
+            noPolicyBucketResource.getMetadata().getWorkspaceId(),
+            noPolicyBucketResource.getMetadata().getResourceId());
+
+    cloneResult =
+        ClientTestUtils.pollWhileRunning(
+            cloneResult,
+            () ->
+                resourceApi.getCloneGcsBucketResult(
+                    noPolicyBucketResource.getMetadata().getWorkspaceId(),
+                    cloneReferenceRequest.getJobControl().getId()),
+            CloneControlledGcpGcsBucketResult::getJobReport,
+            Duration.ofSeconds(5));
+
+    ClientTestUtils.assertJobSuccess(
+        "clone bucket", cloneResult.getJobReport(), cloneResult.getErrorReport());
+
+    validateWorkspaceContainsRegionPolicy(
+        workspaceApi, scenario9Workspace.getId(), gcpEastLocation);
+    workspaceApi.deleteWorkspace(scenario9Workspace.getId());
+
     // Clean up the data collections used in most of the scenarios.
     workspaceApi.deleteWorkspace(centralDataCollection.getId());
+    workspaceApi.deleteWorkspace(noPolicyDataCollection.getId());
   }
 
   private WsmPolicyInputs getRegionPolicyInputs(String location) {
