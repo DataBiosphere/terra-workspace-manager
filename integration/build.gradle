@@ -30,7 +30,7 @@ dependencies {
         datarepoClient = "1.0.155-SNAPSHOT"
         testRunnerVersion = "0.1.9-SNAPSHOT"
         samClient = "0.1-df5a43a"
-        tclClient = "0.0.88-SNAPSHOT"
+        tclClient = "0.0.92-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
