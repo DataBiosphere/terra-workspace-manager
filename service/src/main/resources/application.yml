@@ -29,8 +29,8 @@ env:
     bpm: ${BPM_ADDRESS:https://bpm.dsde-dev.broadinstitute.org/}
     tps: ${TPS_ADDRESS:https://tps.dsde-dev.broadinstitute.org/}
   azure:
-    resource:
-      usage-attribute: ${AZURE_RESOURCE_USAGE_ATTRIBUTE:test}
+    customer:
+      usage-attribute: ${AZURE_CUSTOMER_USAGE_ATTRIBUTE:test}
 
 
 # Below here is non-deployment-specific
@@ -243,9 +243,9 @@ feature:
   state-rule: DELETE_ON_FAILURE
 
 azure:
-  resource:
+  customer:
     #track azure resource usage
-    usage-attribute: ${env.azure.resource.usage-attribute}
+    usage-attribute: ${env.azure.customer.usage-attribute}
 
 reference:
   gitrepos:

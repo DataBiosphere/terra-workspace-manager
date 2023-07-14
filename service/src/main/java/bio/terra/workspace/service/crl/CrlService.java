@@ -77,8 +77,8 @@ public class CrlService {
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
 
-  @Value("${azure.resource.usage-attribute}")
-  private String azureResourceUsageAttribute;
+  @Value("${azure.customer.usage-attribute}")
+  private String azureCustomerUsageAttribute;
 
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
@@ -197,8 +197,8 @@ public class CrlService {
     RelayManager.Configurable relayManagerConfigurable =
         bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
             clientConfig, RelayManager.configure());
-    Optional.ofNullable(azureResourceUsageAttribute)
-        .ifPresent((a) -> relayManagerConfigurable.withPolicy(new UserAgentPolicy(a)));
+    Optional.ofNullable(azureCustomerUsageAttribute)
+        .ifPresent(a -> relayManagerConfigurable.withPolicy(new UserAgentPolicy(a)));
     return relayManagerConfigurable.authenticate(azureCreds, azureProfile);
   }
 
@@ -223,7 +223,7 @@ public class CrlService {
     BatchManager.Configurable batchManagerConfigurable =
         bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
             clientConfig, BatchManager.configure());
-    Optional.ofNullable(azureResourceUsageAttribute)
+    Optional.ofNullable(azureCustomerUsageAttribute)
         .ifPresent((a) -> batchManagerConfigurable.withPolicy(new UserAgentPolicy(a)));
     return batchManagerConfigurable.authenticate(azureCreds, azureProfile);
   }
@@ -293,13 +293,13 @@ public class CrlService {
                     // however it
                     // does need to be set to a value other than NONE for the loggers to fire.
                     .setLogLevel(HttpLogDetailLevel.BASIC));
-    Optional.ofNullable(azureResourceUsageAttribute)
+    Optional.ofNullable(azureCustomerUsageAttribute)
         .ifPresent((a) -> postgreSqlConfigurable.withPolicy(new UserAgentPolicy(a)));
     return postgreSqlConfigurable.authenticate(azureCreds, azureProfile);
   }
 
   private <T extends AzureConfigurable<T>> T configureAzureResourceManager(T configurable) {
-    Optional.ofNullable(azureResourceUsageAttribute)
+    Optional.ofNullable(azureCustomerUsageAttribute)
         .ifPresent((a) -> configurable.withPolicy(new UserAgentPolicy(a)));
     return configurable;
   }
