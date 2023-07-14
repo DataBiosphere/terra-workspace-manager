@@ -40,9 +40,11 @@ public class WorkspaceFixtures {
       new ApiProperty().key(Properties.VERSION).value("version 3");
   public static final ApiProperty USER_SET_PROPERTY =
       new ApiProperty().key("userkey").value("uservalue");
-  public static final String DEFAULT_SPEND_PROFILE = "wm-default-spend-profile";
+  public static final String DEFAULT_SPEND_PROFILE_NAME = "wm-default-spend-profile";
   public static final SpendProfileId DEFAULT_SPEND_PROFILE_ID =
-      new SpendProfileId(DEFAULT_SPEND_PROFILE);
+      new SpendProfileId(DEFAULT_SPEND_PROFILE_NAME);
+  public static final SpendProfile DEFAULT_SPEND_PROFILE =
+      SpendProfile.buildGcpSpendProfile(DEFAULT_SPEND_PROFILE_ID, "billingAccountId");
   public static final String DEFAULT_USER_EMAIL = "fake@gmail.com";
   public static final String DEFAULT_USER_SUBJECT_ID = "subjectId123456";
   public static final SamUser SAM_USER =
@@ -137,7 +139,7 @@ public class WorkspaceFixtures {
         .description("A test workspace created by createWorkspaceRequestBody")
         .userFacingId(getUserFacingId(workspaceId))
         .stage(stageModel)
-        .spendProfile(DEFAULT_SPEND_PROFILE)
+        .spendProfile(DEFAULT_SPEND_PROFILE_NAME)
         .properties(properties);
   }
 

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -121,7 +121,9 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     String makeContextJobId = UUID.randomUUID().toString();
     SpendProfile spendProfile =
         spendProfileService.authorizeLinking(
-            new SpendProfileId(DEFAULT_SPEND_PROFILE), features.isBpmGcpEnabled(), userRequest);
+            new SpendProfileId(DEFAULT_SPEND_PROFILE_NAME),
+            features.isBpmGcpEnabled(),
+            userRequest);
 
     workspaceService.createCloudContext(
         workspace, CloudPlatform.GCP, spendProfile, makeContextJobId, userRequest, null);

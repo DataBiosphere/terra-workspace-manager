@@ -1,13 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.ACCOUNT_ID;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_ENVIRONMENT_USER_ROLE_ARN;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_ENVIRONMENT_WSM_ROLE_ARN;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_KMS_KEY_ARN;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_STORAGE_BUCKET_ARN;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_REGION;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_ENVIRONMENT;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE;
+import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_METADATA;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.ENVIRONMENT_ALIAS;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.MAJOR_VERSION;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.ORGANIZATION_ID;
@@ -29,7 +25,6 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
-import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
@@ -43,14 +38,11 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
-import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.regions.Region;
 
 public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
@@ -58,34 +50,8 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Autowired private AwsCloudContextService awsCloudContextService;
   @Mock private S3EnvironmentDiscovery mockEnvironmentDiscovery;
 
-  private final Metadata metadata =
-      Metadata.builder()
-          .tenantAlias(TENANT_ALIAS)
-          .organizationId(ORGANIZATION_ID)
-          .environmentAlias(ENVIRONMENT_ALIAS)
-          .accountId(ACCOUNT_ID)
-          .region(Region.of(AWS_REGION))
-          .majorVersion(MAJOR_VERSION)
-          .tagMap(Map.of("tagKey", "tagValue"))
-          .build();
-  private final LandingZone landingZone =
-      LandingZone.builder()
-          .metadata(metadata)
-          .storageBucket(Arn.fromString(AWS_LANDING_ZONE_STORAGE_BUCKET_ARN), "bucket")
-          .kmsKey(Arn.fromString(AWS_LANDING_ZONE_KMS_KEY_ARN), UUID.randomUUID())
-          .addNotebookLifecycleConfiguration(
-              Arn.fromString(AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN), "lifecycleConfig")
-          .build();
-  private final Environment environment =
-      Environment.builder()
-          .metadata(metadata)
-          .workspaceManagerRoleArn(Arn.fromString(AWS_ENVIRONMENT_WSM_ROLE_ARN))
-          .userRoleArn(Arn.fromString(AWS_ENVIRONMENT_USER_ROLE_ARN))
-          .notebookRoleArn(Arn.fromString(AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN))
-          .addLandingZone(landingZone.getMetadata().getRegion(), landingZone)
-          .build();
   private final AwsCloudContext awsCloudContext =
-      AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, environment);
+      AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, AWS_ENVIRONMENT);
 
   @Test
   void serdesTest() {
@@ -142,7 +108,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void discoverEnvironmentTest() throws Exception {
     try (MockedStatic<AwsUtils> mockAwsUtils = mockStatic(AwsUtils.class)) {
-      when(mockEnvironmentDiscovery.discoverEnvironment()).thenReturn(environment);
+      when(mockEnvironmentDiscovery.discoverEnvironment()).thenReturn(AWS_ENVIRONMENT);
       mockAwsUtils
           .when(() -> AwsUtils.createEnvironmentDiscovery(any()))
           .thenReturn(null)
@@ -170,16 +136,16 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void createCloudContextTest() {
     AwsCloudContext createdAwsCloudContext =
-        AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, environment);
+        AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, AWS_ENVIRONMENT);
     assertNotNull(createdAwsCloudContext);
 
     AwsCloudContextFields contextFields = createdAwsCloudContext.getContextFields();
     assertNotNull(contextFields);
-    assertEquals(metadata.getMajorVersion(), contextFields.getMajorVersion());
-    assertEquals(metadata.getOrganizationId(), contextFields.getOrganizationId());
-    assertEquals(metadata.getAccountId(), contextFields.getAccountId());
-    assertEquals(metadata.getTenantAlias(), contextFields.getTenantAlias());
-    assertEquals(metadata.getEnvironmentAlias(), contextFields.getEnvironmentAlias());
+    assertEquals(AWS_METADATA.getMajorVersion(), contextFields.getMajorVersion());
+    assertEquals(AWS_METADATA.getOrganizationId(), contextFields.getOrganizationId());
+    assertEquals(AWS_METADATA.getAccountId(), contextFields.getAccountId());
+    assertEquals(AWS_METADATA.getTenantAlias(), contextFields.getTenantAlias());
+    assertEquals(AWS_METADATA.getEnvironmentAlias(), contextFields.getEnvironmentAlias());
 
     CloudContextCommonFields commonFields = createdAwsCloudContext.getCommonFields();
     assertNotNull(commonFields);
@@ -194,37 +160,37 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
     // success
     Optional<LandingZone> fetchedLandingZone =
         AwsCloudContextService.getLandingZone(
-            environment, awsCloudContext, landingZone.getMetadata().getRegion());
+            AWS_ENVIRONMENT, awsCloudContext, AWS_LANDING_ZONE.getMetadata().getRegion());
     assertTrue(fetchedLandingZone.isPresent(), "landing zone expected for valid region");
 
     // failure - no landing zone for region
     fetchedLandingZone =
-        AwsCloudContextService.getLandingZone(environment, awsCloudContext, Region.of("cloud"));
+        AwsCloudContextService.getLandingZone(AWS_ENVIRONMENT, awsCloudContext, Region.of("cloud"));
     assertFalse(fetchedLandingZone.isPresent(), "landing zone not expected for invalid region");
   }
 
   @Test
   void verifyCloudContextTest() {
     // success
-    assertDoesNotThrow(() -> awsCloudContext.verifyCloudContext(environment));
+    assertDoesNotThrow(() -> awsCloudContext.verifyCloudContext(AWS_ENVIRONMENT));
 
     // error - bad cloud context
     assertThrows(
         InvalidCloudContextStateException.class,
-        () -> (new AwsCloudContext(null, null)).verifyCloudContext(environment));
+        () -> (new AwsCloudContext(null, null)).verifyCloudContext(AWS_ENVIRONMENT));
   }
 
   @Test
   void verifyCloudContextFieldsTest() {
     // success
     assertDoesNotThrow(
-        () -> awsCloudContext.getContextFields().verifyCloudContextFields(environment));
+        () -> awsCloudContext.getContextFields().verifyCloudContextFields(AWS_ENVIRONMENT));
 
     // error - cloud context mismatch
     assertThrows(
         StaleConfigurationException.class,
         () ->
             (new AwsCloudContextFields("a", "b", "c", "d", "e"))
-                .verifyCloudContextFields(environment));
+                .verifyCloudContextFields(AWS_ENVIRONMENT));
   }
 }

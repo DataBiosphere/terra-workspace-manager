@@ -4,6 +4,9 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEN
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2_MEDIUM;
 
+import bio.terra.aws.resource.discovery.Environment;
+import bio.terra.aws.resource.discovery.LandingZone;
+import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
@@ -19,13 +22,16 @@ import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.internal.waiters.DefaultWaiterResponse;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.http.SdkHttpResponse;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
@@ -68,6 +74,33 @@ public class ControlledAwsResourceFixtures {
       AwsServiceException.builder().message("ResourceNotFoundException").build();
   public static final AwsServiceException AWS_SERVICE_EXCEPTION_2 =
       AwsServiceException.builder().message("not authorized to perform").build();
+
+  public static final Metadata AWS_METADATA =
+      Metadata.builder()
+          .tenantAlias(TENANT_ALIAS)
+          .organizationId(ORGANIZATION_ID)
+          .environmentAlias(ENVIRONMENT_ALIAS)
+          .accountId(ACCOUNT_ID)
+          .region(Region.of(AWS_REGION))
+          .majorVersion(MAJOR_VERSION)
+          .tagMap(Map.of("tagKey", "tagValue"))
+          .build();
+  public static final LandingZone AWS_LANDING_ZONE =
+      LandingZone.builder()
+          .metadata(AWS_METADATA)
+          .storageBucket(Arn.fromString(AWS_LANDING_ZONE_STORAGE_BUCKET_ARN), "bucket")
+          .kmsKey(Arn.fromString(AWS_LANDING_ZONE_KMS_KEY_ARN), UUID.randomUUID())
+          .addNotebookLifecycleConfiguration(
+              Arn.fromString(AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN), "lifecycleConfig")
+          .build();
+  public static final Environment AWS_ENVIRONMENT =
+      Environment.builder()
+          .metadata(AWS_METADATA)
+          .workspaceManagerRoleArn(Arn.fromString(AWS_ENVIRONMENT_WSM_ROLE_ARN))
+          .userRoleArn(Arn.fromString(AWS_ENVIRONMENT_USER_ROLE_ARN))
+          .notebookRoleArn(Arn.fromString(AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN))
+          .addLandingZone(AWS_LANDING_ZONE.getMetadata().getRegion(), AWS_LANDING_ZONE)
+          .build();
 
   public static Collection<Tag> makeTags() {
     Collection<Tag> tags = new HashSet<>();
@@ -148,6 +181,18 @@ public class ControlledAwsResourceFixtures {
   public static ApiAwsS3StorageFolderCreationParameters makeAwsS3StorageFolderCreationParameters(
       String storageName) {
     return new ApiAwsS3StorageFolderCreationParameters().folderName(storageName).region(AWS_REGION);
+  }
+
+  public static ControlledAwsS3StorageFolderResource makeResource(
+      UUID workspaceUuid,
+      String bucket,
+      ApiAwsS3StorageFolderCreationParameters creationParameters) {
+    return ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
+            workspaceUuid,
+            /* resourceName= */ creationParameters.getFolderName(),
+            bucket,
+            /* folderName= */ creationParameters.getFolderName())
+        .build();
   }
 
   public static ControlledAwsS3StorageFolderResource makeDefaultAwsS3StorageFolderResource(
@@ -248,6 +293,18 @@ public class ControlledAwsResourceFixtures {
         .instanceName(instanceName)
         .instanceType(SAGEMAKER_INSTANCE_TYPE)
         .region(AWS_REGION);
+  }
+
+  public static ControlledAwsSageMakerNotebookResource makeResource(
+      UUID workspaceUuid,
+      ApiAwsSageMakerNotebookCreationParameters creationParameters,
+      String userEmail) {
+    return ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder(
+            workspaceUuid,
+            /* resourceName= */ creationParameters.getInstanceName(),
+            /* instanceName= */ creationParameters.getInstanceName(),
+            userEmail)
+        .build();
   }
 
   public static ControlledAwsSageMakerNotebookResource makeDefaultAwsSagemakerNotebookResource(

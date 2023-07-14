@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.workspace.flight.aws;
+package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,14 +23,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("aws-connected")
-public class CreateAwsWorkspaceV2FlightTest extends BaseAwsConnectedTest {
+public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired MvcWorkspaceApi mvcWorkspaceApi;
   @Autowired MvcAwsApi mvcAwsApi;
   @Autowired UserAccessUtils userAccessUtils;
 
   @Test
-  void createDeleteWorkspaceWithContextTest() throws Exception {
+  void createDeleteWorkspaceV2WithContextTest() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
 
     // create workspace with cloud context
@@ -39,7 +39,7 @@ public class CreateAwsWorkspaceV2FlightTest extends BaseAwsConnectedTest {
     assertEquals(StatusEnum.SUCCEEDED, createResult.getJobReport().getStatus());
     UUID workspaceUuid = createResult.getWorkspaceId();
 
-    // flight should have created a cloud context
+    // cloud context should have been created
     assertTrue(awsCloudContextService.getAwsCloudContext(workspaceUuid).isPresent());
     assertEquals(
         /* expected */ awsConnectedTestUtils.getAwsCloudContext(),
