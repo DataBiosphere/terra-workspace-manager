@@ -11,7 +11,11 @@ tasks.withType(Test).configureEach {
   environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
   systemProperty 'spring.profiles.include', 'human-readable-logging'
   testLogging {
+    if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
+      events = ["passed", "failed", "skipped", "started"]
+    } else {
       events = ["passed", "failed", "skipped", "started", "standard_out", "standard_error"]
+    }
   }
 }
 
