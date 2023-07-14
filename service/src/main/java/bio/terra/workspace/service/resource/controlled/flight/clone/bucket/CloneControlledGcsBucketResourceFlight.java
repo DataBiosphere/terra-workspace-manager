@@ -98,6 +98,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
               location,
+              resolvedCloningInstructions,
               userRequest,
               flightBeanBag.getResourceDao(),
               flightBeanBag.getTpsApiDispatch()));

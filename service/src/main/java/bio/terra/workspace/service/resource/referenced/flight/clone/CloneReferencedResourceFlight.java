@@ -89,6 +89,7 @@ public class CloneReferencedResourceFlight extends Flight {
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
               null, // referenced resources don't have a location.
+              cloningInstructions,
               userRequest,
               appContext.getResourceDao(),
               appContext.getTpsApiDispatch()));
