@@ -224,7 +224,7 @@ public class CrlService {
         bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
             clientConfig, BatchManager.configure());
     Optional.ofNullable(azureCustomerUsageAttribute)
-        .ifPresent((a) -> batchManagerConfigurable.withPolicy(new UserAgentPolicy(a)));
+        .ifPresent(a -> batchManagerConfigurable.withPolicy(new UserAgentPolicy(a)));
     return batchManagerConfigurable.authenticate(azureCreds, azureProfile);
   }
 
@@ -294,13 +294,13 @@ public class CrlService {
                     // does need to be set to a value other than NONE for the loggers to fire.
                     .setLogLevel(HttpLogDetailLevel.BASIC));
     Optional.ofNullable(azureCustomerUsageAttribute)
-        .ifPresent((a) -> postgreSqlConfigurable.withPolicy(new UserAgentPolicy(a)));
+        .ifPresent(a -> postgreSqlConfigurable.withPolicy(new UserAgentPolicy(a)));
     return postgreSqlConfigurable.authenticate(azureCreds, azureProfile);
   }
 
   private <T extends AzureConfigurable<T>> T configureAzureResourceManager(T configurable) {
     Optional.ofNullable(azureCustomerUsageAttribute)
-        .ifPresent((a) -> configurable.withPolicy(new UserAgentPolicy(a)));
+        .ifPresent(a -> configurable.withPolicy(new UserAgentPolicy(a)));
     return configurable;
   }
 
