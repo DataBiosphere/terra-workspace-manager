@@ -61,7 +61,6 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -195,10 +194,9 @@ public class CrlService {
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     RelayManager.Configurable relayManagerConfigurable =
-        bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
-            clientConfig, RelayManager.configure());
-    Optional.ofNullable(azureCustomerUsageAttribute)
-        .ifPresent(a -> relayManagerConfigurable.withPolicy(new UserAgentPolicy(a)));
+        configureRelayManager(
+            bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
+                clientConfig, RelayManager.configure()));
     return relayManagerConfigurable.authenticate(azureCreds, azureProfile);
   }
 
@@ -221,10 +219,9 @@ public class CrlService {
     final var azureProfile = getAzureProfile(azureCloudContext);
 
     BatchManager.Configurable batchManagerConfigurable =
-        bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
-            clientConfig, BatchManager.configure());
-    Optional.ofNullable(azureCustomerUsageAttribute)
-        .ifPresent(a -> batchManagerConfigurable.withPolicy(new UserAgentPolicy(a)));
+        configureBatchManager(
+            bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
+                clientConfig, BatchManager.configure()));
     return batchManagerConfigurable.authenticate(azureCreds, azureProfile);
   }
 
@@ -284,24 +281,17 @@ public class CrlService {
     // PostgreSqlManager.configure does not return the right type, so inline
     // bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure
     PostgreSqlManager.Configurable postgreSqlConfigurable =
-        PostgreSqlManager.configure()
-            .withLogOptions(
-                new HttpLogOptions()
-                    .setRequestLogger(new AzureResourceCleanupRecorder(clientConfig))
-                    .setResponseLogger(new AzureResponseLogger(clientConfig))
-                    // Since we are providing our own loggers this value isn't actually used;
-                    // however it
-                    // does need to be set to a value other than NONE for the loggers to fire.
-                    .setLogLevel(HttpLogDetailLevel.BASIC));
-    Optional.ofNullable(azureCustomerUsageAttribute)
-        .ifPresent(a -> postgreSqlConfigurable.withPolicy(new UserAgentPolicy(a)));
+        configurePostgreSqlManager(
+            PostgreSqlManager.configure()
+                .withLogOptions(
+                    new HttpLogOptions()
+                        .setRequestLogger(new AzureResourceCleanupRecorder(clientConfig))
+                        .setResponseLogger(new AzureResponseLogger(clientConfig))
+                        // Since we are providing our own loggers this value isn't actually used;
+                        // however it
+                        // does need to be set to a value other than NONE for the loggers to fire.
+                        .setLogLevel(HttpLogDetailLevel.BASIC)));
     return postgreSqlConfigurable.authenticate(azureCreds, azureProfile);
-  }
-
-  private <T extends AzureConfigurable<T>> T configureAzureResourceManager(T configurable) {
-    Optional.ofNullable(azureCustomerUsageAttribute)
-        .ifPresent(a -> configurable.withPolicy(new UserAgentPolicy(a)));
-    return configurable;
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -618,5 +608,34 @@ public class CrlService {
             .build();
 
     getCloudBillingClientCow().updateProjectBillingInfo("projects/" + projectId, setBilling);
+  }
+
+  private <T extends AzureConfigurable<T>> T configureAzureResourceManager(T configurable) {
+    if (StringUtils.isNotEmpty(azureCustomerUsageAttribute)) {
+      configurable.withPolicy(new UserAgentPolicy(azureCustomerUsageAttribute));
+    }
+    return configurable;
+  }
+
+  private RelayManager.Configurable configureRelayManager(RelayManager.Configurable configurable) {
+    if (StringUtils.isNotEmpty(azureCustomerUsageAttribute)) {
+      configurable.withPolicy(new UserAgentPolicy(azureCustomerUsageAttribute));
+    }
+    return configurable;
+  }
+
+  private BatchManager.Configurable configureBatchManager(BatchManager.Configurable configurable) {
+    if (StringUtils.isNotEmpty(azureCustomerUsageAttribute)) {
+      configurable.withPolicy(new UserAgentPolicy(azureCustomerUsageAttribute));
+    }
+    return configurable;
+  }
+
+  private PostgreSqlManager.Configurable configurePostgreSqlManager(
+      PostgreSqlManager.Configurable configurable) {
+    if (StringUtils.isNotEmpty(azureCustomerUsageAttribute)) {
+      configurable.withPolicy(new UserAgentPolicy(azureCustomerUsageAttribute));
+    }
+    return configurable;
   }
 }

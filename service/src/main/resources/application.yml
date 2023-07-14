@@ -30,7 +30,7 @@ env:
     tps: ${TPS_ADDRESS:https://tps.dsde-dev.broadinstitute.org/}
   azure:
     customer:
-      usage-attribute: ${AZURE_CUSTOMER_USAGE_ATTRIBUTE:test}
+      usage-attribute: ${AZURE_CUSTOMER_USAGE_ATTRIBUTE:}
 
 
 # Below here is non-deployment-specific
