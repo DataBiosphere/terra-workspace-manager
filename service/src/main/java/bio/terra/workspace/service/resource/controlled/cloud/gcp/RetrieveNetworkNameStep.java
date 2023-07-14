@@ -77,7 +77,7 @@ public class RetrieveNetworkNameStep implements Step {
       String region;
       // If the resource is a dataproc cluster, we use the region in the resource. Otherwise, we
       // compute the region from the zone.
-      if (resource.getResourceType().equals(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER)) {
+      if (WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER == resource.getResourceType()) {
         region = resource.getRegion();
       } else {
         String zone = maybeGetValidZone(projectId);

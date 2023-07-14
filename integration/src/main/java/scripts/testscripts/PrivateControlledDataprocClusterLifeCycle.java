@@ -59,6 +59,8 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     assertThat(
         "There must be at least three test users defined for this test.",
         testUsers != null && testUsers.size() > 2);
+    // We use the workspace owner as the resource user to take advantage of temporary grants giving
+    // the user pet SA the needed permissions to create the dataproc cluster.
     this.resourceUser = testUsers.get(0);
     this.otherWorkspaceUser = testUsers.get(2);
     assertNotEquals(
