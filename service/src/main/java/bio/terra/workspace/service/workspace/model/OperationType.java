@@ -10,6 +10,7 @@ public enum OperationType {
   APPLICATION_ENABLED(ApiOperationType.APPLICATION_ENABLED),
   CLONE(ApiOperationType.CLONE),
   CREATE(ApiOperationType.CREATE),
+  UPDATE(ApiOperationType.UPDATE),
   DELETE(ApiOperationType.DELETE),
   DATA_TRANSFER(ApiOperationType.DATA_TRANSFER),
   DELETE_PROPERTIES(ApiOperationType.DELETE),
@@ -17,7 +18,7 @@ public enum OperationType {
   GRANT_WORKSPACE_ROLE(ApiOperationType.GRANT_WORKSPACE_ROLE),
   REMOVE_WORKSPACE_ROLE(ApiOperationType.REMOVE_WORKSPACE_ROLE),
   SYSTEM_CLEANUP(ApiOperationType.SYSTEM_CLEANUP),
-  UPDATE(ApiOperationType.UPDATE),
+  RESOURCE_CLEANUP(ApiOperationType.RESOURCE_CLEANUP),
   ADMIN_UPDATE(ApiOperationType.ADMIN_UPDATE),
   UNKNOWN(ApiOperationType.UNKNOWN);
 

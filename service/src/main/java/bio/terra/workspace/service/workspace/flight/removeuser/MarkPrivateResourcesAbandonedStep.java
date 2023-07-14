@@ -16,8 +16,8 @@ import java.util.UUID;
 
 /**
  * Step for marking all of user's private resources in a workspace as ABANDONED. This doesn't change
- * any permissions (that happens in the previous {@code RemovePrivateResourceAccessStep}), but makes
- * it clear to WSM and other workspace users that no users have access to this resource.
+ * any permissions (that happens in the previous {@code PollCloudResourceStep}), but makes it clear
+ * to WSM and other workspace users that no users have access to this resource.
  */
 public class MarkPrivateResourcesAbandonedStep implements Step {
 

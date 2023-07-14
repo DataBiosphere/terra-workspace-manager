@@ -79,6 +79,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String RESOURCES_TO_CLONE = "resourcesToClone";
     public static final String PREFIXES_TO_CLONE = "prefixesToClone";
     public static final String CONTROLLED_RESOURCES_TO_DELETE = "controlledResourcesToDelete";
+    public static final String CONTROLLED_RESOURCE_TO_CLEANUP = "controlledResourceToCleanup";
     public static final String SOURCE_CLONE_INPUTS = "sourceCloneInputs";
     public static final String SOURCE_WORKSPACE_ID = "sourceWorkspaceId";
     public static final String STORAGE_TRANSFER_JOB_NAME = "storageTransferJobName";

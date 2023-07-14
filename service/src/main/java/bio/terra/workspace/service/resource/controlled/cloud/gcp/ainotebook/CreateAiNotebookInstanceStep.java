@@ -265,6 +265,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     try {
       OperationCow<Operation> deletionOperation;
       try {
+
         deletionOperation =
             notebooks
                 .operations()
