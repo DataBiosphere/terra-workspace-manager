@@ -39,6 +39,7 @@ import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.resources.ResourceManager;
+import com.azure.resourcemanager.resources.fluentcore.arm.AzureConfigurable;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.Bigquery;
@@ -60,6 +61,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -180,9 +182,9 @@ public class CrlService {
     final var azureProfile = getAzureProfile(azureCloudContext);
 
     // We must use FQDN because there are two `Defaults` symbols imported otherwise.
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, ComputeManager.configure())
-        .withPolicy(new UserAgentPolicy(azureResourceUsageAttribute))
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ComputeManager.configure()))
         .authenticate(azureCreds, azureProfile);
   }
 
@@ -192,9 +194,12 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
-            clientConfig, RelayManager.configure())
-        .authenticate(azureCreds, azureProfile);
+    RelayManager.Configurable relayManagerConfigurable =
+        bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
+            clientConfig, RelayManager.configure());
+    Optional.ofNullable(azureResourceUsageAttribute)
+        .ifPresent((a) -> relayManagerConfigurable.withPolicy(new UserAgentPolicy(a)));
+    return relayManagerConfigurable.authenticate(azureCreds, azureProfile);
   }
 
   /** Returns an Azure {@link StorageManager} configured for use with CRL. */
@@ -203,8 +208,9 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, StorageManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, StorageManager.configure()))
         .authenticate(azureCreds, azureProfile);
   }
 
@@ -214,9 +220,12 @@ public class CrlService {
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
 
-    return bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
-            clientConfig, BatchManager.configure())
-        .authenticate(azureCreds, azureProfile);
+    BatchManager.Configurable batchManagerConfigurable =
+        bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
+            clientConfig, BatchManager.configure());
+    Optional.ofNullable(azureResourceUsageAttribute)
+        .ifPresent((a) -> batchManagerConfigurable.withPolicy(new UserAgentPolicy(a)));
+    return batchManagerConfigurable.authenticate(azureCreds, azureProfile);
   }
 
   /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
@@ -225,8 +234,9 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, ResourceManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ResourceManager.configure()))
         .authenticate(azureCreds, azureProfile)
         .withSubscription(azureCloudContext.getAzureSubscriptionId());
   }
@@ -237,8 +247,9 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, MsiManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, MsiManager.configure()))
         .authenticate(azureCreds, azureProfile);
   }
 
@@ -248,8 +259,9 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, MonitorManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, MonitorManager.configure()))
         .authenticate(azureCreds, azureProfile);
   }
 
@@ -258,8 +270,9 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, ContainerServiceManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ContainerServiceManager.configure()))
         .authenticate(azureCreds, azureProfile);
   }
 
@@ -270,15 +283,25 @@ public class CrlService {
     final var azureProfile = getAzureProfile(azureCloudContext);
     // PostgreSqlManager.configure does not return the right type, so inline
     // bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure
-    return PostgreSqlManager.configure()
-        .withLogOptions(
-            new HttpLogOptions()
-                .setRequestLogger(new AzureResourceCleanupRecorder(clientConfig))
-                .setResponseLogger(new AzureResponseLogger(clientConfig))
-                // Since we are providing our own loggers this value isn't actually used; however it
-                // does need to be set to a value other than NONE for the loggers to fire.
-                .setLogLevel(HttpLogDetailLevel.BASIC))
-        .authenticate(azureCreds, azureProfile);
+    PostgreSqlManager.Configurable postgreSqlConfigurable =
+        PostgreSqlManager.configure()
+            .withLogOptions(
+                new HttpLogOptions()
+                    .setRequestLogger(new AzureResourceCleanupRecorder(clientConfig))
+                    .setResponseLogger(new AzureResponseLogger(clientConfig))
+                    // Since we are providing our own loggers this value isn't actually used;
+                    // however it
+                    // does need to be set to a value other than NONE for the loggers to fire.
+                    .setLogLevel(HttpLogDetailLevel.BASIC));
+    Optional.ofNullable(azureResourceUsageAttribute)
+        .ifPresent((a) -> postgreSqlConfigurable.withPolicy(new UserAgentPolicy(a)));
+    return postgreSqlConfigurable.authenticate(azureCreds, azureProfile);
+  }
+
+  private <T extends AzureConfigurable<T>> T configureAzureResourceManager(T configurable) {
+    Optional.ofNullable(azureResourceUsageAttribute)
+        .ifPresent((a) -> configurable.withPolicy(new UserAgentPolicy(a)));
+    return configurable;
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
