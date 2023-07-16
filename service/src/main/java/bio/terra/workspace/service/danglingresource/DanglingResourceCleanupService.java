@@ -34,7 +34,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DanglingResourceCleanupService {
-
   private static final Logger logger =
       LoggerFactory.getLogger(DanglingResourceCleanupService.class);
   private static final String DANGLING_RESOURCE_CLEANUP_JOB_NAME = "dangling_resource_cleanup_job";
@@ -125,22 +124,21 @@ public class DanglingResourceCleanupService {
         new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
 
     // For each resource, check if it exists in the cloud. If it does not, run the cleanup flight to
-    // delete its db entry and associated sam resource.
+    // delete its db metadata entry and associated sam resource.
     for (ControlledResource resource : resourcesToCheck) {
-      if (cloudResourceExists(resource)) {
-        continue;
+      if (!cloudResourceExists(resource)) {
+        logger.info(
+            "Cleaning up dangling resource {} of type {}.",
+            resource.getResourceId(),
+            resource.getResourceType());
+        launchDanglingResourceCleanupFlight(resource, wsmSaRequest);
       }
-      logger.info(
-          "Cleaning up dangling resource {} of type {}.",
-          resource.getResourceId(),
-          resource.getResourceType());
-      launchDanglingResourceCleanupFlight(resource, wsmSaRequest);
     }
   }
 
   /**
-   * Launches a resource delete flight for a given dangling resource. The controlled resource flight
-   * is reused here to delete the sam resource and metadata entry.
+   * Launches a resource delete flight for a given dangling resource. The controlled resource
+   * deletion flight is reused here to delete the sam resource and metadata entry.
    */
   private void launchDanglingResourceCleanupFlight(
       ControlledResource resource, AuthenticatedUserRequest wsmSaRequest) {
@@ -154,6 +152,9 @@ public class DanglingResourceCleanupService {
         wsmSaRequest);
   }
 
+  /**
+   * Utility method to check if a given wsm controlled resource's associated cloud resourced exists.
+   */
   private boolean cloudResourceExists(ControlledResource resource) {
     return switch (resource.getResourceType()) {
       case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE -> aiNotebookInstanceExists(
@@ -177,7 +178,7 @@ public class DanglingResourceCleanupService {
     } catch (GoogleJsonResponseException e) {
       return HttpStatus.NOT_FOUND.value() != e.getStatusCode();
     } catch (IOException e) {
-      // If any other error occurs, assume the resource may still exist.
+      // If any other error occurs, assume that the resource may still exist.
       return true;
     }
   }
@@ -193,7 +194,7 @@ public class DanglingResourceCleanupService {
     } catch (GoogleJsonResponseException e) {
       return HttpStatus.NOT_FOUND.value() != e.getStatusCode();
     } catch (IOException e) {
-      // If any other error occurs, assume the resource may still exist.
+      // If any other error occurs, assume that the resource may still exist.
       return true;
     }
   }
@@ -205,7 +206,7 @@ public class DanglingResourceCleanupService {
     } catch (GoogleJsonResponseException e) {
       return HttpStatus.NOT_FOUND.value() != e.getStatusCode();
     } catch (IOException e) {
-      // If any other error occurs, assume the resource may still exist.
+      // If any other error occurs, assume that the resource may still exist.
       return true;
     }
   }

@@ -395,13 +395,13 @@ public class ResourceDao {
 
   /**
    * Returns a list of all controlled resources in the READY state in any workspace, filtering by a
-   * provided list of resource types.
+   * provided list of wsm resource types.
    *
-   * @param resourceTypes List of wsm resource types to filter by.
+   * @param wsmResourceTypes List of wsm resource types to filter by.
    */
   @ReadTransaction
   public List<ControlledResource> listControlledResourcesByType(
-      List<WsmResourceType> resourceTypes) {
+      List<WsmResourceType> wsmResourceTypes) {
     String sql =
         RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
             + " WHERE state = :state AND exact_resource_type IN (:resource_types)";
@@ -410,7 +410,7 @@ public class ResourceDao {
             .addValue("state", WsmResourceState.READY.toDb())
             .addValue(
                 "resource_types",
-                resourceTypes.stream().map(WsmResourceType::toSql).collect(Collectors.toList()));
+                wsmResourceTypes.stream().map(WsmResourceType::toSql).collect(Collectors.toList()));
 
     List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
     return dbResources.stream()

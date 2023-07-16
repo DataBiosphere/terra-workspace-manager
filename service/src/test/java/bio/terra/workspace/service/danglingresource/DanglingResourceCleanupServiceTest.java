@@ -10,11 +10,13 @@ import bio.terra.workspace.app.configuration.external.DanglingResourceCleanupCon
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -65,7 +67,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
    */
   @AfterEach
   public void cleanup() {
-    // workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
+    workspaceService.deleteWorkspace(workspace, userAccessUtils.defaultUserAuthRequest());
   }
 
   @Test
@@ -85,6 +87,21 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
             .createGceInstance(
                 userAccessUtils.defaultUserAuthRequest(), workspace.getWorkspaceId(), null)
             .getGceInstance();
+
+    // Create a controlled gcs bucket
+    String bucketResourceName = TestUtils.appendRandomNumber("my-bucket");
+    String bucketCloudName = TestUtils.appendRandomNumber("my-bucket");
+    ApiGcpGcsBucketResource bucket =
+        mockMvcUtils
+            .createControlledGcsBucket(
+                userAccessUtils.defaultUserAuthRequest(),
+                workspace.getWorkspaceId(),
+                bucketResourceName,
+                bucketCloudName, /*location*/
+                null,
+                /*storageClass*/ null,
+                /*lifecycle*/ null)
+            .getGcpBucket();
 
     // Directly delete the notebook
     AIPlatformNotebooksCow notebooksCow = crlService.getAIPlatformNotebooksCow();
@@ -107,8 +124,8 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
     // Call dangling resource cleanup
     danglingResourceCleanupService.cleanupResourcesSuppressExceptions();
 
-    // Verify that the notebook is deleted, poll to ensure dangling resource cleanup flights are
-    // done
+    // Verify that the notebook is deleted, polling to ensure dangling resource cleanup flight to
+    // delete the notebook has completed
     boolean isDeleted = false;
     for (int retryCount = 0; retryCount < ASSERT_RESOURCE_CLEANUP_RETRY_COUNT; retryCount++) {
       try {
@@ -125,5 +142,9 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
     assertNotNull(
         resourceDao.getResource(
             workspace.getWorkspaceId(), instance.getMetadata().getResourceId()));
+
+    // Verify that the bucket is not deleted
+    assertNotNull(
+        resourceDao.getResource(workspace.getWorkspaceId(), bucket.getMetadata().getResourceId()));
   }
 }
