@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,6 +27,7 @@ import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
+import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
@@ -36,7 +36,6 @@ import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextState
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
-import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -135,24 +134,15 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
 
   @Test
   void createCloudContextTest() {
-    AwsCloudContext createdAwsCloudContext =
+    AwsCloudContext createdCloudContext =
         AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, AWS_ENVIRONMENT);
-    assertNotNull(createdAwsCloudContext);
-
-    AwsCloudContextFields contextFields = createdAwsCloudContext.getContextFields();
-    assertNotNull(contextFields);
-    assertEquals(AWS_METADATA.getMajorVersion(), contextFields.getMajorVersion());
-    assertEquals(AWS_METADATA.getOrganizationId(), contextFields.getOrganizationId());
-    assertEquals(AWS_METADATA.getAccountId(), contextFields.getAccountId());
-    assertEquals(AWS_METADATA.getTenantAlias(), contextFields.getTenantAlias());
-    assertEquals(AWS_METADATA.getEnvironmentAlias(), contextFields.getEnvironmentAlias());
-
-    CloudContextCommonFields commonFields = createdAwsCloudContext.getCommonFields();
-    assertNotNull(commonFields);
-    assertEquals(SPEND_PROFILE_ID, commonFields.spendProfileId());
-    assertEquals(WsmResourceState.CREATING, commonFields.state());
-    assertEquals("flightId", commonFields.flightId());
-    assertNull(commonFields.error());
+    assertNotNull(createdCloudContext);
+    AwsTestUtils.assertAwsCloudContextFields(AWS_METADATA, createdCloudContext.getContextFields());
+    AwsTestUtils.assertCloudContextCommonFields(
+        createdCloudContext.getCommonFields(),
+        SPEND_PROFILE_ID,
+        WsmResourceState.CREATING,
+        "flightId");
   }
 
   @Test

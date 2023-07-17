@@ -211,12 +211,12 @@ public class AwsUtils {
    */
   private static AwsCredentialsProvider createDiscoveryCredentialsProvider(
       AwsConfiguration awsConfiguration) {
-    AwsConfiguration.Authentication authenticationConfig = awsConfiguration.getAuthentication();
+    AwsConfiguration.Authentication authentication = awsConfiguration.getAuthentication();
     return createAssumeRoleWithGcpCredentialsProvider(
         Arn.fromString(awsConfiguration.getDiscovery().getRoleArn()),
-        Duration.ofSeconds(authenticationConfig.getCredentialLifetimeSeconds()),
-        Duration.ofSeconds(authenticationConfig.getCredentialStaleTimeSeconds()),
-        authenticationConfig.getGoogleJwtAudience());
+        Duration.ofSeconds(authentication.getCredentialLifetimeSeconds()),
+        Duration.ofSeconds(authentication.getCredentialStaleTimeSeconds()),
+        authentication.getGoogleJwtAudience());
   }
 
   /**
