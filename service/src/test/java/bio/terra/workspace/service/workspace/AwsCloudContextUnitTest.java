@@ -1,15 +1,15 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.ACCOUNT_ID;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_ENVIRONMENT;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_METADATA;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.ENVIRONMENT_ALIAS;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.MAJOR_VERSION;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.ORGANIZATION_ID;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.TENANT_ALIAS;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.V1_VERSION;
-import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.utils.AwsTestUtils.ACCOUNT_ID;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_ENVIRONMENT;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_LANDING_ZONE;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_METADATA;
+import static bio.terra.workspace.common.utils.AwsTestUtils.ENVIRONMENT_ALIAS;
+import static bio.terra.workspace.common.utils.AwsTestUtils.MAJOR_VERSION;
+import static bio.terra.workspace.common.utils.AwsTestUtils.ORGANIZATION_ID;
+import static bio.terra.workspace.common.utils.AwsTestUtils.TENANT_ALIAS;
+import static bio.terra.workspace.common.utils.AwsTestUtils.V1_VERSION;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.makeDbCloudContext;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,7 +50,8 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Mock private S3EnvironmentDiscovery mockEnvironmentDiscovery;
 
   private final AwsCloudContext awsCloudContext =
-      AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, AWS_ENVIRONMENT);
+      AwsCloudContextService.createCloudContext(
+          "flightId", DEFAULT_SPEND_PROFILE_ID, AWS_ENVIRONMENT);
 
   @Test
   void serdesTest() {
@@ -135,12 +136,13 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   @Test
   void createCloudContextTest() {
     AwsCloudContext createdCloudContext =
-        AwsCloudContextService.createCloudContext("flightId", SPEND_PROFILE_ID, AWS_ENVIRONMENT);
+        AwsCloudContextService.createCloudContext(
+            "flightId", DEFAULT_SPEND_PROFILE_ID, AWS_ENVIRONMENT);
     assertNotNull(createdCloudContext);
     AwsTestUtils.assertAwsCloudContextFields(AWS_METADATA, createdCloudContext.getContextFields());
     AwsTestUtils.assertCloudContextCommonFields(
         createdCloudContext.getCommonFields(),
-        SPEND_PROFILE_ID,
+        DEFAULT_SPEND_PROFILE_ID,
         WsmResourceState.CREATING,
         "flightId");
   }

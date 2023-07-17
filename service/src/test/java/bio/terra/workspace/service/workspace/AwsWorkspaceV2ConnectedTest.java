@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -52,7 +52,10 @@ public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
         awsConnectedTestUtils.getEnvironment().getMetadata(),
         createdCloudContext.getContextFields());
     AwsTestUtils.assertCloudContextCommonFields(
-        createdCloudContext.getCommonFields(), SPEND_PROFILE_ID, WsmResourceState.READY, null);
+        createdCloudContext.getCommonFields(),
+        DEFAULT_SPEND_PROFILE_ID,
+        WsmResourceState.READY,
+        null);
 
     // create resource and verify
     ApiAwsS3StorageFolderCreationParameters creationParameters =

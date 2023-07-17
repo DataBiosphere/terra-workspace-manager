@@ -1,10 +1,10 @@
 package bio.terra.workspace.common.utils;
 
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_REGION;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_1;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_2;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -140,7 +140,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
                 t ->
                     t.key().equals(AwsUtils.TAG_KEY_WORKSPACE_ROLE) && t.value().equals("reader")));
 
-    AwsCloudContext cloudContext = ControlledAwsResourceFixtures.makeAwsCloudContext();
+    AwsCloudContext cloudContext = AwsTestUtils.makeAwsCloudContext();
     AwsUtils.appendResourceTags(tags, cloudContext, null);
     assertEquals(/* prevSize+3 */ 5, tags.size());
     assertContainsTagByKey(tags, AwsUtils.TAG_KEY_VERSION);
@@ -435,12 +435,10 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
         .thenReturn(ControlledAwsResourceFixtures.createNotebookResponse400)
         .thenThrow(AWS_SERVICE_EXCEPTION_1);
 
-    Arn userRoleArn =
-        Arn.fromString(ControlledAwsResourceFixtures.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN);
-    Arn kmsKeyArn = Arn.fromString(ControlledAwsResourceFixtures.AWS_LANDING_ZONE_KMS_KEY_ARN);
+    Arn userRoleArn = Arn.fromString(AwsTestUtils.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN);
+    Arn kmsKeyArn = Arn.fromString(AwsTestUtils.AWS_LANDING_ZONE_KMS_KEY_ARN);
     Arn notebookLifecycleConfigArn =
-        Arn.fromString(
-            ControlledAwsResourceFixtures.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
+        Arn.fromString(AwsTestUtils.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
 
     // success
     assertDoesNotThrow(

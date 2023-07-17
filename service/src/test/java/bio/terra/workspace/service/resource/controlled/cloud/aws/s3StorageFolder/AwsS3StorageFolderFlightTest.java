@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_REGION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -66,7 +67,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
         awsCloudContextService
             .getLandingZone(
                 awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid),
-                Region.of(ControlledAwsResourceFixtures.AWS_REGION))
+                Region.of(AWS_REGION))
             .orElseThrow();
     awsCredentialsProvider =
         AwsUtils.createWsmCredentialProvider(

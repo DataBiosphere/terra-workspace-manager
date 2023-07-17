@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_ENVIRONMENT;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_METADATA;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_ENVIRONMENT;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_METADATA;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
