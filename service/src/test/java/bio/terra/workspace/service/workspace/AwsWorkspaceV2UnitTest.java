@@ -55,6 +55,7 @@ public class AwsWorkspaceV2UnitTest extends BaseAwsUnitTest {
 
       when(awsCloudContextService.discoverEnvironment()).thenReturn(AWS_ENVIRONMENT);
 
+      // create workspace (with cloud context)
       Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
       UUID workspaceUuid = workspace.workspaceId();
       String jobId = UUID.randomUUID().toString();

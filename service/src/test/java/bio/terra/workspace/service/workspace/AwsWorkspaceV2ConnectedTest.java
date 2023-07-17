@@ -38,7 +38,7 @@ public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
   void createDeleteWorkspaceV2WithContextTest() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
 
-    // create workspace with cloud context
+    // create workspace (with cloud context)
     ApiCreateWorkspaceV2Result createResult =
         mvcWorkspaceApi.createWorkspaceAndWait(userRequest, apiCloudPlatform);
     assertEquals(StatusEnum.SUCCEEDED, createResult.getJobReport().getStatus());
