@@ -192,10 +192,6 @@ public class CreateDataprocClusterStep implements Step {
             new ClusterConfig()
                 .setConfigBucket(stagingBucketName)
                 .setTempBucket(tempBucketName)
-                .setInitializationActions(
-                    List.of(
-                        new NodeInitializationAction()
-                            .setExecutableFile(creationParameters.getInitializationScript())))
                 .setMasterConfig(
                     getInstanceGroupConfig(creationParameters.getManagerNodeConfig(), false))
                 .setWorkerConfig(
