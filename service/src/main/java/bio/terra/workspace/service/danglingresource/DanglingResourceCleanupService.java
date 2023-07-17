@@ -1,8 +1,5 @@
 package bio.terra.workspace.service.danglingresource;
 
-import bio.terra.cloudres.google.compute.CloudComputeCow;
-import bio.terra.cloudres.google.dataproc.DataprocCow;
-import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.common.logging.LoggingUtils;
 import bio.terra.workspace.app.configuration.external.DanglingResourceCleanupConfiguration;
 import bio.terra.workspace.db.CronjobDao;
@@ -10,15 +7,21 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +43,7 @@ public class DanglingResourceCleanupService {
 
   private final DanglingResourceCleanupConfiguration configuration;
   private final ControlledResourceService controlledResourceService;
+  private final JobService jobService;
   private final ResourceDao resourceDao;
   private final CronjobDao cronjobDao;
   private final SamService samService;
@@ -56,12 +60,14 @@ public class DanglingResourceCleanupService {
   public DanglingResourceCleanupService(
       DanglingResourceCleanupConfiguration configuration,
       ControlledResourceService controlledResourceService,
+      JobService jobService,
       ResourceDao resourceDao,
       CronjobDao cronjobDao,
       SamService samService,
       CrlService crlService) {
     this.configuration = configuration;
     this.controlledResourceService = controlledResourceService;
+    this.jobService = jobService;
     this.resourceDao = resourceDao;
     this.cronjobDao = cronjobDao;
     this.samService = samService;
@@ -116,7 +122,7 @@ public class DanglingResourceCleanupService {
     // Read all resource entries that are in the READY state and match the resource type of
     // potential dangling resources.
     List<ControlledResource> resourcesToCheck =
-        resourceDao.listControlledResourcesByType(DANGLING_RESOURCE_TYPES);
+        resourceDao.listReadyResourcesByType(DANGLING_RESOURCE_TYPES);
     logger.info("Checking {} resources to see if they are dangling.", resourcesToCheck.size());
 
     String wsmSaToken = samService.getWsmServiceAccountToken();
@@ -126,43 +132,53 @@ public class DanglingResourceCleanupService {
     // For each resource, check if it exists in the cloud. If it does not, run the cleanup flight to
     // delete its db metadata entry and associated sam resource.
     for (ControlledResource resource : resourcesToCheck) {
-      if (!cloudResourceExists(resource)) {
-        logger.info(
-            "Cleaning up dangling resource {} of type {}.",
-            resource.getResourceId(),
-            resource.getResourceType());
+      if (!cloudResourceExists(resource, crlService)) {
         launchDanglingResourceCleanupFlight(resource, wsmSaRequest);
       }
     }
   }
 
   /**
-   * Launches a resource delete flight for a given dangling resource. The controlled resource
-   * deletion flight is reused here to delete the sam resource and metadata entry.
+   * Launches a resource deletion flight for a given dangling resource. The controlled resource
+   * deletion flight is reused here, but only deletes sam resources and db metadata.
    */
   private void launchDanglingResourceCleanupFlight(
       ControlledResource resource, AuthenticatedUserRequest wsmSaRequest) {
+
     String jobId = UUID.randomUUID().toString();
-    controlledResourceService.deleteControlledResourceAsync(
-        jobId,
-        resource.getWorkspaceId(),
-        resource.getResourceId(),
-        /* forceDelete= */ false,
-        /* resultPath= */ null,
-        wsmSaRequest);
+    List<WsmResource> resourceToDelete = new ArrayList<>();
+    resourceToDelete.add(resource);
+    jobService
+        .newJob()
+        .description(
+            "Dangling resource cleanup flight, deleting resource "
+                + resource.getResourceId()
+                + "of type "
+                + resource.getResourceType())
+        .jobId(jobId)
+        .flightClass(DeleteControlledResourcesFlight.class)
+        .userRequest(wsmSaRequest)
+        .workspaceId(resource.getWorkspaceId().toString())
+        .operationType(OperationType.SYSTEM_CLEANUP)
+        // resourceType, resourceName, stewardshipType are set for flight job filtering.
+        .resourceType(resource.getResourceType())
+        .resourceName(resource.getName())
+        .stewardshipType(resource.getStewardshipType())
+        .addParameter(ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, resourceToDelete)
+        .submitAndWait();
   }
 
   /**
    * Utility method to check if a given wsm controlled resource's associated cloud resourced exists.
    */
-  private boolean cloudResourceExists(ControlledResource resource) {
+  private static boolean cloudResourceExists(ControlledResource resource, CrlService crlService) {
     return switch (resource.getResourceType()) {
       case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE -> aiNotebookInstanceExists(
-          resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE));
+          resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE), crlService);
       case CONTROLLED_GCP_GCE_INSTANCE -> gceInstanceExists(
-          resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE));
+          resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE), crlService);
       case CONTROLLED_GCP_DATAPROC_CLUSTER -> dataprocClusterExists(
-          resource.castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER));
+          resource.castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER), crlService);
       default -> {
         logger.info(
             "Resource {} is not supported for cloud existence check", resource.getResourceType());
@@ -171,10 +187,15 @@ public class DanglingResourceCleanupService {
     };
   }
 
-  private boolean aiNotebookInstanceExists(ControlledAiNotebookInstanceResource resource) {
+  private static boolean aiNotebookInstanceExists(
+      ControlledAiNotebookInstanceResource resource, CrlService crlService) {
     try {
-      AIPlatformNotebooksCow notebooksCow = crlService.getAIPlatformNotebooksCow();
-      return notebooksCow.instances().get(resource.toInstanceName()).execute() != null;
+      return crlService
+              .getAIPlatformNotebooksCow()
+              .instances()
+              .get(resource.toInstanceName())
+              .execute()
+          != null;
     } catch (GoogleJsonResponseException e) {
       return HttpStatus.NOT_FOUND.value() != e.getStatusCode();
     } catch (IOException e) {
@@ -183,10 +204,11 @@ public class DanglingResourceCleanupService {
     }
   }
 
-  private boolean gceInstanceExists(ControlledGceInstanceResource resource) {
+  private static boolean gceInstanceExists(
+      ControlledGceInstanceResource resource, CrlService crlService) {
     try {
-      CloudComputeCow computeCow = crlService.getCloudComputeCow();
-      return computeCow
+      return crlService
+              .getCloudComputeCow()
               .instances()
               .get(resource.getProjectId(), resource.getZone(), resource.getInstanceId())
               .execute()
@@ -199,10 +221,10 @@ public class DanglingResourceCleanupService {
     }
   }
 
-  private boolean dataprocClusterExists(ControlledDataprocClusterResource resource) {
+  private static boolean dataprocClusterExists(
+      ControlledDataprocClusterResource resource, CrlService crlService) {
     try {
-      DataprocCow dataprocCow = crlService.getDataprocCow();
-      return dataprocCow.clusters().get(resource.toClusterName()).execute() != null;
+      return crlService.getDataprocCow().clusters().get(resource.toClusterName()).execute() != null;
     } catch (GoogleJsonResponseException e) {
       return HttpStatus.NOT_FOUND.value() != e.getStatusCode();
     } catch (IOException e) {

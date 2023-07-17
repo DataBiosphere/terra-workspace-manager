@@ -394,14 +394,13 @@ public class ResourceDao {
   }
 
   /**
-   * Returns a list of all controlled resources in the READY state in any workspace, filtering by a
-   * provided list of wsm resource types.
+   * Returns a list of all resources in the READY state in any workspace, filtering by a provided
+   * list of wsm resource types.
    *
    * @param wsmResourceTypes List of wsm resource types to filter by.
    */
   @ReadTransaction
-  public List<ControlledResource> listControlledResourcesByType(
-      List<WsmResourceType> wsmResourceTypes) {
+  public List<ControlledResource> listReadyResourcesByType(List<WsmResourceType> wsmResourceTypes) {
     String sql =
         RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
             + " WHERE state = :state AND exact_resource_type IN (:resource_types)";

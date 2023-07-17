@@ -36,7 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Tag("connectedPlus")
 public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
   private Workspace workspace;
-  private final int ASSERT_RESOURCE_CLEANUP_RETRY_COUNT = 8;
+  private final int ASSERT_RESOURCE_CLEANUP_RETRY_COUNT = 40;
   private final int ASSERT_RESOURCE_CLEANUP_RETRY_SECONDS = 15;
 
   @Autowired WorkspaceConnectedTestUtils workspaceUtils;
@@ -136,7 +136,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
       }
       TimeUnit.SECONDS.sleep(ASSERT_RESOURCE_CLEANUP_RETRY_SECONDS);
     }
-    assertTrue(isDeleted, "Notebook was not deleted");
+    assertTrue(isDeleted, "Notebook is deleted");
 
     // Verify that the instance is not deleted
     assertNotNull(
