@@ -95,7 +95,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
     ControlledAwsS3StorageFolderResource resource =
-        ControlledAwsResourceFixtures.makeResource(
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResource(
             workspaceUuid, landingZone.getStorageBucket().name(), creationParameters);
 
     // create resource
@@ -155,7 +155,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
     ControlledAwsS3StorageFolderResource resource =
-        ControlledAwsResourceFixtures.makeResource(
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResource(
             workspaceUuid, landingZone.getStorageBucket().name(), creationParameters);
 
     // test idempotency of s3-folder-specific undo step by retrying once.
@@ -187,7 +187,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
     ControlledAwsS3StorageFolderResource resource =
-        ControlledAwsResourceFixtures.makeResource(
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResource(
             workspaceUuid, landingZone.getStorageBucket().name(), creationParameters);
 
     ControlledAwsS3StorageFolderResource createdResource =

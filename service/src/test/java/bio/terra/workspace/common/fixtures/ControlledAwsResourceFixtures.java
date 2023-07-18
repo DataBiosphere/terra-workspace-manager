@@ -120,7 +120,7 @@ public class ControlledAwsResourceFixtures {
     return new ApiAwsS3StorageFolderCreationParameters().folderName(storageName).region(AWS_REGION);
   }
 
-  public static ControlledAwsS3StorageFolderResource makeResource(
+  public static ControlledAwsS3StorageFolderResource makeAwsS3StorageFolderResource(
       UUID workspaceUuid,
       String bucket,
       ApiAwsS3StorageFolderCreationParameters creationParameters) {
@@ -232,7 +232,7 @@ public class ControlledAwsResourceFixtures {
         .region(AWS_REGION);
   }
 
-  public static ControlledAwsSageMakerNotebookResource makeResource(
+  public static ControlledAwsSageMakerNotebookResource makeAwsSagemakerNotebookResource(
       UUID workspaceUuid,
       ApiAwsSageMakerNotebookCreationParameters creationParameters,
       String userEmail) {

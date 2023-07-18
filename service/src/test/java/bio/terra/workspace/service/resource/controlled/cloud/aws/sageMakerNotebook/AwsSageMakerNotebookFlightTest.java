@@ -31,7 +31,7 @@ public class AwsSageMakerNotebookFlightTest extends BaseAwsSageMakerNotebookFlig
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
             ControlledAwsResourceFixtures.getUniqueNotebookName());
     ControlledAwsSageMakerNotebookResource resource =
-        ControlledAwsResourceFixtures.makeResource(
+        ControlledAwsResourceFixtures.makeAwsSagemakerNotebookResource(
             workspaceUuid, creationParameters, userRequest.getEmail());
 
     // create resource

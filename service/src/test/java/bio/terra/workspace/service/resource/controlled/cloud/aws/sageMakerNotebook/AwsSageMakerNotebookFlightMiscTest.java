@@ -30,7 +30,7 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
             ControlledAwsResourceFixtures.getUniqueNotebookName());
     ControlledAwsSageMakerNotebookResource resource =
-        ControlledAwsResourceFixtures.makeResource(
+        ControlledAwsResourceFixtures.makeAwsSagemakerNotebookResource(
             workspaceUuid, creationParameters, userRequest.getEmail());
 
     // test idempotency of s3-folder-specific undo step by retrying once.
@@ -71,7 +71,7 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
             ControlledAwsResourceFixtures.getUniqueNotebookName());
     ControlledAwsSageMakerNotebookResource resource =
-        ControlledAwsResourceFixtures.makeResource(
+        ControlledAwsResourceFixtures.makeAwsSagemakerNotebookResource(
             workspaceUuid, creationParameters, userRequest.getEmail());
 
     // create & verify resource status
