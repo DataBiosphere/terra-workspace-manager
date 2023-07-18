@@ -193,7 +193,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
             getWorkspaceId(),
             resourceId);
 
-    // Directly fetch the cluster to verify non wsm that non wsm managed fields are updated.
+    // Directly fetch the cluster to verify that non wsm managed fields are updated.
     Cluster retrievedCluster =
         dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute();
 
@@ -203,7 +203,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
         newNumPrimaryWorkers, retrievedCluster.getConfig().getWorkerConfig().getNumInstances());
 
     // Update the cluster lifecycle rule through WSM. Cluster lifecycle rules cannot be updated in
-    // tandem with other parameters so we test it separately.
+    // tandem with other parameters, so we update it separately.
     String newIdleDeleteTtl = "1800s";
     updatedResource =
         resourceUserApi.updateDataprocCluster(

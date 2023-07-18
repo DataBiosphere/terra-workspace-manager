@@ -57,7 +57,6 @@ public class UpdateDataprocClusterStep implements Step {
     if (updateParameters == null) {
       return StepResult.getStepResultSuccess();
     }
-
     return updateCluster(updateParameters);
   }
 
@@ -70,7 +69,6 @@ public class UpdateDataprocClusterStep implements Step {
             workingMap,
             PREVIOUS_UPDATE_PARAMETERS,
             ApiControlledDataprocClusterUpdateParameters.class);
-
     return updateCluster(prevParameters);
   }
 
@@ -103,6 +101,7 @@ public class UpdateDataprocClusterStep implements Step {
               new AutoscalingConfig().setPolicyUri(updateParameters.getAutoscalingPolicy()));
     }
     ApiGcpDataprocClusterLifecycleConfig lifecycleConfig = updateParameters.getLifecycleConfig();
+    // Only one of the following lifecycle rule can be applied
     if (lifecycleConfig != null) {
       updateClusterMask.getConfig().setLifecycleConfig(new LifecycleConfig());
       if (lifecycleConfig.getIdleDeleteTtl() != null) {

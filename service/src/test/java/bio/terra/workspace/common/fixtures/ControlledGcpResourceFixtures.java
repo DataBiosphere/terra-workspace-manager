@@ -411,8 +411,6 @@ public class ControlledGcpResourceFixtures {
 
   // Dataproc Cluster
 
-  // TODO: PF-2901 Add fixtures for update metadata parameters
-
   public static ApiGcpDataprocClusterCreationParameters defaultDataprocClusterCreationParameters() {
     return new ApiGcpDataprocClusterCreationParameters()
         .clusterId(TestUtils.appendRandomNumber("default-cluster-id"))
