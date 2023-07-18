@@ -1125,13 +1125,11 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ClusterName clusterName = resource.toClusterName();
     try {
       Cluster retrievedCluster = dataprocCow.clusters().get(clusterName).execute();
-      System.out.println("@@@@@@@@@@@@@@");
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       String prettyJsonString = gson.toJson(JsonParser.parseString(retrievedCluster.toString()));
       System.out.println(prettyJsonString);
 
     } catch (IOException e) {
-      System.out.println("@@@@@@@@@@@@@@");
       System.out.println("Error retrieving cluster");
     }
 
