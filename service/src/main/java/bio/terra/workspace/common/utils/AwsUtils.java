@@ -365,7 +365,7 @@ public class AwsUtils {
         .client(sageMakerClient)
         .overrideConfiguration(
             WaiterOverrideConfiguration.builder()
-                .waitTimeout(AwsResourceConstants.SAGEMAKER_CLIENT_WAITER_TIMEOUT)
+                .waitTimeout(AwsResourceConstants.SAGEMAKER_WAITER_TIMEOUT)
                 .build())
         .build();
   }
