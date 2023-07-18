@@ -5,6 +5,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NO
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_DATAPROC_CLUSTER_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCE_INSTANCES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCE_INSTANCE_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
@@ -30,12 +31,14 @@ import bio.terra.workspace.generated.model.ApiCreateControlledGcpDataprocCluster
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpAiNotebookInstanceRequest;
+import bio.terra.workspace.generated.model.ApiDeleteControlledGcpDataprocClusterRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGceInstanceRequest;
 import bio.terra.workspace.generated.model.ApiDeleteControlledGcpGcsBucketRequest;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
+import bio.terra.workspace.generated.model.ApiGcpDataprocClusterResource;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
@@ -43,6 +46,7 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDatasetRequestBody;
+import bio.terra.workspace.generated.model.ApiUpdateControlledGcpDataprocClusterRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -198,6 +202,11 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder(workspaceUuid).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
 
+    // GCP-Controlled Dataproc cluster
+    var clusterResource =
+        ControlledGcpResourceFixtures.makeDefaultDataprocCluster(workspaceUuid).build();
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, clusterResource);
+
     // GCP-Controlled BigQuery
     var bqResource =
         ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
@@ -246,6 +255,24 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         notebookResource.getResourceId(),
         CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT,
         objectMapper.writeValueAsString(notebookDeleteBody));
+
+    // GCP-Controlled Dataproc cluster
+    var clusterRequestBody = new ApiUpdateControlledGcpDataprocClusterRequestBody().name("foobar");
+    stateTestUtils.updateControlledResource(
+        ApiGcpDataprocClusterResource.class,
+        workspaceUuid,
+        clusterResource.getResourceId(),
+        CONTROLLED_GCP_DATAPROC_CLUSTER_PATH_FORMAT,
+        objectMapper.writeValueAsString(clusterRequestBody));
+
+    var clusterDeleteBody =
+        new ApiDeleteControlledGcpDataprocClusterRequest()
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+    stateTestUtils.postResourceExpectConflict(
+        workspaceUuid,
+        clusterResource.getResourceId(),
+        CONTROLLED_GCP_DATAPROC_CLUSTER_PATH_FORMAT,
+        objectMapper.writeValueAsString(clusterDeleteBody));
 
     // GCP-Controlled BigQuery
     var bqRequestBody =

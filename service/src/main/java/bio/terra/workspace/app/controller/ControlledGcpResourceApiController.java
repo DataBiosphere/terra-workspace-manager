@@ -1,5 +1,8 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.cloudres.google.dataproc.ClusterName;
+import bio.terra.cloudres.google.dataproc.DataprocCow;
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
@@ -13,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketRequest
 import bio.terra.workspace.generated.model.ApiCloneControlledGcpGcsBucketResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpGcsBucket;
+import bio.terra.workspace.generated.model.ApiControlledDataprocClusterUpdateParameters;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpBigQueryDatasetRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpDataprocClusterRequestBody;
@@ -54,6 +58,7 @@ import bio.terra.workspace.generated.model.ApiUpdateControlledGcpBigQueryDataset
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpDataprocClusterRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGceInstanceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateControlledGcpGcsBucketRequestBody;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -87,10 +92,17 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
+import com.google.api.services.dataproc.model.Cluster;
 import com.google.common.base.Strings;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
@@ -107,6 +119,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
   private final Logger logger = LoggerFactory.getLogger(ControlledGcpResourceApiController.class);
 
   private final WsmResourceService wsmResourceService;
+  private final CrlService crlService;
 
   @Autowired
   public ControlledGcpResourceApiController(
@@ -119,6 +132,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
       JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
+      CrlService crlService,
       WorkspaceService workspaceService,
       WsmResourceService wsmResourceService) {
     super(
@@ -133,6 +147,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
         controlledResourceMetadataManager,
         workspaceService);
     this.wsmResourceService = wsmResourceService;
+    this.crlService = crlService;
   }
 
   @Traced
@@ -988,12 +1003,43 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .setName(requestBody.getName())
             .setDescription(requestBody.getDescription());
 
-    // TODO: PF-2901 Add update parameters when update is supported
+    // Validate update parameter values to ensure there are no invalid configurations that can cause
+    // dismal failures.
+    ApiControlledDataprocClusterUpdateParameters updateParameters =
+        requestBody.getUpdateParameters();
+    if (updateParameters != null) {
+      if (updateParameters.getLifecycleConfig() != null) {
+        // Cluster scheduled deletion configurations cannot be updated in tandem with other
+        // attribute
+        // updates.
+        if (updateParameters.getNumPrimaryWorkers() != null
+            || updateParameters.getNumSecondaryWorkers() != null
+            || updateParameters.getAutoscalingPolicy() != null) {
+          throw new BadRequestException(
+              "Cluster scheduled deletion configurations cannot be updated in tandem with other attribute updates.");
+        }
+        // Can only specify one of idleDeleteTtl or autoDeleteTtl or autoDeleteTime
+        long count =
+            Stream.of(
+                    updateParameters.getLifecycleConfig().getIdleDeleteTtl(),
+                    updateParameters.getLifecycleConfig().getAutoDeleteTtl(),
+                    updateParameters.getLifecycleConfig().getAutoDeleteTime())
+                .filter(Objects::nonNull)
+                .count();
+        if (count != 1) {
+          throw new BadRequestException(
+              "Can only specify one of idleDeleteTtl, autoDeleteTtl, or autoDeleteTime");
+        }
+      }
+    }
+
     logger.info(
         "updateDataprocCluster workspace {} resource {}",
         workspaceUuid.toString(),
         resourceUuid.toString());
-    wsmResourceService.updateResource(userRequest, resource, commonUpdateParameters, null);
+
+    wsmResourceService.updateResource(
+        userRequest, resource, commonUpdateParameters, updateParameters);
     ControlledDataprocClusterResource updatedResource =
         controlledResourceService
             .getControlledResource(workspaceUuid, resourceUuid)
@@ -1074,6 +1120,21 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
+
+    DataprocCow dataprocCow = crlService.getDataprocCow();
+    ClusterName clusterName = resource.toClusterName();
+    try {
+      Cluster retrievedCluster = dataprocCow.clusters().get(clusterName).execute();
+      System.out.println("@@@@@@@@@@@@@@");
+      Gson gson = new GsonBuilder().setPrettyPrinting().create();
+      String prettyJsonString = gson.toJson(JsonParser.parseString(retrievedCluster.toString()));
+      System.out.println(prettyJsonString);
+
+    } catch (IOException e) {
+      System.out.println("@@@@@@@@@@@@@@");
+      System.out.println("Error retrieving cluster");
+    }
+
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 }
