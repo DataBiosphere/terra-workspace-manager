@@ -1,9 +1,10 @@
 package bio.terra.workspace.common.fixtures;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_REGION;
 import static software.amazon.awssdk.services.sagemaker.model.InstanceType.ML_T2_MEDIUM;
 
+import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
@@ -11,11 +12,6 @@ import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParame
 import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder.ControlledAwsS3StorageFolderResource;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.model.WsmResourceState;
-import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
-import bio.terra.workspace.service.workspace.model.AwsCloudContextFields.AwsCloudContextV1;
-import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -39,25 +35,9 @@ import software.amazon.awssdk.services.sagemaker.model.StartNotebookInstanceResp
 import software.amazon.awssdk.services.sagemaker.model.StopNotebookInstanceResponse;
 import software.amazon.awssdk.services.sts.model.Tag;
 
+// fixtures for controlled AWS resources
 public class ControlledAwsResourceFixtures {
-  public static final long V1_VERSION = AwsCloudContextV1.getVersion();
-  public static final String MAJOR_VERSION = "v0.5.8";
-  public static final String ORGANIZATION_ID = "o-organization";
-  public static final String ACCOUNT_ID = "1245893245";
-  public static final String TENANT_ALIAS = "tenant-saas";
-  public static final String ENVIRONMENT_ALIAS = "unit-test-env";
-  public static final String AWS_REGION = "us-east-1";
-  public static final String AWS_ENVIRONMENT_WSM_ROLE_ARN =
-      "arn:aws:iam::10000000001:role/WorkspaceManagerRole";
-  public static final String AWS_ENVIRONMENT_USER_ROLE_ARN =
-      "arn:aws:iam::20000000002:role/UserRole";
-  public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN =
-      "arn:aws:iam::30000000003:role/NotebookRole";
-  public static final String AWS_LANDING_ZONE_STORAGE_BUCKET_ARN =
-      "arn:aws:iam::40000000004:role/StorageBucket";
-  public static final String AWS_LANDING_ZONE_KMS_KEY_ARN = "arn:aws:iam::50000000005:role/KmsKey";
-  public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
-      "arn:aws:iam::60000000006:role/NotebookLifecycleConfig";
+
   public static final SdkHttpResponse SDK_HTTP_RESPONSE_200 =
       SdkHttpResponse.builder().statusCode(200).statusText("Success").build();
   public static final SdkHttpResponse SDK_HTTP_RESPONSE_400 =
@@ -71,18 +51,8 @@ public class ControlledAwsResourceFixtures {
 
   public static Collection<Tag> makeTags() {
     Collection<Tag> tags = new HashSet<>();
-    AwsUtils.appendResourceTags(tags, makeAwsCloudContext(), null);
+    AwsUtils.appendResourceTags(tags, AwsTestUtils.makeAwsCloudContext(), null);
     return tags;
-  }
-
-  // Cloud context
-
-  public static AwsCloudContext makeAwsCloudContext() {
-    return new AwsCloudContext(
-        new AwsCloudContextFields(
-            MAJOR_VERSION, ORGANIZATION_ID, ACCOUNT_ID, TENANT_ALIAS, ENVIRONMENT_ALIAS),
-        new CloudContextCommonFields(
-            DEFAULT_SPEND_PROFILE_ID, WsmResourceState.READY, /*flightId=*/ null, /*error=*/ null));
   }
 
   // S3 Folder
@@ -148,6 +118,18 @@ public class ControlledAwsResourceFixtures {
   public static ApiAwsS3StorageFolderCreationParameters makeAwsS3StorageFolderCreationParameters(
       String storageName) {
     return new ApiAwsS3StorageFolderCreationParameters().folderName(storageName).region(AWS_REGION);
+  }
+
+  public static ControlledAwsS3StorageFolderResource makeAwsS3StorageFolderResource(
+      UUID workspaceUuid,
+      String bucket,
+      ApiAwsS3StorageFolderCreationParameters creationParameters) {
+    return ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
+            workspaceUuid,
+            /* resourceName= */ creationParameters.getFolderName(),
+            bucket,
+            /* folderName= */ creationParameters.getFolderName())
+        .build();
   }
 
   public static ControlledAwsS3StorageFolderResource makeDefaultAwsS3StorageFolderResource(
@@ -248,6 +230,18 @@ public class ControlledAwsResourceFixtures {
         .instanceName(instanceName)
         .instanceType(SAGEMAKER_INSTANCE_TYPE)
         .region(AWS_REGION);
+  }
+
+  public static ControlledAwsSageMakerNotebookResource makeAwsSagemakerNotebookResource(
+      UUID workspaceUuid,
+      ApiAwsSageMakerNotebookCreationParameters creationParameters,
+      String userEmail) {
+    return ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder(
+            workspaceUuid,
+            /* resourceName= */ creationParameters.getInstanceName(),
+            /* instanceName= */ creationParameters.getInstanceName(),
+            userEmail)
+        .build();
   }
 
   public static ControlledAwsSageMakerNotebookResource makeDefaultAwsSagemakerNotebookResource(
