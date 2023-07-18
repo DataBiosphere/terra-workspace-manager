@@ -75,7 +75,9 @@ public class CreateAzureDatabaseStep implements Step {
   }
 
   private String getPodName(String newDbUserName) {
-    return this.workspaceId.toString() + this.resource.getDatabaseName() + newDbUserName;
+    // strip underscores to avoid violating azure's naming conventions for pods
+    return (this.workspaceId.toString() + this.resource.getDatabaseName() + newDbUserName)
+        .replace('_', '-');
   }
 
   @Override
@@ -145,8 +147,11 @@ public class CreateAzureDatabaseStep implements Step {
   }
 
   private Optional<String> getPodStatus(CoreV1Api aksApi, String podName) throws ApiException {
-    return Optional.ofNullable(aksApi.readNamespacedPod(podName, aksNamespace, null).getStatus())
-        .map(V1PodStatus::getPhase);
+    var status =
+        Optional.ofNullable(aksApi.readNamespacedPod(podName, aksNamespace, null).getStatus())
+            .map(V1PodStatus::getPhase);
+    logger.debug("Status = {} for database creation pod = {}", status, podName);
+    return status;
   }
 
   private boolean isPodDone(Optional<String> podPhase) {
@@ -207,6 +212,7 @@ public class CreateAzureDatabaseStep implements Step {
       aksApi.createNamespacedPod(aksNamespace, pod, null, null, null, null);
 
     } catch (ApiException e) {
+      logger.error("Error creating azure database; response = {}", e.getResponseBody(), e);
       var status = Optional.ofNullable(HttpStatus.resolve(e.getCode()));
       // If the pod already exists, assume this is a retry, monitor the already running pod
       if (status.stream().noneMatch(s -> s == HttpStatus.CONFLICT)) {
