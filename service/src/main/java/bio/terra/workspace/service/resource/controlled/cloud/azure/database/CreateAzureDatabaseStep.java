@@ -207,6 +207,7 @@ public class CreateAzureDatabaseStep implements Step {
       aksApi.createNamespacedPod(aksNamespace, pod, null, null, null, null);
 
     } catch (ApiException e) {
+      logger.error("Error creating azure database", e);
       var status = Optional.ofNullable(HttpStatus.resolve(e.getCode()));
       // If the pod already exists, assume this is a retry, monitor the already running pod
       if (status.stream().noneMatch(s -> s == HttpStatus.CONFLICT)) {
