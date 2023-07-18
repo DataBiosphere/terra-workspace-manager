@@ -20,5 +20,5 @@ public class AwsResourceConstants {
   public static final int MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH = 63;
 
   /** SageMaker (client) waiter timeout duration */
-  public static final Duration SAGEMAKER_CLIENT_WAITER_TIMEOUT = Duration.ofSeconds(1800);
+  public static final Duration SAGEMAKER_CLIENT_WAITER_TIMEOUT = Duration.ofMinutes(60);
 }
