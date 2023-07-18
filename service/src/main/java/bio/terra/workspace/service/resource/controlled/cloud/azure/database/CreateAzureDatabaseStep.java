@@ -75,6 +75,7 @@ public class CreateAzureDatabaseStep implements Step {
   }
 
   private String getPodName(String newDbUserName) {
+    // strip underscores to avoid violating azure's naming conventions for pods
     return (this.workspaceId.toString() + this.resource.getDatabaseName() + newDbUserName)
         .replace('_', '-');
   }
