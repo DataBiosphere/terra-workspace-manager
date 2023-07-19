@@ -356,11 +356,11 @@ public class MockMvcUtils {
 
   // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
-  @Autowired protected MockMvc mockMvc;
-  @Autowired protected ObjectMapper objectMapper;
-  @Autowired protected JobService jobService;
-  @Autowired protected NamedParameterJdbcTemplate jdbcTemplate;
-  @Autowired protected SamService samService;
+  @Autowired private MockMvc mockMvc;
+  @Autowired private ObjectMapper objectMapper;
+  @Autowired private JobService jobService;
+  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired private SamService samService;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {

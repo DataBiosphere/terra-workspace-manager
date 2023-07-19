@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class MockAwsApi {
 
   @Autowired private MockMvcUtils mockMvcUtils;
-  @Autowired protected ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
   // S3 folder
   public static final String CREATE_CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT =
