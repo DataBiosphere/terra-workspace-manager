@@ -47,6 +47,13 @@ public class WorkspaceUnitTestUtils {
         .error(null);
   }
 
+  public static void deleteCloudContextInDatabase(
+      WorkspaceDao workspaceDao, UUID workspaceUuid, CloudPlatform cloudPlatform) {
+    String flightId = UUID.randomUUID().toString();
+    workspaceDao.deleteCloudContextStart(workspaceUuid, cloudPlatform, flightId);
+    workspaceDao.deleteCloudContextSuccess(workspaceUuid, cloudPlatform, flightId);
+  }
+
   // GCP cloud context
 
   public static final String GCP_PROJECT_ID = "my-project-id";
@@ -82,13 +89,6 @@ public class WorkspaceUnitTestUtils {
         flightId);
   }
 
-  public static void deleteGcpCloudContextInDatabase(
-      WorkspaceDao workspaceDao, UUID workspaceUuid) {
-    String flightId = UUID.randomUUID().toString();
-    workspaceDao.deleteCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.deleteCloudContextSuccess(workspaceUuid, CloudPlatform.GCP, flightId);
-  }
-
   // Azure cloud context
 
   public static void createAzureCloudContextInDatabase(
@@ -119,11 +119,11 @@ public class WorkspaceUnitTestUtils {
         CloudPlatform.AWS,
         new AwsCloudContext(
                 new AwsCloudContextFields(
-                    "majorversion",
-                    "fake-org-id",
-                    "fake-account-id",
-                    "fake-env-alias",
-                    "fake-env-alias"),
+                    AwsTestUtils.MAJOR_VERSION,
+                    AwsTestUtils.ORGANIZATION_ID,
+                    AwsTestUtils.ACCOUNT_ID,
+                    AwsTestUtils.TENANT_ALIAS,
+                    AwsTestUtils.ENVIRONMENT_ALIAS),
                 new CloudContextCommonFields(
                     billingProfileId, WsmResourceState.CREATING, flightId, null))
             .serialize(),
