@@ -6,11 +6,16 @@ import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsS3StorageFolderRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAwsS3StorageFolder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MockAwsApi extends MockMvcUtils {
+public class MockAwsApi {
+
+  @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired protected ObjectMapper objectMapper;
 
   // S3 folder
   public static final String CREATE_CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT =
@@ -31,7 +36,7 @@ public class MockAwsApi extends MockMvcUtils {
             .awsS3StorageFolder(creationParameters);
 
     String serializedResponse =
-        getSerializedResponseForPost(
+        mockMvcUtils.getSerializedResponseForPost(
             userRequest,
             CREATE_CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT,
             workspaceId,
@@ -42,7 +47,7 @@ public class MockAwsApi extends MockMvcUtils {
   public ApiAwsS3StorageFolderResource getControlledAwsS3StorageFolder(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     String serializedResponse =
-        getSerializedResponseForGet(
+        mockMvcUtils.getSerializedResponseForGet(
             userRequest, CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT, workspaceId, resourceId);
     return objectMapper.readValue(serializedResponse, ApiAwsS3StorageFolderResource.class);
   }

@@ -3,7 +3,8 @@ package bio.terra.workspace.common.utils;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MockAzureApi extends MockMvcUtils {
+public class MockAzureApi {
+
   // Disks
   public static final String CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/disks";
