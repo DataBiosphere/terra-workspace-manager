@@ -241,14 +241,6 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/cloudcontexts/GCP";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/result/%s";
-  public static final String CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder";
-  public static final String AWS_STORAGE_FOLDERS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder/%s";
-  public static final String CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/aws/notebook";
-  public static final String AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/aws/notebook/%s";
   public static final String GET_REFERENCED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =

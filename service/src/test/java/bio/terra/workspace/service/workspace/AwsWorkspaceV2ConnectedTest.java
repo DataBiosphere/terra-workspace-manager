@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.utils.AwsTestUtils;
-import bio.terra.workspace.common.utils.MvcAwsApi;
+import bio.terra.workspace.common.utils.MockAwsApi;
 import bio.terra.workspace.common.utils.MvcWorkspaceApi;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
@@ -31,7 +31,7 @@ import software.amazon.awssdk.regions.Region;
 public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired MvcWorkspaceApi mvcWorkspaceApi;
-  @Autowired MvcAwsApi mvcAwsApi;
+  @Autowired MockAwsApi mockAwsApi;
   @Autowired UserAccessUtils userAccessUtils;
 
   @Test
@@ -62,14 +62,14 @@ public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
     UUID resourceUuid =
-        mvcAwsApi
+        mockAwsApi
             .createControlledAwsS3StorageFolder(userRequest, workspaceUuid, creationParameters)
             .getAwsS3StorageFolder()
             .getMetadata()
             .getResourceId();
 
     ApiAwsS3StorageFolderResource fetchedResource =
-        mvcAwsApi.getControlledAwsS3StorageFolder(userRequest, workspaceUuid, resourceUuid);
+        mockAwsApi.getControlledAwsS3StorageFolder(userRequest, workspaceUuid, resourceUuid);
     String expectedBucketName =
         awsConnectedTestUtils
             .getEnvironment()

@@ -10,10 +10,14 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MvcAwsApi extends MockMvcUtils {
+public class MockAwsApi extends MockMvcUtils {
 
-  public static final String CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT =
+  // S3 folder
+
+  public static final String CREATE_CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder";
+  public static final String CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT =
+      CREATE_CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT + "/%s";
 
   public ApiCreatedControlledAwsS3StorageFolder createControlledAwsS3StorageFolder(
       AuthenticatedUserRequest userRequest,
@@ -30,7 +34,7 @@ public class MvcAwsApi extends MockMvcUtils {
     String serializedResponse =
         getSerializedResponseForPost(
             userRequest,
-            CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT,
+            CREATE_CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT,
             workspaceId,
             objectMapper.writeValueAsString(requestBody));
     return objectMapper.readValue(serializedResponse, ApiCreatedControlledAwsS3StorageFolder.class);
@@ -40,10 +44,14 @@ public class MvcAwsApi extends MockMvcUtils {
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     String serializedResponse =
         getSerializedResponseForGet(
-            userRequest,
-            CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT + "/%s",
-            workspaceId,
-            resourceId);
+            userRequest, CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT, workspaceId, resourceId);
     return objectMapper.readValue(serializedResponse, ApiAwsS3StorageFolderResource.class);
   }
+
+  // SageMaker Notebook
+
+  public static final String CREATE_CONTROLLED_AWS_NOTEBOOK_V1_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/aws/notebook";
+  public static final String CONTROLLED_AWS_NOTEBOOK_V1_PATH_FORMAT =
+      CREATE_CONTROLLED_AWS_NOTEBOOK_V1_PATH_FORMAT + "/%s";
 }

@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_STORAGE_FOLDERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAwsApi.CONTROLLED_AWS_NOTEBOOK_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAwsApi.CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAwsApi.CREATE_CONTROLLED_AWS_NOTEBOOK_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAwsApi.CREATE_CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -82,7 +82,7 @@ public class AwsResourceStateFailureTest extends BaseAwsUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(storageRequest),
-        CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT.formatted(workspaceUuid),
+        CREATE_CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT.formatted(workspaceUuid),
         HttpStatus.SC_CONFLICT);
 
     // AWS-notebook
@@ -97,7 +97,7 @@ public class AwsResourceStateFailureTest extends BaseAwsUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(vmRequest),
-        CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT.formatted(workspaceUuid),
+        CREATE_CONTROLLED_AWS_NOTEBOOK_V1_PATH_FORMAT.formatted(workspaceUuid),
         HttpStatus.SC_CONFLICT);
   }
 
@@ -132,7 +132,7 @@ public class AwsResourceStateFailureTest extends BaseAwsUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         storageResource.getResourceId(),
-        AWS_STORAGE_FOLDERS_PATH_FORMAT,
+        CONTROLLED_AWS_STORAGE_FOLDER_V1_PATH_FORMAT,
         objectMapper.writeValueAsString(storageDeleteBody));
 
     // AWS-Notebook
@@ -142,7 +142,7 @@ public class AwsResourceStateFailureTest extends BaseAwsUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         notebookResource.getResourceId(),
-        AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT,
+        CONTROLLED_AWS_NOTEBOOK_V1_PATH_FORMAT,
         objectMapper.writeValueAsString(notebookDeleteBody));
   }
 }
