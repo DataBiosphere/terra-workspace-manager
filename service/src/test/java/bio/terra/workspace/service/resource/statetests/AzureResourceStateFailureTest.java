@@ -1,14 +1,14 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_VM_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_STORAGE_CONTAINERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.AZURE_DISK_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.AZURE_STORAGE_CONTAINER_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.CLONE_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_AZURE_DISK_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_AZURE_STORAGE_CONTAINERS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
