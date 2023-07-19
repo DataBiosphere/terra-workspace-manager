@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
@@ -51,7 +51,7 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
     mockMvc
         .perform(
             addAuth(
-                post(String.format(CREATE_AZURE_VM_PATH_FORMAT, workspaceId))
+                post(String.format(CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -97,7 +97,7 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
         .perform(
             addJsonContentType(
                 addAuth(
-                    post(String.format(CREATE_AZURE_VM_PATH_FORMAT, workspaceId))
+                    post(String.format(CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT, workspaceId))
                         .content(objectMapper.writeValueAsString(vmRequest)),
                     USER_REQUEST)))
         .andExpect(status().is(HttpStatus.SC_OK));

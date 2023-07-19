@@ -316,7 +316,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
       // Run the normal case
       WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
           workspaceDao, workspaceUuid, PROJECT_ID);
-      WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
+      WorkspaceUnitTestUtils.deleteCloudContextInDatabase(
+          workspaceDao, workspaceUuid, CloudPlatform.GCP);
 
       // Mismatched flight id
       String flightId = UUID.randomUUID().toString();
