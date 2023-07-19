@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -49,7 +49,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     mockMvc
         .perform(
             MockMvcUtils.addAuth(
-                post(String.format(CREATE_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -95,7 +95,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     mockMvc
         .perform(
             MockMvcUtils.addAuth(
-                post(String.format(CREATE_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -137,7 +137,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     mockMvc
         .perform(
             MockMvcUtils.addAuth(
-                post(String.format(CREATE_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
