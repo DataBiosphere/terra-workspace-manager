@@ -645,7 +645,7 @@ Description=Configure environment for terra
 After=jupyter.service
 
 [Service]
-ExecStart=${TERRA_BOOT_SCRIPT}
+ExecStart=-${TERRA_BOOT_SCRIPT}
 User=${JUPYTER_USER}
 RemainAfterExit=yes
 
