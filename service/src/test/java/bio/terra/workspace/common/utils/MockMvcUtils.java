@@ -2930,6 +2930,28 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
+  public String getSerializedResponseForPatch(
+      AuthenticatedUserRequest userRequest,
+      String path,
+      UUID workspaceId,
+      UUID resourceId,
+      String request)
+      throws Exception {
+    return mockMvc
+        .perform(
+            addAuth(
+                patch(path.formatted(workspaceId, resourceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
   public String getSerializedResponseForPost(
       AuthenticatedUserRequest userRequest, String path, String request) throws Exception {
     return mockMvc
