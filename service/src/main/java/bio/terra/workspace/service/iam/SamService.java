@@ -460,6 +460,17 @@ public class SamService {
   }
 
   @Traced
+  public void addGroupsToAuthDomain(String resourceType, String resourceId, List<String> groups)
+      throws Exception {
+    ResourcesApi resourceApi = samResourcesApi(getWsmServiceAccountToken());
+    try {
+      SamRetry.retry(() -> resourceApi.patchAuthDomainV2(resourceType, resourceId, groups));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error adding group to auth domain in Sam", apiException);
+    }
+  }
+
+  @Traced
   public boolean isAuthorized(
       AuthenticatedUserRequest userRequest,
       String iamResourceType,

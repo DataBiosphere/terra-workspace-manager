@@ -4,21 +4,29 @@ import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.TpsUtilities;
-import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-// TODO: Once we have support for group update, we can remove this class.
-public class ValidateGroupPolicyAttributesStep implements Step {
+public class MergeGroupsStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(MergeGroupsStep.class);
+
   private final UUID workspaceId;
+  private final SamService samService;
   private final TpsApiDispatch tpsApiDispatch;
 
-  public ValidateGroupPolicyAttributesStep(UUID workspaceId, TpsApiDispatch tpsApiDispatch) {
+  public MergeGroupsStep(UUID workspaceId, TpsApiDispatch tpsApiDispatch, SamService samService) {
     this.workspaceId = workspaceId;
+    this.samService = samService;
     this.tpsApiDispatch = tpsApiDispatch;
   }
 
@@ -30,26 +38,24 @@ public class ValidateGroupPolicyAttributesStep implements Step {
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.EFFECTIVE_POLICIES, TpsPaoGetResult.class);
 
-    // In Milestone 2, we are able to add additional groups but cannot remove them.
-    TpsPaoGetResult currentPao = tpsApiDispatch.getPao(workspaceId);
-
-    HashSet<String> currentGroup =
-        new HashSet<>(
-            TpsUtilities.getGroupConstraintsFromInputs(currentPao.getEffectiveAttributes()));
-    HashSet<String> mergedGroup =
-        new HashSet<>(
+    List<String> mergedGroups =
+        new ArrayList<>(
             TpsUtilities.getGroupConstraintsFromInputs(mergedPao.getEffectiveAttributes()));
 
-    if (mergedGroup.containsAll(currentGroup)) {
-      return StepResult.getStepResultSuccess();
+    try {
+      samService.addGroupsToAuthDomain(
+          SamConstants.SamResource.WORKSPACE, this.workspaceId.toString(), mergedGroups);
+    } catch (Exception ex) {
+      logger.info("Attempt to add groups to auth domain failed", ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
 
-    throw new PolicyConflictException("Cannot remove groups from policy.");
+    return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Validation step so there should be nothing to undo, only propagate the flight failure.
+    // Since we can't remove groups from the auth domain, there's nothing to do.
     return StepResult.getStepResultSuccess();
   }
 }
