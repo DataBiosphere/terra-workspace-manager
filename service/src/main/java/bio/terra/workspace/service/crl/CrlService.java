@@ -64,6 +64,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -75,6 +77,8 @@ public class CrlService {
 
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
+
+  private static final Logger logger = LoggerFactory.getLogger(CrlService.class);
 
   @Value("${azure.customer.usage-attribute}")
   private String azureCustomerUsageAttribute;
@@ -612,6 +616,7 @@ public class CrlService {
 
   private <T extends AzureConfigurable<T>> T configureAzureResourceManager(T configurable) {
     if (StringUtils.isNotEmpty(azureCustomerUsageAttribute)) {
+      logger.info("Customer usage attribute: " + azureCustomerUsageAttribute.substring(0, 10));
       configurable.withPolicy(new UserAgentPolicy(azureCustomerUsageAttribute));
     }
     return configurable;
