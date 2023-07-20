@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -47,6 +48,7 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
     extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockGcpApi mockGcpApi;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
 
@@ -121,7 +123,7 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
                 .value("asia-east1")));
 
     ApiGcpDataprocClusterResource cluster =
-        mockMvcUtils
+        mockGcpApi
             .createDataprocCluster(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,
@@ -146,18 +148,19 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
   @Test
   public void createDataprocCluster_duplicateInstanceId() throws Exception {
     var duplicateName = "not-unique-name";
-    mockMvcUtils
-        .createDataprocClusterAndWait(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            "asia-east1",
-            stagingBucketUuid,
-            tempBucketUuid,
-            duplicateName)
-        .getDataprocCluster();
+    ApiGcpDataprocClusterResource unused =
+        mockGcpApi
+            .createDataprocClusterAndWait(
+                userAccessUtils.defaultUserAuthRequest(),
+                workspaceId,
+                "asia-east1",
+                stagingBucketUuid,
+                tempBucketUuid,
+                duplicateName)
+            .getDataprocCluster();
 
     ApiErrorReport errorReport =
-        mockMvcUtils
+        mockGcpApi
             .createDataprocClusterAndExpect(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,

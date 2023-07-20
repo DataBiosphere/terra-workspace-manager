@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiGcsBucketEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -206,7 +206,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
         objectMapper.writeValueAsString(
             new ApiUpdateBigQueryDatasetReferenceRequestBody().name(newName)),
         String.format(
-            REFERENCED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
+            REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT,
             workspaceId,
             sourceResource.getMetadata().getResourceId()),
         HttpStatus.SC_CONFLICT);
