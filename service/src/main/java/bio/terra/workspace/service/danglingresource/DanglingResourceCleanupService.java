@@ -9,9 +9,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -51,10 +49,7 @@ public class DanglingResourceCleanupService {
   private final ScheduledExecutorService scheduler;
 
   private final List<WsmResourceType> DANGLING_RESOURCE_TYPES =
-      List.of(
-          WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE,
-          WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE,
-          WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
+      List.of(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
 
   @Autowired
   public DanglingResourceCleanupService(
@@ -115,7 +110,7 @@ public class DanglingResourceCleanupService {
     Duration claimTime = configuration.getPollingInterval().minus(Duration.ofSeconds(1));
     // Attempt to claim the latest run of this job to ensure only one pod runs the cleanup job.
     if (!cronjobDao.claimJob(DANGLING_RESOURCE_CLEANUP_JOB_NAME, claimTime)) {
-      logger.info("Another pod has executed this job more recently. Ending resource cleanup.");
+      logger.info("Another pod has executed dangling resource cleanup. Skipping this execution.");
       return;
     }
 
@@ -170,54 +165,16 @@ public class DanglingResourceCleanupService {
 
   /**
    * Utility method to check if a given wsm controlled resource's associated cloud resourced exists.
+   * Currently only Dataproc clusters can be dangling.
    */
   private static boolean cloudResourceExists(ControlledResource resource, CrlService crlService) {
-    return switch (resource.getResourceType()) {
-      case CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE -> aiNotebookInstanceExists(
-          resource.castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE), crlService);
-      case CONTROLLED_GCP_GCE_INSTANCE -> gceInstanceExists(
-          resource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE), crlService);
-      case CONTROLLED_GCP_DATAPROC_CLUSTER -> dataprocClusterExists(
+    if (WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER == resource.getResourceType()) {
+      return dataprocClusterExists(
           resource.castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER), crlService);
-      default -> {
-        logger.info(
-            "Resource {} is not supported for cloud existence check", resource.getResourceType());
-        yield false;
-      }
-    };
-  }
-
-  private static boolean aiNotebookInstanceExists(
-      ControlledAiNotebookInstanceResource resource, CrlService crlService) {
-    try {
-      return crlService
-              .getAIPlatformNotebooksCow()
-              .instances()
-              .get(resource.toInstanceName())
-              .execute()
-          != null;
-    } catch (GoogleJsonResponseException e) {
-      return HttpStatus.NOT_FOUND.value() != e.getStatusCode();
-    } catch (IOException e) {
-      // If any other error occurs, assume that the resource may still exist.
-      return true;
-    }
-  }
-
-  private static boolean gceInstanceExists(
-      ControlledGceInstanceResource resource, CrlService crlService) {
-    try {
-      return crlService
-              .getCloudComputeCow()
-              .instances()
-              .get(resource.getProjectId(), resource.getZone(), resource.getInstanceId())
-              .execute()
-          != null;
-    } catch (GoogleJsonResponseException e) {
-      return HttpStatus.NOT_FOUND.value() != e.getStatusCode();
-    } catch (IOException e) {
-      // If any other error occurs, assume that the resource may still exist.
-      return true;
+    } else {
+      logger.error(
+          "Resource {} is not supported for cloud existence check", resource.getResourceType());
+      return false;
     }
   }
 

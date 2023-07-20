@@ -163,7 +163,7 @@ public class GrantService {
     Duration claimTime = configuration.getPollingInterval().minus(Duration.ofSeconds(10));
     // Attempt to claim the latest run of this job to ensure only one pod runs the cleanup job.
     if (!cronjobDao.claimJob(REVOKE_GRANTS_JOB_NAME, claimTime)) {
-      logger.info("Another pod has executed this job more recently. Ending resource cleanup.");
+      logger.info("Another pod has executed temporary grant revokes. Skipping this execution.");
       return;
     }
 
