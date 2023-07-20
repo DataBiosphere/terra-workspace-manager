@@ -22,6 +22,7 @@ import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -74,7 +75,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
         .thenReturn(WorkspaceFixtures.SAM_USER);
 
     when(mockAwsCloudContextService.getRequiredAwsCloudContext(any()))
-        .thenReturn(ControlledAwsResourceFixtures.makeAwsCloudContext());
+        .thenReturn(AwsTestUtils.makeAwsCloudContext());
 
     mockAwsUtils
         .when(() -> AwsUtils.createWsmCredentialProvider(any(), any()))

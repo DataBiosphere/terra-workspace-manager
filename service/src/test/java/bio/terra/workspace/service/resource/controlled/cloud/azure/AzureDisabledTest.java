@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GET_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
@@ -96,7 +96,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
         .perform(
             addJsonContentType(
                 addAuth(
-                    post(String.format(CREATE_AZURE_DISK_PATH_FORMAT, workspaceUuid))
+                    post(String.format(CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT, workspaceUuid))
                         .content(objectMapper.writeValueAsString(diskRequest)),
                     userRequest)))
         .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
@@ -110,7 +110,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
         .perform(
             addJsonContentType(
                 addAuth(
-                    post(String.format(CREATE_AZURE_VM_PATH_FORMAT, workspaceUuid))
+                    post(String.format(CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT, workspaceUuid))
                         .content(objectMapper.writeValueAsString(vmRequest)),
                     userRequest)))
         .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));

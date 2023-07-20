@@ -241,34 +241,6 @@ public class MockMvcUtils {
       "/api/workspaces/v1/%s/cloudcontexts/GCP";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/result/%s";
-  public static final String CREATE_AZURE_DISK_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/disks";
-  public static final String CREATE_AZURE_VM_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/vm";
-  public static final String CREATE_AZURE_SAS_TOKEN_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/getSasToken";
-  public static final String CREATE_AZURE_BATCH_POOL_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/batchpool";
-  public static final String CREATE_AZURE_STORAGE_CONTAINERS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer";
-  public static final String AZURE_BATCH_POOL_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/batchpool/%s";
-  public static final String AZURE_DISK_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/disks/%s";
-  public static final String AZURE_STORAGE_CONTAINER_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s";
-  public static final String AZURE_VM_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/vm/%s";
-  public static final String CLONE_AZURE_STORAGE_CONTAINER_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/azure/storageContainer/%s/clone";
-  public static final String CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder";
-  public static final String AWS_STORAGE_FOLDERS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/aws/storageFolder/%s";
-  public static final String CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/aws/notebook";
-  public static final String AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/aws/notebook/%s";
   public static final String GET_REFERENCED_GCP_GCS_BUCKET_FORMAT =
       "/api/workspaces/v1/%s/resources/referenced/gcp/buckets/%s";
   public static final String CLONE_CONTROLLED_GCP_GCS_BUCKET_FORMAT =
@@ -384,11 +356,11 @@ public class MockMvcUtils {
 
   // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
-  @Autowired protected MockMvc mockMvc;
-  @Autowired protected ObjectMapper objectMapper;
-  @Autowired protected JobService jobService;
-  @Autowired protected NamedParameterJdbcTemplate jdbcTemplate;
-  @Autowired protected SamService samService;
+  @Autowired private MockMvc mockMvc;
+  @Autowired private ObjectMapper objectMapper;
+  @Autowired private JobService jobService;
+  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
+  @Autowired private SamService samService;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
