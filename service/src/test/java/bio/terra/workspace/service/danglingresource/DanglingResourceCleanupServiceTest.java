@@ -38,8 +38,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Tag("connectedPlus")
 public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
   private Workspace workspace;
-  private final int ASSERT_RESOURCE_CLEANUP_RETRY_COUNT = 40;
-  private final int ASSERT_RESOURCE_CLEANUP_RETRY_SECONDS = 15;
+  private static final int ASSERT_RESOURCE_CLEANUP_RETRY_COUNT = 40;
+  private static final int ASSERT_RESOURCE_CLEANUP_RETRY_SECONDS = 15;
 
   @Autowired WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired UserAccessUtils userAccessUtils;
@@ -70,7 +70,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
     String stagingBucketResourceName = TestUtils.appendRandomNumber("dataproc-staging-bucket");
     String stagingBucketCloudName = TestUtils.appendRandomNumber("dataproc-staging-bucket");
     ApiGcpGcsBucketResource stagingBucketResource =
-        mockMvcUtils
+        mockGcpApi
             .createControlledGcsBucket(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspace.getWorkspaceId(),
@@ -84,7 +84,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
     String tempBucketResourceName = TestUtils.appendRandomNumber("dataproc-temp-bucket");
     String tempBucketCloudName = TestUtils.appendRandomNumber("dataproc-temp-bucket");
     ApiGcpGcsBucketResource tempBucketResource =
-        mockMvcUtils
+        mockGcpApi
             .createControlledGcsBucket(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspace.getWorkspaceId(),
@@ -133,7 +133,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
     String bucketResourceName = TestUtils.appendRandomNumber("my-bucket");
     String bucketCloudName = TestUtils.appendRandomNumber("my-bucket");
     ApiGcpGcsBucketResource bucket =
-        mockMvcUtils
+        mockGcpApi
             .createControlledGcsBucket(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspace.getWorkspaceId(),

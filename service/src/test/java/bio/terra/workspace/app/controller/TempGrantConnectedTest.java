@@ -77,7 +77,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
     String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
     String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
     ApiGcpGcsBucketResource unused =
-        mockMvcUtils
+        mockGcpApi
             .createControlledGcsBucket(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,

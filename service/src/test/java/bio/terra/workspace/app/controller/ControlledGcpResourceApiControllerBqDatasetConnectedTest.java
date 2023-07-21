@@ -421,7 +421,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
             List.of(HttpStatus.SC_ACCEPTED),
             /*shouldUndo=*/ false);
     ApiErrorReport errorReport =
-        mockGcpApi.cloneControlledBqDatasetAndExpectError(
+        mockGcpApi.getCloneControlledBqDatasetResultAndExpectError(
             userRequest, workspaceId, result.getJobReport().getId(), HttpStatus.SC_CONFLICT);
     assertThat(
         errorReport.getMessage(), equalTo("A resource with matching attributes already exists"));
@@ -735,7 +735,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
             /*defaultPartitionLifetime=*/ null,
             List.of(HttpStatus.SC_ACCEPTED),
             /*shouldUndo=*/ true);
-    mockGcpApi.cloneControlledBqDatasetAndExpectError(
+    mockGcpApi.getCloneControlledBqDatasetResultAndExpectError(
         userRequest,
         sourceWorkspaceId,
         result.getJobReport().getId(),
@@ -762,7 +762,6 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
   void clone_copyReference_undo() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-
     cloneControlledBqDataset_undo(
         userRequest,
         /*sourceWorkspaceId=*/ workspaceId,
