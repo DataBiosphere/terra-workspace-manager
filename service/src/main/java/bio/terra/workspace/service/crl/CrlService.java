@@ -76,7 +76,7 @@ public class CrlService {
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
 
-  @Value("${azure.customer.usage-attribute}")
+  @Value("${azure.customer.usage-attribute:}")
   private String azureCustomerUsageAttribute;
 
   private final ClientConfig clientConfig;
