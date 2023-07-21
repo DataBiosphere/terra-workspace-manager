@@ -1,14 +1,14 @@
 package bio.terra.workspace.service.resource.statetests;
 
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_REFERENCED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_REFERENCED_GCP_BQ_DATA_TABLES_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_REFERENCED_GCP_GCS_OBJECTS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.REFERENCED_GCP_BQ_DATASET_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATA_TABLES_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GIT_REPOS_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GIT_REPO_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
@@ -137,7 +137,7 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(refBqDatasetRequest),
-        REFERENCED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT.formatted(workspace.workspaceId()),
+        CREATE_REFERENCED_GCP_BQ_DATASETS_PATH_FORMAT.formatted(workspace.workspaceId()),
         HttpStatus.SC_CONFLICT);
 
     // GCP-Referenced BQ data table
@@ -152,7 +152,7 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(refBqDataTableRequest),
-        REFERENCED_GCP_BIG_QUERY_DATA_TABLES_V1_PATH_FORMAT.formatted(workspace.workspaceId()),
+        CREATE_REFERENCED_GCP_BQ_DATA_TABLES_PATH_FORMAT.formatted(workspace.workspaceId()),
         HttpStatus.SC_CONFLICT);
 
     // GCP-Referenced Bucket
@@ -163,7 +163,7 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(refBucketRequest),
-        REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT.formatted(workspace.workspaceId()),
+        CREATE_REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT.formatted(workspace.workspaceId()),
         HttpStatus.SC_CONFLICT);
 
     // GCP-Referenced Bucket Object
@@ -174,7 +174,7 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(refBucketObjectRequest),
-        REFERENCED_GCP_GCS_OBJECTS_V1_PATH_FORMAT.formatted(workspace.workspaceId()),
+        CREATE_REFERENCED_GCP_GCS_OBJECTS_PATH_FORMAT.formatted(workspace.workspaceId()),
         HttpStatus.SC_CONFLICT);
   }
 
@@ -264,10 +264,10 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         bqResource.getResourceId(),
-        REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT,
+        REFERENCED_GCP_BQ_DATASET_PATH_FORMAT,
         objectMapper.writeValueAsString(bqUpdateRequest));
     stateTestUtils.deleteResourceExpectConflict(
-        workspaceUuid, bqResource.getResourceId(), REFERENCED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
+        workspaceUuid, bqResource.getResourceId(), REFERENCED_GCP_BQ_DATASET_PATH_FORMAT);
 
     // GCP-Referenced BQ data table
     var bqTableUpdateRequest =
@@ -275,20 +275,18 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         bqTable.getResourceId(),
-        REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT,
+        REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT,
         objectMapper.writeValueAsString(bqTableUpdateRequest));
     stateTestUtils.deleteResourceExpectConflict(
-        workspaceUuid, bqTable.getResourceId(), REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT);
+        workspaceUuid, bqTable.getResourceId(), REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT);
 
     // GCP-Referenced Bucket
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         bqResource.getResourceId(),
-        REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT,
+        REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT,
         objectMapper.writeValueAsString(bqTableUpdateRequest));
     stateTestUtils.deleteResourceExpectConflict(
-        workspaceUuid,
-        bqResource.getResourceId(),
-        REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT);
+        workspaceUuid, bqResource.getResourceId(), REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT);
   }
 }

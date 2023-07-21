@@ -6,9 +6,9 @@ import static bio.terra.workspace.common.GcsBucketUtils.addFileToBucket;
 import static bio.terra.workspace.common.GcsBucketUtils.buildSignedUrlListObject;
 import static bio.terra.workspace.common.GcsBucketUtils.waitForProjectAccess;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.LOAD_SIGNED_URL_LIST_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.LOAD_SIGNED_URL_LIST_ALPHA_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.LOAD_SIGNED_URL_LIST_RESULT_ALPHA_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiGcsBucketEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
@@ -401,7 +401,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
 
     mockMvcUtils.updateResource(
         ApiGcpGcsBucketResource.class,
-        CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
+        CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT,
         workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         objectMapper.writeValueAsString(
@@ -923,7 +923,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     mockMvcUtils.postExpect(
         userRequest,
         objectMapper.writeValueAsString(requestBody),
-        String.format(LOAD_SIGNED_URL_LIST_PATH_FORMAT, workspaceId, bucketId),
+        String.format(LOAD_SIGNED_URL_LIST_ALPHA_PATH_FORMAT, workspaceId, bucketId),
         httpStatus);
   }
 
@@ -934,7 +934,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     var serializedResponse =
         mockMvcUtils.getSerializedResponseForPost(
             userRequest,
-            String.format(LOAD_SIGNED_URL_LIST_PATH_FORMAT, workspaceId, bucketId),
+            String.format(LOAD_SIGNED_URL_LIST_ALPHA_PATH_FORMAT, workspaceId, bucketId),
             objectMapper.writeValueAsString(requestBody));
     var result = objectMapper.readValue(serializedResponse, ApiLoadUrlListResult.class);
     String jobId = result.getJobReport().getId();
@@ -954,7 +954,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     String serializedResponse =
         mockMvcUtils.getSerializedResponseForGetJobResult(
             userRequest,
-            String.format(LOAD_SIGNED_URL_LIST_RESULT_PATH_FORMAT, workspaceId, resourceId, jobId));
+            String.format(
+                LOAD_SIGNED_URL_LIST_RESULT_ALPHA_PATH_FORMAT, workspaceId, resourceId, jobId));
     return objectMapper.readValue(serializedResponse, ApiLoadUrlListResult.class);
   }
 }
