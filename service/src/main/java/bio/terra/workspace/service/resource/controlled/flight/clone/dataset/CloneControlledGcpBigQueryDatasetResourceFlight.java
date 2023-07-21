@@ -7,6 +7,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.MergeGroupsStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.ValidateGroupPolicyAttributesStep;
@@ -99,6 +100,12 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               destinationWorkspaceId,
               resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new MergeGroupsStep(
+              destinationWorkspaceId,
+              flightBeanBag.getTpsApiDispatch(),
+              flightBeanBag.getSamService()));
     }
     addStep(
         new RetrieveControlledResourceMetadataStep(
