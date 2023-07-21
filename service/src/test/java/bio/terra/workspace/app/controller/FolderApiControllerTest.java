@@ -2,10 +2,10 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DELETE_FOLDER_JOB_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDERS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_PROPERTIES_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.FOLDER_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockFolderApi.CREATE_FOLDERS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockFolderApi.DELETE_RESULT_FOLDERS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockFolderApi.FOLDERS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockFolderApi.FOLDERS_PROPERTIES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
@@ -332,7 +332,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
       Thread.sleep(Duration.ofSeconds(1).toMillis());
       jobReport =
           mockMvcUtils.getJobReport(
-              DELETE_FOLDER_JOB_V1_PATH_FORMAT.formatted(
+              DELETE_RESULT_FOLDERS_PATH_FORMAT.formatted(
                   workspaceId, folder.getId().toString(), jobId),
               USER_REQUEST);
     }
@@ -603,7 +603,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
         .perform(
             addJsonContentType(
                 addAuth(
-                    post(String.format(FOLDERS_V1_PATH_FORMAT, workspaceId))
+                    post(String.format(CREATE_FOLDERS_PATH_FORMAT, workspaceId))
                         .content(
                             objectMapper.writeValueAsString(
                                 createFolderRequestBody(
@@ -660,7 +660,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     return mockMvc
         .perform(
             addAuth(
-                patch(String.format(FOLDER_V1_PATH_FORMAT, workspaceId, folderId))
+                patch(String.format(FOLDERS_PATH_FORMAT, workspaceId, folderId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -700,7 +700,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
       throws Exception {
     return mockMvc
         .perform(
-            addAuth(get(String.format(FOLDER_V1_PATH_FORMAT, workspaceId, folderId)), USER_REQUEST))
+            addAuth(get(String.format(FOLDERS_PATH_FORMAT, workspaceId, folderId)), USER_REQUEST))
         .andExpect(status().is(code));
   }
 
@@ -716,7 +716,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   /** Returns ResultActions because this is called by listFolder(). */
   private ResultActions listFoldersExpectCode(UUID workspaceId, int code) throws Exception {
     return mockMvc
-        .perform(addAuth(get(String.format(FOLDERS_V1_PATH_FORMAT, workspaceId)), USER_REQUEST))
+        .perform(addAuth(get(String.format(CREATE_FOLDERS_PATH_FORMAT, workspaceId)), USER_REQUEST))
         .andExpect(status().is(code));
   }
 
@@ -724,8 +724,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
       throws Exception {
     return mockMvc
         .perform(
-            addAuth(
-                post(String.format(FOLDER_V1_PATH_FORMAT, workspaceId, folderId)), USER_REQUEST))
+            addAuth(post(String.format(FOLDERS_PATH_FORMAT, workspaceId, folderId)), USER_REQUEST))
         .andExpect(status().is(code));
   }
 
@@ -740,7 +739,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
         .perform(
             addJsonContentType(
                 addAuth(
-                    post(String.format(FOLDER_PROPERTIES_V1_PATH_FORMAT, workspaceId, folderId))
+                    post(String.format(FOLDERS_PROPERTIES_PATH_FORMAT, workspaceId, folderId))
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
@@ -766,7 +765,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
         .perform(
             addJsonContentType(
                 addAuth(
-                    patch(String.format(FOLDER_PROPERTIES_V1_PATH_FORMAT, workspaceId, folderId))
+                    patch(String.format(FOLDERS_PROPERTIES_PATH_FORMAT, workspaceId, folderId))
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")

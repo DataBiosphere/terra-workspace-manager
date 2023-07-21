@@ -1,7 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GIT_REPO_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGitRepoApi.REFERENCED_GIT_REPOS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
+import bio.terra.workspace.common.mocks.MockGitRepoApi;
 import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -55,6 +56,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired MockGcpApi mockGcpApi;
+  @Autowired MockGitRepoApi mockGitRepoApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
@@ -89,7 +91,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
             .formatted(TestUtils.appendRandomNumber("terra-workspace-manager"));
 
     sourceResource =
-        mockMvcUtils.createReferencedGitRepo(
+        mockGitRepoApi.createReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResourceName,
@@ -119,7 +121,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
 
     // Assert resource returned by get
     ApiGitRepoResource gotResource =
-        mockMvcUtils.getReferencedGitRepo(
+        mockGitRepoApi.getReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
@@ -139,7 +141,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
     String newDescription = "This is an updated description";
 
     ApiGitRepoResource updatedResource =
-        mockMvcUtils.updateReferencedGitRepo(
+        mockGitRepoApi.updateReferencedGitRepo(
             workspaceId,
             sourceResource.getMetadata().getResourceId(),
             newResourceName,
@@ -168,12 +170,12 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
   @Test
   public void update_throws409() throws Exception {
     var newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
-    mockMvcUtils.createReferencedGitRepo(
+    mockGitRepoApi.createReferencedGitRepo(
         userAccessUtils.defaultUserAuthRequest(), workspaceId, newName, sourceGitRepoUrl);
 
     mockMvcUtils.updateResource(
         ApiGitRepoResource.class,
-        REFERENCED_GIT_REPO_V1_PATH_FORMAT,
+        REFERENCED_GIT_REPOS_PATH_FORMAT,
         workspaceId,
         sourceResource.getMetadata().getResourceId(),
         objectMapper.writeValueAsString(
@@ -182,7 +184,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
         HttpStatus.SC_CONFLICT);
 
     ApiGitRepoResource gotResource =
-        mockMvcUtils.getReferencedGitRepo(
+        mockGitRepoApi.getReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
@@ -191,7 +193,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
 
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
-    mockMvcUtils.cloneReferencedGitRepo(
+    mockGitRepoApi.cloneReferencedGitRepo(
         userAccessUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -214,7 +216,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
 
-    mockMvcUtils.cloneReferencedGitRepo(
+    mockGitRepoApi.cloneReferencedGitRepo(
         userAccessUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -249,7 +251,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
         userAccessUtils.getSecondUserEmail());
 
     ApiGitRepoResource clonedResource =
-        mockMvcUtils.cloneReferencedGitRepo(
+        mockGitRepoApi.cloneReferencedGitRepo(
             userAccessUtils.secondUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -287,7 +289,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
   void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGitRepoResource clonedResource =
-        mockMvcUtils.cloneReferencedGitRepo(
+        mockGitRepoApi.cloneReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -308,7 +310,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGitRepoResource clonedResource =
-        mockMvcUtils.cloneReferencedGitRepo(
+        mockGitRepoApi.cloneReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -328,8 +330,8 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGitRepoResource gotResource =
-        mockMvcUtils.getReferencedGitRepo(
+    ApiGitRepoResource gotResource =
+        mockGitRepoApi.getReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
@@ -341,7 +343,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGitRepoResource clonedResource =
-        mockMvcUtils.cloneReferencedGitRepo(
+        mockGitRepoApi.cloneReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -361,8 +363,8 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGitRepoResource gotResource =
-        mockMvcUtils.getReferencedGitRepo(
+    ApiGitRepoResource gotResource =
+        mockGitRepoApi.getReferencedGitRepo(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
@@ -397,7 +399,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
 
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-    mockMvcUtils.cloneReferencedGitRepo(
+    mockGitRepoApi.cloneReferencedGitRepo(
         userAccessUtils.defaultUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),

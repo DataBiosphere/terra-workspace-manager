@@ -481,7 +481,7 @@ public class MockGcpApi {
     return objectMapper.readValue(serializedResponse, ApiGcpGcsObjectResource.class);
   }
 
-  public void deleteGcsObject(
+  public void deleteReferencedGcsObject(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     mockMvcUtils.deleteResource(
         userRequest, workspaceId, resourceId, REFERENCED_GCP_GCS_OBJECTS_PATH_FORMAT);
@@ -1003,7 +1003,7 @@ public class MockGcpApi {
     return objectMapper.readValue(serializedResponse, ApiGcpBigQueryDataTableResource.class);
   }
 
-  public void deleteBqDataTable(
+  public void deleteReferencedBqDataTable(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
     mockMvcUtils.deleteResource(
         userRequest, workspaceId, resourceId, REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT);

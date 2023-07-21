@@ -297,7 +297,7 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
         workspaceId2,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockGcpApi.deleteBqDataTable(
+    mockGcpApi.deleteReferencedBqDataTable(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         clonedResource.getMetadata().getResourceId());

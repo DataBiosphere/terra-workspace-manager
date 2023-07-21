@@ -33,6 +33,7 @@ import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.mocks.MockDataRepoApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -100,6 +101,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockDataRepoApi mockDataRepoApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired WorkspaceActivityLogService workspaceActivityLogService;
   @Autowired JobService jobService;
@@ -337,7 +339,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     // Create some data repo references
     ApiDataRepoSnapshotResource snap1 =
-        mockMvcUtils.createReferencedDataRepoSnapshot(
+        mockDataRepoApi.createReferencedDataRepoSnapshot(
             USER_REQUEST,
             sourceWorkspaceId,
             ApiCloningInstructionsEnum.REFERENCE,
@@ -345,7 +347,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             "snap1-instance-name",
             UUID.randomUUID().toString());
     ApiDataRepoSnapshotResource snap2 =
-        mockMvcUtils.createReferencedDataRepoSnapshot(
+        mockDataRepoApi.createReferencedDataRepoSnapshot(
             USER_REQUEST,
             sourceWorkspaceId,
             ApiCloningInstructionsEnum.REFERENCE,
@@ -353,7 +355,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             "snap2-instance-name",
             UUID.randomUUID().toString());
     ApiDataRepoSnapshotResource snap3 =
-        mockMvcUtils.createReferencedDataRepoSnapshot(
+        mockDataRepoApi.createReferencedDataRepoSnapshot(
             USER_REQUEST,
             sourceWorkspaceId,
             ApiCloningInstructionsEnum.NOTHING,

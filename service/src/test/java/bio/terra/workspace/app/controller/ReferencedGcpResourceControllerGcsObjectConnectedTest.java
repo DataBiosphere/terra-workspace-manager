@@ -256,7 +256,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
     mockMvcUtils.removeRole(
         userRequest, workspaceId2, WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
-    mockGcpApi.deleteGcsObject(
+    mockGcpApi.deleteReferencedGcsObject(
         userRequest, workspaceId2, clonedResource.getMetadata().getResourceId());
   }
 
