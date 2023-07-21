@@ -326,7 +326,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         Collections.singletonList(HttpStatus.SC_CONFLICT),
         false);
 
-    mockMvcUtils.cloneControlledGcsBucketAsync(
+    mockGcpApi.cloneControlledGcsBucketAsync(
         USER_REQUEST,
         workspaceUuid,
         bucketResource.getResourceId(),

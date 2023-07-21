@@ -68,7 +68,7 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
     String stagingBucketResourceName = TestUtils.appendRandomNumber("dataproc-staging-bucket");
     String stagingBucketCloudName = TestUtils.appendRandomNumber("dataproc-staging-bucket");
     ApiGcpGcsBucketResource stagingBucketResource =
-        mockMvcUtils
+        mockGcpApi
             .createControlledGcsBucket(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,
@@ -82,7 +82,7 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
     String tempBucketResourceName = TestUtils.appendRandomNumber("dataproc-temp-bucket");
     String tempBucketCloudName = TestUtils.appendRandomNumber("dataproc-temp-bucket");
     ApiGcpGcsBucketResource tempBucketResource =
-        mockMvcUtils
+        mockGcpApi
             .createControlledGcsBucket(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,

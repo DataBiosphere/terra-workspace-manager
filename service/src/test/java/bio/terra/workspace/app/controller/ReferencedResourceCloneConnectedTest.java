@@ -13,6 +13,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -54,6 +55,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
@@ -207,7 +209,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
     logger.info("Test workspaceId {}  workspaceId2 {}", sourceWorkspaceId, destinationWorkspaceId);
 
-    mockMvcUtils.cloneReferencedGcsBucket(
+    mockGcpApi.cloneReferencedGcsBucket(
         userAccessUtils.defaultUserAuthRequest(),
         sourceWorkspaceId,
         sourceResource.getMetadata().getResourceId(),
@@ -259,7 +261,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     List<String> actualGroups =
         groupPolicy.getAdditionalData().stream()
             .filter(data -> data.getKey().equals(PolicyFixtures.GROUP))
-            .map(group -> group.getValue())
+            .map(ApiWsmPolicyPair::getValue)
             .toList();
     assertEquals(expectedGroups, actualGroups);
   }
@@ -306,7 +308,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest(), workspace2Request);
 
     sourceResource =
-        mockMvcUtils.createReferencedGcsBucket(
+        mockGcpApi.createReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
             sourceWorkspaceId,
             sourceResourceName,

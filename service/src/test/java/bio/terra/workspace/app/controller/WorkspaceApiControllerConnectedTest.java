@@ -29,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
@@ -84,6 +85,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockGcpApi mockGcpApi;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private SamService samService;
@@ -401,7 +403,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
               userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
-      mockMvcUtils.createControlledGcsBucket(
+      mockGcpApi.createControlledGcsBucket(
           userRequest,
           targetWorkspaceId,
           "resource-name",
@@ -440,7 +442,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
               userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
-      mockMvcUtils.createControlledGcsBucket(
+      mockGcpApi.createControlledGcsBucket(
           userRequest,
           targetWorkspaceId,
           "resource-name",
@@ -473,7 +475,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
               userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
-      mockMvcUtils.createControlledGcsBucket(
+      mockGcpApi.createControlledGcsBucket(
           userRequest,
           targetWorkspaceId,
           "resource-name",
