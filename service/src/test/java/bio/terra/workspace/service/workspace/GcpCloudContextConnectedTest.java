@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
@@ -180,7 +180,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .perform(
                 MockMvcUtils.addAuth(
                     get(
-                        CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT.formatted(
+                        CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT.formatted(
                             workspaceId, bucketResource.getMetadata().getResourceId())),
                     userRequest))
             .andExpect(status().isNotFound())

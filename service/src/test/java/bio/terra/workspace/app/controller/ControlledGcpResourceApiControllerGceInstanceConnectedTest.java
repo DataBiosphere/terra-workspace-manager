@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
@@ -44,6 +45,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockGcpApi mockGcpApi;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
 
@@ -84,7 +86,7 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
                 .value("asia-east1")));
 
     ApiGcpGceInstanceResource instance =
-        mockMvcUtils
+        mockGcpApi
             .createGceInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
             .getGceInstance();
 
@@ -98,7 +100,7 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
         userAccessUtils.getDefaultUserEmail());
 
     instance =
-        mockMvcUtils
+        mockGcpApi
             .createGceInstance(
                 userAccessUtils.defaultUserAuthRequest(), workspaceId, "europe-west1-b")
             .getGceInstance();
@@ -120,13 +122,14 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
   @Test
   public void createGceInstance_duplicateInstanceId() throws Exception {
     var duplicateName = "not-unique-name";
-    mockMvcUtils
-        .createGceInstanceAndWait(
-            userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
-        .getGceInstance();
+    ApiGcpGceInstanceResource unused =
+        mockGcpApi
+            .createGceInstanceAndWait(
+                userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
+            .getGceInstance();
 
     ApiErrorReport errorReport =
-        mockMvcUtils
+        mockGcpApi
             .createGceInstanceAndExpect(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,

@@ -3,8 +3,8 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.fixtures.PolicyFixtures.IOWA_REGION;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_NAME;
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -373,7 +373,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     String serializedResponse =
         mockMvcUtils.getSerializedResponseForPost(
             userAccessUtils.defaultUserAuthRequest(),
-            REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT,
+            CREATE_REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT,
             sourceWorkspaceId,
             objectMapper.writeValueAsString(request));
     sourceResource = objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);

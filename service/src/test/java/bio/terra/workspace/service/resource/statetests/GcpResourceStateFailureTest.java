@@ -1,14 +1,14 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCE_INSTANCES_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCE_INSTANCE_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -18,6 +18,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
@@ -64,6 +65,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired ReferencedResourceService referencedResourceService;
   @Autowired ResourceDao resourceDao;
@@ -115,7 +117,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(instanceRequest),
-        CONTROLLED_GCP_GCE_INSTANCES_V1_PATH_FORMAT.formatted(workspace.workspaceId()),
+        CREATE_CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT.formatted(workspace.workspaceId()),
         HttpStatus.SC_CONFLICT);
 
     // GCP-Controlled Notebook
@@ -132,7 +134,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(notebookRequest),
-        CONTROLLED_GCP_AI_NOTEBOOKS_V1_PATH_FORMAT.formatted(workspace.workspaceId()),
+        CREATE_CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT.formatted(workspace.workspaceId()),
         HttpStatus.SC_CONFLICT);
 
     // GCP-Controlled Dataproc cluster
@@ -151,7 +153,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(clusterRequest),
-        CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT.formatted(workspace.workspaceId()),
+        CREATE_CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT.formatted(workspace.workspaceId()),
         HttpStatus.SC_CONFLICT);
 
     // GCP-Controlled BigQuery
@@ -165,7 +167,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(bqRequest),
-        CONTROLLED_GCP_BIG_QUERY_DATASETS_V1_PATH_FORMAT.formatted(workspace.workspaceId()),
+        CREATE_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT.formatted(workspace.workspaceId()),
         HttpStatus.SC_CONFLICT);
 
     // GCP-Controlled Bucket
@@ -178,7 +180,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(bucketRequest),
-        CONTROLLED_GCP_GCS_BUCKETS_V1_PATH_FORMAT.formatted(workspace.workspaceId()),
+        CREATE_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT.formatted(workspace.workspaceId()),
         HttpStatus.SC_CONFLICT);
   }
 
@@ -218,7 +220,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         ApiGcpGceInstanceResource.class,
         workspaceUuid,
         instanceResource.getResourceId(),
-        CONTROLLED_GCP_GCE_INSTANCE_V1_PATH_FORMAT,
+        CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT,
         objectMapper.writeValueAsString(instanceRequestBody));
     var instanceDeleteBody =
         new ApiDeleteControlledGcpGceInstanceRequest()
@@ -226,7 +228,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         instanceResource.getResourceId(),
-        CONTROLLED_GCP_GCE_INSTANCE_V1_PATH_FORMAT,
+        CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT,
         objectMapper.writeValueAsString(instanceDeleteBody));
 
     // GCP-Controlled Notebook
@@ -236,7 +238,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         ApiGcpAiNotebookInstanceResource.class,
         workspaceUuid,
         notebookResource.getResourceId(),
-        CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT,
+        CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT,
         objectMapper.writeValueAsString(notebookRequestBody));
     var notebookDeleteBody =
         new ApiDeleteControlledGcpAiNotebookInstanceRequest()
@@ -244,7 +246,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         notebookResource.getResourceId(),
-        CONTROLLED_GCP_AI_NOTEBOOK_V1_PATH_FORMAT,
+        CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT,
         objectMapper.writeValueAsString(notebookDeleteBody));
 
     // GCP-Controlled BigQuery
@@ -257,10 +259,10 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         ApiGcpBigQueryDatasetResource.class,
         workspaceUuid,
         bqResource.getResourceId(),
-        CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT,
+        CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT,
         objectMapper.writeValueAsString(bqRequestBody));
     stateTestUtils.deleteResourceExpectConflict(
-        workspaceUuid, bqResource.getResourceId(), CONTROLLED_GCP_BIG_QUERY_DATASET_V1_PATH_FORMAT);
+        workspaceUuid, bqResource.getResourceId(), CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT);
 
     // GCP-Controlled bucket
     var bucketRequestBody =
@@ -272,7 +274,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         ApiGcpGcsBucketResource.class,
         workspaceUuid,
         bucketResource.getResourceId(),
-        CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
+        CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT,
         objectMapper.writeValueAsString(bucketRequestBody));
     var bucketDeleteBody =
         new ApiDeleteControlledGcpGcsBucketRequest()
@@ -280,7 +282,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         notebookResource.getResourceId(),
-        CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT,
+        CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT,
         objectMapper.writeValueAsString(bucketDeleteBody));
   }
 
@@ -310,7 +312,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
         createContextFlightId);
 
-    mockMvcUtils.cloneControlledBqDatasetAsync(
+    mockGcpApi.cloneControlledBqDatasetAsync(
         USER_REQUEST,
         workspaceUuid,
         bqResource.getResourceId(),
