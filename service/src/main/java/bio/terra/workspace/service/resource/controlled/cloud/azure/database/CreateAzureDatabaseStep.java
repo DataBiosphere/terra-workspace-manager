@@ -19,6 +19,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
+import io.kubernetes.client.PodLogs;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
@@ -27,6 +28,9 @@ import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodStatus;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +46,7 @@ public class CreateAzureDatabaseStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureDatabaseStep.class);
   public static final String POD_FAILED = "Failed";
   public static final String POD_SUCCEEDED = "Succeeded";
+  public static final String CREATE_DB_CONTAINER = "createdb";
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureDatabaseResource resource;
@@ -104,6 +109,7 @@ public class CreateAzureDatabaseStep implements Step {
             containerServiceManager, azureCloudContext.getAzureResourceGroupId(), clusterResource);
     var podName = getPodName(GetManagedIdentityStep.getManagedIdentityName(context));
     try {
+      logger.info("Creating pod {}", podName);
       startCreateDatabaseContainer(
           aksApi,
           bearerToken,
@@ -121,6 +127,7 @@ public class CreateAzureDatabaseStep implements Step {
     } catch (Exception e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     } finally {
+      logPodLogs(aksApi, podName, azureConfig.getAzureDatabaseUtilLogsTailLines());
       deleteCreateDatabaseContainer(aksApi, podName);
     }
 
@@ -144,6 +151,30 @@ public class CreateAzureDatabaseStep implements Step {
         Duration.ofSeconds(10),
         0.0,
         Duration.ofSeconds(10));
+  }
+
+  private void logPodLogs(CoreV1Api aksApi, String podName, Integer tailLines) {
+    try {
+      var pod = aksApi.readNamespacedPod(podName, aksNamespace, null);
+      logger.info("Pod {} final status: {}", podName, pod.getStatus());
+
+      try (InputStream logs =
+          new PodLogs(aksApi.getApiClient())
+              .streamNamespacedPodLog(
+                  aksNamespace,
+                  podName,
+                  CREATE_DB_CONTAINER,
+                  null,
+                  Optional.ofNullable(tailLines).orElse(1000),
+                  false)) {
+
+        new BufferedReader(new InputStreamReader(logs))
+            .lines()
+            .forEach(line -> logger.info("Pod {} log line: {}", podName, line));
+      }
+    } catch (Exception e) {
+      logger.info("Pod {}, failed to get pod logs", podName, e);
+    }
   }
 
   private Optional<String> getPodStatus(CoreV1Api aksApi, String podName) throws ApiException {
@@ -192,7 +223,7 @@ public class CreateAzureDatabaseStep implements Step {
                       .restartPolicy("Never")
                       .addContainersItem(
                           new V1Container()
-                              .name("createdb")
+                              .name(CREATE_DB_CONTAINER)
                               .image(azureConfig.getAzureDatabaseUtilImage())
                               .env(
                                   List.of(

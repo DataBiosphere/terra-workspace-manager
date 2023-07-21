@@ -148,6 +148,7 @@ workspace:
     cors-allowed-origins:
     protected-data-landing-zone-defs: ["ProtectedDataResourcesFactory"]
     azure-database-util-image: "us.gcr.io/broad-dsp-gcr-public/azure-database-utils:${version.gitHash}"
+    azure-database-util-logs-tail-lines: 1000
 
 terra.common:
   kubernetes:
