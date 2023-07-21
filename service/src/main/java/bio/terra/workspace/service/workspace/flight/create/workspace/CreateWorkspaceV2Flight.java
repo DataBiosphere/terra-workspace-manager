@@ -41,7 +41,7 @@ public class CreateWorkspaceV2Flight extends Flight {
     CloudPlatform cloudPlatform =
         inputParameters.get(WorkspaceFlightMapKeys.CLOUD_PLATFORM, CloudPlatform.class);
     String projectOwnerGroupId =
-            inputParameters.get(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, String.class);
+        inputParameters.get(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, String.class);
 
     RetryRule serviceRetryRule = RetryRules.shortExponential();
     RetryRule dbRetryRule = RetryRules.shortDatabase();
