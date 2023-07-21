@@ -1,14 +1,14 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.utils.MockAzureApi.CLONE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAzureApi.CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAzureApi.CONTROLLED_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAzureApi.CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAzureApi.CONTROLLED_AZURE_VM_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CLONE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_DISK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;

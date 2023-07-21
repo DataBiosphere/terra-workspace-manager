@@ -1,9 +1,9 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.GENERATE_NAME_CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.GENERATE_NAME_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.GENERATE_NAME_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.GENERATE_NAME_CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.GENERATE_NAME_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.GENERATE_NAME_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;

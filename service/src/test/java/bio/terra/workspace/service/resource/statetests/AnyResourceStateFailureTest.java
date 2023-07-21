@@ -11,6 +11,17 @@ import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_REFERENCED_GCP_
 import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_REFERENCED_GCP_GCS_OBJECTS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockGcpApi.REFERENCED_GCP_BQ_DATASET_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockGcpApi.REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_REFERENCED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_REFERENCED_GCP_BQ_DATA_TABLES_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_REFERENCED_GCP_GCS_OBJECTS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.REFERENCED_GCP_BQ_DATASET_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GIT_REPOS_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GIT_REPO_V1_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;

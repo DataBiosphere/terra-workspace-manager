@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.GET_CLOUD_CONTEXT_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
