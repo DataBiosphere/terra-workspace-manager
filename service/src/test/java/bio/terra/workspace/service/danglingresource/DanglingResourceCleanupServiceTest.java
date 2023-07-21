@@ -9,6 +9,7 @@ import bio.terra.cloudres.google.dataproc.DataprocCow;
 import bio.terra.workspace.app.configuration.external.DanglingResourceCleanupConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.utils.GcpUtils;
+import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -37,13 +38,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Tag("connectedPlus")
 public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
   private Workspace workspace;
-  private final int ASSERT_RESOURCE_CLEANUP_RETRY_COUNT = 40;
-  private final int ASSERT_RESOURCE_CLEANUP_RETRY_SECONDS = 15;
+  private static final int ASSERT_RESOURCE_CLEANUP_RETRY_COUNT = 40;
+  private static final int ASSERT_RESOURCE_CLEANUP_RETRY_SECONDS = 15;
 
   @Autowired WorkspaceConnectedTestUtils workspaceUtils;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired WorkspaceService workspaceService;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockGcpApi mockGcpApi;
   @Autowired SamService samService;
   @Autowired ControlledResourceService controlledResourceService;
   @Autowired DanglingResourceCleanupConfiguration danglingResourceCleanupConfiguration;
@@ -68,7 +70,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
     String stagingBucketResourceName = TestUtils.appendRandomNumber("dataproc-staging-bucket");
     String stagingBucketCloudName = TestUtils.appendRandomNumber("dataproc-staging-bucket");
     ApiGcpGcsBucketResource stagingBucketResource =
-        mockMvcUtils
+        mockGcpApi
             .createControlledGcsBucket(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspace.getWorkspaceId(),
@@ -82,7 +84,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
     String tempBucketResourceName = TestUtils.appendRandomNumber("dataproc-temp-bucket");
     String tempBucketCloudName = TestUtils.appendRandomNumber("dataproc-temp-bucket");
     ApiGcpGcsBucketResource tempBucketResource =
-        mockMvcUtils
+        mockGcpApi
             .createControlledGcsBucket(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspace.getWorkspaceId(),
@@ -111,7 +113,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
 
     // Create a controlled dataproc cluster
     ApiGcpDataprocClusterResource cluster =
-        mockMvcUtils
+        mockGcpApi
             .createDataprocCluster(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspace.getWorkspaceId(),
@@ -122,7 +124,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
 
     // Create a controlled gce instance
     ApiGcpGceInstanceResource instance =
-        mockMvcUtils
+        mockGcpApi
             .createGceInstance(
                 userAccessUtils.defaultUserAuthRequest(), workspace.getWorkspaceId(), null)
             .getGceInstance();
@@ -131,7 +133,7 @@ public class DanglingResourceCleanupServiceTest extends BaseConnectedTest {
     String bucketResourceName = TestUtils.appendRandomNumber("my-bucket");
     String bucketCloudName = TestUtils.appendRandomNumber("my-bucket");
     ApiGcpGcsBucketResource bucket =
-        mockMvcUtils
+        mockGcpApi
             .createControlledGcsBucket(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspace.getWorkspaceId(),

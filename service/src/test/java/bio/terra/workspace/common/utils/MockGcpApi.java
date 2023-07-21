@@ -280,7 +280,7 @@ public class MockGcpApi {
                                 sourceWorkspaceId, sourceResourceId))
                             .content(objectMapper.writeValueAsString(request)),
                         userRequest)))
-            .andExpect(status().is(mockMvcUtils.getExpectedCodesMatcher(expectedCodes)))
+            .andExpect(status().is(MockMvcUtils.getExpectedCodesMatcher(expectedCodes)))
             .andReturn()
             .getResponse();
 
