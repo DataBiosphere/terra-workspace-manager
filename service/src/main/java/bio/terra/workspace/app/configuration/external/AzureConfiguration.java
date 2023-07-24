@@ -20,6 +20,7 @@ public class AzureConfiguration {
   private String azureMonitorLinuxAgentVersion;
   private List<String> protectedDataLandingZoneDefs;
   private String azureDatabaseUtilImage;
+  private Integer azureDatabaseUtilLogsTailLines;
 
   public String getManagedAppClientId() {
     return managedAppClientId;
@@ -100,5 +101,13 @@ public class AzureConfiguration {
 
   public void setAzureDatabaseUtilImage(String azureDatabaseUtilImage) {
     this.azureDatabaseUtilImage = azureDatabaseUtilImage;
+  }
+
+  public Integer getAzureDatabaseUtilLogsTailLines() {
+    return azureDatabaseUtilLogsTailLines;
+  }
+
+  public void setAzureDatabaseUtilLogsTailLines(Integer azureDatabaseUtilLogsTailLines) {
+    this.azureDatabaseUtilLogsTailLines = azureDatabaseUtilLogsTailLines;
   }
 }

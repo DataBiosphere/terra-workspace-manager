@@ -1,5 +1,7 @@
 package bio.terra.workspace.common.utils;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
@@ -18,7 +20,6 @@ import java.util.UUID;
 
 /** Utilities for working with workspaces in unit tests. */
 public class WorkspaceUnitTestUtils {
-  public static final SpendProfileId SPEND_PROFILE_ID = new SpendProfileId("my-spend-profile");
   public static final String POLICY_OWNER = "policy-owner";
   public static final String POLICY_WRITER = "policy-writer";
   public static final String POLICY_READER = "policy-reader";
@@ -39,11 +40,18 @@ public class WorkspaceUnitTestUtils {
   public static DbCloudContext makeDbCloudContext(CloudPlatform cloudPlatform, String json) {
     return new DbCloudContext()
         .cloudPlatform(cloudPlatform)
-        .spendProfile(WorkspaceUnitTestUtils.SPEND_PROFILE_ID)
+        .spendProfile(DEFAULT_SPEND_PROFILE_ID)
         .contextJson(json)
         .state(WsmResourceState.READY)
         .flightId(null)
         .error(null);
+  }
+
+  public static void deleteCloudContextInDatabase(
+      WorkspaceDao workspaceDao, UUID workspaceUuid, CloudPlatform cloudPlatform) {
+    String flightId = UUID.randomUUID().toString();
+    workspaceDao.deleteCloudContextStart(workspaceUuid, cloudPlatform, flightId);
+    workspaceDao.deleteCloudContextSuccess(workspaceUuid, cloudPlatform, flightId);
   }
 
   // GCP cloud context
@@ -68,7 +76,7 @@ public class WorkspaceUnitTestUtils {
       WorkspaceDao workspaceDao, UUID workspaceUuid, String projectId) {
     String flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(
-        workspaceUuid, CloudPlatform.GCP, SPEND_PROFILE_ID, flightId);
+        workspaceUuid, CloudPlatform.GCP, DEFAULT_SPEND_PROFILE_ID, flightId);
     workspaceDao.createCloudContextSuccess(
         workspaceUuid,
         CloudPlatform.GCP,
@@ -76,16 +84,9 @@ public class WorkspaceUnitTestUtils {
                 new GcpCloudContextFields(
                     projectId, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
                 new CloudContextCommonFields(
-                    SPEND_PROFILE_ID, WsmResourceState.CREATING, flightId, /*error=*/ null))
+                    DEFAULT_SPEND_PROFILE_ID, WsmResourceState.CREATING, flightId, /*error=*/ null))
             .serialize(),
         flightId);
-  }
-
-  public static void deleteGcpCloudContextInDatabase(
-      WorkspaceDao workspaceDao, UUID workspaceUuid) {
-    String flightId = UUID.randomUUID().toString();
-    workspaceDao.deleteCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
-    workspaceDao.deleteCloudContextSuccess(workspaceUuid, CloudPlatform.GCP, flightId);
   }
 
   // Azure cloud context
@@ -118,11 +119,11 @@ public class WorkspaceUnitTestUtils {
         CloudPlatform.AWS,
         new AwsCloudContext(
                 new AwsCloudContextFields(
-                    "majorversion",
-                    "fake-org-id",
-                    "fake-account-id",
-                    "fake-env-alias",
-                    "fake-env-alias"),
+                    AwsTestUtils.MAJOR_VERSION,
+                    AwsTestUtils.ORGANIZATION_ID,
+                    AwsTestUtils.ACCOUNT_ID,
+                    AwsTestUtils.TENANT_ALIAS,
+                    AwsTestUtils.ENVIRONMENT_ALIAS),
                 new CloudContextCommonFields(
                     billingProfileId, WsmResourceState.CREATING, flightId, null))
             .serialize(),

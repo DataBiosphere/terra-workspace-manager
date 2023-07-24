@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_KMS_KEY_ARN;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_1;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_LANDING_ZONE_KMS_KEY_ARN;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN;
 import static bio.terra.workspace.common.utils.TestUtils.assertStepResultFatal;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;

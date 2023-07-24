@@ -58,7 +58,7 @@ public class MvcWorkspaceApi {
         new ApiCreateWorkspaceV2Request()
             .id(UUID.randomUUID())
             .cloudPlatform(cloudPlatform)
-            .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE)
+            .spendProfile(WorkspaceFixtures.DEFAULT_SPEND_PROFILE_NAME)
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .jobControl(new ApiJobControl().id(jobId));
 

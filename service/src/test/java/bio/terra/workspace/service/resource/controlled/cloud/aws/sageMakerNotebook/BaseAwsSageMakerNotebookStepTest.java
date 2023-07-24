@@ -13,6 +13,7 @@ import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
@@ -60,7 +61,7 @@ public abstract class BaseAwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
     when(mockCliConfiguration.getServerName()).thenReturn("serverName");
 
     when(mockAwsCloudContextService.getRequiredAwsCloudContext(any()))
-        .thenReturn(ControlledAwsResourceFixtures.makeAwsCloudContext());
+        .thenReturn(AwsTestUtils.makeAwsCloudContext());
 
     mockAwsUtils
         .when(() -> AwsUtils.createWsmCredentialProvider(any(), any()))

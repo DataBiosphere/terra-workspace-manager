@@ -394,6 +394,31 @@ public class ResourceDao {
   }
 
   /**
+   * Returns a list of all resources in the READY state in any workspace, filtering by a provided
+   * list of wsm resource types.
+   *
+   * @param wsmResourceTypes List of wsm resource types to filter by.
+   */
+  @ReadTransaction
+  public List<ControlledResource> listReadyResourcesByType(List<WsmResourceType> wsmResourceTypes) {
+    String sql =
+        RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
+            + " WHERE state = :state AND exact_resource_type IN (:resource_types)";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("state", WsmResourceState.READY.toDb())
+            .addValue(
+                "resource_types",
+                wsmResourceTypes.stream().map(WsmResourceType::toSql).collect(Collectors.toList()));
+
+    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+    return dbResources.stream()
+        .map(this::constructResource)
+        .map(WsmResource::castToControlledResource)
+        .collect(Collectors.toList());
+  }
+
+  /**
    * Reads all private controlled resources assigned to a given user in a given workspace which are
    * not being cleaned up by other flights and marks them as being cleaned up by the current flight.
    *

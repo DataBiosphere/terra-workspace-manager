@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
@@ -44,6 +45,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockGcpApi mockGcpApi;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
 
@@ -84,7 +86,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
                 .value("asia-east1")));
 
     ApiGcpAiNotebookInstanceResource notebook =
-        mockMvcUtils
+        mockGcpApi
             .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
             .getAiNotebookInstance();
 
@@ -98,7 +100,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
         userAccessUtils.getDefaultUserEmail());
 
     notebook =
-        mockMvcUtils
+        mockGcpApi
             .createAiNotebookInstance(
                 userAccessUtils.defaultUserAuthRequest(), workspaceId, "europe-west1-b")
             .getAiNotebookInstance();
@@ -120,13 +122,14 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
   @Test
   public void createAiNotebookInstance_duplicateInstanceId() throws Exception {
     var duplicateName = "not-unique-name";
-    mockMvcUtils
-        .createAiNotebookInstanceAndWait(
-            userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
-        .getAiNotebookInstance();
+    ApiGcpAiNotebookInstanceResource unused =
+        mockGcpApi
+            .createAiNotebookInstanceAndWait(
+                userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
+            .getAiNotebookInstance();
 
     ApiErrorReport errorReport =
-        mockMvcUtils
+        mockGcpApi
             .createAiNotebookInstanceAndExpect(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,

@@ -69,7 +69,8 @@ public class ResourceDaoTest extends BaseUnitTest {
 
   @AfterAll
   public void cleanUp() {
-    WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
+    WorkspaceUnitTestUtils.deleteCloudContextInDatabase(
+        workspaceDao, workspaceUuid, CloudPlatform.GCP);
     WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
   }
 
@@ -266,7 +267,8 @@ public class ResourceDaoTest extends BaseUnitTest {
     List<ControlledResource> listAfterDeletion =
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.GCP);
     assertTrue(listAfterDeletion.isEmpty());
-    WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
+    WorkspaceUnitTestUtils.deleteCloudContextInDatabase(
+        workspaceDao, workspaceUuid, CloudPlatform.GCP);
   }
 
   private void assertPartialEqualList(

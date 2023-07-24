@@ -296,7 +296,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .prefix(folderName)
             .build();
 
-    ControlledAwsS3StorageFolderResource createdBucket =
+    ControlledAwsS3StorageFolderResource createdResource =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAwsS3StorageFolder())
@@ -304,8 +304,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     return new ResponseEntity<>(
         new ApiCreatedControlledAwsS3StorageFolder()
-            .resourceId(createdBucket.getResourceId())
-            .awsS3StorageFolder(createdBucket.toApiResource()),
+            .resourceId(createdResource.getResourceId())
+            .awsS3StorageFolder(createdResource.toApiResource()),
         HttpStatus.OK);
   }
 

@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_REGION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -66,7 +67,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
         awsCloudContextService
             .getLandingZone(
                 awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid),
-                Region.of(ControlledAwsResourceFixtures.AWS_REGION))
+                Region.of(AWS_REGION))
             .orElseThrow();
     awsCredentialsProvider =
         AwsUtils.createWsmCredentialProvider(
@@ -88,22 +89,14 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     StairwayTestUtils.enumerateJobsDump(jobService, workspaceUuid, userRequest);
   }
 
-  private ControlledAwsS3StorageFolderResource makeResource(
-      ApiAwsS3StorageFolderCreationParameters creationParameters) {
-    return ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
-            workspaceUuid,
-            /* resourceName= */ creationParameters.getFolderName(),
-            landingZone.getStorageBucket().name(),
-            /* folderName= */ creationParameters.getFolderName())
-        .build();
-  }
-
   @Test
   void createGetUpdateDeleteS3StorageFolderTest() throws InterruptedException {
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
-    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters);
+    ControlledAwsS3StorageFolderResource resource =
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResource(
+            workspaceUuid, landingZone.getStorageBucket().name(), creationParameters);
 
     // create resource
     ControlledAwsS3StorageFolderResource createdResource =
@@ -161,7 +154,9 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
-    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters);
+    ControlledAwsS3StorageFolderResource resource =
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResource(
+            workspaceUuid, landingZone.getStorageBucket().name(), creationParameters);
 
     // test idempotency of s3-folder-specific undo step by retrying once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
@@ -191,7 +186,9 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
-    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters);
+    ControlledAwsS3StorageFolderResource resource =
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResource(
+            workspaceUuid, landingZone.getStorageBucket().name(), creationParameters);
 
     ControlledAwsS3StorageFolderResource createdResource =
         controlledResourceService

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
@@ -22,6 +22,7 @@ import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -40,7 +41,6 @@ import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultOrException;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
@@ -101,10 +101,10 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private JobService jobService;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockGcpApi mockGcpApi;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private ReferencedResourceService referenceResourceService;
   @Autowired private ResourceDao resourceDao;
-  @Autowired private SamService samService;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceService workspaceService;
@@ -180,7 +180,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .perform(
                 MockMvcUtils.addAuth(
                     get(
-                        CONTROLLED_GCP_GCS_BUCKET_V1_PATH_FORMAT.formatted(
+                        CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT.formatted(
                             workspaceId, bucketResource.getMetadata().getResourceId())),
                     userRequest))
             .andExpect(status().isNotFound())
@@ -234,7 +234,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   private ApiGcpGcsBucketResource createControlledBucket() throws Exception {
     // Add a bucket resource
     String bucketName = "terra-test-" + UUID.randomUUID().toString().toLowerCase();
-    return mockMvcUtils
+    return mockGcpApi
         .createControlledGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,

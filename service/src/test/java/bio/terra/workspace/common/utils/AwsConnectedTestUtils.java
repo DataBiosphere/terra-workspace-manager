@@ -11,7 +11,7 @@ import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-// Test Utils for connected tests
+// Test Utils for AWS connected tests
 @Component
 public class AwsConnectedTestUtils {
   @Autowired private AwsConfiguration awsConfiguration;
@@ -23,11 +23,19 @@ public class AwsConnectedTestUtils {
     this.awsConfiguration = awsConfiguration;
   }
 
-  public AwsCloudContext getAwsCloudContext() throws IOException {
+  private void initEnvironment() throws IOException {
     if (environment == null) {
       environment = AwsUtils.createEnvironmentDiscovery(awsConfiguration).discoverEnvironment();
     }
+  }
 
+  public Environment getEnvironment() throws IOException {
+    initEnvironment();
+    return environment;
+  }
+
+  public AwsCloudContext getAwsCloudContext() throws IOException {
+    initEnvironment();
     return new AwsCloudContext(
         new AwsCloudContextFields(
             environment.getMetadata().getMajorVersion(),
