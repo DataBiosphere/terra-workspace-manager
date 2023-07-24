@@ -1104,6 +1104,7 @@ public class SamService {
         new AccessPolicyMembershipRequest()
             .addRolesItem(WsmIamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail));
+    // Optionally add a policy for project owner (used for billing projects in Terra CWB).
     if (projectOwnerGroupId != null) {
       policyMap.put(
           WsmIamRole.PROJECT_OWNER.toSamRole(),
@@ -1115,6 +1116,7 @@ public class SamService {
                       .policyName("owner")
                       .resourceId(projectOwnerGroupId)));
     }
+    // For all non-owner/manager roles, we create empty policies which can be modified later.
     for (WsmIamRole workspaceRole : WsmIamRole.values()) {
       if (!Set.of(WsmIamRole.OWNER, WsmIamRole.MANAGER, WsmIamRole.PROJECT_OWNER)
           .contains(workspaceRole)) {
