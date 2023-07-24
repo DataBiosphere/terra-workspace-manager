@@ -50,10 +50,11 @@ public class UpdateDataprocClusterStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+    FlightMap inputParameters = flightContext.getInputParameters();
+    FlightUtils.validateRequiredEntries(inputParameters, UPDATE_PARAMETERS);
     ApiControlledDataprocClusterUpdateParameters updateParameters =
-        flightContext
-            .getInputParameters()
-            .get(UPDATE_PARAMETERS, ApiControlledDataprocClusterUpdateParameters.class);
+        inputParameters.get(UPDATE_PARAMETERS, ApiControlledDataprocClusterUpdateParameters.class);
+
     if (updateParameters == null) {
       return StepResult.getStepResultSuccess();
     }
@@ -76,49 +77,44 @@ public class UpdateDataprocClusterStep implements Step {
   private StepResult updateCluster(ApiControlledDataprocClusterUpdateParameters updateParameters) {
     ClusterName clusterName = resource.toClusterName();
     List<String> updateMaskPaths = new ArrayList<>();
-    Cluster updateClusterMask =
+    // Contains only the values that are being updated, the rest are null
+    Cluster updatedCluster =
         new Cluster().setClusterName(clusterName.name()).setConfig(new ClusterConfig());
 
     // Apply the update parameters to the cluster config mask
     if (updateParameters.getNumPrimaryWorkers() != null) {
       updateMaskPaths.add(NUM_WORKERS);
-      updateClusterMask
+      updatedCluster
           .getConfig()
           .setWorkerConfig(
               new InstanceGroupConfig().setNumInstances(updateParameters.getNumPrimaryWorkers()));
     }
     if (updateParameters.getNumSecondaryWorkers() != null) {
       updateMaskPaths.add(NUM_SECONDARY_WORKERS);
-      updateClusterMask
+      updatedCluster
           .getConfig()
           .setSecondaryWorkerConfig(new InstanceGroupConfig().setNumInstances(3));
     }
     if (updateParameters.getAutoscalingPolicy() != null) {
       updateMaskPaths.add(AUTOSCALING_POLICY);
-      updateClusterMask
+      updatedCluster
           .getConfig()
           .setAutoscalingConfig(
               new AutoscalingConfig().setPolicyUri(updateParameters.getAutoscalingPolicy()));
     }
     ApiGcpDataprocClusterLifecycleConfig lifecycleConfig = updateParameters.getLifecycleConfig();
-    // Only one of the following lifecycle rule can be applied
     if (lifecycleConfig != null) {
-      updateClusterMask.getConfig().setLifecycleConfig(new LifecycleConfig());
-      if (lifecycleConfig.getIdleDeleteTtl() != null) {
-        updateMaskPaths.add(IDLE_DELETE_TTL);
-        updateClusterMask
-            .getConfig()
-            .getLifecycleConfig()
-            .setIdleDeleteTtl(updateParameters.getLifecycleConfig().getIdleDeleteTtl());
-      } else if (lifecycleConfig.getAutoDeleteTtl() != null) {
+      updatedCluster.getConfig().setLifecycleConfig(new LifecycleConfig());
+      // Only one autoDeleteTtl and autoDeleteTime can be set (already validated in controller)
+      if (lifecycleConfig.getAutoDeleteTtl() != null) {
         updateMaskPaths.add(AUTO_DELETE_TTL);
-        updateClusterMask
+        updatedCluster
             .getConfig()
             .getLifecycleConfig()
             .setAutoDeleteTtl(updateParameters.getLifecycleConfig().getAutoDeleteTtl());
       } else if (lifecycleConfig.getAutoDeleteTime() != null) {
         updateMaskPaths.add(AUTO_DELETE_TIME);
-        updateClusterMask
+        updatedCluster
             .getConfig()
             .getLifecycleConfig()
             .setAutoDeleteTime(
@@ -131,7 +127,7 @@ public class UpdateDataprocClusterStep implements Step {
           .clusters()
           .patch(
               clusterName,
-              updateClusterMask,
+              updatedCluster,
               String.join(",", updateMaskPaths),
               updateParameters.getGracefulDecommissionTimeout())
           .execute();

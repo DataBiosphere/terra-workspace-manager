@@ -1,7 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.cloudres.google.dataproc.ClusterName;
-import bio.terra.cloudres.google.dataproc.DataprocCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -92,17 +90,11 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
-import com.google.api.services.dataproc.model.Cluster;
 import com.google.common.base.Strings;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Stream;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
@@ -1010,25 +1002,21 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     if (updateParameters != null) {
       if (updateParameters.getLifecycleConfig() != null) {
         // Cluster scheduled deletion configurations cannot be updated in tandem with other
-        // attribute
-        // updates.
+        // attributes.
         if (updateParameters.getNumPrimaryWorkers() != null
             || updateParameters.getNumSecondaryWorkers() != null
             || updateParameters.getAutoscalingPolicy() != null) {
           throw new BadRequestException(
               "Cluster scheduled deletion configurations cannot be updated in tandem with other attribute updates.");
         }
-        // Can only specify one of idleDeleteTtl or autoDeleteTtl or autoDeleteTime
-        long count =
-            Stream.of(
-                    updateParameters.getLifecycleConfig().getIdleDeleteTtl(),
-                    updateParameters.getLifecycleConfig().getAutoDeleteTtl(),
-                    updateParameters.getLifecycleConfig().getAutoDeleteTime())
-                .filter(Objects::nonNull)
-                .count();
-        if (count != 1) {
-          throw new BadRequestException(
-              "Can only specify one of idleDeleteTtl, autoDeleteTtl, or autoDeleteTime");
+        // Can only specify one of autoDeleteTtl or autoDeleteTime
+        if (updateParameters.getLifecycleConfig().getAutoDeleteTtl() != null
+            && updateParameters.getLifecycleConfig().getAutoDeleteTime() != null) {
+          throw new BadRequestException("Cannot specify both autoDeleteTtl and autoDeleteTime");
+        }
+        // Can only specify 0 or more than 1 primary worker
+        if (Objects.equals(updateParameters.getNumPrimaryWorkers(), 1)) {
+          throw new BadRequestException("Provide at least 1 primary worker, or none.");
         }
       }
     }
@@ -1120,19 +1108,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
-
-    DataprocCow dataprocCow = crlService.getDataprocCow();
-    ClusterName clusterName = resource.toClusterName();
-    try {
-      Cluster retrievedCluster = dataprocCow.clusters().get(clusterName).execute();
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
-      String prettyJsonString = gson.toJson(JsonParser.parseString(retrievedCluster.toString()));
-      System.out.println(prettyJsonString);
-
-    } catch (IOException e) {
-      System.out.println("Error retrieving cluster");
-    }
-
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 }

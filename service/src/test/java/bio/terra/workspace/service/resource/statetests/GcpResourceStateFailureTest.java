@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.statetests;
 
 import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
@@ -23,7 +23,7 @@ import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
-import bio.terra.workspace.db.ResourceDao;gi
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCreateControlledGcpAiNotebookInstanceRequestBody;

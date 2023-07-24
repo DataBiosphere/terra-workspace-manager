@@ -205,16 +205,17 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     // Update the cluster lifecycle rule through WSM. Cluster lifecycle rules cannot be updated in
     // tandem with other parameters, so we update it separately.
     String newIdleDeleteTtl = "1800s";
-    updatedResource =
-        resourceUserApi.updateDataprocCluster(
-            new UpdateControlledGcpDataprocClusterRequestBody()
-                .updateParameters(
-                    new ControlledDataprocClusterUpdateParameters()
-                        .lifecycleConfig(
-                            new GcpDataprocClusterLifecycleConfig()
-                                .idleDeleteTtl(newIdleDeleteTtl))),
-            getWorkspaceId(),
-            resourceId);
+    String newAutoDeleteTtl = "3600s";
+    resourceUserApi.updateDataprocCluster(
+        new UpdateControlledGcpDataprocClusterRequestBody()
+            .updateParameters(
+                new ControlledDataprocClusterUpdateParameters()
+                    .lifecycleConfig(
+                        new GcpDataprocClusterLifecycleConfig()
+                            .idleDeleteTtl(newIdleDeleteTtl)
+                            .autoDeleteTtl(newAutoDeleteTtl))),
+        getWorkspaceId(),
+        resourceId);
 
     // Directly fetch the cluster to verify updated lifecycle rules
     retrievedCluster =
@@ -222,6 +223,8 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
 
     assertEquals(
         newIdleDeleteTtl, retrievedCluster.getConfig().getLifecycleConfig().getIdleDeleteTtl());
+    assertEquals(
+        newAutoDeleteTtl, retrievedCluster.getConfig().getLifecycleConfig().getAutoDeleteTtl());
 
     // Delete the Dataproc cluster through WSM.
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);

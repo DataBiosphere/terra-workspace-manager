@@ -251,13 +251,13 @@ public class DataprocUtils {
         // Retry 403s as permissions may take time to propagate, but do not retry if it's
         // any other IO exception.
         if (e.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
-          logger.info("Fails to fetch Cluster JupyterLab proxy url due to 403, retry", e);
+          logger.info("Failed to fetch Cluster JupyterLab proxy url due to 403, retry", e);
         } else {
-          logger.info("Fails to fetch Cluster JupyterLab proxy url, do not retry", e);
+          logger.info("Failed to fetch Cluster JupyterLab proxy url, do not retry", e);
           throw e;
         }
       } catch (Exception e) {
-        logger.info("Fails to fetch Cluster JupyterLab proxy url, do not retry", e);
+        logger.info("Failed to fetch Cluster JupyterLab proxy url, do not retry", e);
         throw e;
       }
       // If we are here, we are retrying
