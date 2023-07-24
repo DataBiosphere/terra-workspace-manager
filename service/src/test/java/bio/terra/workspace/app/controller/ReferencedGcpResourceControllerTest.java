@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.mocks.MockDataRepoApi;
+import bio.terra.workspace.common.mocks.MockGitRepoApi;
 import bio.terra.workspace.common.utils.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -28,6 +30,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired MockGcpApi mockGcpApi;
+  @Autowired MockDataRepoApi mockDataRepoApi;
+  @Autowired MockGitRepoApi mockGitRepoApi;
   @Autowired ObjectMapper objectMapper;
 
   @BeforeEach
@@ -57,7 +61,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   @Test
   public void cloneReferencedDataRepoSnapshot_copyDefinition_throws400() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    mockMvcUtils.cloneReferencedDataRepoSnapshot(
+    mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -70,7 +74,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   @Test
   public void cloneReferencedDataRepoSnapshot_copyResource_throws400() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    mockMvcUtils.cloneReferencedDataRepoSnapshot(
+    mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -187,7 +191,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   @Test
   public void cloneReferencedGitRepo_copyDefinition_throws400() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    mockMvcUtils.cloneReferencedGitRepo(
+    mockGitRepoApi.cloneReferencedGitRepo(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -200,7 +204,7 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
   @Test
   public void cloneReferencedGitRepo_copyResource_throws400() throws Exception {
     UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    mockMvcUtils.cloneReferencedGitRepo(
+    mockGitRepoApi.cloneReferencedGitRepo(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),

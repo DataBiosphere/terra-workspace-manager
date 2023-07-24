@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.iam;
 
+import static bio.terra.workspace.common.mocks.MockDataRepoApi.CREATE_REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -140,7 +141,9 @@ class SamServiceTest extends BaseConnectedTest {
         .perform(
             addJsonContentType(
                     addAuth(
-                        post(String.format(CREATE_SNAPSHOT_PATH_FORMAT, workspaceUuid)),
+                        post(
+                            String.format(
+                                CREATE_REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT, workspaceUuid)),
                         secondaryUserRequest()))
                 .content(objectMapper.writeValueAsString(referenceRequest)))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
@@ -156,7 +159,10 @@ class SamServiceTest extends BaseConnectedTest {
             .perform(
                 addJsonContentType(
                         addAuth(
-                            post(String.format(CREATE_SNAPSHOT_PATH_FORMAT, workspaceUuid)),
+                            post(
+                                String.format(
+                                    CREATE_REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT,
+                                    workspaceUuid)),
                             secondaryUserRequest()))
                     .content(objectMapper.writeValueAsString(referenceRequest)))
             .andExpect(status().is(HttpStatus.SC_OK))

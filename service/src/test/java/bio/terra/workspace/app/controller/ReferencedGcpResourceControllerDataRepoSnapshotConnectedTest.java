@@ -1,8 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiDataRepoEquals;
+import static bio.terra.workspace.common.mocks.MockDataRepoApi.REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -13,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
+import bio.terra.workspace.common.mocks.MockDataRepoApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -55,6 +55,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockDataRepoApi mockDataRepoApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
@@ -88,7 +89,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
     sourceInstanceName = TestUtils.appendRandomNumber("source-instance-name");
     sourceSnapshot = UUID.randomUUID().toString();
     sourceResource =
-        mockMvcUtils.createReferencedDataRepoSnapshot(
+        mockDataRepoApi.createReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             ApiCloningInstructionsEnum.NOTHING,
@@ -121,7 +122,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
     // Assert resource returned by get
     ApiDataRepoSnapshotResource gotResource =
-        mockMvcUtils.getReferencedDataRepoSnapshot(
+        mockDataRepoApi.getReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
@@ -142,7 +143,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
     var newInstanceName = TestUtils.appendRandomNumber("newinstance");
     var newSnapshot = TestUtils.appendRandomNumber("newsnapshot");
     ApiDataRepoSnapshotResource updatedResource =
-        mockMvcUtils.updateReferencedDataRepoSnapshot(
+        mockDataRepoApi.updateReferencedDataRepoSnapshot(
             userAccessUtils.secondUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -171,7 +172,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
   @Test
   public void update_throws409() throws Exception {
     var newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
-    mockMvcUtils.createReferencedDataRepoSnapshot(
+    mockDataRepoApi.createReferencedDataRepoSnapshot(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         ApiCloningInstructionsEnum.REFERENCE,
@@ -184,13 +185,13 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         objectMapper.writeValueAsString(
             new ApiUpdateBigQueryDatasetReferenceRequestBody().name(newName)),
         String.format(
-            REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT,
+            REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT,
             workspaceId,
             sourceResource.getMetadata().getResourceId()),
         HttpStatus.SC_CONFLICT);
 
     ApiDataRepoSnapshotResource gotResource =
-        mockMvcUtils.getReferencedDataRepoSnapshot(
+        mockDataRepoApi.getReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
@@ -199,7 +200,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
-    mockMvcUtils.cloneReferencedDataRepoSnapshot(
+    mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         userAccessUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -222,7 +223,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
 
-    mockMvcUtils.cloneReferencedDataRepoSnapshot(
+    mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         userAccessUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -257,7 +258,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         userAccessUtils.getSecondUserEmail());
 
     ApiDataRepoSnapshotResource clonedResource =
-        mockMvcUtils.cloneReferencedDataRepoSnapshot(
+        mockDataRepoApi.cloneReferencedDataRepoSnapshot(
             userAccessUtils.secondUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -286,7 +287,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         workspaceId2,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.deleteDataRepoSnapshot(
+    mockDataRepoApi.deleteReferencedDataRepoSnapshot(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         clonedResource.getMetadata().getResourceId());
@@ -296,7 +297,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
   void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiDataRepoSnapshotResource clonedResource =
-        mockMvcUtils.cloneReferencedDataRepoSnapshot(
+        mockDataRepoApi.cloneReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -317,7 +318,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiDataRepoSnapshotResource clonedResource =
-        mockMvcUtils.cloneReferencedDataRepoSnapshot(
+        mockDataRepoApi.cloneReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -339,8 +340,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiDataRepoSnapshotResource gotResource =
-        mockMvcUtils.getReferencedDataRepoSnapshot(
+    ApiDataRepoSnapshotResource gotResource =
+        mockDataRepoApi.getReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
@@ -352,7 +353,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiDataRepoSnapshotResource clonedResource =
-        mockMvcUtils.cloneReferencedDataRepoSnapshot(
+        mockDataRepoApi.cloneReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -374,8 +375,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiDataRepoSnapshotResource gotResource =
-        mockMvcUtils.getReferencedDataRepoSnapshot(
+    ApiDataRepoSnapshotResource gotResource =
+        mockDataRepoApi.getReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
@@ -410,7 +411,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-    mockMvcUtils.cloneReferencedDataRepoSnapshot(
+    mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         userAccessUtils.defaultUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
@@ -487,5 +488,12 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
     assertEquals(expectedInstanceName, actualResource.getAttributes().getInstanceName());
     assertEquals(expectedSnapshot, actualResource.getAttributes().getSnapshot());
+  }
+
+  public static void assertApiDataRepoEquals(
+      ApiDataRepoSnapshotResource expectedDataRepo, ApiDataRepoSnapshotResource actualDataRepo) {
+    MockMvcUtils.assertResourceMetadataEquals(
+        expectedDataRepo.getMetadata(), actualDataRepo.getMetadata());
+    assertEquals(expectedDataRepo.getAttributes(), actualDataRepo.getAttributes());
   }
 }

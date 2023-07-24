@@ -20,48 +20,27 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import bio.terra.stairway.FlightDebugInfo;
-import bio.terra.stairway.Step;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.model.ApiAccessScope;
-import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceRequest;
-import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGcpDataRepoSnapshotResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneReferencedGitRepoResourceResult;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
-import bio.terra.workspace.generated.model.ApiControlledFlexibleResourceCreationParameters;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
-import bio.terra.workspace.generated.model.ApiCreateControlledFlexibleResourceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateGitRepoReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedControlledFlexibleResource;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotAttributes;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiFlexibleResource;
-import bio.terra.workspace.generated.model.ApiFlexibleResourceAttributes;
-import bio.terra.workspace.generated.model.ApiFlexibleResourceUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
-import bio.terra.workspace.generated.model.ApiGitRepoAttributes;
-import bio.terra.workspace.generated.model.ApiGitRepoResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
@@ -81,9 +60,6 @@ import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiState;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
-import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateDataRepoSnapshotReferenceRequestBody;
-import bio.terra.workspace.generated.model.ApiUpdateGitRepoReferenceRequestBody;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -97,19 +73,14 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -121,7 +92,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.hamcrest.Matcher;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -177,40 +147,14 @@ public class MockMvcUtils {
   public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";
   public static final String REMOVE_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members/%s";
   public static final String RESOURCES_PATH_FORMAT = "/api/workspaces/v1/%s/resources";
-  public static final String CREATE_SNAPSHOT_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
   public static final String CREATE_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts";
   public static final String DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/GCP";
   public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
       "/api/workspaces/v1/%s/cloudcontexts/result/%s";
-  public static final String FOLDERS_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders";
-  public static final String FOLDER_V1_PATH_FORMAT = "/api/workspaces/v1/%s/folders/%s";
-  public static final String FOLDER_PROPERTIES_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/folders/%s/properties";
   public static final String RESOURCE_PROPERTIES_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/%s/properties";
-  public static final String REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots";
-  public static final String REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots/%s";
-  public static final String CLONE_REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/referenced/datarepo/snapshots/%s/clone";
-  public static final String REFERENCED_GIT_REPOS_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/referenced/gitrepos";
-  public static final String REFERENCED_GIT_REPO_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/referenced/gitrepos/%s";
-  public static final String CLONE_REFERENCED_GIT_REPO_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/referenced/gitrepos/%s/clone";
-  public static final String DELETE_FOLDER_JOB_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/folders/%s/result/%s";
-  public static final String CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources";
-  public static final String CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources/%s";
-  public static final String CLONE_CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/controlled/any/flexibleResources/%s/clone";
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
   public static final String POLICY_V1_GET_REGION_INFO_PATH = "/api/policies/v1/getLocationInfo";
 
@@ -698,449 +642,12 @@ public class MockMvcUtils {
     assertEquals(expectedLastUpdatedByEmail, actualWorkspace.getLastUpdatedBy());
   }
 
-  public void deleteDataRepoSnapshot(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    deleteResource(
-        userRequest, workspaceId, resourceId, REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT);
-  }
-
-  public void deleteGitRepo(AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId)
-      throws Exception {
-    deleteResource(userRequest, workspaceId, resourceId, REFERENCED_GIT_REPO_V1_PATH_FORMAT);
-  }
-
   public void deleteResource(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String path)
       throws Exception {
     mockMvc
         .perform(addAuth(delete(String.format(path, workspaceId, resourceId)), userRequest))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
-  }
-
-  public ApiFlexibleResource getFlexibleResource(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    var serializedResponse =
-        getSerializedResponseForGet(
-            userRequest, CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT, workspaceId, resourceId);
-    return objectMapper.readValue(serializedResponse, ApiFlexibleResource.class);
-  }
-
-  public void getFlexibleResourceExpect(UUID workspaceId, UUID resourceId, int httpStatus)
-      throws Exception {
-    mockMvc
-        .perform(
-            addAuth(
-                get(CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT.formatted(workspaceId, resourceId)),
-                USER_REQUEST))
-        .andExpect(status().is(httpStatus));
-  }
-
-  public ApiCreatedControlledFlexibleResource createFlexibleResource(
-      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
-    return createFlexibleResource(
-        userRequest,
-        workspaceId,
-        /*resourceName=*/ TestUtils.appendRandomNumber("resource-name"),
-        /*typeNamespace=*/ "terra",
-        /*type*/ "default-fake-flexible-type",
-        /*data*/ null);
-  }
-
-  public ApiCreateControlledFlexibleResourceRequestBody createFlexibleResourceRequestBody(
-      String resourceName, String typeNamespace, String type, @Nullable byte[] data) {
-    ApiControlledFlexibleResourceCreationParameters creationParameters =
-        new ApiControlledFlexibleResourceCreationParameters()
-            .typeNamespace(typeNamespace)
-            .type(type);
-    if (data != null) {
-      creationParameters.setData(data);
-    }
-
-    return new ApiCreateControlledFlexibleResourceRequestBody()
-        .common(
-            ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi().name(resourceName))
-        .flexibleResource(creationParameters);
-  }
-
-  public ApiCreatedControlledFlexibleResource createFlexibleResource(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      String resourceName,
-      String typeNamespace,
-      String type,
-      @Nullable byte[] data)
-      throws Exception {
-    ApiCreateControlledFlexibleResourceRequestBody request =
-        createFlexibleResourceRequestBody(resourceName, typeNamespace, type, data);
-
-    String serializedResponse =
-        getSerializedResponseForPost(
-            userRequest,
-            CONTROLLED_FLEXIBLE_RESOURCES_V1_PATH_FORMAT,
-            workspaceId,
-            objectMapper.writeValueAsString(request));
-    return objectMapper.readValue(serializedResponse, ApiCreatedControlledFlexibleResource.class);
-  }
-
-  public void deleteFlexibleResource(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    deleteResource(
-        userRequest, workspaceId, resourceId, CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT);
-  }
-
-  public ApiFlexibleResource updateFlexibleResource(
-      UUID workspaceId,
-      UUID resourceId,
-      @Nullable String newResourceName,
-      @Nullable String newDescription,
-      @Nullable byte[] newData,
-      @Nullable ApiCloningInstructionsEnum newCloningInstructions)
-      throws Exception {
-    String request =
-        objectMapper.writeValueAsString(
-            getUpdateFlexibleResourceRequestBody(
-                newResourceName, newDescription, newData, newCloningInstructions));
-
-    return updateResource(
-        ApiFlexibleResource.class,
-        CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
-        workspaceId,
-        resourceId,
-        request,
-        USER_REQUEST,
-        HttpStatus.SC_OK);
-  }
-
-  public void updateFlexibleResourceExpect(
-      UUID workspaceId,
-      UUID resourceId,
-      @Nullable String newResourceName,
-      @Nullable String newDescription,
-      @Nullable byte[] newData,
-      @Nullable ApiCloningInstructionsEnum newCloningInstructions,
-      int code)
-      throws Exception {
-    String request =
-        objectMapper.writeValueAsString(
-            getUpdateFlexibleResourceRequestBody(
-                newResourceName, newDescription, newData, newCloningInstructions));
-
-    updateResource(
-        ApiFlexibleResource.class,
-        CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT,
-        workspaceId,
-        resourceId,
-        request,
-        USER_REQUEST,
-        code);
-  }
-
-  private ApiUpdateControlledFlexibleResourceRequestBody getUpdateFlexibleResourceRequestBody(
-      @Nullable String newResourceName,
-      @Nullable String newDescription,
-      @Nullable byte[] newData,
-      @Nullable ApiCloningInstructionsEnum newCloningInstructions) {
-    return new ApiUpdateControlledFlexibleResourceRequestBody()
-        .description(newDescription)
-        .name(newResourceName)
-        .updateParameters(
-            new ApiFlexibleResourceUpdateParameters()
-                .data(newData)
-                .cloningInstructions(newCloningInstructions));
-  }
-
-  public ApiCloneControlledFlexibleResourceResult cloneFlexResourceHelper(
-      AuthenticatedUserRequest userRequest,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      @Nullable String destResourceName,
-      @Nullable String destDescription,
-      List<Integer> expectedCodes,
-      boolean shouldUndo)
-      throws Exception {
-    // Retry to ensure steps are idempotent
-    Map<String, StepStatus> retryableStepsMap = new HashMap<>();
-    List<Class<? extends Step>> retryableSteps =
-        ImmutableList.of(CheckControlledResourceAuthStep.class);
-    retryableSteps.forEach(
-        step -> retryableStepsMap.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
-    jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder()
-            .doStepFailures(retryableStepsMap)
-            .lastStepFailure(shouldUndo)
-            .build());
-
-    ApiCloneControlledFlexibleResourceRequest request =
-        new ApiCloneControlledFlexibleResourceRequest()
-            .destinationWorkspaceId(destWorkspaceId)
-            .cloningInstructions(cloningInstructions)
-            .description(destDescription);
-
-    if (!StringUtils.isEmpty(destResourceName)) {
-      request.name(destResourceName);
-    }
-
-    MockHttpServletResponse response =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(CLONE_CONTROLLED_FLEXIBLE_RESOURCE_V1_PATH_FORMAT.formatted(
-                                sourceWorkspaceId, sourceResourceId))
-                            .content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
-            .andExpect(status().is(getExpectedCodesMatcher(expectedCodes)))
-            .andReturn()
-            .getResponse();
-
-    if (isErrorResponse(response)) {
-      return null;
-    }
-
-    String serializedResponse = response.getContentAsString();
-    return objectMapper.readValue(
-        serializedResponse, ApiCloneControlledFlexibleResourceResult.class);
-  }
-
-  /** Call cloneFlexResource() and wait for the flight to finish. */
-  public ApiFlexibleResource cloneFlexResource(
-      AuthenticatedUserRequest userRequest,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      @Nullable String destResourceName,
-      @Nullable String destDescription)
-      throws Exception {
-    ApiCloneControlledFlexibleResourceResult result =
-        cloneFlexResourceHelper(
-            userRequest,
-            sourceWorkspaceId,
-            sourceResourceId,
-            destWorkspaceId,
-            cloningInstructions,
-            destResourceName,
-            destDescription,
-            // clone_copyNothing sometimes returns SC_OK, even for the initial call. So accept both
-            // to avoid flakes.
-            JOB_SUCCESS_CODES,
-            /*shouldUndo=*/ false);
-    logger.info("Controlled flex clone of resource %s completed.".formatted(sourceResourceId));
-    return result.getResource();
-  }
-
-  public void cloneFlex_undo(
-      AuthenticatedUserRequest userRequest,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      @Nullable String destResourceName,
-      @Nullable String destDescription)
-      throws Exception {
-    cloneFlexResourceHelper(
-        userRequest,
-        sourceWorkspaceId,
-        sourceResourceId,
-        destWorkspaceId,
-        cloningInstructions,
-        destResourceName,
-        destDescription,
-        List.of(HttpStatus.SC_INTERNAL_SERVER_ERROR),
-        /*shouldUndo=*/ true);
-  }
-
-  public void cloneFlex_forbidden(
-      AuthenticatedUserRequest userRequest,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      @Nullable String destResourceName,
-      @Nullable String destDescription)
-      throws Exception {
-    cloneFlexResourceHelper(
-        userRequest,
-        sourceWorkspaceId,
-        sourceResourceId,
-        destWorkspaceId,
-        cloningInstructions,
-        destResourceName,
-        destDescription,
-        List.of(HttpStatus.SC_FORBIDDEN),
-        /*shouldUndo=*/ false);
-  }
-
-  public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      String resourceName,
-      String instanceName,
-      String snapshot)
-      throws Exception {
-    ApiDataRepoSnapshotAttributes creationParameters =
-        new ApiDataRepoSnapshotAttributes().instanceName(instanceName).snapshot(snapshot);
-    ApiCreateDataRepoSnapshotReferenceRequestBody request =
-        new ApiCreateDataRepoSnapshotReferenceRequestBody()
-            .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
-                    .name(resourceName)
-                    .cloningInstructions(cloningInstructions))
-            .snapshot(creationParameters);
-    String serializedResponse =
-        getSerializedResponseForPost(
-            userRequest,
-            REFERENCED_DATA_REPO_SNAPSHOTS_V1_PATH_FORMAT,
-            workspaceId,
-            objectMapper.writeValueAsString(request));
-    return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
-  }
-
-  public ApiDataRepoSnapshotResource getReferencedDataRepoSnapshot(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    String serializedResponse =
-        getSerializedResponseForGet(
-            userRequest, REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT, workspaceId, resourceId);
-    return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
-  }
-
-  public ApiDataRepoSnapshotResource updateReferencedDataRepoSnapshot(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      UUID resourceId,
-      String newName,
-      String newDescription,
-      String newSnapshot,
-      String newInstanceName,
-      ApiCloningInstructionsEnum newCloningInstruction)
-      throws Exception {
-    ApiUpdateDataRepoSnapshotReferenceRequestBody requestBody =
-        new ApiUpdateDataRepoSnapshotReferenceRequestBody()
-            .name(newName)
-            .description(newDescription)
-            .cloningInstructions(newCloningInstruction)
-            .snapshot(newSnapshot)
-            .instanceName(newInstanceName);
-    var serializedResponse =
-        getSerializedResponseForPost(
-            userRequest,
-            String.format(REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT, workspaceId, resourceId),
-            objectMapper.writeValueAsString(requestBody));
-    return objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
-  }
-
-  public ApiDataRepoSnapshotResource cloneReferencedDataRepoSnapshot(
-      AuthenticatedUserRequest userRequest,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      @Nullable String destResourceName)
-      throws Exception {
-    return cloneReferencedDataRepoSnapshot(
-        userRequest,
-        sourceWorkspaceId,
-        sourceResourceId,
-        destWorkspaceId,
-        cloningInstructions,
-        destResourceName,
-        HttpStatus.SC_OK);
-  }
-
-  public ApiDataRepoSnapshotResource cloneReferencedDataRepoSnapshot(
-      AuthenticatedUserRequest userRequest,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      @Nullable String destResourceName,
-      int expectedCode)
-      throws Exception {
-    MockHttpServletResponse response =
-        cloneReferencedResource(
-            userRequest,
-            CLONE_REFERENCED_DATA_REPO_SNAPSHOT_V1_PATH_FORMAT,
-            sourceWorkspaceId,
-            sourceResourceId,
-            destWorkspaceId,
-            cloningInstructions,
-            destResourceName,
-            expectedCode);
-
-    // If an exception was thrown, deserialization won't work, so don't attempt it.
-    if (isErrorResponse(response)) {
-      return null;
-    }
-
-    String serializedResponse = response.getContentAsString();
-    return objectMapper
-        .readValue(serializedResponse, ApiCloneReferencedGcpDataRepoSnapshotResourceResult.class)
-        .getResource();
-  }
-
-  public ApiGitRepoResource createReferencedGitRepo(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      String resourceName,
-      String gitRepoUrl)
-      throws Exception {
-    ApiGitRepoAttributes creationParameters = new ApiGitRepoAttributes().gitRepoUrl(gitRepoUrl);
-    ApiCreateGitRepoReferenceRequestBody request =
-        new ApiCreateGitRepoReferenceRequestBody()
-            .metadata(
-                ReferenceResourceFixtures.makeDefaultReferencedResourceFieldsApi()
-                    .name(resourceName))
-            .gitrepo(creationParameters);
-    String serializedResponse =
-        getSerializedResponseForPost(
-            userRequest,
-            REFERENCED_GIT_REPOS_V1_PATH_FORMAT,
-            workspaceId,
-            objectMapper.writeValueAsString(request));
-    return objectMapper.readValue(serializedResponse, ApiGitRepoResource.class);
-  }
-
-  public ApiGitRepoResource getReferencedGitRepo(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    String serializedResponse =
-        getSerializedResponseForGet(
-            userRequest, REFERENCED_GIT_REPO_V1_PATH_FORMAT, workspaceId, resourceId);
-    return objectMapper.readValue(serializedResponse, ApiGitRepoResource.class);
-  }
-
-  public ApiGitRepoResource updateReferencedGitRepo(
-      UUID workspaceId,
-      UUID resourceId,
-      String newDisplayName,
-      String newDescription,
-      String newGitRepoUrl,
-      ApiCloningInstructionsEnum cloningInstructionsEnum,
-      AuthenticatedUserRequest userRequest)
-      throws Exception {
-    ApiUpdateGitRepoReferenceRequestBody requestBody = new ApiUpdateGitRepoReferenceRequestBody();
-    if (newDisplayName != null) {
-      requestBody.name(newDisplayName);
-    }
-    if (newDescription != null) {
-      requestBody.description(newDescription);
-    }
-    if (newGitRepoUrl != null) {
-      requestBody.gitRepoUrl(newGitRepoUrl);
-    }
-    if (cloningInstructionsEnum != null) {
-      requestBody.cloningInstructions(cloningInstructionsEnum);
-    }
-    return updateResource(
-        ApiGitRepoResource.class,
-        REFERENCED_GIT_REPO_V1_PATH_FORMAT,
-        workspaceId,
-        resourceId,
-        objectMapper.writeValueAsString(requestBody),
-        userRequest,
-        HttpStatus.SC_OK);
   }
 
   /**
@@ -1176,54 +683,6 @@ public class MockMvcUtils {
     String serializedResponse = result.andReturn().getResponse().getContentAsString();
 
     return objectMapper.readValue(serializedResponse, classType);
-  }
-
-  public ApiGitRepoResource cloneReferencedGitRepo(
-      AuthenticatedUserRequest userRequest,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      @Nullable String destResourceName)
-      throws Exception {
-    return cloneReferencedGitRepo(
-        userRequest,
-        sourceWorkspaceId,
-        sourceResourceId,
-        destWorkspaceId,
-        cloningInstructions,
-        destResourceName,
-        HttpStatus.SC_OK);
-  }
-
-  public ApiGitRepoResource cloneReferencedGitRepo(
-      AuthenticatedUserRequest userRequest,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      @Nullable String destResourceName,
-      int expectedCode)
-      throws Exception {
-    MockHttpServletResponse response =
-        cloneReferencedResource(
-            userRequest,
-            CLONE_REFERENCED_GIT_REPO_V1_PATH_FORMAT,
-            sourceWorkspaceId,
-            sourceResourceId,
-            destWorkspaceId,
-            cloningInstructions,
-            destResourceName,
-            expectedCode);
-
-    if (isErrorResponse(response)) {
-      return null;
-    }
-
-    String serializedResponse = response.getContentAsString();
-    return objectMapper
-        .readValue(serializedResponse, ApiCloneReferencedGitRepoResourceResult.class)
-        .getResource();
   }
 
   public MockHttpServletResponse cloneReferencedResource(
@@ -1645,19 +1104,6 @@ public class MockMvcUtils {
     assertEquals(expectedDataset.getAttributes(), actualDataset.getAttributes());
   }
 
-  public static void assertApiFlexibleResourceEquals(
-      ApiFlexibleResource expectedFlexibleResource, ApiFlexibleResource actualFlexibleResource) {
-    assertResourceMetadataEquals(
-        expectedFlexibleResource.getMetadata(), actualFlexibleResource.getMetadata());
-    assertEquals(expectedFlexibleResource.getAttributes(), actualFlexibleResource.getAttributes());
-  }
-
-  public static void assertApiDataRepoEquals(
-      ApiDataRepoSnapshotResource expectedDataRepo, ApiDataRepoSnapshotResource actualDataRepo) {
-    assertResourceMetadataEquals(expectedDataRepo.getMetadata(), actualDataRepo.getMetadata());
-    assertEquals(expectedDataRepo.getAttributes(), actualDataRepo.getAttributes());
-  }
-
   // I can't figure out the proper way to do this
   public static Matcher<? super Integer> getExpectedCodesMatcher(List<Integer> expectedCodes) {
     if (expectedCodes.size() == 1) {
@@ -1796,68 +1242,5 @@ public class MockMvcUtils {
       logger.error("Not an error report. Serialized response is: {}", serializedResponse);
     }
     return true;
-  }
-
-  public void assertFlexibleResource(
-      ApiFlexibleResource actualFlexibleResource,
-      ApiStewardshipType expectedStewardshipType,
-      ApiCloningInstructionsEnum expectedCloningInstructions,
-      UUID expectedWorkspaceId,
-      String expectedResourceName,
-      String expectedResourceDescription,
-      String expectedCreatedBy,
-      String expectedLastUpdatedBy,
-      String expectedTypeNamespace,
-      String expectedType,
-      @Nullable String expectedData) {
-    assertResourceMetadata(
-        actualFlexibleResource.getMetadata(),
-        (CloudPlatform.ANY).toApiModel(),
-        ApiResourceType.FLEXIBLE_RESOURCE,
-        expectedStewardshipType,
-        expectedCloningInstructions,
-        expectedWorkspaceId,
-        expectedResourceName,
-        expectedResourceDescription,
-        /*expectedResourceLineage=*/ new ApiResourceLineage(),
-        expectedCreatedBy,
-        expectedLastUpdatedBy);
-
-    assertEquals(expectedTypeNamespace, actualFlexibleResource.getAttributes().getTypeNamespace());
-    assertEquals(expectedType, actualFlexibleResource.getAttributes().getType());
-    assertEquals(expectedData, actualFlexibleResource.getAttributes().getData());
-  }
-
-  public void assertClonedControlledFlexibleResource(
-      @NotNull ApiFlexibleResource originalFlexibleResource,
-      ApiFlexibleResource actualFlexibleResource,
-      UUID expectedDestWorkspaceId,
-      String expectedResourceName,
-      String expectedResourceDescription,
-      String expectedCreatedBy,
-      String expectedLastUpdatedBy) {
-    // Attributes are immutable upon cloning.
-    ApiFlexibleResourceAttributes originalAttributes = originalFlexibleResource.getAttributes();
-
-    assertFlexibleResource(
-        actualFlexibleResource,
-        ApiStewardshipType.CONTROLLED,
-        ApiCloningInstructionsEnum.DEFINITION,
-        expectedDestWorkspaceId,
-        expectedResourceName,
-        expectedResourceDescription,
-        expectedCreatedBy,
-        expectedLastUpdatedBy,
-        originalAttributes.getTypeNamespace(),
-        originalAttributes.getType(),
-        originalAttributes.getData());
-
-    assertControlledResourceMetadata(
-        actualFlexibleResource.getMetadata().getControlledResourceMetadata(),
-        ApiAccessScope.SHARED_ACCESS,
-        ApiManagedBy.USER,
-        new ApiPrivateResourceUser(),
-        ApiPrivateResourceState.NOT_APPLICABLE,
-        null);
   }
 }
