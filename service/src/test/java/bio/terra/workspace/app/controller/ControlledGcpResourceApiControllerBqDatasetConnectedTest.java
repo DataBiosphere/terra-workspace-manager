@@ -2,7 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.GcsBucketUtils.waitForProjectAccess;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
@@ -19,7 +19,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.common.utils.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockGcpApi;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;

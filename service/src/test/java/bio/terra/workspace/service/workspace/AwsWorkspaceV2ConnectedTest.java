@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseAwsConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
+import bio.terra.workspace.common.mocks.MockAwsApi;
 import bio.terra.workspace.common.utils.AwsTestUtils;
-import bio.terra.workspace.common.utils.MockAwsApi;
 import bio.terra.workspace.common.utils.MvcWorkspaceApi;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;

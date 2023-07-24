@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.utils.MockAwsApi.CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAwsApi.CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAwsApi.CREATE_CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAwsApi.CREATE_CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CREATE_CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CREATE_CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
