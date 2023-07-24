@@ -109,7 +109,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
             /*additionalPolicies=*/ null,
             destWorkspace,
             azureTestUtils.getSpendProfile(),
-            /*projectOwnerGroupId'*/ null);
+            /*projectOwnerGroupId=*/ null);
     jobService.waitForJob(cloneJobId);
 
     assertEquals(workspaceService.getWorkspace(destUUID), destWorkspace);

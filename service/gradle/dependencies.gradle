@@ -51,7 +51,7 @@ dependencies {
   implementation("bio.terra:terra-common-lib:0.0.93-SNAPSHOT") {
     exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
   }
-  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-df5a43a"
+  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-d606036"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
   // Required by Sam client
   implementation group: "com.squareup.okhttp3", name: "okhttp", version: "4.9.1"

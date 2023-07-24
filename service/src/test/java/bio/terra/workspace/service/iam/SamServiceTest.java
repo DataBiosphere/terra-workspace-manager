@@ -55,6 +55,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipRequest;
+import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -221,6 +225,62 @@ class SamServiceTest extends BaseConnectedTest {
                 secondaryUserRequest(),
                 WsmIamRole.READER,
                 userAccessUtils.getSecondUserEmail()));
+  }
+
+  private void createBillingProjectResource(
+      AuthenticatedUserRequest userRequest, String projectName) throws ApiException {
+    ResourcesApi resourceApi = samService.samResourcesApi(userRequest.getRequiredToken());
+    CreateResourceRequestV2 createResourceRequest =
+        new CreateResourceRequestV2()
+            .resourceId(projectName)
+            .putPoliciesItem(
+                "owner",
+                new AccessPolicyMembershipRequest()
+                    .addRolesItem("owner")
+                    .addMemberEmailsItem(userRequest.getEmail()))
+            .authDomain(List.of());
+    resourceApi.createResourceV2("billing-project", createResourceRequest);
+  }
+
+  private void deleteBillingProjectResource(
+      AuthenticatedUserRequest userRequest, String projectName) throws ApiException {
+    ResourcesApi resourceApi = samService.samResourcesApi(userRequest.getRequiredToken());
+    resourceApi.deleteResourceV2("billing-project", projectName);
+  }
+
+  @Test
+  void projectOwnerRole() throws ApiException, InterruptedException {
+    Workspace workspace = null;
+    AuthenticatedUserRequest workspaceCreatorRequest = defaultUserRequest();
+    AuthenticatedUserRequest billingProjectOwnerRequest = billingUserRequest();
+    String billingProjectId = UUID.randomUUID().toString();
+    try {
+      // Create a Sam resource for the billing project (in Terra CWB production,
+      // done in Rawls at billing project creation time)
+      createBillingProjectResource(billingProjectOwnerRequest, billingProjectId);
+
+      // Create a workspace, passing the optional billing project ID.
+      workspace = createWorkspaceForUser(workspaceCreatorRequest, billingProjectId);
+
+      // Verify creator has role "owner".
+      AccessibleWorkspace workspaceCreatorRole =
+          samService
+              .listWorkspaceIdsAndHighestRoles(workspaceCreatorRequest, WsmIamRole.READER)
+              .get(workspace.workspaceId());
+      assertEquals(WsmIamRole.OWNER, workspaceCreatorRole.highestRole());
+
+      AccessibleWorkspace billingProjectOwnerRole =
+          samService
+              .listWorkspaceIdsAndHighestRoles(billingProjectOwnerRequest, WsmIamRole.READER)
+              .get(workspace.workspaceId());
+      assertEquals(WsmIamRole.PROJECT_OWNER, billingProjectOwnerRole.highestRole());
+
+    } finally {
+      if (workspace != null) {
+        workspaceService.deleteWorkspace(workspace, workspaceCreatorRequest);
+      }
+      deleteBillingProjectResource(billingProjectOwnerRequest, billingProjectId);
+    }
   }
 
   @Test
@@ -467,14 +527,22 @@ class SamServiceTest extends BaseConnectedTest {
         null, null, Optional.of(userAccessUtils.secondUserAccessToken().getTokenValue()));
   }
 
-  /** Create a workspace using the default test user for connected tests, return its ID. */
-  private Workspace createWorkspaceDefaultUser() {
-    return createWorkspaceForUser(defaultUserRequest());
+  private AuthenticatedUserRequest billingUserRequest() {
+    return new AuthenticatedUserRequest(
+        userAccessUtils.billingUser().getEmail(),
+        null,
+        Optional.of(userAccessUtils.billingUserAccessToken().getTokenValue()));
   }
 
-  private Workspace createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
+  /** Create a workspace using the default test user for connected tests, return its ID. */
+  private Workspace createWorkspaceDefaultUser() {
+    return createWorkspaceForUser(defaultUserRequest(), null);
+  }
+
+  private Workspace createWorkspaceForUser(
+      AuthenticatedUserRequest userRequest, String projectOwnerGroupId) {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
-    workspaceService.createWorkspace(workspace, null, null, null, userRequest);
+    workspaceService.createWorkspace(workspace, null, null, projectOwnerGroupId, userRequest);
     return workspace;
   }
 }

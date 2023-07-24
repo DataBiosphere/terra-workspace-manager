@@ -54,8 +54,7 @@ public enum WsmIamRole {
     }
   },
   // Role for billing project owner so that owners of billing projects are able to view and
-  // manage/delete workspaces
-  // using the project.
+  // manage/delete workspaces using the project.
   PROJECT_OWNER("project-owner", SamWorkspaceAction.OWN, ApiIamRole.PROJECT_OWNER) {
     public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
       return roleToCheck == WsmIamRole.APPLICATION || roleToCheck == WsmIamRole.PROJECT_OWNER;

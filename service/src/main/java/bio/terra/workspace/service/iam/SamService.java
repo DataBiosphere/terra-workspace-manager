@@ -48,11 +48,12 @@ import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
+import org.broadinstitute.dsde.workbench.client.sam.model.PolicyIdentifiers;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -105,7 +106,7 @@ public class SamService {
     return apiClient;
   }
 
-  private ResourcesApi samResourcesApi(String accessToken) {
+  public ResourcesApi samResourcesApi(String accessToken) {
     return new ResourcesApi(getApiClient(accessToken));
   }
 
@@ -1095,42 +1096,38 @@ public class SamService {
    * provided at creation time. Although policy membership can be modified later, policy creation
    * must happen at the same time as workspace resource creation.
    */
-  private Map<String, AccessPolicyMembershipV2> defaultWorkspacePolicies(
+  private Map<String, AccessPolicyMembershipRequest> defaultWorkspacePolicies(
       String ownerEmail, String projectOwnerGroupId) {
-    Map<String, AccessPolicyMembershipV2> policyMap = new HashMap<>();
+    Map<String, AccessPolicyMembershipRequest> policyMap = new HashMap<>();
     policyMap.put(
         WsmIamRole.OWNER.toSamRole(),
-        new AccessPolicyMembershipV2()
+        new AccessPolicyMembershipRequest()
             .addRolesItem(WsmIamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail));
     if (projectOwnerGroupId != null) {
-      //      policyMap.put(
-      //          WsmIamRole.PROJECT_OWNER.toSamRole(),
-      //          new AccessPolicyMembershipV2()
-      //              .addRolesItem(WsmIamRole.PROJECT_OWNER.toSamRole())
-      //              .addMemberEmailsItem("")); // temp email for testing
-      ////              .addMemberPoliciesItem(
-      ////                  new PolicyIdentifiers()
-      ////                      .resourceTypeName("billing-project")
-      ////                      .policyName("owner")
-      ////                      .resourceId(projectOwnerGroupId));
+      policyMap.put(
+          WsmIamRole.PROJECT_OWNER.toSamRole(),
+          new AccessPolicyMembershipRequest()
+              .addRolesItem(WsmIamRole.PROJECT_OWNER.toSamRole())
+              .addMemberPoliciesItem(
+                  new PolicyIdentifiers()
+                      .resourceTypeName("billing-project")
+                      .policyName("owner")
+                      .resourceId(projectOwnerGroupId)));
     }
-    // .addMemberEmailsItem("policy-272e49d3-126f-4c7c-a885-49e3a379de10@dev.test.firecloud.org"));
-    // policy-272e49d3-126f-4c7c-a885-49e3a379de10@dev.test.firecloud.org
-    // For all non-owner/manager roles, we create empty policies which can be modified later.
     for (WsmIamRole workspaceRole : WsmIamRole.values()) {
       if (!Set.of(WsmIamRole.OWNER, WsmIamRole.MANAGER, WsmIamRole.PROJECT_OWNER)
           .contains(workspaceRole)) {
         policyMap.put(
             workspaceRole.toSamRole(),
-            new AccessPolicyMembershipV2().addRolesItem(workspaceRole.toSamRole()));
+            new AccessPolicyMembershipRequest().addRolesItem(workspaceRole.toSamRole()));
       }
     }
     // We always give WSM's service account the 'manager' role for admin control of workspaces.
     String wsmSa = GcpUtils.getWsmSaEmail();
     policyMap.put(
         WsmIamRole.MANAGER.toSamRole(),
-        new AccessPolicyMembershipV2()
+        new AccessPolicyMembershipRequest()
             .addRolesItem(WsmIamRole.MANAGER.toSamRole())
             .addMemberEmailsItem(wsmSa));
     return policyMap;
