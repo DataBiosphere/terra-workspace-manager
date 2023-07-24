@@ -18,6 +18,7 @@ public class CreateDatabaseDao {
 
   /**
    * Create a database with the given name
+   *
    * @param databaseName
    * @return true if the database was created, false if it already existed
    */
