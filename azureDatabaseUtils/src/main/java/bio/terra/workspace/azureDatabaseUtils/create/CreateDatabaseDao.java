@@ -2,6 +2,7 @@ package bio.terra.workspace.azureDatabaseUtils.create;
 
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -15,10 +16,25 @@ public class CreateDatabaseDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  public void createDatabase(String databaseName) {
+  /**
+   * Create a database with the given name
+   * @param databaseName
+   * @return true if the database was created, false if it already existed
+   */
+  public boolean createDatabase(String databaseName) {
     // databaseName should already be validated by the service layer
     // CREATE DATABASE does not like bind parameters
-    jdbcTemplate.update("CREATE DATABASE " + databaseName, Map.of());
+    try {
+      jdbcTemplate.update("CREATE DATABASE " + databaseName, Map.of());
+      return true;
+    } catch (BadSqlGrammarException e) {
+      // ignore if the database already exists
+      if (!e.getSQLException().getMessage().contains("already exists")) {
+        throw e;
+      } else {
+        return false;
+      }
+    }
   }
 
   /**

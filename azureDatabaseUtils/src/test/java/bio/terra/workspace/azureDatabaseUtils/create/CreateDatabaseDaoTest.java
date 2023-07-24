@@ -29,7 +29,7 @@ public class CreateDatabaseDaoTest extends BaseUnitTest {
 
   @Test
   void testCreateDatabase() {
-    createDatabaseDao.createDatabase(testDatabaseName);
+    assertThat(createDatabaseDao.createDatabase(testDatabaseName), equalTo(true));
 
     jdbcTemplate
         .query(
@@ -38,6 +38,9 @@ public class CreateDatabaseDaoTest extends BaseUnitTest {
             new int[] {Types.VARCHAR},
             (rs, rowNum) -> rs.getInt(1))
         .forEach(count -> assertThat(count, equalTo(1)));
+
+    // verify that we can call it again without error
+    assertThat(createDatabaseDao.createDatabase(testDatabaseName), equalTo(false));
   }
 
   @Test
