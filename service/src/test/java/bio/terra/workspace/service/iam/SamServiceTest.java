@@ -345,8 +345,6 @@ class SamServiceTest extends BaseConnectedTest {
             .build();
     RoleBinding expectedDiscovererBinding =
         RoleBinding.builder().role(WsmIamRole.DISCOVERER).users(Collections.emptyList()).build();
-    RoleBinding expectedProjectOwnerBinding =
-        RoleBinding.builder().role(WsmIamRole.PROJECT_OWNER).users(Collections.emptyList()).build();
     RoleBinding expectedApplicationBinding =
         RoleBinding.builder().role(WsmIamRole.APPLICATION).users(Collections.emptyList()).build();
     assertThat(
@@ -356,8 +354,7 @@ class SamServiceTest extends BaseConnectedTest {
             equalTo(expectedWriterBinding),
             equalTo(expectedReaderBinding),
             equalTo(expectedDiscovererBinding),
-            equalTo(expectedApplicationBinding),
-            equalTo(expectedProjectOwnerBinding)));
+            equalTo(expectedApplicationBinding)));
   }
 
   @Test
