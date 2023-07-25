@@ -8,6 +8,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
@@ -45,6 +46,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
@@ -72,7 +74,8 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test
@@ -121,7 +124,7 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
 
   @Test
   public void createGceInstance_duplicateInstanceId() throws Exception {
-    var duplicateName = "not-unique-name";
+    String duplicateName = "not-unique-name";
     ApiGcpGceInstanceResource unused =
         mockGcpApi
             .createGceInstanceAndWait(

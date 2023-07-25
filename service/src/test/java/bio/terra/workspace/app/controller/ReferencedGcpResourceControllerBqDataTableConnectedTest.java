@@ -13,6 +13,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -56,6 +57,7 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
@@ -107,8 +109,9 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId2);
   }
 
   @Test
@@ -145,12 +148,12 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
 
-    var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
-    var newDescription = "This is an updated description";
-    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
-    var newProjectId = TestUtils.appendRandomNumber("newProjectid");
-    var newDataset = TestUtils.appendRandomNumber("newdataset");
-    var newTable = TestUtils.appendRandomNumber("newtable");
+    String newName = TestUtils.appendRandomNumber("newdatatableresourcename");
+    String newDescription = "This is an updated description";
+    ApiCloningInstructionsEnum newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    String newProjectId = TestUtils.appendRandomNumber("newProjectid");
+    String newDataset = TestUtils.appendRandomNumber("newdataset");
+    String newTable = TestUtils.appendRandomNumber("newtable");
     ApiGcpBigQueryDataTableResource updatedResource =
         mockGcpApi.updateReferencedBqDataTable(
             userAccessUtils.secondUserAuthRequest(),
@@ -182,7 +185,7 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
 
   @Test
   public void update_throws409() throws Exception {
-    var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
+    String newName = TestUtils.appendRandomNumber("newdatatableresourcename");
     mockGcpApi.createReferencedBqDataTable(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,

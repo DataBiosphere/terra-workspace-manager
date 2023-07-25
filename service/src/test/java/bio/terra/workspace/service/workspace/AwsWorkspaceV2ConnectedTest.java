@@ -8,8 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.mocks.MockAwsApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.AwsTestUtils;
-import bio.terra.workspace.common.utils.MvcWorkspaceApi;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderResource;
@@ -30,7 +30,7 @@ import software.amazon.awssdk.regions.Region;
 @Tag("aws-connected")
 public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired MvcWorkspaceApi mvcWorkspaceApi;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockAwsApi mockAwsApi;
   @Autowired UserAccessUtils userAccessUtils;
 
@@ -40,7 +40,7 @@ public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
 
     // create workspace (with cloud context)
     ApiCreateWorkspaceV2Result createResult =
-        mvcWorkspaceApi.createWorkspaceAndWait(userRequest, apiCloudPlatform);
+        mockWorkspaceV2Api.createWorkspaceAndWait(userRequest, apiCloudPlatform);
     assertEquals(StatusEnum.SUCCEEDED, createResult.getJobReport().getStatus());
     UUID workspaceUuid = createResult.getWorkspaceId();
 
@@ -81,7 +81,8 @@ public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
     assertEquals(creationParameters.getFolderName(), fetchedResource.getAttributes().getPrefix());
 
     // delete workspace (with cloud context)
-    ApiJobResult deleteResult = mvcWorkspaceApi.deleteWorkspaceAndWait(userRequest, workspaceUuid);
+    ApiJobResult deleteResult =
+        mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceUuid);
     assertEquals(StatusEnum.SUCCEEDED, deleteResult.getJobReport().getStatus());
 
     // cloud context should have been deleted

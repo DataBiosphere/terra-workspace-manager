@@ -4,16 +4,13 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEF
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_SUBJECT_ID;
 import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -37,10 +34,7 @@ import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
@@ -72,13 +66,11 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
-import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -92,6 +84,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.hamcrest.Matcher;
+import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,7 +114,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 public class MockMvcUtils {
   private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
 
-  public static final String AUTH_HEADER = "Authorization";
   public static final String WORKSPACES_V1_PATH = "/api/workspaces/v1";
   public static final String WORKSPACES_V1_BY_UUID_PATH_FORMAT = "/api/workspaces/v1/%s";
   public static final String WORKSPACES_V1_BY_UFID_PATH_FORMAT =
@@ -131,9 +123,6 @@ public class MockMvcUtils {
   public static final String CLONE_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s/clone";
   public static final String CLONE_WORKSPACE_RESULT_PATH_FORMAT =
       "/api/workspaces/v1/%s/clone-result/%s";
-  public static final String DELETE_WORKSPACE_V2_FORMAT = "/api/workspaces/v2/%s/delete";
-  public static final String GET_DELETE_WORKSPACE_V2_RESULT_FORMAT =
-      "/api/workspaces/v2/%s/delete-result/%s";
   public static final String UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT =
       "/api/workspaces/v1/%s/properties";
   public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
@@ -156,7 +145,6 @@ public class MockMvcUtils {
   public static final String RESOURCE_PROPERTIES_V1_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/%s/properties";
   public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
-  public static final String POLICY_V1_GET_REGION_INFO_PATH = "/api/policies/v1/getLocationInfo";
 
   // Only use this if you are mocking SAM. If you're using real SAM,
   // use userAccessUtils.defaultUserAuthRequest() instead.
@@ -173,18 +161,29 @@ public class MockMvcUtils {
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
-  @Autowired private JobService jobService;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private SamService samService;
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
-    return request.header(AUTH_HEADER, "Bearer " + userRequest.getRequiredToken());
+    return request.header("Authorization", "Bearer " + userRequest.getRequiredToken());
   }
 
   public static MockHttpServletRequestBuilder addJsonContentType(
       MockHttpServletRequestBuilder request) {
     return request.contentType("application/json");
+  }
+
+  public <T> T getCheckedJobResult(MockHttpServletResponse response, Class<T> clazz)
+      throws Exception {
+    int statusCode = response.getStatus();
+    String content = response.getContentAsString();
+    if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_ACCEPTED) {
+      return objectMapper.readValue(content, clazz);
+    }
+    Assertions.fail(
+        String.format("Expected OK or ACCEPTED, but received %d; body: %s", statusCode, content));
+    return null;
   }
 
   public ApiWorkspaceDescription getWorkspace(
@@ -463,43 +462,6 @@ public class MockMvcUtils {
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 
-  public ApiJobResult deleteWorkspaceV2Async(AuthenticatedUserRequest userRequest, UUID workspaceId)
-      throws Exception {
-    ApiDeleteWorkspaceV2Request request =
-        new ApiDeleteWorkspaceV2Request()
-            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
-    String content =
-        getSerializedResponseForPost(
-            userRequest,
-            DELETE_WORKSPACE_V2_FORMAT,
-            workspaceId,
-            objectMapper.writeValueAsString(request));
-    return objectMapper.readValue(content, ApiJobResult.class);
-  }
-
-  public ApiJobResult getDeleteWorkspaceV2Result(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
-    String serializedResponse =
-        getSerializedResponseForGetJobResult(
-            userRequest, GET_DELETE_WORKSPACE_V2_RESULT_FORMAT, workspaceId, jobId);
-    return objectMapper.readValue(serializedResponse, ApiJobResult.class);
-  }
-
-  public void deleteWorkspaceV2AndWait(AuthenticatedUserRequest userRequest, UUID workspaceId)
-      throws Exception {
-    ApiJobResult result = deleteWorkspaceV2Async(userRequest, workspaceId);
-    String jobId = result.getJobReport().getId();
-    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      TimeUnit.SECONDS.sleep(15);
-      result = getDeleteWorkspaceV2Result(userRequest, workspaceId, jobId);
-    }
-    if (result.getJobReport().getStatus() != StatusEnum.SUCCEEDED) {
-      logger.error("Delete workspace failed: {}", result.getErrorReport());
-    } else {
-      logger.info("Deleted workspace {}", workspaceId);
-    }
-  }
-
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID workspaceId)
       throws Exception {
     mockMvc
@@ -621,25 +583,6 @@ public class MockMvcUtils {
     createCloudContextAndWait(userRequest, resultWorkspaceId, apiCloudPlatform);
 
     return resultWorkspaceId;
-  }
-
-  public void assertWorkspace(
-      ApiWorkspaceDescription actualWorkspace,
-      String expectedUserFacingId,
-      String expectedDisplayName,
-      String expectedDescription,
-      String expectedCreatedByEmail,
-      String expectedLastUpdatedByEmail) {
-    assertEquals(expectedUserFacingId, actualWorkspace.getUserFacingId());
-    assertEquals(expectedDisplayName, actualWorkspace.getDisplayName());
-    assertEquals(expectedDescription, actualWorkspace.getDescription());
-    OffsetDateTime firstLastUpdatedDate = actualWorkspace.getLastUpdatedDate();
-    assertNotNull(firstLastUpdatedDate);
-    OffsetDateTime createdDate = actualWorkspace.getCreatedDate();
-    assertNotNull(createdDate);
-    assertTrue(firstLastUpdatedDate.isAfter(createdDate));
-    assertEquals(expectedCreatedByEmail, actualWorkspace.getCreatedBy());
-    assertEquals(expectedLastUpdatedByEmail, actualWorkspace.getLastUpdatedBy());
   }
 
   public void deleteResource(
@@ -911,10 +854,6 @@ public class MockMvcUtils {
             userRequest));
   }
 
-  public void assertProperties(List<ApiProperty> expected, List<ApiProperty> actual) {
-    assertThat(expected, containsInAnyOrder(actual.toArray()));
-  }
-
   public ApiJobReport getJobReport(String path, AuthenticatedUserRequest userRequest)
       throws Exception {
     String serializedResponse =
@@ -1090,18 +1029,6 @@ public class MockMvcUtils {
           expectedMetadata.getControlledResourceMetadata(),
           actualMetadata.getControlledResourceMetadata());
     }
-  }
-
-  public static void assertApiGcsBucketEquals(
-      ApiGcpGcsBucketResource expectedBucket, ApiGcpGcsBucketResource actualBucket) {
-    assertResourceMetadataEquals(expectedBucket.getMetadata(), actualBucket.getMetadata());
-    assertEquals(expectedBucket.getAttributes(), actualBucket.getAttributes());
-  }
-
-  public static void assertApiBqDatasetEquals(
-      ApiGcpBigQueryDatasetResource expectedDataset, ApiGcpBigQueryDatasetResource actualDataset) {
-    assertResourceMetadataEquals(expectedDataset.getMetadata(), actualDataset.getMetadata());
-    assertEquals(expectedDataset.getAttributes(), actualDataset.getAttributes());
   }
 
   // I can't figure out the proper way to do this

@@ -3,6 +3,7 @@ package bio.terra.workspace.common.utils;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AwsConnectedTestUtils {
   @Autowired private AwsConfiguration awsConfiguration;
-  @Autowired MvcWorkspaceApi mvcWorkspaceApi;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
 
   private Environment environment;
 

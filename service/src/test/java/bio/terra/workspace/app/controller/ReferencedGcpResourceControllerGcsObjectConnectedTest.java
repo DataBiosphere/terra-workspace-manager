@@ -13,6 +13,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -55,6 +56,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
@@ -101,8 +103,8 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   @AfterAll
   public void cleanup() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    mockMvcUtils.deleteWorkspaceV2AndWait(userRequest, workspaceId);
-    mockMvcUtils.deleteWorkspaceV2AndWait(userRequest, workspaceId2);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId2);
   }
 
   @Test
@@ -136,11 +138,12 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
     mockMvcUtils.grantRole(
         userRequest, workspaceId, WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
 
-    var newName = TestUtils.appendRandomNumber("newgcsobjectname");
-    var newBucketName = TestUtils.appendRandomNumber("newgcsbucketname");
-    var newObjectName = TestUtils.appendRandomNumber("newobjectname");
-    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    String newName = TestUtils.appendRandomNumber("newgcsobjectname");
+    String newBucketName = TestUtils.appendRandomNumber("newgcsbucketname");
+    String newObjectName = TestUtils.appendRandomNumber("newobjectname");
+    ApiCloningInstructionsEnum newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
     String newDescription = "This is an updated description";
+
     ApiGcpGcsObjectResource updatedResource =
         mockGcpApi.updateReferencedGcsObject(
             workspaceId,
@@ -168,7 +171,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
 
   @Test
   public void update_throws409() throws Exception {
-    var newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
+    String newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     mockGcpApi.createReferencedGcsObject(

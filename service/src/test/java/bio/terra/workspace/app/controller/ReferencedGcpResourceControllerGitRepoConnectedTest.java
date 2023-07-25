@@ -14,6 +14,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
 import bio.terra.workspace.common.mocks.MockGitRepoApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -55,6 +56,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired MockGitRepoApi mockGitRepoApi;
   @Autowired ObjectMapper objectMapper;
@@ -100,8 +102,9 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId2);
   }
 
   @Test
@@ -169,7 +172,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
 
   @Test
   public void update_throws409() throws Exception {
-    var newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
+    String newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
     mockGitRepoApi.createReferencedGitRepo(
         userAccessUtils.defaultUserAuthRequest(), workspaceId, newName, sourceGitRepoUrl);
 
