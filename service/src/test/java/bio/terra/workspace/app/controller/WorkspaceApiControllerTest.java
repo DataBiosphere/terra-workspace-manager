@@ -5,8 +5,8 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRI
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_NAME;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_CREATE;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -592,7 +592,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   private List<ApiWorkspaceDescription> listWorkspaces() throws Exception {
     String serializedResponse =
         mockMvc
-            .perform(addJsonContentType(addAuth(get(WORKSPACES_V1_PATH), USER_REQUEST)))
+            .perform(addJsonContentType(addAuth(get(WORKSPACES_V1_CREATE), USER_REQUEST)))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()

@@ -59,6 +59,7 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -85,7 +86,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @Tag("connectedPlus")
 @ActiveProfiles({"app-test"})
 class GcpCloudContextConnectedTest extends BaseConnectedTest {
-  public static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
+  private static final String SPEND_PROFILE_ID = "wm-default-spend-profile";
   private static final Logger logger = LoggerFactory.getLogger(GcpCloudContextConnectedTest.class);
   // Name of the test WSM application. This must match the identifier in the
   // application-app-test.yml file.
@@ -172,7 +173,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     ApiGcpGcsBucketResource bucketResource = createControlledBucket();
 
     // Delete the cloud context
-    mockMvcUtils.deleteGcpCloudContext(userRequest, workspaceId);
+    mockMvcUtils.deleteCloudContext(userRequest, workspaceId, CloudPlatform.GCP);
 
     // Make sure the bucket gets deleted when we delete the cloud context
     String errorResponseString =
@@ -202,7 +203,8 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   void createGetDeleteGoogleContext_deleteGcpProjectAndLog() throws Exception {
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isPresent());
 
-    mockMvcUtils.deleteGcpCloudContext(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockMvcUtils.deleteCloudContext(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId, CloudPlatform.GCP);
 
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
     ActivityLogChangeDetails changeDetails =

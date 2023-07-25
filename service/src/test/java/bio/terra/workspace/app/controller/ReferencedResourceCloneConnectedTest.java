@@ -4,7 +4,7 @@ import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RES
 import static bio.terra.workspace.common.fixtures.PolicyFixtures.IOWA_REGION;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_NAME;
 import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_CLONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -187,7 +187,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     mockMvcUtils.postExpect(
         userAccessUtils.defaultUserAuthRequest(),
         objectMapper.writeValueAsString(request),
-        CLONE_WORKSPACE_PATH_FORMAT.formatted(sourceWorkspaceId.toString()),
+        WORKSPACES_V1_CLONE.formatted(sourceWorkspaceId.toString()),
         HttpStatus.SC_CONFLICT);
   }
 
@@ -282,7 +282,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   private void resourceSetup() throws Exception {
     sourceWorkspaceId = UUID.randomUUID();
-    var workspaceRequest =
+    ApiCreateWorkspaceRequestBody workspaceRequest =
         new ApiCreateWorkspaceRequestBody()
             .id(sourceWorkspaceId)
             .displayName("clone source")
@@ -295,7 +295,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
 
     destinationWorkspaceId = UUID.randomUUID();
-    var workspace2Request =
+    ApiCreateWorkspaceRequestBody workspace2Request =
         new ApiCreateWorkspaceRequestBody()
             .id(destinationWorkspaceId)
             .displayName("clone destination")
@@ -349,7 +349,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   private void workspaceSetup(ApiCloningInstructionsEnum cloningInstructions) throws Exception {
     sourceWorkspaceId = UUID.randomUUID();
-    var workspaceRequest =
+    ApiCreateWorkspaceRequestBody workspaceRequest =
         new ApiCreateWorkspaceRequestBody()
             .id(sourceWorkspaceId)
             .displayName("clone source")

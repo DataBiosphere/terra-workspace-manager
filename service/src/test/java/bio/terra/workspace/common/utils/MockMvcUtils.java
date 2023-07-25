@@ -3,6 +3,7 @@ package bio.terra.workspace.common.utils;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_SUBJECT_ID;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.*;
 import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -68,6 +69,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -114,38 +116,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 public class MockMvcUtils {
   private static final Logger logger = LoggerFactory.getLogger(MockMvcUtils.class);
 
-  public static final String WORKSPACES_V1_PATH = "/api/workspaces/v1";
-  public static final String WORKSPACES_V1_BY_UUID_PATH_FORMAT = "/api/workspaces/v1/%s";
-  public static final String WORKSPACES_V1_BY_UFID_PATH_FORMAT =
-      "/api/workspaces/v1/workspaceByUserFacingId/%s";
-  public static final String ADD_USER_TO_WORKSPACE_PATH_FORMAT =
-      "/api/workspaces/v1/%s/roles/%s/members";
-  public static final String CLONE_WORKSPACE_PATH_FORMAT = "/api/workspaces/v1/%s/clone";
-  public static final String CLONE_WORKSPACE_RESULT_PATH_FORMAT =
-      "/api/workspaces/v1/%s/clone-result/%s";
-  public static final String UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT =
-      "/api/workspaces/v1/%s/properties";
-  public static final String UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT =
-      "/api/workspaces/v1/%s/policies";
-  public static final String WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT =
-      "/api/workspaces/v1/%s/policies/explain";
-  public static final String WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT =
-      "/api/workspaces/v1/%s/policies/mergeCheck";
-  public static final String WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT =
-      "/api/workspaces/v1/%s/listValidRegions";
-  public static final String GRANT_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members";
-  public static final String REMOVE_ROLE_PATH_FORMAT = "/api/workspaces/v1/%s/roles/%s/members/%s";
-  public static final String RESOURCES_PATH_FORMAT = "/api/workspaces/v1/%s/resources";
-  public static final String CREATE_CLOUD_CONTEXT_PATH_FORMAT =
-      "/api/workspaces/v1/%s/cloudcontexts";
-  public static final String DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT =
-      "/api/workspaces/v1/%s/cloudcontexts/GCP";
-  public static final String GET_CLOUD_CONTEXT_PATH_FORMAT =
-      "/api/workspaces/v1/%s/cloudcontexts/result/%s";
-  public static final String RESOURCE_PROPERTIES_V1_PATH_FORMAT =
-      "/api/workspaces/v1/%s/resources/%s/properties";
-  public static final String UPDATE_POLICIES_PATH_FORMAT = "/api/workspaces/v1/%s/policies";
-
   // Only use this if you are mocking SAM. If you're using real SAM,
   // use userAccessUtils.defaultUserAuthRequest() instead.
   public static final AuthenticatedUserRequest USER_REQUEST =
@@ -189,7 +159,7 @@ public class MockMvcUtils {
   public ApiWorkspaceDescription getWorkspace(
       AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     String serializedResponse =
-        getSerializedResponseForGet(userRequest, WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId);
+        getSerializedResponseForGet(userRequest, WORKSPACES_V1, workspaceId);
     return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
   }
 
@@ -231,7 +201,7 @@ public class MockMvcUtils {
     String serializedResponse =
         getSerializedResponseForPost(
             userRequest,
-            CLONE_WORKSPACE_PATH_FORMAT,
+            WORKSPACES_V1_CLONE,
             sourceWorkspaceId,
             objectMapper.writeValueAsString(request));
     ApiCloneWorkspaceResult cloneWorkspace =
@@ -268,7 +238,8 @@ public class MockMvcUtils {
             .perform(
                 addJsonContentType(
                     addAuth(
-                        post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
+                        post(WORKSPACES_V1_CREATE)
+                            .content(objectMapper.writeValueAsString(request)),
                         userRequest)))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
@@ -291,7 +262,7 @@ public class MockMvcUtils {
         WorkspaceFixtures.createWorkspaceRequestBody(stageModel);
     String serializedResponse =
         getSerializedResponseForPost(
-            userRequest, WORKSPACES_V1_PATH, objectMapper.writeValueAsString(request));
+            userRequest, WORKSPACES_V1_CREATE, objectMapper.writeValueAsString(request));
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
@@ -300,7 +271,7 @@ public class MockMvcUtils {
       throws Exception {
     String serializedResponse =
         getSerializedResponseForPost(
-            userRequest, WORKSPACES_V1_PATH, objectMapper.writeValueAsString(request));
+            userRequest, WORKSPACES_V1_CREATE, objectMapper.writeValueAsString(request));
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
@@ -324,7 +295,8 @@ public class MockMvcUtils {
             .perform(
                 addJsonContentType(
                     addAuth(
-                        post(WORKSPACES_V1_PATH).content(objectMapper.writeValueAsString(request)),
+                        post(WORKSPACES_V1_CREATE)
+                            .content(objectMapper.writeValueAsString(request)),
                         userRequest)))
             .andExpect(status().is(expectedCode))
             .andReturn()
@@ -369,10 +341,7 @@ public class MockMvcUtils {
             .jobControl(new ApiJobControl().id(jobId));
     String serializedResponse =
         getSerializedResponseForPost(
-            userRequest,
-            CREATE_CLOUD_CONTEXT_PATH_FORMAT,
-            workspaceId,
-            objectMapper.writeValueAsString(request));
+            userRequest, CLOUD_CONTEXTS_V1, workspaceId, objectMapper.writeValueAsString(request));
     return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
   }
 
@@ -380,24 +349,26 @@ public class MockMvcUtils {
       AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
     String serializedResponse =
         getSerializedResponseForGetJobResult(
-            userRequest, GET_CLOUD_CONTEXT_PATH_FORMAT, workspaceId, jobId);
+            userRequest, CLOUD_CONTEXT_V2_CREATE_RESULT, workspaceId, jobId);
     return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
   }
 
-  public void deleteGcpCloudContext(AuthenticatedUserRequest userRequest, UUID workspaceId)
+  public void deleteCloudContext(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, CloudPlatform cloudPlatform)
       throws Exception {
-    mockMvc
-        .perform(
-            addAuth(
-                delete(DELETE_GCP_CLOUD_CONTEXT_PATH_FORMAT.formatted(workspaceId)), userRequest))
-        .andExpect(status().isNoContent());
+    String path = CLOUD_CONTEXTS_V1 + cloudPlatform.toString();
+    if (cloudPlatform == CloudPlatform.GCP) {
+      mockMvc
+          .perform(addAuth(delete(path.formatted(workspaceId)), userRequest))
+          .andExpect(status().isNoContent());
+    }
   }
 
   public ApiCloneWorkspaceResult getCloneWorkspaceResult(
       AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
     String serializedResponse =
         getSerializedResponseForGetJobResult(
-            userRequest, CLONE_WORKSPACE_RESULT_PATH_FORMAT, workspaceId, jobId);
+            userRequest, WORKSPACES_V1_CLONE_RESULT, workspaceId, jobId);
     return objectMapper.readValue(serializedResponse, ApiCloneWorkspaceResult.class);
   }
 
@@ -422,7 +393,7 @@ public class MockMvcUtils {
         mockMvc
             .perform(
                 addAuth(
-                    patch(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId))
+                    patch(String.format(WORKSPACES_V1, workspaceId))
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
@@ -440,7 +411,7 @@ public class MockMvcUtils {
       throws Exception {
     getSerializedResponseForPost(
         userRequest,
-        UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT,
+        WORKSPACES_V1_PROPERTIES,
         workspaceId,
         objectMapper.writeValueAsString(properties));
   }
@@ -453,7 +424,7 @@ public class MockMvcUtils {
     mockMvc
         .perform(
             addAuth(
-                patch(String.format(UPDATE_WORKSPACES_V1_PROPERTIES_PATH_FORMAT, workspaceId))
+                patch(String.format(WORKSPACES_V1_PROPERTIES, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -465,14 +436,10 @@ public class MockMvcUtils {
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID workspaceId)
       throws Exception {
     mockMvc
-        .perform(
-            addAuth(
-                delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
+        .perform(addAuth(delete(String.format(WORKSPACES_V1, workspaceId)), userRequest))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)), userRequest))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceId)), userRequest))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 
@@ -481,10 +448,7 @@ public class MockMvcUtils {
       throws Exception {
     MvcResult mvcResult =
         mockMvc
-            .perform(
-                addAuth(
-                    delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceId)),
-                    userRequest))
+            .perform(addAuth(delete(String.format(WORKSPACES_V1, workspaceId)), userRequest))
             .andReturn();
     return mvcResult.getResponse().getStatus();
   }
@@ -519,7 +483,7 @@ public class MockMvcUtils {
         mockMvc
             .perform(
                 addAuth(
-                    patch(String.format(UPDATE_POLICIES_PATH_FORMAT, workspaceId))
+                    patch(String.format(WORKSPACES_V1_POLICIES, workspaceId))
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
@@ -661,7 +625,7 @@ public class MockMvcUtils {
   public List<ApiResourceDescription> enumerateResources(
       AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
     String serializedResponse =
-        getSerializedResponseForGet(userRequest, RESOURCES_PATH_FORMAT, workspaceId);
+        getSerializedResponseForGet(userRequest, WORKSPACES_V1_RESOURCES, workspaceId);
     return objectMapper.readValue(serializedResponse, ApiResourceList.class).getResources();
   }
 
@@ -825,7 +789,7 @@ public class MockMvcUtils {
         .perform(
             addJsonContentType(
                 addAuth(
-                    post(String.format(GRANT_ROLE_PATH_FORMAT, workspaceId, role.name()))
+                    post(String.format(WORKSPACES_V1_GRANT_ROLE, workspaceId, role.name()))
                         .content(objectMapper.writeValueAsString(request)),
                     userRequest)))
         .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
@@ -850,7 +814,7 @@ public class MockMvcUtils {
       throws Exception {
     return mockMvc.perform(
         addAuth(
-            delete(String.format(REMOVE_ROLE_PATH_FORMAT, workspaceId, role.name(), memberEmail)),
+            delete(String.format(WORKSPACES_V1_REMOVE_ROLE, workspaceId, role.name(), memberEmail)),
             userRequest));
   }
 
@@ -1081,7 +1045,7 @@ public class MockMvcUtils {
     return mockMvc
         .perform(
             addAuth(
-                patch(String.format(UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT, workspaceId))
+                patch(String.format(WORKSPACES_V1_POLICIES, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -1096,7 +1060,7 @@ public class MockMvcUtils {
         mockMvc
             .perform(
                 addAuth(
-                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
+                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS, workspaceId))
                         .queryParam("platform", platform)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8"),
@@ -1132,7 +1096,7 @@ public class MockMvcUtils {
     return mockMvc
         .perform(
             addAuth(
-                patch(String.format(UPDATE_WORKSPACES_V1_POLICIES_PATH_FORMAT, workspaceId))
+                patch(String.format(WORKSPACES_V1_POLICIES, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")

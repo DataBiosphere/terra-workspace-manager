@@ -3,7 +3,7 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertApiPropertyToMap;
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
-import static bio.terra.workspace.common.utils.MockMvcUtils.RESOURCE_PROPERTIES_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_RESOURCES_PROPERTIES;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
@@ -80,7 +80,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
           mockGcpApi.createControlledBqDataset(
               userAccessUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
-      var folderIdKey = "terra_workspace_folder_id";
+      String folderIdKey = "terra_workspace_folder_id";
       Map<String, String> newProperties =
           Map.of(
               "terra_workspace_folder_id",
@@ -102,7 +102,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
           expectedProperties,
           convertApiPropertyToMap(updatedResource.getMetadata().getProperties()));
 
-      var newFolderId = UUID.randomUUID();
+      UUID newFolderId = UUID.randomUUID();
       // Change property terra_workspace_folder_id to new UUID.
       updateResourcePropertiesExpectCode(
           workspaceId,
@@ -261,7 +261,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
                   addAuth(
                       patch(
                               String.format(
-                                  RESOURCE_PROPERTIES_V1_PATH_FORMAT, workspaceId, resourceId))
+                                  WORKSPACES_V1_RESOURCES_PROPERTIES, workspaceId, resourceId))
                           .contentType(MediaType.APPLICATION_JSON_VALUE)
                           .accept(MediaType.APPLICATION_JSON)
                           .characterEncoding("UTF-8")
@@ -296,7 +296,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
         .perform(
             addJsonContentType(
                 addAuth(
-                    post(String.format(RESOURCE_PROPERTIES_V1_PATH_FORMAT, workspaceId, resourceId))
+                    post(String.format(WORKSPACES_V1_RESOURCES_PROPERTIES, workspaceId, resourceId))
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")

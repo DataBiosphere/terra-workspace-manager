@@ -4,11 +4,11 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRI
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_BY_UFID;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_CREATE;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_POLICIES_EXPLAIN;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_POLICIES_MERGE_CHECK;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static bio.terra.workspace.common.utils.MockMvcUtils.buildWsmRegionPolicyInput;
@@ -663,8 +663,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   private ApiWorkspaceDescription getWorkspace(
       AuthenticatedUserRequest request, UUID id, Optional<ApiIamRole> minimumHighestRole)
       throws Exception {
-    MockHttpServletRequestBuilder requestBuilder =
-        get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id));
+    MockHttpServletRequestBuilder requestBuilder = get(String.format(WORKSPACES_V1, id));
     minimumHighestRole.ifPresent(
         apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     String serializedResponse =
@@ -683,8 +682,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       Optional<ApiIamRole> minimumHighestRole,
       int statusCode)
       throws Exception {
-    MockHttpServletRequestBuilder requestBuilder =
-        get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id));
+    MockHttpServletRequestBuilder requestBuilder = get(String.format(WORKSPACES_V1, id));
     minimumHighestRole.ifPresent(
         apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     mockMvc.perform(addAuth(requestBuilder, userRequest)).andExpect(status().is(statusCode));
@@ -702,7 +700,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       Optional<ApiIamRole> minimumHighestRole)
       throws Exception {
     MockHttpServletRequestBuilder requestBuilder =
-        get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId));
+        get(String.format(WORKSPACES_V1_BY_UFID, userFacingId));
     minimumHighestRole.ifPresent(
         apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     String serializedResponse =
@@ -722,7 +720,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       int statusCode)
       throws Exception {
     MockHttpServletRequestBuilder requestBuilder =
-        get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId));
+        get(String.format(WORKSPACES_V1_BY_UFID, userFacingId));
     minimumHighestRole.ifPresent(
         apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     mockMvc.perform(addAuth(requestBuilder, userRequest)).andExpect(status().is(statusCode));
@@ -735,7 +733,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   private List<ApiWorkspaceDescription> listWorkspaces(
       AuthenticatedUserRequest request, Optional<ApiIamRole> minimumHighestRole) throws Exception {
-    MockHttpServletRequestBuilder requestBuilder = get(WORKSPACES_V1_PATH);
+    MockHttpServletRequestBuilder requestBuilder = get(WORKSPACES_V1_CREATE);
     minimumHighestRole.ifPresent(
         apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     String serializedResponse =
@@ -756,7 +754,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         mockMvc
             .perform(
                 addAuth(
-                    get(String.format(WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT, workspaceId))
+                    get(String.format(WORKSPACES_V1_POLICIES_EXPLAIN, workspaceId))
                         .queryParam("depth", String.valueOf(depth)),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_OK))
@@ -775,8 +773,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
             .perform(
                 addAuth(
                     addJsonContentType(
-                        post(String.format(
-                                WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, targetWorkspaceId))
+                        post(String.format(WORKSPACES_V1_POLICIES_MERGE_CHECK, targetWorkspaceId))
                             .content(objectMapper.writeValueAsString(request))),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_ACCEPTED))

@@ -2,8 +2,8 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT;
 import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.GET_CLOUD_CONTEXT_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.CLOUD_CONTEXTS_V1;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.CLOUD_CONTEXT_V2_CREATE_RESULT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -25,6 +25,7 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -57,7 +58,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
   public void azureDisabledTest() throws Exception {
     Workspace workspace =
         connectedTestUtils.createWorkspace(userAccessUtils.defaultUserAuthRequest());
-    var workspaceUuid = workspace.getWorkspaceId();
+    UUID workspaceUuid = workspace.getWorkspaceId();
 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     String fakeJobId = "a pretend job ID";
@@ -69,7 +70,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
         .perform(
             addJsonContentType(
                 addAuth(
-                    post(String.format(CREATE_CLOUD_CONTEXT_PATH_FORMAT, workspaceUuid))
+                    post(String.format(CLOUD_CONTEXTS_V1, workspaceUuid))
                         .content(objectMapper.writeValueAsString(request)),
                     userRequest)))
         .andExpect(status().is(HttpStatus.SC_NOT_IMPLEMENTED));
@@ -77,7 +78,7 @@ public class AzureDisabledTest extends BaseConnectedTest {
     mockMvc
         .perform(
             (addAuth(
-                get(String.format(GET_CLOUD_CONTEXT_PATH_FORMAT, workspaceUuid, fakeJobId)),
+                get(String.format(CLOUD_CONTEXT_V2_CREATE_RESULT, workspaceUuid, fakeJobId)),
                 userRequest)))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
 
