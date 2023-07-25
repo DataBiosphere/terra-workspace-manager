@@ -22,14 +22,16 @@ public enum WsmIamRole {
       return roleToCheck == WsmIamRole.APPLICATION
           || roleToCheck == WsmIamRole.OWNER
           || roleToCheck == WsmIamRole.WRITER
-          || roleToCheck == WsmIamRole.READER;
+          || roleToCheck == WsmIamRole.READER
+          || roleToCheck == WsmIamRole.PROJECT_OWNER;
     }
   },
   WRITER("writer", SamWorkspaceAction.WRITE, ApiIamRole.WRITER) {
     public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
       return roleToCheck == WsmIamRole.APPLICATION
           || roleToCheck == WsmIamRole.OWNER
-          || roleToCheck == WsmIamRole.WRITER;
+          || roleToCheck == WsmIamRole.WRITER
+          || roleToCheck == WsmIamRole.PROJECT_OWNER;
     }
   },
   APPLICATION("application", null, ApiIamRole.APPLICATION) {
@@ -39,7 +41,9 @@ public enum WsmIamRole {
   },
   OWNER("owner", SamWorkspaceAction.OWN, ApiIamRole.OWNER) {
     public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
-      return roleToCheck == WsmIamRole.APPLICATION || roleToCheck == WsmIamRole.OWNER;
+      return roleToCheck == WsmIamRole.APPLICATION
+          || roleToCheck == WsmIamRole.OWNER
+          || roleToCheck == WsmIamRole.PROJECT_OWNER;
     }
   },
   // The manager role is given to WSM's SA on all Sam workspace objects for admin control. Users
@@ -47,6 +51,13 @@ public enum WsmIamRole {
   MANAGER("manager", null, null) {
     public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
       throw new InternalServerErrorException("Unexpected workspace MANAGER role");
+    }
+  },
+  // Role for billing project owner so that owners of billing projects are able to view and
+  // manage/delete workspaces using the project.
+  PROJECT_OWNER("project-owner", SamWorkspaceAction.OWN, ApiIamRole.PROJECT_OWNER) {
+    public boolean roleAtLeastAsHighAs(WsmIamRole roleToCheck) {
+      return roleToCheck == WsmIamRole.APPLICATION || roleToCheck == WsmIamRole.PROJECT_OWNER;
     }
   };
 
@@ -64,7 +75,9 @@ public enum WsmIamRole {
 
   public static WsmIamRole fromApiModel(ApiIamRole apiModel) {
     Optional<WsmIamRole> result =
-        Arrays.stream(WsmIamRole.values()).filter(x -> x.apiRole.equals(apiModel)).findFirst();
+        Arrays.stream(WsmIamRole.values())
+            .filter(x -> x.apiRole != null && x.apiRole.equals(apiModel))
+            .findFirst();
     return result.orElseThrow(
         () ->
             new RuntimeException("No IamRole enum found corresponding to model role " + apiModel));
@@ -91,6 +104,8 @@ public enum WsmIamRole {
 
     if (roles.contains(WsmIamRole.APPLICATION)) {
       return Optional.of(WsmIamRole.APPLICATION);
+    } else if (roles.contains(WsmIamRole.PROJECT_OWNER)) {
+      return Optional.of(WsmIamRole.PROJECT_OWNER);
     } else if (roles.contains(WsmIamRole.OWNER)) {
       return Optional.of(WsmIamRole.OWNER);
     } else if (roles.contains(WsmIamRole.WRITER)) {

@@ -40,6 +40,8 @@ public class CreateWorkspaceV2Flight extends Flight {
         inputParameters.get(WorkspaceFlightMapKeys.APPLICATION_IDS, new TypeReference<>() {});
     CloudPlatform cloudPlatform =
         inputParameters.get(WorkspaceFlightMapKeys.CLOUD_PLATFORM, CloudPlatform.class);
+    String projectOwnerGroupId =
+        inputParameters.get(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, String.class);
 
     RetryRule serviceRetryRule = RetryRules.shortExponential();
     RetryRule dbRetryRule = RetryRules.shortDatabase();
@@ -65,7 +67,8 @@ public class CreateWorkspaceV2Flight extends Flight {
                 appContext.getSamService(),
                 appContext.getTpsApiDispatch(),
                 appContext.getFeatureConfiguration(),
-                userRequest),
+                userRequest,
+                projectOwnerGroupId),
             serviceRetryRule);
       }
       case RAWLS_WORKSPACE -> addStep(

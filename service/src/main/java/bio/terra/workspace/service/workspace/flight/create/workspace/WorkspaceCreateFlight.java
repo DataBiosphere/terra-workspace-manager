@@ -44,6 +44,8 @@ public class WorkspaceCreateFlight extends Flight {
     UUID sourceWorkspaceUuid =
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+    String projectOwnerGroupId =
+        inputParameters.get(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, String.class);
 
     RetryRule serviceRetryRule = RetryRules.shortExponential();
     RetryRule dbRetryRule = RetryRules.shortDatabase();
@@ -82,7 +84,8 @@ public class WorkspaceCreateFlight extends Flight {
                 appContext.getSamService(),
                 appContext.getTpsApiDispatch(),
                 appContext.getFeatureConfiguration(),
-                userRequest),
+                userRequest,
+                projectOwnerGroupId),
             serviceRetryRule);
       }
       case RAWLS_WORKSPACE -> addStep(

@@ -8,7 +8,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceC
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +82,7 @@ public class ControlledResourceSamPolicyBuilder {
   }
 
   public void addPolicies(CreateResourceRequestV2 request) throws InterruptedException {
-    Map<ControlledResourceIamRole, AccessPolicyMembershipV2> policyMap;
+    Map<ControlledResourceIamRole, AccessPolicyMembershipRequest> policyMap;
 
     // Owner is always WSM SA
     addWsmResourceOwnerPolicy(request);
@@ -111,8 +111,8 @@ public class ControlledResourceSamPolicyBuilder {
               "Flight should never see application-shared with a user email");
         }
         // Application is always editor on its resources; other policies are inherited
-        AccessPolicyMembershipV2 editorPolicy =
-            new AccessPolicyMembershipV2()
+        AccessPolicyMembershipRequest editorPolicy =
+            new AccessPolicyMembershipRequest()
                 .addRolesItem(ControlledResourceIamRole.EDITOR.toSamRole());
         addApplicationResourceEditorPolicy(editorPolicy, userRequest);
         request.putPoliciesItem(ControlledResourceIamRole.EDITOR.toSamRole(), editorPolicy);
@@ -136,17 +136,20 @@ public class ControlledResourceSamPolicyBuilder {
    * For the private resources we always fill in READER, WRITER, and EDITOR even if empty. This
    * generates a map by role of the policy.
    */
-  private Map<ControlledResourceIamRole, AccessPolicyMembershipV2> makeInitialPolicyMap() {
-    Map<ControlledResourceIamRole, AccessPolicyMembershipV2> policyMap = new HashMap<>();
+  private Map<ControlledResourceIamRole, AccessPolicyMembershipRequest> makeInitialPolicyMap() {
+    Map<ControlledResourceIamRole, AccessPolicyMembershipRequest> policyMap = new HashMap<>();
     policyMap.put(
         ControlledResourceIamRole.READER,
-        new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.READER.toSamRole()));
+        new AccessPolicyMembershipRequest()
+            .addRolesItem(ControlledResourceIamRole.READER.toSamRole()));
     policyMap.put(
         ControlledResourceIamRole.WRITER,
-        new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.WRITER.toSamRole()));
+        new AccessPolicyMembershipRequest()
+            .addRolesItem(ControlledResourceIamRole.WRITER.toSamRole()));
     policyMap.put(
         ControlledResourceIamRole.EDITOR,
-        new AccessPolicyMembershipV2().addRolesItem(ControlledResourceIamRole.EDITOR.toSamRole()));
+        new AccessPolicyMembershipRequest()
+            .addRolesItem(ControlledResourceIamRole.EDITOR.toSamRole()));
     return policyMap;
   }
 
@@ -159,7 +162,7 @@ public class ControlledResourceSamPolicyBuilder {
    */
   private void applyPolicyMap(
       CreateResourceRequestV2 request,
-      Map<ControlledResourceIamRole, AccessPolicyMembershipV2> policyMap) {
+      Map<ControlledResourceIamRole, AccessPolicyMembershipRequest> policyMap) {
     policyMap.forEach((key, value) -> request.putPoliciesItem(key.toSamRole(), value));
   }
 
@@ -170,8 +173,8 @@ public class ControlledResourceSamPolicyBuilder {
    */
   private void addWsmResourceOwnerPolicy(CreateResourceRequestV2 request) {
     try {
-      AccessPolicyMembershipV2 ownerPolicy =
-          new AccessPolicyMembershipV2()
+      AccessPolicyMembershipRequest ownerPolicy =
+          new AccessPolicyMembershipRequest()
               .addRolesItem(ControlledResourceIamRole.OWNER.toSamRole())
               .addMemberEmailsItem(GcpUtils.getWsmSaEmail());
       request.putPoliciesItem(ControlledResourceIamRole.OWNER.toSamRole(), ownerPolicy);
@@ -193,7 +196,7 @@ public class ControlledResourceSamPolicyBuilder {
    * @throws InterruptedException on interrupt while waiting on retries
    */
   private void addApplicationResourceEditorPolicy(
-      AccessPolicyMembershipV2 editorPolicy, AuthenticatedUserRequest userRequest)
+      AccessPolicyMembershipRequest editorPolicy, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     String applicationEmail = samService.getUserEmailFromSam(userRequest);
     editorPolicy.addMemberEmailsItem(applicationEmail);

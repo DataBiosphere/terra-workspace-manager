@@ -123,6 +123,7 @@ public class WorkspaceService {
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
+      @Nullable String projectOwnerGroupId,
       AuthenticatedUserRequest userRequest) {
     return createWorkspaceWorker(
         workspace,
@@ -130,6 +131,7 @@ public class WorkspaceService {
         applications,
         /*sourceWorkspaceUuid=*/ null,
         CloningInstructions.COPY_NOTHING,
+        projectOwnerGroupId,
         userRequest);
   }
 
@@ -138,11 +140,18 @@ public class WorkspaceService {
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
+      @Nullable String projectOwnerGroupId,
       UUID sourceWorkspaceId,
       CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
     return createWorkspaceWorker(
-        workspace, policies, applications, sourceWorkspaceId, cloningInstructions, userRequest);
+        workspace,
+        policies,
+        applications,
+        sourceWorkspaceId,
+        cloningInstructions,
+        projectOwnerGroupId,
+        userRequest);
   }
 
   @Traced
@@ -204,6 +213,8 @@ public class WorkspaceService {
    * @param sourceWorkspaceUuid nullable source workspace id if doing create-for-clone
    * @param cloningInstructions COPY_NOTHING for a new create; COPY_REFERENCE or LINK_REFERENCE for
    *     a clone
+   * @param projectOwnerGroupId nullable Sam resource group ID which allows the group to be added as
+   *     project owner on the workspace
    * @param userRequest identity of the creator
    * @return id of the new workspace
    */
@@ -213,6 +224,7 @@ public class WorkspaceService {
       @Nullable List<String> applications,
       @Nullable UUID sourceWorkspaceUuid,
       CloningInstructions cloningInstructions,
+      @Nullable String projectOwnerGroupId,
       AuthenticatedUserRequest userRequest) {
 
     String workspaceUuid = workspace.getWorkspaceId().toString();
@@ -234,7 +246,8 @@ public class WorkspaceService {
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications)
             .addParameter(
                 WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
-            .addParameter(SOURCE_WORKSPACE_ID, sourceWorkspaceUuid);
+            .addParameter(SOURCE_WORKSPACE_ID, sourceWorkspaceUuid)
+            .addParameter(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, projectOwnerGroupId);
 
     workspace
         .getSpendProfileId()
@@ -672,7 +685,8 @@ public class WorkspaceService {
       @Nullable String location,
       TpsPolicyInputs additionalPolicies,
       Workspace destinationWorkspace,
-      @Nullable SpendProfile spendProfile) {
+      @Nullable SpendProfile spendProfile,
+      @Nullable String projectOwnerGroupId) {
     UUID workspaceUuid = sourceWorkspace.getWorkspaceId();
 
     // Get the enabled applications from the source workspace
@@ -690,6 +704,7 @@ public class WorkspaceService {
         destinationWorkspace,
         additionalPolicies,
         applicationIds,
+        projectOwnerGroupId,
         workspaceUuid,
         cloningInstructions,
         userRequest);

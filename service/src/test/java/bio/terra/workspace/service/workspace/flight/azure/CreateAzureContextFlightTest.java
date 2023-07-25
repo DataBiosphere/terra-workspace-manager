@@ -156,7 +156,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
                             .value("azure." + policyRegion)));
 
     workspaceService.createWorkspace(
-        workspace, policies, null, userAccessUtils.defaultUserAuthRequest());
+        workspace, policies, null, null, userAccessUtils.defaultUserAuthRequest());
 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     String jobId = UUID.randomUUID().toString();
@@ -214,7 +214,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
                     .namespace(TpsUtilities.TERRA_NAMESPACE));
 
     workspaceService.createWorkspace(
-        workspace, policies, null, userAccessUtils.defaultUserAuthRequest());
+        workspace, policies, null, null, userAccessUtils.defaultUserAuthRequest());
 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     String jobId = UUID.randomUUID().toString();
