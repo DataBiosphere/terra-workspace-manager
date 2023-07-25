@@ -121,9 +121,7 @@ public class MockMvcUtils {
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           DEFAULT_USER_EMAIL, DEFAULT_USER_SUBJECT_ID, Optional.of("ThisIsNotARealBearerToken"));
-  public static final String DEFAULT_GCP_RESOURCE_REGION = "us-central1";
-  public static final String DEST_BUCKET_RESOURCE_NAME =
-      TestUtils.appendRandomNumber("i-am-the-cloned-bucket");
+
   public static final List<Integer> JOB_SUCCESS_CODES =
       List.of(HttpStatus.SC_OK, HttpStatus.SC_ACCEPTED);
 

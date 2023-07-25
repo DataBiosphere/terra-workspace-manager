@@ -262,7 +262,7 @@ public class MockGcpApi {
         new ApiCloneControlledGcpGcsBucketRequest()
             .destinationWorkspaceId(destWorkspaceId)
             .cloningInstructions(cloningInstructions)
-            .name(TestUtils.appendRandomNumber(MockMvcUtils.DEST_BUCKET_RESOURCE_NAME))
+            .name(TestUtils.appendRandomNumber("i-am-the-cloned-bucket"))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
     if (!StringUtils.isEmpty(destResourceName)) {
       request.name(destResourceName);
