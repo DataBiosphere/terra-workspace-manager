@@ -94,6 +94,7 @@ readonly USER_BASHRC="${USER_HOME_DIR}/.bashrc"
 readonly USER_BASH_PROFILE="${USER_HOME_DIR}/.bash_profile"
 
 readonly POST_STARTUP_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.txt"
+readonly TERRA_BOOT_SERVICE_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/boot-output.txt"
 
 # When JupyterLab is provided by a Docker container, the default Deep Learning images
 # pick up jupyter_notebook_config.py provided by the host VM.
@@ -629,11 +630,17 @@ cat << EOF >"${TERRA_BOOT_SCRIPT}"
 #!/bin/bash
 # This script is run on instance boot to configure the instance for terra.
 
+# Send stdout and stderr from this script to a file for debugging.
+exec >> "${TERRA_BOOT_SERVICE_OUTPUT_FILE}"
+exec 2>&1
+
 # Pick up environment from the ~/.bashrc
 source "${USER_BASHRC}"
 
 # Mount terra workspace resources
 "${USER_HOME_LOCAL_BIN}/terra" resource mount
+
+exit 0
 EOF
 chmod +x "${TERRA_BOOT_SCRIPT}"
 chown ${JUPYTER_USER}:${JUPYTER_USER} "${TERRA_BOOT_SCRIPT}"
