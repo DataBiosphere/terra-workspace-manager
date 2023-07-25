@@ -30,6 +30,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
@@ -85,6 +86,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired private MockGcpApi mockGcpApi;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
@@ -103,7 +105,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   /** Clean up workspaces from Broad dev SAM. */
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(
         userAccessUtils.defaultUserAuthRequest(), workspace.getId());
   }
 
@@ -393,7 +395,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_resourceWithDifferentRegion() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
     try {
@@ -433,7 +435,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_existingResourceNoPolicyOnSource() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     try {
       //  Create target workspace with US region constraint.
@@ -465,7 +467,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_caseInsensitiveRegion() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
     try {
@@ -509,7 +511,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_nonMatchingGroups() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
     try {
@@ -570,7 +572,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
-    var usRegion = PolicyFixtures.US_REGION;
+    String usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
         mockMvcUtils.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
@@ -750,7 +752,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   private ApiWsmPolicyExplainResult explainPolicies(
       AuthenticatedUserRequest userRequest, UUID workspaceId, int depth) throws Exception {
-    var serializedResponse =
+    String serializedResponse =
         mockMvc
             .perform(
                 addAuth(
@@ -767,18 +769,15 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   private ApiWsmPolicyMergeCheckResult mergeCheck(
       AuthenticatedUserRequest userRequest, UUID targetWorkspaceId, UUID sourceWorkspaceId)
       throws Exception {
-    var request = new ApiMergeCheckRequest().workspaceId(sourceWorkspaceId);
-
-    var content = objectMapper.writeValueAsString(request);
-
-    var serializedResponse =
+    ApiMergeCheckRequest request = new ApiMergeCheckRequest().workspaceId(sourceWorkspaceId);
+    String serializedResponse =
         mockMvc
             .perform(
                 addAuth(
                     addJsonContentType(
                         post(String.format(
                                 WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, targetWorkspaceId))
-                            .content(content)),
+                            .content(objectMapper.writeValueAsString(request))),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_ACCEPTED))
             .andReturn()

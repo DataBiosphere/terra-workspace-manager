@@ -13,6 +13,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockDataRepoApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -55,6 +56,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockDataRepoApi mockDataRepoApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
@@ -100,8 +102,9 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId2);
   }
 
   @Test
@@ -137,11 +140,11 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
 
-    var newName = TestUtils.appendRandomNumber("newdatareporesourcename");
-    var newDescription = "This is an updated description";
-    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
-    var newInstanceName = TestUtils.appendRandomNumber("newinstance");
-    var newSnapshot = TestUtils.appendRandomNumber("newsnapshot");
+    String newName = TestUtils.appendRandomNumber("newdatareporesourcename");
+    String newDescription = "This is an updated description";
+    ApiCloningInstructionsEnum newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    String newInstanceName = TestUtils.appendRandomNumber("newinstance");
+    String newSnapshot = TestUtils.appendRandomNumber("newsnapshot");
     ApiDataRepoSnapshotResource updatedResource =
         mockDataRepoApi.updateReferencedDataRepoSnapshot(
             userAccessUtils.secondUserAuthRequest(),
@@ -171,7 +174,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   @Test
   public void update_throws409() throws Exception {
-    var newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
+    String newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
     mockDataRepoApi.createReferencedDataRepoSnapshot(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,

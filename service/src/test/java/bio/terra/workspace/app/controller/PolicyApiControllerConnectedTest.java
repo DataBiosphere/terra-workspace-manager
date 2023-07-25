@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.POLICY_V1_GET_REGION_INFO_PATH;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,6 +27,8 @@ import org.springframework.test.web.servlet.ResultActions;
 @Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
+
+  public static final String POLICY_V1_GET_LOCATION_INFO = "/api/policies/v1/getLocationInfo";
 
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
@@ -69,7 +70,7 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
     }
     Queue<ApiWsmPolicyLocation> subLocations = new ArrayDeque<>(location.getSublocations());
     while (!subLocations.isEmpty()) {
-      var subLocation = subLocations.poll();
+      ApiWsmPolicyLocation subLocation = subLocations.poll();
       if (subLocation.getName().equals(name)) {
         return subLocation;
       } else if (subLocation.getSublocations() != null) {
@@ -91,7 +92,7 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
   }
 
   private ApiWsmPolicyLocation getLocationInfo(String platform, String location) throws Exception {
-    var serializedResponse =
+    String serializedResponse =
         getRegionInfoExpect(platform, location, HttpStatus.SC_OK)
             .andReturn()
             .getResponse()
@@ -104,7 +105,7 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
     return mockMvc
         .perform(
             addAuth(
-                get(POLICY_V1_GET_REGION_INFO_PATH)
+                get(POLICY_V1_GET_LOCATION_INFO)
                     .queryParam("platform", platform)
                     .queryParam("location", region),
                 USER_REQUEST))

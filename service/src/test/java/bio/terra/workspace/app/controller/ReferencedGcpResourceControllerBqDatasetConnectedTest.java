@@ -1,7 +1,6 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.mocks.MockGcpApi.REFERENCED_GCP_BQ_DATASET_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDatasetEquals;
 import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -13,6 +12,8 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
+import bio.terra.workspace.common.utils.GcpTestUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -57,6 +58,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
@@ -106,8 +108,9 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId2);
   }
 
   @Test
@@ -132,7 +135,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
-    assertApiBqDatasetEquals(sourceResource, gotResource);
+    GcpTestUtils.assertApiBqDatasetEquals(sourceResource, gotResource);
   }
 
   @Test
@@ -352,7 +355,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
-    assertApiBqDatasetEquals(clonedResource, gotResource);
+    GcpTestUtils.assertApiBqDatasetEquals(clonedResource, gotResource);
   }
 
   @Test
@@ -387,7 +390,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
-    assertApiBqDatasetEquals(clonedResource, gotResource);
+    GcpTestUtils.assertApiBqDatasetEquals(clonedResource, gotResource);
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination

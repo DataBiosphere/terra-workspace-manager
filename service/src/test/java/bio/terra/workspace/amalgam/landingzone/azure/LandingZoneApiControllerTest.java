@@ -1,6 +1,7 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.AUTH_HEADER;
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -10,7 +11,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.common.exception.ForbiddenException;
-import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
@@ -24,6 +24,8 @@ import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCre
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.AzureLandingZoneFixtures;
+import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
+import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -52,9 +54,8 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
   private static final String JOB_ID = "newJobId";
   private static final UUID LANDING_ZONE_ID = UUID.randomUUID();
   private static final UUID BILLING_PROFILE_ID = UUID.randomUUID();
-  private static final BearerToken BEARER_TOKEN = new BearerToken("fake-token");
   @Autowired private MockMvc mockMvc;
-  @Autowired ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
   @Test
   public void createAzureLandingZoneJobRunning() throws Exception {
@@ -66,16 +67,17 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         .thenReturn(asyncJobResult);
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
-    var requestBody =
+    ApiCreateAzureLandingZoneRequestBody requestBody =
         AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID, BILLING_PROFILE_ID);
 
     mockMvc
         .perform(
-            post(AZURE_LANDING_ZONE_PATH)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody))
-                .characterEncoding("utf-8")
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                post(AZURE_LANDING_ZONE_PATH)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .characterEncoding("utf-8"),
+                USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_ACCEPTED))
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists())
@@ -94,16 +96,17 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
     // TODO SG: check if we need name and description??
-    var requestBody =
+    ApiCreateAzureLandingZoneRequestBody requestBody =
         AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID, BILLING_PROFILE_ID);
 
     mockMvc
         .perform(
-            post(AZURE_LANDING_ZONE_PATH)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody))
-                .characterEncoding("utf-8")
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                post(AZURE_LANDING_ZONE_PATH)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .characterEncoding("utf-8"),
+                USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_OK))
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists())
@@ -123,16 +126,17 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         .thenReturn(asyncJobResult);
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
-    var requestBody =
+    ApiCreateAzureLandingZoneRequestBody requestBody =
         AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequestWithoutDefinition(JOB_ID);
 
     mockMvc
         .perform(
-            post(AZURE_LANDING_ZONE_PATH)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody))
-                .characterEncoding("utf-8")
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                post(AZURE_LANDING_ZONE_PATH)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .characterEncoding("utf-8"),
+                USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
   }
 
@@ -144,16 +148,17 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockLandingZoneService().getAsyncJobResult(any(), any())).thenReturn(asyncJobResult);
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
-    var requestBody =
+    ApiCreateAzureLandingZoneRequestBody requestBody =
         AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequestWithoutTarget(JOB_ID);
 
     mockMvc
         .perform(
-            post(AZURE_LANDING_ZONE_PATH)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody))
-                .characterEncoding("utf-8")
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                post(AZURE_LANDING_ZONE_PATH)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .characterEncoding("utf-8"),
+                USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
   }
 
@@ -166,8 +171,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
 
     mockMvc
         .perform(
-            get(GET_CREATE_AZURE_LANDING_ZONE_RESULT + "/{jobId}", JOB_ID)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(get(GET_CREATE_AZURE_LANDING_ZONE_RESULT + "/{jobId}", JOB_ID), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_ACCEPTED))
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists())
@@ -184,8 +188,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
 
     mockMvc
         .perform(
-            get(GET_CREATE_AZURE_LANDING_ZONE_RESULT + "/{jobId}", JOB_ID)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(get(GET_CREATE_AZURE_LANDING_ZONE_RESULT + "/{jobId}", JOB_ID), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_OK))
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists())
@@ -198,7 +201,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
 
   @Test
   public void listAzureLandingZoneDefinitionsSuccess() throws Exception {
-    var definitions =
+    List<LandingZoneDefinition> definitions =
         List.of(
             LandingZoneDefinition.builder()
                 .definition("fooDefinition")
@@ -222,9 +225,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
     mockMvc
-        .perform(
-            get(LIST_AZURE_LANDING_ZONES_DEFINITIONS_PATH)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+        .perform(addAuth(get(LIST_AZURE_LANDING_ZONES_DEFINITIONS_PATH), USER_REQUEST))
         .andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").isArray());
@@ -239,15 +240,17 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
         .thenReturn(asyncJobResult);
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
 
-    var requestBody = AzureLandingZoneFixtures.buildDeleteAzureLandingZoneRequest(JOB_ID);
+    ApiDeleteAzureLandingZoneRequestBody requestBody =
+        AzureLandingZoneFixtures.buildDeleteAzureLandingZoneRequest(JOB_ID);
 
     mockMvc
         .perform(
-            post(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody))
-                .characterEncoding("utf-8")
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                post(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .characterEncoding("utf-8"),
+                USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_ACCEPTED))
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists());
@@ -270,13 +273,14 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
 
     mockMvc
         .perform(
-            get(
-                    AZURE_LANDING_ZONE_PATH + "/{landingZoneId}/delete-result/{jobId}",
-                    LANDING_ZONE_ID,
-                    JOB_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .characterEncoding("utf-8")
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                get(
+                        AZURE_LANDING_ZONE_PATH + "/{landingZoneId}/delete-result/{jobId}",
+                        LANDING_ZONE_ID,
+                        JOB_ID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .characterEncoding("utf-8"),
+                USER_REQUEST))
         .andExpect(status().is(expectedHttpStatus))
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport.id").exists())
@@ -307,8 +311,9 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(
-            get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}/resources", LANDING_ZONE_ID)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}/resources", LANDING_ZONE_ID),
+                USER_REQUEST))
         .andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.id").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.id", Matchers.is(LANDING_ZONE_ID.toString())))
@@ -337,8 +342,9 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(
-            get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}/resources", LANDING_ZONE_ID)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}/resources", LANDING_ZONE_ID),
+                USER_REQUEST))
         .andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.id").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.resources").exists())
@@ -360,8 +366,8 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(
-            get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID), USER_REQUEST))
         .andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingZoneId").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.definition").exists())
@@ -385,10 +391,11 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(
-            get(
+            addAuth(
+                get(
                     AZURE_LANDING_ZONE_PATH + "?billingProfileId={billingProfileId}",
-                    BILLING_PROFILE_ID)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+                    BILLING_PROFILE_ID),
+                USER_REQUEST))
         .andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").isArray())
@@ -424,10 +431,11 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(
-            get(
+            addAuth(
+                get(
                     AZURE_LANDING_ZONE_PATH + "?billingProfileId={billingProfileId}",
-                    BILLING_PROFILE_ID)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+                    BILLING_PROFILE_ID),
+                USER_REQUEST))
         .andExpect(status().isConflict());
   }
 
@@ -444,8 +452,7 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockLandingZoneService().listLandingZones(any())).thenReturn(List.of(landingZone));
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
-        .perform(
-            get(AZURE_LANDING_ZONE_PATH).header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+        .perform(addAuth(get(AZURE_LANDING_ZONE_PATH), USER_REQUEST))
         .andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").exists())
         .andExpect(MockMvcResultMatchers.jsonPath("$.landingzones").isArray())
@@ -465,8 +472,8 @@ public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(
-            get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID)
-                .header(AUTH_HEADER, "Bearer " + BEARER_TOKEN.getToken()))
+            addAuth(
+                get(AZURE_LANDING_ZONE_PATH + "/{landingZoneId}", LANDING_ZONE_ID), USER_REQUEST))
         .andExpect(status().isForbidden());
   }
 }

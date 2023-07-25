@@ -44,6 +44,7 @@ import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiProperty;
+import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
@@ -199,7 +200,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             USER_REQUEST, workspace.getId(), newUserFacingId, newDisplayName, newDescription);
 
     // Assert updated workspace
-    mockMvcUtils.assertWorkspace(
+    assertWorkspace(
         updatedWorkspace,
         newUserFacingId,
         newDisplayName,
@@ -209,9 +210,9 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     // As second user, update only description
     String secondUserEmail = "foo@gmail.com";
-    var newUser = new UserStatusInfo().userEmail(secondUserEmail).userSubjectId("foo");
+    UserStatusInfo newUser = new UserStatusInfo().userEmail(secondUserEmail).userSubjectId("foo");
     when(mockSamService().getUserStatusInfo(any())).thenReturn(newUser);
-    var secondNewDescription = "This is yet another description";
+    String secondNewDescription = "This is yet another description";
     ApiWorkspaceDescription secondUpdatedWorkspace =
         mockMvcUtils.updateWorkspace(
             USER_REQUEST,
@@ -221,7 +222,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             secondNewDescription);
 
     // Assert description is updated, while ufId and displayName are the same
-    mockMvcUtils.assertWorkspace(
+    assertWorkspace(
         secondUpdatedWorkspace,
         newUserFacingId,
         newDisplayName,
@@ -248,7 +249,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     // Assert remaining 2 properties
     ApiWorkspaceDescription gotWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
-    mockMvcUtils.assertProperties(
+    assertProperties(
         List.of(SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY), gotWorkspace.getProperties());
 
     // TODO(PF-2314): Change to call API. We don't expose this in API yet, so read from db.
@@ -276,7 +277,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     // Assert 5 properties.
     ApiWorkspaceDescription gotWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
-    mockMvcUtils.assertProperties(
+    assertProperties(
         List.of(
             SHORT_DESCRIPTION_PROPERTY,
             VERSION_PROPERTY,
@@ -385,7 +386,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             snap1.getMetadata().getResourceId(),
             snap2.getMetadata().getResourceId(),
             snap3.getMetadata().getResourceId()));
-    for (var cloneDetail : cloneDetails) {
+    for (ApiResourceCloneDetails cloneDetail : cloneDetails) {
       if (cloneDetail.getSourceResourceId().equals(snap3.getMetadata().getResourceId())) {
         assertEquals(ApiCloneResourceResult.SKIPPED, cloneDetail.getResult());
         assertNull(cloneDetail.getDestinationResourceId());
@@ -466,7 +467,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     List<ApiWorkspaceDescription> workspaces = listWorkspaces();
 
-    var workspaceDescriptions =
+    List<ApiWorkspaceDescription> workspaceDescriptions =
         workspaces.stream()
             .filter(
                 w ->
@@ -555,12 +556,12 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
   @Test
   void listValidRegions() throws Exception {
-    var expectedRegions = List.of("region1", "region2");
-    var workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    List<String> expectedRegions = List.of("region1", "region2");
+    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), any()))
         .thenReturn(expectedRegions);
 
-    var result = mockMvcUtils.listValidRegions(USER_REQUEST, workspace.getId(), "GCP");
+    ApiRegions result = mockMvcUtils.listValidRegions(USER_REQUEST, workspace.getId(), "GCP");
     assertEquals(expectedRegions, result);
   }
 
@@ -599,5 +600,28 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     ApiWorkspaceDescriptionList workspaceDescriptionList =
         objectMapper.readValue(serializedResponse, ApiWorkspaceDescriptionList.class);
     return workspaceDescriptionList.getWorkspaces();
+  }
+
+  public static void assertWorkspace(
+      ApiWorkspaceDescription actualWorkspace,
+      String expectedUserFacingId,
+      String expectedDisplayName,
+      String expectedDescription,
+      String expectedCreatedByEmail,
+      String expectedLastUpdatedByEmail) {
+    assertEquals(expectedUserFacingId, actualWorkspace.getUserFacingId());
+    assertEquals(expectedDisplayName, actualWorkspace.getDisplayName());
+    assertEquals(expectedDescription, actualWorkspace.getDescription());
+    OffsetDateTime lastUpdatedDate = actualWorkspace.getLastUpdatedDate();
+    assertNotNull(lastUpdatedDate);
+    OffsetDateTime createdDate = actualWorkspace.getCreatedDate();
+    assertNotNull(createdDate);
+    assertTrue(lastUpdatedDate.isAfter(createdDate));
+    assertEquals(expectedCreatedByEmail, actualWorkspace.getCreatedBy());
+    assertEquals(expectedLastUpdatedByEmail, actualWorkspace.getLastUpdatedBy());
+  }
+
+  private static void assertProperties(List<ApiProperty> expected, List<ApiProperty> actual) {
+    assertThat(expected, containsInAnyOrder(actual.toArray()));
   }
 }

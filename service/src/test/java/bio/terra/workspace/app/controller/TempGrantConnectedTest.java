@@ -6,6 +6,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -37,6 +38,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
@@ -58,7 +60,8 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
 
   @After
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test

@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
@@ -48,6 +49,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
@@ -65,7 +67,8 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Nested

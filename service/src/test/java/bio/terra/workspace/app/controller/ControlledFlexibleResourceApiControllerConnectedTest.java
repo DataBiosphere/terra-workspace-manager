@@ -10,6 +10,7 @@ import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockFlexibleResourceApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -56,6 +57,7 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockFlexibleResourceApi mockFlexibleResourceApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
@@ -115,8 +117,9 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId2);
   }
 
   // Destination workspace policy is the merge of source workspace policy and pre-clone destination
