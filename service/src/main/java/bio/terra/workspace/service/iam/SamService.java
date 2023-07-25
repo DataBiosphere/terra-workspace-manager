@@ -106,6 +106,7 @@ public class SamService {
     return apiClient;
   }
 
+  @VisibleForTesting
   public ResourcesApi samResourcesApi(String accessToken) {
     return new ResourcesApi(getApiClient(accessToken));
   }
@@ -313,7 +314,7 @@ public class SamService {
       AuthenticatedUserRequest userRequest,
       UUID uuid,
       List<String> authDomainList,
-      String projectOwnerGroupId)
+      @Nullable String projectOwnerGroupId)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
@@ -1097,7 +1098,7 @@ public class SamService {
    * must happen at the same time as workspace resource creation.
    */
   private Map<String, AccessPolicyMembershipRequest> defaultWorkspacePolicies(
-      String ownerEmail, String projectOwnerGroupId) {
+      String ownerEmail, @Nullable String projectOwnerGroupId) {
     Map<String, AccessPolicyMembershipRequest> policyMap = new HashMap<>();
     policyMap.put(
         WsmIamRole.OWNER.toSamRole(),

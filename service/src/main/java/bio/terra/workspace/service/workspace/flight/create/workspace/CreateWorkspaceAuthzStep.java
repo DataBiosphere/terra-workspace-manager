@@ -14,6 +14,7 @@ import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public class CreateWorkspaceAuthzStep implements Step {
       TpsApiDispatch tpsApiDispatch,
       FeatureConfiguration features,
       AuthenticatedUserRequest userRequest,
-      String projectOwnerGroupId) {
+      @Nullable String projectOwnerGroupId) {
     this.samService = samService;
     this.userRequest = userRequest;
     this.workspace = workspace;

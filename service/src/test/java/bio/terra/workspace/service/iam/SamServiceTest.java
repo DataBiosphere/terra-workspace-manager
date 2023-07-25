@@ -269,6 +269,7 @@ class SamServiceTest extends BaseConnectedTest {
               .get(workspace.workspaceId());
       assertEquals(WsmIamRole.OWNER, workspaceCreatorRole.highestRole());
 
+      // Verify billing project owner has role "project owner".
       AccessibleWorkspace billingProjectOwnerRole =
           samService
               .listWorkspaceIdsAndHighestRoles(billingProjectOwnerRequest, WsmIamRole.READER)
