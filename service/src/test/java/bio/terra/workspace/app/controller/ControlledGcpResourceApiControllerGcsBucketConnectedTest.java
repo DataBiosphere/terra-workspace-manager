@@ -26,6 +26,7 @@ import bio.terra.workspace.common.GcsBucketUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.GcpTestUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -118,6 +119,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
@@ -173,8 +175,9 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     AuthenticatedUserRequest defaultUserRequest =
         userAccessUtils.defaultUser().getAuthenticatedRequest();
 
-    workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
-    workspaceId2 = mockMvcUtils.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
+    workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
+    workspaceId2 =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
 
     // Setup 2nd user
     mockMvcUtils.grantRole(

@@ -14,6 +14,7 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -55,6 +56,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
@@ -291,7 +293,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
             .spendProfile("wm-default-spend-profile")
             .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));
 
-    mockMvcUtils.createdWorkspaceWithoutCloudContext(
+    mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
 
     destinationWorkspaceId = UUID.randomUUID();
@@ -304,7 +306,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
             .spendProfile("wm-default-spend-profile")
             .policies(null);
 
-    mockMvcUtils.createdWorkspaceWithoutCloudContext(
+    mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspace2Request);
 
     sourceResource =
@@ -358,7 +360,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
             .spendProfile("wm-default-spend-profile")
             .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));
 
-    mockMvcUtils.createdWorkspaceWithoutCloudContext(
+    mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
 
     // Create the bucket with the test cloning instructions

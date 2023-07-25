@@ -34,6 +34,7 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.mocks.MockDataRepoApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -102,6 +103,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockDataRepoApi mockDataRepoApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired WorkspaceActivityLogService workspaceActivityLogService;
@@ -143,9 +145,9 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   public void createWorkspace_duplicateUuid_throws400() throws Exception {
     UUID workspaceId = UUID.randomUUID();
-    mockMvcUtils.createWorkspaceWithoutCloudContextExpectError(
+    mockWorkspaceV1Api.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST, workspaceId, /*stageModel=*/ null, /*policies=*/ null, HttpStatus.SC_OK);
-    mockMvcUtils.createWorkspaceWithoutCloudContextExpectError(
+    mockWorkspaceV1Api.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST,
         workspaceId,
         /*stageModel=*/ null,
@@ -173,7 +175,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
   @Test
   public void createWorkspace() throws Exception {
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiCreatedWorkspace workspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     ApiWorkspaceDescription getWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
@@ -189,7 +192,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
   @Test
   public void updateWorkspace() throws Exception {
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiCreatedWorkspace workspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     // Update workspace
     String newUserFacingId = TestUtils.appendRandomNumber("new-ufid");
@@ -241,7 +245,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     // Create workspace with 4 properties: terra-type=type,
     // terra-workspace-short-description=short description, terra-workspace-version=version 3
     // userkey=uservalue
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     // Delete terra-type, userkey properties
     mockMvcUtils.deleteWorkspaceProperties(
@@ -267,7 +271,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     // Create workspace with 4 properties: terra-type=type,
     // terra-workspace-short-description=short description, terra-workspace-version=version 3
     // userkey=uservalue
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     // Change userkey value to uservalue2. Add new property foo=bar.
     ApiProperty newUserProperty = new ApiProperty().key("userkey").value("uservalue2");
@@ -301,7 +305,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     // Disable TPS feature flag for this test
     when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
 
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiWorkspaceDescription sourceWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
 
     ApiCloneWorkspaceResult cloneWorkspace =
@@ -330,7 +334,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   public void cloneWorkspace_rawls() throws Exception {
     UUID sourceWorkspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithoutCloudContext(
                 USER_REQUEST, ApiWorkspaceStageModel.RAWLS_WORKSPACE)
             .getId();
@@ -400,7 +404,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   public void getWorkspace_includesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiCreatedWorkspace workspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     TpsPaoGetResult getPolicyResult =
         emptyWorkspacePao()
@@ -424,7 +429,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   public void getWorkspace_tpsDisabled_excludesPolicy() throws Exception {
     when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiCreatedWorkspace workspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     ApiWorkspaceDescription gotWorkspace =
         mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
@@ -434,9 +440,10 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   public void listWorkspace_includesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiCreatedWorkspace workspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
     ApiCreatedWorkspace noPolicyWorkspace =
-        mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
     List<String> missingAuthDomains =
         List.of(TPS_GROUP_POLICY.getAdditionalData().get(0).getValue());
     when(mockSamService().listWorkspaceIdsAndHighestRoles(any(), any()))
@@ -499,7 +506,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   public void listWorkspace_tpsDisabled_excludesPolicy() throws Exception {
     when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiCreatedWorkspace workspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockSamService().listWorkspaceIdsAndHighestRoles(any(), any()))
         .thenReturn(
             ImmutableMap.of(
@@ -514,7 +522,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
   @Test
   public void updatePolicies_tpsEnabledAndPolicyUpdated_log() throws Exception {
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiCreatedWorkspace workspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockTpsApiDispatch().updatePao(eq(workspace.getId()), any(), any(), any()))
         .thenReturn(new TpsPaoUpdateResult().updateApplied(true));
     ActivityLogChangeDetails lastChangeDetails =
@@ -540,7 +549,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
   @Test
   public void updatePolicies_tpsEnabledAndPolicyNotUpdated_notLog() throws Exception {
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiCreatedWorkspace workspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockTpsApiDispatch().updatePao(eq(workspace.getId()), any(), any(), any()))
         .thenReturn(new TpsPaoUpdateResult().updateApplied(false));
     ActivityLogChangeDetails lastChangeDetails =
@@ -557,7 +567,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   @Test
   void listValidRegions() throws Exception {
     List<String> expectedRegions = List.of("region1", "region2");
-    ApiCreatedWorkspace workspace = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST);
+    ApiCreatedWorkspace workspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
     when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), any()))
         .thenReturn(expectedRegions);
 
@@ -577,7 +588,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
                     .addAdditionalDataItem(
                         new ApiWsmPolicyPair().key("group").value("my_fake_group")));
 
-    return mockMvcUtils.createWorkspaceWithoutCloudContextExpectError(
+    return mockWorkspaceV1Api.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST,
         /*workspaceId=*/ UUID.randomUUID(),
         ApiWorkspaceStageModel.RAWLS_WORKSPACE,

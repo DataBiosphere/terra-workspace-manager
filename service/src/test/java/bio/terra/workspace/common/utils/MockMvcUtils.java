@@ -24,6 +24,7 @@ import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
@@ -57,7 +58,6 @@ import bio.terra.workspace.generated.model.ApiState;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
-import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
@@ -128,6 +128,7 @@ public class MockMvcUtils {
   // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private SamService samService;
@@ -221,7 +222,8 @@ public class MockMvcUtils {
 
   public ApiCreatedWorkspace createWorkspaceWithCloudContext(
       AuthenticatedUserRequest userRequest, ApiCloudPlatform apiCloudPlatform) throws Exception {
-    ApiCreatedWorkspace createdWorkspace = createWorkspaceWithoutCloudContext(userRequest);
+    ApiCreatedWorkspace createdWorkspace =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(userRequest);
     createCloudContextAndWait(userRequest, createdWorkspace.getId(), apiCloudPlatform);
     return createdWorkspace;
   }
@@ -245,69 +247,6 @@ public class MockMvcUtils {
             .getContentAsString();
 
     return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
-  }
-
-  public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
-      @Nullable AuthenticatedUserRequest userRequest) throws Exception {
-    return createWorkspaceWithoutCloudContext(userRequest, ApiWorkspaceStageModel.MC_WORKSPACE);
-  }
-
-  public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
-      @Nullable AuthenticatedUserRequest userRequest, ApiWorkspaceStageModel stageModel)
-      throws Exception {
-
-    ApiCreateWorkspaceRequestBody request =
-        WorkspaceFixtures.createWorkspaceRequestBody(stageModel);
-    String serializedResponse =
-        getSerializedResponseForPost(
-            userRequest, WORKSPACES_V1_CREATE, objectMapper.writeValueAsString(request));
-    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
-  }
-
-  public ApiCreatedWorkspace createdWorkspaceWithoutCloudContext(
-      @Nullable AuthenticatedUserRequest userRequest, ApiCreateWorkspaceRequestBody request)
-      throws Exception {
-    String serializedResponse =
-        getSerializedResponseForPost(
-            userRequest, WORKSPACES_V1_CREATE, objectMapper.writeValueAsString(request));
-    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
-  }
-
-  public ApiErrorReport createWorkspaceWithoutCloudContextExpectError(
-      @Nullable AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      @Nullable ApiWorkspaceStageModel stageModel,
-      @Nullable ApiWsmPolicyInputs policyInputs,
-      int expectedCode)
-      throws Exception {
-    ApiCreateWorkspaceRequestBody request =
-        WorkspaceFixtures.createWorkspaceRequestBody().id(workspaceId);
-    if (stageModel != null) {
-      request.stage(stageModel);
-    }
-    if (policyInputs != null) {
-      request.policies(policyInputs);
-    }
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_CREATE)
-                            .content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
-            .andExpect(status().is(expectedCode))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    try {
-      ApiErrorReport errorReport = objectMapper.readValue(serializedResponse, ApiErrorReport.class);
-      assertEquals(expectedCode, errorReport.getStatusCode());
-      return errorReport;
-    } catch (Exception e) {
-      // There is no ApiErrorReport to return
-      return null;
-    }
   }
 
   public void createCloudContextAndWait(

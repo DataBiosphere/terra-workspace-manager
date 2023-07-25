@@ -1,9 +1,32 @@
 package bio.terra.workspace.common.mocks;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
+import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.UUID;
+import javax.annotation.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.test.web.servlet.MockMvc;
 
 @Component
 public class MockWorkspaceV1Api {
+
+  @Autowired private MockMvc mockMvc;
+  @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private ObjectMapper objectMapper;
 
   // Workspace
 
@@ -13,6 +36,68 @@ public class MockWorkspaceV1Api {
       WORKSPACES_V1_CREATE + "/workspaceByUserFacingId/%s";
   public static final String WORKSPACES_V1_CLONE = WORKSPACES_V1 + "/clone";
   public static final String WORKSPACES_V1_CLONE_RESULT = WORKSPACES_V1 + "/clone-result/%s";
+
+  public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
+      @Nullable AuthenticatedUserRequest userRequest) throws Exception {
+    return createWorkspaceWithoutCloudContext(userRequest, ApiWorkspaceStageModel.MC_WORKSPACE);
+  }
+
+  public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
+      @Nullable AuthenticatedUserRequest userRequest, ApiWorkspaceStageModel stageModel)
+      throws Exception {
+    ApiCreateWorkspaceRequestBody request =
+        WorkspaceFixtures.createWorkspaceRequestBody(stageModel);
+    String serializedResponse =
+        mockMvcUtils.getSerializedResponseForPost(
+            userRequest, WORKSPACES_V1_CREATE, objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+  }
+
+  public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
+      @Nullable AuthenticatedUserRequest userRequest, ApiCreateWorkspaceRequestBody request)
+      throws Exception {
+    String serializedResponse =
+        mockMvcUtils.getSerializedResponseForPost(
+            userRequest, WORKSPACES_V1_CREATE, objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+  }
+
+  public ApiErrorReport createWorkspaceWithoutCloudContextExpectError(
+      @Nullable AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable ApiWorkspaceStageModel stageModel,
+      @Nullable ApiWsmPolicyInputs policyInputs,
+      int expectedCode)
+      throws Exception {
+    ApiCreateWorkspaceRequestBody request =
+        WorkspaceFixtures.createWorkspaceRequestBody().id(workspaceId);
+    if (stageModel != null) {
+      request.stage(stageModel);
+    }
+    if (policyInputs != null) {
+      request.policies(policyInputs);
+    }
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addJsonContentType(
+                    addAuth(
+                        post(WORKSPACES_V1_CREATE)
+                            .content(objectMapper.writeValueAsString(request)),
+                        userRequest)))
+            .andExpect(status().is(expectedCode))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    try {
+      ApiErrorReport errorReport = objectMapper.readValue(serializedResponse, ApiErrorReport.class);
+      assertEquals(expectedCode, errorReport.getStatusCode());
+      return errorReport;
+    } catch (Exception e) {
+      // There is no ApiErrorReport to return
+      return null;
+    }
+  }
 
   // Cloud context
 
