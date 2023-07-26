@@ -35,6 +35,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
@@ -281,6 +282,29 @@ public class ResourceDaoTest extends BaseUnitTest {
                       r.getResourceId().equals(resource.getResourceId())
                           && r.partialEqual(resource)));
     }
+  }
+
+  @Test
+  public void duplicateResourceCreateDoesNotDelete() {
+    String bucketName = "my-real-bucket-name";
+    // Run the normal case
+    ControlledGcsBucketResource initialBucket =
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid)
+            .bucketName(bucketName)
+            .build();
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, initialBucket);
+    // Later calls to createResourceFailure (e.g. from duplicate requests) should not undo
+    // resources they did not create.
+    resourceDao.createResourceFailure(
+        initialBucket,
+        UUID.randomUUID().toString(),
+        /*exception=*/ null,
+        WsmResourceStateRule.DELETE_ON_FAILURE);
+    ControlledGcsBucketResource retrievedBucket =
+        resourceDao
+            .getResource(initialBucket.getWorkspaceId(), initialBucket.getResourceId())
+            .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
+    assertTrue(initialBucket.partialEqual(retrievedBucket));
   }
 
   @Test

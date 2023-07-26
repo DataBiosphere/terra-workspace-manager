@@ -269,6 +269,22 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
+  void duplicateWorkspaceCreateFailureDoesNotDelete() {
+    Workspace workspace = defaultRawlsWorkspace(workspaceUuid);
+    // Create the workspace normally
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    // A later call to createWorkspaceFailure should only delete if the caller is the same flight
+    // which created the workspace.
+    workspaceDao.createWorkspaceFailure(
+        workspaceUuid,
+        /*flightId=*/ UUID.randomUUID().toString(),
+        /*exception=*/ null,
+        WsmResourceStateRule.DELETE_ON_FAILURE);
+    Workspace workspaceAfterDelete = workspaceDao.getWorkspace(workspaceUuid);
+    assertEquals(workspace, workspaceAfterDelete);
+  }
+
+  @Test
   void deleteWorkspaceProperties() {
     Map<String, String> propertyGenerate = Map.of("foo", "bar", "xyz", "pqn");
 
@@ -423,6 +439,22 @@ class WorkspaceDaoTest extends BaseUnitTest {
       assertEquals(
           exception.getStatusCode(),
           secondBrokenGcpContext.getCommonFields().error().getStatusCode());
+    }
+
+    @Test
+    void duplicateCloudContextCreateDoesNotDelete() {
+      // Run the normal case
+      WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+          workspaceDao, workspaceUuid, PROJECT_ID);
+      // Later calls to createCloudContextFailure (e.g. from duplicate requests) should not undo
+      // cloud contexts they did not create.
+      workspaceDao.createCloudContextFailure(
+          workspaceUuid,
+          CloudPlatform.GCP,
+          UUID.randomUUID().toString(),
+          /*exception=*/ null,
+          WsmResourceStateRule.DELETE_ON_FAILURE);
+      assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isPresent());
     }
   }
 
