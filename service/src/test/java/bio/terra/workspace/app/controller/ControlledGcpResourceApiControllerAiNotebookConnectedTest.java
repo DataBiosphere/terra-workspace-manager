@@ -82,7 +82,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
 
   @Test
   public void createAiNotebookInstance_correctZone() throws Exception {
-    mockMvcUtils.updateWorkspaceProperties(
+    mockWorkspaceV1Api.updateWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(
@@ -118,7 +118,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
         userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getDefaultUserEmail());
 
-    mockMvcUtils.deleteWorkspaceProperties(
+    mockWorkspaceV1Api.deleteWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION));

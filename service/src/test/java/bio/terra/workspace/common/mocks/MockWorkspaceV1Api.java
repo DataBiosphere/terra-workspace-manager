@@ -24,6 +24,8 @@ import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiProperty;
+import bio.terra.workspace.generated.model.ApiPropertyKeys;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -33,6 +35,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -351,6 +354,33 @@ public class MockWorkspaceV1Api {
   // Properties
 
   public static final String WORKSPACES_V1_PROPERTIES = WORKSPACES_V1 + "/properties";
+
+  public void updateWorkspaceProperties(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, List<ApiProperty> properties)
+      throws Exception {
+    mockMvcUtils.getSerializedResponseForPost(
+        userRequest,
+        WORKSPACES_V1_PROPERTIES,
+        workspaceId,
+        objectMapper.writeValueAsString(properties));
+  }
+
+  public void deleteWorkspaceProperties(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, List<String> propertyKeys)
+      throws Exception {
+    ApiPropertyKeys apiPropertyKeys = new ApiPropertyKeys();
+    apiPropertyKeys.addAll(propertyKeys);
+    mockMvc
+        .perform(
+            addAuth(
+                patch(String.format(WORKSPACES_V1_PROPERTIES, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(apiPropertyKeys)),
+                userRequest))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
 
   // Policies & region
 

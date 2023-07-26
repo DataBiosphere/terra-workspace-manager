@@ -35,8 +35,6 @@ import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.generated.model.ApiPrivateResourceState;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
-import bio.terra.workspace.generated.model.ApiProperty;
-import bio.terra.workspace.generated.model.ApiPropertyKeys;
 import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
@@ -137,33 +135,6 @@ public class MockMvcUtils {
     Assertions.fail(
         String.format("Expected OK or ACCEPTED, but received %d; body: %s", statusCode, content));
     return null;
-  }
-
-  public void updateWorkspaceProperties(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, List<ApiProperty> properties)
-      throws Exception {
-    getSerializedResponseForPost(
-        userRequest,
-        WORKSPACES_V1_PROPERTIES,
-        workspaceId,
-        objectMapper.writeValueAsString(properties));
-  }
-
-  public void deleteWorkspaceProperties(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, List<String> propertyKeys)
-      throws Exception {
-    ApiPropertyKeys apiPropertyKeys = new ApiPropertyKeys();
-    apiPropertyKeys.addAll(propertyKeys);
-    mockMvc
-        .perform(
-            addAuth(
-                patch(String.format(WORKSPACES_V1_PROPERTIES, workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(apiPropertyKeys)),
-                userRequest))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
   }
 
   public ApiWsmPolicyUpdateResult updatePolicies(

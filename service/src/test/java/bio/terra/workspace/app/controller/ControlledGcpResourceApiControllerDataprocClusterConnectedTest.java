@@ -119,7 +119,7 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
 
   @Test
   public void createDataprocCluster() throws Exception {
-    mockMvcUtils.updateWorkspaceProperties(
+    mockWorkspaceV1Api.updateWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(
@@ -144,7 +144,7 @@ public class ControlledGcpResourceApiControllerDataprocClusterConnectedTest
         userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getDefaultUserEmail());
 
-    mockMvcUtils.deleteWorkspaceProperties(
+    mockWorkspaceV1Api.deleteWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION));

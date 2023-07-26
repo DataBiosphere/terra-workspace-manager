@@ -248,7 +248,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
     // Delete terra-type, userkey properties
-    mockMvcUtils.deleteWorkspaceProperties(
+    mockWorkspaceV1Api.deleteWorkspaceProperties(
         USER_REQUEST, workspaceId, List.of(Properties.TYPE, "userkey"));
 
     // Assert remaining 2 properties
@@ -277,7 +277,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     // Change userkey value to uservalue2. Add new property foo=bar.
     ApiProperty newUserProperty = new ApiProperty().key("userkey").value("uservalue2");
     ApiProperty fooProperty = new ApiProperty().key("foo").value("bar");
-    mockMvcUtils.updateWorkspaceProperties(
+    mockWorkspaceV1Api.updateWorkspaceProperties(
         USER_REQUEST, workspaceId, List.of(newUserProperty, fooProperty));
 
     // Assert 5 properties.
