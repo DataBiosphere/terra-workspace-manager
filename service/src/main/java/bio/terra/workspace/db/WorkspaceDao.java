@@ -873,7 +873,8 @@ public class WorkspaceDao {
         try {
           stateDao.updateState(
               cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
-          deleteCloudContextWorker(workspaceUuid, cloudPlatform, flightId);
+          // flightId is now null due to the updateState call above.
+          deleteCloudContextWorker(workspaceUuid, cloudPlatform, null);
         } catch (ResourceStateConflictException e) {
           // Thrown by updateState during an invalid state transition. This indicates that the
           // caller is not the same flight that created the cloud context.
