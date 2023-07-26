@@ -13,12 +13,12 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
@@ -58,27 +58,25 @@ import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 public class GcpResourceStateFailureTest extends BaseUnitTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired ReferencedResourceService referencedResourceService;
   @Autowired ResourceDao resourceDao;
   @Autowired private WorkspaceDao workspaceDao;
 
-  @MockBean private LandingZoneService mockLandingZoneService;
-
   private static final String RESOURCE_NAME = "resourcename";
   private StateTestUtils stateTestUtils;
 
   @BeforeEach
   void setup() throws Exception {
-    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils);
+    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils, mockWorkspaceV1Api);
     // Everything is authorized!
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);
     when(mockSamService().getUserStatusInfo(any()))

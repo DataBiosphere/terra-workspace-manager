@@ -213,9 +213,9 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
   void clone_copyResource_undo() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destDescription = "new description";
-
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     mockFlexibleResourceApi.cloneFlexibleResourceAndExpect(
-        userAccessUtils.defaultUserAuthRequest(),
+        userRequest,
         /*sourceWorkspaceId=*/ workspaceId,
         sourceFlexResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
@@ -226,8 +226,7 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
         /*shouldUndo=*/ true);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId2, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
   }
 
   @Test

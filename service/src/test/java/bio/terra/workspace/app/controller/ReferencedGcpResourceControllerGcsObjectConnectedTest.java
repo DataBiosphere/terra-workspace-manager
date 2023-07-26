@@ -283,7 +283,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
     assertNull(clonedResource);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
   }
 
   @Test

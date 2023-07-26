@@ -307,9 +307,10 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
   @Test
   void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     ApiGcpBigQueryDatasetResource clonedResource =
         mockGcpApi.cloneReferencedBqDataset(
-            userAccessUtils.defaultUserAuthRequest(),
+            userRequest,
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
@@ -320,8 +321,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
     assertNull(clonedResource);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
   }
 
   @Test

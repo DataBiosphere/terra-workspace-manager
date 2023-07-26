@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -14,8 +15,10 @@ import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
@@ -28,6 +31,8 @@ import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiPropertyKeys;
 import bio.terra.workspace.generated.model.ApiRegions;
+import bio.terra.workspace.generated.model.ApiResourceDescription;
+import bio.terra.workspace.generated.model.ApiResourceList;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -47,11 +52,13 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -463,7 +470,7 @@ public class MockWorkspaceV1Api {
       UUID workspaceId,
       ApiWsmPolicyInput addAttribute,
       ApiWsmPolicyUpdateMode updateMode,
-      int code)
+      int expectedCode)
       throws Exception {
     ApiWsmPolicyUpdateRequest updateRequest =
         new ApiWsmPolicyUpdateRequest()
@@ -478,7 +485,7 @@ public class MockWorkspaceV1Api {
                     .characterEncoding("UTF-8")
                     .content(objectMapper.writeValueAsString(updateRequest)),
                 userRequest))
-        .andExpect(status().is(code));
+        .andExpect(status().is(expectedCode));
   }
 
   public ApiWsmPolicyUpdateResult updatePoliciesAndExpect(
@@ -486,7 +493,7 @@ public class MockWorkspaceV1Api {
       UUID workspaceId,
       @Nullable List<ApiWsmPolicyInput> policiesToAdd,
       @Nullable List<ApiWsmPolicyInput> policiesToRemove,
-      int code)
+      int expectedCode)
       throws Exception {
     ApiWsmPolicyUpdateRequest requestBody =
         new ApiWsmPolicyUpdateRequest().updateMode(ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
@@ -506,7 +513,7 @@ public class MockWorkspaceV1Api {
                         .characterEncoding("UTF-8")
                         .content(objectMapper.writeValueAsString(requestBody)),
                     userRequest))
-            .andExpect(status().is(code))
+            .andExpect(status().is(expectedCode))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -605,5 +612,99 @@ public class MockWorkspaceV1Api {
   public static final String WORKSPACES_V1_RESOURCES_PROPERTIES =
       WORKSPACES_V1_RESOURCES + "/%s/properties";
 
-  // TODO-Dex
+  public <T> T createResourceJobResult(
+      Class<T> classType,
+      AuthenticatedUserRequest userRequest,
+      String path,
+      UUID workspaceId,
+      String jobId)
+      throws Exception {
+    String serializedResponse =
+        mockMvcUtils.getSerializedResponseForGetJobResult(userRequest, path, workspaceId, jobId);
+    return objectMapper.readValue(serializedResponse, classType);
+  }
+
+  public void deleteResource(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String path)
+      throws Exception {
+    mockMvc
+        .perform(addAuth(delete(String.format(path, workspaceId, resourceId)), userRequest))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public <T> T updateResourceAndExpect(
+      Class<T> classType,
+      String pathFormat,
+      UUID workspaceId,
+      UUID resourceId,
+      String requestBody,
+      AuthenticatedUserRequest userRequest,
+      int expectedCode)
+      throws Exception {
+    ResultActions result =
+        mockMvc
+            .perform(
+                addAuth(
+                    patch(String.format(pathFormat, workspaceId, resourceId))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(requestBody),
+                    userRequest))
+            .andExpect(status().is(expectedCode));
+
+    // If not successful then don't serialize the response.
+    if (expectedCode >= 300) {
+      return null;
+    }
+
+    String serializedResponse = result.andReturn().getResponse().getContentAsString();
+    return objectMapper.readValue(serializedResponse, classType);
+  }
+
+  public MockHttpServletResponse cloneReferencedResourceAndExpect(
+      AuthenticatedUserRequest userRequest,
+      String path,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      UUID destWorkspaceId,
+      ApiCloningInstructionsEnum cloningInstructions,
+      @Nullable String destResourceName,
+      int expectedCode)
+      throws Exception {
+    ApiCloneReferencedResourceRequestBody request =
+        new ApiCloneReferencedResourceRequestBody()
+            .destinationWorkspaceId(destWorkspaceId)
+            .cloningInstructions(cloningInstructions);
+    if (!StringUtils.isEmpty(destResourceName)) {
+      request.name(destResourceName);
+    }
+
+    return mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(path.formatted(sourceWorkspaceId, sourceResourceId))
+                        .content(objectMapper.writeValueAsString(request)),
+                    userRequest)))
+        .andExpect(status().is(expectedCode))
+        .andReturn()
+        .getResponse();
+  }
+
+  public List<ApiResourceDescription> enumerateResources(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
+    String serializedResponse =
+        mockMvcUtils.getSerializedResponseForGet(userRequest, WORKSPACES_V1_RESOURCES, workspaceId);
+    return objectMapper.readValue(serializedResponse, ApiResourceList.class).getResources();
+  }
+
+  public void assertNoResourceWithName(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String unexpectedResourceName)
+      throws Exception {
+    enumerateResources(userRequest, workspaceId)
+        .forEach(
+            actualResource ->
+                assertNotEquals(unexpectedResourceName, actualResource.getMetadata().getName()));
+  }
 }

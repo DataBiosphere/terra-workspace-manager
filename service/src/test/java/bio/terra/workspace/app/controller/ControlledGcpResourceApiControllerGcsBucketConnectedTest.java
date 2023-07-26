@@ -404,23 +404,21 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   public void update_throws409() throws Exception {
     String oldName = sourceBucket.getMetadata().getName();
     String newName = TestUtils.appendRandomNumber("newbucketresourcename");
-    mockGcpApi.createReferencedGcsBucket(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId, newName, sourceBucketName);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    mockGcpApi.createReferencedGcsBucket(userRequest, workspaceId, newName, sourceBucketName);
 
-    mockMvcUtils.updateResource(
+    mockWorkspaceV1Api.updateResourceAndExpect(
         ApiGcpGcsBucketResource.class,
         CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT,
         workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         objectMapper.writeValueAsString(
             new ApiUpdateControlledGcpGcsBucketRequestBody().name(newName)),
-        userAccessUtils.defaultUserAuthRequest(),
+        userRequest,
         HttpStatus.SC_CONFLICT);
     ApiGcpGcsBucketResource getResource =
         mockGcpApi.getControlledGcsBucket(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceBucket.getMetadata().getResourceId());
+            userRequest, workspaceId, sourceBucket.getMetadata().getResourceId());
     assertEquals(oldName, getResource.getMetadata().getName());
   }
 
@@ -547,7 +545,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     assertNull(clonedResource);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
   }
 
   @Test
@@ -852,7 +850,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
   }
 
   @Test
@@ -868,7 +866,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
   }
 
   private void assertGcsBucket(

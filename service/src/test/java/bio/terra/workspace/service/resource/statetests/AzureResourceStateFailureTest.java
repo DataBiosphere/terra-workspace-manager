@@ -19,6 +19,7 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -53,6 +54,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired ObjectMapper objectMapper;
   @Autowired ReferencedResourceService referencedResourceService;
   @Autowired ResourceDao resourceDao;
@@ -66,7 +68,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
 
   @BeforeEach
   void setup() throws Exception {
-    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils);
+    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils, mockWorkspaceV1Api);
 
     // Everything is authorized!
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);

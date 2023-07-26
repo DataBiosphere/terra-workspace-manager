@@ -302,7 +302,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
     mockGcpApi.createReferencedBqDataset(
         userRequest, workspaceId, newName, projectId, sourceDatasetName);
 
-    mockMvcUtils.updateResource(
+    mockWorkspaceV1Api.updateResourceAndExpect(
         ApiGcpBigQueryDatasetResource.class,
         CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT,
         workspaceId,
@@ -451,7 +451,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
     assertNull(clonedResource);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
   }
 
   @Test
@@ -761,7 +761,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
   }
 
   @Test
@@ -777,7 +777,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
   }
 
   private void assertBqDataset(

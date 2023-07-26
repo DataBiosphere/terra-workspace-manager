@@ -272,6 +272,6 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     assertNull(clonedFlexResource);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(USER_REQUEST, workspaceId, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(USER_REQUEST, workspaceId, destResourceName);
   }
 }

@@ -56,6 +56,7 @@ public class MockFlexibleResourceApi {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private JobService jobService;
 
@@ -97,7 +98,7 @@ public class MockFlexibleResourceApi {
 
   public void deleteFlexibleResource(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    mockMvcUtils.deleteResource(
+    mockWorkspaceV1Api.deleteResource(
         userRequest, workspaceId, resourceId, CONTROLLED_FLEXIBLE_RESOURCES_PATH_FORMAT);
   }
 
@@ -132,7 +133,7 @@ public class MockFlexibleResourceApi {
             getUpdateFlexibleResourceRequestBody(
                 newResourceName, newDescription, newData, newCloningInstructions));
 
-    return mockMvcUtils.updateResource(
+    return mockWorkspaceV1Api.updateResourceAndExpect(
         ApiFlexibleResource.class,
         CONTROLLED_FLEXIBLE_RESOURCES_PATH_FORMAT,
         workspaceId,
@@ -156,7 +157,7 @@ public class MockFlexibleResourceApi {
             getUpdateFlexibleResourceRequestBody(
                 newResourceName, newDescription, newData, newCloningInstructions));
 
-    mockMvcUtils.updateResource(
+    mockWorkspaceV1Api.updateResourceAndExpect(
         ApiFlexibleResource.class,
         CONTROLLED_FLEXIBLE_RESOURCES_PATH_FORMAT,
         workspaceId,

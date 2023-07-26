@@ -175,24 +175,22 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
   @Test
   public void update_throws409() throws Exception {
     String newName = TestUtils.appendRandomNumber("newgcsobjectresourcename");
-    mockGitRepoApi.createReferencedGitRepo(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId, newName, sourceGitRepoUrl);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    mockGitRepoApi.createReferencedGitRepo(userRequest, workspaceId, newName, sourceGitRepoUrl);
 
-    mockMvcUtils.updateResource(
+    mockWorkspaceV1Api.updateResourceAndExpect(
         ApiGitRepoResource.class,
         REFERENCED_GIT_REPOS_PATH_FORMAT,
         workspaceId,
         sourceResource.getMetadata().getResourceId(),
         objectMapper.writeValueAsString(
             new ApiUpdateBigQueryDatasetReferenceRequestBody().name(newName)),
-        userAccessUtils.defaultUserAuthRequest(),
+        userRequest,
         HttpStatus.SC_CONFLICT);
 
     ApiGitRepoResource gotResource =
         mockGitRepoApi.getReferencedGitRepo(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResource.getMetadata().getResourceId());
+            userRequest, workspaceId, sourceResource.getMetadata().getResourceId());
     assertEquals(sourceResourceName, gotResource.getMetadata().getName());
   }
 
@@ -293,9 +291,10 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
   @Test
   void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     ApiGitRepoResource clonedResource =
         mockGitRepoApi.cloneReferencedGitRepo(
-            userAccessUtils.defaultUserAuthRequest(),
+            userRequest,
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
@@ -306,8 +305,7 @@ public class ReferencedGcpResourceControllerGitRepoConnectedTest extends BaseCon
     assertNull(clonedResource);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
   }
 
   @Test

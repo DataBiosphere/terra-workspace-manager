@@ -9,10 +9,8 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -22,7 +20,6 @@ import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.generated.model.ApiAccessScope;
-import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
@@ -32,10 +29,8 @@ import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.generated.model.ApiPrivateResourceState;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
-import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
-import bio.terra.workspace.generated.model.ApiResourceList;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiState;
@@ -52,7 +47,6 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.hamcrest.Matcher;
@@ -67,7 +61,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
@@ -121,86 +114,6 @@ public class MockMvcUtils {
     Assertions.fail(
         String.format("Expected OK or ACCEPTED, but received %d; body: %s", statusCode, content));
     return null;
-  }
-
-  public void deleteResource(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId, String path)
-      throws Exception {
-    mockMvc
-        .perform(addAuth(delete(String.format(path, workspaceId, resourceId)), userRequest))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
-  }
-
-  /**
-   * Expect a code when updating, and return the serialized API resource if expected code is
-   * successful.
-   */
-  public <T> T updateResource(
-      Class<T> classType,
-      String pathFormat,
-      UUID workspaceId,
-      UUID resourceId,
-      String requestBody,
-      AuthenticatedUserRequest userRequest,
-      int code)
-      throws Exception {
-    ResultActions result =
-        mockMvc
-            .perform(
-                addAuth(
-                    patch(String.format(pathFormat, workspaceId, resourceId))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(requestBody),
-                    userRequest))
-            .andExpect(status().is(code));
-
-    // If not successful then don't serialize the response.
-    if (code >= 300) {
-      return null;
-    }
-
-    String serializedResponse = result.andReturn().getResponse().getContentAsString();
-
-    return objectMapper.readValue(serializedResponse, classType);
-  }
-
-  public MockHttpServletResponse cloneReferencedResource(
-      AuthenticatedUserRequest userRequest,
-      String path,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      UUID destWorkspaceId,
-      ApiCloningInstructionsEnum cloningInstructions,
-      @Nullable String destResourceName,
-      int expectedCode)
-      throws Exception {
-    ApiCloneReferencedResourceRequestBody request =
-        new ApiCloneReferencedResourceRequestBody()
-            .destinationWorkspaceId(destWorkspaceId)
-            .cloningInstructions(cloningInstructions);
-    if (!StringUtils.isEmpty(destResourceName)) {
-      request.name(destResourceName);
-    }
-
-    return mockMvc
-        .perform(
-            addJsonContentType(
-                addAuth(
-                    post(path.formatted(sourceWorkspaceId, sourceResourceId))
-                        .content(objectMapper.writeValueAsString(request)),
-                    userRequest)))
-        .andExpect(status().is(expectedCode))
-        .andReturn()
-        .getResponse();
-  }
-
-  public List<ApiResourceDescription> enumerateResources(
-      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
-    String serializedResponse =
-        getSerializedResponseForGet(userRequest, WORKSPACES_V1_RESOURCES, workspaceId);
-    return objectMapper.readValue(serializedResponse, ApiResourceList.class).getResources();
   }
 
   public static void assertControlledResourceMetadata(
@@ -346,15 +259,6 @@ public class MockMvcUtils {
         jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
   }
 
-  public void assertNoResourceWithName(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String unexpectedResourceName)
-      throws Exception {
-    enumerateResources(userRequest, workspaceId)
-        .forEach(
-            actualResource ->
-                assertNotEquals(unexpectedResourceName, actualResource.getMetadata().getName()));
-  }
-
   public ApiJobReport getJobReport(String path, AuthenticatedUserRequest userRequest)
       throws Exception {
     String serializedResponse =
@@ -365,18 +269,6 @@ public class MockMvcUtils {
             .getResponse()
             .getContentAsString();
     return objectMapper.readValue(serializedResponse, ApiJobResult.class).getJobReport();
-  }
-
-  public <T> T getCreateResourceJobResult(
-      Class<T> classType,
-      AuthenticatedUserRequest userRequest,
-      String path,
-      UUID workspaceId,
-      String jobId)
-      throws Exception {
-    String serializedResponse =
-        getSerializedResponseForGetJobResult(userRequest, path, workspaceId, jobId);
-    return objectMapper.readValue(serializedResponse, classType);
   }
 
   public String getSerializedResponseForGet(
