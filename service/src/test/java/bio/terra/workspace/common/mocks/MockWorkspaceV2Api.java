@@ -154,10 +154,10 @@ public class MockWorkspaceV2Api {
 
   // Cloud context
 
-  public static final String CLOUD_CONTEXTS_V2 = WORKSPACES_V2 + "/cloudcontexts";
-  public static final String CLOUD_CONTEXT_V2_DELETE = CLOUD_CONTEXTS_V2 + "/%s/delete";
-  public static final String CLOUD_CONTEXT_V2_DELETE_RESULT =
-      CLOUD_CONTEXTS_V2 + "/delete-result/%s";
+  public static final String CLOUD_CONTEXTS_V2_CREATE = WORKSPACES_V2 + "/cloudcontexts";
+  public static final String CLOUD_CONTEXTS_V2_DELETE = CLOUD_CONTEXTS_V2_CREATE + "/%s/delete";
+  public static final String CLOUD_CONTEXTS_V2_DELETE_RESULT =
+      CLOUD_CONTEXTS_V2_CREATE + "/delete-result/%s";
 
   public ApiJobResult deleteCloudContextAsync(
       AuthenticatedUserRequest userRequest,
@@ -172,7 +172,7 @@ public class MockWorkspaceV2Api {
         cloudPlatform,
         jobId);
     String path =
-        String.format(CLOUD_CONTEXT_V2_DELETE, workspaceId, cloudPlatform.toApiModel().toString());
+        String.format(CLOUD_CONTEXTS_V2_DELETE, workspaceId, cloudPlatform.toApiModel().toString());
     ApiDeleteCloudContextV2Request request =
         new ApiDeleteCloudContextV2Request().jobControl(new ApiJobControl().id(jobId));
     MockHttpServletResponse response =
@@ -193,7 +193,7 @@ public class MockWorkspaceV2Api {
         userRequest.getEmail(),
         workspaceId,
         jobId);
-    String path = String.format(CLOUD_CONTEXT_V2_DELETE_RESULT, workspaceId, jobId);
+    String path = String.format(CLOUD_CONTEXTS_V2_DELETE_RESULT, workspaceId, jobId);
     MockHttpServletResponse response =
         mockMvc
             .perform(MockMvcUtils.addJsonContentType(MockMvcUtils.addAuth(get(path), userRequest)))

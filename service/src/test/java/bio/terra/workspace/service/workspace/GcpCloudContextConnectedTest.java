@@ -102,7 +102,6 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @Autowired private FolderDao folderDao;
   @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private JobService jobService;
-  @Autowired private MockMvcUtils mockMvcUtils;
   @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private MockGcpApi mockGcpApi;
   @Autowired private ObjectMapper objectMapper;
@@ -175,7 +174,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     ApiGcpGcsBucketResource bucketResource = createControlledBucket();
 
     // Delete the cloud context
-    mockMvcUtils.deleteCloudContext(userRequest, workspaceId, CloudPlatform.GCP);
+    mockWorkspaceV1Api.deleteCloudContext(userRequest, workspaceId, CloudPlatform.GCP);
 
     // Make sure the bucket gets deleted when we delete the cloud context
     String errorResponseString =
@@ -205,7 +204,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   void createGetDeleteGoogleContext_deleteGcpProjectAndLog() throws Exception {
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isPresent());
 
-    mockMvcUtils.deleteCloudContext(
+    mockWorkspaceV1Api.deleteCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceId, CloudPlatform.GCP);
 
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId).isEmpty());
@@ -224,7 +223,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .createWorkspaceWithoutCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), ApiWorkspaceStageModel.MC_WORKSPACE)
             .getId();
-    mockMvcUtils.createCloudContextAndWait(
+    mockWorkspaceV1Api.createCloudContextAndWait(
         userAccessUtils.defaultUserAuthRequest(), workspaceId2, apiCloudPlatform);
 
     assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceId2).isPresent());

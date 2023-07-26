@@ -139,8 +139,9 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
         userAccessUtils.secondUser().getEmail());
 
     // Create the cloud contexts
-    mockMvcUtils.createCloudContextAndWait(defaultUserRequest, workspaceId, apiCloudPlatform);
-    mockMvcUtils.createCloudContextAndWait(defaultUserRequest, workspaceId2, apiCloudPlatform);
+    mockWorkspaceV1Api.createCloudContextAndWait(defaultUserRequest, workspaceId, apiCloudPlatform);
+    mockWorkspaceV1Api.createCloudContextAndWait(
+        defaultUserRequest, workspaceId2, apiCloudPlatform);
 
     ApiWorkspaceDescription workspace =
         mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);

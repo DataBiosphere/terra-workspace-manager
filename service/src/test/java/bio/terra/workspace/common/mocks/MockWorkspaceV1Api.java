@@ -17,9 +17,12 @@ import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
+import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
@@ -28,11 +31,15 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -41,6 +48,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 @Component
 public class MockWorkspaceV1Api {
+  private static final Logger logger = LoggerFactory.getLogger(MockWorkspaceV1Api.class);
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
@@ -120,7 +128,7 @@ public class MockWorkspaceV1Api {
   public ApiCreatedWorkspace createWorkspaceWithCloudContext(
       AuthenticatedUserRequest userRequest, ApiCloudPlatform apiCloudPlatform) throws Exception {
     ApiCreatedWorkspace createdWorkspace = createWorkspaceWithoutCloudContext(userRequest);
-    mockMvcUtils.createCloudContextAndWait(userRequest, createdWorkspace.getId(), apiCloudPlatform);
+    createCloudContextAndWait(userRequest, createdWorkspace.getId(), apiCloudPlatform);
     return createdWorkspace;
   }
 
@@ -176,7 +184,7 @@ public class MockWorkspaceV1Api {
       AuthenticatedUserRequest userRequest, ApiCloudPlatform apiCloudPlatform, String regionName)
       throws Exception {
     UUID resultWorkspaceId = createWorkspaceWithRegionConstraint(userRequest, regionName);
-    mockMvcUtils.createCloudContextAndWait(userRequest, resultWorkspaceId, apiCloudPlatform);
+    createCloudContextAndWait(userRequest, resultWorkspaceId, apiCloudPlatform);
     return resultWorkspaceId;
   }
 
@@ -281,8 +289,64 @@ public class MockWorkspaceV1Api {
 
   // Cloud context
 
-  public static final String CLOUD_CONTEXTS_V1 = WORKSPACES_V1 + "/cloudcontexts";
-  public static final String CLOUD_CONTEXT_V2_CREATE_RESULT = CLOUD_CONTEXTS_V1 + "/result/%s";
+  public static final String CLOUD_CONTEXTS_V1_CREATE = WORKSPACES_V1 + "/cloudcontexts";
+  public static final String CLOUD_CONTEXTS_V1_CREATE_RESULT =
+      CLOUD_CONTEXTS_V1_CREATE + "/result/%s";
+
+  private ApiCreateCloudContextResult createCloudContext(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, ApiCloudPlatform apiCloudPlatform)
+      throws Exception {
+    String jobId = UUID.randomUUID().toString();
+    ApiCreateCloudContextRequest request =
+        new ApiCreateCloudContextRequest()
+            .cloudPlatform(apiCloudPlatform)
+            .jobControl(new ApiJobControl().id(jobId));
+    String serializedResponse =
+        mockMvcUtils.getSerializedResponseForPost(
+            userRequest,
+            CLOUD_CONTEXTS_V1_CREATE,
+            workspaceId,
+            objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
+  }
+
+  public void createCloudContextAndWait(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, ApiCloudPlatform apiCloudPlatform)
+      throws Exception {
+    ApiCreateCloudContextResult result =
+        createCloudContext(userRequest, workspaceId, apiCloudPlatform);
+    String jobId = result.getJobReport().getId();
+    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
+      TimeUnit.SECONDS.sleep(15);
+      result = createCloudContextResult(userRequest, workspaceId, jobId);
+    }
+    assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
+
+    if (Objects.requireNonNull(apiCloudPlatform) == ApiCloudPlatform.GCP) {
+      logger.info(
+          "Created project %s for workspace %s"
+              .formatted(result.getGcpContext().getProjectId(), workspaceId));
+    }
+  }
+
+  private ApiCreateCloudContextResult createCloudContextResult(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
+    String serializedResponse =
+        mockMvcUtils.getSerializedResponseForGetJobResult(
+            userRequest, CLOUD_CONTEXTS_V1_CREATE_RESULT, workspaceId, jobId);
+    return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
+  }
+
+  public void deleteCloudContext(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, CloudPlatform cloudPlatform)
+      throws Exception {
+    String path = CLOUD_CONTEXTS_V1_CREATE + "/" + cloudPlatform.toString();
+    if (cloudPlatform == CloudPlatform.GCP) {
+      mockMvc
+          .perform(addAuth(delete(path.formatted(workspaceId)), userRequest))
+          .andExpect(status().isNoContent());
+    }
+  }
 
   // Properties
 

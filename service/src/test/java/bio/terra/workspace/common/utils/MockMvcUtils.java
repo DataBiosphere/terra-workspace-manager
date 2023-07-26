@@ -19,24 +19,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
-import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
-import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
-import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
-import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
-import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.generated.model.ApiPrivateResourceState;
@@ -64,16 +58,13 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -146,66 +137,6 @@ public class MockMvcUtils {
     Assertions.fail(
         String.format("Expected OK or ACCEPTED, but received %d; body: %s", statusCode, content));
     return null;
-  }
-
-  public void createCloudContextAndWait(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, ApiCloudPlatform apiCloudPlatform)
-      throws Exception {
-    ApiCreateCloudContextResult result =
-        createCloudContext(userRequest, workspaceId, apiCloudPlatform);
-    String jobId = result.getJobReport().getId();
-    while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      TimeUnit.SECONDS.sleep(15);
-      result = getCreateCloudContextResult(userRequest, workspaceId, jobId);
-    }
-    assertEquals(StatusEnum.SUCCEEDED, result.getJobReport().getStatus());
-
-    if (Objects.requireNonNull(apiCloudPlatform) == ApiCloudPlatform.GCP) {
-      logger.info(
-          "Created project %s for workspace %s"
-              .formatted(result.getGcpContext().getProjectId(), workspaceId));
-    }
-  }
-
-  private ApiCreateCloudContextResult createCloudContext(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, ApiCloudPlatform apiCloudPlatform)
-      throws Exception {
-    String jobId = UUID.randomUUID().toString();
-    ApiCreateCloudContextRequest request =
-        new ApiCreateCloudContextRequest()
-            .cloudPlatform(apiCloudPlatform)
-            .jobControl(new ApiJobControl().id(jobId));
-    String serializedResponse =
-        getSerializedResponseForPost(
-            userRequest, CLOUD_CONTEXTS_V1, workspaceId, objectMapper.writeValueAsString(request));
-    return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
-  }
-
-  private ApiCreateCloudContextResult getCreateCloudContextResult(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
-    String serializedResponse =
-        getSerializedResponseForGetJobResult(
-            userRequest, CLOUD_CONTEXT_V2_CREATE_RESULT, workspaceId, jobId);
-    return objectMapper.readValue(serializedResponse, ApiCreateCloudContextResult.class);
-  }
-
-  public void deleteCloudContext(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, CloudPlatform cloudPlatform)
-      throws Exception {
-    String path = CLOUD_CONTEXTS_V1 + cloudPlatform.toString();
-    if (cloudPlatform == CloudPlatform.GCP) {
-      mockMvc
-          .perform(addAuth(delete(path.formatted(workspaceId)), userRequest))
-          .andExpect(status().isNoContent());
-    }
-  }
-
-  public ApiCloneWorkspaceResult getCloneWorkspaceResult(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String jobId) throws Exception {
-    String serializedResponse =
-        getSerializedResponseForGetJobResult(
-            userRequest, WORKSPACES_V1_CLONE_RESULT, workspaceId, jobId);
-    return objectMapper.readValue(serializedResponse, ApiCloneWorkspaceResult.class);
   }
 
   public void updateWorkspaceProperties(

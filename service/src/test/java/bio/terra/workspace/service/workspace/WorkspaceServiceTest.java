@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.CLOUD_CONTEXTS_V1;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.CLOUD_CONTEXTS_V1_CREATE;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_BY_UFID;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
@@ -706,7 +706,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     mockMvc
         .perform(
             addJsonContentType(
-                    addAuth(post(String.format(CLOUD_CONTEXTS_V1, workspaceId)), USER_REQUEST))
+                    addAuth(
+                        post(String.format(CLOUD_CONTEXTS_V1_CREATE, workspaceId)), USER_REQUEST))
                 .content(objectMapper.writeValueAsString(contextRequest)))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
   }
