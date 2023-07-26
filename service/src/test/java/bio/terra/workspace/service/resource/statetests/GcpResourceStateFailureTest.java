@@ -9,7 +9,7 @@ import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_
 import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
 import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT;
 import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -18,8 +18,8 @@ import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
-import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;

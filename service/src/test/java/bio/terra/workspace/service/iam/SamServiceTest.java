@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.iam;
 
 import static bio.terra.workspace.common.mocks.MockDataRepoApi.CREATE_REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.*;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_GRANT_ROLE;
-import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;

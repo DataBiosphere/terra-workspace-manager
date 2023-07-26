@@ -2,10 +2,10 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT;
 import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addJsonContentType;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.CLOUD_CONTEXTS_V1_CREATE;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.CLOUD_CONTEXTS_V1_CREATE_RESULT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -56,11 +56,11 @@ public class AzureDisabledTest extends BaseConnectedTest {
 
   @Test
   public void azureDisabledTest() throws Exception {
-    Workspace workspace =
-        connectedTestUtils.createWorkspace(userAccessUtils.defaultUserAuthRequest());
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+
+    Workspace workspace = connectedTestUtils.createWorkspace(userRequest);
     UUID workspaceUuid = workspace.getWorkspaceId();
 
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     String fakeJobId = "a pretend job ID";
     ApiCreateCloudContextRequest request =
         new ApiCreateCloudContextRequest()

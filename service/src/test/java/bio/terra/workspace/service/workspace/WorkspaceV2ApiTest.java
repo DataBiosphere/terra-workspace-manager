@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.workspace;
 
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
-import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
