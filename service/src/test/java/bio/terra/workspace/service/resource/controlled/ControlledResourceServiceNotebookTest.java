@@ -46,6 +46,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.Note
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.RetrieveAiNotebookResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.UpdateAiNotebookAttributesStep;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -269,12 +270,18 @@ public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
     retrySteps.put(
         CreateAiNotebookInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
+
+    // The finish step is not undoable, so we make the failure at the penultimate step.
+    Map<String, StepStatus> triggerFailureStep = new HashMap<>();
+    triggerFailureStep.put(
+        UpdateControlledResourceRegionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
+    FlightDebugInfo debugInfo =
         FlightDebugInfo.newBuilder()
-            // Fail after the last step to test that everything is deleted on undo.
-            .lastStepFailure(true)
+            .doStepFailures(triggerFailureStep)
             .undoStepFailures(retrySteps)
-            .build());
+            .build();
+    jobService.setFlightDebugInfoForTest(debugInfo);
 
     // Revoke user's Pet SA access, if they have it. Because these tests re-use a common workspace,
     // the user may have pet SA access enabled prior to this test.
