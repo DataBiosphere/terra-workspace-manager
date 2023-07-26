@@ -170,7 +170,7 @@ public class WorkspaceActivityLogDao {
     if (workspaceIdList.isEmpty()) {
       return Collections.emptyList();
     }
-    
+
     // This is a query that uses group by/max to build a result table of
     // (workspace_id, max(date)) that we self-join to the activity log table
     // to do a bulk retrieval of last-updated information.

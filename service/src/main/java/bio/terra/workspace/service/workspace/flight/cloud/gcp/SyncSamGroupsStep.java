@@ -77,7 +77,8 @@ public class SyncSamGroupsStep implements Step {
                 workspaceRoleGroupMap.get(WsmIamRole.OWNER),
                 workspaceRoleGroupMap.get(WsmIamRole.WRITER),
                 workspaceRoleGroupMap.get(WsmIamRole.READER),
-                workspaceRoleGroupMap.get(WsmIamRole.APPLICATION)),
+                workspaceRoleGroupMap.get(WsmIamRole.APPLICATION),
+                null), // TODO:dd
             new CloudContextCommonFields(
                 spendProfile.id(),
                 WsmResourceState.CREATING,

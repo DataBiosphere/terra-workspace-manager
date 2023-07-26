@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -20,6 +21,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.GcpRegionZone;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import java.util.Optional;
@@ -137,5 +139,25 @@ public class GcpCloudContextUnitTest extends BaseUnitTest {
     Mockito.when(mockResourceManager.projects().get(any()).execute())
         .thenReturn(new Project().setState("DELETE_IN_PROGRESS"));
     Mockito.when(mockCrlService().getCloudResourceManagerCow()).thenReturn(mockResourceManager);
+  }
+
+  @Test
+  void testFromLocation() {
+    String first = "us-central1";
+    String second = "us-central1-a";
+    String third = "foobarfoobar";
+
+    GcpRegionZone rz = GcpRegionZone.fromLocation(first);
+    System.out.printf("Region: %s  Zone: %s%n", rz.getRegion(), rz.getZone());
+    assertEquals(first, rz.getRegion());
+    assertTrue(rz.getZone().isEmpty());
+
+    GcpRegionZone rz2 = GcpRegionZone.fromLocation(first);
+    System.out.printf("Region: %s  Zone: %s%n", rz2.getRegion(), rz2.getZone());
+    assertEquals(first, rz.getRegion());
+    assertTrue(rz.getZone().isPresent());
+    assertEquals(second, rz.getZone().get());
+
+    assertThrows(ValidationException.class, () -> GcpRegionZone.fromLocation(third));
   }
 }

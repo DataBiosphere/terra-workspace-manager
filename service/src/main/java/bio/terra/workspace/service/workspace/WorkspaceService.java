@@ -4,6 +4,7 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.SPEND_PROFILE;
 
+import bio.terra.common.exception.ValidationException;
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoDescription;
@@ -16,9 +17,12 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ApplicationDao;
+import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.db.model.DbWorkspace;
+import bio.terra.workspace.db.model.DbWorkspaceContextPair;
 import bio.terra.workspace.db.model.DbWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -53,14 +57,19 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.GcpCloudContextFields;
+import bio.terra.workspace.service.workspace.model.GcpRegionZone;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -92,6 +101,7 @@ public class WorkspaceService {
   private final TpsApiDispatch tpsApiDispatch;
   private final PolicyValidator policyValidator;
   private final FeatureConfiguration features;
+  private final GcpCloudContextService gcpCloudContextService;
 
   @Autowired
   public WorkspaceService(
@@ -104,7 +114,8 @@ public class WorkspaceService {
       WorkspaceActivityLogService workspaceActivityLogService,
       TpsApiDispatch tpsApiDispatch,
       PolicyValidator policyValidator,
-      FeatureConfiguration features) {
+      FeatureConfiguration features,
+      GcpCloudContextService gcpCloudContextService) {
     this.jobService = jobService;
     this.applicationDao = applicationDao;
     this.workspaceDao = workspaceDao;
@@ -115,6 +126,7 @@ public class WorkspaceService {
     this.tpsApiDispatch = tpsApiDispatch;
     this.policyValidator = policyValidator;
     this.features = features;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
@@ -948,5 +960,78 @@ public class WorkspaceService {
       }
       return result;
     }
+  }
+
+  /** Update all GcpCloudContextV2 to V3 */
+  public void backfillGcpCloudContextV2() {
+    // Get the update targets
+    List<DbWorkspaceContextPair> pairs = workspaceDao.backfillGetGcpCloudContextV2();
+
+    // For each, compute the target zone and update the cloud context
+    for (DbWorkspaceContextPair pair : pairs) {
+      backfillOneGcpCloudContextV2(
+          pair.dbWorkspace(), Objects.requireNonNull(pair.dbCloudContext()));
+    }
+  }
+
+  private void backfillOneGcpCloudContextV2(
+      DbWorkspace dbWorkspace, DbCloudContext dbCloudContext) {
+    // Build the V2 cloud context from the context string. We know these are all GCP V2 contexts,
+    // because that is what the DAO is returning. IntelliJ thinks the context can be null, but in
+    // this case, it is never null.
+    GcpCloudContextFields.GcpCloudContextV2 v2Context =
+        DbSerDes.fromJson(
+            dbCloudContext.getContextJson(), GcpCloudContextFields.GcpCloudContextV2.class);
+
+    // Compute the default zone for the project. If the workspace properties have a default location
+    // set,
+    // we start with that. If not, we use the static default. It is possible that the property is
+    // not a
+    // valid location. If that is the case, use the static default.
+    String defaultLocationProperty =
+        dbWorkspace.getProperties().get(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION);
+    String zone = GcpCloudContextFields.GCP_CONTEXT_DEFAULT_ZONE;
+    if (defaultLocationProperty != null) {
+      try {
+        GcpRegionZone rz =
+            gcpCloudContextService.validateRegionAndZone(
+                v2Context.gcpProjectId, defaultLocationProperty);
+        if (rz.getZone().isEmpty()) {
+          throw new InternalLogicException("Zone should not be empty in this context");
+        }
+        zone = rz.getZone().get();
+      } catch (IOException e) {
+        // IOException is problematic here; it means something went wrong talking to GCP.
+        // We can't sort out whether that is a GCP issue or that something is wrong with the
+        // property.
+        // We assume it is an input problem and cross our fingers...
+        logger.error(
+            String.format(
+                "CRL failed to resolve location %s in project %s workspace %s. Using system default zone",
+                defaultLocationProperty, v2Context.gcpProjectId, dbWorkspace.getWorkspaceId()),
+            e);
+      } catch (ValidationException e) {
+        // This is not ambiguous. The default location is invalid.
+        logger.error(
+            String.format(
+                "Location property %s is invalid in workspace %s. Using system default zone",
+                defaultLocationProperty, dbWorkspace.getWorkspaceId()),
+            e);
+      }
+    }
+
+    // Construct the cloud context and serialize it to V3
+    GcpCloudContextFields cloudContextFields =
+        new GcpCloudContextFields(
+            v2Context.gcpProjectId,
+            v2Context.samPolicyOwner,
+            v2Context.samPolicyWriter,
+            v2Context.samPolicyReader,
+            v2Context.samPolicyApplication,
+            zone);
+    String v3Context = cloudContextFields.serialize();
+    workspaceDao.updateCloudContext(dbWorkspace.getWorkspaceId(), CloudPlatform.GCP, v3Context);
+
+    // TODO: NEED TO UPDATE THE WORKSPACE PROPERTY WITH THE NEW VALUE
   }
 }

@@ -6,6 +6,7 @@ import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ConflictException;
 import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
@@ -175,12 +176,17 @@ public class GcpUtils {
   }
 
   /**
-   * Extract the region part from the given location string. If the string is a region, return that.
-   * If the string looks like a zone, return just the region part. Basically, remove any trailing
-   * "-[a-z]".
+   * Extract the name from a network URL like
+   * "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/global/networks/{NAME}" or route
+   * URL like "https://www.googleapis.com/compute/v1/projects/{PROJECT_ID}/regions/{REGION_NAME}"
    */
-  public static String parseRegion(String location) {
-    return location.replaceAll("(?!^)-[a-zA-Z]$", "");
+  public static String extractNameFromUrl(String url) {
+    int lastSlashIndex = url.lastIndexOf('/');
+    if (lastSlashIndex == -1) {
+      throw new InternalServerErrorException(
+          String.format("Unable to extract resource name from '%s'", url));
+    }
+    return url.substring(lastSlashIndex + 1);
   }
 
   // Methods for building member strings using in GCP IAM bindings

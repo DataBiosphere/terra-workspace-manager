@@ -74,7 +74,12 @@ public class WorkspaceUnitTestUtils {
         CloudPlatform.GCP,
         new GcpCloudContext(
                 new GcpCloudContextFields(
-                    projectId, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
+                    projectId,
+                    POLICY_OWNER,
+                    POLICY_WRITER,
+                    POLICY_READER,
+                    POLICY_APPLICATION,
+                    null /*TODO:dd */),
                 new CloudContextCommonFields(
                     SPEND_PROFILE_ID, WsmResourceState.CREATING, flightId, /*error=*/ null))
             .serialize(),

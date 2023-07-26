@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.common.exception.ValidationException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -33,13 +35,18 @@ import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCl
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.GcpRegionZone;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import com.google.api.services.compute.model.Zone;
+import com.google.api.services.compute.model.ZoneList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -58,13 +65,18 @@ public class GcpCloudContextService implements CloudContextService {
   private final WorkspaceDao workspaceDao;
   private final ResourceDao resourceDao;
   private final JobService jobService;
+  private final CrlService crlService;
 
   @Autowired
   public GcpCloudContextService(
-      WorkspaceDao workspaceDao, ResourceDao resourceDao, JobService jobService) {
+      WorkspaceDao workspaceDao,
+      ResourceDao resourceDao,
+      JobService jobService,
+      CrlService crlService) {
     this.workspaceDao = workspaceDao;
     this.resourceDao = resourceDao;
     this.jobService = jobService;
+    this.crlService = crlService;
   }
 
   // Set up static accessor for use by CloudPlatform
@@ -247,5 +259,42 @@ public class GcpCloudContextService implements CloudContextService {
   public String getRequiredReadyGcpProject(UUID workspaceUuid) {
     GcpCloudContext cloudContext = getRequiredReadyGcpCloudContext(workspaceUuid);
     return cloudContext.getGcpProjectId();
+  }
+
+  /**
+   * Ensure the region is accessible to this project If zone is specified, ensure zone is valid If
+   * zone does not exist, provide a default zone
+   *
+   * @param projectId project id of the cloud context
+   * @param location that should be a valid GCP region or region-with-zone
+   * @return GcpRegionZone object
+   */
+  public GcpRegionZone validateRegionAndZone(String projectId, String location) throws IOException {
+    GcpRegionZone regionZone = GcpRegionZone.fromLocation(location.toLowerCase());
+    ZoneList zoneList = crlService.getCloudComputeCow().zones().list(projectId).execute();
+    List<Zone> zonesInRegion =
+        zoneList.getItems().stream()
+            .filter(
+                zone ->
+                    GcpUtils.extractNameFromUrl(zone.getRegion())
+                        .equalsIgnoreCase(regionZone.getRegion()))
+            .toList();
+    if (zonesInRegion.isEmpty()) {
+      throw new ValidationException("Invalid or inaccessible GCP region specified");
+    }
+
+    if (regionZone.getZone().isEmpty()) {
+      // No zone - we sort the list, grab the first on the list, and return a new GcpRegionZone.
+      Optional<Zone> firstZone = zonesInRegion.stream().sorted().findFirst();
+      return GcpRegionZone.fromLocation(firstZone.get().getName());
+    }
+
+    // A zone was specified. Make sure it is valid.
+    for (Zone zone : zonesInRegion) {
+      if (StringUtils.equals(zone.getName(), regionZone.getZone().get())) {
+        return GcpRegionZone.fromLocation(zone.getName());
+      }
+    }
+    throw new ValidationException("Invalid zone specified");
   }
 }

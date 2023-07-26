@@ -1118,4 +1118,22 @@ public class WorkspaceDao {
         """;
     jdbcTemplate.update(sql, new MapSqlParameterSource());
   }
+
+  /**
+   * Collect all GCP cloud contexts that need to be updated
+   *
+   * <p>TODO: PF-2869 remove this backfill
+   */
+  @ReadTransaction
+  public List<DbWorkspaceContextPair> backfillGetGcpCloudContextV2() {
+    String needsUpdateListSql =
+        WORKSPACE_CONTEXT_SELECT
+            + """
+    WHERE C.cloud_platform = :gcp_cloud_platform AND (C.context->'version')::int = 2
+    """;
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("gcp_cloud_platform", CloudPlatform.GCP.toSql());
+
+    return jdbcTemplate.query(needsUpdateListSql, params, WORKSPACE_CONTEXT_ROW_MAPPER);
+  }
 }

@@ -368,7 +368,12 @@ class WorkspaceDaoTest extends BaseUnitTest {
   private GcpCloudContext makeCloudContext() {
     return new GcpCloudContext(
         new GcpCloudContextFields(
-            PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
+            PROJECT_ID,
+            POLICY_OWNER,
+            POLICY_WRITER,
+            POLICY_READER,
+            POLICY_APPLICATION,
+            null /*TODO:dd */),
         new CloudContextCommonFields(
             SPEND_PROFILE_ID, WsmResourceState.READY, /*flightId=*/ null, /*error=*/ null));
   }

@@ -8,7 +8,6 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
-import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
@@ -20,6 +19,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.model.GcpRegionZone;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -153,7 +153,7 @@ public class ResourceValidationUtils {
       TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String region, CloudPlatform platform) {
     switch (platform) {
       case GCP -> validateRegion(
-          tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(region), platform);
+          tpsApiDispatch, workspaceUuid, GcpRegionZone.fromLocation(region).getRegion(), platform);
       case AZURE, AWS -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
       case ANY -> {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.
