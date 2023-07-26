@@ -141,7 +141,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     try {
       if (workspaceId != null) {
         int status =
-            mockMvcUtils.deleteWorkspaceNoCheck(
+            mockWorkspaceV1Api.deleteWorkspaceIfExists(
                 userAccessUtils.defaultUserAuthRequest(), workspaceId);
         assertTrue(
             status == HttpStatus.NO_CONTENT.value() || status == HttpStatus.NOT_FOUND.value());
@@ -149,7 +149,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
       }
       if (workspaceId2 != null) {
         int status =
-            mockMvcUtils.deleteWorkspaceNoCheck(
+            mockWorkspaceV1Api.deleteWorkspaceIfExists(
                 userAccessUtils.defaultUserAuthRequest(), workspaceId2);
         assertTrue(
             status == HttpStatus.NO_CONTENT.value() || status == HttpStatus.NOT_FOUND.value());
@@ -193,7 +193,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
     ApiErrorReport errorReport = objectMapper.readValue(errorResponseString, ApiErrorReport.class);
     assertEquals(HttpStatus.NOT_FOUND.value(), errorReport.getStatusCode());
 
-    mockMvcUtils.deleteWorkspace(userRequest, workspaceId);
+    mockWorkspaceV1Api.deleteWorkspace(userRequest, workspaceId);
     workspaceId = null;
 
     // Check that project is now being deleted.

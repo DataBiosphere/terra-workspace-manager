@@ -163,7 +163,7 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
 
     // Assert dest workspace policy is reduced to the narrower region.
     ApiWorkspaceDescription destWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     assertThat(
         destWorkspace.getPolicies(),
         containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA, PolicyFixtures.GROUP_POLICY_DEFAULT));

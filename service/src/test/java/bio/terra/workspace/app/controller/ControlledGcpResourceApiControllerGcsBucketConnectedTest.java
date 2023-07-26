@@ -196,11 +196,11 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     mockMvcUtils.createCloudContextAndWait(defaultUserRequest, workspaceId2, apiCloudPlatform);
 
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     projectId = workspace.getGcpContext().getProjectId();
 
     ApiWorkspaceDescription workspace2 =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     projectId2 = workspace2.getGcpContext().getProjectId();
 
     // Wait for both users to have permission in both projects
@@ -798,7 +798,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         /*destLocation*/ null);
 
     // Assert dest workspace policy is reduced to the narrower region.
-    ApiWorkspaceDescription destWorkspace = mockMvcUtils.getWorkspace(userRequest, workspaceId2);
+    ApiWorkspaceDescription destWorkspace =
+        mockWorkspaceV1Api.getWorkspace(userRequest, workspaceId2);
     assertThat(
         destWorkspace.getPolicies(), containsInAnyOrder(PolicyFixtures.REGION_POLICY_NEVADA));
     Assertions.assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));

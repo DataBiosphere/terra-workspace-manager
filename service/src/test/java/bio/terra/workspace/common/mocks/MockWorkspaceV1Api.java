@@ -1,18 +1,28 @@
 package bio.terra.workspace.common.mocks;
 
+import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
+import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
+import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
@@ -20,11 +30,14 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 @Component
 public class MockWorkspaceV1Api {
@@ -165,6 +178,105 @@ public class MockWorkspaceV1Api {
     UUID resultWorkspaceId = createWorkspaceWithRegionConstraint(userRequest, regionName);
     mockMvcUtils.createCloudContextAndWait(userRequest, resultWorkspaceId, apiCloudPlatform);
     return resultWorkspaceId;
+  }
+
+  public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    mockMvc
+        .perform(addAuth(delete(String.format(WORKSPACES_V1, workspaceId)), userRequest))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+    mockMvc
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceId)), userRequest))
+        .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
+  }
+
+  public int deleteWorkspaceIfExists(AuthenticatedUserRequest userRequest, UUID workspaceId)
+      throws Exception {
+    MvcResult mvcResult =
+        mockMvc
+            .perform(addAuth(delete(String.format(WORKSPACES_V1, workspaceId)), userRequest))
+            .andReturn();
+    return mvcResult.getResponse().getStatus();
+  }
+
+  public ApiWorkspaceDescription getWorkspace(
+      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
+    String serializedResponse =
+        mockMvcUtils.getSerializedResponseForGet(userRequest, WORKSPACES_V1, workspaceId);
+    return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
+  }
+
+  public ApiWorkspaceDescription updateWorkspace(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      @Nullable String newUserFacingId,
+      @Nullable String newDisplayName,
+      @Nullable String newDescription)
+      throws Exception {
+    ApiUpdateWorkspaceRequestBody requestBody = new ApiUpdateWorkspaceRequestBody();
+    if (newUserFacingId != null) {
+      requestBody.userFacingId(newUserFacingId);
+    }
+    if (newDisplayName != null) {
+      requestBody.displayName(newDisplayName);
+    }
+    if (newDescription != null) {
+      requestBody.description(newDescription);
+    }
+
+    String serializedResponse =
+        mockMvc
+            .perform(
+                addAuth(
+                    patch(String.format(WORKSPACES_V1, workspaceId))
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(objectMapper.writeValueAsString(requestBody)),
+                    USER_REQUEST))
+            .andExpect(status().is(HttpStatus.SC_OK))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiWorkspaceDescription.class);
+  }
+
+  public ApiCloneWorkspaceResult cloneWorkspace(
+      AuthenticatedUserRequest userRequest,
+      UUID sourceWorkspaceId,
+      String spendProfile,
+      @Nullable ApiWsmPolicyInputs policiesToAdd,
+      @Nullable UUID destinationWorkspaceId)
+      throws Exception {
+    ApiCloneWorkspaceRequest request =
+        new ApiCloneWorkspaceRequest()
+            .destinationWorkspaceId(destinationWorkspaceId)
+            .spendProfile(spendProfile)
+            .additionalPolicies(policiesToAdd);
+    String serializedResponse =
+        mockMvcUtils.getSerializedResponseForPost(
+            userRequest,
+            WORKSPACES_V1_CLONE,
+            sourceWorkspaceId,
+            objectMapper.writeValueAsString(request));
+    ApiCloneWorkspaceResult cloneWorkspace =
+        objectMapper.readValue(serializedResponse, ApiCloneWorkspaceResult.class);
+    if (destinationWorkspaceId == null) {
+      destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
+    }
+
+    // Wait for the clone to complete
+    String jobId = cloneWorkspace.getJobReport().getId();
+    while (StairwayTestUtils.jobIsRunning(cloneWorkspace.getJobReport())) {
+      TimeUnit.SECONDS.sleep(5);
+      serializedResponse =
+          mockMvcUtils.getSerializedResponseForGetJobResult(
+              userRequest, WORKSPACES_V1_CLONE_RESULT, destinationWorkspaceId, jobId);
+      cloneWorkspace = objectMapper.readValue(serializedResponse, ApiCloneWorkspaceResult.class);
+    }
+    assertEquals(StatusEnum.SUCCEEDED, cloneWorkspace.getJobReport().getStatus());
+
+    return cloneWorkspace;
   }
 
   // Cloud context

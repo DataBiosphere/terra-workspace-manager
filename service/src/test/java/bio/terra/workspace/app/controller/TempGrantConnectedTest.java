@@ -74,7 +74,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
@@ -109,7 +109,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
@@ -133,7 +133,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);

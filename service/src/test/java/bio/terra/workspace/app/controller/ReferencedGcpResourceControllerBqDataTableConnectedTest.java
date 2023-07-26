@@ -84,7 +84,7 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     projectId = workspace.getGcpContext().getProjectId();
     workspaceId2 =
         mockWorkspaceV1Api
@@ -434,7 +434,7 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
 
     // Assert dest workspace policy is reduced to the narrower region.
     ApiWorkspaceDescription destWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     assertThat(
         destWorkspace.getPolicies(),
         containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA, PolicyFixtures.GROUP_POLICY_DEFAULT));

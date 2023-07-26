@@ -179,7 +179,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     ApiWorkspaceDescription getWorkspace =
-        mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
     assertEquals(WORKSPACE_NAME, getWorkspace.getDisplayName());
     assertEquals(
         WorkspaceFixtures.getUserFacingId(workspace.getId()), getWorkspace.getUserFacingId());
@@ -200,7 +200,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     String newDisplayName = "new workspace display name";
     String newDescription = "new description for the workspace";
     ApiWorkspaceDescription updatedWorkspace =
-        mockMvcUtils.updateWorkspace(
+        mockWorkspaceV1Api.updateWorkspace(
             USER_REQUEST, workspace.getId(), newUserFacingId, newDisplayName, newDescription);
 
     // Assert updated workspace
@@ -218,7 +218,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     when(mockSamService().getUserStatusInfo(any())).thenReturn(newUser);
     String secondNewDescription = "This is yet another description";
     ApiWorkspaceDescription secondUpdatedWorkspace =
-        mockMvcUtils.updateWorkspace(
+        mockWorkspaceV1Api.updateWorkspace(
             USER_REQUEST,
             workspace.getId(),
             /*newUserFacingId=*/ null,
@@ -252,7 +252,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         USER_REQUEST, workspaceId, List.of(Properties.TYPE, "userkey"));
 
     // Assert remaining 2 properties
-    ApiWorkspaceDescription gotWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
+    ApiWorkspaceDescription gotWorkspace =
+        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspaceId);
     assertProperties(
         List.of(SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY), gotWorkspace.getProperties());
 
@@ -280,7 +281,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         USER_REQUEST, workspaceId, List.of(newUserProperty, fooProperty));
 
     // Assert 5 properties.
-    ApiWorkspaceDescription gotWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
+    ApiWorkspaceDescription gotWorkspace =
+        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspaceId);
     assertProperties(
         List.of(
             SHORT_DESCRIPTION_PROPERTY,
@@ -306,16 +308,17 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
 
     UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-    ApiWorkspaceDescription sourceWorkspace = mockMvcUtils.getWorkspace(USER_REQUEST, workspaceId);
+    ApiWorkspaceDescription sourceWorkspace =
+        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspaceId);
 
     ApiCloneWorkspaceResult cloneWorkspace =
-        mockMvcUtils.cloneWorkspace(
+        mockWorkspaceV1Api.cloneWorkspace(
             USER_REQUEST, workspaceId, DEFAULT_SPEND_PROFILE_NAME, null, null);
     jobService.waitForJob(cloneWorkspace.getJobReport().getId());
 
     UUID destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
     ApiWorkspaceDescription destinationWorkspace =
-        mockMvcUtils.getWorkspace(USER_REQUEST, destinationWorkspaceId);
+        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, destinationWorkspaceId);
 
     assertEquals(sourceWorkspace.getProperties(), destinationWorkspace.getProperties());
     assertEquals(
@@ -373,7 +376,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     UUID destinationWorkspaceId = UUID.randomUUID();
 
     ApiCloneWorkspaceResult cloneWorkspace =
-        mockMvcUtils.cloneWorkspace(
+        mockWorkspaceV1Api.cloneWorkspace(
             USER_REQUEST,
             sourceWorkspaceId,
             DEFAULT_SPEND_PROFILE_NAME,
@@ -417,7 +420,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         .thenReturn(getPolicyResult);
 
     ApiWorkspaceDescription gotWorkspace =
-        mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
     assertEquals(1, gotWorkspace.getPolicies().size());
     // The workspace polices from the REST API are in "ApiTps*" form.
     // So we have to convert from TPS form to API form to compare.
@@ -433,7 +436,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
 
     ApiWorkspaceDescription gotWorkspace =
-        mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
     assertEquals(0, gotWorkspace.getPolicies().size());
   }
 
@@ -516,7 +519,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
                     workspace.getId(), WsmIamRole.OWNER, Collections.emptyList())));
 
     ApiWorkspaceDescription gotWorkspace =
-        mockMvcUtils.getWorkspace(USER_REQUEST, workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
     assertEquals(0, gotWorkspace.getPolicies().size());
   }
 

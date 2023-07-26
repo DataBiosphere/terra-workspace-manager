@@ -77,9 +77,9 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   @AfterEach
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), sourceWorkspaceId);
+    mockWorkspaceV1Api.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), sourceWorkspaceId);
     if (destinationWorkspaceId != null) {
-      mockMvcUtils.deleteWorkspace(
+      mockWorkspaceV1Api.deleteWorkspace(
           userAccessUtils.defaultUserAuthRequest(), destinationWorkspaceId);
     }
   }
@@ -225,7 +225,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
   private void checkRegionPolicy(UUID workspaceUuid, List<String> expectedRegions)
       throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
 
     List<ApiWsmPolicyInput> policies = workspaceDescription.getPolicies();
     ApiWsmPolicyInput regionPolicy =
@@ -246,7 +246,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   private void checkGroupPolicy(UUID workspaceUuid, List<String> expectedGroups) throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
 
     List<ApiWsmPolicyInput> policies = workspaceDescription.getPolicies();
     ApiWsmPolicyInput groupPolicy =
@@ -321,7 +321,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     workspaceSetup(cloningInstructions);
 
     destinationWorkspaceId = UUID.randomUUID();
-    mockMvcUtils.cloneWorkspace(
+    mockWorkspaceV1Api.cloneWorkspace(
         userAccessUtils.defaultUserAuthRequest(),
         sourceWorkspaceId,
         "wm-default-spend-profile",
@@ -339,7 +339,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     workspaceSetup(cloningInstructions);
 
     destinationWorkspaceId = UUID.randomUUID();
-    mockMvcUtils.cloneWorkspace(
+    mockWorkspaceV1Api.cloneWorkspace(
         userAccessUtils.defaultUserAuthRequest(),
         sourceWorkspaceId,
         "wm-default-spend-profile",

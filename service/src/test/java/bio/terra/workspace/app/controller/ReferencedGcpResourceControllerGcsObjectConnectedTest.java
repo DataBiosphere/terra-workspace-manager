@@ -393,7 +393,8 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         destResourceName);
 
     // Assert dest workspace policy is reduced to the narrower region.
-    ApiWorkspaceDescription destWorkspace = mockMvcUtils.getWorkspace(userRequest, workspaceId2);
+    ApiWorkspaceDescription destWorkspace =
+        mockWorkspaceV1Api.getWorkspace(userRequest, workspaceId2);
     assertThat(
         destWorkspace.getPolicies(),
         containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA, PolicyFixtures.GROUP_POLICY_DEFAULT));
