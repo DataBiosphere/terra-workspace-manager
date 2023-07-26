@@ -6,6 +6,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -38,6 +39,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
@@ -67,12 +69,12 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   @Test
   public void setupAndWaitBucket() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
@@ -102,12 +104,12 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   @Test
   public void setupAndWaitNotebook() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
@@ -126,12 +128,12 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   @Test
   public void setupAndWaitBigQuery() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);

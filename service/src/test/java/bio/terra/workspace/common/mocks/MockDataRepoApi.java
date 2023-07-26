@@ -28,6 +28,7 @@ public class MockDataRepoApi {
       REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT + "/clone";
 
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private ObjectMapper objectMapper;
 
   public ApiDataRepoSnapshotResource createReferencedDataRepoSnapshot(
@@ -58,7 +59,7 @@ public class MockDataRepoApi {
 
   public void deleteReferencedDataRepoSnapshot(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    mockMvcUtils.deleteResource(
+    mockWorkspaceV1Api.deleteResource(
         userRequest, workspaceId, resourceId, REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT);
   }
 
@@ -123,7 +124,7 @@ public class MockDataRepoApi {
       int expectedCode)
       throws Exception {
     MockHttpServletResponse response =
-        mockMvcUtils.cloneReferencedResource(
+        mockWorkspaceV1Api.cloneReferencedResourceAndExpect(
             userRequest,
             CLONE_REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT,
             sourceWorkspaceId,

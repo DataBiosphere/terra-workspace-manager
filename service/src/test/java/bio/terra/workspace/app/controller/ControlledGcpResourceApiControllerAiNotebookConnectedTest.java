@@ -8,6 +8,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -46,6 +47,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired UserAccessUtils userAccessUtils;
@@ -56,7 +58,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
   @BeforeAll
   public void setup() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
@@ -80,7 +82,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
 
   @Test
   public void createAiNotebookInstance_correctZone() throws Exception {
-    mockMvcUtils.updateWorkspaceProperties(
+    mockWorkspaceV1Api.updateWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(
@@ -116,7 +118,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
         userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getDefaultUserEmail());
 
-    mockMvcUtils.deleteWorkspaceProperties(
+    mockWorkspaceV1Api.deleteWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION));

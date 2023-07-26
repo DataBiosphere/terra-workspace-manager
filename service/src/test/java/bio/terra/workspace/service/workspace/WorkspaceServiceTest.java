@@ -1,9 +1,9 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_CLOUD_CONTEXT_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.CLOUD_CONTEXTS_V1_CREATE;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_BY_UFID;
 import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
@@ -30,6 +30,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -69,6 +70,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -159,10 +161,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, UUID.randomUUID())),
-                USER_REQUEST))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, UUID.randomUUID())), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 
@@ -175,10 +174,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, request.getWorkspaceId())),
-                USER_REQUEST))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, request.getWorkspaceId())), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }
 
@@ -212,9 +208,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .checkAuthz(any(), any(), any(), any());
     mockMvc
         .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, "missing-workspace")),
-                USER_REQUEST))
+            addAuth(get(String.format(WORKSPACES_V1_BY_UFID, "missing-workspace")), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 
@@ -229,9 +223,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId)), USER_REQUEST))
+        .perform(addAuth(get(String.format(WORKSPACES_V1_BY_UFID, userFacingId)), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     assertThrows(
         ForbiddenException.class,
@@ -280,6 +272,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void duplicateWorkspaceIdRequestsRejected() {
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(request, null, null, null, USER_REQUEST);
+
     Workspace duplicateWorkspace =
         WorkspaceFixtures.defaultWorkspaceBuilder(request.getWorkspaceId())
             .description("slightly different workspace")
@@ -363,9 +356,12 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void testUpdateWorkspace() {
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
     workspaceService.createWorkspace(request, null, null, null, USER_REQUEST);
+
     UUID workspaceUuid = request.getWorkspaceId();
-    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
+    Optional<ActivityLogChangeDetails> lastUpdateDetails =
+        workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(lastUpdateDetails.isPresent());
+
     Workspace createdWorkspace = workspaceService.getWorkspace(request.getWorkspaceId());
     assertEquals(request.getWorkspaceId(), createdWorkspace.getWorkspaceId());
     assertTrue(createdWorkspace.getDisplayName().isEmpty());
@@ -380,7 +376,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             workspaceUuid, userFacingId, name, description, USER_REQUEST);
     Workspace updatedWorkspace = updatedWorkspaceDescription.workspace();
 
-    var workspaceUpdateChangeDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
+    Optional<ActivityLogChangeDetails> workspaceUpdateChangeDetails =
+        workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
         lastUpdateDetails
             .get()
@@ -401,7 +398,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.updateWorkspace(
             workspaceUuid, /*userFacingId=*/ null, /*name=*/ null, otherDescription, USER_REQUEST);
     Workspace secondUpdatedWorkspace = secondUpdatedWorkspaceDescription.workspace();
-    var secondUpdateChangeDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
+    Optional<ActivityLogChangeDetails> secondUpdateChangeDetails =
+        workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
         workspaceUpdateChangeDetails
             .get()
@@ -420,7 +418,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         workspaceService.updateWorkspace(workspaceUuid, userFacingId, "", "", USER_REQUEST);
     Workspace thirdUpdatedWorkspace = thirdUpdatedWorkspaceDescription.workspace();
 
-    var thirdUpdatedDateAfterWorkspaceUpdate =
+    Optional<ActivityLogChangeDetails> thirdUpdatedDateAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
         secondUpdateChangeDetails
@@ -442,7 +440,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
                 /*name=*/ null,
                 /*description=*/ null,
                 USER_REQUEST));
-    var failedUpdateDate = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
+    Optional<ActivityLogChangeDetails> failedUpdateDate =
+        workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertEquals(
         thirdUpdatedDateAfterWorkspaceUpdate.get().changeDate(),
         failedUpdateDate.get().changeDate());
@@ -483,7 +482,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     Workspace request = WorkspaceFixtures.defaultWorkspaceBuilder(null).build();
     workspaceService.createWorkspace(request, null, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
-    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
+    Optional<ActivityLogChangeDetails> lastUpdateDetails =
+        workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     OffsetDateTime lastUpdatedDate = lastUpdateDetails.get().changeDate();
     assertNotNull(lastUpdatedDate);
 
@@ -491,7 +491,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.updateWorkspaceProperties(workspaceUuid, propertyMap, USER_REQUEST);
     Workspace updatedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
-    var updateDetailsAfterWorkspaceUpdate =
+    Optional<ActivityLogChangeDetails> updateDetailsAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(lastUpdatedDate.isBefore(updateDetailsAfterWorkspaceUpdate.get().changeDate()));
     assertEquals(
@@ -606,7 +606,8 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         WorkspaceFixtures.defaultWorkspaceBuilder(null).properties(propertyMap).build();
     workspaceService.createWorkspace(request, null, null, null, USER_REQUEST);
     UUID workspaceUuid = request.getWorkspaceId();
-    var lastUpdateDetails = workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
+    Optional<ActivityLogChangeDetails> lastUpdateDetails =
+        workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(lastUpdateDetails.isPresent());
 
     List<String> propertyKeys = new ArrayList<>(Arrays.asList("foo", "foo1"));
@@ -614,7 +615,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.deleteWorkspaceProperties(workspaceUuid, propertyKeys, USER_REQUEST);
     Workspace deletedWorkspace = workspaceService.getWorkspace(workspaceUuid);
 
-    var updateDetailsAfterWorkspaceUpdate =
+    Optional<ActivityLogChangeDetails> updateDetailsAfterWorkspaceUpdate =
         workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(
         lastUpdateDetails
@@ -634,10 +635,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .when(mockSamService)
         .checkAuthz(any(), any(), any(), any());
     mockMvc
-        .perform(
-            addAuth(
-                delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, UUID.randomUUID())),
-                USER_REQUEST))
+        .perform(addAuth(delete(String.format(WORKSPACES_V1, UUID.randomUUID())), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_NOT_FOUND));
   }
 
@@ -652,9 +650,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
     mockMvc
         .perform(
-            addAuth(
-                delete(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, request.getWorkspaceId())),
-                USER_REQUEST))
+            addAuth(delete(String.format(WORKSPACES_V1, request.getWorkspaceId())), USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }
 
@@ -711,8 +707,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
         .perform(
             addJsonContentType(
                     addAuth(
-                        post(String.format(CREATE_CLOUD_CONTEXT_PATH_FORMAT, workspaceId)),
-                        USER_REQUEST))
+                        post(String.format(CLOUD_CONTEXTS_V1_CREATE, workspaceId)), USER_REQUEST))
                 .content(objectMapper.writeValueAsString(contextRequest)))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
   }

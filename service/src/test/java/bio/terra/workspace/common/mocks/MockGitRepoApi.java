@@ -28,6 +28,7 @@ public class MockGitRepoApi {
       REFERENCED_GIT_REPOS_PATH_FORMAT + "/clone";
 
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private ObjectMapper objectMapper;
 
   public ApiGitRepoResource createReferencedGitRepo(
@@ -54,7 +55,7 @@ public class MockGitRepoApi {
 
   public void deleteReferencedGitRepo(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    mockMvcUtils.deleteResource(
+    mockWorkspaceV1Api.deleteResource(
         userRequest, workspaceId, resourceId, REFERENCED_GIT_REPOS_PATH_FORMAT);
   }
 
@@ -88,7 +89,7 @@ public class MockGitRepoApi {
     if (cloningInstructionsEnum != null) {
       requestBody.cloningInstructions(cloningInstructionsEnum);
     }
-    return mockMvcUtils.updateResource(
+    return mockWorkspaceV1Api.updateResourceAndExpect(
         ApiGitRepoResource.class,
         REFERENCED_GIT_REPOS_PATH_FORMAT,
         workspaceId,
@@ -126,7 +127,7 @@ public class MockGitRepoApi {
       int expectedCode)
       throws Exception {
     MockHttpServletResponse response =
-        mockMvcUtils.cloneReferencedResource(
+        mockWorkspaceV1Api.cloneReferencedResourceAndExpect(
             userRequest,
             CLONE_REFERENCED_GIT_REPOS_PATH_FORMAT,
             sourceWorkspaceId,

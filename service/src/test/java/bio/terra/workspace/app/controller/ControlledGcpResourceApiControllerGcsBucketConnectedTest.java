@@ -26,6 +26,7 @@ import bio.terra.workspace.common.GcsBucketUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.GcpTestUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -118,6 +119,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
@@ -173,31 +175,33 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     AuthenticatedUserRequest defaultUserRequest =
         userAccessUtils.defaultUser().getAuthenticatedRequest();
 
-    workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
-    workspaceId2 = mockMvcUtils.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
+    workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
+    workspaceId2 =
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
 
     // Setup 2nd user
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         defaultUserRequest,
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.secondUser().getEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         defaultUserRequest,
         workspaceId2,
         WsmIamRole.READER,
         userAccessUtils.secondUser().getEmail());
 
     // Create the cloud contexts
-    mockMvcUtils.createCloudContextAndWait(defaultUserRequest, workspaceId, apiCloudPlatform);
-    mockMvcUtils.createCloudContextAndWait(defaultUserRequest, workspaceId2, apiCloudPlatform);
+    mockWorkspaceV1Api.createCloudContextAndWait(defaultUserRequest, workspaceId, apiCloudPlatform);
+    mockWorkspaceV1Api.createCloudContextAndWait(
+        defaultUserRequest, workspaceId2, apiCloudPlatform);
 
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     projectId = workspace.getGcpContext().getProjectId();
 
     ApiWorkspaceDescription workspace2 =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     projectId2 = workspace2.getGcpContext().getProjectId();
 
     // Wait for both users to have permission in both projects
@@ -400,23 +404,21 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   public void update_throws409() throws Exception {
     String oldName = sourceBucket.getMetadata().getName();
     String newName = TestUtils.appendRandomNumber("newbucketresourcename");
-    mockGcpApi.createReferencedGcsBucket(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId, newName, sourceBucketName);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    mockGcpApi.createReferencedGcsBucket(userRequest, workspaceId, newName, sourceBucketName);
 
-    mockMvcUtils.updateResource(
+    mockWorkspaceV1Api.updateResourceAndExpect(
         ApiGcpGcsBucketResource.class,
         CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT,
         workspaceId,
         sourceBucket.getMetadata().getResourceId(),
         objectMapper.writeValueAsString(
             new ApiUpdateControlledGcpGcsBucketRequestBody().name(newName)),
-        userAccessUtils.defaultUserAuthRequest(),
+        userRequest,
         HttpStatus.SC_CONFLICT);
     ApiGcpGcsBucketResource getResource =
         mockGcpApi.getControlledGcsBucket(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceBucket.getMetadata().getResourceId());
+            userRequest, workspaceId, sourceBucket.getMetadata().getResourceId());
     assertEquals(oldName, getResource.getMetadata().getName());
   }
 
@@ -543,7 +545,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     assertNull(clonedResource);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
   }
 
   @Test
@@ -767,16 +769,16 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
 
     // Clean up policies from previous runs, if any exist
-    mockMvcUtils.deletePolicies(userRequest, workspaceId);
-    mockMvcUtils.deletePolicies(userRequest, workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId2);
 
     // Add broader region policy to destination, narrow policy on source.
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userRequest,
         workspaceId,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_NEVADA),
         /*policiesToRemove=*/ null);
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userRequest,
         workspaceId2,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
@@ -795,14 +797,15 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         /*destLocation*/ null);
 
     // Assert dest workspace policy is reduced to the narrower region.
-    ApiWorkspaceDescription destWorkspace = mockMvcUtils.getWorkspace(userRequest, workspaceId2);
+    ApiWorkspaceDescription destWorkspace =
+        mockWorkspaceV1Api.getWorkspace(userRequest, workspaceId2);
     assertThat(
         destWorkspace.getPolicies(), containsInAnyOrder(PolicyFixtures.REGION_POLICY_NEVADA));
     Assertions.assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
 
     // Clean up: Delete policies
-    mockMvcUtils.deletePolicies(userRequest, workspaceId);
-    mockMvcUtils.deletePolicies(userRequest, workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId2);
   }
 
   public void cloneControlledGcsBucket_undo(
@@ -847,7 +850,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
   }
 
   @Test
@@ -863,7 +866,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         destResourceName);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
   }
 
   private void assertGcsBucket(

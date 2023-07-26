@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.iam;
 
 import static bio.terra.workspace.common.mocks.MockDataRepoApi.CREATE_REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_GRANT_ROLE;
 import static bio.terra.workspace.common.utils.MockMvcUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -108,10 +110,7 @@ class SamServiceTest extends BaseConnectedTest {
     // Authz checks happen in the controller, so this uses mockMvc to pretend these are real
     // requests instead of hooking into the service layer directly.
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     samService.grantWorkspaceRole(
         workspaceUuid,
@@ -120,10 +119,7 @@ class SamServiceTest extends BaseConnectedTest {
         userAccessUtils.getSecondUserEmail());
     // After being granted permission, secondary user can read the workspace.
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_OK));
   }
 
@@ -173,7 +169,9 @@ class SamServiceTest extends BaseConnectedTest {
             .andReturn()
             .getResponse()
             .getContentAsString();
-    var response = objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
+    ApiDataRepoSnapshotResource response =
+        objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
+
     ReferencedResource ref =
         referenceResourceService.getReferenceResource(
             workspaceUuid, response.getMetadata().getResourceId());
@@ -188,10 +186,7 @@ class SamServiceTest extends BaseConnectedTest {
   void removedReaderCannotRead() throws Exception {
     // Before being granted permission, secondary user should be rejected.
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
@@ -200,10 +195,7 @@ class SamServiceTest extends BaseConnectedTest {
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_OK));
     // After removing permission, secondary user can no longer read.
     samService.removeWorkspaceRole(
@@ -212,10 +204,7 @@ class SamServiceTest extends BaseConnectedTest {
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }
 
@@ -307,9 +296,7 @@ class SamServiceTest extends BaseConnectedTest {
             addJsonContentType(
                 addAuth(
                     post(String.format(
-                            ADD_USER_TO_WORKSPACE_PATH_FORMAT,
-                            workspaceUuid,
-                            WsmIamRole.READER.toSamRole()))
+                            WORKSPACES_V1_GRANT_ROLE, workspaceUuid, WsmIamRole.READER.toSamRole()))
                         .content(objectMapper.writeValueAsString(request)),
                     defaultUserRequest())))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));

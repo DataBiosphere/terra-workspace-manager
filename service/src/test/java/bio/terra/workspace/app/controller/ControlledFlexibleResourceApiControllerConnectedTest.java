@@ -10,6 +10,7 @@ import bio.terra.workspace.common.GcpCloudUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockFlexibleResourceApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -57,6 +58,7 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockFlexibleResourceApi mockFlexibleResourceApi;
   @Autowired ObjectMapper objectMapper;
@@ -81,11 +83,11 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
   @BeforeAll
   public void setup() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithoutCloudContext(userAccessUtils.defaultUserAuthRequest())
             .getId();
     workspaceId2 =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithPolicy(
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
@@ -133,16 +135,16 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
     }
 
     // Clean up policies from previous runs, if any exist
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
 
     // Add broader region policy to destination, narrow policy on source.
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
         /*policiesToRemove=*/ null);
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
@@ -161,15 +163,15 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
 
     // Assert dest workspace policy is reduced to the narrower region.
     ApiWorkspaceDescription destWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     assertThat(
         destWorkspace.getPolicies(),
         containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA, PolicyFixtures.GROUP_POLICY_DEFAULT));
     Assertions.assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
 
     // Clean up: Delete policies
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   @Test
@@ -211,9 +213,9 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
   void clone_copyResource_undo() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     String destDescription = "new description";
-
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     mockFlexibleResourceApi.cloneFlexibleResourceAndExpect(
-        userAccessUtils.defaultUserAuthRequest(),
+        userRequest,
         /*sourceWorkspaceId=*/ workspaceId,
         sourceFlexResource.getMetadata().getResourceId(),
         /*destWorkspaceId=*/ workspaceId2,
@@ -224,8 +226,7 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
         /*shouldUndo=*/ true);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId2, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
   }
 
   @Test
@@ -246,9 +247,9 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userRequest, workspaceId2, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
 
     // Always remove roles before test terminates.
@@ -265,21 +266,21 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
           List.of(HttpStatus.SC_FORBIDDEN),
           /*shouldUndo=*/ false);
     } finally {
-      mockMvcUtils.removeRole(
+      mockWorkspaceV1Api.removeRole(
           userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
-      mockMvcUtils.removeRole(
+      mockWorkspaceV1Api.removeRole(
           userRequest, workspaceId2, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
     }
   }
 
   @Test
   public void clone_SecondUserHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.WRITER,
@@ -311,12 +312,12 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
           workspaceId2,
           clonedFlexResource.getMetadata().getResourceId());
     } finally {
-      mockMvcUtils.removeRole(
+      mockWorkspaceV1Api.removeRole(
           userAccessUtils.defaultUserAuthRequest(),
           workspaceId,
           WsmIamRole.READER,
           userAccessUtils.getSecondUserEmail());
-      mockMvcUtils.removeRole(
+      mockWorkspaceV1Api.removeRole(
           userAccessUtils.defaultUserAuthRequest(),
           workspaceId2,
           WsmIamRole.WRITER,

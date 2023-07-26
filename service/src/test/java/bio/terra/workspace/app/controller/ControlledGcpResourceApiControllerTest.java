@@ -18,6 +18,7 @@ import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiAiNotebookCloudId;
 import bio.terra.workspace.generated.model.ApiBqDatasetCloudId;
@@ -46,6 +47,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpCloudContextService {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired ObjectMapper objectMapper;
 
   @BeforeEach
@@ -75,7 +77,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
 
   @Test
   public void getCloudNameFromGcsBucketName() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiGenerateGcpGcsBucketCloudNameRequestBody bucketNameRequest =
         new ApiGenerateGcpGcsBucketCloudNameRequestBody().gcsBucketName("my-bucket");
 
@@ -106,7 +108,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
 
   @Test
   public void getCloudNameFromBigQueryDatasetName() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiGenerateGcpBigQueryDatasetCloudIDRequestBody bqDatasetNameRequest =
         new ApiGenerateGcpBigQueryDatasetCloudIDRequestBody().bigQueryDatasetName("bq-dataset");
 
@@ -135,7 +137,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
 
   @Test
   public void getCloudNameFromAiNotebookInstanceName() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiGenerateGcpAiNotebookCloudIdRequestBody aiNotebookNameRequest =
         new ApiGenerateGcpAiNotebookCloudIdRequestBody().aiNotebookName("ai-notebook");
 
@@ -164,7 +166,7 @@ public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpC
 
   @Test
   public void createBigQueryDataset_resourceContainsInvalidFolderId_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiCreateControlledGcpBigQueryDatasetRequestBody datasetCreationRequest =
         new ApiCreateControlledGcpBigQueryDatasetRequestBody()
             .common(

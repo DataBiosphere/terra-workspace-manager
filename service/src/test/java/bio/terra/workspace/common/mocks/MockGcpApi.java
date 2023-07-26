@@ -102,6 +102,7 @@ public class MockGcpApi {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private JobService jobService;
 
@@ -169,7 +170,7 @@ public class MockGcpApi {
             .description(newDescription)
             .updateParameters(
                 new ApiGcpGcsBucketUpdateParameters().cloningInstructions(newCloningInstruction));
-    return mockMvcUtils.updateResource(
+    return mockWorkspaceV1Api.updateResourceAndExpect(
         ApiGcpGcsBucketResource.class,
         CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT,
         workspaceId,
@@ -208,7 +209,7 @@ public class MockGcpApi {
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
       result =
-          mockMvcUtils.getCreateResourceJobResult(
+          mockWorkspaceV1Api.createResourceJobResult(
               ApiCloneControlledGcpGcsBucketResult.class,
               userRequest,
               CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT,
@@ -262,7 +263,7 @@ public class MockGcpApi {
         new ApiCloneControlledGcpGcsBucketRequest()
             .destinationWorkspaceId(destWorkspaceId)
             .cloningInstructions(cloningInstructions)
-            .name(TestUtils.appendRandomNumber(MockMvcUtils.DEST_BUCKET_RESOURCE_NAME))
+            .name(TestUtils.appendRandomNumber("i-am-the-cloned-bucket"))
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
     if (!StringUtils.isEmpty(destResourceName)) {
       request.name(destResourceName);
@@ -302,7 +303,7 @@ public class MockGcpApi {
     // After job fails, cloneGcsBucket returns ApiCloneControlledGcpGcsBucketResult OR
     // ApiErrorReport.
     ApiCloneControlledGcpGcsBucketResult result =
-        mockMvcUtils.getCreateResourceJobResult(
+        mockWorkspaceV1Api.createResourceJobResult(
             ApiCloneControlledGcpGcsBucketResult.class,
             userRequest,
             CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT,
@@ -362,7 +363,7 @@ public class MockGcpApi {
 
   public void deleteReferencedGcsBucket(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    mockMvcUtils.deleteResource(
+    mockWorkspaceV1Api.deleteResource(
         userRequest, workspaceId, resourceId, REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT);
   }
 
@@ -425,7 +426,7 @@ public class MockGcpApi {
       int expectedCode)
       throws Exception {
     MockHttpServletResponse response =
-        mockMvcUtils.cloneReferencedResource(
+        mockWorkspaceV1Api.cloneReferencedResourceAndExpect(
             userRequest,
             CLONE_REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT,
             sourceWorkspaceId,
@@ -485,7 +486,7 @@ public class MockGcpApi {
 
   public void deleteReferencedGcsObject(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    mockMvcUtils.deleteResource(
+    mockWorkspaceV1Api.deleteResource(
         userRequest, workspaceId, resourceId, REFERENCED_GCP_GCS_OBJECTS_PATH_FORMAT);
   }
 
@@ -552,7 +553,7 @@ public class MockGcpApi {
       int expectedCode)
       throws Exception {
     MockHttpServletResponse response =
-        mockMvcUtils.cloneReferencedResource(
+        mockWorkspaceV1Api.cloneReferencedResourceAndExpect(
             userRequest,
             CLONE_REFERENCED_GCP_GCS_OBJECTS_PATH_FORMAT,
             sourceWorkspaceId,
@@ -638,7 +639,7 @@ public class MockGcpApi {
       UUID resourceId,
       StewardshipType stewardshipType)
       throws Exception {
-    mockMvcUtils.deleteResource(
+    mockWorkspaceV1Api.deleteResource(
         userRequest,
         workspaceId,
         resourceId,
@@ -676,7 +677,7 @@ public class MockGcpApi {
             .updateParameters(
                 new ApiGcpBigQueryDatasetUpdateParameters()
                     .cloningInstructions(newCloningInstruction));
-    return mockMvcUtils.updateResource(
+    return mockWorkspaceV1Api.updateResourceAndExpect(
         ApiGcpBigQueryDatasetResource.class,
         CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT,
         workspaceId,
@@ -741,7 +742,7 @@ public class MockGcpApi {
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
       result =
-          mockMvcUtils.getCreateResourceJobResult(
+          mockWorkspaceV1Api.createResourceJobResult(
               ApiCloneControlledGcpBigQueryDatasetResult.class,
               userRequest,
               CLONE_RESULT_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT,
@@ -833,7 +834,7 @@ public class MockGcpApi {
     // After job fails, cloneBigQueryDataset returns ApiCloneControlledGcpBigQueryDatasetResult OR
     // ApiErrorReport.
     ApiCloneControlledGcpBigQueryDatasetResult result =
-        mockMvcUtils.getCreateResourceJobResult(
+        mockWorkspaceV1Api.createResourceJobResult(
             ApiCloneControlledGcpBigQueryDatasetResult.class,
             userRequest,
             CLONE_RESULT_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT,
@@ -950,7 +951,7 @@ public class MockGcpApi {
       int expectedCode)
       throws Exception {
     MockHttpServletResponse response =
-        mockMvcUtils.cloneReferencedResource(
+        mockWorkspaceV1Api.cloneReferencedResourceAndExpect(
             userRequest,
             CLONE_REFERENCED_GCP_BQ_DATASET_PATH_FORMAT,
             sourceWorkspaceId,
@@ -1007,7 +1008,7 @@ public class MockGcpApi {
 
   public void deleteReferencedBqDataTable(
       AuthenticatedUserRequest userRequest, UUID workspaceId, UUID resourceId) throws Exception {
-    mockMvcUtils.deleteResource(
+    mockWorkspaceV1Api.deleteResource(
         userRequest, workspaceId, resourceId, REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT);
   }
 
@@ -1074,7 +1075,7 @@ public class MockGcpApi {
       int expectedCode)
       throws Exception {
     MockHttpServletResponse response =
-        mockMvcUtils.cloneReferencedResource(
+        mockWorkspaceV1Api.cloneReferencedResourceAndExpect(
             userRequest,
             CLONE_REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT,
             sourceWorkspaceId,
@@ -1155,7 +1156,7 @@ public class MockGcpApi {
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       TimeUnit.SECONDS.sleep(5);
       result =
-          mockMvcUtils.getCreateResourceJobResult(
+          mockWorkspaceV1Api.createResourceJobResult(
               ApiCreatedControlledGcpAiNotebookInstanceResult.class,
               userRequest,
               CREATE_RESULT_CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT,
@@ -1227,7 +1228,7 @@ public class MockGcpApi {
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
       result =
-          mockMvcUtils.getCreateResourceJobResult(
+          mockWorkspaceV1Api.createResourceJobResult(
               ApiCreatedControlledGcpGceInstanceResult.class,
               userRequest,
               CREATE_RESULT_CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT,
@@ -1317,7 +1318,7 @@ public class MockGcpApi {
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
       Thread.sleep(/*millis=*/ 5000);
       result =
-          mockMvcUtils.getCreateResourceJobResult(
+          mockWorkspaceV1Api.createResourceJobResult(
               ApiCreatedControlledGcpDataprocClusterResult.class,
               userRequest,
               CREATE_RESULT_CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT,
