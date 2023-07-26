@@ -21,10 +21,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
-import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
@@ -34,8 +32,6 @@ import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
-import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -128,7 +124,6 @@ public class MockMvcUtils {
   // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
-  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private SamService samService;
@@ -218,35 +213,6 @@ public class MockMvcUtils {
     assertEquals(ApiJobReport.StatusEnum.SUCCEEDED, cloneWorkspace.getJobReport().getStatus());
 
     return cloneWorkspace;
-  }
-
-  public ApiCreatedWorkspace createWorkspaceWithCloudContext(
-      AuthenticatedUserRequest userRequest, ApiCloudPlatform apiCloudPlatform) throws Exception {
-    ApiCreatedWorkspace createdWorkspace =
-        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(userRequest);
-    createCloudContextAndWait(userRequest, createdWorkspace.getId(), apiCloudPlatform);
-    return createdWorkspace;
-  }
-
-  public ApiCreatedWorkspace createWorkspaceWithPolicy(
-      AuthenticatedUserRequest userRequest, ApiWsmPolicyInputs policy) throws Exception {
-    ApiCreateWorkspaceRequestBody request =
-        WorkspaceFixtures.createWorkspaceRequestBody().policies(policy);
-
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addJsonContentType(
-                    addAuth(
-                        post(WORKSPACES_V1_CREATE)
-                            .content(objectMapper.writeValueAsString(request)),
-                        userRequest)))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-
-    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
   }
 
   public void createCloudContextAndWait(
@@ -447,43 +413,6 @@ public class MockMvcUtils {
                     !(p.getNamespace().equals(PolicyFixtures.NAMESPACE)
                         && p.getName().equals(PolicyFixtures.GROUP_CONSTRAINT)))
             .collect(Collectors.toList()));
-  }
-
-  public UUID createWorkspaceWithRegionConstraint(
-      AuthenticatedUserRequest userRequest, String regionName) throws Exception {
-    ApiWsmPolicyInputs regionPolicy =
-        new ApiWsmPolicyInputs()
-            .addInputsItem(
-                new ApiWsmPolicyInput()
-                    .namespace(PolicyFixtures.NAMESPACE)
-                    .name(PolicyFixtures.REGION_CONSTRAINT)
-                    .addAdditionalDataItem(
-                        new ApiWsmPolicyPair().key(PolicyFixtures.REGION).value(regionName)));
-    ApiCreatedWorkspace workspace = createWorkspaceWithPolicy(userRequest, regionPolicy);
-    return workspace.getId();
-  }
-
-  public UUID createWorkspaceWithGroupConstraint(
-      AuthenticatedUserRequest userRequest, String groupName) throws Exception {
-    ApiWsmPolicyInputs groupPolicy =
-        new ApiWsmPolicyInputs()
-            .addInputsItem(
-                new ApiWsmPolicyInput()
-                    .namespace(PolicyFixtures.NAMESPACE)
-                    .name(PolicyFixtures.GROUP_CONSTRAINT)
-                    .addAdditionalDataItem(
-                        new ApiWsmPolicyPair().key(PolicyFixtures.GROUP).value(groupName)));
-    ApiCreatedWorkspace workspace = createWorkspaceWithPolicy(userRequest, groupPolicy);
-    return workspace.getId();
-  }
-
-  public UUID createWorkspaceWithRegionConstraintAndCloudContext(
-      AuthenticatedUserRequest userRequest, ApiCloudPlatform apiCloudPlatform, String regionName)
-      throws Exception {
-    UUID resultWorkspaceId = createWorkspaceWithRegionConstraint(userRequest, regionName);
-    createCloudContextAndWait(userRequest, resultWorkspaceId, apiCloudPlatform);
-
-    return resultWorkspaceId;
   }
 
   public void deleteResource(

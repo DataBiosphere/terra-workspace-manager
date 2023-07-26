@@ -12,6 +12,7 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.GcpTestUtils;
 import bio.terra.workspace.common.utils.MockMvcUtils;
@@ -58,6 +59,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
@@ -78,7 +80,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
   @BeforeAll
   public void setup() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
@@ -86,7 +88,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     projectId = workspace.getGcpContext().getProjectId();
     workspaceId2 =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithPolicy(
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
@@ -116,7 +118,6 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
   @Test
   public void create() throws Exception {
     // Resource was created in setup()
-
     // Assert resource returned by create
     assertBqDataset(
         sourceResource,
@@ -146,10 +147,10 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
 
-    var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
-    var newDescription = "This is an updated description";
-    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
-    var newDataset = TestUtils.appendRandomNumber("newdataset");
+    String newName = TestUtils.appendRandomNumber("newdatatableresourcename");
+    String newDescription = "This is an updated description";
+    ApiCloningInstructionsEnum newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    String newDataset = TestUtils.appendRandomNumber("newdataset");
     ApiGcpBigQueryDatasetResource updatedResource =
         mockGcpApi.updateReferencedBqDataset(
             userAccessUtils.secondUserAuthRequest(),
@@ -180,7 +181,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
 
   @Test
   public void update_throws409() throws Exception {
-    var newName = TestUtils.appendRandomNumber("newdataSetresourcename");
+    String newName = TestUtils.appendRandomNumber("newdataSetresourcename");
     mockGcpApi.createReferencedBqDataset(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,

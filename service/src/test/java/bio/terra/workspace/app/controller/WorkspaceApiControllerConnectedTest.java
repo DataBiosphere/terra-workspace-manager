@@ -379,12 +379,12 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void mergeCheck_workspaceWithDifferentRegion() throws Exception {
     // Create workspace with US region constraint.
     UUID targetWorkspaceId =
-        mockMvcUtils.createWorkspaceWithRegionConstraint(
+        mockWorkspaceV1Api.createWorkspaceWithRegionConstraint(
             userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.US_REGION);
 
     // Create workspace with Europe region constraint.
     UUID sourceWorkspaceId =
-        mockMvcUtils.createWorkspaceWithRegionConstraint(
+        mockWorkspaceV1Api.createWorkspaceWithRegionConstraint(
             userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.EUROPE_REGION);
 
     // Both workspaces have conflicting policy.
@@ -404,7 +404,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraintAndCloudContext(
               userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
@@ -419,7 +419,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
       // Create source workspace with US central region constraint.
       sourceWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
 
       // Target workspace has compatible policy (usa) with source.
       // However, target has resource (us-east1) that will conflict with the policy (us-central1) in
@@ -443,7 +443,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraintAndCloudContext(
               userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
@@ -476,7 +476,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraintAndCloudContext(
               userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
@@ -491,7 +491,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
       // Create source workspace with US central region constraint.
       sourceWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
 
       // Target workspace has a compatible policy with the source.
       // But target has a resource in US-CENTRAL1, which doesn't match the casing of the policy.
@@ -519,10 +519,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     UUID sourceWorkspaceId = null;
     try {
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithGroupConstraint(
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
               userRequest, PolicyFixtures.DEFAULT_GROUP);
       sourceWorkspaceId =
-          mockMvcUtils.createWorkspaceWithGroupConstraint(userRequest, PolicyFixtures.ALT_GROUP);
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.ALT_GROUP);
 
       ApiWsmPolicyMergeCheckResult result =
           mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
