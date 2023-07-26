@@ -22,6 +22,7 @@ import bio.terra.workspace.generated.model.ApiCreateCloudContextResult;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiProperty;
@@ -33,6 +34,7 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -48,6 +50,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
 @Component
 public class MockWorkspaceV1Api {
@@ -390,14 +393,55 @@ public class MockWorkspaceV1Api {
       WORKSPACES_V1_POLICIES + "/mergeCheck";
   public static final String WORKSPACES_V1_LIST_VALID_REGIONS = WORKSPACES_V1 + "/listValidRegions";
 
+  // TODO-Dex
+
   // Roles
 
   public static final String WORKSPACES_V1_GRANT_ROLE = WORKSPACES_V1 + "/roles/%s/members";
   public static final String WORKSPACES_V1_REMOVE_ROLE = WORKSPACES_V1_GRANT_ROLE + "/%s";
+
+  public void grantRole(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
+      throws Exception {
+    var request = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
+    mockMvc
+        .perform(
+            addJsonContentType(
+                addAuth(
+                    post(String.format(WORKSPACES_V1_GRANT_ROLE, workspaceId, role.name()))
+                        .content(objectMapper.writeValueAsString(request)),
+                    userRequest)))
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public void removeRole(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
+      throws Exception {
+    removeRoleInternal(userRequest, workspaceId, role, memberEmail)
+        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
+  }
+
+  public void removeRoleExpectBadRequest(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
+      throws Exception {
+    removeRoleInternal(userRequest, workspaceId, role, memberEmail)
+        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
+
+  private ResultActions removeRoleInternal(
+      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
+      throws Exception {
+    return mockMvc.perform(
+        addAuth(
+            delete(String.format(WORKSPACES_V1_REMOVE_ROLE, workspaceId, role.name(), memberEmail)),
+            userRequest));
+  }
 
   // Resources
 
   public static final String WORKSPACES_V1_RESOURCES = WORKSPACES_V1 + "/resources";
   public static final String WORKSPACES_V1_RESOURCES_PROPERTIES =
       WORKSPACES_V1_RESOURCES + "/%s/properties";
+
+  // TODO-Dex
 }

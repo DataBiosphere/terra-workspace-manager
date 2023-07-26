@@ -248,9 +248,9 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userRequest, workspaceId2, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
 
     // Always remove roles before test terminates.
@@ -267,21 +267,21 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
           List.of(HttpStatus.SC_FORBIDDEN),
           /*shouldUndo=*/ false);
     } finally {
-      mockMvcUtils.removeRole(
+      mockWorkspaceV1Api.removeRole(
           userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
-      mockMvcUtils.removeRole(
+      mockWorkspaceV1Api.removeRole(
           userRequest, workspaceId2, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
     }
   }
 
   @Test
   public void clone_SecondUserHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.WRITER,
@@ -313,12 +313,12 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
           workspaceId2,
           clonedFlexResource.getMetadata().getResourceId());
     } finally {
-      mockMvcUtils.removeRole(
+      mockWorkspaceV1Api.removeRole(
           userAccessUtils.defaultUserAuthRequest(),
           workspaceId,
           WsmIamRole.READER,
           userAccessUtils.getSecondUserEmail());
-      mockMvcUtils.removeRole(
+      mockWorkspaceV1Api.removeRole(
           userAccessUtils.defaultUserAuthRequest(),
           workspaceId2,
           WsmIamRole.WRITER,

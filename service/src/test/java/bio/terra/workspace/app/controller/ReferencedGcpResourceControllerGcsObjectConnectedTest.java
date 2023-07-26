@@ -137,7 +137,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   @Test
   public void update() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userRequest, workspaceId, WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
 
     String newName = TestUtils.appendRandomNumber("newgcsobjectname");
@@ -167,7 +167,7 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         newObjectName,
         /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
         /*expectedLastUpdatedBy=*/ userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userRequest, workspaceId, WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
   }
 
@@ -210,9 +210,9 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userRequest, workspaceId2, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
 
     mockGcpApi.cloneReferencedGcsObjectAndExpect(
@@ -224,18 +224,18 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
 
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userRequest, workspaceId2, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
   }
 
   @Test
   public void clone_secondUserHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userRequest, workspaceId2, WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
 
     ApiGcpGcsObjectResource clonedResource =
@@ -257,9 +257,9 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
         sourceFileName,
         /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
         userAccessUtils.secondUserAuthRequest());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userRequest, workspaceId2, WsmIamRole.WRITER, userAccessUtils.getSecondUserEmail());
     mockGcpApi.deleteReferencedGcsObject(
         userRequest, workspaceId2, clonedResource.getMetadata().getResourceId());

@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
@@ -49,6 +50,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
@@ -156,7 +158,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
           mockGcpApi.createControlledBqDataset(
               userAccessUtils.defaultUserAuthRequest(), workspaceId);
       UUID resourceId = resource.getResourceId();
-      mockMvcUtils.grantRole(
+      mockWorkspaceV1Api.grantRole(
           userAccessUtils.defaultUserAuthRequest(),
           workspaceId,
           WsmIamRole.READER,
@@ -223,7 +225,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
           resourceId,
           Map.of("foo", "bar", "sweet", "cake", "cute", "puppy"),
           HttpStatus.SC_NO_CONTENT);
-      mockMvcUtils.grantRole(
+      mockWorkspaceV1Api.grantRole(
           userAccessUtils.defaultUserAuthRequest(),
           workspaceId,
           WsmIamRole.READER,

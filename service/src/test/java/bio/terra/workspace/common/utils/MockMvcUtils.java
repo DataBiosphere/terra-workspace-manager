@@ -29,7 +29,6 @@ import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiManagedBy;
@@ -53,7 +52,6 @@ import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.model.OperationType;
@@ -426,43 +424,6 @@ public class MockMvcUtils {
         .forEach(
             actualResource ->
                 assertNotEquals(unexpectedResourceName, actualResource.getMetadata().getName()));
-  }
-
-  public void grantRole(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
-      throws Exception {
-    var request = new ApiGrantRoleRequestBody().memberEmail(memberEmail);
-    mockMvc
-        .perform(
-            addJsonContentType(
-                addAuth(
-                    post(String.format(WORKSPACES_V1_GRANT_ROLE, workspaceId, role.name()))
-                        .content(objectMapper.writeValueAsString(request)),
-                    userRequest)))
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
-  }
-
-  public void removeRole(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
-      throws Exception {
-    removeRoleInternal(userRequest, workspaceId, role, memberEmail)
-        .andExpect(status().is(HttpStatus.SC_NO_CONTENT));
-  }
-
-  public void removeRoleExpectBadRequest(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
-      throws Exception {
-    removeRoleInternal(userRequest, workspaceId, role, memberEmail)
-        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
-  }
-
-  private ResultActions removeRoleInternal(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, WsmIamRole role, String memberEmail)
-      throws Exception {
-    return mockMvc.perform(
-        addAuth(
-            delete(String.format(WORKSPACES_V1_REMOVE_ROLE, workspaceId, role.name(), memberEmail)),
-            userRequest));
   }
 
   public ApiJobReport getJobReport(String path, AuthenticatedUserRequest userRequest)

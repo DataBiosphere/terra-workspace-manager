@@ -136,7 +136,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   @Test
   public void update() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.WRITER,
@@ -167,7 +167,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         newSnapshot,
         userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.WRITER,
@@ -217,12 +217,12 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.READER,
@@ -237,12 +237,12 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
 
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.READER,
@@ -251,12 +251,12 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
   @Test
   public void clone_writerHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.WRITER,
@@ -282,12 +282,12 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
         userAccessUtils.secondUserAuthRequest());
 
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.WRITER,

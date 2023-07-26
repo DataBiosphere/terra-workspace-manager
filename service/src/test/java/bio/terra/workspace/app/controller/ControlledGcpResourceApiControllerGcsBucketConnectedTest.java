@@ -180,12 +180,12 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
         mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(defaultUserRequest).getId();
 
     // Setup 2nd user
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         defaultUserRequest,
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.secondUser().getEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         defaultUserRequest,
         workspaceId2,
         WsmIamRole.READER,

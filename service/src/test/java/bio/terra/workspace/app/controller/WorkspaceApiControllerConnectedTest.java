@@ -123,7 +123,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
       throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -139,7 +139,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
       throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -156,7 +156,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -191,7 +191,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         mockWorkspaceV1Api.getWorkspace(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId());
 
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -212,7 +212,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         mockWorkspaceV1Api.getWorkspace(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId());
 
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -233,7 +233,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         mockWorkspaceV1Api.getWorkspace(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId());
 
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -263,7 +263,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_returnsNoWorkspaces()
       throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -280,7 +280,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_returnsNoWorkspaces()
           throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -295,7 +295,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   public void grantRole_logsAnActivity() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -313,13 +313,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   public void removeRole_logsAnActivity() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
         userAccessUtils.getSecondUserEmail());
 
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -339,7 +339,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -621,7 +621,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   public void updatePolicies_requesterIsWriter_throws() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.WRITER,
@@ -639,30 +639,30 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void workspaceOwnerCannotAbandonWorkspace() throws Exception {
     // Default user should be the only workspace owner, and so should not be able to remove
     // themselves.
-    mockMvcUtils.removeRoleExpectBadRequest(
+    mockWorkspaceV1Api.removeRoleExpectBadRequest(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
         userAccessUtils.getDefaultUserEmail());
     // After adding a second user, they should be able to remove themselves.
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
         userAccessUtils.getDefaultUserEmail());
     // Reset workspace to starting setup, where default user is an owner and secondary user has no
     // role.
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.secondUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
         userAccessUtils.getDefaultUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.secondUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.OWNER,
