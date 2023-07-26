@@ -51,8 +51,8 @@ public class SetCreateResponseStep implements Step {
     workingMap.put(ResourceKeys.UPDATE_COMPLETE, Boolean.FALSE);
     WsmResource responseResource =
         resourceDao.createResourceSuccess(resource, flightContext.getFlightId());
-    flightContext.getWorkingMap().put(JobMapKeys.RESPONSE.getKeyName(), responseResource);
     workingMap.put(ResourceKeys.UPDATE_COMPLETE, TRUE);
+    workingMap.put(JobMapKeys.RESPONSE.getKeyName(), responseResource);
     workspaceActivityLogService.writeActivity(
         userRequest,
         resource.getWorkspaceId(),
