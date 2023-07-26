@@ -388,7 +388,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     try {
       // Update the source workspace policy
       ApiWsmPolicyUpdateResult result =
-          mockMvcUtils.updatePolicies(
+          mockWorkspaceV1Api.updatePolicies(
               userAccessUtils.defaultUserAuthRequest(),
               sourceWorkspaceId,
               /*policiesToAdd*/ locationsToAdd,
@@ -406,7 +406,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     try {
       // Update the source workspace policy
       ApiWsmPolicyUpdateResult result =
-          mockMvcUtils.updatePoliciesExpectStatus(
+          mockWorkspaceV1Api.updatePoliciesAndExpect(
               userAccessUtils.defaultUserAuthRequest(),
               sourceWorkspaceId,
               /*policiesToAdd*/ locationsToAdd,

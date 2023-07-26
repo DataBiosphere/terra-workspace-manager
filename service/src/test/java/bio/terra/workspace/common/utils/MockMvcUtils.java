@@ -19,10 +19,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
-import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
-import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloneReferencedResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -34,7 +32,6 @@ import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.generated.model.ApiPrivateResourceState;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
-import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiResourceDescription;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceLineageEntry;
@@ -43,13 +40,6 @@ import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiState;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
-import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateMode;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateRequest;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -61,7 +51,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -108,7 +97,6 @@ public class MockMvcUtils {
   // Do not Autowire UserAccessUtils. UserAccessUtils are for connected tests and not unit tests
   // (since unit tests don't use real SAM). Instead, each method must take in userRequest.
   @Autowired private MockMvc mockMvc;
-  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private SamService samService;
@@ -133,65 +121,6 @@ public class MockMvcUtils {
     Assertions.fail(
         String.format("Expected OK or ACCEPTED, but received %d; body: %s", statusCode, content));
     return null;
-  }
-
-  public ApiWsmPolicyUpdateResult updatePolicies(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      @Nullable List<ApiWsmPolicyInput> policiesToAdd,
-      @Nullable List<ApiWsmPolicyInput> policiesToRemove)
-      throws Exception {
-    return updatePoliciesExpectStatus(
-        userRequest, workspaceId, policiesToAdd, policiesToRemove, HttpStatus.SC_OK);
-  }
-
-  public ApiWsmPolicyUpdateResult updatePoliciesExpectStatus(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      @Nullable List<ApiWsmPolicyInput> policiesToAdd,
-      @Nullable List<ApiWsmPolicyInput> policiesToRemove,
-      int httpStatus)
-      throws Exception {
-
-    ApiWsmPolicyUpdateRequest requestBody =
-        new ApiWsmPolicyUpdateRequest().updateMode(ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
-    if (policiesToAdd != null) {
-      requestBody.addAttributes(new ApiWsmPolicyInputs().inputs(policiesToAdd));
-    }
-    if (policiesToRemove != null) {
-      requestBody.removeAttributes(new ApiWsmPolicyInputs().inputs(policiesToRemove));
-    }
-    String serializedResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    patch(String.format(WORKSPACES_V1_POLICIES, workspaceId))
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8")
-                        .content(objectMapper.writeValueAsString(requestBody)),
-                    userRequest))
-            .andExpect(status().is(httpStatus))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
-  }
-
-  public void deletePolicies(AuthenticatedUserRequest userRequest, UUID workspaceId)
-      throws Exception {
-    ApiWorkspaceDescription workspace = mockWorkspaceV1Api.getWorkspace(userRequest, workspaceId);
-    updatePolicies(
-        userRequest,
-        workspaceId,
-        /*policiesToAdd=*/ null,
-        /*policiesToRemove=*/ workspace.getPolicies().stream()
-            .filter(
-                p ->
-                    // We cannot remove group policies but will remove all others.
-                    !(p.getNamespace().equals(PolicyFixtures.NAMESPACE)
-                        && p.getName().equals(PolicyFixtures.GROUP_CONSTRAINT)))
-            .collect(Collectors.toList()));
   }
 
   public void deleteResource(
@@ -617,107 +546,6 @@ public class MockMvcUtils {
     } else {
       throw new RuntimeException("Unexpected number of expected codes");
     }
-  }
-
-  public ApiWsmPolicyUpdateResult updatePolicies(
-      AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
-    return updateRegionPolicy(userRequest, workspaceId, /*region=*/ "US");
-  }
-
-  public ApiWsmPolicyUpdateResult updateRegionPolicy(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String region) throws Exception {
-    var serializedResponse =
-        updatePoliciesExpect(
-                userRequest,
-                workspaceId,
-                HttpStatus.SC_OK,
-                buildWsmRegionPolicyInput(region),
-                ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT)
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
-  }
-
-  public ResultActions updatePoliciesExpect(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      int code,
-      ApiWsmPolicyInput addAttribute,
-      ApiWsmPolicyUpdateMode updateMode)
-      throws Exception {
-    ApiWsmPolicyUpdateRequest updateRequest =
-        new ApiWsmPolicyUpdateRequest()
-            .updateMode(updateMode)
-            .addAttributes(new ApiWsmPolicyInputs().addInputsItem(addAttribute));
-    return mockMvc
-        .perform(
-            addAuth(
-                patch(String.format(WORKSPACES_V1_POLICIES, workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(updateRequest)),
-                userRequest))
-        .andExpect(status().is(code));
-  }
-
-  public ApiRegions listValidRegions(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String platform) throws Exception {
-    var serializedResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS, workspaceId))
-                        .queryParam("platform", platform)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .characterEncoding("UTF-8"),
-                    userRequest))
-            .andExpect(status().isOk())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiRegions.class);
-  }
-
-  public ApiWsmPolicyUpdateResult removeRegionPolicy(
-      AuthenticatedUserRequest userRequest, UUID workspaceId, String region) throws Exception {
-    var serializedResponse =
-        removePoliciesExpect(
-                userRequest, workspaceId, HttpStatus.SC_OK, buildWsmRegionPolicyInput(region))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiWsmPolicyUpdateResult.class);
-  }
-
-  private ResultActions removePoliciesExpect(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceId,
-      int code,
-      ApiWsmPolicyInput addAttribute)
-      throws Exception {
-    ApiWsmPolicyUpdateRequest updateRequest =
-        new ApiWsmPolicyUpdateRequest()
-            .updateMode(ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT)
-            .removeAttributes(new ApiWsmPolicyInputs().addInputsItem(addAttribute));
-    return mockMvc
-        .perform(
-            addAuth(
-                patch(String.format(WORKSPACES_V1_POLICIES, workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(objectMapper.writeValueAsString(updateRequest)),
-                userRequest))
-        .andExpect(status().is(code));
-  }
-
-  public static ApiWsmPolicyInput buildWsmRegionPolicyInput(String location) {
-    return new ApiWsmPolicyInput()
-        .namespace("terra")
-        .name("region-constraint")
-        .addAdditionalDataItem(new ApiWsmPolicyPair().key("region-name").value(location));
   }
 
   /**

@@ -771,16 +771,16 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
 
     // Clean up policies from previous runs, if any exist
-    mockMvcUtils.deletePolicies(userRequest, workspaceId);
-    mockMvcUtils.deletePolicies(userRequest, workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId2);
 
     // Add broader region policy to destination, narrow policy on source.
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userRequest,
         workspaceId,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_NEVADA),
         /*policiesToRemove=*/ null);
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userRequest,
         workspaceId2,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
@@ -806,8 +806,8 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
     Assertions.assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
 
     // Clean up: Delete policies
-    mockMvcUtils.deletePolicies(userRequest, workspaceId);
-    mockMvcUtils.deletePolicies(userRequest, workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId2);
   }
 
   public void cloneControlledGcsBucket_undo(

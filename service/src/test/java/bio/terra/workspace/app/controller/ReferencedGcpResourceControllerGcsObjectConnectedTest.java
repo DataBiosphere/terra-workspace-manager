@@ -367,16 +367,16 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Clean up policies from previous runs, if any exist
-    mockMvcUtils.deletePolicies(userRequest, workspaceId);
-    mockMvcUtils.deletePolicies(userRequest, workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId2);
 
     // Add broader region policy to destination, narrow policy on source.
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userRequest,
         workspaceId,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
         /*policiesToRemove=*/ null);
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userRequest,
         workspaceId2,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
@@ -401,8 +401,8 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
     assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
 
     // Clean up: Delete policies
-    mockMvcUtils.deletePolicies(userRequest, workspaceId);
-    mockMvcUtils.deletePolicies(userRequest, workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userRequest, workspaceId2);
   }
 
   private void assertGcsObject(

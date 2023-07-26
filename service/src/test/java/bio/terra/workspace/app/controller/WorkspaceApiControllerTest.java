@@ -534,7 +534,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     OffsetDateTime lastChangedDate = lastChangeDetails.changeDate();
     assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
-    ApiWsmPolicyUpdateResult result = mockMvcUtils.updatePolicies(USER_REQUEST, workspace.getId());
+    ApiWsmPolicyUpdateResult result =
+        mockWorkspaceV1Api.updatePolicies(USER_REQUEST, workspace.getId());
     assertTrue(result.isUpdateApplied());
     ActivityLogChangeDetails secondChangeDetails =
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
@@ -560,7 +561,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         workspaceActivityLogService.getLastUpdatedDetails(workspace.getId()).get();
     assertEquals(OperationType.CREATE, lastChangeDetails.operationType());
 
-    ApiWsmPolicyUpdateResult result = mockMvcUtils.updatePolicies(USER_REQUEST, workspace.getId());
+    ApiWsmPolicyUpdateResult result =
+        mockWorkspaceV1Api.updatePolicies(USER_REQUEST, workspace.getId());
     assertFalse(result.isUpdateApplied());
     assertEquals(
         lastChangeDetails,
@@ -575,7 +577,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     when(mockTpsApiDispatch().listValidRegions(eq(workspace.getId()), any()))
         .thenReturn(expectedRegions);
 
-    ApiRegions result = mockMvcUtils.listValidRegions(USER_REQUEST, workspace.getId(), "GCP");
+    ApiRegions result = mockWorkspaceV1Api.listValidRegions(USER_REQUEST, workspace.getId(), "GCP");
     assertEquals(expectedRegions, result);
   }
 

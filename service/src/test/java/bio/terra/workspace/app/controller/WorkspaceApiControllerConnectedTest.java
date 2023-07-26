@@ -9,9 +9,9 @@ import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_CREATE;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_POLICIES_EXPLAIN;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_POLICIES_MERGE_CHECK;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.buildWsmRegionPolicyInput;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
-import static bio.terra.workspace.common.utils.MockMvcUtils.buildWsmRegionPolicyInput;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
@@ -553,7 +553,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     // add attributes
     String usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
-        mockMvcUtils.updateRegionPolicy(
+        mockWorkspaceV1Api.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
 
     assertTrue(result.isUpdateApplied());
@@ -566,7 +566,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     // remove attributes
     ApiWsmPolicyUpdateResult removeResult =
-        mockMvcUtils.removeRegionPolicy(
+        mockWorkspaceV1Api.removeRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
 
     assertTrue(removeResult.isUpdateApplied());
@@ -586,7 +586,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     String usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
-        mockMvcUtils.updateRegionPolicy(
+        mockWorkspaceV1Api.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
 
     assertTrue(result.isUpdateApplied());
@@ -595,18 +595,18 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
             userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertEquals(1, updatedWorkspace.getPolicies().size());
 
-    mockMvcUtils.updatePoliciesExpect(
+    mockWorkspaceV1Api.updatePoliciesAndExpect(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
-        HttpStatus.SC_CONFLICT,
         buildWsmRegionPolicyInput(PolicyFixtures.EUROPE_REGION),
-        ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
-    mockMvcUtils.updatePoliciesExpect(
+        ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT,
+        HttpStatus.SC_CONFLICT);
+    mockWorkspaceV1Api.updatePoliciesAndExpect(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
-        HttpStatus.SC_CONFLICT,
         buildWsmRegionPolicyInput("asiapacific"),
-        ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT);
+        ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT,
+        HttpStatus.SC_CONFLICT);
     updatedWorkspace =
         mockWorkspaceV1Api.getWorkspace(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId());
@@ -615,7 +615,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         usRegion, updatedWorkspace.getPolicies().get(0).getAdditionalData().get(0).getValue());
 
     // clean up
-    mockMvcUtils.removeRegionPolicy(
+    mockWorkspaceV1Api.removeRegionPolicy(
         userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
   }
 
@@ -627,12 +627,12 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         WsmIamRole.WRITER,
         userAccessUtils.noBillingUser().getEmail());
 
-    mockMvcUtils.updatePoliciesExpect(
+    mockWorkspaceV1Api.updatePoliciesAndExpect(
         userAccessUtils.noBillingAccessUserAuthRequest(),
         workspace.getId(),
-        HttpStatus.SC_FORBIDDEN,
         buildWsmRegionPolicyInput("asiapacific"),
-        ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT);
+        ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT,
+        HttpStatus.SC_FORBIDDEN);
   }
 
   @Test
