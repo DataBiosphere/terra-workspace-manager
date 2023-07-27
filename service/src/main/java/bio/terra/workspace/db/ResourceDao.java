@@ -808,29 +808,28 @@ public class ResourceDao {
       WsmResourceStateRule resourceStateRule) {
     DbResource dbResource =
         getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-    switch (resourceStateRule) {
-      case DELETE_ON_FAILURE -> {
-        // There is no guarantee this is the flight which created this resource. Validate that it
-        // is before attempting to delete the workspace.
-        try {
+    try {
+      switch (resourceStateRule) {
+        case DELETE_ON_FAILURE -> {
+          // There is no guarantee this is the flight which created this resource. Validate that it
+          // is before attempting to delete the workspace.
           stateDao.updateState(
               dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
           deleteResourceWorker(
               resource.getWorkspaceId(), resource.getResourceId(), /*resourceType=*/ null);
-        } catch (ResourceStateConflictException e) {
-          // Thrown by updateState during an invalid state transition. This indicates that the
-          // caller is not the same flight that created the resource.
-          logger.info(
-              "Skipping resource delete in createResourceFailure. This is expected for duplicate 'createResource' requests. Cause: ",
-              e);
         }
+        case BROKEN_ON_FAILURE -> {
+          stateDao.updateState(
+              dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+        }
+        default -> throw new InternalLogicException("Invalid switch case");
       }
-
-      case BROKEN_ON_FAILURE -> {
-        stateDao.updateState(
-            dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
-      }
-      default -> throw new InternalLogicException("Invalid switch case");
+    } catch (ResourceStateConflictException e) {
+      // Thrown by updateState during an invalid state transition. This indicates that the
+      // caller is not the same flight that created the resource.
+      logger.info(
+          "Skipping resource delete in createResourceFailure. This is expected for duplicate 'createResource' requests. Cause: ",
+          e);
     }
   }
 

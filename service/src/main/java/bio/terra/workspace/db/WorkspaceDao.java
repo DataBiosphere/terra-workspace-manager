@@ -343,27 +343,27 @@ public class WorkspaceDao {
       @Nullable Exception exception,
       WsmResourceStateRule resourceStateRule) {
     DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
-    switch (resourceStateRule) {
-      case DELETE_ON_FAILURE -> {
-        // There is no guarantee this is the flight which created this workspace. Validate that it
-        // is before attempting to delete the workspace.
-        try {
+    try {
+      switch (resourceStateRule) {
+        case DELETE_ON_FAILURE -> {
+          // There is no guarantee this is the flight which created this workspace. Validate that it
+          // is before attempting to delete the workspace.
           stateDao.updateState(
               dbWorkspace, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
           deleteWorkspaceWorker(workspaceUuid);
-        } catch (ResourceStateConflictException e) {
-          // Thrown by updateState during an invalid state transition. This indicates that the
-          // caller is not the same flight that created the workspace.
-          logger.info(
-              "Skipping workspace delete in createWorkspaceFailure. This is expected for duplicate 'createWorkspace' requests. Cause: ",
-              e);
         }
+        case BROKEN_ON_FAILURE -> {
+          stateDao.updateState(
+              dbWorkspace, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+        }
+        default -> throw new InternalLogicException("Invalid switch case");
       }
-      case BROKEN_ON_FAILURE -> {
-        stateDao.updateState(
-            dbWorkspace, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
-      }
-      default -> throw new InternalLogicException("Invalid switch case");
+    } catch (ResourceStateConflictException e) {
+      // Thrown by updateState during an invalid state transition. This indicates that the
+      // caller is not the same flight that created the workspace.
+      logger.info(
+          "Skipping workspace delete in createWorkspaceFailure. This is expected for duplicate 'createWorkspace' requests. Cause: ",
+          e);
     }
   }
 
@@ -866,29 +866,29 @@ public class WorkspaceDao {
       @Nullable Exception exception,
       WsmResourceStateRule resourceStateRule) {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
-    switch (resourceStateRule) {
-      case DELETE_ON_FAILURE -> {
-        // There is no guarantee this is the flight which created this cloud context. Validate that
-        // it is before attempting to delete the workspace.
-        try {
+    try {
+      switch (resourceStateRule) {
+        case DELETE_ON_FAILURE -> {
+          // There is no guarantee this is the flight which created this cloud context. Validate
+          // that
+          // it is before attempting to delete the workspace.
           stateDao.updateState(
               cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
           // flightId is now null due to the updateState call above.
           deleteCloudContextWorker(workspaceUuid, cloudPlatform, null);
-        } catch (ResourceStateConflictException e) {
-          // Thrown by updateState during an invalid state transition. This indicates that the
-          // caller is not the same flight that created the cloud context.
-          logger.info(
-              "Skipping cloud context delete in createCloudContextFailure. This is expected for duplicate 'createCloudContext' requests. Cause: ",
-              e);
         }
+        case BROKEN_ON_FAILURE -> {
+          stateDao.updateState(
+              cloudContext, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+        }
+        default -> throw new InternalLogicException("Invalid switch case");
       }
-
-      case BROKEN_ON_FAILURE -> {
-        stateDao.updateState(
-            cloudContext, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
-      }
-      default -> throw new InternalLogicException("Invalid switch case");
+    } catch (ResourceStateConflictException e) {
+      // Thrown by updateState during an invalid state transition. This indicates that the
+      // caller is not the same flight that created the cloud context.
+      logger.info(
+          "Skipping cloud context delete in createCloudContextFailure. This is expected for duplicate 'createCloudContext' requests. Cause: ",
+          e);
     }
   }
 
