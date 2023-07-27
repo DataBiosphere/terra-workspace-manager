@@ -1,9 +1,8 @@
-package bio.terra.workspace.common.utils;
+package bio.terra.workspace.common.mocks;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_SUBJECT_ID;
-import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.*;
 import static bio.terra.workspace.db.WorkspaceActivityLogDao.ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -83,7 +82,6 @@ public class MockMvcUtils {
   public static final AuthenticatedUserRequest USER_REQUEST =
       new AuthenticatedUserRequest(
           DEFAULT_USER_EMAIL, DEFAULT_USER_SUBJECT_ID, Optional.of("ThisIsNotARealBearerToken"));
-
   public static final List<Integer> JOB_SUCCESS_CODES =
       List.of(HttpStatus.SC_OK, HttpStatus.SC_ACCEPTED);
 
@@ -93,6 +91,8 @@ public class MockMvcUtils {
   @Autowired private ObjectMapper objectMapper;
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private SamService samService;
+
+  // API utils
 
   public static MockHttpServletRequestBuilder addAuth(
       MockHttpServletRequestBuilder request, AuthenticatedUserRequest userRequest) {
@@ -104,171 +104,92 @@ public class MockMvcUtils {
     return request.contentType("application/json");
   }
 
-  public <T> T getCheckedJobResult(MockHttpServletResponse response, Class<T> clazz)
+  public void patchExpect(
+      AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
       throws Exception {
-    int statusCode = response.getStatus();
-    String content = response.getContentAsString();
-    if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_ACCEPTED) {
-      return objectMapper.readValue(content, clazz);
-    }
-    Assertions.fail(
-        String.format("Expected OK or ACCEPTED, but received %d; body: %s", statusCode, content));
-    return null;
+    mockMvc
+        .perform(
+            addAuth(
+                patch(api)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is(httpStatus));
   }
 
-  public static void assertControlledResourceMetadata(
-      ApiControlledResourceMetadata actualMetadata,
-      ApiAccessScope expectedAccessScope,
-      ApiManagedBy expectedManagedByType,
-      ApiPrivateResourceUser expectedPrivateResourceUser,
-      ApiPrivateResourceState expectedPrivateResourceState,
-      @Nullable String region) {
-    assertEquals(expectedAccessScope, actualMetadata.getAccessScope());
-    assertEquals(expectedManagedByType, actualMetadata.getManagedBy());
-    assertEquals(expectedPrivateResourceUser, actualMetadata.getPrivateResourceUser());
-    assertEquals(expectedPrivateResourceState, actualMetadata.getPrivateResourceState());
-    if (region != null) {
-      assertEquals(
-          region.toLowerCase(Locale.ROOT), actualMetadata.getRegion().toLowerCase(Locale.ROOT));
-    }
-  }
-
-  public static void assertResourceMetadata(
-      ApiResourceMetadata actualMetadata,
-      ApiCloudPlatform expectedCloudPlatform,
-      ApiResourceType expectedResourceType,
-      ApiStewardshipType expectedStewardshipType,
-      ApiCloningInstructionsEnum expectedCloningInstructions,
-      UUID expectedWorkspaceId,
-      String expectedResourceName,
-      String expectedResourceDescription,
-      ApiResourceLineage expectedResourceLineage,
-      String expectedCreatedBy,
-      String expectedLastUpdatedBy) {
-    assertEquals(expectedWorkspaceId, actualMetadata.getWorkspaceId());
-    assertEquals(expectedResourceName, actualMetadata.getName());
-    assertEquals(expectedResourceDescription, actualMetadata.getDescription());
-    assertEquals(expectedResourceType, actualMetadata.getResourceType());
-    assertEquals(expectedStewardshipType, actualMetadata.getStewardshipType());
-    assertEquals(expectedCloudPlatform, actualMetadata.getCloudPlatform());
-    assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
-    assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
-    assertEquals(expectedLastUpdatedBy, actualMetadata.getLastUpdatedBy());
-    assertNotNull(actualMetadata.getLastUpdatedDate());
-    assertEquals(expectedCreatedBy, actualMetadata.getCreatedBy());
-    assertNotNull(actualMetadata.getCreatedDate());
-    // last updated date must be equals or after created date.
-    assertFalse(actualMetadata.getLastUpdatedDate().isBefore(actualMetadata.getCreatedDate()));
-
-    assertEquals(
-        PropertiesUtils.convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES),
-        actualMetadata.getProperties());
-  }
-
-  public void assertClonedResourceMetadata(
-      ApiResourceMetadata actualMetadata,
-      ApiCloudPlatform expectedCloudPlatform,
-      ApiResourceType expectedResourceType,
-      ApiStewardshipType expectedStewardshipType,
-      ApiCloningInstructionsEnum expectedCloningInstructions,
-      UUID expectedWorkspaceId,
-      String expectedResourceName,
-      String expectedResourceDescription,
-      UUID sourceWorkspaceId,
-      UUID sourceResourceId,
-      String expectedCreatedBy,
-      StewardshipType sourceResourceStewardshipType,
-      AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
-    ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
-    expectedResourceLineage.add(
-        new ApiResourceLineageEntry()
-            .sourceWorkspaceId(sourceWorkspaceId)
-            .sourceResourceId(sourceResourceId));
-
-    UserStatusInfo userStatusInfo = samService.getUserStatusInfo(userRequest);
-    String expectedLastUpdatedBy = userStatusInfo.getUserEmail();
-    String expectedLastUpdatedBySubjectId = userStatusInfo.getUserSubjectId();
-    logger.info(">>Expect last updated by {}", expectedLastUpdatedBy);
-
-    assertResourceMetadata(
-        actualMetadata,
-        expectedCloudPlatform,
-        expectedResourceType,
-        expectedStewardshipType,
-        expectedCloningInstructions,
-        expectedWorkspaceId,
-        expectedResourceName,
-        expectedResourceDescription,
-        expectedResourceLineage,
-        expectedCreatedBy,
-        expectedLastUpdatedBy);
-
-    // Log the clone entry in the destination workspace as that is where the cloned resource is
-    // created and to record the lineage of the cloned resource id (source) to the destination
-    // workspace.
-    assertLatestActivityLogChangeDetails(
-        expectedWorkspaceId,
-        expectedLastUpdatedBy,
-        expectedLastUpdatedBySubjectId,
-        OperationType.CLONE,
-        sourceResourceId.toString(),
-        WsmResourceType.fromApiResourceType(expectedResourceType, sourceResourceStewardshipType)
-            .getActivityLogChangedTarget());
-  }
-
-  public void assertLatestActivityLogChangeDetails(
-      UUID workspaceId,
-      String expectedActorEmail,
-      String expectedActorSubjectId,
-      OperationType expectedOperationType,
-      String expectedChangeSubjectId,
-      ActivityLogChangedTarget expectedChangeTarget) {
-    ActivityLogChangeDetails actualChangedDetails =
-        getLastChangeDetails(workspaceId, expectedChangeSubjectId);
-    assertEquals(
-        new ActivityLogChangeDetails(
-            workspaceId,
-            actualChangedDetails.changeDate(),
-            expectedActorEmail,
-            expectedActorSubjectId,
-            expectedOperationType,
-            expectedChangeSubjectId,
-            expectedChangeTarget),
-        actualChangedDetails);
+  public void postExpect(
+      AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
+      throws Exception {
+    mockMvc
+        .perform(
+            addAuth(
+                post(api)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is(httpStatus));
   }
 
   /**
-   * Get the latest activity log row where workspaceId matches.
+   * Test that the response is an error. If so, try to format as an error report and log it.
+   * Otherwise, log what is available.
    *
-   * <p>Do not use WorkspaceActivityLogService#getLastUpdatedDetails because it filters out
-   * non-update change_type such as `GRANT_WORKSPACE_ROLE` and `REMOVE_WORKSPACE_ROLE`.
+   * @param response response from a mock api request
+   * @return true if this was an error; false otherwise
    */
-  private ActivityLogChangeDetails getLastChangeDetails(UUID workspaceId, String changeSubjectId) {
-    String sql =
-        """
-            SELECT * FROM workspace_activity_log
-            WHERE workspace_id = :workspace_id AND change_subject_id=:change_subject_id
-            ORDER BY change_date DESC LIMIT 1
-        """;
-    var params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceId.toString())
-            .addValue("change_subject_id", changeSubjectId);
-    return DataAccessUtils.singleResult(
-        jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
+  public boolean isErrorResponse(MockHttpServletResponse response) throws Exception {
+    // not an error
+    if (response.getStatus() < 300) {
+      return false;
+    }
+
+    String serializedResponse = response.getContentAsString();
+    try {
+      var errorReport = objectMapper.readValue(serializedResponse, ApiErrorReport.class);
+      logger.error("Error report: {}", errorReport);
+    } catch (JsonProcessingException e) {
+      logger.error("Not an error report. Serialized response is: {}", serializedResponse);
+    }
+    return true;
   }
 
-  public ApiJobReport getJobReport(String path, AuthenticatedUserRequest userRequest)
+  public String getSerializedResponseForPost(
+      AuthenticatedUserRequest userRequest, String path, String request) throws Exception {
+    return mockMvc
+        .perform(
+            addAuth(
+                post(path)
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
+  }
+
+  public String getSerializedResponseForPost(
+      AuthenticatedUserRequest userRequest, String path, UUID workspaceId, String request)
       throws Exception {
-    String serializedResponse =
-        mockMvc
-            .perform(addJsonContentType(addAuth(get(path), userRequest)))
-            .andExpect(status().is2xxSuccessful())
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiJobResult.class).getJobReport();
+    return mockMvc
+        .perform(
+            addAuth(
+                post(path.formatted(workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(request),
+                userRequest))
+        .andExpect(status().is2xxSuccessful())
+        .andReturn()
+        .getResponse()
+        .getContentAsString();
   }
 
   public String getSerializedResponseForGet(
@@ -323,76 +244,64 @@ public class MockMvcUtils {
         .getContentAsString();
   }
 
-  public String getSerializedResponseForPost(
-      AuthenticatedUserRequest userRequest, String path, String request) throws Exception {
-    return mockMvc
-        .perform(
-            addAuth(
-                post(path)
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(request),
-                userRequest))
-        .andExpect(status().is2xxSuccessful())
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
-  }
+  // Job utils
 
-  public String getSerializedResponseForPost(
-      AuthenticatedUserRequest userRequest, String path, UUID workspaceId, String request)
+  public <T> T getCheckedJobResult(MockHttpServletResponse response, Class<T> clazz)
       throws Exception {
-    return mockMvc
-        .perform(
-            addAuth(
-                post(path.formatted(workspaceId))
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(request),
-                userRequest))
-        .andExpect(status().is2xxSuccessful())
-        .andReturn()
-        .getResponse()
-        .getContentAsString();
+    int statusCode = response.getStatus();
+    String content = response.getContentAsString();
+    if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_ACCEPTED) {
+      return objectMapper.readValue(content, clazz);
+    }
+    Assertions.fail(
+        String.format("Expected OK or ACCEPTED, but received %d; body: %s", statusCode, content));
+    return null;
   }
 
-  /** Patch http request and expect error thrown. */
-  public void patchExpect(
-      AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
+  public ApiJobReport getJobReport(String path, AuthenticatedUserRequest userRequest)
       throws Exception {
-    mockMvc
-        .perform(
-            addAuth(
-                patch(api)
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(request),
-                userRequest))
-        .andExpect(status().is(httpStatus));
+    String serializedResponse =
+        mockMvc
+            .perform(addJsonContentType(addAuth(get(path), userRequest)))
+            .andExpect(status().is2xxSuccessful())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readValue(serializedResponse, ApiJobResult.class).getJobReport();
   }
 
-  public void postExpect(
-      AuthenticatedUserRequest userRequest, String request, String api, int httpStatus)
-      throws Exception {
-    mockMvc
-        .perform(
-            addAuth(
-                post(api)
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .characterEncoding("UTF-8")
-                    .content(request),
-                userRequest))
-        .andExpect(status().is(httpStatus));
-  }
+  // Resources
 
-  public static void assertResourceReady(ApiResourceMetadata metadata) {
-    assertEquals(ApiState.READY, metadata.getState());
-    assertNull(metadata.getErrorReport());
-    assertNull(metadata.getJobId());
+  public static void assertResourceMetadata(
+      ApiResourceMetadata actualMetadata,
+      ApiCloudPlatform expectedCloudPlatform,
+      ApiResourceType expectedResourceType,
+      ApiStewardshipType expectedStewardshipType,
+      ApiCloningInstructionsEnum expectedCloningInstructions,
+      UUID expectedWorkspaceId,
+      String expectedResourceName,
+      String expectedResourceDescription,
+      ApiResourceLineage expectedResourceLineage,
+      String expectedCreatedBy,
+      String expectedLastUpdatedBy) {
+    assertEquals(expectedWorkspaceId, actualMetadata.getWorkspaceId());
+    assertEquals(expectedResourceName, actualMetadata.getName());
+    assertEquals(expectedResourceDescription, actualMetadata.getDescription());
+    assertEquals(expectedResourceType, actualMetadata.getResourceType());
+    assertEquals(expectedStewardshipType, actualMetadata.getStewardshipType());
+    assertEquals(expectedCloudPlatform, actualMetadata.getCloudPlatform());
+    assertEquals(expectedCloningInstructions, actualMetadata.getCloningInstructions());
+    assertEquals(expectedResourceLineage, actualMetadata.getResourceLineage());
+    assertEquals(expectedLastUpdatedBy, actualMetadata.getLastUpdatedBy());
+    assertNotNull(actualMetadata.getLastUpdatedDate());
+    assertEquals(expectedCreatedBy, actualMetadata.getCreatedBy());
+    assertNotNull(actualMetadata.getCreatedDate());
+    // last updated date must be equals or after created date.
+    assertFalse(actualMetadata.getLastUpdatedDate().isBefore(actualMetadata.getCreatedDate()));
+
+    assertEquals(
+        PropertiesUtils.convertMapToApiProperties(DEFAULT_RESOURCE_PROPERTIES),
+        actualMetadata.getProperties());
   }
 
   /**
@@ -424,7 +333,125 @@ public class MockMvcUtils {
     }
   }
 
-  // I can't figure out the proper way to do this
+  public static void assertControlledResourceMetadata(
+      ApiControlledResourceMetadata actualMetadata,
+      ApiAccessScope expectedAccessScope,
+      ApiManagedBy expectedManagedByType,
+      ApiPrivateResourceUser expectedPrivateResourceUser,
+      ApiPrivateResourceState expectedPrivateResourceState,
+      @Nullable String region) {
+    assertEquals(expectedAccessScope, actualMetadata.getAccessScope());
+    assertEquals(expectedManagedByType, actualMetadata.getManagedBy());
+    assertEquals(expectedPrivateResourceUser, actualMetadata.getPrivateResourceUser());
+    assertEquals(expectedPrivateResourceState, actualMetadata.getPrivateResourceState());
+    if (region != null) {
+      assertEquals(
+          region.toLowerCase(Locale.ROOT), actualMetadata.getRegion().toLowerCase(Locale.ROOT));
+    }
+  }
+
+  public void assertClonedResourceMetadata(
+      ApiResourceMetadata actualMetadata,
+      ApiCloudPlatform expectedCloudPlatform,
+      ApiResourceType expectedResourceType,
+      ApiStewardshipType expectedStewardshipType,
+      ApiCloningInstructionsEnum expectedCloningInstructions,
+      UUID expectedWorkspaceId,
+      String expectedResourceName,
+      String expectedResourceDescription,
+      UUID sourceWorkspaceId,
+      UUID sourceResourceId,
+      String expectedCreatedBy,
+      StewardshipType sourceResourceStewardshipType,
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
+    ApiResourceLineage expectedResourceLineage = new ApiResourceLineage();
+    expectedResourceLineage.add(
+        new ApiResourceLineageEntry()
+            .sourceWorkspaceId(sourceWorkspaceId)
+            .sourceResourceId(sourceResourceId));
+
+    UserStatusInfo userStatusInfo = samService.getUserStatusInfo(userRequest);
+    String expectedLastUpdatedBy = userStatusInfo.getUserEmail();
+    String expectedLastUpdatedBySubjectId = userStatusInfo.getUserSubjectId();
+    logger.info(">>Expect last updated by {}", expectedLastUpdatedBy);
+
+    assertResourceMetadata(
+        actualMetadata,
+        expectedCloudPlatform,
+        expectedResourceType,
+        expectedStewardshipType,
+        expectedCloningInstructions,
+        expectedWorkspaceId,
+        expectedResourceName,
+        expectedResourceDescription,
+        expectedResourceLineage,
+        expectedCreatedBy,
+        expectedLastUpdatedBy);
+
+    // Log the clone entry in the destination workspace as that is where the cloned resource is
+    // created and to record the lineage of the cloned resource id (source) to the destination
+    // workspace.
+    assertLatestActivityLogChangeDetails(
+        expectedWorkspaceId,
+        expectedLastUpdatedBy,
+        expectedLastUpdatedBySubjectId,
+        OperationType.CLONE,
+        sourceResourceId.toString(),
+        WsmResourceType.fromApiResourceType(expectedResourceType, sourceResourceStewardshipType)
+            .getActivityLogChangedTarget());
+  }
+
+  public static void assertResourceReady(ApiResourceMetadata metadata) {
+    assertEquals(ApiState.READY, metadata.getState());
+    assertNull(metadata.getErrorReport());
+    assertNull(metadata.getJobId());
+  }
+
+  // Misc. utils
+
+  public void assertLatestActivityLogChangeDetails(
+      UUID workspaceId,
+      String expectedActorEmail,
+      String expectedActorSubjectId,
+      OperationType expectedOperationType,
+      String expectedChangeSubjectId,
+      ActivityLogChangedTarget expectedChangeTarget) {
+    ActivityLogChangeDetails actualChangedDetails =
+        getLastChangeDetails(workspaceId, expectedChangeSubjectId);
+    assertEquals(
+        new ActivityLogChangeDetails(
+            workspaceId,
+            actualChangedDetails.changeDate(),
+            expectedActorEmail,
+            expectedActorSubjectId,
+            expectedOperationType,
+            expectedChangeSubjectId,
+            expectedChangeTarget),
+        actualChangedDetails);
+  }
+
+  /**
+   * Get the latest activity log row where workspaceId matches.
+   *
+   * <p>Do not use WorkspaceActivityLogService#getLastUpdatedDetails because it filters out
+   * non-update change_type such as `GRANT_WORKSPACE_ROLE` and `REMOVE_WORKSPACE_ROLE`.
+   */
+  private ActivityLogChangeDetails getLastChangeDetails(UUID workspaceId, String changeSubjectId) {
+    String sql =
+        """
+            SELECT * FROM workspace_activity_log
+            WHERE workspace_id = :workspace_id AND change_subject_id=:change_subject_id
+            ORDER BY change_date DESC LIMIT 1
+        """;
+    var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceId.toString())
+            .addValue("change_subject_id", changeSubjectId);
+    return DataAccessUtils.singleResult(
+        jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER));
+  }
+
   public static Matcher<? super Integer> getExpectedCodesMatcher(List<Integer> expectedCodes) {
     if (expectedCodes.size() == 1) {
       return equalTo(expectedCodes.get(0));
@@ -438,28 +465,5 @@ public class MockMvcUtils {
     } else {
       throw new RuntimeException("Unexpected number of expected codes");
     }
-  }
-
-  /**
-   * Test that the response is an error. If so, try to format as an error report and log it.
-   * Otherwise, log what is available.
-   *
-   * @param response response from a mock api request
-   * @return true if this was an error; false otherwise
-   */
-  public boolean isErrorResponse(MockHttpServletResponse response) throws Exception {
-    // not an error
-    if (response.getStatus() < 300) {
-      return false;
-    }
-
-    String serializedResponse = response.getContentAsString();
-    try {
-      var errorReport = objectMapper.readValue(serializedResponse, ApiErrorReport.class);
-      logger.error("Error report: {}", errorReport);
-    } catch (JsonProcessingException e) {
-      logger.error("Not an error report. Serialized response is: {}", serializedResponse);
-    }
-    return true;
   }
 }

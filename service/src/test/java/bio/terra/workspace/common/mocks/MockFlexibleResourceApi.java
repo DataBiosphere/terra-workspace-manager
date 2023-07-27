@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.mocks;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,7 +10,6 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceRequest;
 import bio.terra.workspace.generated.model.ApiCloneControlledFlexibleResourceResult;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;

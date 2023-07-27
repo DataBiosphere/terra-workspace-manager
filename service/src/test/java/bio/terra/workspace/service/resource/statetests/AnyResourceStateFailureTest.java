@@ -11,7 +11,7 @@ import static bio.terra.workspace.common.mocks.MockGcpApi.REFERENCED_GCP_BQ_DATA
 import static bio.terra.workspace.common.mocks.MockGcpApi.REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT;
 import static bio.terra.workspace.common.mocks.MockGitRepoApi.CREATE_REFERENCED_GIT_REPOS_PATH_FORMAT;
 import static bio.terra.workspace.common.mocks.MockGitRepoApi.REFERENCED_GIT_REPOS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -20,8 +20,8 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.mocks.MockFlexibleResourceApi;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
-import bio.terra.workspace.common.utils.MockMvcUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCreateControlledFlexibleResourceRequestBody;

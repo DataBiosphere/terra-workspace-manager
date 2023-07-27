@@ -2,6 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 

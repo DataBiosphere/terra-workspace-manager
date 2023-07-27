@@ -1,11 +1,11 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addJsonContentType;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.CLOUD_CONTEXTS_V1_CREATE;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1;
 import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_BY_UFID;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
