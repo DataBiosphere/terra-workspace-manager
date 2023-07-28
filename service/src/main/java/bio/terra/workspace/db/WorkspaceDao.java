@@ -7,6 +7,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.db.exception.CloudContextNotFoundException;
+import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.db.model.DbWorkspace;
@@ -341,16 +342,28 @@ public class WorkspaceDao {
       String flightId,
       @Nullable Exception exception,
       WsmResourceStateRule resourceStateRule) {
-
-    switch (resourceStateRule) {
-      case DELETE_ON_FAILURE -> deleteWorkspaceWorker(workspaceUuid);
-
-      case BROKEN_ON_FAILURE -> {
-        DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
-        stateDao.updateState(
-            dbWorkspace, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+    DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
+    try {
+      switch (resourceStateRule) {
+        case DELETE_ON_FAILURE -> {
+          // There is no guarantee this is the flight which created this workspace. Validate that it
+          // is before attempting to delete the workspace.
+          stateDao.updateState(
+              dbWorkspace, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+          deleteWorkspaceWorker(workspaceUuid);
+        }
+        case BROKEN_ON_FAILURE -> {
+          stateDao.updateState(
+              dbWorkspace, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+        }
+        default -> throw new InternalLogicException("Invalid switch case");
       }
-      default -> throw new InternalLogicException("Invalid switch case");
+    } catch (ResourceStateConflictException e) {
+      // Thrown by updateState during an invalid state transition. This indicates that the
+      // caller is not the same flight that created the workspace.
+      logger.info(
+          "Skipping workspace delete in createWorkspaceFailure. This is expected for duplicate 'createWorkspace' requests. Cause: ",
+          e);
     }
   }
 
@@ -852,16 +865,30 @@ public class WorkspaceDao {
       String flightId,
       @Nullable Exception exception,
       WsmResourceStateRule resourceStateRule) {
-
-    switch (resourceStateRule) {
-      case DELETE_ON_FAILURE -> deleteCloudContextWorker(workspaceUuid, cloudPlatform, flightId);
-
-      case BROKEN_ON_FAILURE -> {
-        DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
-        stateDao.updateState(
-            cloudContext, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+    DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
+    try {
+      switch (resourceStateRule) {
+        case DELETE_ON_FAILURE -> {
+          // There is no guarantee this is the flight which created this cloud context. Validate
+          // that
+          // it is before attempting to delete the workspace.
+          stateDao.updateState(
+              cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+          // flightId is now null due to the updateState call above.
+          deleteCloudContextWorker(workspaceUuid, cloudPlatform, null);
+        }
+        case BROKEN_ON_FAILURE -> {
+          stateDao.updateState(
+              cloudContext, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+        }
+        default -> throw new InternalLogicException("Invalid switch case");
       }
-      default -> throw new InternalLogicException("Invalid switch case");
+    } catch (ResourceStateConflictException e) {
+      // Thrown by updateState during an invalid state transition. This indicates that the
+      // caller is not the same flight that created the cloud context.
+      logger.info(
+          "Skipping cloud context delete in createCloudContextFailure. This is expected for duplicate 'createCloudContext' requests. Cause: ",
+          e);
     }
   }
 
