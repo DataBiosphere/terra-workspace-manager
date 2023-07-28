@@ -10,6 +10,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.CloudContextService;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,8 +55,12 @@ public class BuildAndValidateResourceListStep implements Step {
     // Generate pairs of (resourceId, flightId) maintaining the ordering
     List<ResourceDeleteFlightPair> resourcePairs = new ArrayList<>();
     for (ControlledResource resource : resources) {
-      resourcePairs.add(
-          new ResourceDeleteFlightPair(resource.getResourceId(), UUID.randomUUID().toString()));
+      // Resources already in delete flight are added to the list without creating a new flight
+      String flightId =
+          ((resource.getState() == WsmResourceState.DELETING) && (resource.getFlightId() != null))
+              ? resource.getFlightId()
+              : UUID.randomUUID().toString();
+      resourcePairs.add(new ResourceDeleteFlightPair(resource.getResourceId(), flightId));
     }
     logger.info(
         "Flight {} BuildAndValidateResourceListStep found {} resources to delete",
