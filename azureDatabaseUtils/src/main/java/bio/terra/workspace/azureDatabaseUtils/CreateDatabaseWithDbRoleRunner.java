@@ -1,31 +1,26 @@
-package bio.terra.workspace.azureDatabaseUtils.create;
+package bio.terra.workspace.azureDatabaseUtils;
 
+import bio.terra.workspace.azureDatabaseUtils.create.CreateDatabaseService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Profile("CreateDatabase")
+@Profile("CreateDatabaseWithDbRole")
 @Component
-public class CreateDatabaseRunner implements ApplicationRunner {
-  @Value("${azureDatabaseUtils.create.newDbUserOid}")
-  private String newDbUserOid;
-
-  @Value("${azureDatabaseUtils.create.newDbUserName}")
-  private String newDbUserName;
-
+public class CreateDatabaseWithDbRoleRunner implements ApplicationRunner {
   @Value("${azureDatabaseUtils.create.newDbName}")
   private String newDbName;
 
   private final CreateDatabaseService createDatabaseService;
 
-  public CreateDatabaseRunner(CreateDatabaseService createDatabaseService) {
+  public CreateDatabaseWithDbRoleRunner(CreateDatabaseService createDatabaseService) {
     this.createDatabaseService = createDatabaseService;
   }
 
   @Override
   public void run(ApplicationArguments args) {
-    createDatabaseService.createDatabaseWithManagedIdentity(newDbName, newDbUserName, newDbUserOid);
+    createDatabaseService.createDatabaseWithDbRole(newDbName);
   }
 }

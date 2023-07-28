@@ -13,6 +13,9 @@ spring profile that is active. The commands are:
   * `NEW_DB_NAME` - the name of the database to create
   * `NEW_DB_USER_NAME` - the name of the user to create (good idea to make this the same as the managed identity)
   * `NEW_DB_USER_OID` - the OID of the manged identity
+* `CreateDatabaseWithDbRole` - creates a database with a given name and grant access new role of the same name. Used in the [CreateAzureDatabaseStep](../service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/azure/database/CreateAzureDatabaseStep.java). Environment variables:
+  * `spring_profiles_active` - must be set to `CreateDatabaseWithDbRole`
+  * `NEW_DB_NAME` - the name of the database to create
 
 Common environment variables:
 * `DB_SERVER_NAME` - fully qualified name of the database server

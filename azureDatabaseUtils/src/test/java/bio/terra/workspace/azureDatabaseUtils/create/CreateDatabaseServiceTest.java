@@ -20,10 +20,10 @@ public class CreateDatabaseServiceTest extends BaseUnitTest {
     final String newDbUserName = "testCreateRole";
     final String newDbUserOid = UUID.randomUUID().toString();
 
-    createDatabaseService.createDatabase(newDbName, newDbUserName, newDbUserOid);
+    createDatabaseService.createDatabaseWithManagedIdentity(newDbName, newDbUserName, newDbUserOid);
 
     verify(createDatabaseDao).createDatabase(newDbName);
-    verify(createDatabaseDao).createRole(newDbUserName, newDbUserOid);
+    verify(createDatabaseDao).createRoleForManagedIdentity(newDbUserName, newDbUserOid);
     verify(createDatabaseDao).grantAllPrivileges(newDbUserName, newDbName);
     verify(createDatabaseDao).revokeAllPublicPrivileges(newDbName);
   }
@@ -35,7 +35,7 @@ public class CreateDatabaseServiceTest extends BaseUnitTest {
     final String newDbUserOid = UUID.randomUUID().toString();
     assertThrows(
         IllegalArgumentException.class,
-        () -> createDatabaseService.createDatabase(newDbName, newDbUserName, newDbUserOid));
+        () -> createDatabaseService.createDatabaseWithManagedIdentity(newDbName, newDbUserName, newDbUserOid));
   }
 
   @Test
@@ -45,7 +45,7 @@ public class CreateDatabaseServiceTest extends BaseUnitTest {
     final String newDbUserOid = UUID.randomUUID().toString();
     assertThrows(
         IllegalArgumentException.class,
-        () -> createDatabaseService.createDatabase(newDbName, newDbUserName, newDbUserOid));
+        () -> createDatabaseService.createDatabaseWithManagedIdentity(newDbName, newDbUserName, newDbUserOid));
   }
 
   @Test
@@ -55,6 +55,6 @@ public class CreateDatabaseServiceTest extends BaseUnitTest {
     final String newDbUserOid = "not a uuid";
     assertThrows(
         IllegalArgumentException.class,
-        () -> createDatabaseService.createDatabase(newDbName, newDbUserName, newDbUserOid));
+        () -> createDatabaseService.createDatabaseWithManagedIdentity(newDbName, newDbUserName, newDbUserOid));
   }
 }

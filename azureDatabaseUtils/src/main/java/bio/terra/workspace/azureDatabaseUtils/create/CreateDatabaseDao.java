@@ -47,7 +47,7 @@ public class CreateDatabaseDao {
    * @return the text `exists` if the role already exists, or the output of
    *     `pgaadauth_create_principal_with_oid` if the role was created
    */
-  public String createRole(String roleName, String userOID) {
+  public String createRoleForManagedIdentity(String roleName, String userOID) {
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("roleName", roleName).addValue("userOID", userOID);
     return jdbcTemplate
@@ -62,12 +62,32 @@ public class CreateDatabaseDao {
         .get(0);
   }
 
+  public boolean createRole(String roleName) {
+    // roleName should already be validated by the service layer
+    try {
+      jdbcTemplate.update(
+          """
+              CREATE ROLE "%s"
+              """.formatted(roleName),
+          Map.of());
+      return true;
+    } catch (BadSqlGrammarException e) {
+      // ignore if the role already exists
+      if (!e.getSQLException().getMessage().contains("already exists")) {
+        throw e;
+      }
+      return false;
+    }
+  }
+
   public void grantAllPrivileges(String roleName, String databaseName) {
     // databaseName should already be validated by the service layer
     // roleName should already be validated by the service layer
     // GRANT does not like bind parameters
     jdbcTemplate.update(
-        "GRANT ALL PRIVILEGES ON DATABASE %s TO \"%s\"".formatted(databaseName, roleName),
+        """
+        GRANT ALL PRIVILEGES ON DATABASE %s TO "%s"
+        """.formatted(databaseName, roleName),
         Map.of());
   }
 

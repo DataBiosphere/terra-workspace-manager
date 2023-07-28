@@ -17,7 +17,7 @@ public class CreateDatabaseService {
     this.createDatabaseDao = createDatabaseDao;
   }
 
-  public void createDatabase(String newDbName, String newDbUserName, String newDbUserOid) {
+  public void createDatabaseWithManagedIdentity(String newDbName, String newDbUserName, String newDbUserOid) {
     validateDatabaseNameFormat(newDbName);
     validateRoleNameFormat(newDbUserName);
     validateUserOidFormat(newDbUserOid);
@@ -26,8 +26,20 @@ public class CreateDatabaseService {
         "Creating database {} with user {} and OID {}", newDbName, newDbUserName, newDbUserOid);
 
     createDatabaseDao.createDatabase(newDbName);
-    createDatabaseDao.createRole(newDbUserName, newDbUserOid);
+    createDatabaseDao.createRoleForManagedIdentity(newDbUserName, newDbUserOid);
     createDatabaseDao.grantAllPrivileges(newDbUserName, newDbName);
+    createDatabaseDao.revokeAllPublicPrivileges(newDbName);
+  }
+
+  public void createDatabaseWithDbRole(String newDbName) {
+    validateDatabaseNameFormat(newDbName);
+
+    logger.info(
+        "Creating database {} with db role of same name", newDbName);
+
+    createDatabaseDao.createDatabase(newDbName);
+    createDatabaseDao.createRole(newDbName);
+    createDatabaseDao.grantAllPrivileges(newDbName, newDbName);
     createDatabaseDao.revokeAllPublicPrivileges(newDbName);
   }
 
