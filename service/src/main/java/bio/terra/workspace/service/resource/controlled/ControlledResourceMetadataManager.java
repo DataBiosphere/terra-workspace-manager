@@ -53,8 +53,8 @@ public class ControlledResourceMetadataManager {
    * access against the workspace, a read access check against the resource will be done).
    *
    * <p>This method differs from `validateControlledResourceAndAction` in that this method will
-   * allow read access to a resource if the user has access to the workspace, but not the resource
-   * itself.
+   * allow read access to a resource if the user has access to the workspace, even if the user does
+   * not have read access to the resource itself.
    *
    * <p>Throws ResourceNotFound from getResource if the resource does not exist in the specified
    * workspace, regardless of the user's permission.

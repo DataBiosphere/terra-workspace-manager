@@ -38,6 +38,8 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
   private UUID resourceId;
   private ControlledResource controlledResource;
 
+  private final String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
+
   @BeforeEach
   void setupMocks() throws InterruptedException {
     workspaceId = UUID.randomUUID();
@@ -59,9 +61,7 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
 
   @Test
   public void testValidateControlledResourceReadAccess_Workspace() throws InterruptedException {
-    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
-
-    // User has read permissions on the workspace but NOT the resource itself.
+    // User has read permissions on the workspace, but NOT the resource itself.
     // They are still able to see the resource.
     doReturn(true)
         .when(mockSamService())
@@ -83,9 +83,7 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
 
   @Test
   public void testValidateControlledResourceReadAccess_Resource() throws InterruptedException {
-    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
-
-    // User does not have read access on the workspace but does on the resource (which
+    // User does not have read access on the workspace, but does on the resource (which
     // should not happen in practice). Go ahead and return the resource.
     doReturn(false)
         .when(mockSamService())
@@ -107,9 +105,7 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
 
   @Test
   public void testValidateControlledResourceReadAccess_NoAccess() throws InterruptedException {
-    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
-
-    // User does not have read access to the workspace, nor the resource.
+    // User does not have read access on the workspace, nor the resource.
     doReturn(false)
         .when(mockSamService())
         .isAuthorized(
@@ -128,9 +124,7 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
   @Test
   public void testValidateControlledResourceAndAction_Read_HasWorkspaceAccessOnly()
       throws InterruptedException {
-    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
-
-    // User has read permissions on the workspace but NOT the resource itself.
+    // User has read permissions on the workspace, but NOT the resource itself.
     // This method will throw an error, as opposed to validateControlledResourceReadAccess.
     doReturn(true)
         .when(mockSamService())
@@ -151,10 +145,9 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
                 userRequest, workspaceId, resourceId, readAction));
   }
 
+  @Test
   public void testValidateControlledResourceAndAction_Read_HasResourceAccess()
       throws InterruptedException {
-    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
-
     // User has read permissions on the resource, method short-circuits and returns the resource.
     doReturn(true)
         .when(mockSamService())
@@ -164,18 +157,15 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
             resourceId.toString(),
             readAction);
 
-    assertThrows(
-        ForbiddenException.class,
-        () ->
-            controlledResourceMetadataManager.validateControlledResourceAndAction(
-                userRequest, workspaceId, resourceId, readAction));
+    ControlledResource resource =
+        controlledResourceMetadataManager.validateControlledResourceAndAction(
+            userRequest, workspaceId, resourceId, readAction);
+    Assertions.assertEquals(controlledResource, resource);
   }
 
   @Test
   public void testValidateControlledResourceAndAction_Read_NoResourceAccess()
       throws InterruptedException {
-    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
-
     // User does not have read access on the resource.
     doReturn(false)
         .when(mockSamService())
