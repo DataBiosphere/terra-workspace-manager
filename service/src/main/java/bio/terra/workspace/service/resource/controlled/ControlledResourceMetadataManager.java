@@ -49,7 +49,53 @@ public class ControlledResourceMetadataManager {
 
   /**
    * Convenience function that checks existence of a controlled resource within a workspace,
-   * followed by an authorization check against that resource.
+   * followed by a read authorization check against the workspace (if the user does not have read
+   * access against the workspace, a read access check against the resource will be done).
+   *
+   * <p>This method differs from `validateControlledResourceAndAction` in that this method will
+   * allow read access to a resource if the user has access to the workspace, but not the resource
+   * itself.
+   *
+   * <p>Throws ResourceNotFound from getResource if the resource does not exist in the specified
+   * workspace, regardless of the user's permission.
+   *
+   * <p>Throws InvalidControlledResourceException if the given resource is not controlled.
+   *
+   * <p>Throws ForbiddenException if the user does not have read access on the workspace nor the
+   * resource.
+   *
+   * @param userRequest the user's authenticated request
+   * @param workspaceUuid id of the workspace this resource exists in
+   * @param resourceId id of the resource in question
+   * @return validated resource
+   */
+  public ControlledResource validateControlledResourceReadAccess(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, UUID resourceId) {
+    String readAction = SamControlledResourceActions.READ_ACTION;
+    stageService.assertMcWorkspace(workspaceUuid, readAction);
+    WsmResource resource = resourceDao.getResource(workspaceUuid, resourceId);
+
+    // Everyone who is a reader (or above) on the workspace can see all the resources in a
+    // workspace. Thus we return the resource if the user has read access on the workspace,
+    // and only check permissions on the resource itself if the user does not have read
+    // access on the workspace (which should not happen given that it is a controlled resource).
+    try {
+      checkResourceAuthz(
+          userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid, readAction);
+    } catch (ForbiddenException exception) {
+      ControlledResource controlledResource = resource.castToControlledResource();
+      String samName = controlledResource.getCategory().getSamResourceName();
+      checkResourceAuthz(userRequest, samName, resourceId, readAction);
+    }
+
+    return resource.castToControlledResource();
+  }
+
+  /**
+   * Convenience function that checks existence of a controlled resource within a workspace,
+   * followed by an authorization check against that resource. This method verifies that the user
+   * has access on the specific resource (even for read access, so it is stricter in the case of
+   * read access than `validateControlledResourceReadAccess`).
    *
    * <p>Throws ResourceNotFound from getResource if the resource does not exist in the specified
    * workspace, regardless of the user's permission.
@@ -79,10 +125,8 @@ public class ControlledResourceMetadataManager {
     ControlledResource controlledResource = resource.castToControlledResource();
     String samName = controlledResource.getCategory().getSamResourceName();
 
-    // Everyone who is a reader (or above) on the workspace can see all the resources in a
-    // workspace. Thus this authorization check is against the workspace and not the resource.
     if (StringUtils.equals(action, SamControlledResourceActions.READ_ACTION)) {
-      checkResourceAuthz(userRequest, SamConstants.SamResource.WORKSPACE, workspaceUuid, action);
+      checkResourceAuthz(userRequest, samName, resourceId, action);
       return controlledResource;
     }
 

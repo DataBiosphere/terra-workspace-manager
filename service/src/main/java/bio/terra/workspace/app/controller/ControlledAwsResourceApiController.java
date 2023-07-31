@@ -316,11 +316,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsS3StorageFolderResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                resourceUuid,
-                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .validateControlledResourceReadAccess(userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -524,11 +520,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsSageMakerNotebookResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                resourceUuid,
-                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .validateControlledResourceReadAccess(userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }

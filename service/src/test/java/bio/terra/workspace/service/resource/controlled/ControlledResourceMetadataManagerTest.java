@@ -58,8 +58,7 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
   }
 
   @Test
-  public void testValidateControlledResourceAndAction_Read_HasWorkspaceAccess()
-      throws InterruptedException {
+  public void testValidateControlledResourceReadAccess_Workspace() throws InterruptedException {
     String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
 
     // User has read permissions on the workspace but NOT the resource itself.
@@ -77,21 +76,107 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
             readAction);
 
     ControlledResource resource =
-        controlledResourceMetadataManager.validateControlledResourceAndAction(
-            userRequest, workspaceId, resourceId, readAction);
+        controlledResourceMetadataManager.validateControlledResourceReadAccess(
+            userRequest, workspaceId, resourceId);
     Assertions.assertEquals(controlledResource, resource);
   }
 
   @Test
-  public void testValidateControlledResourceAndAction_Read_NoWorkspaceAccess()
-      throws InterruptedException {
+  public void testValidateControlledResourceReadAccess_Resource() throws InterruptedException {
     String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
 
-    // User read permissions on neither the workspace nor the resource.
+    // User does not have read access on the workspace but does on the resource (which
+    // should not happen in practice). Go ahead and return the resource.
     doReturn(false)
         .when(mockSamService())
         .isAuthorized(
             userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), readAction);
+    doReturn(true)
+        .when(mockSamService())
+        .isAuthorized(
+            userRequest,
+            controlledResource.getCategory().getSamResourceName(),
+            resourceId.toString(),
+            readAction);
+
+    ControlledResource resource =
+        controlledResourceMetadataManager.validateControlledResourceReadAccess(
+            userRequest, workspaceId, resourceId);
+    Assertions.assertEquals(controlledResource, resource);
+  }
+
+  @Test
+  public void testValidateControlledResourceReadAccess_NoAccess() throws InterruptedException {
+    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
+
+    // User does not have read access to the workspace, nor the resource.
+    doReturn(false)
+        .when(mockSamService())
+        .isAuthorized(
+            userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), readAction);
+    doReturn(false)
+        .when(mockSamService())
+        .isAuthorized(
+            userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), readAction);
+    assertThrows(
+        ForbiddenException.class,
+        () ->
+            controlledResourceMetadataManager.validateControlledResourceReadAccess(
+                userRequest, workspaceId, resourceId));
+  }
+
+  @Test
+  public void testValidateControlledResourceAndAction_Read_HasWorkspaceAccessOnly()
+      throws InterruptedException {
+    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
+
+    // User has read permissions on the workspace but NOT the resource itself.
+    // This method will throw an error, as opposed to validateControlledResourceReadAccess.
+    doReturn(true)
+        .when(mockSamService())
+        .isAuthorized(
+            userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), readAction);
+    doReturn(false)
+        .when(mockSamService())
+        .isAuthorized(
+            userRequest,
+            controlledResource.getCategory().getSamResourceName(),
+            resourceId.toString(),
+            readAction);
+
+    assertThrows(
+        ForbiddenException.class,
+        () ->
+            controlledResourceMetadataManager.validateControlledResourceAndAction(
+                userRequest, workspaceId, resourceId, readAction));
+  }
+
+  public void testValidateControlledResourceAndAction_Read_HasResourceAccess()
+      throws InterruptedException {
+    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
+
+    // User has read permissions on the resource, method short-circuits and returns the resource.
+    doReturn(true)
+        .when(mockSamService())
+        .isAuthorized(
+            userRequest,
+            controlledResource.getCategory().getSamResourceName(),
+            resourceId.toString(),
+            readAction);
+
+    assertThrows(
+        ForbiddenException.class,
+        () ->
+            controlledResourceMetadataManager.validateControlledResourceAndAction(
+                userRequest, workspaceId, resourceId, readAction));
+  }
+
+  @Test
+  public void testValidateControlledResourceAndAction_Read_NoResourceAccess()
+      throws InterruptedException {
+    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
+
+    // User does not have read access on the resource.
     doReturn(false)
         .when(mockSamService())
         .isAuthorized(
@@ -111,8 +196,8 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
   public void testValidateControlledResourceAndAction_Write() {
     String writeAction = SamConstants.SamControlledResourceActions.WRITE_ACTION;
 
-    // On write permissions, workspace access isn't checked and the method moves on to checking
-    // resource state. Since this controlled resource was created directly without proper state,
+    // On write permissions, resource access is done based on the resource state.
+    // Since this controlled resource was created directly without proper state,
     // its `getState` method returns NOT_EXISTS and `validateControlledResourceAndAction` throws
     // an exception.
     Assertions.assertEquals(NOT_EXISTS, controlledResource.getState());
