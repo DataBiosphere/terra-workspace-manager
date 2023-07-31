@@ -280,8 +280,8 @@ public class WorkspaceService {
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
     logWorkspaceAction(userRequest, workspaceUuid.toString(), action);
-    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
     checkWorkspaceAuthz(userRequest, workspaceUuid, action);
+    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
     return workspace;
   }
 
