@@ -47,8 +47,12 @@ public class CreateDatabaseDaoTest extends BaseUnitTest {
   void testCreateRoleForManagedIdentity() {
     final String testUserOID = "test";
     createRoleFunction();
-    assertThat(createDatabaseDao.createRoleForManagedIdentity(testRoleName, testUserOID), equalTo("created"));
-    assertThat(createDatabaseDao.createRoleForManagedIdentity(testRoleName, testUserOID), equalTo("exists"));
+    assertThat(
+        createDatabaseDao.createRoleForManagedIdentity(testRoleName, testUserOID),
+        equalTo("created"));
+    assertThat(
+        createDatabaseDao.createRoleForManagedIdentity(testRoleName, testUserOID),
+        equalTo("exists"));
   }
 
   @Test
@@ -60,7 +64,6 @@ public class CreateDatabaseDaoTest extends BaseUnitTest {
   @Test
   void testGrantAllPrivileges() {
     jdbcTemplate.execute("CREATE DATABASE " + testDatabaseName);
-    createDatabaseDao.createRole(testRoleName);
     createTestRole(testRoleName);
     createDatabaseDao.grantAllPrivileges(testRoleName, testDatabaseName);
   }

@@ -100,7 +100,7 @@ public class GetAzureDatabaseStepTest {
         .thenReturn(null);
 
     var step =
-        new GetAzureDatabaseStep(
+        new AzureDatabaseGuardStep(
             mockAzureConfig,
             mockCrlService,
             databaseResource,
@@ -133,7 +133,7 @@ public class GetAzureDatabaseStepTest {
     when(mockHttpResponse.getStatusCode()).thenReturn(httpStatus.value());
 
     var step =
-        new GetAzureDatabaseStep(
+        new AzureDatabaseGuardStep(
             mockAzureConfig,
             mockCrlService,
             databaseResource,

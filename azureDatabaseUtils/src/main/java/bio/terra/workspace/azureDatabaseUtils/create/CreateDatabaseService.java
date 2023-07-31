@@ -17,7 +17,8 @@ public class CreateDatabaseService {
     this.createDatabaseDao = createDatabaseDao;
   }
 
-  public void createDatabaseWithManagedIdentity(String newDbName, String newDbUserName, String newDbUserOid) {
+  public void createDatabaseWithManagedIdentity(
+      String newDbName, String newDbUserName, String newDbUserOid) {
     validateDatabaseNameFormat(newDbName);
     validateRoleNameFormat(newDbUserName);
     validateUserOidFormat(newDbUserOid);
@@ -34,8 +35,7 @@ public class CreateDatabaseService {
   public void createDatabaseWithDbRole(String newDbName) {
     validateDatabaseNameFormat(newDbName);
 
-    logger.info(
-        "Creating database {} with db role of same name", newDbName);
+    logger.info("Creating database {} with db role of same name", newDbName);
 
     createDatabaseDao.createDatabase(newDbName);
     createDatabaseDao.createRole(newDbName);

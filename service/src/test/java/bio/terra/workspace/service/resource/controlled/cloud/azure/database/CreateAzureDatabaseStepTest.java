@@ -94,8 +94,9 @@ public class CreateAzureDatabaseStepTest {
   }
 
   @Test
-  void testSuccess() throws InterruptedException, ApiException {
-    var step = setupStepTest(CreateAzureDatabaseStep.POD_SUCCEEDED);
+  // TODO: remove with https://broadworkbench.atlassian.net/browse/WOR-1165
+  void testSuccessWithFederatedIdentity() throws InterruptedException, ApiException {
+    var step = setupStepTest(CreateAzureDatabaseStep.POD_SUCCEEDED, true);
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
     var spec = podCaptor.getValue().getSpec();
@@ -117,8 +118,29 @@ public class CreateAzureDatabaseStepTest {
   }
 
   @Test
+  void testSuccess() throws InterruptedException, ApiException {
+    var step = setupStepTest(CreateAzureDatabaseStep.POD_SUCCEEDED, false);
+    assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
+
+    var spec = podCaptor.getValue().getSpec();
+    var container = spec.getContainers().get(0);
+    var env =
+        container.getEnv().stream()
+            .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
+
+    assertThat(env.get("spring_profiles_active"), equalTo("CreateDatabaseWithDbRole"));
+    assertThat(env.get("DB_SERVER_NAME"), equalTo(mockDatabase.getResourceId()));
+    assertThat(env.get("ADMIN_DB_USER_NAME"), equalTo(mockAdminIdentity.getResourceId()));
+    assertThat(env.get("NEW_DB_NAME"), equalTo(databaseResource.getDatabaseName()));
+
+    assertThat(container.getImage(), equalTo(mockAzureConfig.getAzureDatabaseUtilImage()));
+
+    assertThat(spec.getServiceAccountName(), equalTo(mockAdminIdentity.getResourceId()));
+  }
+
+  @Test
   void testRetry() throws InterruptedException, ApiException {
-    var step = setupStepTest(CreateAzureDatabaseStep.POD_FAILED);
+    var step = setupStepTest(CreateAzureDatabaseStep.POD_FAILED, false);
     assertThat(
         step.doStep(mockFlightContext).getStepStatus(),
         equalTo(StepStatus.STEP_RESULT_FAILURE_RETRY));
@@ -182,14 +204,23 @@ public class CreateAzureDatabaseStepTest {
   }
 
   @NotNull
-  private CreateAzureDatabaseStep setupStepTest(String podPhase) throws ApiException {
+  private CreateAzureDatabaseStep setupStepTest(String podPhase, boolean withFederatedIdentity)
+      throws ApiException {
     createMockFlightContext();
     when(mockAzureConfig.getAzureDatabaseUtilImage()).thenReturn(UUID.randomUUID().toString());
 
-    when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, String.class))
-        .thenReturn(uamiName);
-    when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_PRINCIPAL_ID, String.class))
-        .thenReturn(uamiPrincipalId);
+    if (withFederatedIdentity) {
+      // TODO: remove with https://broadworkbench.atlassian.net/browse/WOR-1165
+      when(mockWorkingMap.containsKey(GetManagedIdentityStep.MANAGED_IDENTITY_NAME))
+          .thenReturn(true);
+      when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, String.class))
+          .thenReturn(uamiName);
+      when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_PRINCIPAL_ID, String.class))
+          .thenReturn(uamiPrincipalId);
+    } else {
+      when(mockWorkingMap.containsKey(GetManagedIdentityStep.MANAGED_IDENTITY_NAME))
+          .thenReturn(false);
+    }
 
     when(mockSamService.getWsmServiceAccountToken()).thenReturn(UUID.randomUUID().toString());
 
@@ -210,10 +241,10 @@ public class CreateAzureDatabaseStepTest {
     when(mockCoreV1Api.createNamespacedPod(any(), podCaptor.capture(), any(), any(), any(), any()))
         .thenReturn(new V1Pod());
     when(mockCoreV1Api.readNamespacedPod(
-            eq(workspaceId + databaseResource.getDatabaseName() + uamiName), any(), any()))
+            eq("create-" + databaseResource.getDatabaseName()), any(), any()))
         .thenReturn(new V1Pod().status(new V1PodStatus().phase(podPhase)));
     when(mockCoreV1Api.deleteNamespacedPod(
-            eq(workspaceId + databaseResource.getDatabaseName() + uamiName),
+            eq("create-" + databaseResource.getDatabaseName()),
             any(),
             any(),
             any(),

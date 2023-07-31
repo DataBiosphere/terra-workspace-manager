@@ -68,8 +68,7 @@ public class CreateDatabaseDao {
       jdbcTemplate.update(
           """
               CREATE ROLE "%s"
-              """.formatted(roleName),
-          Map.of());
+              """.formatted(roleName), Map.of());
       return true;
     } catch (BadSqlGrammarException e) {
       // ignore if the role already exists
@@ -87,7 +86,8 @@ public class CreateDatabaseDao {
     jdbcTemplate.update(
         """
         GRANT ALL PRIVILEGES ON DATABASE %s TO "%s"
-        """.formatted(databaseName, roleName),
+        """
+            .formatted(databaseName, roleName),
         Map.of());
   }
 
