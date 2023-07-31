@@ -5,6 +5,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 
@@ -37,8 +38,11 @@ public class CheckControlledResourceAuthStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // Validate caller can read the source resource before proceeding with the flight.
-    controlledResourceMetadataManager.validateControlledResourceReadAccess(
-        userRequest, resource.getWorkspaceId(), resource.getResourceId());
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        resource.getWorkspaceId(),
+        resource.getResourceId(),
+        SamControlledResourceActions.READ_ACTION);
     return StepResult.getStepResultSuccess();
   }
 
