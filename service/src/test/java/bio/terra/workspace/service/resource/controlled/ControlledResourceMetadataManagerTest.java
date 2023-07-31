@@ -60,7 +60,8 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
   }
 
   @Test
-  public void testValidateControlledResourceReadAccess_Workspace() throws InterruptedException {
+  public void testValidateWorkspaceOrControlledResourceReadAccess_Workspace()
+      throws InterruptedException {
     // User has read permissions on the workspace, but NOT the resource itself.
     // They are still able to see the resource.
     doReturn(true)
@@ -76,13 +77,14 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
             readAction);
 
     ControlledResource resource =
-        controlledResourceMetadataManager.validateControlledResourceReadAccess(
+        controlledResourceMetadataManager.validateWorkspaceOrControlledResourceReadAccess(
             userRequest, workspaceId, resourceId);
     Assertions.assertEquals(controlledResource, resource);
   }
 
   @Test
-  public void testValidateControlledResourceReadAccess_Resource() throws InterruptedException {
+  public void testValidateWorkspaceOrControlledResourceReadAccess_Resource()
+      throws InterruptedException {
     // User does not have read access on the workspace, but does on the resource (which
     // should not happen in practice). Go ahead and return the resource.
     doReturn(false)
@@ -98,13 +100,14 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
             readAction);
 
     ControlledResource resource =
-        controlledResourceMetadataManager.validateControlledResourceReadAccess(
+        controlledResourceMetadataManager.validateWorkspaceOrControlledResourceReadAccess(
             userRequest, workspaceId, resourceId);
     Assertions.assertEquals(controlledResource, resource);
   }
 
   @Test
-  public void testValidateControlledResourceReadAccess_NoAccess() throws InterruptedException {
+  public void testValidateWorkspaceOrControlledResourceReadAccess_NoAccess()
+      throws InterruptedException {
     // User does not have read access on the workspace, nor the resource.
     doReturn(false)
         .when(mockSamService())
@@ -117,7 +120,7 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
     assertThrows(
         ForbiddenException.class,
         () ->
-            controlledResourceMetadataManager.validateControlledResourceReadAccess(
+            controlledResourceMetadataManager.validateWorkspaceOrControlledResourceReadAccess(
                 userRequest, workspaceId, resourceId));
   }
 
@@ -125,7 +128,8 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
   public void testValidateControlledResourceAndAction_Read_HasWorkspaceAccessOnly()
       throws InterruptedException {
     // User has read permissions on the workspace, but NOT the resource itself.
-    // This method will throw an error, as opposed to validateControlledResourceReadAccess.
+    // This method will throw an error, as opposed to
+    // validateWorkspaceOrControlledResourceReadAccess.
     doReturn(true)
         .when(mockSamService())
         .isAuthorized(

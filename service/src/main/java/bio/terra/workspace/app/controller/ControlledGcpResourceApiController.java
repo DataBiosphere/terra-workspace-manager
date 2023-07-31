@@ -234,7 +234,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledGcsBucketResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceReadAccess(userRequest, workspaceUuid, resourceUuid)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -352,7 +353,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledBigQueryDatasetResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceReadAccess(userRequest, workspaceUuid, resourceUuid)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -702,7 +704,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAiNotebookInstanceResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceReadAccess(userRequest, workspaceUuid, resourceUuid)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -873,7 +876,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledGceInstanceResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceReadAccess(userRequest, workspaceUuid, resourceUuid)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -1067,7 +1071,8 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledDataprocClusterResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceReadAccess(userRequest, workspaceUuid, resourceUuid)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }

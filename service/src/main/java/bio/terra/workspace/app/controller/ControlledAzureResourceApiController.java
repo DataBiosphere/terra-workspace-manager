@@ -415,7 +415,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
     final ControlledAzureDiskResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceReadAccess(userRequest, workspaceUuid, resourceUuid)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -427,7 +428,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
     final ControlledAzureVmResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceReadAccess(userRequest, workspaceUuid, resourceUuid)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -720,7 +722,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
     final ControlledAzureDatabaseResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceReadAccess(userRequest, workspaceId, resourceId)
+            .validateWorkspaceOrControlledResourceReadAccess(userRequest, workspaceId, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -733,7 +735,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
     final ControlledAzureManagedIdentityResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceReadAccess(userRequest, workspaceId, resourceId)
+            .validateWorkspaceOrControlledResourceReadAccess(userRequest, workspaceId, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }

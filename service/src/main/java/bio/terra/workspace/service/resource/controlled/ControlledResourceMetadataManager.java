@@ -69,7 +69,7 @@ public class ControlledResourceMetadataManager {
    * @param resourceId id of the resource in question
    * @return validated resource
    */
-  public ControlledResource validateControlledResourceReadAccess(
+  public ControlledResource validateWorkspaceOrControlledResourceReadAccess(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, UUID resourceId) {
     String readAction = SamControlledResourceActions.READ_ACTION;
     stageService.assertMcWorkspace(workspaceUuid, readAction);
@@ -95,7 +95,7 @@ public class ControlledResourceMetadataManager {
    * Convenience function that checks existence of a controlled resource within a workspace,
    * followed by an authorization check against that resource. This method verifies that the user
    * has access on the specific resource (even for read access, so it is stricter in the case of
-   * read access than `validateControlledResourceReadAccess`).
+   * read access than `validateWorkspaceOrControlledResourceReadAccess`).
    *
    * <p>Throws ResourceNotFound from getResource if the resource does not exist in the specified
    * workspace, regardless of the user's permission.
