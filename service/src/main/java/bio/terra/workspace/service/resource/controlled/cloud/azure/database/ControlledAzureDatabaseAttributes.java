@@ -15,7 +15,7 @@ public class ControlledAzureDatabaseAttributes {
       @JsonProperty("databaseName") String databaseName,
       @JsonProperty("databaseOwner") UUID databaseOwner,
       @JsonProperty("k8sNamespace") String k8sNamespace,
-      @JsonProperty("allowAccessForAllWorkspaceUsers") Boolean allowAccessForAllWorkspaceUsers) {
+      @JsonProperty("allowAccessForAllWorkspaceUsers") boolean allowAccessForAllWorkspaceUsers) {
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
     this.k8sNamespace = k8sNamespace;
