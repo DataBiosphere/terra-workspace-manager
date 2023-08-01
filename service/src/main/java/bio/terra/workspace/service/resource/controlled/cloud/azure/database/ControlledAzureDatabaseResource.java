@@ -260,14 +260,20 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   }
 
   private ApiAzureDatabaseAttributes toApiAttributes() {
-    return new ApiAzureDatabaseAttributes().databaseName(getDatabaseName());
+    return new ApiAzureDatabaseAttributes()
+        .databaseName(getDatabaseName())
+        .databaseOwner(getDatabaseOwner())
+        .allowAccessForAllWorkspaceUsers(getAllowAccessForAllWorkspaceUsers());
   }
 
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAzureDatabaseAttributes(
-            getDatabaseName(), getDatabaseOwner(), k8sNamespace, getRegion()));
+            getDatabaseName(),
+            getDatabaseOwner(),
+            getK8sNamespace(),
+            getAllowAccessForAllWorkspaceUsers()));
   }
 
   @Override

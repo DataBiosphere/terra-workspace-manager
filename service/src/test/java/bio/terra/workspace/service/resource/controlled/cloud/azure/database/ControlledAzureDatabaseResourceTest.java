@@ -2,9 +2,11 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
 
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.generated.model.ApiAzureDatabaseAttributes;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
@@ -78,5 +80,49 @@ public class ControlledAzureDatabaseResourceTest {
             GetFederatedIdentityStep.class,
             CreateFederatedIdentityStep.class,
             CreateAzureDatabaseStep.class));
+  }
+
+  @Test
+  void testToApiResource() {
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+
+    var databaseResource =
+        ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
+                creationParameters, workspaceId)
+            .build();
+
+    var apiResource = databaseResource.toApiResource();
+    assertThat(
+        apiResource.getAttributes(),
+        equalTo(
+            new ApiAzureDatabaseAttributes()
+                .databaseName(creationParameters.getName())
+                .databaseOwner(creationParameters.getOwner())
+                .allowAccessForAllWorkspaceUsers(
+                    creationParameters.isAllowAccessForAllWorkspaceUsers())));
+  }
+
+  @Test
+  void testAttributesToJson() {
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+
+    var databaseResource =
+        ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
+                creationParameters, workspaceId)
+            .build();
+
+    var json = databaseResource.attributesToJson();
+    assertThat(
+        json,
+        equalTo(
+            """
+            {"databaseName":"%s","databaseOwner":"%s","k8sNamespace":"%s","allowAccessForAllWorkspaceUsers":%s}"""
+                .formatted(
+                    creationParameters.getName(),
+                    creationParameters.getOwner(),
+                    creationParameters.getK8sNamespace(),
+                    creationParameters.isAllowAccessForAllWorkspaceUsers())));
   }
 }

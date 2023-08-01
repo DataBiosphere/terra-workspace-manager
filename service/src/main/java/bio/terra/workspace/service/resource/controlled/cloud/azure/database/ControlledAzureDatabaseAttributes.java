@@ -8,26 +8,22 @@ public class ControlledAzureDatabaseAttributes {
   private final String databaseName;
   private final UUID databaseOwner;
   private final String k8sNamespace;
-  private final String region;
+  private final boolean allowAccessForAllWorkspaceUsers;
 
   @JsonCreator
   public ControlledAzureDatabaseAttributes(
       @JsonProperty("databaseName") String databaseName,
       @JsonProperty("databaseOwner") UUID databaseOwner,
       @JsonProperty("k8sNamespace") String k8sNamespace,
-      @JsonProperty("region") String region) {
+      @JsonProperty("allowAccessForAllWorkspaceUsers") Boolean allowAccessForAllWorkspaceUsers) {
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
     this.k8sNamespace = k8sNamespace;
-    this.region = region;
+    this.allowAccessForAllWorkspaceUsers = allowAccessForAllWorkspaceUsers;
   }
 
   public String getDatabaseName() {
     return databaseName;
-  }
-
-  public String getRegion() {
-    return region;
   }
 
   public UUID getDatabaseOwner() {
@@ -36,5 +32,9 @@ public class ControlledAzureDatabaseAttributes {
 
   public String getK8sNamespace() {
     return k8sNamespace;
+  }
+
+  public boolean getAllowAccessForAllWorkspaceUsers() {
+    return allowAccessForAllWorkspaceUsers;
   }
 }

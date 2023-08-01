@@ -610,6 +610,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .databaseOwner(body.getAzureDatabase().getOwner())
             .databaseName(body.getAzureDatabase().getName())
             .k8sNamespace(body.getAzureDatabase().getK8sNamespace())
+            .allowAccessForAllWorkspaceUsers(
+                body.getAzureDatabase().isAllowAccessForAllWorkspaceUsers())
             .build();
 
     var jobId =
