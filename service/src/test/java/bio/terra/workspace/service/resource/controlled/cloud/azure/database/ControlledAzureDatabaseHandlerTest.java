@@ -29,7 +29,7 @@ public class ControlledAzureDatabaseHandlerTest {
                 new DbResource()
                     .attributes(
                         """
-                            {"databaseName":"%s","databaseOwner":"%s","k8sNamespace":"%s"}"""
+                            {"databaseName":"%s","databaseOwner":"%s","k8sNamespace":"%s","region":"us-central1"}"""
                             .formatted(databaseName, ownerId, namespace))));
 
     ControlledAzureDatabaseResource actual =
