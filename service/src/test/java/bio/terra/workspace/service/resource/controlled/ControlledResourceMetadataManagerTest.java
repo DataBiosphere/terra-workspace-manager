@@ -12,7 +12,8 @@ import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.stage.StageService;
@@ -37,8 +38,6 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
   private UUID workspaceId;
   private UUID resourceId;
   private ControlledResource controlledResource;
-
-  private final String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
 
   @BeforeEach
   void setupMocks() throws InterruptedException {
@@ -67,14 +66,17 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
     doReturn(true)
         .when(mockSamService())
         .isAuthorized(
-            userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), readAction);
+            userRequest,
+            SamResource.WORKSPACE,
+            workspaceId.toString(),
+            SamControlledResourceActions.READ_ACTION);
     doReturn(false)
         .when(mockSamService())
         .isAuthorized(
             userRequest,
             controlledResource.getCategory().getSamResourceName(),
             resourceId.toString(),
-            readAction);
+            SamControlledResourceActions.READ_ACTION);
 
     ControlledResource resource =
         controlledResourceMetadataManager.validateWorkspaceOrControlledResourceReadAccess(
@@ -90,14 +92,17 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
     doReturn(false)
         .when(mockSamService())
         .isAuthorized(
-            userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), readAction);
+            userRequest,
+            SamResource.WORKSPACE,
+            workspaceId.toString(),
+            SamControlledResourceActions.READ_ACTION);
     doReturn(true)
         .when(mockSamService())
         .isAuthorized(
             userRequest,
             controlledResource.getCategory().getSamResourceName(),
             resourceId.toString(),
-            readAction);
+            SamControlledResourceActions.READ_ACTION);
 
     ControlledResource resource =
         controlledResourceMetadataManager.validateWorkspaceOrControlledResourceReadAccess(
@@ -112,11 +117,17 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
     doReturn(false)
         .when(mockSamService())
         .isAuthorized(
-            userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), readAction);
+            userRequest,
+            SamResource.WORKSPACE,
+            workspaceId.toString(),
+            SamControlledResourceActions.READ_ACTION);
     doReturn(false)
         .when(mockSamService())
         .isAuthorized(
-            userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), readAction);
+            userRequest,
+            SamResource.WORKSPACE,
+            workspaceId.toString(),
+            SamControlledResourceActions.READ_ACTION);
     assertThrows(
         ForbiddenException.class,
         () ->
@@ -133,20 +144,23 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
     doReturn(true)
         .when(mockSamService())
         .isAuthorized(
-            userRequest, SamConstants.SamResource.WORKSPACE, workspaceId.toString(), readAction);
+            userRequest,
+            SamResource.WORKSPACE,
+            workspaceId.toString(),
+            SamControlledResourceActions.READ_ACTION);
     doReturn(false)
         .when(mockSamService())
         .isAuthorized(
             userRequest,
             controlledResource.getCategory().getSamResourceName(),
             resourceId.toString(),
-            readAction);
+            SamControlledResourceActions.READ_ACTION);
 
     assertThrows(
         ForbiddenException.class,
         () ->
             controlledResourceMetadataManager.validateControlledResourceAndAction(
-                userRequest, workspaceId, resourceId, readAction));
+                userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION));
   }
 
   @Test
@@ -159,11 +173,11 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
             userRequest,
             controlledResource.getCategory().getSamResourceName(),
             resourceId.toString(),
-            readAction);
+            SamControlledResourceActions.READ_ACTION);
 
     ControlledResource resource =
         controlledResourceMetadataManager.validateControlledResourceAndAction(
-            userRequest, workspaceId, resourceId, readAction);
+            userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION);
     Assertions.assertEquals(controlledResource, resource);
   }
 
@@ -177,19 +191,17 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
             userRequest,
             controlledResource.getCategory().getSamResourceName(),
             resourceId.toString(),
-            readAction);
+            SamControlledResourceActions.READ_ACTION);
 
     assertThrows(
         ForbiddenException.class,
         () ->
             controlledResourceMetadataManager.validateControlledResourceAndAction(
-                userRequest, workspaceId, resourceId, readAction));
+                userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION));
   }
 
   @Test
   public void testValidateControlledResourceAndAction_Write() {
-    String writeAction = SamConstants.SamControlledResourceActions.WRITE_ACTION;
-
     // On write permissions, resource access is done based on the resource state.
     // Since this controlled resource was created directly without proper state,
     // its `getState` method returns NOT_EXISTS and `validateControlledResourceAndAction` throws
@@ -199,6 +211,6 @@ public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
         InternalLogicException.class,
         () ->
             controlledResourceMetadataManager.validateControlledResourceAndAction(
-                userRequest, workspaceId, resourceId, writeAction));
+                userRequest, workspaceId, resourceId, SamControlledResourceActions.WRITE_ACTION));
   }
 }
