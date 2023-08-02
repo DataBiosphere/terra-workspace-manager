@@ -6,6 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
@@ -23,11 +24,18 @@ public class MergeGroupsStep implements Step {
   private final UUID workspaceId;
   private final SamService samService;
   private final TpsApiDispatch tpsApiDispatch;
+  private final AuthenticatedUserRequest userRequest;
 
-  public MergeGroupsStep(UUID workspaceId, TpsApiDispatch tpsApiDispatch, SamService samService) {
+  public MergeGroupsStep(
+      AuthenticatedUserRequest userRequest,
+      UUID workspaceId,
+      TpsApiDispatch tpsApiDispatch,
+      SamService samService) {
+
     this.workspaceId = workspaceId;
     this.samService = samService;
     this.tpsApiDispatch = tpsApiDispatch;
+    this.userRequest = userRequest;
   }
 
   @Override
@@ -44,7 +52,10 @@ public class MergeGroupsStep implements Step {
 
     try {
       samService.addGroupsToAuthDomain(
-          SamConstants.SamResource.WORKSPACE, this.workspaceId.toString(), mergedGroups);
+          userRequest,
+          SamConstants.SamResource.WORKSPACE,
+          this.workspaceId.toString(),
+          mergedGroups);
     } catch (Exception ex) {
       logger.info("Attempt to add groups to auth domain failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);

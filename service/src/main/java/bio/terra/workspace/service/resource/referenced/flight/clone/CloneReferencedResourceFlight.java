@@ -108,6 +108,7 @@ public class CloneReferencedResourceFlight extends Flight {
 
       addStep(
           new MergeGroupsStep(
+              userRequest,
               destinationWorkspaceId,
               appContext.getTpsApiDispatch(),
               appContext.getSamService()));

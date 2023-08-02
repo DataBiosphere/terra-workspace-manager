@@ -103,6 +103,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
       addStep(
           new MergeGroupsStep(
+              userRequest,
               destinationWorkspaceId,
               flightBeanBag.getTpsApiDispatch(),
               flightBeanBag.getSamService()));

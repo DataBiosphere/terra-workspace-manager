@@ -117,6 +117,7 @@ public class CloneControlledGcsBucketResourceFlight extends Flight {
 
       addStep(
           new MergeGroupsStep(
+              userRequest,
               destinationWorkspaceId,
               flightBeanBag.getTpsApiDispatch(),
               flightBeanBag.getSamService()));
