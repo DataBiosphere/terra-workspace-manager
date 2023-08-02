@@ -921,7 +921,9 @@ public class AwsUtils {
   public static void checkException(SdkException ex, String altMessage, boolean ignoreNotFound)
       throws NotFoundException, UnauthorizedException, BadRequestException, ApiException {
     String message = ex.getMessage();
-    if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
+    if (message.contains("ResourceNotFoundException")
+        || message.contains("RecordNotFound")
+        || message.contains("does not exist")) {
       if (ignoreNotFound) {
         return;
       }
