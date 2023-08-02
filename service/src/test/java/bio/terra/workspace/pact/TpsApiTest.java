@@ -1,5 +1,6 @@
 package bio.terra.workspace.pact;
 
+
 import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
@@ -18,6 +19,8 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 
@@ -36,7 +39,18 @@ public class TpsApiTest {
 
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact retrievingAnExistingWorkspacePolicy(PactDslWithProvider builder) {
+    var inputsShape = new PactDslJsonBody().object(
+        "inputs",
+        new PactDslJsonArray().eachArrayLike().object().stringType("namespace").stringType("name").closeObject()
+    );
+    var policyResponseShape = new PactDslJsonBody()
+        .valueFromProviderState("objectId", "${objectId}", objectId)
+        .stringValue("component", TpsComponent.WSM.getValue())
+        .stringValue("objectType", TpsObjectType.WORKSPACE.getValue())
+        .object("attributes", inputsShape);
+
     return builder
+        .given("an existing policy for a workspace")
         .uponReceiving("A request to create a policy")
         .method("GET")
         .pathFromProviderState(
@@ -44,8 +58,7 @@ public class TpsApiTest {
             String.format("/api/policy/v1alpha1/pao/%s", objectId))
         .willRespondWith()
         .status(200)
-        .body("{\"component\": \"WSM\"}")
-        .headers(Map.of("Content-type","application/json"))
+        .body(policyResponseShape)
         .toPact();
   }
 
@@ -73,8 +86,13 @@ public class TpsApiTest {
         .uponReceiving("A request to create a policy")
         .method("POST")
         .path("/api/policy/v1alpha1/pao")
-        //.body(requestShape)
-        //.headers("Content-type","application/json")
+        .body(requestShape)
+        // Note: the header must match exactly so pact doesn't add it's own
+        // if "Content-type" is specified instead,
+        // pact will also have a required header for "Content-Type: application/json; charset=UTF-8"
+        // which will cause the request to fail to match,
+        // since our client doesn't include the encoding in the content type header
+        .headers(Map.of("Content-Type","application/json"))
         .willRespondWith()
         .status(200)
         .toPact();
@@ -110,7 +128,21 @@ public class TpsApiTest {
     var featureConfig = new FeatureConfiguration();
     featureConfig.setTpsEnabled(true);
     var dispatch = new TpsApiDispatch(featureConfig, tpsConfig);
-    var inputs = List.of(new TpsPolicyInput().name("test_name").namespace("test_namespace"));
     var result = dispatch.getPao(objectId);
+    assertNotNull(result);
+    assertEquals(TpsComponent.WSM, result.getComponent());
+    assertEquals(TpsObjectType.WORKSPACE, result.getObjectType());
+    assertEquals(objectId, result.getObjectId());
+    assertNotNull(result.getAttributes());
+    assertNotNull(result.getAttributes().getInputs());
+    var inputs = result.getAttributes().getInputs();
+    assertTrue(inputs.size() > 0);
+    var policy = inputs.get(0);
+    assertNotNull(policy);
+    assertNotNull(policy.getName());
+    assertNotNull(policy.getNamespace());
+    assertFalse(policy.getName().isEmpty());
+    assertFalse(policy.getNamespace().isEmpty());
   }
+
 }
