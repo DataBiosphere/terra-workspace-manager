@@ -25,3 +25,10 @@ Common environment variables:
 This utility is deployed as a docker image tagged with the git commit hash before the main WSM
 tests are run. It is intended that the main WSM application uses the github hash found in its
 version configuration to pull the correct version of this utility.
+
+# Development
+To deploy an image of this utility for your git commit hash, run the following
+```bash
+./gradlew :azureDatabaseUtils:jibDockerBuild --image=us.gcr.io/broad-dsp-gcr-public/azure-database-utils:$(git rev-parse HEAD) -Djib.console=plain
+docker push us.gcr.io/broad-dsp-gcr-public/azure-database-utils:$(git rev-parse HEAD) 
+```
