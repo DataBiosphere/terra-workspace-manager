@@ -54,6 +54,7 @@ public class ControlledAzureDatabaseResourceTest {
     assertThat(
         steps.stream().map(Object::getClass).toList(),
         contains(
+            ValidateDatabaseOwnerStep.class,
             AzureDatabaseGuardStep.class,
             GetPetManagedIdentityStep.class,
             GetFederatedIdentityStep.class,
@@ -75,6 +76,7 @@ public class ControlledAzureDatabaseResourceTest {
     assertThat(
         steps.stream().map(Object::getClass).toList(),
         contains(
+            ValidateDatabaseOwnerStep.class,
             AzureDatabaseGuardStep.class,
             GetWorkspaceManagedIdentityStep.class,
             GetFederatedIdentityStep.class,

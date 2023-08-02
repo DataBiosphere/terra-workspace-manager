@@ -159,6 +159,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   @VisibleForTesting
   List<Step> getAddSteps(FlightBeanBag flightBeanBag) {
     var steps = new ArrayList<Step>();
+    steps.add(new ValidateDatabaseOwnerStep(this, flightBeanBag.getResourceDao()));
     steps.add(
         new AzureDatabaseGuardStep(
             flightBeanBag.getAzureConfig(),
