@@ -1,10 +1,10 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.utils.MockAwsApi.CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAwsApi.CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAwsApi.CREATE_CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockAwsApi.CREATE_CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CREATE_CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CREATE_CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -12,7 +12,8 @@ import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -40,6 +41,7 @@ public class AwsResourceStateFailureTest extends BaseAwsUnitTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired ObjectMapper objectMapper;
   @Autowired ReferencedResourceService referencedResourceService;
   @Autowired ResourceDao resourceDao;
@@ -50,7 +52,7 @@ public class AwsResourceStateFailureTest extends BaseAwsUnitTest {
 
   @BeforeEach
   void setup() throws Exception {
-    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils);
+    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils, mockWorkspaceV1Api);
 
     // Everything is authorized!
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);

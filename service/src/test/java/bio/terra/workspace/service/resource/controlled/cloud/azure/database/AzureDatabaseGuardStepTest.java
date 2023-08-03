@@ -35,7 +35,7 @@ import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
 
 @Tag("azure-unit")
-public class GetAzureDatabaseStepTest {
+public class AzureDatabaseGuardStepTest {
   private MockitoSession mockito;
   @Mock private FlightContext mockFlightContext;
   @Mock private FlightMap mockWorkingMap;
@@ -100,7 +100,7 @@ public class GetAzureDatabaseStepTest {
         .thenReturn(null);
 
     var step =
-        new GetAzureDatabaseStep(
+        new AzureDatabaseGuardStep(
             mockAzureConfig,
             mockCrlService,
             databaseResource,
@@ -133,7 +133,7 @@ public class GetAzureDatabaseStepTest {
     when(mockHttpResponse.getStatusCode()).thenReturn(httpStatus.value());
 
     var step =
-        new GetAzureDatabaseStep(
+        new AzureDatabaseGuardStep(
             mockAzureConfig,
             mockCrlService,
             databaseResource,

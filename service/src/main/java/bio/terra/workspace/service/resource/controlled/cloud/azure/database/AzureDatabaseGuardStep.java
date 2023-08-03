@@ -25,7 +25,7 @@ import org.springframework.http.HttpStatus;
  * Gets an Azure Database, and fails if it already exists. This step is designed to run immediately
  * before {@link CreateAzureDatabaseStep} to ensure idempotency of the create operation.
  */
-public class GetAzureDatabaseStep implements Step {
+public class AzureDatabaseGuardStep implements Step {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final ControlledAzureDatabaseResource resource;
@@ -34,7 +34,7 @@ public class GetAzureDatabaseStep implements Step {
   private final WorkspaceService workspaceService;
   private final UUID workspaceId;
 
-  public GetAzureDatabaseStep(
+  public AzureDatabaseGuardStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ControlledAzureDatabaseResource resource,

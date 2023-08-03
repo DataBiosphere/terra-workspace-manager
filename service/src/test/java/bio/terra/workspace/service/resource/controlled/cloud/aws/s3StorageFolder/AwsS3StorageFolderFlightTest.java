@@ -14,8 +14,8 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.AwsUtils;
-import bio.terra.workspace.common.utils.MvcWorkspaceApi;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -49,7 +49,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private JobService jobService;
   @Autowired private StairwayComponent stairwayComponent;
-  @Autowired MvcWorkspaceApi mvcWorkspaceApi;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired UserAccessUtils userAccessUtils;
 
   private AuthenticatedUserRequest userRequest;
@@ -62,7 +62,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     super.init();
     userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
     workspaceUuid =
-        mvcWorkspaceApi.createWorkspaceAndWait(userRequest, apiCloudPlatform).getWorkspaceId();
+        mockWorkspaceV2Api.createWorkspaceAndWait(userRequest, apiCloudPlatform).getWorkspaceId();
     landingZone =
         awsCloudContextService
             .getLandingZone(
@@ -77,7 +77,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
 
   @AfterAll
   public void cleanUp() throws Exception {
-    mvcWorkspaceApi.deleteWorkspaceAndWait(userRequest, workspaceUuid);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceUuid);
   }
 
   /**
@@ -163,16 +163,23 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     retrySteps.put(
         CreateAwsS3StorageFolderStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
 
-    // fail after the last step to test that everything is deleted on undo.
+    // final createResponseStep cannot fail, hence fail the create step
+    Map<String, StepStatus> failureSteps = new HashMap<>();
+    failureSteps.put(
+        CreateAwsS3StorageFolderStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).undoStepFailures(retrySteps).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(failureSteps)
+            .undoStepFailures(retrySteps)
+            .build());
     assertThrows(
         InvalidResultStateException.class,
         () ->
             controlledResourceService.createControlledResourceSync(
                 resource, null, userRequest, creationParameters));
 
-    // validate resource does not exist.
+    // validate resource does not exist
     assertFalse(AwsUtils.checkFolderExists(awsCredentialsProvider, resource));
     assertThrows(
         ResourceNotFoundException.class,

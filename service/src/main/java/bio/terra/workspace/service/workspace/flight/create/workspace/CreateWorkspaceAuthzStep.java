@@ -14,6 +14,7 @@ import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public class CreateWorkspaceAuthzStep implements Step {
   private final AuthenticatedUserRequest userRequest;
   private final Workspace workspace;
   private final FeatureConfiguration features;
+  private final String projectOwnerGroupId;
 
   private static final Logger logger = LoggerFactory.getLogger(CreateWorkspaceAuthzStep.class);
 
@@ -36,12 +38,14 @@ public class CreateWorkspaceAuthzStep implements Step {
       SamService samService,
       TpsApiDispatch tpsApiDispatch,
       FeatureConfiguration features,
-      AuthenticatedUserRequest userRequest) {
+      AuthenticatedUserRequest userRequest,
+      @Nullable String projectOwnerGroupId) {
     this.samService = samService;
     this.userRequest = userRequest;
     this.workspace = workspace;
     this.tpsApiDispatch = tpsApiDispatch;
     this.features = features;
+    this.projectOwnerGroupId = projectOwnerGroupId;
   }
 
   @Override
@@ -60,7 +64,8 @@ public class CreateWorkspaceAuthzStep implements Step {
           authDomains = TpsUtilities.getGroupConstraintsFromInputs(pao.getEffectiveAttributes());
         }
       }
-      samService.createWorkspaceWithDefaults(userRequest, workspace.getWorkspaceId(), authDomains);
+      samService.createWorkspaceWithDefaults(
+          userRequest, workspace.getWorkspaceId(), authDomains, projectOwnerGroupId);
     }
     return StepResult.getStepResultSuccess();
   }

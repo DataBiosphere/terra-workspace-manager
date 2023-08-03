@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdent
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
@@ -89,6 +90,12 @@ public class GetWorkspaceManagedIdentityStepTest {
             mockResourceDao,
             identityResource.getResourceId());
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
+
+    verify(mockWorkingMap).put(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, mockIdentity.name());
+    verify(mockWorkingMap)
+        .put(GetManagedIdentityStep.MANAGED_IDENTITY_PRINCIPAL_ID, mockIdentity.principalId());
+    verify(mockWorkingMap)
+        .put(GetManagedIdentityStep.MANAGED_IDENTITY_CLIENT_ID, mockIdentity.clientId());
   }
 
   @Test

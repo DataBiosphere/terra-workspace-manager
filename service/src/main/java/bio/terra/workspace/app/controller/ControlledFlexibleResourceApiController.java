@@ -194,11 +194,8 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledFlexibleResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                resourceUuid,
-                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }

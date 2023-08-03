@@ -1,10 +1,10 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addJsonContentType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;

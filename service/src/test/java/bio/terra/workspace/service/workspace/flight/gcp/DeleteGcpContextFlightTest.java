@@ -73,7 +73,7 @@ class DeleteGcpContextFlightTest extends BaseConnectedTest {
             .build();
     workspaceUuid =
         workspaceService.createWorkspace(
-            workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+            workspace, null, null, null, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterEach

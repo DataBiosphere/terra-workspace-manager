@@ -48,11 +48,12 @@ import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipV2;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
 import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
+import org.broadinstitute.dsde.workbench.client.sam.model.PolicyIdentifiers;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
@@ -105,7 +106,8 @@ public class SamService {
     return apiClient;
   }
 
-  private ResourcesApi samResourcesApi(String accessToken) {
+  @VisibleForTesting
+  public ResourcesApi samResourcesApi(String accessToken) {
     return new ResourcesApi(getApiClient(accessToken));
   }
 
@@ -309,7 +311,10 @@ public class SamService {
    */
   @Traced
   public void createWorkspaceWithDefaults(
-      AuthenticatedUserRequest userRequest, UUID uuid, List<String> authDomainList)
+      AuthenticatedUserRequest userRequest,
+      UUID uuid,
+      List<String> authDomainList,
+      @Nullable String projectOwnerGroupId)
       throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // Sam will throw an error if no owner is specified, so the caller's email is required. It can
@@ -324,7 +329,7 @@ public class SamService {
     CreateResourceRequestV2 workspaceRequest =
         new CreateResourceRequestV2()
             .resourceId(uuid.toString())
-            .policies(defaultWorkspacePolicies(humanUserEmail))
+            .policies(defaultWorkspacePolicies(humanUserEmail, projectOwnerGroupId))
             .authDomain(authDomainList);
     try {
       SamRetry.retry(
@@ -451,6 +456,23 @@ public class SamService {
       return SamRetry.retry(() -> resourceApi.resourceActionsV2(resourceType, resourceId));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error listing resources actions in Sam", apiException);
+    }
+  }
+
+  @Traced
+  public void addGroupsToAuthDomain(
+      AuthenticatedUserRequest userRequest,
+      String resourceType,
+      String resourceId,
+      List<String> groups)
+      throws Exception {
+    ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
+    // TODO: [PF-2938] We should use the service account to add these groups.
+    // ResourcesApi resourceApi = samResourcesApi(getWsmServiceAccountToken());
+    try {
+      SamRetry.retry(() -> resourceApi.patchAuthDomainV2(resourceType, resourceId, groups));
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error adding group to auth domain in Sam", apiException);
     }
   }
 
@@ -1081,37 +1103,51 @@ public class SamService {
   }
 
   /**
-   * Builds a policy list with a single provided owner and empty reader, writer and application
-   * policies.
+   * Builds a policy list with a single provided owner and empty reader, writer, project-owner, and
+   * application policies.
    *
    * <p>This is a helper function for building the policy section of a request to create a workspace
    * resource in Sam. The provided user is granted the OWNER role and empty policies for reader,
-   * writer, and application are also included.
+   * writer, project-owner, and application are also included.
    *
    * <p>The empty policies are included because Sam requires all policies on a workspace to be
    * provided at creation time. Although policy membership can be modified later, policy creation
    * must happen at the same time as workspace resource creation.
    */
-  private Map<String, AccessPolicyMembershipV2> defaultWorkspacePolicies(String ownerEmail) {
-    Map<String, AccessPolicyMembershipV2> policyMap = new HashMap<>();
+  private Map<String, AccessPolicyMembershipRequest> defaultWorkspacePolicies(
+      String ownerEmail, @Nullable String projectOwnerGroupId) {
+    Map<String, AccessPolicyMembershipRequest> policyMap = new HashMap<>();
     policyMap.put(
         WsmIamRole.OWNER.toSamRole(),
-        new AccessPolicyMembershipV2()
+        new AccessPolicyMembershipRequest()
             .addRolesItem(WsmIamRole.OWNER.toSamRole())
             .addMemberEmailsItem(ownerEmail));
+    // Optionally add a policy for project owner (used for billing projects in Terra CWB).
+    if (projectOwnerGroupId != null) {
+      policyMap.put(
+          WsmIamRole.PROJECT_OWNER.toSamRole(),
+          new AccessPolicyMembershipRequest()
+              .addRolesItem(WsmIamRole.PROJECT_OWNER.toSamRole())
+              .addMemberPoliciesItem(
+                  new PolicyIdentifiers()
+                      .resourceTypeName("billing-project")
+                      .policyName("owner")
+                      .resourceId(projectOwnerGroupId)));
+    }
     // For all non-owner/manager roles, we create empty policies which can be modified later.
     for (WsmIamRole workspaceRole : WsmIamRole.values()) {
-      if (workspaceRole != WsmIamRole.OWNER && workspaceRole != WsmIamRole.MANAGER) {
+      if (!Set.of(WsmIamRole.OWNER, WsmIamRole.MANAGER, WsmIamRole.PROJECT_OWNER)
+          .contains(workspaceRole)) {
         policyMap.put(
             workspaceRole.toSamRole(),
-            new AccessPolicyMembershipV2().addRolesItem(workspaceRole.toSamRole()));
+            new AccessPolicyMembershipRequest().addRolesItem(workspaceRole.toSamRole()));
       }
     }
     // We always give WSM's service account the 'manager' role for admin control of workspaces.
     String wsmSa = GcpUtils.getWsmSaEmail();
     policyMap.put(
         WsmIamRole.MANAGER.toSamRole(),
-        new AccessPolicyMembershipV2()
+        new AccessPolicyMembershipRequest()
             .addRolesItem(WsmIamRole.MANAGER.toSamRole())
             .addMemberEmailsItem(wsmSa));
     return policyMap;

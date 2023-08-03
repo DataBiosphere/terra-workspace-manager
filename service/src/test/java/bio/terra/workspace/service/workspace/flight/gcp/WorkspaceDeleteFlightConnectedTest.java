@@ -15,7 +15,9 @@ import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -47,12 +49,16 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
    */
   private static final Duration DELETION_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
 
-  @Autowired UserAccessUtils userAccessUtils;
-  @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
-  @Autowired ControlledResourceService controlledResourceService;
-  @Autowired JobService jobService;
-  @Autowired WorkspaceService workspaceService;
-  @Autowired GcpCloudContextService gcpCloudContextService;
+  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private WorkspaceConnectedTestUtils connectedTestUtils;
+  @Autowired private ControlledResourceService controlledResourceService;
+  @Autowired private JobService jobService;
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
+
+  // TODO(BENCH-845): Autowire samService to debug flaky tests
+  // samService is not directly used in the test. Autowire it to ensure it is ready before tests
+  @Autowired private SamService samService;
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
@@ -68,7 +74,7 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
             .projectId(projectId)
             .build();
 
-    var creationParameters =
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
         ControlledGcpResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
     controlledResourceService
@@ -121,7 +127,7 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void cannotUndoWorkspaceDelete() throws Exception {
     // Create a workspace with a controlled resource
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     Workspace workspace = connectedTestUtils.createWorkspaceWithGcpContext(userRequest);
     UUID workspaceId = workspace.getWorkspaceId();
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceId);
@@ -130,7 +136,7 @@ public class WorkspaceDeleteFlightConnectedTest extends BaseConnectedTest {
         ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceId)
             .projectId(projectId)
             .build();
-    var creationParameters =
+    ApiGcpBigQueryDatasetCreationParameters creationParameters =
         ControlledGcpResourceFixtures.defaultBigQueryDatasetCreationParameters()
             .datasetId(dataset.getDatasetName());
     controlledResourceService

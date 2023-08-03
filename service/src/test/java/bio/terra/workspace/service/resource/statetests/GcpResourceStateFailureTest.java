@@ -1,26 +1,26 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockGcpApi.CREATE_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_AI_NOTEBOOKS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_DATAPROC_CLUSTERS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_GCE_INSTANCES_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.utils.MockGcpApi;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
@@ -62,27 +62,25 @@ import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 public class GcpResourceStateFailureTest extends BaseUnitTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired ReferencedResourceService referencedResourceService;
   @Autowired ResourceDao resourceDao;
   @Autowired private WorkspaceDao workspaceDao;
 
-  @MockBean private LandingZoneService mockLandingZoneService;
-
   private static final String RESOURCE_NAME = "resourcename";
   private StateTestUtils stateTestUtils;
 
   @BeforeEach
   void setup() throws Exception {
-    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils);
+    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils, mockWorkspaceV1Api);
     // Everything is authorized!
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);
     when(mockSamService().getUserStatusInfo(any()))
@@ -204,11 +202,6 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         ControlledGcpResourceFixtures.makeDefaultAiNotebookInstanceBuilder(workspaceUuid).build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, notebookResource);
 
-    // GCP-Controlled Dataproc cluster
-    var clusterResource =
-        ControlledGcpResourceFixtures.makeDefaultDataprocCluster(workspaceUuid).build();
-    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, clusterResource);
-
     // GCP-Controlled BigQuery
     var bqResource =
         ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(workspaceUuid).build();
@@ -260,6 +253,9 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
 
     // GCP-Controlled Dataproc cluster
     var clusterRequestBody = new ApiUpdateControlledGcpDataprocClusterRequestBody().name("foobar");
+    var clusterResource =
+        ControlledGcpResourceFixtures.makeDefaultDataprocCluster(workspaceUuid).build();
+    ControlledResourceFixtures.insertControlledResourceRow(resourceDao, clusterResource);
     stateTestUtils.updateControlledResource(
         ApiGcpDataprocClusterResource.class,
         workspaceUuid,
@@ -339,7 +335,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
         createContextFlightId);
 
-    mockGcpApi.cloneControlledBqDatasetAsync(
+    mockGcpApi.cloneControlledBqDatasetAsyncAndExpect(
         USER_REQUEST,
         workspaceUuid,
         bqResource.getResourceId(),
@@ -353,7 +349,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         Collections.singletonList(HttpStatus.SC_CONFLICT),
         false);
 
-    mockGcpApi.cloneControlledGcsBucketAsync(
+    mockGcpApi.cloneControlledGcsBucketAsyncAndExpect(
         USER_REQUEST,
         workspaceUuid,
         bucketResource.getResourceId(),

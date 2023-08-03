@@ -2,6 +2,7 @@ package bio.terra.workspace.azureDatabaseUtils.create;
 
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -15,10 +16,26 @@ public class CreateDatabaseDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  public void createDatabase(String databaseName) {
+  /**
+   * Create a database with the given name
+   *
+   * @param databaseName
+   * @return true if the database was created, false if it already existed
+   */
+  public boolean createDatabase(String databaseName) {
     // databaseName should already be validated by the service layer
     // CREATE DATABASE does not like bind parameters
-    jdbcTemplate.update("CREATE DATABASE " + databaseName, Map.of());
+    try {
+      jdbcTemplate.update("CREATE DATABASE " + databaseName, Map.of());
+      return true;
+    } catch (BadSqlGrammarException e) {
+      // ignore if the database already exists
+      if (!e.getSQLException().getMessage().contains("already exists")) {
+        throw e;
+      } else {
+        return false;
+      }
+    }
   }
 
   /**
@@ -30,7 +47,7 @@ public class CreateDatabaseDao {
    * @return the text `exists` if the role already exists, or the output of
    *     `pgaadauth_create_principal_with_oid` if the role was created
    */
-  public String createRole(String roleName, String userOID) {
+  public String createRoleForManagedIdentity(String roleName, String userOID) {
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("roleName", roleName).addValue("userOID", userOID);
     return jdbcTemplate
@@ -45,12 +62,38 @@ public class CreateDatabaseDao {
         .get(0);
   }
 
+  /**
+   * Create a role in the database with the given name.
+   *
+   * @param roleName
+   * @return true if the role was created, false if the role already existed
+   */
+  public boolean createRole(String roleName) {
+    // roleName should already be validated by the service layer
+    try {
+      jdbcTemplate.update(
+          """
+              CREATE ROLE "%s"
+              """.formatted(roleName), Map.of());
+      return true;
+    } catch (BadSqlGrammarException e) {
+      // ignore if the role already exists
+      if (!e.getSQLException().getMessage().contains("already exists")) {
+        throw e;
+      }
+      return false;
+    }
+  }
+
   public void grantAllPrivileges(String roleName, String databaseName) {
     // databaseName should already be validated by the service layer
     // roleName should already be validated by the service layer
     // GRANT does not like bind parameters
     jdbcTemplate.update(
-        "GRANT ALL PRIVILEGES ON DATABASE %s TO \"%s\"".formatted(databaseName, roleName),
+        """
+        GRANT ALL PRIVILEGES ON DATABASE %s TO "%s"
+        """
+            .formatted(databaseName, roleName),
         Map.of());
   }
 
