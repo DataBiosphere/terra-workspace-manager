@@ -61,6 +61,7 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBod
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBucketCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CompleteTransferOperationStep;
@@ -255,7 +256,8 @@ public class MockGcpApi {
         step -> failureSteps.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
 
     if (shouldUndo) {
-      failureSteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+      failureSteps.put(
+          GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
 
     jobService.setFlightDebugInfoForTest(
