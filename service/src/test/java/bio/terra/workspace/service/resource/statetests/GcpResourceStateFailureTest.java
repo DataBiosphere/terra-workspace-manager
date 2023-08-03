@@ -310,7 +310,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
         createContextFlightId);
 
-    mockGcpApi.cloneControlledBqDatasetAsync(
+    mockGcpApi.cloneControlledBqDatasetAsyncAndExpect(
         USER_REQUEST,
         workspaceUuid,
         bqResource.getResourceId(),
@@ -324,7 +324,7 @@ public class GcpResourceStateFailureTest extends BaseUnitTest {
         Collections.singletonList(HttpStatus.SC_CONFLICT),
         false);
 
-    mockGcpApi.cloneControlledGcsBucketAsync(
+    mockGcpApi.cloneControlledGcsBucketAsyncAndExpect(
         USER_REQUEST,
         workspaceUuid,
         bucketResource.getResourceId(),
