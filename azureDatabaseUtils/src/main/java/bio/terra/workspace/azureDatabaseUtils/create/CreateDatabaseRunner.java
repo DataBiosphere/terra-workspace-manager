@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Profile("CreateDatabase")
 @Component
+// TODO: remove with https://broadworkbench.atlassian.net/browse/WOR-1165
 public class CreateDatabaseRunner implements ApplicationRunner {
   @Value("${azureDatabaseUtils.create.newDbUserOid}")
   private String newDbUserOid;

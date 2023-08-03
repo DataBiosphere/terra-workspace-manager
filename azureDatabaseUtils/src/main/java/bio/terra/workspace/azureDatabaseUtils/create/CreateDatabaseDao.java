@@ -62,6 +62,12 @@ public class CreateDatabaseDao {
         .get(0);
   }
 
+  /**
+   * Create a role in the database with the given name.
+   *
+   * @param roleName
+   * @return true if the role was created, false if the role already existed
+   */
   public boolean createRole(String roleName) {
     // roleName should already be validated by the service layer
     try {

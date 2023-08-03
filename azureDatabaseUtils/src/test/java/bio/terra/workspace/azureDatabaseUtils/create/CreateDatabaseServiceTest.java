@@ -1,9 +1,9 @@
 package bio.terra.workspace.azureDatabaseUtils.create;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 
 import bio.terra.workspace.azureDatabaseUtils.BaseUnitTest;
+import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +13,11 @@ public class CreateDatabaseServiceTest extends BaseUnitTest {
   @Autowired private CreateDatabaseService createDatabaseService;
 
   @MockBean private CreateDatabaseDao createDatabaseDao;
+  @MockBean private Validator validator;
 
   @Test
-  void testCreateDatabase() {
+  // TODO: remove with https://broadworkbench.atlassian.net/browse/WOR-1165
+  void testCreateDatabaseWithManagedIdentity() {
     final String newDbName = "testCreateDatabase";
     final String newDbUserName = "testCreateRole";
     final String newDbUserOid = UUID.randomUUID().toString();
@@ -26,41 +28,23 @@ public class CreateDatabaseServiceTest extends BaseUnitTest {
     verify(createDatabaseDao).createRoleForManagedIdentity(newDbUserName, newDbUserOid);
     verify(createDatabaseDao).grantAllPrivileges(newDbUserName, newDbName);
     verify(createDatabaseDao).revokeAllPublicPrivileges(newDbName);
+
+    verify(validator).validateDatabaseNameFormat(newDbName);
+    verify(validator).validateRoleNameFormat(newDbUserName);
+    verify(validator).validateUserOidFormat(newDbUserOid);
   }
 
   @Test
-  void testDatabaseNameValidation() {
-    final String newDbName = "testCreateDatabase; DROP DATABASE testCreateDatabase";
-    final String newDbUserName = "testCreateRole";
-    final String newDbUserOid = UUID.randomUUID().toString();
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            createDatabaseService.createDatabaseWithManagedIdentity(
-                newDbName, newDbUserName, newDbUserOid));
-  }
-
-  @Test
-  void testRoleNameValidation() {
+  void testCreateDatabaseWithDbRole() {
     final String newDbName = "testCreateDatabase";
-    final String newDbUserName = "testCreateRole; DROP ROLE testCreateRole";
-    final String newDbUserOid = UUID.randomUUID().toString();
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            createDatabaseService.createDatabaseWithManagedIdentity(
-                newDbName, newDbUserName, newDbUserOid));
-  }
 
-  @Test
-  void testOidValidation() {
-    final String newDbName = "testCreateDatabase";
-    final String newDbUserName = "testCreateRole";
-    final String newDbUserOid = "not a uuid";
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            createDatabaseService.createDatabaseWithManagedIdentity(
-                newDbName, newDbUserName, newDbUserOid));
+    createDatabaseService.createDatabaseWithDbRole(newDbName);
+
+    verify(createDatabaseDao).createDatabase(newDbName);
+    verify(createDatabaseDao).createRole(newDbName);
+    verify(createDatabaseDao).grantAllPrivileges(newDbName, newDbName);
+    verify(createDatabaseDao).revokeAllPublicPrivileges(newDbName);
+
+    verify(validator).validateDatabaseNameFormat(newDbName);
   }
 }

@@ -1,7 +1,6 @@
 package bio.terra.workspace.azureDatabaseUtils.create;
 
-import java.util.Objects;
-import java.util.UUID;
+import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,17 +10,20 @@ import org.springframework.stereotype.Service;
 public class CreateDatabaseService {
   private static final Logger logger = LoggerFactory.getLogger(CreateDatabaseService.class);
   private final CreateDatabaseDao createDatabaseDao;
+  private final Validator validator;
 
   @Autowired
-  public CreateDatabaseService(CreateDatabaseDao createDatabaseDao) {
+  public CreateDatabaseService(CreateDatabaseDao createDatabaseDao, Validator validator) {
     this.createDatabaseDao = createDatabaseDao;
+    this.validator = validator;
   }
 
+  // TODO: remove with https://broadworkbench.atlassian.net/browse/WOR-1165
   public void createDatabaseWithManagedIdentity(
       String newDbName, String newDbUserName, String newDbUserOid) {
-    validateDatabaseNameFormat(newDbName);
-    validateRoleNameFormat(newDbUserName);
-    validateUserOidFormat(newDbUserOid);
+    validator.validateDatabaseNameFormat(newDbName);
+    validator.validateRoleNameFormat(newDbUserName);
+    validator.validateUserOidFormat(newDbUserOid);
 
     logger.info(
         "Creating database {} with user {} and OID {}", newDbName, newDbUserName, newDbUserOid);
@@ -33,7 +35,7 @@ public class CreateDatabaseService {
   }
 
   public void createDatabaseWithDbRole(String newDbName) {
-    validateDatabaseNameFormat(newDbName);
+    validator.validateDatabaseNameFormat(newDbName);
 
     logger.info("Creating database {} with db role of same name", newDbName);
 
@@ -41,23 +43,5 @@ public class CreateDatabaseService {
     createDatabaseDao.createRole(newDbName);
     createDatabaseDao.grantAllPrivileges(newDbName, newDbName);
     createDatabaseDao.revokeAllPublicPrivileges(newDbName);
-  }
-
-  private void validateDatabaseNameFormat(String databaseName) {
-    if (databaseName != null && !databaseName.matches("(?i)^[a-z][a-z0-9_]*$")) {
-      throw new IllegalArgumentException(
-          "Database name must be specified and start with a letter and contain only letters, numbers, and underscores");
-    }
-  }
-
-  private void validateRoleNameFormat(String roleName) {
-    if (roleName != null && !roleName.matches("(?i)^[a-z][a-z0-9_-]*$")) {
-      throw new IllegalArgumentException(
-          "Role name must be specified and start with a letter and contain only letters, numbers, dashes, and underscores");
-    }
-  }
-
-  private void validateUserOidFormat(String userOid) {
-    UUID.fromString(Objects.requireNonNull(userOid, "userOid must be specified"));
   }
 }
