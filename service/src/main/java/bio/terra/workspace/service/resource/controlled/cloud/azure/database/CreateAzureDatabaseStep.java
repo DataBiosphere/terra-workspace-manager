@@ -40,7 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-/** Creates an Azure Database. Designed to run directly after {@link GetAzureDatabaseStep}. */
+/** Creates an Azure Database. Designed to run directly after {@link AzureDatabaseGuardStep}. */
 public class CreateAzureDatabaseStep implements Step {
 
   private static final Logger logger = LoggerFactory.getLogger(CreateAzureDatabaseStep.class);
@@ -79,10 +79,9 @@ public class CreateAzureDatabaseStep implements Step {
     this.kubernetesClientProvider = kubernetesClientProvider;
   }
 
-  private String getPodName(String newDbUserName) {
+  private String getPodName() {
     // strip underscores to avoid violating azure's naming conventions for pods
-    return (this.workspaceId.toString() + this.resource.getDatabaseName() + newDbUserName)
-        .replace('_', '-');
+    return ("create-" + this.resource.getDatabaseName()).replace('_', '-');
   }
 
   @Override
@@ -107,16 +106,10 @@ public class CreateAzureDatabaseStep implements Step {
     var aksApi =
         kubernetesClientProvider.createCoreApiClient(
             containerServiceManager, azureCloudContext.getAzureResourceGroupId(), clusterResource);
-    var podName = getPodName(GetManagedIdentityStep.getManagedIdentityName(context));
+    var podName = getPodName();
     try {
       logger.info("Creating pod {}", podName);
-      startCreateDatabaseContainer(
-          aksApi,
-          bearerToken,
-          landingZoneId,
-          GetManagedIdentityStep.getManagedIdentityName(context),
-          GetManagedIdentityStep.getManagedIdentityPrincipalId(context),
-          podName);
+      startCreateDatabaseContainer(aksApi, bearerToken, landingZoneId, context, podName);
       var finalPhase = waitForCreateDatabaseContainer(aksApi, podName);
       if (finalPhase.stream().anyMatch(phase -> phase.equals(POD_FAILED))) {
         logger.info("Create database pod failed with phase {}", finalPhase);
@@ -154,9 +147,10 @@ public class CreateAzureDatabaseStep implements Step {
   }
 
   private void logPodLogs(CoreV1Api aksApi, String podName, Integer tailLines) {
+    var logContext = Map.of("workspaceId", workspaceId, "podName", podName);
     try {
       var pod = aksApi.readNamespacedPod(podName, aksNamespace, null);
-      logger.info("Pod {} final status: {}", podName, pod.getStatus());
+      logger.info("Pod final status: {}", pod.getStatus(), logContext);
 
       try (InputStream logs =
           new PodLogs(aksApi.getApiClient())
@@ -170,10 +164,10 @@ public class CreateAzureDatabaseStep implements Step {
 
         new BufferedReader(new InputStreamReader(logs))
             .lines()
-            .forEach(line -> logger.info("Pod {} log line: {}", podName, line));
+            .forEach(line -> logger.info("pod log line: {}", line, logContext));
       }
     } catch (Exception e) {
-      logger.info("Pod {}, failed to get pod logs", podName, e);
+      logger.info("failed to get pod logs", logContext, e);
     }
   }
 
@@ -195,8 +189,7 @@ public class CreateAzureDatabaseStep implements Step {
       CoreV1Api aksApi,
       BearerToken bearerToken,
       UUID landingZoneId,
-      String newDbUserName,
-      String newDbUserOid,
+      FlightContext context,
       String podName)
       throws ApiException {
     try {
@@ -211,6 +204,33 @@ public class CreateAzureDatabaseStep implements Step {
                   .getSharedDatabaseAdminIdentity(bearerToken, landingZoneId)
                   .orElseThrow(
                       () -> new RuntimeException("No shared database admin identity found")));
+
+      List<V1EnvVar> envVars;
+      if (GetManagedIdentityStep.managedIdentityExists(context)) {
+        // The first iteration of creating azure databases setup federated identities when setting
+        // up the database. The existence of a managed identity in the context indicates that this
+        // is a first iteration call.
+        // TODO: remove as part of https://broadworkbench.atlassian.net/browse/WOR-1165
+        envVars =
+            List.of(
+                new V1EnvVar().name("spring_profiles_active").value("CreateDatabase"),
+                new V1EnvVar().name("DB_SERVER_NAME").value(dbServerName),
+                new V1EnvVar().name("ADMIN_DB_USER_NAME").value(adminDbUserName),
+                new V1EnvVar()
+                    .name("NEW_DB_USER_NAME")
+                    .value(GetManagedIdentityStep.getManagedIdentityName(context)),
+                new V1EnvVar()
+                    .name("NEW_DB_USER_OID")
+                    .value(GetManagedIdentityStep.getManagedIdentityPrincipalId(context)),
+                new V1EnvVar().name("NEW_DB_NAME").value(resource.getDatabaseName()));
+      } else {
+        envVars =
+            List.of(
+                new V1EnvVar().name("spring_profiles_active").value("CreateDatabaseWithDbRole"),
+                new V1EnvVar().name("DB_SERVER_NAME").value(dbServerName),
+                new V1EnvVar().name("ADMIN_DB_USER_NAME").value(adminDbUserName),
+                new V1EnvVar().name("NEW_DB_NAME").value(resource.getDatabaseName()));
+      }
       V1Pod pod =
           new V1Pod()
               .metadata(
@@ -225,28 +245,15 @@ public class CreateAzureDatabaseStep implements Step {
                           new V1Container()
                               .name(CREATE_DB_CONTAINER)
                               .image(azureConfig.getAzureDatabaseUtilImage())
-                              .env(
-                                  List.of(
-                                      new V1EnvVar()
-                                          .name("spring_profiles_active")
-                                          .value("CreateDatabase"),
-                                      new V1EnvVar().name("DB_SERVER_NAME").value(dbServerName),
-                                      new V1EnvVar()
-                                          .name("ADMIN_DB_USER_NAME")
-                                          .value(adminDbUserName),
-                                      new V1EnvVar().name("NEW_DB_USER_NAME").value(newDbUserName),
-                                      new V1EnvVar().name("NEW_DB_USER_OID").value(newDbUserOid),
-                                      new V1EnvVar()
-                                          .name("NEW_DB_NAME")
-                                          .value(resource.getDatabaseName())))));
+                              .env(envVars)));
 
       aksApi.createNamespacedPod(aksNamespace, pod, null, null, null, null);
 
     } catch (ApiException e) {
-      logger.error("Error creating azure database; response = {}", e.getResponseBody(), e);
       var status = Optional.ofNullable(HttpStatus.resolve(e.getCode()));
       // If the pod already exists, assume this is a retry, monitor the already running pod
       if (status.stream().noneMatch(s -> s == HttpStatus.CONFLICT)) {
+        logger.error("Error creating azure database; response = {}", e.getResponseBody(), e);
         throw e;
       }
     }
