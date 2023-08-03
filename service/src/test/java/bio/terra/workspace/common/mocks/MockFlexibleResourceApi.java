@@ -24,8 +24,8 @@ import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.flexibleresource.CloneFlexibleResourceStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -226,7 +226,8 @@ public class MockFlexibleResourceApi {
         step -> failureSteps.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
 
     if (shouldUndo) {
-      failureSteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+      failureSteps.put(
+          CloneFlexibleResourceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
 
     jobService.setFlightDebugInfoForTest(
