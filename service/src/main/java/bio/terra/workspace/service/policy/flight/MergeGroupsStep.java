@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.policy.flight;
 
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -12,8 +14,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,16 +47,25 @@ public class MergeGroupsStep implements Step {
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.EFFECTIVE_POLICIES, TpsPaoGetResult.class);
 
-    List<String> mergedGroups =
-        new ArrayList<>(
+    HashSet<String> mergedGroups =
+        new HashSet<>(
             TpsUtilities.getGroupConstraintsFromInputs(mergedPao.getEffectiveAttributes()));
 
+    HashSet<String> currentGroups =
+        new HashSet<>(
+            TpsUtilities.getGroupConstraintsFromInputs(
+                tpsApiDispatch
+                    .getOrCreatePao(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE)
+                    .getEffectiveAttributes()));
+
     try {
-      samService.addGroupsToAuthDomain(
-          userRequest,
-          SamConstants.SamResource.WORKSPACE,
-          this.workspaceId.toString(),
-          mergedGroups);
+      if (!currentGroups.equals(mergedGroups)) {
+        samService.addGroupsToAuthDomain(
+            userRequest,
+            SamConstants.SamResource.WORKSPACE,
+            this.workspaceId.toString(),
+            mergedGroups.stream().toList());
+      }
     } catch (Exception ex) {
       logger.info("Attempt to add groups to auth domain failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
