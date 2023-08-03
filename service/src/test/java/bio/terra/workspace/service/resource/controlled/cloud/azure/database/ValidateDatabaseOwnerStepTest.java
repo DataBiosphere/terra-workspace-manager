@@ -32,7 +32,7 @@ public class ValidateDatabaseOwnerStepTest {
 
   private final UUID owner = UUID.randomUUID();
   private final ApiAzureDatabaseCreationParameters creationParameters =
-      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner);
+      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, "default");
   private final ControlledAzureDatabaseResource databaseResource =
       ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
               creationParameters, UUID.randomUUID())
@@ -65,7 +65,7 @@ public class ValidateDatabaseOwnerStepTest {
   @Test
   void testNoOwner() throws InterruptedException {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null);
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default");
     var databaseResource =
         ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
                 creationParameters, UUID.randomUUID(), null)

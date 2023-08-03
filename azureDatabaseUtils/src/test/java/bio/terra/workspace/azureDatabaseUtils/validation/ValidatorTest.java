@@ -17,6 +17,11 @@ public class ValidatorTest extends BaseUnitTest {
   }
 
   @Test
+  void testMissingDatabaseNameValidation() {
+    assertThrows(IllegalArgumentException.class, () -> validator.validateDatabaseNameFormat(null));
+  }
+
+  @Test
   void testRoleNameValidation() {
     final String newDbUserName = "testCreateRole; DROP ROLE testCreateRole";
     assertThrows(
@@ -24,9 +29,19 @@ public class ValidatorTest extends BaseUnitTest {
   }
 
   @Test
+  void testMissingRoleNameValidation() {
+    assertThrows(IllegalArgumentException.class, () -> validator.validateRoleNameFormat(null));
+  }
+
+  @Test
   void testOidValidation() {
     final String newDbUserOid = "not a uuid";
     assertThrows(
         IllegalArgumentException.class, () -> validator.validateUserOidFormat(newDbUserOid));
+  }
+
+  @Test
+  void testMissingOidValidation() {
+    assertThrows(NullPointerException.class, () -> validator.validateUserOidFormat(null));
   }
 }

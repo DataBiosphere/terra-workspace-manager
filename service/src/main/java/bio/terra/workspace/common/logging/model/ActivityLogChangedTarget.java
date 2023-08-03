@@ -22,6 +22,7 @@ public enum ActivityLogChangedTarget {
   CONTROLLED_GCP_DATAPROC_CLUSTER(/*isResource=*/ true),
   // Azure
   CONTROLLED_AZURE_MANAGED_IDENTITY(/*isResource=*/ true),
+  CONTROLLED_AZURE_KUBERNETES_NAMESPACE(/*isResource=*/ true),
   CONTROLLED_AZURE_DATABASE(/*isResource=*/ true),
   CONTROLLED_AZURE_DISK(/*isResource=*/ true),
   CONTROLLED_AZURE_VM(/*isResource=*/ true),

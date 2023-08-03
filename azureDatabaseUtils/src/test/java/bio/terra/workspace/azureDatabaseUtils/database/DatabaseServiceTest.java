@@ -1,4 +1,4 @@
-package bio.terra.workspace.azureDatabaseUtils.create;
+package bio.terra.workspace.azureDatabaseUtils.database;
 
 import static org.mockito.Mockito.verify;
 
@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class CreateDatabaseServiceTest extends BaseUnitTest {
-  @Autowired private CreateDatabaseService createDatabaseService;
+public class DatabaseServiceTest extends BaseUnitTest {
+  @Autowired private DatabaseService databaseService;
 
-  @MockBean private CreateDatabaseDao createDatabaseDao;
+  @MockBean private DatabaseDao databaseDao;
   @MockBean private Validator validator;
 
   @Test
@@ -22,12 +22,12 @@ public class CreateDatabaseServiceTest extends BaseUnitTest {
     final String newDbUserName = "testCreateRole";
     final String newDbUserOid = UUID.randomUUID().toString();
 
-    createDatabaseService.createDatabaseWithManagedIdentity(newDbName, newDbUserName, newDbUserOid);
+    databaseService.createDatabaseWithManagedIdentity(newDbName, newDbUserName, newDbUserOid);
 
-    verify(createDatabaseDao).createDatabase(newDbName);
-    verify(createDatabaseDao).createRoleForManagedIdentity(newDbUserName, newDbUserOid);
-    verify(createDatabaseDao).grantAllPrivileges(newDbUserName, newDbName);
-    verify(createDatabaseDao).revokeAllPublicPrivileges(newDbName);
+    verify(databaseDao).createDatabase(newDbName);
+    verify(databaseDao).createRoleForManagedIdentity(newDbUserName, newDbUserOid);
+    verify(databaseDao).grantAllPrivileges(newDbUserName, newDbName);
+    verify(databaseDao).revokeAllPublicPrivileges(newDbName);
 
     verify(validator).validateDatabaseNameFormat(newDbName);
     verify(validator).validateRoleNameFormat(newDbUserName);
@@ -38,12 +38,12 @@ public class CreateDatabaseServiceTest extends BaseUnitTest {
   void testCreateDatabaseWithDbRole() {
     final String newDbName = "testCreateDatabase";
 
-    createDatabaseService.createDatabaseWithDbRole(newDbName);
+    databaseService.createDatabaseWithDbRole(newDbName);
 
-    verify(createDatabaseDao).createDatabase(newDbName);
-    verify(createDatabaseDao).createRole(newDbName);
-    verify(createDatabaseDao).grantAllPrivileges(newDbName, newDbName);
-    verify(createDatabaseDao).revokeAllPublicPrivileges(newDbName);
+    verify(databaseDao).createDatabase(newDbName);
+    verify(databaseDao).createRole(newDbName);
+    verify(databaseDao).grantAllPrivileges(newDbName, newDbName);
+    verify(databaseDao).revokeAllPublicPrivileges(newDbName);
 
     verify(validator).validateDatabaseNameFormat(newDbName);
   }

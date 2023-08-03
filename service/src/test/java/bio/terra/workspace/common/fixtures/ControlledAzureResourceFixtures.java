@@ -13,6 +13,7 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineConfig
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineImageReference;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureKubernetesNamespaceCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureManagedIdentityCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
@@ -26,6 +27,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace.ControlledAzureKubernetesNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
@@ -42,6 +44,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 /** A series of static objects useful for testing controlled resources. */
@@ -51,6 +55,7 @@ public class ControlledAzureResourceFixtures {
   public static final String DEFAULT_AZURE_RESOURCE_REGION = Region.US_EAST2.name();
   private static final String AZURE_UAMI_NAME_PREFIX = "uami";
   private static final String AZURE_DATABASE_NAME_PREFIX = "db";
+  private static final String AZURE_KUBERNETES_NAMESPACE_PREFIX = "k8s";
 
   public static String uniqueAzureName(String resourcePrefix) {
     return TestUtils.appendRandomNumber(AZURE_NAME_PREFIX + "-" + resourcePrefix);
@@ -404,10 +409,39 @@ public class ControlledAzureResourceFixtures {
         .managedIdentityName(creationParameters.getName());
   }
 
-  public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(UUID owner) {
+  public static ApiAzureKubernetesNamespaceCreationParameters
+      getAzureKubernetesNamespaceCreationParameters(UUID owner, List<UUID> databases) {
+    return new ApiAzureKubernetesNamespaceCreationParameters()
+        .managedIdentity(owner)
+        .databases(databases)
+        .namespacePrefix(uniqueAzureName(AZURE_KUBERNETES_NAMESPACE_PREFIX).substring(0, 24));
+  }
+
+  public static ControlledAzureKubernetesNamespaceResource.Builder
+      makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
+          ApiAzureKubernetesNamespaceCreationParameters creationParameters, UUID workspaceId) {
+    var namespace = creationParameters.getNamespacePrefix() + "-" + workspaceId.toString();
+    return ControlledAzureKubernetesNamespaceResource.builder()
+        .common(
+            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("k8s"))
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .build())
+        .kubernetesServiceAccount(creationParameters.getNamespacePrefix() + "-ksa")
+        .kubernetesNamespace(namespace)
+        .managedIdentity(creationParameters.getManagedIdentity())
+        .databases(new HashSet<>(creationParameters.getDatabases()));
+  }
+
+  public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(
+      UUID owner, String k8sNamespace) {
     return new ApiAzureDatabaseCreationParameters()
         .name(uniqueAzureName(AZURE_DATABASE_NAME_PREFIX))
-        .k8sNamespace("default")
+        .k8sNamespace(k8sNamespace)
         .owner(owner);
   }
 

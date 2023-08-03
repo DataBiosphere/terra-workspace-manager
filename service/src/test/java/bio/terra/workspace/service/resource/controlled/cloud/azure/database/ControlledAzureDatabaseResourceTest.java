@@ -43,7 +43,7 @@ public class ControlledAzureDatabaseResourceTest {
   @Test
   void testCorrectPrivateDatabaseSteps() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null);
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default");
 
     var databaseResource =
         ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
@@ -65,7 +65,8 @@ public class ControlledAzureDatabaseResourceTest {
   @Test
   void testCorrectSharedDatabaseSteps() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID(), "default");
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
@@ -87,7 +88,8 @@ public class ControlledAzureDatabaseResourceTest {
   @Test
   void testToApiResource() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID(), "default");
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
@@ -108,7 +110,8 @@ public class ControlledAzureDatabaseResourceTest {
   @Test
   void testAttributesToJson() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID(), "default");
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(

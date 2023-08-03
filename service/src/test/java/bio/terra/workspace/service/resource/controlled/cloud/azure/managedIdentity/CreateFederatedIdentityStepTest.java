@@ -101,7 +101,8 @@ public class CreateFederatedIdentityStepTest {
             mockLandingZoneApiDispatch,
             mockSamService,
             mockWorkspaceService,
-            workspaceId);
+            workspaceId,
+            null);
     var result =
         step.createFederatedIdentityAndK8sServiceAccount(
             identityResource.getManagedIdentityName(),
@@ -109,7 +110,8 @@ public class CreateFederatedIdentityStepTest {
             mockMsiManager,
             mockCoreV1Api,
             oidcIssuer,
-            uamiClientId);
+            uamiClientId
+        );
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
 
     assertThat(fedIdInnerCaptor.getValue().issuer(), equalTo(oidcIssuer));
@@ -163,7 +165,8 @@ public class CreateFederatedIdentityStepTest {
             mockLandingZoneApiDispatch,
             mockSamService,
             mockWorkspaceService,
-            workspaceId);
+            workspaceId,
+            null);
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
   }
 
@@ -183,14 +186,16 @@ public class CreateFederatedIdentityStepTest {
             mockLandingZoneApiDispatch,
             mockSamService,
             mockWorkspaceService,
-            workspaceId);
+            workspaceId,
+            null);
     return step.createFederatedIdentityAndK8sServiceAccount(
         identityResource.getManagedIdentityName(),
         mockAzureCloudContext,
         mockMsiManager,
         mockCoreV1Api,
         oidcIssuer,
-        uamiClientId);
+        uamiClientId
+    );
   }
 
   private void setupMocks() {

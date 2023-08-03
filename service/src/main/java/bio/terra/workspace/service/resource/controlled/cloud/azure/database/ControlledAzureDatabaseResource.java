@@ -15,7 +15,6 @@ import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProviderImpl;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
@@ -179,7 +178,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
-            new KubernetesClientProviderImpl()));
+            flightBeanBag.getAzureDatabaseUtilsRunner()));
     return steps;
   }
 
@@ -215,23 +214,19 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
               getK8sNamespace(),
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
-              getDatabaseOwner(),
-              new KubernetesClientProviderImpl(),
-              flightBeanBag.getLandingZoneApiDispatch(),
-              flightBeanBag.getSamService(),
-              flightBeanBag.getWorkspaceService(),
-              getWorkspaceId(),
-              flightBeanBag.getResourceDao()));
+              flightBeanBag.getKubernetesClientProvider(),
+              getWorkspaceId()));
       steps.add(
           new CreateFederatedIdentityStep(
               getK8sNamespace(),
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
-              new KubernetesClientProviderImpl(),
+              flightBeanBag.getKubernetesClientProvider(),
               flightBeanBag.getLandingZoneApiDispatch(),
               flightBeanBag.getSamService(),
               flightBeanBag.getWorkspaceService(),
-              getWorkspaceId()));
+              getWorkspaceId(),
+              null));
     }
   }
 

@@ -1,0 +1,34 @@
+components:
+  schemas:
+    AzureKubernetesNamespaceAttributes:
+      description: >-
+        KubernetesNamespace properties included in post-creation get and update. Others must be retrieved from Azure using the name.
+      type: object
+      properties:
+        kubernetesNamespace:
+          description: Name of created kubernetesNamespace (not the resource name).
+          type: string
+        kubernetesServiceAccount:
+          description: Name of the kubernetesServiceAccount created for the kubernetesNamespace. This value doubles as database user name. Null if no service account was created.
+          type: string
+        managedIdentity:
+          description: The resource id of a managed identity to use for the kubernetesNamespace. Null for private namespaces.
+          type: string
+          format: uuid
+        databases:
+          description: The resource IDs of databases within the workspace to be used by the kubernetesNamespace.
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    AzureKubernetesNamespaceResource:
+      type: object
+      description: Description of an Azure kubernetesNamespace
+      required: [ metadata, attributes ]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/AzureKubernetesNamespaceAttributes'

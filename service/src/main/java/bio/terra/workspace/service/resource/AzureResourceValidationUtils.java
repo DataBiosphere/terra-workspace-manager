@@ -161,6 +161,20 @@ public class AzureResourceValidationUtils {
     }
   }
 
+  public static final Pattern AZURE_KUBERNETS_NAMESPACE_PATTERN =
+      Pattern.compile("^[a-z][a-z0-9-]{0,62}$");
+
+  public static void validateAzureKubernetesNamespace(String name) {
+    // the namespace is a combination of the name of the resource and the workspace id
+    // so the text of the error does not match the actual regex, it only talks about what the user
+    // can control
+    if (!AZURE_KUBERNETS_NAMESPACE_PATTERN.matcher(name).matches()) {
+      logger.warn("Invalid Kubernetes namespace {}", name);
+      throw new InvalidReferenceException(
+          "Invalid Kubernetes namespace resource name. Must be 1 to 26 characters long and can contain only lowercase alphanumeric characters or dashes. The name must start with a letter.");
+    }
+  }
+
   public static final Pattern AZURE_DATABASE_NAME_PATTERN =
       Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]{0,62}$");
 

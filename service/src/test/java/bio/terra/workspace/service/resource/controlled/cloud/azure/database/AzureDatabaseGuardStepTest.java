@@ -84,7 +84,8 @@ public class AzureDatabaseGuardStepTest {
   void testAlreadyExists() throws InterruptedException {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID(), "default");
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)
@@ -116,7 +117,8 @@ public class AzureDatabaseGuardStepTest {
   private StepResult testWithError(HttpStatus httpStatus) throws InterruptedException {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID(), "default");
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)
