@@ -163,16 +163,23 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     retrySteps.put(
         CreateAwsS3StorageFolderStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
 
-    // fail after the last step to test that everything is deleted on undo.
+    // final createResponseStep cannot fail, hence fail the create step
+    Map<String, StepStatus> failureSteps = new HashMap<>();
+    failureSteps.put(
+        CreateAwsS3StorageFolderStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).undoStepFailures(retrySteps).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(failureSteps)
+            .undoStepFailures(retrySteps)
+            .build());
     assertThrows(
         InvalidResultStateException.class,
         () ->
             controlledResourceService.createControlledResourceSync(
                 resource, null, userRequest, creationParameters));
 
-    // validate resource does not exist.
+    // validate resource does not exist
     assertFalse(AwsUtils.checkFolderExists(awsCredentialsProvider, resource));
     assertThrows(
         ResourceNotFoundException.class,
