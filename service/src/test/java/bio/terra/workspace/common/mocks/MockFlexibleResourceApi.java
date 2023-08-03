@@ -24,6 +24,7 @@ import bio.terra.workspace.generated.model.ApiStewardshipType;
 import bio.terra.workspace.generated.model.ApiUpdateControlledFlexibleResourceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -218,16 +219,18 @@ public class MockFlexibleResourceApi {
       boolean shouldUndo)
       throws Exception {
     // Retry to ensure steps are idempotent
-    Map<String, StepStatus> retryableStepsMap = new HashMap<>();
+    Map<String, StepStatus> failureSteps = new HashMap<>();
     List<Class<? extends Step>> retryableSteps =
         ImmutableList.of(CheckControlledResourceAuthStep.class);
     retryableSteps.forEach(
-        step -> retryableStepsMap.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
+        step -> failureSteps.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
+
+    if (shouldUndo) {
+      failureSteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+    }
+
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder()
-            .doStepFailures(retryableStepsMap)
-            .lastStepFailure(shouldUndo)
-            .build());
+        FlightDebugInfo.newBuilder().doStepFailures(failureSteps).build());
 
     ApiCloneControlledFlexibleResourceRequest request =
         new ApiCloneControlledFlexibleResourceRequest()
