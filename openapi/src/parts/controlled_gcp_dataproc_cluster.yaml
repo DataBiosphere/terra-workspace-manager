@@ -194,9 +194,11 @@ components:
         region:
           type: string
           description: GCP region.
-        initializationScript:
-          type: string
-          description: Path to the initialization script.
+        initializationScripts:
+          type: array
+          items:
+            type: string
+          description: List of initialization scripts to run on create. In gs url format.
         components:
           type: array
           items:
