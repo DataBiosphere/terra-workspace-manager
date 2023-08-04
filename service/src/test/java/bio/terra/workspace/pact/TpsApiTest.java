@@ -14,20 +14,16 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.PolicyServiceConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
 import bio.terra.workspace.service.policy.exception.PolicyServiceNotFoundException;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 
 import static au.com.dius.pact.consumer.dsl.DslPart.UUID_REGEX;
@@ -54,6 +50,9 @@ public class TpsApiTest {
 
   // TODO don't use a random value
   UUID objectId = UUID.randomUUID();
+  UUID secondObjectId = UUID.randomUUID();
+
+  static String existingWorkspacePolicyState = "an existing workspace policy";
 
   static PactDslJsonBody tpsPolicyInputsObjectShape = new PactDslJsonBody().object(
       "inputs",
@@ -115,7 +114,7 @@ public class TpsApiTest {
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact createPaoWithAPreexistingPolicy(PactDslWithProvider builder) {
     return builder
-        .given("an existing policy for a workspace")
+        .given(existingWorkspacePolicyState)
         .uponReceiving("A request to create a policy")
         .method("POST")
         .path("/api/policy/v1alpha1/pao")
@@ -143,12 +142,12 @@ public class TpsApiTest {
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact deletePaoThatExists(PactDslWithProvider builder) {
     return builder
-        .given("an existing policy for a workspace")
+        .given(existingWorkspacePolicyState)
         .uponReceiving("A request to delete a policy")
         .method("DELETE")
         .pathFromProviderState(
             "/api/policy/v1alpha1/pao/${objectId}",
-            String.format("/api/policy/v1alpha1/pao/%s", objectId))
+            "/api/policy/v1alpha1/pao/%s".formatted(objectId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .toPact();
@@ -162,7 +161,6 @@ public class TpsApiTest {
   }
 
 
-
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact getPaoWithAnExistingWorkspacePolicy(PactDslWithProvider builder) {
     var policyResponseShape = new PactDslJsonBody()
@@ -173,7 +171,7 @@ public class TpsApiTest {
         .object("attributes", tpsPolicyInputsObjectShape);
 
     return builder
-        .given("an existing policy for a workspace")
+        .given(existingWorkspacePolicyState)
         .uponReceiving("A request to retrieve a policy")
         .method("GET")
         .pathFromProviderState(
@@ -212,7 +210,7 @@ public class TpsApiTest {
     return builder
         .uponReceiving("A request to retrieve a policy that doesn't exist")
         .method("GET")
-        .matchPath("/api/policy/v1alpha1/pao/%s" .formatted(UUID_REGEX))
+        .matchPath("/api/policy/v1alpha1/pao/%s".formatted(UUID_REGEX))
         .willRespondWith()
         .status(HttpStatus.NOT_FOUND.value())
         .toPact();
@@ -225,36 +223,171 @@ public class TpsApiTest {
     assertThrows(PolicyServiceNotFoundException.class, () -> dispatch.getPao(objectId));
   }
 
-
   /*
+  TODO:
+   test different update modes
+          we use TpsUpdateMode.FAIL_ON_CONFLICT, and TpsUpdateMode.DRY_RUN
+          ENFORCE_CONFLICT is not found in the project
+   */
+
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact linkPaoWhenBothExist(PactDslWithProvider builder) {
+    var linkRequestShape = new PactDslJsonBody()
+        .valueFromProviderState("sourceObjectId", "${secondObjectId}", secondObjectId)
+        .stringMatcher("updateMode",
+            Arrays.stream(TpsUpdateMode.values()).map(TpsUpdateMode::getValue).collect(Collectors.joining("|"))
+        );
+    var linkResponseShape = new PactDslJsonBody()
+        .booleanType("updateApplied")
+        .object("conflicts", new PactDslJsonArray())
+        .object("resultingPao");
 
     return builder
-        .given("an existing policy for a workspace")
+        .given(existingWorkspacePolicyState)
+        // TODO: better second policy state
         .given("another existing policy")
         .uponReceiving("A request to link the policies")
-        .method("GET")
-        .query("depth=1")
+        .method("POST")
+        .headers(contentTypeJsonHeader)
+        .body(linkRequestShape)
         .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/${objectId}/explain",
-            String.format("/api/policy/v1alpha1/pao/%s/explain", objectId))
+            "/api/policy/v1alpha1/pao/${objectId}/link",
+            String.format("/api/policy/v1alpha1/pao/%s/link", objectId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
-        //.body(explainResponse)
+        .body(linkResponseShape)
         .toPact();
-  }*/
+  }
 
 
-  // link Pao
-  // merge Pao
-  // replace Pao
-  // update Pao
+  @Test
+  @PactTestFor(pactMethod = "linkPaoWhenBothExist")
+  public void linkTwoExistingPaosWithNoConflicts() throws Exception {
+    var result = dispatch.linkPao(objectId, secondObjectId, TpsUpdateMode.FAIL_ON_CONFLICT);
+    assertNotNull(result);
+  }
+
+
+  @Pact(consumer = "wsm", provider = "tps")
+  public RequestResponsePact mergePaoWhenBothExist(PactDslWithProvider builder) {
+    var linkRequestShape = new PactDslJsonBody()
+        .valueFromProviderState("sourceObjectId", "${secondObjectId}", secondObjectId)
+        .stringMatcher("sourceObjectId", UUID_REGEX)
+        .stringMatcher("updateMode",
+            Arrays.stream(TpsUpdateMode.values()).map(TpsUpdateMode::getValue).collect(Collectors.joining("|"))
+        );
+    var linkResponseShape = new PactDslJsonBody()
+        .booleanType("updateApplied")
+        .object("conflicts", new PactDslJsonArray())
+        .object("resultingPao");
+
+    return builder
+        .given(existingWorkspacePolicyState)
+        .given("another existing policy")
+        .uponReceiving("A request to link the policies")
+        .method("POST")
+        .headers(contentTypeJsonHeader)
+        .body(linkRequestShape)
+        .pathFromProviderState(
+            "/api/policy/v1alpha1/pao/${objectId}/merge",
+            String.format("/api/policy/v1alpha1/pao/%s/merge", objectId))
+        .willRespondWith()
+        .status(HttpStatus.OK.value())
+        .body(linkResponseShape)
+        .toPact();
+  }
+
+
+  @Test
+  @PactTestFor(pactMethod = "mergePaoWhenBothExist")
+  public void mergingTwoExistingPaos() throws Exception {
+    var result = dispatch.mergePao(objectId, secondObjectId, TpsUpdateMode.FAIL_ON_CONFLICT);
+    assertNotNull(result);
+  }
+
+
+  @Pact(consumer = "wsm", provider = "tps")
+  public RequestResponsePact replacePaoThatExists(PactDslWithProvider builder) {
+    var updateRequestShape = new PactDslJsonBody()
+        .object("newAttributes", tpsPolicyInputsObjectShape)
+        .stringMatcher("updateMode",
+            Arrays.stream(TpsUpdateMode.values()).map(TpsUpdateMode::getValue).collect(Collectors.joining("|"))
+        );
+    var updateResponseShape = new PactDslJsonBody()
+        .booleanType("updateApplied")
+        .object("conflicts", new PactDslJsonArray())
+        .object("resultingPao"); // TpsPaoGetResult
+    return builder
+        .given(existingWorkspacePolicyState)
+        .uponReceiving("A request to update a policy")
+        .method("PUT")
+        .body(updateRequestShape)
+        .headers(contentTypeJsonHeader)
+        .pathFromProviderState(
+            "/api/policy/v1alpha1/pao/${objectId}",
+            "/api/policy/v1alpha1/pao/%s".formatted(objectId))
+        .willRespondWith()
+        .status(HttpStatus.OK.value())
+        .body(updateResponseShape)
+        .toPact();
+  }
+
+
+  @Test
+  @PactTestFor(pactMethod = "replacePaoThatExists")
+  public void replacingAnExistingPaoWithNoConflicts() throws Exception {
+    var newInputs = new TpsPolicyInputs().inputs(List.of(
+        new TpsPolicyInput().name("new_name").namespace("new_namespace")
+    ));
+    var result = dispatch.replacePao(objectId, newInputs, TpsUpdateMode.FAIL_ON_CONFLICT);
+    assertNotNull(result);
+  }
+
+
+  @Pact(consumer = "wsm", provider = "tps")
+  public RequestResponsePact updatePaoPreexistingNoConflicts(PactDslWithProvider builder) {
+    var updateRequestShape = new PactDslJsonBody()
+        .object("addAttributes", tpsPolicyInputsObjectShape)
+        .object("removeAttributes", tpsPolicyInputsObjectShape)
+        .stringMatcher("updateMode",
+            Arrays.stream(TpsUpdateMode.values()).map(TpsUpdateMode::getValue).collect(Collectors.joining("|"))
+        );
+    var updateResponseShape = new PactDslJsonBody()
+        .booleanType("updateApplied")
+        .object("conflicts", new PactDslJsonArray())
+        .object("resultingPao"); // TpsPaoGetResult
+    return builder
+        .given(existingWorkspacePolicyState)
+        .uponReceiving("A request to update a policy")
+        .method("PATCH")
+        .body(updateRequestShape)
+        .headers(contentTypeJsonHeader)
+        .pathFromProviderState(
+            "/api/policy/v1alpha1/pao/${objectId}",
+            "/api/policy/v1alpha1/pao/%s".formatted(objectId))
+        .willRespondWith()
+        .status(HttpStatus.OK.value())
+        .body(updateResponseShape)
+        .toPact();
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "updatePaoPreexistingNoConflicts")
+  public void updatingAnExistingPaoWithNoConflicts() throws Exception {
+    var remove = new TpsPolicyInputs().inputs(List.of(
+        new TpsPolicyInput().name("test_name").namespace("test_namespace")
+    ));
+    var add = new TpsPolicyInputs().inputs(List.of(
+        new TpsPolicyInput().name("new_name").namespace("new_namespace")
+    ));
+    var result = dispatch.updatePao(objectId, add, remove, TpsUpdateMode.FAIL_ON_CONFLICT);
+    assertNotNull(result);
+  }
 
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact listValidRegions(PactDslWithProvider builder) {
     return builder
-        .given("an existing policy for a workspace")
+        .given(existingWorkspacePolicyState)
         .uponReceiving("A request to list the valid regions for a policy")
         .method("GET")
         .query("platform=%s".formatted(CloudPlatform.AZURE.toTps()))
@@ -279,7 +412,7 @@ public class TpsApiTest {
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact listValidByPolicyInput(PactDslWithProvider builder) {
     return builder
-        .given("an existing policy")
+        .given(existingWorkspacePolicyState)
         .uponReceiving("A request to list the valid regions for a policy")
         .method("POST")
         .body(tpsPolicyInputsObjectShape)
@@ -316,7 +449,7 @@ public class TpsApiTest {
             new PactDslJsonBody().stringType("namespace").stringType("name").closeObject()
         );
     return builder
-        .given("an existing policy for a workspace")
+        .given(existingWorkspacePolicyState)
         .uponReceiving("A request to explain the policy")
         .method("GET")
         .query("depth=1")
@@ -332,18 +465,17 @@ public class TpsApiTest {
   @Test
   @PactTestFor(pactMethod = "explainingAWorkspacePolicy")
   public void explainingAPolicy() throws Exception {
-    var workspace =  Workspace.builder()
+    var workspace = Workspace.builder()
         .workspaceId(objectId)
         .workspaceStage(WorkspaceStage.MC_WORKSPACE)
         .createdByEmail("")
         .build();
     var userRequest = mock(AuthenticatedUserRequest.class, RETURNS_SMART_NULLS);
     var workspaceService = mock(WorkspaceService.class);
-    when(workspaceService.validateWorkspaceAndAction(any(),any(), any())).thenReturn(workspace);
-    var result = dispatch.explain(objectId, 1,workspaceService, userRequest);
+    when(workspaceService.validateWorkspaceAndAction(any(), any(), any())).thenReturn(workspace);
+    var result = dispatch.explain(objectId, 1, workspaceService, userRequest);
     assertNotNull(result);
   }
-
 
 
   @Pact(consumer = "wsm", provider = "tps")
@@ -357,11 +489,10 @@ public class TpsApiTest {
         .object("regions", new PactDslJsonArray().stringType())
         .object("locations", locationArray);
     return builder
-        .uponReceiving("A for information about a location")
+        .uponReceiving("A request for information about a location")
         .method("GET")
         // TODO: find a way to improve query string matching (this may require updating pact
-        .query("platform=%s&location=%s".formatted(CloudPlatform.AZURE.toTps(), "West"))
-        //.query("location=%s".formatted("West"))
+        .query("platform=%s&location=%s".formatted(CloudPlatform.AZURE.toTps(), "europe"))
         .path("/api/policy/v1alpha1/location")
         .willRespondWith()
         .status(HttpStatus.OK.value())
@@ -372,20 +503,9 @@ public class TpsApiTest {
   @Test
   @PactTestFor(pactMethod = "getLocationInfo")
   public void retrievingInformationOnARegion() throws Exception {
-    var result = dispatch.getLocationInfo(CloudPlatform.AZURE, "West");
+    var result = dispatch.getLocationInfo(CloudPlatform.AZURE, "europe");
     assertNotNull(result);
   }
 
 
-  /*
-    TODO:
-      Link Pao
-        - different update modes
-          we use TpsUpdateMode.FAIL_ON_CONFLICT, and TpsUpdateMode.DRY_RUN
-          ENFORCE_CONFLICT is not found in the project
-        - different results
-      Merge Pao
-      Replace Pao
-      update Pao
-   */
 }
