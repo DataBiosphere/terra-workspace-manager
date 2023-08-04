@@ -184,7 +184,11 @@ public class ControlledDataprocClusterResource extends ControlledResource {
 
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    // TODO PF-2901: Add update steps for setting autoscaling policy and manager node metadata.
+    flight.addStep(
+        new RetrieveDataprocClusterResourceAttributesStep(this, flightBeanBag.getCrlService()),
+        RetryRules.cloud());
+    flight.addStep(
+        new UpdateDataprocClusterStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
   public ClusterName toClusterName() {

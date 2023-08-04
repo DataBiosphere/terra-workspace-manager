@@ -15,8 +15,10 @@ import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.ResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
+import bio.terra.workspace.model.ControlledDataprocClusterUpdateParameters;
 import bio.terra.workspace.model.CreatedControlledGcpDataprocClusterResult;
 import bio.terra.workspace.model.DataprocClusterCloudId;
+import bio.terra.workspace.model.GcpDataprocClusterLifecycleConfig;
 import bio.terra.workspace.model.GcpDataprocClusterResource;
 import bio.terra.workspace.model.GenerateGcpDataprocClusterCloudIdRequestBody;
 import bio.terra.workspace.model.IamRole;
@@ -27,6 +29,7 @@ import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.UpdateControlledGcpDataprocClusterRequestBody;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.Dataproc;
+import com.google.api.services.dataproc.model.Cluster;
 import com.google.api.services.dataproc.model.StopClusterRequest;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
@@ -178,16 +181,50 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     // Update the cluster through WSM.
     var newName = "new-cluster-name";
     var newDescription = "new description for the cluster";
+    int newNumPrimaryWorkers = 3;
     GcpDataprocClusterResource updatedResource =
         resourceUserApi.updateDataprocCluster(
             new UpdateControlledGcpDataprocClusterRequestBody()
                 .description(newDescription)
-                .name(newName),
+                .name(newName)
+                .updateParameters(
+                    new ControlledDataprocClusterUpdateParameters()
+                        .numPrimaryWorkers(newNumPrimaryWorkers)),
             getWorkspaceId(),
             resourceId);
 
+    // Directly fetch the cluster to verify that non wsm managed fields are updated.
+    Cluster retrievedCluster =
+        dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute();
+
     assertEquals(newName, updatedResource.getMetadata().getName());
     assertEquals(newDescription, updatedResource.getMetadata().getDescription());
+    assertEquals(
+        newNumPrimaryWorkers, retrievedCluster.getConfig().getWorkerConfig().getNumInstances());
+
+    // Update the cluster lifecycle rule through WSM. Cluster lifecycle rules cannot be updated in
+    // tandem with other parameters, so we update it separately.
+    String newIdleDeleteTtl = "1800s";
+    String newAutoDeleteTtl = "3600s";
+    resourceUserApi.updateDataprocCluster(
+        new UpdateControlledGcpDataprocClusterRequestBody()
+            .updateParameters(
+                new ControlledDataprocClusterUpdateParameters()
+                    .lifecycleConfig(
+                        new GcpDataprocClusterLifecycleConfig()
+                            .idleDeleteTtl(newIdleDeleteTtl)
+                            .autoDeleteTtl(newAutoDeleteTtl))),
+        getWorkspaceId(),
+        resourceId);
+
+    // Directly fetch the cluster to verify updated lifecycle rules
+    retrievedCluster =
+        dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute();
+
+    assertEquals(
+        newIdleDeleteTtl, retrievedCluster.getConfig().getLifecycleConfig().getIdleDeleteTtl());
+    assertEquals(
+        newAutoDeleteTtl, retrievedCluster.getConfig().getLifecycleConfig().getAutoDeleteTtl());
 
     // Delete the Dataproc cluster through WSM.
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);
