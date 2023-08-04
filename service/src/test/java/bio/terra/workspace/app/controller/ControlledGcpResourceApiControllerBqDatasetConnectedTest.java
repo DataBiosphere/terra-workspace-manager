@@ -320,7 +320,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
 
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
-    mockGcpApi.cloneControlledBqDatasetAsyncAndExpect(
+    mockGcpApi.cloneControlledBqDatasetAsync(
         userAccessUtils.noBillingUser().getAuthenticatedRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -337,7 +337,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
 
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
-    mockGcpApi.cloneControlledBqDatasetAsyncAndExpect(
+    mockGcpApi.cloneControlledBqDatasetAsync(
         userAccessUtils.secondUser().getAuthenticatedRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -354,7 +354,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
 
   @Test
   public void clone_requestContainsInvalidField_throws400() throws Exception {
-    mockGcpApi.cloneControlledBqDatasetAsyncAndExpect(
+    mockGcpApi.cloneControlledBqDatasetAsync(
         userAccessUtils.defaultUser().getAuthenticatedRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -412,7 +412,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
   void clone_duplicateDatasetName_jobThrows409() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     ApiCloneControlledGcpBigQueryDatasetResult result =
-        mockGcpApi.cloneControlledBqDatasetAsyncAndExpect(
+        mockGcpApi.cloneControlledBqDatasetAsync(
             userRequest,
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -728,7 +728,7 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
       String destResourceName)
       throws Exception {
     ApiCloneControlledGcpBigQueryDatasetResult result =
-        mockGcpApi.cloneControlledBqDatasetAsyncAndExpect(
+        mockGcpApi.cloneControlledBqDatasetAsync(
             userRequest,
             sourceWorkspaceId,
             sourceResourceId,

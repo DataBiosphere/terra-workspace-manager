@@ -424,7 +424,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
 
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
-    mockGcpApi.cloneControlledGcsBucketAsyncAndExpect(
+    mockGcpApi.cloneControlledGcsBucketAsync(
         userAccessUtils.noBillingUser().getAuthenticatedRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceBucket.getMetadata().getResourceId(),
@@ -439,7 +439,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
 
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
-    mockGcpApi.cloneControlledGcsBucketAsyncAndExpect(
+    mockGcpApi.cloneControlledGcsBucketAsync(
         userAccessUtils.secondUser().getAuthenticatedRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceBucket.getMetadata().getResourceId(),
@@ -489,7 +489,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   void clone_duplicateBucketName_jobThrows409() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
     ApiCloneControlledGcpGcsBucketResult result =
-        mockGcpApi.cloneControlledGcsBucketAsyncAndExpect(
+        mockGcpApi.cloneControlledGcsBucketAsync(
             userRequest,
             /*sourceWorkspaceId=*/ workspaceId,
             sourceBucket.getMetadata().getResourceId(),
@@ -513,7 +513,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
   @Test
   public void cloneGcsBucket_badRequest_throws400() throws Exception {
     // Cannot set bucketName for COPY_REFERENCE clone
-    mockGcpApi.cloneControlledGcsBucketAsyncAndExpect(
+    mockGcpApi.cloneControlledGcsBucketAsync(
         userAccessUtils.defaultUser().getAuthenticatedRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         sourceBucket.getMetadata().getResourceId(),
@@ -817,7 +817,7 @@ public class ControlledGcpResourceApiControllerGcsBucketConnectedTest extends Ba
       String destResourceName)
       throws Exception {
     ApiCloneControlledGcpGcsBucketResult result =
-        mockGcpApi.cloneControlledGcsBucketAsyncAndExpect(
+        mockGcpApi.cloneControlledGcsBucketAsync(
             userRequest,
             sourceWorkspaceId,
             sourceResourceId,

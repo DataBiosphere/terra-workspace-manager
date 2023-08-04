@@ -60,8 +60,6 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequ
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBucketCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CompleteTransferOperationStep;
@@ -192,7 +190,7 @@ public class MockGcpApi {
       @Nullable String destLocation)
       throws Exception {
     ApiCloneControlledGcpGcsBucketResult result =
-        cloneControlledGcsBucketAsyncAndExpect(
+        cloneControlledGcsBucketAsync(
             userRequest,
             sourceWorkspaceId,
             sourceResourceId,
@@ -224,7 +222,7 @@ public class MockGcpApi {
   }
 
   /** Call cloneGcsBucket() and return immediately; don't wait for flight to finish. */
-  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsyncAndExpect(
+  public ApiCloneControlledGcpGcsBucketResult cloneControlledGcsBucketAsync(
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
@@ -237,7 +235,7 @@ public class MockGcpApi {
       boolean shouldUndo)
       throws Exception {
     // Retry to ensure steps are idempotent
-    Map<String, StepStatus> failureSteps = new HashMap<>();
+    Map<String, StepStatus> retryableStepsMap = new HashMap<>();
     List<Class> retryableSteps =
         ImmutableList.of(
             CheckControlledResourceAuthStep.class,
@@ -253,15 +251,12 @@ public class MockGcpApi {
             // DeleteStorageTransferServiceJobStep.class,
             RemoveBucketRolesStep.class);
     retryableSteps.forEach(
-        step -> failureSteps.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
-
-    if (shouldUndo) {
-      failureSteps.put(
-          GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
-    }
-
+        step -> retryableStepsMap.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().doStepFailures(failureSteps).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(retryableStepsMap)
+            .lastStepFailure(shouldUndo)
+            .build());
 
     ApiCloneControlledGcpGcsBucketRequest request =
         new ApiCloneControlledGcpGcsBucketRequest()
@@ -726,7 +721,7 @@ public class MockGcpApi {
       @Nullable Long defaultPartitionLifetime)
       throws Exception {
     ApiCloneControlledGcpBigQueryDatasetResult result =
-        cloneControlledBqDatasetAsyncAndExpect(
+        cloneControlledBqDatasetAsync(
             userRequest,
             sourceWorkspaceId,
             sourceResourceId,
@@ -760,7 +755,7 @@ public class MockGcpApi {
   }
 
   /** Call cloneBigQueryDataset() and return immediately; don't wait for flight to finish. */
-  public ApiCloneControlledGcpBigQueryDatasetResult cloneControlledBqDatasetAsyncAndExpect(
+  public ApiCloneControlledGcpBigQueryDatasetResult cloneControlledBqDatasetAsync(
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceId,
       UUID sourceResourceId,
@@ -775,7 +770,7 @@ public class MockGcpApi {
       boolean shouldUndo)
       throws Exception {
     // Retry to ensure steps are idempotent
-    Map<String, StepStatus> failureSteps = new HashMap<>();
+    Map<String, StepStatus> retryableStepsMap = new HashMap<>();
     List<Class<? extends Step>> retryableSteps =
         ImmutableList.of(
             CheckControlledResourceAuthStep.class,
@@ -785,14 +780,12 @@ public class MockGcpApi {
             CreateTableCopyJobsStep.class,
             CompleteTableCopyJobsStep.class);
     retryableSteps.forEach(
-        step -> failureSteps.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
-
-    if (shouldUndo) {
-      failureSteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
-    }
-
+        step -> retryableStepsMap.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().doStepFailures(failureSteps).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(retryableStepsMap)
+            .lastStepFailure(shouldUndo)
+            .build());
 
     ApiCloneControlledGcpBigQueryDatasetRequest request =
         new ApiCloneControlledGcpBigQueryDatasetRequest()
