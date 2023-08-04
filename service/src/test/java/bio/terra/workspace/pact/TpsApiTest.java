@@ -75,7 +75,7 @@ public class TpsApiTest {
 
   TpsApiDispatch dispatch;
 
-  
+
   @BeforeEach
   void setup(MockServer mockServer) throws Exception {
     var tpsConfig = mock(PolicyServiceConfiguration.class);
@@ -84,69 +84,6 @@ public class TpsApiTest {
     var featureConfig = new FeatureConfiguration();
     featureConfig.setTpsEnabled(true);
     dispatch = new TpsApiDispatch(featureConfig, tpsConfig);
-  }
-
-
-  @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact getPaoWithAnExistingWorkspacePolicy(PactDslWithProvider builder) {
-    var policyResponseShape = new PactDslJsonBody()
-        .valueFromProviderState("objectId", "${objectId}", objectId)
-        .stringValue("component", TpsComponent.WSM.getValue())
-        .stringValue("objectType", TpsObjectType.WORKSPACE.getValue())
-        .object("effectiveAttributes", tpsPolicyInputsObjectShape)
-        .object("attributes", tpsPolicyInputsObjectShape);
-
-    return builder
-        .given("an existing policy for a workspace")
-        .uponReceiving("A request to retrieve a policy")
-        .method("GET")
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/${objectId}",
-            String.format("/api/policy/v1alpha1/pao/%s", objectId))
-        .willRespondWith()
-        .status(HttpStatus.OK.value())
-        .body(policyResponseShape)
-        .toPact();
-  }
-
-
-  @Test
-  @PactTestFor(pactMethod = "getPaoWithAnExistingWorkspacePolicy")
-  public void retrievingAnExistingWorkspacePolicy() throws Exception {
-    var result = dispatch.getPao(objectId);
-    assertNotNull(result);
-    assertEquals(TpsComponent.WSM, result.getComponent());
-    assertEquals(TpsObjectType.WORKSPACE, result.getObjectType());
-    assertEquals(objectId, result.getObjectId());
-    assertNotNull(result.getAttributes());
-    assertNotNull(result.getAttributes().getInputs());
-    var inputs = result.getAttributes().getInputs();
-    assertTrue(inputs.size() > 0);
-    var policy = inputs.get(0);
-    assertNotNull(policy);
-    assertNotNull(policy.getName());
-    assertNotNull(policy.getNamespace());
-    assertFalse(policy.getName().isEmpty());
-    assertFalse(policy.getNamespace().isEmpty());
-  }
-
-
-  @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact getPaoThatDoesNotExist(PactDslWithProvider builder) {
-    return builder
-        .uponReceiving("A request to retrieve a policy that doesn't exist")
-        .method("GET")
-        .matchPath("/api/policy/v1alpha1/pao/%s" .formatted(UUID_REGEX))
-        .willRespondWith()
-        .status(HttpStatus.NOT_FOUND.value())
-        .toPact();
-  }
-
-
-  @Test
-  @PactTestFor(pactMethod = "getPaoThatDoesNotExist")
-  public void retrievingAPolicyThatDoesNotExist() {
-    assertThrows(PolicyServiceNotFoundException.class, () -> dispatch.getPao(objectId));
   }
 
 
@@ -224,6 +161,151 @@ public class TpsApiTest {
     dispatch.deletePao(objectId);
   }
 
+
+
+  @Pact(consumer = "wsm", provider = "tps")
+  public RequestResponsePact getPaoWithAnExistingWorkspacePolicy(PactDslWithProvider builder) {
+    var policyResponseShape = new PactDslJsonBody()
+        .valueFromProviderState("objectId", "${objectId}", objectId)
+        .stringValue("component", TpsComponent.WSM.getValue())
+        .stringValue("objectType", TpsObjectType.WORKSPACE.getValue())
+        .object("effectiveAttributes", tpsPolicyInputsObjectShape)
+        .object("attributes", tpsPolicyInputsObjectShape);
+
+    return builder
+        .given("an existing policy for a workspace")
+        .uponReceiving("A request to retrieve a policy")
+        .method("GET")
+        .pathFromProviderState(
+            "/api/policy/v1alpha1/pao/${objectId}",
+            String.format("/api/policy/v1alpha1/pao/%s", objectId))
+        .willRespondWith()
+        .status(HttpStatus.OK.value())
+        .body(policyResponseShape)
+        .toPact();
+  }
+
+
+  @Test
+  @PactTestFor(pactMethod = "getPaoWithAnExistingWorkspacePolicy")
+  public void retrievingAnExistingWorkspacePolicy() throws Exception {
+    var result = dispatch.getPao(objectId);
+    assertNotNull(result);
+    assertEquals(TpsComponent.WSM, result.getComponent());
+    assertEquals(TpsObjectType.WORKSPACE, result.getObjectType());
+    assertEquals(objectId, result.getObjectId());
+    assertNotNull(result.getAttributes());
+    assertNotNull(result.getAttributes().getInputs());
+    var inputs = result.getAttributes().getInputs();
+    assertTrue(inputs.size() > 0);
+    var policy = inputs.get(0);
+    assertNotNull(policy);
+    assertNotNull(policy.getName());
+    assertNotNull(policy.getNamespace());
+    assertFalse(policy.getName().isEmpty());
+    assertFalse(policy.getNamespace().isEmpty());
+  }
+
+
+  @Pact(consumer = "wsm", provider = "tps")
+  public RequestResponsePact getPaoThatDoesNotExist(PactDslWithProvider builder) {
+    return builder
+        .uponReceiving("A request to retrieve a policy that doesn't exist")
+        .method("GET")
+        .matchPath("/api/policy/v1alpha1/pao/%s" .formatted(UUID_REGEX))
+        .willRespondWith()
+        .status(HttpStatus.NOT_FOUND.value())
+        .toPact();
+  }
+
+
+  @Test
+  @PactTestFor(pactMethod = "getPaoThatDoesNotExist")
+  public void retrievingAPolicyThatDoesNotExist() {
+    assertThrows(PolicyServiceNotFoundException.class, () -> dispatch.getPao(objectId));
+  }
+
+
+  /*
+  @Pact(consumer = "wsm", provider = "tps")
+  public RequestResponsePact linkPaoWhenBothExist(PactDslWithProvider builder) {
+
+    return builder
+        .given("an existing policy for a workspace")
+        .given("another existing policy")
+        .uponReceiving("A request to link the policies")
+        .method("GET")
+        .query("depth=1")
+        .pathFromProviderState(
+            "/api/policy/v1alpha1/pao/${objectId}/explain",
+            String.format("/api/policy/v1alpha1/pao/%s/explain", objectId))
+        .willRespondWith()
+        .status(HttpStatus.OK.value())
+        //.body(explainResponse)
+        .toPact();
+  }*/
+
+
+  // link Pao
+  // merge Pao
+  // replace Pao
+  // update Pao
+
+  @Pact(consumer = "wsm", provider = "tps")
+  public RequestResponsePact listValidRegions(PactDslWithProvider builder) {
+    return builder
+        .given("an existing policy for a workspace")
+        .uponReceiving("A request to list the valid regions for a policy")
+        .method("GET")
+        .query("platform=%s".formatted(CloudPlatform.AZURE.toTps()))
+        .pathFromProviderState(
+            "/api/policy/v1alpha1/region/${objectId}/list-valid",
+            "/api/policy/v1alpha1/region/%s/list-valid".formatted(objectId))
+        .willRespondWith()
+        .status(HttpStatus.OK.value())
+        .body(new PactDslJsonArray().stringType())
+        .toPact();
+  }
+
+
+  @Test
+  @PactTestFor(pactMethod = "listValidRegions")
+  public void listingValidRegionsOnAWorkspace() throws Exception {
+    var result = dispatch.listValidRegions(objectId, CloudPlatform.AZURE);
+    assertNotNull(result);
+  }
+
+
+  @Pact(consumer = "wsm", provider = "tps")
+  public RequestResponsePact listValidByPolicyInput(PactDslWithProvider builder) {
+    return builder
+        .given("an existing policy")
+        .uponReceiving("A request to list the valid regions for a policy")
+        .method("POST")
+        .body(tpsPolicyInputsObjectShape)
+        .query("platform=%s".formatted(CloudPlatform.AZURE.toTps()))
+        .path("/api/policy/v1alpha1/location/list-valid")
+        .headers(contentTypeJsonHeader)
+        .willRespondWith()
+        .status(HttpStatus.OK.value())
+        .body(new PactDslJsonArray().stringType())
+        .toPact();
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "listValidByPolicyInput")
+  public void listingValidRegionsOnAPolicy() throws Exception {
+    var inputs = new TpsPolicyInputs()
+        .inputs(List.of(new TpsPolicyInput().name("test_name").namespace("test_namespace")));
+    var tpsPao = new TpsPaoGetResult()
+        .objectId(objectId)
+        .attributes(inputs)
+        .effectiveAttributes(inputs);
+    var result = dispatch.listValidRegionsForPao(tpsPao, CloudPlatform.AZURE);
+    assertNotNull(result);
+  }
+
+
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact explainingAWorkspacePolicy(PactDslWithProvider builder) {
     var explainResponse = new PactDslJsonBody()
@@ -262,78 +344,39 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-  /*
-  @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact linkingTwoPolicies(PactDslWithProvider builder) {
 
-    return builder
-        .given("an existing policy for a workspace")
-        .given("another existing policy")
-        .uponReceiving("A request to link the policies")
-        .method("GET")
-        .query("depth=1")
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/${objectId}/explain",
-            String.format("/api/policy/v1alpha1/pao/%s/explain", objectId))
-        .willRespondWith()
-        .status(HttpStatus.OK.value())
-        //.body(explainResponse)
-        .toPact();
-  }*/
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact listValidRegions(PactDslWithProvider builder) {
+  public RequestResponsePact getLocationInfo(PactDslWithProvider builder) {
+    var locationArray = new PactDslJsonArray().eachArrayLike().object().stringType("name")
+        .stringType("description")
+        .object("regions", new PactDslJsonArray().stringType()).closeObject();
+    var responseShape = new PactDslJsonBody()
+        .stringType("name")
+        .stringType("description")
+        .object("regions", new PactDslJsonArray().stringType())
+        .object("locations", locationArray);
     return builder
-        .given("an existing policy for a workspace")
-        .uponReceiving("A request to list the valid regions for a policy")
+        .uponReceiving("A for information about a location")
         .method("GET")
-        .query("platform=%s".formatted(CloudPlatform.AZURE.toTps()))
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/region/${objectId}/list-valid",
-            "/api/policy/v1alpha1/region/%s/list-valid".formatted(objectId))
+        // TODO: find a way to improve query string matching (this may require updating pact
+        .query("platform=%s&location=%s".formatted(CloudPlatform.AZURE.toTps(), "West"))
+        //.query("location=%s".formatted("West"))
+        .path("/api/policy/v1alpha1/location")
         .willRespondWith()
         .status(HttpStatus.OK.value())
-        .body(new PactDslJsonArray().stringType())
+        .body(responseShape)
         .toPact();
   }
 
   @Test
-  @PactTestFor(pactMethod = "listValidRegions")
-  public void listingValidRegionsOnAWorkspace() throws Exception {
-    var result = dispatch.listValidRegions(objectId, CloudPlatform.AZURE);
+  @PactTestFor(pactMethod = "getLocationInfo")
+  public void retrievingInformationOnARegion() throws Exception {
+    var result = dispatch.getLocationInfo(CloudPlatform.AZURE, "West");
     assertNotNull(result);
   }
 
 
-
-  @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact listValidByPolicyInput(PactDslWithProvider builder) {
-    return builder
-        .given("an existing policy")
-        .uponReceiving("A request to list the valid regions for a policy")
-        .method("POST")
-        .body(tpsPolicyInputsObjectShape)
-        .query("platform=%s".formatted(CloudPlatform.AZURE.toTps()))
-        .path("/api/policy/v1alpha1/location/list-valid")
-        .headers(contentTypeJsonHeader)
-        .willRespondWith()
-        .status(HttpStatus.OK.value())
-        .body(new PactDslJsonArray().stringType())
-        .toPact();
-  }
-
-  @Test
-  @PactTestFor(pactMethod = "listValidByPolicyInput")
-  public void listingValidRegionsOnAPolicy() throws Exception {
-    var inputs = new TpsPolicyInputs()
-        .inputs(List.of(new TpsPolicyInput().name("test_name").namespace("test_namespace")));
-    var tpsPao = new TpsPaoGetResult()
-        .objectId(objectId)
-        .attributes(inputs)
-        .effectiveAttributes(inputs);
-    var result = dispatch.listValidRegionsForPao(tpsPao, CloudPlatform.AZURE);
-    assertNotNull(result);
-  }
   /*
     TODO:
       Link Pao
@@ -344,6 +387,5 @@ public class TpsApiTest {
       Merge Pao
       Replace Pao
       update Pao
-      getLocationInfo
    */
 }
