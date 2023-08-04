@@ -25,7 +25,7 @@ def runnerThreads = System.getenv().containsKey("CI") ? Runtime.runtime.availabl
 // Alternatively, if a user specifies the TEST_SINGLE_THREAD env var, we will always restrict tests to a
 // single thread. This can be helpful when using a local database.
 def singleThread = System.getenv().containsKey("TEST_SINGLE_THREAD")
-runnerThreads = singleThread ? 1 : runnerThreads
+runnerThreads = 1
 
 test {
   useJUnitPlatform {
