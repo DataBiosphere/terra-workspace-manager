@@ -517,7 +517,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
-  public void mergeCheck_nonMatchingGroups() throws Exception {
+  public void mergeCheck_addGroup() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
@@ -532,10 +532,57 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       ApiWsmPolicyMergeCheckResult result =
           mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
 
-      assertEquals(1, result.getConflicts().size());
-      assertEquals(0, result.getResourcesWithConflict().size());
-      assertEquals(PolicyFixtures.NAMESPACE, result.getConflicts().get(0).getNamespace());
-      assertEquals(PolicyFixtures.GROUP_CONSTRAINT, result.getConflicts().get(0).getName());
+      // Adding an additional group should not conflict
+      assertEquals(0, result.getConflicts().size());
+    } finally {
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, sourceWorkspaceId);
+    }
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergeCheck_combineGroupAndRegion() throws Exception {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      targetWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.DEFAULT_GROUP);
+      sourceWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraintAndCloudContext(
+              userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
+
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
+
+      assertEquals(0, result.getConflicts().size());
+    } finally {
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, sourceWorkspaceId);
+    }
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergeCheck_noGroupChange() throws Exception {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      targetWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.DEFAULT_GROUP);
+      sourceWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.DEFAULT_GROUP);
+
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
+
+      // No change to groups, should merge just fine.
+      assertEquals(0, result.getConflicts().size());
     } finally {
       mockWorkspaceV1Api.deleteWorkspace(userRequest, targetWorkspaceId);
       mockWorkspaceV1Api.deleteWorkspace(userRequest, sourceWorkspaceId);
