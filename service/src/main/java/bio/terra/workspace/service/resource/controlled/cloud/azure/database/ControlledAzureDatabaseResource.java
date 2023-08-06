@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
@@ -83,16 +82,6 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
     return new Builder();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   // -- getters used in serialization --
 
   @Override
@@ -158,7 +147,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
 
   @VisibleForTesting
   List<Step> getAddSteps(FlightBeanBag flightBeanBag) {
-    var steps = new ArrayList<Step>();
+    ArrayList<Step> steps = new ArrayList<>();
     steps.add(new ValidateDatabaseOwnerStep(this, flightBeanBag.getResourceDao()));
     steps.add(
         new AzureDatabaseGuardStep(
@@ -188,13 +177,13 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
    * database. The absence of k8sNamespace indicates that this is a subsequent iteration where a
    * KubernetesNamespace controlled resource takes care of that.
    *
-   * @param flightBeanBag
-   * @param steps
+   * @param flightBeanBag flightBeanBag
+   * @param steps steps
    */
   private void maybeSetupFederatedIdentity(FlightBeanBag flightBeanBag, ArrayList<Step> steps) {
     // TODO: remove as part of https://broadworkbench.atlassian.net/browse/WOR-1165
     if (k8sNamespace != null) {
-      var getManagedIdentityStep =
+      Step getManagedIdentityStep =
           switch (getAccessScope()) {
             case ACCESS_SCOPE_SHARED -> new GetWorkspaceManagedIdentityStep(
                 flightBeanBag.getAzureConfig(),

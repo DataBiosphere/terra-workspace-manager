@@ -96,16 +96,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
     return new Builder();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   // -- getters used in serialization --
   @Override
   @JsonProperty("wsmResourceFields")
@@ -292,9 +282,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ControlledAiNotebookInstanceResource)) return false;
+    if (!(o instanceof ControlledAiNotebookInstanceResource resource)) return false;
     if (!super.equals(o)) return false;
-    ControlledAiNotebookInstanceResource resource = (ControlledAiNotebookInstanceResource) o;
     return Objects.equal(instanceId, resource.instanceId)
         && Objects.equal(location, resource.location)
         && Objects.equal(projectId, resource.projectId);

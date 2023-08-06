@@ -70,16 +70,6 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     return new Builder();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   // -- getters used in serialization --
   @JsonProperty("wsmResourceFields")
   public WsmResourceFields getWsmResourceFields() {
@@ -146,7 +136,8 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
     boolean forceDelete =
-        flight.getInputParameters().get(ControlledResourceKeys.FORCE_DELETE, Boolean.class);
+        Boolean.TRUE.equals(
+            flight.getInputParameters().get(ControlledResourceKeys.FORCE_DELETE, Boolean.class));
 
     // Notebooks must be stopped before deletion. If requested, stop instance before delete attempt
     if (forceDelete) {
