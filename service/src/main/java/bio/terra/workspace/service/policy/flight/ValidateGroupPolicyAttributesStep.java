@@ -30,9 +30,7 @@ public class ValidateGroupPolicyAttributesStep implements Step {
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.EFFECTIVE_POLICIES, TpsPaoGetResult.class);
 
-    // For Milestone 1, we aren't able to change groups. So if the effectivePolices have different
-    // groups than the existing workspace, we'll fail. Otherwise, the step will succeed.
-
+    // In Milestone 2, we are able to add additional groups but cannot remove them.
     TpsPaoGetResult currentPao = tpsApiDispatch.getPao(workspaceId);
 
     HashSet<String> currentGroup =
@@ -42,11 +40,11 @@ public class ValidateGroupPolicyAttributesStep implements Step {
         new HashSet<>(
             TpsUtilities.getGroupConstraintsFromInputs(mergedPao.getEffectiveAttributes()));
 
-    if (currentGroup.equals(mergedGroup)) {
+    if (mergedGroup.containsAll(currentGroup)) {
       return StepResult.getStepResultSuccess();
     }
 
-    throw new PolicyConflictException("Cannot update group policies.");
+    throw new PolicyConflictException("Cannot remove groups from policy.");
   }
 
   @Override

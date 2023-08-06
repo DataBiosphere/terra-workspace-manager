@@ -25,6 +25,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String FLIGHT_IDS = "flightIds";
   public static final String CREATE_CLOUD_CONTEXT_FLIGHT_ID = "createCloudContextFlightId";
   public static final String RESOURCE_DELETE_FLIGHT_PAIR_LIST = "resourceDeleteFlightPairList";
+  public static final String PROJECT_OWNER_GROUP_ID = "projectOwnerGroupId";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -54,6 +55,10 @@ public final class WorkspaceFlightMapKeys {
 
     // GCE Instance keys
     public static final String CREATE_GCE_INSTANCE_PARAMETERS = "createGceInstanceParameters";
+
+    // Dataproc Cluster keys
+    public static final String CREATE_DATAPROC_CLUSTER_PARAMETERS =
+        "createDataprocClusterParameters";
 
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";

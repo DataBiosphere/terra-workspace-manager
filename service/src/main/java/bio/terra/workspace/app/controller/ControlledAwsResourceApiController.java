@@ -296,7 +296,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .prefix(folderName)
             .build();
 
-    ControlledAwsS3StorageFolderResource createdBucket =
+    ControlledAwsS3StorageFolderResource createdResource =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAwsS3StorageFolder())
@@ -304,8 +304,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     return new ResponseEntity<>(
         new ApiCreatedControlledAwsS3StorageFolder()
-            .resourceId(createdBucket.getResourceId())
-            .awsS3StorageFolder(createdBucket.toApiResource()),
+            .resourceId(createdResource.getResourceId())
+            .awsS3StorageFolder(createdResource.toApiResource()),
         HttpStatus.OK);
   }
 
@@ -316,11 +316,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsS3StorageFolderResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                resourceUuid,
-                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -524,11 +521,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControlledAwsSageMakerNotebookResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                resourceUuid,
-                SamConstants.SamControlledResourceActions.READ_ACTION)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }

@@ -8,6 +8,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.MergeGroupsStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.ValidateGroupPolicyAttributesStep;
@@ -89,6 +90,7 @@ public class CloneReferencedResourceFlight extends Flight {
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
               null, // referenced resources don't have a location.
+              cloningInstructions,
               userRequest,
               appContext.getResourceDao(),
               appContext.getTpsApiDispatch()));
@@ -103,10 +105,22 @@ public class CloneReferencedResourceFlight extends Flight {
               destinationWorkspaceId,
               cloningInstructions,
               appContext.getTpsApiDispatch()));
+
+      addStep(
+          new MergeGroupsStep(
+              userRequest,
+              destinationWorkspaceId,
+              appContext.getTpsApiDispatch(),
+              appContext.getSamService()));
     }
 
     addStep(
-        new CreateResourceInDbFinishStep(appContext.getResourceDao(), destinationResource),
+        new CreateResourceInDbFinishStep(
+            appContext.getResourceDao(),
+            destinationResource,
+            sourceResource,
+            userRequest,
+            appContext.getWorkspaceActivityLogService()),
         shortDatabaseRetryRule);
   }
 }

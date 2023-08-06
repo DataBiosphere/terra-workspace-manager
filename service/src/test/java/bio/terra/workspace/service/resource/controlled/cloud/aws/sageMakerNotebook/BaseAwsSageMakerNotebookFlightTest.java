@@ -6,11 +6,9 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.AwsUtils;
-import bio.terra.workspace.common.utils.MvcWorkspaceApi;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiAwsSageMakerNotebookCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
@@ -33,7 +31,7 @@ public abstract class BaseAwsSageMakerNotebookFlightTest extends BaseAwsConnecte
   @Autowired protected ControlledResourceService controlledResourceService;
   @Autowired protected JobService jobService;
   @Autowired protected StairwayComponent stairwayComponent;
-  @Autowired protected MvcWorkspaceApi mvcWorkspaceApi;
+  @Autowired protected MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired protected UserAccessUtils userAccessUtils;
   @Autowired protected CliConfiguration cliConfiguration;
 
@@ -47,7 +45,7 @@ public abstract class BaseAwsSageMakerNotebookFlightTest extends BaseAwsConnecte
     super.init();
     userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
     workspaceUuid =
-        mvcWorkspaceApi.createWorkspaceAndWait(userRequest, apiCloudPlatform).getWorkspaceId();
+        mockWorkspaceV2Api.createWorkspaceAndWait(userRequest, apiCloudPlatform).getWorkspaceId();
     environment = awsCloudContextService.discoverEnvironment();
     awsCredentialsProvider =
         AwsUtils.createWsmCredentialProvider(
@@ -58,7 +56,7 @@ public abstract class BaseAwsSageMakerNotebookFlightTest extends BaseAwsConnecte
 
   @AfterAll
   public void cleanUp() throws Exception {
-    mvcWorkspaceApi.deleteWorkspaceAndWait(userRequest, workspaceUuid);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceUuid);
   }
 
   /**
@@ -68,15 +66,5 @@ public abstract class BaseAwsSageMakerNotebookFlightTest extends BaseAwsConnecte
   public void resetFlightDebugInfo() {
     jobService.setFlightDebugInfoForTest(null);
     StairwayTestUtils.enumerateJobsDump(jobService, workspaceUuid, userRequest);
-  }
-
-  protected ControlledAwsSageMakerNotebookResource makeResource(
-      ApiAwsSageMakerNotebookCreationParameters creationParameters) {
-    return ControlledAwsResourceFixtures.makeAwsSageMakerNotebookResourceBuilder(
-            workspaceUuid,
-            /* resourceName= */ creationParameters.getInstanceName(),
-            /* instanceName= */ creationParameters.getInstanceName(),
-            userRequest.getEmail())
-        .build();
   }
 }

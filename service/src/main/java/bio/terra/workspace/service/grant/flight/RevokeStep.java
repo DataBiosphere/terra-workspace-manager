@@ -6,6 +6,7 @@ import static java.lang.Boolean.TRUE;
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.compute.CloudComputeCow;
+import bio.terra.cloudres.google.dataproc.DataprocCow;
 import bio.terra.cloudres.google.iam.ServiceAccountName;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
@@ -25,6 +26,7 @@ import bio.terra.workspace.service.petserviceaccount.PetSaUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster.ControlledDataprocClusterResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.ControlledGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -184,6 +186,11 @@ public class RevokeStep implements Step {
             controlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
         revokeResourceGceInstance(gceInstanceResource, grantData);
       }
+      case CONTROLLED_GCP_DATAPROC_CLUSTER -> {
+        ControlledDataprocClusterResource dataprocClusterResource =
+            controlledResource.castByEnum(WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER);
+        removeResourceDataprocCluster(dataprocClusterResource, grantData);
+      }
       default -> throw new InternalLogicException("Non-GCP resource got a temporary grant");
     }
   }
@@ -271,16 +278,10 @@ public class RevokeStep implements Step {
       // Remove role-member
       for (com.google.api.services.notebooks.v1.model.Binding binding : bindings) {
         if (binding.getRole().equals(grantData.role())) {
-          List<String> currentMembers = binding.getMembers();
-          List<String> members = new ArrayList<>();
-          for (String member : currentMembers) {
-            if (StringUtils.equals(member, grantData.petSaMember())
-                || StringUtils.equals(member, grantData.userMember())) {
-              continue;
-            }
-            members.add(member);
-          }
-
+          List<String> members = binding.getMembers();
+          members.removeIf(
+              member ->
+                  member.equals(grantData.petSaMember()) || member.equals(grantData.userMember()));
           binding.setMembers(members);
         }
       }
@@ -318,15 +319,10 @@ public class RevokeStep implements Step {
       // Remove role-member
       for (com.google.api.services.compute.model.Binding binding : bindings) {
         if (binding.getRole().equals(grantData.role())) {
-          List<String> currentMembers = binding.getMembers();
-          List<String> members = new ArrayList<>();
-          for (String member : currentMembers) {
-            if (StringUtils.equals(member, grantData.petSaMember())
-                || StringUtils.equals(member, grantData.userMember())) {
-              continue;
-            }
-            members.add(member);
-          }
+          List<String> members = binding.getMembers();
+          members.removeIf(
+              member ->
+                  member.equals(grantData.petSaMember()) || member.equals(grantData.userMember()));
           binding.setMembers(members);
         }
       }
@@ -338,6 +334,41 @@ public class RevokeStep implements Step {
               gceInstanceResource.getZone(),
               gceInstanceResource.getInstanceId(),
               new ZoneSetPolicyRequest().setPolicy(policy))
+          .execute();
+    }
+  }
+
+  private void removeResourceDataprocCluster(
+      ControlledDataprocClusterResource dataprocClusterResource, GrantData grantData)
+      throws IOException {
+    logger.info(
+        "Revoke Dataproc Cluster {} in project {}",
+        dataprocClusterResource.getName(),
+        dataprocClusterResource.getProjectId());
+
+    DataprocCow dataprocCow = crlService.getDataprocCow();
+    com.google.api.services.dataproc.model.Policy policy =
+        dataprocCow.clusters().getIamPolicy(dataprocClusterResource.toClusterName()).execute();
+    List<com.google.api.services.dataproc.model.Binding> bindings = policy.getBindings();
+
+    if (bindings != null) {
+      // Remove role-member
+      for (com.google.api.services.dataproc.model.Binding binding : bindings) {
+        if (binding.getRole().equals(grantData.role())) {
+          List<String> members = binding.getMembers();
+          members.removeIf(
+              member ->
+                  member.equals(grantData.petSaMember()) || member.equals(grantData.userMember()));
+          binding.setMembers(members);
+        }
+      }
+
+      // Update policy to remove members
+      dataprocCow
+          .clusters()
+          .setIamPolicy(
+              dataprocClusterResource.toClusterName(),
+              new com.google.api.services.dataproc.model.SetIamPolicyRequest().setPolicy(policy))
           .execute();
     }
   }

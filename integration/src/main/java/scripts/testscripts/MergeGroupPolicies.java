@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketUtils;
-import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
@@ -91,7 +90,8 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
             groupTestReferenceResource.getMetadata().getWorkspaceId(),
             groupTestReferenceResource.getMetadata().getResourceId());
 
-    validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
+    validateWorkspaceContainsGroupPolicy(
+        workspaceApi, groupTestWorkspace.getId(), Arrays.asList(groupNameA));
     workspaceApi.deleteWorkspace(noGroupDataCollection.getId());
 
     // Scenario 2: WS(groupA) can merge DC(groupA).
@@ -118,10 +118,12 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
             groupATestReferenceResource.getMetadata().getWorkspaceId(),
             groupATestReferenceResource.getMetadata().getResourceId());
 
-    validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
+    validateWorkspaceContainsGroupPolicy(
+        workspaceApi, groupTestWorkspace.getId(), Arrays.asList(groupNameA));
     workspaceApi.deleteWorkspace(groupADataCollection.getId());
 
-    // Scenario 3: WS(groupA) cannot merge DC(groupB).
+    // Scenario 3: WS(groupA) can merge DC(groupB).
+    // Result: WS(groupA, groupB)
     CreatedWorkspace groupBDataCollection =
         createWorkspaceWithPolicy(
             UUID.randomUUID(), getSpendProfileId(), workspaceApi, groupPolicyB);
@@ -133,50 +135,37 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
             "referenceBucket",
             CloningInstructionsEnum.REFERENCE);
 
-    // remove the old reference
+    // remove the old reference so we can clone again
     referencedGcpResourceApi.deleteBucketReference(
         referenceResult.getResource().getMetadata().getWorkspaceId(),
         referenceResult.getResource().getMetadata().getResourceId());
 
-    ApiException exception =
-        assertThrows(
-            ApiException.class,
-            () ->
-                referencedGcpResourceApi.cloneGcpGcsBucketReference(
-                    new CloneReferencedResourceRequestBody()
-                        .destinationWorkspaceId(groupTestWorkspace.getId()),
-                    groupBTestReferenceResource.getMetadata().getWorkspaceId(),
-                    groupBTestReferenceResource.getMetadata().getResourceId()));
-    assertEquals(HttpStatus.SC_CONFLICT, exception.getCode());
-    TestUtils.assertContains(exception.getMessage(), "Cannot update group policies.");
+    referencedGcpResourceApi.cloneGcpGcsBucketReference(
+        new CloneReferencedResourceRequestBody().destinationWorkspaceId(groupTestWorkspace.getId()),
+        groupBTestReferenceResource.getMetadata().getWorkspaceId(),
+        groupBTestReferenceResource.getMetadata().getResourceId());
 
-    // group should still be A only
-    validateWorkspaceContainsGroupPolicy(workspaceApi, groupTestWorkspace.getId(), groupNameA);
+    // workspace should have groups A and B
+    validateWorkspaceContainsGroupPolicy(
+        workspaceApi, groupTestWorkspace.getId(), Arrays.asList(groupNameA, groupNameB));
 
-    // Scenario 4: WS(nopolicy) cannot merge DC(groupB).
+    // Scenario 4: WS(nopolicy) can merge DC(groupB).
+    // Result: WS(groupB)
     CreatedWorkspace noGroupPolicyWorkspace =
         createWorkspace(UUID.randomUUID(), getSpendProfileId(), workspaceApi);
 
-    exception =
-        assertThrows(
-            ApiException.class,
-            () ->
-                referencedGcpResourceApi.cloneGcpGcsBucketReference(
-                    new CloneReferencedResourceRequestBody()
-                        .destinationWorkspaceId(noGroupPolicyWorkspace.getId()),
-                    groupBTestReferenceResource.getMetadata().getWorkspaceId(),
-                    groupBTestReferenceResource.getMetadata().getResourceId()));
-    assertEquals(HttpStatus.SC_CONFLICT, exception.getCode());
-    TestUtils.assertContains(exception.getMessage(), "Cannot update group policies.");
+    referencedGcpResourceApi.cloneGcpGcsBucketReference(
+        new CloneReferencedResourceRequestBody()
+            .destinationWorkspaceId(noGroupPolicyWorkspace.getId()),
+        groupBTestReferenceResource.getMetadata().getWorkspaceId(),
+        groupBTestReferenceResource.getMetadata().getResourceId());
 
-    WorkspaceDescription updatedWorkspace =
-        workspaceApi.getWorkspace(noGroupPolicyWorkspace.getId(), null);
-    List<WsmPolicyInput> updatedPolicies = updatedWorkspace.getPolicies();
-
-    assertEquals(0, updatedPolicies.size());
+    validateWorkspaceContainsGroupPolicy(
+        workspaceApi, noGroupPolicyWorkspace.getId(), Arrays.asList(groupNameB));
     workspaceApi.deleteWorkspace(noGroupPolicyWorkspace.getId());
 
-    // Scenario 5: Clone a workspace and add additional groups. WS(groupA), Clone(+groupB) =
+    // Scenario 5: Clone a workspace and add additional groups at the same time. WS(groupA),
+    // Clone(+groupB) =
     // WS(groupA, groupB)
     CreatedWorkspace workspaceToClone =
         createWorkspaceWithPolicy(
@@ -190,17 +179,8 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
             .spendProfile(getSpendProfileId());
 
     workspaceApi.cloneWorkspace(request, workspaceToClone.getId());
-    updatedWorkspace = workspaceApi.getWorkspace(cloneWorkspaceId, null);
-    updatedPolicies = updatedWorkspace.getPolicies();
-
-    assertEquals(1, updatedPolicies.size());
-    var additionalData = updatedPolicies.get(0).getAdditionalData();
-    assertEquals(2, additionalData.size());
-    assertTrue(
-        additionalData.stream()
-            .map(data -> data.getValue())
-            .toList()
-            .containsAll(Arrays.asList(groupNameA, groupNameB)));
+    validateWorkspaceContainsGroupPolicy(
+        workspaceApi, cloneWorkspaceId, Arrays.asList(groupNameA, groupNameB));
 
     // Clean up the data collections used in most of the scenarios.
     workspaceApi.deleteWorkspace(groupBDataCollection.getId());
@@ -208,17 +188,19 @@ public class MergeGroupPolicies extends WorkspaceAllocateTestScriptBase {
   }
 
   private void validateWorkspaceContainsGroupPolicy(
-      WorkspaceApi workspaceApi, UUID workspaceId, String groupName) throws Exception {
+      WorkspaceApi workspaceApi, UUID workspaceId, List<String> groupNames) throws Exception {
     WorkspaceDescription updatedWorkspace = workspaceApi.getWorkspace(workspaceId, null);
     List<WsmPolicyInput> updatedPolicies = updatedWorkspace.getPolicies();
 
     List<WsmPolicyInput> groupPolicies =
         updatedPolicies.stream().filter(p -> p.getName().equals("group-constraint")).toList();
+    // there should only be 1 group policy
     assertEquals(1, groupPolicies.size());
-    WsmPolicyPair groupPolicy = groupPolicies.get(0).getAdditionalData().get(0);
-    assertEquals(1, groupPolicies.get(0).getAdditionalData().size());
-    assertEquals("group", groupPolicy.getKey());
-    assertEquals(groupName, groupPolicy.getValue());
+    var additionalData = groupPolicies.get(0).getAdditionalData();
+    // but the policy can describe multiple groups
+    assertEquals(groupNames.size(), additionalData.size());
+    assertTrue(
+        additionalData.stream().map(data -> data.getValue()).toList().containsAll(groupNames));
   }
 
   @Override

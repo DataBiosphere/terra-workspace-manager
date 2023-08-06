@@ -11,6 +11,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.ArrayList;
@@ -23,11 +24,13 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
   private final AuthenticatedUserRequest userRequest;
   private final ResourceDao resourceDao;
   private final TpsApiDispatch tpsApiDispatch;
+  private final CloningInstructions cloningInstructions;
 
   public ValidateWorkspaceAgainstPolicyStep(
       UUID workspaceId,
       CloudPlatform cloudPlatform,
       String destinationLocation,
+      CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest,
       ResourceDao resourceDao,
       TpsApiDispatch tpsApiDispatch) {
@@ -37,6 +40,7 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
     this.tpsApiDispatch = tpsApiDispatch;
     this.resourceDao = resourceDao;
     this.destinationLocation = destinationLocation;
+    this.cloningInstructions = cloningInstructions;
   }
 
   @Override
@@ -61,7 +65,9 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
             ResourceValidationUtils.validateExistingResourceRegions(
                 workspaceId, validRegions, cloudPlatform, resourceDao));
 
-    if (destinationLocation != null && !validRegions.contains(destinationLocation.toLowerCase())) {
+    if (!cloningInstructions.isReferenceClone()
+        && destinationLocation != null
+        && !validRegions.contains(destinationLocation.toLowerCase())) {
       validationErrors.add(
           String.format(
               "The specified destination location '%s' violates region policies",

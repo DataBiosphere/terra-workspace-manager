@@ -65,7 +65,9 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
 
     String destinationDatasetId =
         FlightUtils.getRequired(
-            inputParameters, ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class);
+            flightContext.getWorkingMap(),
+            ControlledResourceKeys.DESTINATION_DATASET_NAME,
+            String.class);
 
     Map<String, Value> params = new HashMap<>();
     String sourceDatasetId = sourceDataset.getDatasetName();

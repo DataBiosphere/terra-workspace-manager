@@ -5,10 +5,15 @@ import static bio.terra.workspace.common.GcsBucketUtils.addFileToBucket;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceResource;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
+import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
@@ -34,6 +39,9 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
+  @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
@@ -54,34 +62,36 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
 
   @After
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test
   public void setupAndWaitBucket() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
 
     String sourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
     String sourceBucketName = TestUtils.appendRandomNumber("source-bucket-name");
-    mockMvcUtils
-        .createControlledGcsBucket(
-            userAccessUtils.defaultUserAuthRequest(),
-            workspaceId,
-            sourceResourceName,
-            sourceBucketName,
-            null,
-            null,
-            null)
-        .getGcpBucket();
+    ApiGcpGcsBucketResource unused =
+        mockGcpApi
+            .createControlledGcsBucket(
+                userAccessUtils.defaultUserAuthRequest(),
+                workspaceId,
+                sourceResourceName,
+                sourceBucketName,
+                null,
+                null,
+                null)
+            .getGcpBucket();
     addFileToBucket(
         userAccessUtils.defaultUser().getGoogleCredentials(), projectId, sourceBucketName);
 
@@ -94,19 +104,20 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   @Test
   public void setupAndWaitNotebook() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
 
-    mockMvcUtils
-        .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
-        .getAiNotebookInstance();
+    ApiGcpAiNotebookInstanceResource unused =
+        mockGcpApi
+            .createAiNotebookInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
+            .getAiNotebookInstance();
 
     // So I can end the test and run cleanup when I'm done debugging
     while (!timeToFinish) {
@@ -117,12 +128,12 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
   @Test
   public void setupAndWaitBigQuery() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     String projectId = workspace.getGcpContext().getProjectId();
 
     logger.info("Created workspace {} with project {}", workspaceId, projectId);
@@ -131,7 +142,7 @@ public class TempGrantConnectedTest extends BaseConnectedTest {
     String sourceDatasetName = TestUtils.appendRandomNumber("sourcedatasetname");
 
     ApiGcpBigQueryDatasetResource resource =
-        mockMvcUtils
+        mockGcpApi
             .createControlledBqDataset(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,

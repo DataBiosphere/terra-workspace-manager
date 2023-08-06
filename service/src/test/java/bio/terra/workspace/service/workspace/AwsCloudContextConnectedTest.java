@@ -1,9 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -15,6 +13,7 @@ import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
@@ -52,7 +51,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
 
   @Test
   void discoverEnvironmentTest() throws IOException {
-    Assertions.assertDoesNotThrow(() -> featureService.awsEnabledCheck());
+    Assertions.assertDoesNotThrow(() -> mockFeatureService.awsEnabledCheck());
 
     // Log the AWS config
     logger.info("AWS Configuration: {}", awsConfiguration.toString());
@@ -119,22 +118,14 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
         awsCloudContextService.createCloudContext(
             "flightId", WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID);
     assertNotNull(createdCloudContext);
-
-    Metadata envMetadata = awsCloudContextService.discoverEnvironment().getMetadata();
-    AwsCloudContextFields contextFields = createdCloudContext.getContextFields();
-    assertNotNull(contextFields);
-    assertEquals(envMetadata.getMajorVersion(), contextFields.getMajorVersion());
-    assertEquals(envMetadata.getOrganizationId(), contextFields.getOrganizationId());
-    assertEquals(envMetadata.getAccountId(), contextFields.getAccountId());
-    assertEquals(envMetadata.getTenantAlias(), contextFields.getTenantAlias());
-    assertEquals(envMetadata.getEnvironmentAlias(), contextFields.getEnvironmentAlias());
-
-    CloudContextCommonFields commonFields = createdCloudContext.getCommonFields();
-    assertNotNull(commonFields);
-    assertEquals("flightId", commonFields.flightId());
-    assertEquals(WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID, commonFields.spendProfileId());
-    assertEquals(WsmResourceState.CREATING, commonFields.state());
-    assertNull(commonFields.error());
+    AwsTestUtils.assertAwsCloudContextFields(
+        awsCloudContextService.discoverEnvironment().getMetadata(),
+        createdCloudContext.getContextFields());
+    AwsTestUtils.assertCloudContextCommonFields(
+        createdCloudContext.getCommonFields(),
+        WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+        WsmResourceState.CREATING,
+        "flightId");
   }
 
   @Test

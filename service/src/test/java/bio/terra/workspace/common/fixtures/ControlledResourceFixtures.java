@@ -101,7 +101,7 @@ public class ControlledResourceFixtures {
 
   // Flexible resources
 
-  public static final byte[] DEFAULT_UPDATE_FLEX_DATA =
+  static final byte[] DEFAULT_UPDATE_FLEX_DATA =
       "{\"description\":\"this is new JSON\"}".getBytes(StandardCharsets.UTF_8);
 
   public static ApiControlledFlexibleResourceCreationParameters

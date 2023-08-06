@@ -1,18 +1,19 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AWS_STORAGE_FOLDERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CREATE_CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAwsApi.CREATE_CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -23,7 +24,6 @@ import bio.terra.workspace.generated.model.ApiCreateControlledAwsS3StorageFolder
 import bio.terra.workspace.generated.model.ApiCreateControlledAwsSageMakerNotebookRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteControlledAwsResourceRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -35,30 +35,24 @@ import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-public class AwsResourceStateFailureTest extends BaseUnitTest {
+public class AwsResourceStateFailureTest extends BaseAwsUnitTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired ObjectMapper objectMapper;
   @Autowired ReferencedResourceService referencedResourceService;
   @Autowired ResourceDao resourceDao;
   @Autowired private WorkspaceDao workspaceDao;
-
-  @MockBean FeatureService mockFeatureService;
-
   private final UUID billingProfileUuid = UUID.randomUUID();
   private final SpendProfileId billingProfileId = new SpendProfileId(billingProfileUuid.toString());
   private StateTestUtils stateTestUtils;
 
   @BeforeEach
   void setup() throws Exception {
-    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils);
-
-    // Force aws enabled on for unit test
-    when(mockFeatureService.awsEnabled()).thenReturn(true);
+    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils, mockWorkspaceV1Api);
 
     // Everything is authorized!
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);
@@ -90,7 +84,7 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(storageRequest),
-        CREATE_AWS_STORAGE_FOLDERS_PATH_FORMAT.formatted(workspaceUuid),
+        CREATE_CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT.formatted(workspaceUuid),
         HttpStatus.SC_CONFLICT);
 
     // AWS-notebook
@@ -105,7 +99,7 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(vmRequest),
-        CREATE_AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT.formatted(workspaceUuid),
+        CREATE_CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT.formatted(workspaceUuid),
         HttpStatus.SC_CONFLICT);
   }
 
@@ -140,7 +134,7 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         storageResource.getResourceId(),
-        AWS_STORAGE_FOLDERS_PATH_FORMAT,
+        CONTROLLED_AWS_STORAGE_FOLDER_PATH_FORMAT,
         objectMapper.writeValueAsString(storageDeleteBody));
 
     // AWS-Notebook
@@ -150,7 +144,7 @@ public class AwsResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         notebookResource.getResourceId(),
-        AWS_SAGEMAKER_NOTEBOOKS_PATH_FORMAT,
+        CONTROLLED_AWS_NOTEBOOK_PATH_FORMAT,
         objectMapper.writeValueAsString(notebookDeleteBody));
   }
 }

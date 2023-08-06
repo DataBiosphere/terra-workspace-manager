@@ -90,6 +90,7 @@ public class CloneAllResourcesFlight extends Flight {
           }
             // CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE: not supported
             // CONTROLLED_GCP_GCE_INSTANCE: not supported
+            // CONTROLLED_GCP_DATAPROC_CLUSTER: not supported
 
             // Azure
           case CONTROLLED_AZURE_STORAGE_CONTAINER -> {

@@ -52,6 +52,11 @@ public enum WsmResourceFamily {
       ApiResourceType.GCE_INSTANCE,
       null, // no reference type for instances
       WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE),
+  DATAPROC_CLUSTER(
+      "DATAPROC_CLUSTER",
+      ApiResourceType.DATAPROC_CLUSTER,
+      null, // no reference type for dataproc clusters
+      WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER),
 
   // AZURE
   AZURE_MANAGED_IDENTITY(

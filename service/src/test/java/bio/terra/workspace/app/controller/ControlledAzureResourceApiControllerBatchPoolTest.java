@@ -1,8 +1,8 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserAssignedIdentity;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
@@ -49,7 +49,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     mockMvc
         .perform(
             MockMvcUtils.addAuth(
-                post(String.format(CREATE_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -95,7 +95,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     mockMvc
         .perform(
             MockMvcUtils.addAuth(
-                post(String.format(CREATE_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -137,7 +137,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     mockMvc
         .perform(
             MockMvcUtils.addAuth(
-                post(String.format(CREATE_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")

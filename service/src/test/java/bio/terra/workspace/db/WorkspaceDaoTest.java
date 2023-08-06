@@ -1,11 +1,11 @@
 package bio.terra.workspace.db;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_APPLICATION;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_OWNER;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_READER;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_WRITER;
-import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.SPEND_PROFILE_ID;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -269,6 +269,22 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
+  void duplicateWorkspaceCreateFailureDoesNotDelete() {
+    Workspace workspace = defaultRawlsWorkspace(workspaceUuid);
+    // Create the workspace normally
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    // A later call to createWorkspaceFailure should only delete if the caller is the same flight
+    // which created the workspace.
+    workspaceDao.createWorkspaceFailure(
+        workspaceUuid,
+        /*flightId=*/ UUID.randomUUID().toString(),
+        /*exception=*/ null,
+        WsmResourceStateRule.DELETE_ON_FAILURE);
+    Workspace workspaceAfterDelete = workspaceDao.getWorkspace(workspaceUuid);
+    assertEquals(workspace, workspaceAfterDelete);
+  }
+
+  @Test
   void deleteWorkspaceProperties() {
     Map<String, String> propertyGenerate = Map.of("foo", "bar", "xyz", "pqn");
 
@@ -316,12 +332,13 @@ class WorkspaceDaoTest extends BaseUnitTest {
       // Run the normal case
       WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
           workspaceDao, workspaceUuid, PROJECT_ID);
-      WorkspaceUnitTestUtils.deleteGcpCloudContextInDatabase(workspaceDao, workspaceUuid);
+      WorkspaceUnitTestUtils.deleteCloudContextInDatabase(
+          workspaceDao, workspaceUuid, CloudPlatform.GCP);
 
       // Mismatched flight id
       String flightId = UUID.randomUUID().toString();
       workspaceDao.createCloudContextStart(
-          workspaceUuid, CloudPlatform.GCP, WorkspaceUnitTestUtils.SPEND_PROFILE_ID, flightId);
+          workspaceUuid, CloudPlatform.GCP, DEFAULT_SPEND_PROFILE_ID, flightId);
 
       String gcpContextString = makeCloudContext().serialize();
 
@@ -387,7 +404,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
     void workspaceCreateErrorDeserializes() {
       var flightId = UUID.randomUUID().toString();
       workspaceDao.createCloudContextStart(
-          workspaceUuid, CloudPlatform.GCP, SPEND_PROFILE_ID, flightId);
+          workspaceUuid, CloudPlatform.GCP, DEFAULT_SPEND_PROFILE_ID, flightId);
       var exception = new FieldSizeExceededException("This is a random ErrorReportException");
       workspaceDao.createCloudContextFailure(
           workspaceUuid,
@@ -423,6 +440,22 @@ class WorkspaceDaoTest extends BaseUnitTest {
           exception.getStatusCode(),
           secondBrokenGcpContext.getCommonFields().error().getStatusCode());
     }
+
+    @Test
+    void duplicateCloudContextCreateDoesNotDelete() {
+      // Run the normal case
+      WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+          workspaceDao, workspaceUuid, PROJECT_ID);
+      // Later calls to createCloudContextFailure (e.g. from duplicate requests) should not undo
+      // cloud contexts they did not create.
+      workspaceDao.createCloudContextFailure(
+          workspaceUuid,
+          CloudPlatform.GCP,
+          UUID.randomUUID().toString(),
+          /*exception=*/ null,
+          WsmResourceStateRule.DELETE_ON_FAILURE);
+      assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isPresent());
+    }
   }
 
   private Workspace defaultRawlsWorkspace(UUID workspaceUuid) {
@@ -434,7 +467,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
         new GcpCloudContextFields(
             PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
         new CloudContextCommonFields(
-            SPEND_PROFILE_ID, WsmResourceState.READY, /*flightId=*/ null, /*error=*/ null));
+            DEFAULT_SPEND_PROFILE_ID, WsmResourceState.READY, /*flightId=*/ null, /*error=*/ null));
   }
 
   private void checkCloudContext(Optional<GcpCloudContext> optionalContext) {

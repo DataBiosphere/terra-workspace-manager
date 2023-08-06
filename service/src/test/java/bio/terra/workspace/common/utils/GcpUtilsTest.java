@@ -15,6 +15,8 @@ import org.mockito.Mock;
 
 public class GcpUtilsTest extends BaseUnitTest {
 
+  public static final String DEFAULT_GCP_RESOURCE_REGION = "us-central1";
+
   @Mock private OperationCow<Operation> mockOperationCow;
   @Mock private OperationCow.OperationAdapter<Operation> mockOperationAdapter;
   @Mock private OperationCow.OperationAdapter.StatusAdapter mockOperationStatusAdapter;

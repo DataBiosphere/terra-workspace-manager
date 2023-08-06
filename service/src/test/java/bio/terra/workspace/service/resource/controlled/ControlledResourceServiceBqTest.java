@@ -234,12 +234,18 @@ public class ControlledResourceServiceBqTest extends BaseConnectedTest {
     // Test idempotency of datatset-specific undo step by retrying once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(CreateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
+
+    // The finish step is not undoable, so we make the failure at the penultimate step.
+    Map<String, StepStatus> triggerFailureStep = new HashMap<>();
+    triggerFailureStep.put(
+        CreateBigQueryDatasetStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
+    FlightDebugInfo debugInfo =
         FlightDebugInfo.newBuilder()
-            // Fail after the last step to test that everything is deleted on undo.
-            .lastStepFailure(true)
+            .doStepFailures(triggerFailureStep)
             .undoStepFailures(retrySteps)
-            .build());
+            .build();
+    jobService.setFlightDebugInfoForTest(debugInfo);
 
     // Service methods which wait for a flight to complete will throw an
     // InvalidResultStateException when that flight fails without a cause, which occurs when a

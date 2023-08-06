@@ -69,7 +69,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
             .spendProfileId(spendProfileId)
             .build();
     workspaceService.createWorkspace(
-        workspace, null, null, userAccessUtils.defaultUserAuthRequest());
+        workspace, null, null, null, userAccessUtils.defaultUserAuthRequest());
   }
 
   @AfterEach

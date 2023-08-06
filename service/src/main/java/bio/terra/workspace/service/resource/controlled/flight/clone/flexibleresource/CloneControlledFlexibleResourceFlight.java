@@ -104,6 +104,7 @@ public class CloneControlledFlexibleResourceFlight extends Flight {
               destinationWorkspaceId,
               sourceFlexResource.getResourceType().getCloudPlatform(),
               /*destinationLocation=*/ null,
+              resolvedCloningInstructions,
               userRequest,
               flightBeanBag.getResourceDao(),
               flightBeanBag.getTpsApiDispatch()));

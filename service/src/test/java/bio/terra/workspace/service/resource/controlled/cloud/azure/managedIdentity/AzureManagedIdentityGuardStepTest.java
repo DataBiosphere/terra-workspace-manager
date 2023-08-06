@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
+package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -9,20 +9,15 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
-import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.http.HttpResponse;
 import com.azure.core.management.exception.ManagementException;
-import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
-import com.azure.resourcemanager.postgresqlflexibleserver.models.Databases;
-import java.util.Optional;
+import com.azure.resourcemanager.msi.MsiManager;
+import com.azure.resourcemanager.msi.models.Identities;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,20 +30,16 @@ import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
 
 @Tag("azure-unit")
-public class GetAzureDatabaseStepTest {
+public class AzureManagedIdentityGuardStepTest {
   private MockitoSession mockito;
   @Mock private FlightContext mockFlightContext;
   @Mock private FlightMap mockWorkingMap;
   @Mock private AzureCloudContext mockAzureCloudContext;
   @Mock private CrlService mockCrlService;
+  @Mock private MsiManager mockMsiManager;
+  @Mock private Identities mockIdentities;
   @Mock private AzureConfiguration mockAzureConfig;
   @Mock private HttpResponse mockHttpResponse;
-  @Mock private PostgreSqlManager mockPostgreSqlManager;
-  @Mock private Databases mockDatabases;
-  @Mock private SamService mockSamService;
-  @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
-  @Mock private ApiAzureLandingZoneDeployedResource mockDatabase;
-  @Mock private WorkspaceService mockWorkspaceService;
 
   @BeforeEach
   public void setup() {
@@ -84,30 +75,23 @@ public class GetAzureDatabaseStepTest {
   void testAlreadyExists() throws InterruptedException {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
-    var databaseResource =
-        ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
+        ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
+    var identityResource =
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 
     createMockFlightContext();
 
-    setupMocksUntilGetCall();
-    when(mockDatabases.get(
+    when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
+    when(mockMsiManager.identities()).thenReturn(mockIdentities);
+    when(mockIdentities.getByResourceGroup(
             mockAzureCloudContext.getAzureResourceGroupId(),
-            mockDatabase.getResourceId(),
-            databaseResource.getDatabaseName()))
+            identityResource.getManagedIdentityName()))
         .thenReturn(null);
 
-    var step =
-        new GetAzureDatabaseStep(
-            mockAzureConfig,
-            mockCrlService,
-            databaseResource,
-            mockSamService,
-            mockLandingZoneApiDispatch,
-            mockWorkspaceService,
-            workspaceId);
+    AzureManagedIdentityGuardStep step =
+        new AzureManagedIdentityGuardStep(mockAzureConfig, mockCrlService, identityResource);
     assertThat(
         step.doStep(mockFlightContext).getStepStatus(),
         equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
@@ -116,42 +100,25 @@ public class GetAzureDatabaseStepTest {
   private StepResult testWithError(HttpStatus httpStatus) throws InterruptedException {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
-    var databaseResource =
-        ControlledAzureResourceFixtures.makeDefaultControlledAzureDatabaseResourceBuilder(
+        ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
+    var identityResource =
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
                 creationParameters, workspaceId)
             .build();
 
     createMockFlightContext();
 
-    setupMocksUntilGetCall();
-    when(mockDatabases.get(
+    when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
+    when(mockMsiManager.identities()).thenReturn(mockIdentities);
+    when(mockIdentities.getByResourceGroup(
             mockAzureCloudContext.getAzureResourceGroupId(),
-            mockDatabase.getResourceId(),
-            databaseResource.getDatabaseName()))
+            identityResource.getManagedIdentityName()))
         .thenThrow(new ManagementException(httpStatus.name(), mockHttpResponse));
     when(mockHttpResponse.getStatusCode()).thenReturn(httpStatus.value());
 
-    var step =
-        new GetAzureDatabaseStep(
-            mockAzureConfig,
-            mockCrlService,
-            databaseResource,
-            mockSamService,
-            mockLandingZoneApiDispatch,
-            mockWorkspaceService,
-            workspaceId);
+    AzureManagedIdentityGuardStep step =
+        new AzureManagedIdentityGuardStep(mockAzureConfig, mockCrlService, identityResource);
     return step.doStep(mockFlightContext);
-  }
-
-  private void setupMocksUntilGetCall() {
-    when(mockSamService.getWsmServiceAccountToken()).thenReturn(UUID.randomUUID().toString());
-    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), any())).thenReturn(UUID.randomUUID());
-    when(mockLandingZoneApiDispatch.getSharedDatabase(any(), any()))
-        .thenReturn(Optional.of(mockDatabase));
-    when(mockDatabase.getResourceId()).thenReturn(UUID.randomUUID().toString());
-    when(mockCrlService.getPostgreSqlManager(any(), any())).thenReturn(mockPostgreSqlManager);
-    when(mockPostgreSqlManager.databases()).thenReturn(mockDatabases);
   }
 
   private FlightContext createMockFlightContext() {

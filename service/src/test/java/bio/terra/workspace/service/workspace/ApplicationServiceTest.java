@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -127,9 +127,9 @@ public class ApplicationServiceTest extends BaseUnitTest {
 
     // Create two workspaces
     workspace = WorkspaceFixtures.buildMcWorkspace();
-    workspaceService.createWorkspace(workspace, null, null, USER_REQUEST);
+    workspaceService.createWorkspace(workspace, null, null, null, USER_REQUEST);
     workspace2 = WorkspaceFixtures.buildMcWorkspace();
-    workspaceService.createWorkspace(workspace2, null, null, USER_REQUEST);
+    workspaceService.createWorkspace(workspace2, null, null, null, USER_REQUEST);
   }
 
   @DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)

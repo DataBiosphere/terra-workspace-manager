@@ -9,6 +9,7 @@ import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.db.model.DbUpdater;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
@@ -385,6 +386,31 @@ public class ResourceDao {
       sql += " AND cloud_platform = :cloud_platform";
       params.addValue("cloud_platform", cloudPlatform.toSql());
     }
+
+    List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
+    return dbResources.stream()
+        .map(this::constructResource)
+        .map(WsmResource::castToControlledResource)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Returns a list of all resources in the READY state in any workspace, filtering by a provided
+   * list of wsm resource types.
+   *
+   * @param wsmResourceTypes List of wsm resource types to filter by.
+   */
+  @ReadTransaction
+  public List<ControlledResource> listReadyResourcesByType(List<WsmResourceType> wsmResourceTypes) {
+    String sql =
+        RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
+            + " WHERE state = :state AND exact_resource_type IN (:resource_types)";
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("state", WsmResourceState.READY.toDb())
+            .addValue(
+                "resource_types",
+                wsmResourceTypes.stream().map(WsmResourceType::toSql).collect(Collectors.toList()));
 
     List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
     return dbResources.stream()
@@ -780,20 +806,30 @@ public class ResourceDao {
       String flightId,
       @Nullable Exception exception,
       WsmResourceStateRule resourceStateRule) {
-
-    switch (resourceStateRule) {
-      case DELETE_ON_FAILURE -> {
-        deleteResourceWorker(
-            resource.getWorkspaceId(), resource.getResourceId(), /*resourceType=*/ null);
+    DbResource dbResource =
+        getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
+    try {
+      switch (resourceStateRule) {
+        case DELETE_ON_FAILURE -> {
+          // There is no guarantee this is the flight which created this resource. Validate that it
+          // is before attempting to delete the workspace.
+          stateDao.updateState(
+              dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+          deleteResourceWorker(
+              resource.getWorkspaceId(), resource.getResourceId(), /*resourceType=*/ null);
+        }
+        case BROKEN_ON_FAILURE -> {
+          stateDao.updateState(
+              dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+        }
+        default -> throw new InternalLogicException("Invalid switch case");
       }
-
-      case BROKEN_ON_FAILURE -> {
-        DbResource dbResource =
-            getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
-        stateDao.updateState(
-            dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
-      }
-      default -> throw new InternalLogicException("Invalid switch case");
+    } catch (ResourceStateConflictException e) {
+      // Thrown by updateState during an invalid state transition. This indicates that the
+      // caller is not the same flight that created the resource.
+      logger.info(
+          "Skipping resource delete in createResourceFailure. This is expected for duplicate 'createResource' requests. Cause: ",
+          e);
     }
   }
 

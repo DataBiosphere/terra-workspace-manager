@@ -12,6 +12,7 @@ components:
         - GCE_INSTANCE
         - GCS_BUCKET
         - GCS_OBJECT
+        - DATAPROC_CLUSTER
         - AZURE_MANAGED_IDENTITY
         - AZURE_DATABASE
         - AZURE_DISK
@@ -37,6 +38,8 @@ components:
           $ref: '#/components/schemas/GcpBigQueryDataTableAttributes'
         gcpDataRepoSnapshot:
           $ref: '#/components/schemas/DataRepoSnapshotAttributes'
+        gcpDataprocCluster:
+          $ref: '#/components/schemas/GcpDataprocClusterAttributes'
         gcpGceInstance:
           $ref: '#/components/schemas/GcpGceInstanceAttributes'
         gcpGcsBucket:
@@ -81,6 +84,8 @@ components:
           $ref: '#/components/schemas/GcpBigQueryDataTableResource'
         gcpDataRepoSnapshot:
           $ref: '#/components/schemas/DataRepoSnapshotResource'
+        gcpDataprocCluster:
+          $ref: '#/components/schemas/GcpDataprocClusterResource'
         gcpGceInstance:
           $ref: '#/components/schemas/GcpGceInstanceResource'
         gcpGcsBucket:

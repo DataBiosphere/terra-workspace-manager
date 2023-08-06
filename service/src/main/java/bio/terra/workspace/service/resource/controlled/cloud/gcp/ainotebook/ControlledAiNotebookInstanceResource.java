@@ -18,6 +18,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GrantPetUsagePermissionStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.UpdateInstanceResourceLocationAttributesStep;
@@ -46,13 +47,6 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   /** The Notebook instance metadata key used to control proxy mode. */
   protected static final String PROXY_MODE_METADATA_KEY = "proxy-mode";
-  /** The Notebook instance metadata key used to set the terra workspace. */
-  protected static final String WORKSPACE_ID_METADATA_KEY = "terra-workspace-id";
-  /**
-   * The Notebook instance metadata key used to point the terra CLI at the correct WSM and SAM
-   * instances given a CLI specific name.
-   */
-  protected static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
   /**
    * When notebook has a custom image, disable root access and requires user to log in as Jupyter.
    * <a
@@ -64,7 +58,10 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   /** Metadata keys that are reserved by terra. User cannot modify those. */
   public static final Set<String> RESERVED_METADATA_KEYS =
-      Set.of(PROXY_MODE_METADATA_KEY, WORKSPACE_ID_METADATA_KEY, SERVER_ID_METADATA_KEY);
+      Set.of(
+          GcpResourceConstants.WORKSPACE_ID_METADATA_KEY,
+          GcpResourceConstants.SERVER_ID_METADATA_KEY,
+          PROXY_MODE_METADATA_KEY);
 
   private final String instanceId;
   private final String location;

@@ -415,8 +415,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
     final ControlledAzureDiskResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -428,8 +428,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
     final ControlledAzureVmResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest, workspaceUuid, resourceUuid, SamControlledResourceActions.READ_ACTION)
+            .validateWorkspaceOrControlledResourceReadAccess(
+                userRequest, workspaceUuid, resourceUuid)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_VM);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -610,6 +610,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .databaseOwner(body.getAzureDatabase().getOwner())
             .databaseName(body.getAzureDatabase().getName())
             .k8sNamespace(body.getAzureDatabase().getK8sNamespace())
+            .allowAccessForAllWorkspaceUsers(
+                body.getAzureDatabase().isAllowAccessForAllWorkspaceUsers())
             .build();
 
     var jobId =
@@ -722,8 +724,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
     final ControlledAzureDatabaseResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
+            .validateWorkspaceOrControlledResourceReadAccess(userRequest, workspaceId, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
@@ -736,8 +737,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
     final ControlledAzureManagedIdentityResource resource =
         controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest, workspaceId, resourceId, SamControlledResourceActions.READ_ACTION)
+            .validateWorkspaceOrControlledResourceReadAccess(userRequest, workspaceId, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }

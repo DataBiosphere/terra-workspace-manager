@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -71,13 +71,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("connectedPlus")
+@Disabled("Until PF-2884 is finished")
 public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
+  private static final Logger logger =
+      LoggerFactory.getLogger(RemoveUserFromWorkspaceFlightTest.class);
 
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
   @Autowired private WorkspaceService workspaceService;
@@ -115,7 +121,9 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     String makeContextJobId = UUID.randomUUID().toString();
     SpendProfile spendProfile =
         spendProfileService.authorizeLinking(
-            new SpendProfileId(DEFAULT_SPEND_PROFILE), features.isBpmGcpEnabled(), userRequest);
+            new SpendProfileId(DEFAULT_SPEND_PROFILE_NAME),
+            features.isBpmGcpEnabled(),
+            userRequest);
 
     workspaceService.createCloudContext(
         workspace, CloudPlatform.GCP, spendProfile, makeContextJobId, userRequest, null);

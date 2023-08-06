@@ -46,6 +46,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.Gce
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.RetrieveGceInstanceResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gceinstance.UpdateGceInstanceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
+import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -65,6 +66,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -176,8 +178,8 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void createGceInstanceDo() throws Exception {
     String workspaceUserFacingId = workspaceService.getWorkspace(workspaceId).getUserFacingId();
-    var instanceId = "create-gce-instance-do";
-    var serverName = "verily-autopush";
+    String instanceId = "create-gce-instance-do";
+    String serverName = "verily-autopush";
 
     cliConfiguration.setServerName(serverName);
     ApiGcpGceInstanceCreationParameters creationParameters =
@@ -234,11 +236,6 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
             .collect(Collectors.toMap(Items::getKey, Items::getValue));
     assertThat(metadata, Matchers.hasEntry("terra-cli-server", serverName));
     assertThat(metadata, Matchers.hasEntry("terra-workspace-id", workspaceUserFacingId));
-    ServiceAccountName serviceAccountName =
-        ServiceAccountName.builder()
-            .projectId(resource.getProjectId())
-            .email(instance.getServiceAccounts().get(0).getEmail())
-            .build();
 
     // Creating a controlled resource with a duplicate underlying instance is not allowed.
     ControlledGceInstanceResource duplicateResource =
@@ -278,12 +275,18 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
         GrantPetUsagePermissionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(CreateGceInstanceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(UpdateFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    jobService.setFlightDebugInfoForTest(
+
+    // The finish step is not undoable, so we make the failure at the penultimate step.
+    Map<String, StepStatus> triggerFailureStep = new HashMap<>();
+    triggerFailureStep.put(
+        UpdateControlledResourceRegionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
+    FlightDebugInfo debugInfo =
         FlightDebugInfo.newBuilder()
-            // Fail after the last step to test that everything is deleted on undo.
-            .lastStepFailure(true)
+            .doStepFailures(triggerFailureStep)
             .undoStepFailures(retrySteps)
-            .build());
+            .build();
+    jobService.setFlightDebugInfoForTest(debugInfo);
 
     // Revoke user's Pet SA access, if they have it. Because these tests re-use a common workspace,
     // the user may have pet SA access enabled prior to this test.
@@ -357,16 +360,17 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateGceInstanceResourceDo() throws InterruptedException, IOException {
-    var instanceId = "update-gce-instance-do";
-    var name = "update-gce-instance-do-name";
-    var newName = "update-gce-instance-do-name-NEW";
-    var newDescription = "new description for update-gce-instance-do-name-NEW";
+    String instanceId = "update-gce-instance-do";
+    String name = "update-gce-instance-do-name";
+    String newName = "update-gce-instance-do-name-NEW";
+    String newDescription = "new description for update-gce-instance-do-name-NEW";
 
-    var creationParameters =
+    ApiGcpGceInstanceCreationParameters creationParameters =
         ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
-    var resource = makeInstanceTestResource(workspaceId, name, instanceId);
+    ControlledGceInstanceResource resource =
+        makeInstanceTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createGceInstance(
             resource,
@@ -384,13 +388,13 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
 
-    var instanceFromCloud =
+    Instance instanceFromCloud =
         crlService
             .getCloudComputeCow()
             .instances()
             .get(resource.getProjectId(), resource.getZone(), resource.getInstanceId())
             .execute();
-    var metadata =
+    Map<String, String> metadata =
         instanceFromCloud.getMetadata().getItems().stream()
             .collect(Collectors.toMap(Items::getKey, Items::getValue));
 
@@ -415,8 +419,9 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
     // resource metadata is updated.
     assertEquals(newName, updatedInstance.getName());
     assertEquals(newDescription, updatedInstance.getDescription());
+
     // cloud instance attributes are updated.
-    var updatedInstanceFromCloud =
+    Instance updatedInstanceFromCloud =
         crlService
             .getCloudComputeCow()
             .instances()
@@ -429,10 +434,10 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
             (key, value) ->
                 metadata.merge(
                     key, value, (v1, v2) -> v1.equalsIgnoreCase(v2) ? v1 : v1 + "," + v2));
-    var newMetadata =
+    Map<String, String> newMetadata =
         updatedInstanceFromCloud.getMetadata().getItems().stream()
             .collect(Collectors.toMap(Items::getKey, Items::getValue));
-    for (var entrySet : GCE_INSTANCE_UPDATE_PARAMETERS.getMetadata().entrySet()) {
+    for (Entry<String, String> entrySet : GCE_INSTANCE_UPDATE_PARAMETERS.getMetadata().entrySet()) {
       assertEquals(entrySet.getValue(), newMetadata.get(entrySet.getKey()));
     }
   }
@@ -441,16 +446,18 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
   void updateGceInstanceResourceDo_nameAndDescriptionOnly()
       throws InterruptedException, IOException {
-    var instanceId = "update-gce-instance-do-name-and-description-only";
-    var name = "update-gce-instance-do-name-and-description-only";
-    var newName = "update-gce-instance-do-name-and-description-only-NEW";
-    var newDescription = "new description for update-gce-instance-do-name-and-description-only-NEW";
+    String instanceId = "update-gce-instance-do-name-and-description-only";
+    String name = "update-gce-instance-do-name-and-description-only";
+    String newName = "update-gce-instance-do-name-and-description-only-NEW";
+    String newDescription =
+        "new description for update-gce-instance-do-name-and-description-only-NEW";
 
-    var creationParameters =
+    ApiGcpGceInstanceCreationParameters creationParameters =
         ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
-    var resource = makeInstanceTestResource(workspaceId, name, instanceId);
+    ControlledGceInstanceResource resource =
+        makeInstanceTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createGceInstance(
             resource,
@@ -467,19 +474,6 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
         controlledResourceService
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
-
-    var instanceFromCloud =
-        crlService
-            .getCloudComputeCow()
-            .instances()
-            .get(
-                fetchedInstance.getProjectId(),
-                fetchedInstance.getZone(),
-                fetchedInstance.getInstanceId())
-            .execute();
-    var metadata =
-        instanceFromCloud.getMetadata().getItems().stream()
-            .collect(Collectors.toMap(Items::getKey, Items::getValue));
 
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
@@ -513,12 +507,13 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
     String newDescription = "new description for update-gce-instance-undo-name-NEW";
 
     Map<String, String> prevCustomMetadata = GCE_INSTANCE_PREV_PARAMETERS.getMetadata();
-    var creationParameters =
+    ApiGcpGceInstanceCreationParameters creationParameters =
         ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE)
             .metadata(prevCustomMetadata);
-    var resource = makeInstanceTestResource(workspaceId, name, instanceId);
+    ControlledGceInstanceResource resource =
+        makeInstanceTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createGceInstance(
             resource,
@@ -569,8 +564,9 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
     // resource metadata is updated.
     assertEquals(resource.getName(), updatedInstance.getName());
     assertEquals(resource.getDescription(), updatedInstance.getDescription());
+
     // cloud attributes are not updated.
-    var instanceFromCloud =
+    Instance instanceFromCloud =
         crlService
             .getCloudComputeCow()
             .instances()
@@ -583,7 +579,7 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
     Map<String, String> currentCloudInstanceMetadata =
         instanceFromCloud.getMetadata().getItems().stream()
             .collect(Collectors.toMap(Items::getKey, Items::getValue));
-    for (var entrySet : metadataToUpdate.entrySet()) {
+    for (Entry<String, String> entrySet : metadataToUpdate.entrySet()) {
       assertEquals(
           prevCustomMetadata.getOrDefault(entrySet.getKey(), ""),
           currentCloudInstanceMetadata.get(entrySet.getKey()));
@@ -600,11 +596,12 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
     String newDescription =
         "new description for update-gce-instance-undo-name-illegal-metadata-key-NEW";
 
-    var creationParameters =
+    ApiGcpGceInstanceCreationParameters creationParameters =
         ControlledGcpResourceFixtures.defaultGceInstanceCreationParameters()
             .instanceId(instanceId)
             .zone(DEFAULT_INSTANCE_ZONE);
-    var resource = makeInstanceTestResource(workspaceId, name, instanceId);
+    ControlledGceInstanceResource resource =
+        makeInstanceTestResource(workspaceId, name, instanceId);
     String jobId =
         controlledResourceService.createGceInstance(
             resource,
@@ -621,7 +618,7 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
         controlledResourceService
             .getControlledResource(workspaceId, resource.getResourceId())
             .castByEnum(WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE);
-    var prevInstanceFromCloud =
+    Instance prevInstanceFromCloud =
         crlService
             .getCloudComputeCow()
             .instances()
@@ -632,7 +629,7 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
             .execute();
 
     Map<String, String> illegalMetadataToUpdate = new HashMap<>();
-    for (var key : ControlledGceInstanceResource.RESERVED_METADATA_KEYS) {
+    for (String key : ControlledGceInstanceResource.RESERVED_METADATA_KEYS) {
       illegalMetadataToUpdate.put(key, RandomStringUtils.random(10));
     }
     assertThrows(
@@ -651,8 +648,9 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
     // resource metadata is updated.
     assertEquals(resource.getName(), updatedInstance.getName());
     assertEquals(resource.getDescription(), updatedInstance.getDescription());
+
     // cloud attributes are not updated.
-    var instanceFromCloud =
+    Instance instanceFromCloud =
         crlService
             .getCloudComputeCow()
             .instances()
@@ -667,7 +665,7 @@ public class ControlledResourceServiceGceInstanceConnectedTest extends BaseConne
     Map<String, String> prevCloudInstanceMetadata =
         prevInstanceFromCloud.getMetadata().getItems().stream()
             .collect(Collectors.toMap(Items::getKey, Items::getValue));
-    for (var entrySet : illegalMetadataToUpdate.entrySet()) {
+    for (Entry<String, String> entrySet : illegalMetadataToUpdate.entrySet()) {
       assertEquals(
           prevCloudInstanceMetadata.getOrDefault(entrySet.getKey(), ""),
           currentCloudInstanceMetadata.getOrDefault(entrySet.getKey(), ""));

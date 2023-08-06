@@ -1,10 +1,10 @@
 package bio.terra.workspace.common.utils;
 
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER;
-import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_REGION;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_1;
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_2;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_REGION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -71,7 +71,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   @Mock private S3Client mockS3Client;
   @Mock private SageMakerClient mockSageMakerClient;
   @Mock private SageMakerWaiter mockSageMakerWaiter;
-  protected static MockedStatic<AwsUtils> mockAwsUtils;
+  private static MockedStatic<AwsUtils> mockAwsUtils;
   private static final Region awsRegion = Region.of(AWS_REGION);
   private static final Collection<Tag> tags = ControlledAwsResourceFixtures.makeTags();
   private static final ControlledAwsS3StorageFolderResource s3FolderResource =
@@ -80,12 +80,13 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
       ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource(WORKSPACE_ID);
 
   @BeforeAll
-  public static void init() {
+  public void init() throws Exception {
+    super.init();
     mockAwsUtils = mockStatic(AwsUtils.class, Mockito.CALLS_REAL_METHODS);
   }
 
   @AfterAll
-  public static void terminate() {
+  public void terminate() {
     mockAwsUtils.close();
   }
 
@@ -103,7 +104,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void appendTagsTest() {
+  void appendTagsTest() {
     Collection<Tag> tags = new HashSet<>();
 
     AwsUtils.appendUserTags(tags, null);
@@ -139,7 +140,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
                 t ->
                     t.key().equals(AwsUtils.TAG_KEY_WORKSPACE_ROLE) && t.value().equals("reader")));
 
-    AwsCloudContext cloudContext = ControlledAwsResourceFixtures.makeAwsCloudContext();
+    AwsCloudContext cloudContext = AwsTestUtils.makeAwsCloudContext();
     AwsUtils.appendResourceTags(tags, cloudContext, null);
     assertEquals(/* prevSize+3 */ 5, tags.size());
     assertContainsTagByKey(tags, AwsUtils.TAG_KEY_VERSION);
@@ -167,7 +168,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   // AWS S3 Storage Folder
 
   @Test
-  public void checkFolderExistsTest() {
+  void checkFolderExistsTest() {
     when(mockS3Client.listObjectsV2((ListObjectsV2Request) any()))
         .thenReturn(ControlledAwsResourceFixtures.listFolderResponse200_1_obj1)
         .thenReturn(ControlledAwsResourceFixtures.listFolderResponse200_0)
@@ -198,7 +199,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void createStorageFolderTest() {
+  void createStorageFolderTest() {
     when(mockS3Client.putObject((PutObjectRequest) any(), (RequestBody) any()))
         .thenReturn(ControlledAwsResourceFixtures.putFolderResponse200)
         .thenReturn(ControlledAwsResourceFixtures.putFolderResponse400)
@@ -228,7 +229,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void deleteStorageFolderTest() {
+  void deleteStorageFolderTest() {
     when(mockS3Client.listObjectsV2((ListObjectsV2Request) any()))
         .thenReturn(ControlledAwsResourceFixtures.listFolderResponse200_0)
         .thenReturn(ControlledAwsResourceFixtures.listFolderResponse200_2)
@@ -273,7 +274,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void putS3ObjectTest() {
+  void putS3ObjectTest() {
     when(mockS3Client.putObject((PutObjectRequest) any(), (RequestBody) any()))
         .thenReturn(ControlledAwsResourceFixtures.putFolderResponse200)
         .thenReturn(ControlledAwsResourceFixtures.putFolderResponse400)
@@ -318,7 +319,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void getS3ObjectKeysByPrefix_successTest() {
+  void getS3ObjectKeysByPrefix_successTest() {
     // return all in a single response
     when(mockS3Client.listObjectsV2((ListObjectsV2Request) any()))
         .thenReturn(ControlledAwsResourceFixtures.listFolderResponse200_2);
@@ -350,7 +351,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void getS3ObjectKeysByPrefix_failureTest() {
+  void getS3ObjectKeysByPrefix_failureTest() {
     when(mockS3Client.listObjectsV2((ListObjectsV2Request) any()))
         .thenReturn(ControlledAwsResourceFixtures.listFolderResponse400)
         .thenThrow(AWS_SERVICE_EXCEPTION_2);
@@ -373,7 +374,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void deleteS3ObjectsTest() {
+  void deleteS3ObjectsTest() {
     List<String> keys =
         List.of(
             ControlledAwsResourceFixtures.s3Obj1.key(), ControlledAwsResourceFixtures.s3Obj2.key());
@@ -428,18 +429,16 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   // AWS SageMaker Notebook
 
   @Test
-  public void createSageMakerNotebookTest() {
+  void createSageMakerNotebookTest() {
     when(mockSageMakerClient.createNotebookInstance((CreateNotebookInstanceRequest) any()))
         .thenReturn(ControlledAwsResourceFixtures.createNotebookResponse200)
         .thenReturn(ControlledAwsResourceFixtures.createNotebookResponse400)
         .thenThrow(AWS_SERVICE_EXCEPTION_1);
 
-    Arn userRoleArn =
-        Arn.fromString(ControlledAwsResourceFixtures.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN);
-    Arn kmsKeyArn = Arn.fromString(ControlledAwsResourceFixtures.AWS_LANDING_ZONE_KMS_KEY_ARN);
+    Arn userRoleArn = Arn.fromString(AwsTestUtils.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN);
+    Arn kmsKeyArn = Arn.fromString(AwsTestUtils.AWS_LANDING_ZONE_KMS_KEY_ARN);
     Arn notebookLifecycleConfigArn =
-        Arn.fromString(
-            ControlledAwsResourceFixtures.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
+        Arn.fromString(AwsTestUtils.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
 
     // success
     assertDoesNotThrow(
@@ -481,7 +480,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void getSageMakerNotebookStatusTest() {
+  void getSageMakerNotebookStatusTest() {
     when(mockSageMakerClient.describeNotebookInstance((DescribeNotebookInstanceRequest) any()))
         .thenReturn(ControlledAwsResourceFixtures.describeNotebookResponse200Stopped)
         .thenReturn(ControlledAwsResourceFixtures.describeNotebookResponse400)
@@ -512,7 +511,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void startSageMakerNotebookTest() {
+  void startSageMakerNotebookTest() {
     when(mockSageMakerClient.startNotebookInstance((StartNotebookInstanceRequest) any()))
         .thenReturn(ControlledAwsResourceFixtures.startNotebookResponse200)
         .thenReturn(ControlledAwsResourceFixtures.startNotebookResponse400)
@@ -543,7 +542,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void stopSageMakerNotebookTest() {
+  void stopSageMakerNotebookTest() {
     when(mockSageMakerClient.stopNotebookInstance((StopNotebookInstanceRequest) any()))
         .thenReturn(ControlledAwsResourceFixtures.stopNotebookResponse200)
         .thenReturn(ControlledAwsResourceFixtures.stopNotebookResponse400)
@@ -573,7 +572,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void deleteSageMakerNotebookTest() {
+  void deleteSageMakerNotebookTest() {
     when(mockSageMakerClient.deleteNotebookInstance((DeleteNotebookInstanceRequest) any()))
         .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse200)
         .thenReturn(ControlledAwsResourceFixtures.deleteNotebookResponse400)
@@ -611,7 +610,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void waitForSageMakerNotebookStatusTest() {
+  void waitForSageMakerNotebookStatusTest() {
     // error (unsupported desiredStatus)
     assertThrows(
         BadRequestException.class,
@@ -667,7 +666,7 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
   }
 
   @Test
-  public void checkExceptionTest() {
+  void checkExceptionTest() {
     Exception ex =
         assertThrows(
             NotFoundException.class,

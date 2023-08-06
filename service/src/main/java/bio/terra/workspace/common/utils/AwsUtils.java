@@ -211,12 +211,12 @@ public class AwsUtils {
    */
   private static AwsCredentialsProvider createDiscoveryCredentialsProvider(
       AwsConfiguration awsConfiguration) {
-    AwsConfiguration.Authentication authenticationConfig = awsConfiguration.getAuthentication();
+    AwsConfiguration.Authentication authentication = awsConfiguration.getAuthentication();
     return createAssumeRoleWithGcpCredentialsProvider(
         Arn.fromString(awsConfiguration.getDiscovery().getRoleArn()),
-        Duration.ofSeconds(authenticationConfig.getCredentialLifetimeSeconds()),
-        Duration.ofSeconds(authenticationConfig.getCredentialStaleTimeSeconds()),
-        authenticationConfig.getGoogleJwtAudience());
+        Duration.ofSeconds(authentication.getCredentialLifetimeSeconds()),
+        Duration.ofSeconds(authentication.getCredentialStaleTimeSeconds()),
+        authentication.getGoogleJwtAudience());
   }
 
   /**
@@ -365,7 +365,7 @@ public class AwsUtils {
         .client(sageMakerClient)
         .overrideConfiguration(
             WaiterOverrideConfiguration.builder()
-                .waitTimeout(AwsResourceConstants.SAGEMAKER_CLIENT_WAITER_TIMEOUT)
+                .waitTimeout(AwsResourceConstants.SAGEMAKER_WAITER_TIMEOUT)
                 .build())
         .build();
   }
@@ -921,7 +921,9 @@ public class AwsUtils {
   public static void checkException(SdkException ex, String altMessage, boolean ignoreNotFound)
       throws NotFoundException, UnauthorizedException, BadRequestException, ApiException {
     String message = ex.getMessage();
-    if (message.contains("ResourceNotFoundException") || message.contains("RecordNotFound")) {
+    if (message.contains("ResourceNotFoundException")
+        || message.contains("RecordNotFound")
+        || message.contains("does not exist")) {
       if (ignoreNotFound) {
         return;
       }

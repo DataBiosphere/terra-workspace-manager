@@ -1,8 +1,8 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_SAS_TOKEN_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -56,7 +56,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -69,7 +71,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -90,7 +94,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -103,7 +109,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8"),
@@ -133,7 +141,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -149,7 +159,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -171,7 +183,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -191,7 +205,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -207,7 +223,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -228,7 +246,9 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
         .perform(
             addAuth(
                 post(String.format(
-                        CREATE_AZURE_SAS_TOKEN_PATH_FORMAT, workspaceId, storageContainerId))
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")

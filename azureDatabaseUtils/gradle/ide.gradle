@@ -1,0 +1,7 @@
+// IDE settings and tasks
+idea {
+  module {
+    generatedSourceDirs = [file("${openapiOutputDir}/src/main/java")]
+    downloadJavadoc = true
+  }
+}

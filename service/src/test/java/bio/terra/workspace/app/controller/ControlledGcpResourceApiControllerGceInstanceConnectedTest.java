@@ -1,13 +1,16 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertControlledResourceMetadata;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.assertControlledResourceMetadata;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.assertResourceMetadata;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -44,6 +47,9 @@ import org.springframework.test.web.servlet.MockMvc;
 public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends BaseConnectedTest {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
+  @Autowired MockGcpApi mockGcpApi;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired JobService jobService;
 
@@ -52,7 +58,7 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
   @BeforeAll
   public void setup() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
@@ -70,12 +76,13 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspaceId);
   }
 
   @Test
   public void createGceInstance_correctZone() throws Exception {
-    mockMvcUtils.updateWorkspaceProperties(
+    mockWorkspaceV1Api.updateWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(
@@ -84,7 +91,7 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
                 .value("asia-east1")));
 
     ApiGcpGceInstanceResource instance =
-        mockMvcUtils
+        mockGcpApi
             .createGceInstance(userAccessUtils.defaultUserAuthRequest(), workspaceId, null)
             .getGceInstance();
 
@@ -98,7 +105,7 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
         userAccessUtils.getDefaultUserEmail());
 
     instance =
-        mockMvcUtils
+        mockGcpApi
             .createGceInstance(
                 userAccessUtils.defaultUserAuthRequest(), workspaceId, "europe-west1-b")
             .getGceInstance();
@@ -111,7 +118,7 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
         userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getDefaultUserEmail());
 
-    mockMvcUtils.deleteWorkspaceProperties(
+    mockWorkspaceV1Api.deleteWorkspaceProperties(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         List.of(WorkspaceConstants.Properties.DEFAULT_RESOURCE_LOCATION));
@@ -119,14 +126,15 @@ public class ControlledGcpResourceApiControllerGceInstanceConnectedTest extends 
 
   @Test
   public void createGceInstance_duplicateInstanceId() throws Exception {
-    var duplicateName = "not-unique-name";
-    mockMvcUtils
-        .createGceInstanceAndWait(
-            userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
-        .getGceInstance();
+    String duplicateName = "not-unique-name";
+    ApiGcpGceInstanceResource unused =
+        mockGcpApi
+            .createGceInstanceAndWait(
+                userAccessUtils.defaultUserAuthRequest(), workspaceId, duplicateName, null)
+            .getGceInstance();
 
     ApiErrorReport errorReport =
-        mockMvcUtils
+        mockGcpApi
             .createGceInstanceAndExpect(
                 userAccessUtils.defaultUserAuthRequest(),
                 workspaceId,

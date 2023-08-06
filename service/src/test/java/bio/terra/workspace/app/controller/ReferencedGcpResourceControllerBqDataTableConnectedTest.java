@@ -1,9 +1,8 @@
 package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertApiBqDataTableEquals;
-import static bio.terra.workspace.common.utils.MockMvcUtils.assertResourceMetadata;
+import static bio.terra.workspace.common.mocks.MockGcpApi.REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.assertResourceMetadata;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,7 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -50,12 +52,15 @@ import org.springframework.test.web.servlet.MockMvc;
 // time creating and deleting GCP contexts.
 @Tag("connectedPlus")
 @TestInstance(Lifecycle.PER_CLASS)
-public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseConnectedTest {
+public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends BaseConnectedTest {
   private static final Logger logger =
-      LoggerFactory.getLogger(ReferencedGcpResourceControllerBqTableConnectedTest.class);
+      LoggerFactory.getLogger(ReferencedGcpResourceControllerBqDataTableConnectedTest.class);
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
+  @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
@@ -74,15 +79,15 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
   @BeforeAll
   public void setup() throws Exception {
     workspaceId =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithCloudContext(
                 userAccessUtils.defaultUserAuthRequest(), apiCloudPlatform)
             .getId();
     ApiWorkspaceDescription workspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     projectId = workspace.getGcpContext().getProjectId();
     workspaceId2 =
-        mockMvcUtils
+        mockWorkspaceV1Api
             .createWorkspaceWithPolicy(
                 userAccessUtils.defaultUserAuthRequest(),
                 new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.GROUP_POLICY_DEFAULT))
@@ -95,7 +100,7 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
     sourceDatasetName = TestUtils.appendRandomNumber("source-dataset-name");
     sourceTableId = TestUtils.appendRandomNumber("source-table-id");
     sourceResource =
-        mockMvcUtils.createReferencedBqTable(
+        mockGcpApi.createReferencedBqDataTable(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResourceName,
@@ -106,8 +111,9 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deleteWorkspaceV2AndWait(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId2);
   }
 
   @Test
@@ -129,7 +135,7 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
     // Assert resource returned by get
     ApiGcpBigQueryDataTableResource gotResource =
-        mockMvcUtils.getReferencedBqTable(
+        mockGcpApi.getReferencedBqDataTable(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
@@ -138,20 +144,20 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
   @Test
   public void update() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
 
-    var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
-    var newDescription = "This is an updated description";
-    var newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
-    var newProjectId = TestUtils.appendRandomNumber("newProjectid");
-    var newDataset = TestUtils.appendRandomNumber("newdataset");
-    var newTable = TestUtils.appendRandomNumber("newtable");
+    String newName = TestUtils.appendRandomNumber("newdatatableresourcename");
+    String newDescription = "This is an updated description";
+    ApiCloningInstructionsEnum newCloningInstruction = ApiCloningInstructionsEnum.REFERENCE;
+    String newProjectId = TestUtils.appendRandomNumber("newProjectid");
+    String newDataset = TestUtils.appendRandomNumber("newdataset");
+    String newTable = TestUtils.appendRandomNumber("newtable");
     ApiGcpBigQueryDataTableResource updatedResource =
-        mockMvcUtils.updateReferencedBqTable(
+        mockGcpApi.updateReferencedBqDataTable(
             userAccessUtils.secondUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -172,7 +178,7 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
         newTable,
         userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.WRITER,
@@ -181,8 +187,8 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
   @Test
   public void update_throws409() throws Exception {
-    var newName = TestUtils.appendRandomNumber("newdatatableresourcename");
-    mockMvcUtils.createReferencedBqTable(
+    String newName = TestUtils.appendRandomNumber("newdatatableresourcename");
+    mockGcpApi.createReferencedBqDataTable(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         newName,
@@ -195,13 +201,13 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
         objectMapper.writeValueAsString(
             new ApiUpdateBigQueryDatasetReferenceRequestBody().name(newName)),
         String.format(
-            REFERENCED_GCP_BIG_QUERY_DATA_TABLE_V1_PATH_FORMAT,
+            REFERENCED_GCP_BQ_DATA_TABLE_PATH_FORMAT,
             workspaceId,
             sourceResource.getMetadata().getResourceId()),
         HttpStatus.SC_CONFLICT);
 
     ApiGcpBigQueryDataTableResource gotResource =
-        mockMvcUtils.getReferencedBqTable(
+        mockGcpApi.getReferencedBqDataTable(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId());
@@ -210,7 +216,7 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
   @Test
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
-    mockMvcUtils.cloneReferencedBqTable(
+    mockGcpApi.cloneReferencedBqDataTableAndExpect(
         userAccessUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -222,18 +228,18 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
   @Test
   public void clone_requesterNoWriteAccessOnDestWorkspace_throws403() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
 
-    mockMvcUtils.cloneReferencedBqTable(
+    mockGcpApi.cloneReferencedBqDataTableAndExpect(
         userAccessUtils.secondUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
@@ -242,12 +248,12 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
         /*destResourceName=*/ null,
         HttpStatus.SC_FORBIDDEN);
 
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.READER,
@@ -256,19 +262,19 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
   @Test
   public void clone_secondUserHasWriteAccessOnDestWorkspace_succeeds() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
 
     ApiGcpBigQueryDataTableResource clonedResource =
-        mockMvcUtils.cloneReferencedBqTable(
+        mockGcpApi.cloneReferencedBqDataTable(
             userAccessUtils.secondUserAuthRequest(),
             workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -286,17 +292,17 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
         sourceTableId,
         /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
         userAccessUtils.secondUserAuthRequest());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         WsmIamRole.WRITER,
         userAccessUtils.getSecondUserEmail());
-    mockMvcUtils.deleteBqDataTable(
+    mockGcpApi.deleteReferencedBqDataTable(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         clonedResource.getMetadata().getResourceId());
@@ -305,9 +311,10 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
   @Test
   void clone_copyNothing() throws Exception {
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     ApiGcpBigQueryDataTableResource clonedResource =
-        mockMvcUtils.cloneReferencedBqTable(
-            userAccessUtils.defaultUserAuthRequest(),
+        mockGcpApi.cloneReferencedBqDataTable(
+            userRequest,
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
             /*destWorkspaceId=*/ workspaceId,
@@ -318,8 +325,7 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
     assertNull(clonedResource);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
-    mockMvcUtils.assertNoResourceWithName(
-        userAccessUtils.defaultUserAuthRequest(), workspaceId, destResourceName);
+    mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId, destResourceName);
   }
 
   @Test
@@ -327,7 +333,7 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpBigQueryDataTableResource clonedResource =
-        mockMvcUtils.cloneReferencedBqTable(
+        mockGcpApi.cloneReferencedBqDataTable(
             userAccessUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -348,8 +354,8 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpBigQueryDataTableResource gotResource =
-        mockMvcUtils.getReferencedBqTable(
+    ApiGcpBigQueryDataTableResource gotResource =
+        mockGcpApi.getReferencedBqDataTable(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId,
             clonedResource.getMetadata().getResourceId());
@@ -361,7 +367,7 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     ApiGcpBigQueryDataTableResource clonedResource =
-        mockMvcUtils.cloneReferencedBqTable(
+        mockGcpApi.cloneReferencedBqDataTable(
             userAccessUtils.defaultUserAuthRequest(),
             /*sourceWorkspaceId=*/ workspaceId,
             sourceResource.getMetadata().getResourceId(),
@@ -382,8 +388,8 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
-    final ApiGcpBigQueryDataTableResource gotResource =
-        mockMvcUtils.getReferencedBqTable(
+    ApiGcpBigQueryDataTableResource gotResource =
+        mockGcpApi.getReferencedBqDataTable(
             userAccessUtils.defaultUserAuthRequest(),
             workspaceId2,
             clonedResource.getMetadata().getResourceId());
@@ -401,16 +407,16 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
     }
 
     // Clean up policies from previous runs, if any exist
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
 
     // Add broader region policy to destination, narrow policy on source.
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
         /*policiesToRemove=*/ null);
-    mockMvcUtils.updatePolicies(
+    mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
         /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
@@ -418,7 +424,7 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
-    mockMvcUtils.cloneReferencedBqTable(
+    mockGcpApi.cloneReferencedBqDataTable(
         userAccessUtils.defaultUserAuthRequest(),
         /*sourceWorkspaceId=*/ workspaceId,
         sourceResource.getMetadata().getResourceId(),
@@ -428,15 +434,15 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
 
     // Assert dest workspace policy is reduced to the narrower region.
     ApiWorkspaceDescription destWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     assertThat(
         destWorkspace.getPolicies(),
         containsInAnyOrder(PolicyFixtures.REGION_POLICY_IOWA, PolicyFixtures.GROUP_POLICY_DEFAULT));
     assertFalse(destWorkspace.getPolicies().contains(PolicyFixtures.REGION_POLICY_USA));
 
     // Clean up: Delete policies
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockMvcUtils.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
   }
 
   private void assertBqTable(
@@ -497,5 +503,13 @@ public class ReferencedGcpResourceControllerBqTableConnectedTest extends BaseCon
     assertEquals(expectedProjectId, actualResource.getAttributes().getProjectId());
     assertEquals(expectedDatasetName, actualResource.getAttributes().getDatasetId());
     assertEquals(expectedTableId, actualResource.getAttributes().getDataTableId());
+  }
+
+  private static void assertApiBqDataTableEquals(
+      ApiGcpBigQueryDataTableResource expectedDataTable,
+      ApiGcpBigQueryDataTableResource actualDataTable) {
+    MockMvcUtils.assertResourceMetadataEquals(
+        expectedDataTable.getMetadata(), actualDataTable.getMetadata());
+    assertEquals(expectedDataTable.getAttributes(), actualDataTable.getAttributes());
   }
 }

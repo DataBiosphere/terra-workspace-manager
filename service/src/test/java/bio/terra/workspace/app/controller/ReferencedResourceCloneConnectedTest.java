@@ -2,9 +2,9 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
 import static bio.terra.workspace.common.fixtures.PolicyFixtures.IOWA_REGION;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_WORKSPACE_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_NAME;
+import static bio.terra.workspace.common.mocks.MockGcpApi.CREATE_REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_CLONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -13,7 +13,9 @@ import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloneWorkspaceRequest;
@@ -54,6 +56,8 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
+  @Autowired MockGcpApi mockGcpApi;
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
@@ -73,9 +77,9 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   @AfterEach
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), sourceWorkspaceId);
+    mockWorkspaceV1Api.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), sourceWorkspaceId);
     if (destinationWorkspaceId != null) {
-      mockMvcUtils.deleteWorkspace(
+      mockWorkspaceV1Api.deleteWorkspace(
           userAccessUtils.defaultUserAuthRequest(), destinationWorkspaceId);
     }
   }
@@ -178,14 +182,14 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     workspaceSetup(ApiCloningInstructionsEnum.REFERENCE);
     ApiCloneWorkspaceRequest request =
         new ApiCloneWorkspaceRequest()
-            .spendProfile(DEFAULT_SPEND_PROFILE)
+            .spendProfile(DEFAULT_SPEND_PROFILE_NAME)
             .additionalPolicies(
                 new ApiWsmPolicyInputs().addInputsItem(makeRegionPolicyInput("asiapacific")));
 
     mockMvcUtils.postExpect(
         userAccessUtils.defaultUserAuthRequest(),
         objectMapper.writeValueAsString(request),
-        CLONE_WORKSPACE_PATH_FORMAT.formatted(sourceWorkspaceId.toString()),
+        WORKSPACES_V1_CLONE.formatted(sourceWorkspaceId.toString()),
         HttpStatus.SC_CONFLICT);
   }
 
@@ -207,7 +211,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
     logger.info("Test workspaceId {}  workspaceId2 {}", sourceWorkspaceId, destinationWorkspaceId);
 
-    mockMvcUtils.cloneReferencedGcsBucket(
+    mockGcpApi.cloneReferencedGcsBucket(
         userAccessUtils.defaultUserAuthRequest(),
         sourceWorkspaceId,
         sourceResource.getMetadata().getResourceId(),
@@ -221,7 +225,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
   private void checkRegionPolicy(UUID workspaceUuid, List<String> expectedRegions)
       throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
 
     List<ApiWsmPolicyInput> policies = workspaceDescription.getPolicies();
     ApiWsmPolicyInput regionPolicy =
@@ -242,7 +246,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   private void checkGroupPolicy(UUID workspaceUuid, List<String> expectedGroups) throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceUuid);
 
     List<ApiWsmPolicyInput> policies = workspaceDescription.getPolicies();
     ApiWsmPolicyInput groupPolicy =
@@ -259,7 +263,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     List<String> actualGroups =
         groupPolicy.getAdditionalData().stream()
             .filter(data -> data.getKey().equals(PolicyFixtures.GROUP))
-            .map(group -> group.getValue())
+            .map(ApiWsmPolicyPair::getValue)
             .toList();
     assertEquals(expectedGroups, actualGroups);
   }
@@ -280,7 +284,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   private void resourceSetup() throws Exception {
     sourceWorkspaceId = UUID.randomUUID();
-    var workspaceRequest =
+    ApiCreateWorkspaceRequestBody workspaceRequest =
         new ApiCreateWorkspaceRequestBody()
             .id(sourceWorkspaceId)
             .displayName("clone source")
@@ -289,11 +293,11 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
             .spendProfile("wm-default-spend-profile")
             .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));
 
-    mockMvcUtils.createdWorkspaceWithoutCloudContext(
+    mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
 
     destinationWorkspaceId = UUID.randomUUID();
-    var workspace2Request =
+    ApiCreateWorkspaceRequestBody workspace2Request =
         new ApiCreateWorkspaceRequestBody()
             .id(destinationWorkspaceId)
             .displayName("clone destination")
@@ -302,11 +306,11 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
             .spendProfile("wm-default-spend-profile")
             .policies(null);
 
-    mockMvcUtils.createdWorkspaceWithoutCloudContext(
+    mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspace2Request);
 
     sourceResource =
-        mockMvcUtils.createReferencedGcsBucket(
+        mockGcpApi.createReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
             sourceWorkspaceId,
             sourceResourceName,
@@ -317,7 +321,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     workspaceSetup(cloningInstructions);
 
     destinationWorkspaceId = UUID.randomUUID();
-    mockMvcUtils.cloneWorkspace(
+    mockWorkspaceV1Api.cloneWorkspace(
         userAccessUtils.defaultUserAuthRequest(),
         sourceWorkspaceId,
         "wm-default-spend-profile",
@@ -335,7 +339,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     workspaceSetup(cloningInstructions);
 
     destinationWorkspaceId = UUID.randomUUID();
-    mockMvcUtils.cloneWorkspace(
+    mockWorkspaceV1Api.cloneWorkspace(
         userAccessUtils.defaultUserAuthRequest(),
         sourceWorkspaceId,
         "wm-default-spend-profile",
@@ -347,7 +351,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
   private void workspaceSetup(ApiCloningInstructionsEnum cloningInstructions) throws Exception {
     sourceWorkspaceId = UUID.randomUUID();
-    var workspaceRequest =
+    ApiCreateWorkspaceRequestBody workspaceRequest =
         new ApiCreateWorkspaceRequestBody()
             .id(sourceWorkspaceId)
             .displayName("clone source")
@@ -356,7 +360,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
             .spendProfile("wm-default-spend-profile")
             .policies(new ApiWsmPolicyInputs().addInputsItem(PolicyFixtures.REGION_POLICY_USA));
 
-    mockMvcUtils.createdWorkspaceWithoutCloudContext(
+    mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(
         userAccessUtils.defaultUserAuthRequest(), workspaceRequest);
 
     // Create the bucket with the test cloning instructions
@@ -373,7 +377,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     String serializedResponse =
         mockMvcUtils.getSerializedResponseForPost(
             userAccessUtils.defaultUserAuthRequest(),
-            REFERENCED_GCP_GCS_BUCKETS_V1_PATH_FORMAT,
+            CREATE_REFERENCED_GCP_GCS_BUCKETS_PATH_FORMAT,
             sourceWorkspaceId,
             objectMapper.writeValueAsString(request));
     sourceResource = objectMapper.readValue(serializedResponse, ApiGcpGcsBucketResource.class);
@@ -384,7 +388,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     try {
       // Update the source workspace policy
       ApiWsmPolicyUpdateResult result =
-          mockMvcUtils.updatePolicies(
+          mockWorkspaceV1Api.updatePolicies(
               userAccessUtils.defaultUserAuthRequest(),
               sourceWorkspaceId,
               /*policiesToAdd*/ locationsToAdd,
@@ -402,7 +406,7 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     try {
       // Update the source workspace policy
       ApiWsmPolicyUpdateResult result =
-          mockMvcUtils.updatePoliciesExpectStatus(
+          mockWorkspaceV1Api.updatePoliciesAndExpect(
               userAccessUtils.defaultUserAuthRequest(),
               sourceWorkspaceId,
               /*policiesToAdd*/ locationsToAdd,

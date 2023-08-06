@@ -29,16 +29,25 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
     ApiAwsSageMakerNotebookCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
             ControlledAwsResourceFixtures.getUniqueNotebookName());
-    ControlledAwsSageMakerNotebookResource resource = makeResource(creationParameters);
+    ControlledAwsSageMakerNotebookResource resource =
+        ControlledAwsResourceFixtures.makeAwsSagemakerNotebookResource(
+            workspaceUuid, creationParameters, userRequest.getEmail());
 
-    // test idempotency of s3-folder-specific undo step by retrying once.
+    // test idempotency of sagemaker-specific undo step by retrying once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         CreateAwsSageMakerNotebookStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
 
-    // fail after the last step to test that everything is deleted on undo.
+    // final createResponseStep cannot fail, hence fail the create step
+    Map<String, StepStatus> failureSteps = new HashMap<>();
+    failureSteps.put(
+        CreateAwsSageMakerNotebookStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).undoStepFailures(retrySteps).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(failureSteps)
+            .undoStepFailures(retrySteps)
+            .build());
     String jobId =
         controlledResourceService.createAwsSageMakerNotebookInstance(
             resource,
@@ -52,7 +61,7 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
     assertEquals(
         FlightStatus.ERROR, stairwayComponent.get().getFlightState(jobId).getFlightStatus());
 
-    // validate resource does not exist.
+    // validate resource does not exist
     assertThrows(
         NotFoundException.class,
         () -> AwsUtils.getSageMakerNotebookStatus(awsCredentialsProvider, resource));
@@ -68,7 +77,9 @@ public class AwsSageMakerNotebookFlightMiscTest extends BaseAwsSageMakerNotebook
     ApiAwsSageMakerNotebookCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsSageMakerNotebookCreationParameters(
             ControlledAwsResourceFixtures.getUniqueNotebookName());
-    ControlledAwsSageMakerNotebookResource resource = makeResource(creationParameters);
+    ControlledAwsSageMakerNotebookResource resource =
+        ControlledAwsResourceFixtures.makeAwsSagemakerNotebookResource(
+            workspaceUuid, creationParameters, userRequest.getEmail());
 
     // create & verify resource status
     String jobId =

@@ -13,14 +13,13 @@ import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -28,7 +27,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
 import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 
-@TestInstance(Lifecycle.PER_CLASS)
 public abstract class BaseAwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
 
   @MockBean protected FlightContext mockFlightContext;
@@ -42,12 +40,13 @@ public abstract class BaseAwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
       ControlledAwsResourceFixtures.makeDefaultAwsSagemakerNotebookResource(WORKSPACE_ID);
 
   @BeforeAll
-  public static void init() {
+  public void init() throws Exception {
+    super.init();
     mockAwsUtils = mockStatic(AwsUtils.class, Mockito.CALLS_REAL_METHODS);
   }
 
   @AfterAll
-  public static void terminate() {
+  public void terminate() {
     mockAwsUtils.close();
   }
 
@@ -62,7 +61,7 @@ public abstract class BaseAwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
     when(mockCliConfiguration.getServerName()).thenReturn("serverName");
 
     when(mockAwsCloudContextService.getRequiredAwsCloudContext(any()))
-        .thenReturn(ControlledAwsResourceFixtures.makeAwsCloudContext());
+        .thenReturn(AwsTestUtils.makeAwsCloudContext());
 
     mockAwsUtils
         .when(() -> AwsUtils.createWsmCredentialProvider(any(), any()))

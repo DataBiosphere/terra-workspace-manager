@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_REGION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -13,8 +14,8 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.common.utils.AwsUtils;
-import bio.terra.workspace.common.utils.MvcWorkspaceApi;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiAwsS3StorageFolderCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -48,7 +49,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private JobService jobService;
   @Autowired private StairwayComponent stairwayComponent;
-  @Autowired MvcWorkspaceApi mvcWorkspaceApi;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired UserAccessUtils userAccessUtils;
 
   private AuthenticatedUserRequest userRequest;
@@ -61,12 +62,12 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     super.init();
     userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
     workspaceUuid =
-        mvcWorkspaceApi.createWorkspaceAndWait(userRequest, apiCloudPlatform).getWorkspaceId();
+        mockWorkspaceV2Api.createWorkspaceAndWait(userRequest, apiCloudPlatform).getWorkspaceId();
     landingZone =
         awsCloudContextService
             .getLandingZone(
                 awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid),
-                Region.of(ControlledAwsResourceFixtures.AWS_REGION))
+                Region.of(AWS_REGION))
             .orElseThrow();
     awsCredentialsProvider =
         AwsUtils.createWsmCredentialProvider(
@@ -76,7 +77,7 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
 
   @AfterAll
   public void cleanUp() throws Exception {
-    mvcWorkspaceApi.deleteWorkspaceAndWait(userRequest, workspaceUuid);
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceUuid);
   }
 
   /**
@@ -88,22 +89,14 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     StairwayTestUtils.enumerateJobsDump(jobService, workspaceUuid, userRequest);
   }
 
-  private ControlledAwsS3StorageFolderResource makeResource(
-      ApiAwsS3StorageFolderCreationParameters creationParameters) {
-    return ControlledAwsResourceFixtures.makeAwsS3StorageFolderResourceBuilder(
-            workspaceUuid,
-            /* resourceName= */ creationParameters.getFolderName(),
-            landingZone.getStorageBucket().name(),
-            /* folderName= */ creationParameters.getFolderName())
-        .build();
-  }
-
   @Test
   void createGetUpdateDeleteS3StorageFolderTest() throws InterruptedException {
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
-    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters);
+    ControlledAwsS3StorageFolderResource resource =
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResource(
+            workspaceUuid, landingZone.getStorageBucket().name(), creationParameters);
 
     // create resource
     ControlledAwsS3StorageFolderResource createdResource =
@@ -161,23 +154,32 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
-    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters);
+    ControlledAwsS3StorageFolderResource resource =
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResource(
+            workspaceUuid, landingZone.getStorageBucket().name(), creationParameters);
 
     // test idempotency of s3-folder-specific undo step by retrying once.
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         CreateAwsS3StorageFolderStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
 
-    // fail after the last step to test that everything is deleted on undo.
+    // final createResponseStep cannot fail, hence fail the create step
+    Map<String, StepStatus> failureSteps = new HashMap<>();
+    failureSteps.put(
+        CreateAwsS3StorageFolderStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+
     jobService.setFlightDebugInfoForTest(
-        FlightDebugInfo.newBuilder().lastStepFailure(true).undoStepFailures(retrySteps).build());
+        FlightDebugInfo.newBuilder()
+            .doStepFailures(failureSteps)
+            .undoStepFailures(retrySteps)
+            .build());
     assertThrows(
         InvalidResultStateException.class,
         () ->
             controlledResourceService.createControlledResourceSync(
                 resource, null, userRequest, creationParameters));
 
-    // validate resource does not exist.
+    // validate resource does not exist
     assertFalse(AwsUtils.checkFolderExists(awsCredentialsProvider, resource));
     assertThrows(
         ResourceNotFoundException.class,
@@ -191,7 +193,9 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     ApiAwsS3StorageFolderCreationParameters creationParameters =
         ControlledAwsResourceFixtures.makeAwsS3StorageFolderCreationParameters(
             ControlledAwsResourceFixtures.uniqueStorageName());
-    ControlledAwsS3StorageFolderResource resource = makeResource(creationParameters);
+    ControlledAwsS3StorageFolderResource resource =
+        ControlledAwsResourceFixtures.makeAwsS3StorageFolderResource(
+            workspaceUuid, landingZone.getStorageBucket().name(), creationParameters);
 
     ControlledAwsS3StorageFolderResource createdResource =
         controlledResourceService

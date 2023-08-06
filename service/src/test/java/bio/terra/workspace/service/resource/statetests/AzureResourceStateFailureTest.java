@@ -1,15 +1,15 @@
 package bio.terra.workspace.service.resource.statetests;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.AZURE_VM_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CLONE_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_STORAGE_CONTAINERS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CLONE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_DISK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -19,7 +19,8 @@ import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -53,6 +54,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired ObjectMapper objectMapper;
   @Autowired ReferencedResourceService referencedResourceService;
   @Autowired ResourceDao resourceDao;
@@ -66,7 +68,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
 
   @BeforeEach
   void setup() throws Exception {
-    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils);
+    stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils, mockWorkspaceV1Api);
 
     // Everything is authorized!
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);
@@ -111,7 +113,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(batchRequest),
-        CREATE_AZURE_BATCH_POOL_PATH_FORMAT.formatted(workspaceUuid),
+        CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT.formatted(workspaceUuid),
         HttpStatus.SC_CONFLICT);
 
     // AZURE-Controlled Disk
@@ -122,7 +124,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(diskRequest),
-        CREATE_AZURE_DISK_PATH_FORMAT.formatted(workspaceUuid),
+        CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT.formatted(workspaceUuid),
         HttpStatus.SC_CONFLICT);
 
     // AZURE-Storage Container
@@ -134,7 +136,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(storageRequest),
-        CREATE_AZURE_STORAGE_CONTAINERS_PATH_FORMAT.formatted(workspaceUuid),
+        CREATE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT.formatted(workspaceUuid),
         HttpStatus.SC_CONFLICT);
 
     // AZURE-VM
@@ -146,7 +148,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     mockMvcUtils.postExpect(
         USER_REQUEST,
         objectMapper.writeValueAsString(vmRequest),
-        CREATE_AZURE_VM_PATH_FORMAT.formatted(workspaceUuid),
+        CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT.formatted(workspaceUuid),
         HttpStatus.SC_CONFLICT);
   }
 
@@ -189,7 +191,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
 
     // AZURE-Controlled Batch
     stateTestUtils.deleteResourceExpectConflict(
-        workspaceUuid, batchResource.getResourceId(), AZURE_BATCH_POOL_PATH_FORMAT);
+        workspaceUuid, batchResource.getResourceId(), CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT);
 
     // AZURE-Controlled Disk
     var diskDeleteBody =
@@ -198,7 +200,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         diskResource.getResourceId(),
-        AZURE_DISK_PATH_FORMAT,
+        CONTROLLED_AZURE_DISK_PATH_FORMAT,
         objectMapper.writeValueAsString(diskDeleteBody));
 
     // AZURE-Storage Container
@@ -208,7 +210,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         storageResource.getResourceId(),
-        AZURE_STORAGE_CONTAINER_PATH_FORMAT,
+        CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT,
         objectMapper.writeValueAsString(storageDeleteBody));
 
     // AZURE-VM
@@ -218,7 +220,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         vmResource.getResourceId(),
-        AZURE_VM_PATH_FORMAT,
+        CONTROLLED_AZURE_VM_PATH_FORMAT,
         objectMapper.writeValueAsString(vmDeleteBody));
   }
 
@@ -257,7 +259,7 @@ public class AzureResourceStateFailureTest extends BaseUnitTest {
     stateTestUtils.postResourceExpectConflict(
         workspaceUuid,
         storageResource.getResourceId(),
-        CLONE_AZURE_STORAGE_CONTAINER_PATH_FORMAT,
+        CLONE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT,
         objectMapper.writeValueAsString(storageCloneBody));
   }
 }

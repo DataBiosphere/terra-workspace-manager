@@ -84,7 +84,7 @@ public class AwsCloudContextFields {
    * @param environment discovery environment
    * @throws StaleConfigurationException StaleConfigurationException if they do not match
    */
-  public void verifyCloudContext(Environment environment) {
+  public void verifyCloudContextFields(Environment environment) {
     Metadata metadata = environment.getMetadata();
     if (!majorVersion.equals(metadata.getMajorVersion())
         || !accountId.equals(metadata.getAccountId())) {
