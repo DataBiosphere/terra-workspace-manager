@@ -520,7 +520,6 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact getLocationInfoWithNullLocation(PactDslWithProvider builder) {
     var locationArray =
