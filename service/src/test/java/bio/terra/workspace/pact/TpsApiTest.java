@@ -520,11 +520,7 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-  /**
-   * The location parameter for PolicyApiController.getLocationInfo is marked as nullable, So
-   * presumably we can call TPS without the location. It would be nice to be able to specify this in
-   * a single pact, but the query arg matching doesn't give us that level of control
-   */
+
   @Pact(consumer = "wsm", provider = "tps")
   public RequestResponsePact getLocationInfoWithNullLocation(PactDslWithProvider builder) {
     var locationArray =
@@ -555,6 +551,7 @@ public class TpsApiTest {
   @Test
   @PactTestFor(pactMethod = "getLocationInfoWithNullLocation")
   public void retrievingInformationOnANullLocation() throws Exception {
+    // when location is null, it defaults to "global" in TPS
     var result = dispatch.getLocationInfo(CloudPlatform.AZURE, null);
     assertNotNull(result);
   }
