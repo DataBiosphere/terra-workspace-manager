@@ -465,7 +465,7 @@ public class SamService {
       String resourceType,
       String resourceId,
       List<String> groups)
-      throws Exception {
+      throws InterruptedException {
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
     // TODO: [PF-2938] We should use the service account to add these groups.
     // ResourcesApi resourceApi = samResourcesApi(getWsmServiceAccountToken());

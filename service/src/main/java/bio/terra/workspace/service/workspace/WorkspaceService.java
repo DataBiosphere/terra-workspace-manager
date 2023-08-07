@@ -32,6 +32,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.PolicyValidator;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -59,6 +60,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -919,6 +921,8 @@ public class WorkspaceService {
       TpsUpdateMode updateMode,
       AuthenticatedUserRequest userRequest) {
     logger.info("Updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
+    TpsPaoGetResult paoBeforeUpdate =
+        Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(workspaceUuid), "getPao");
 
     var dryRun =
         Rethrow.onInterrupted(
@@ -962,6 +966,25 @@ public class WorkspaceService {
             workspaceUuid,
             userRequest.getEmail());
       }
+
+      HashSet<String> addedGroups =
+          TpsUtilities.getAddedGroups(
+              paoBeforeUpdate.getEffectiveAttributes(),
+              dryRun.getResultingPao().getEffectiveAttributes());
+      if (!addedGroups.isEmpty()) {
+        logger.info(
+            "Group policies have changed, adding additional groups to auth domain in Sam for workspace {}",
+            workspaceUuid);
+        Rethrow.onInterrupted(
+            () ->
+                samService.addGroupsToAuthDomain(
+                    userRequest,
+                    SamConstants.SamResource.WORKSPACE,
+                    workspaceUuid.toString(),
+                    addedGroups.stream().toList()),
+            "updateAuthDomains");
+      }
+
       return result;
     }
   }
