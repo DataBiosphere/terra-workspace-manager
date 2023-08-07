@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -221,13 +222,14 @@ public class CreateDataprocClusterStep implements Step {
 
     // Set initialization script
     // TODO PF-2828: Add WSM default post-startup script
-    if (!StringUtils.isEmpty(creationParameters.getInitializationScript())) {
+    List<String> initializationScripts = creationParameters.getInitializationScripts();
+    if (initializationScripts != null) {
       cluster
           .getConfig()
           .setInitializationActions(
-              List.of(
-                  new NodeInitializationAction()
-                      .setExecutableFile(creationParameters.getInitializationScript())));
+              initializationScripts.stream()
+                  .map(script -> new NodeInitializationAction().setExecutableFile(script))
+                  .collect(Collectors.toList()));
     }
 
     // Configure cluster lifecycle
