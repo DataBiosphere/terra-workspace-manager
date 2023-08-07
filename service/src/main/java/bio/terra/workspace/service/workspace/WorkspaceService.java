@@ -60,6 +60,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.common.base.Preconditions;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -920,6 +921,8 @@ public class WorkspaceService {
       TpsUpdateMode updateMode,
       AuthenticatedUserRequest userRequest) {
     logger.info("Updating workspace policies {} for {}", workspaceUuid, userRequest.getEmail());
+    TpsPaoGetResult paoBeforeUpdate =
+        Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(workspaceUuid), "getPao");
 
     var dryRun =
         Rethrow.onInterrupted(
@@ -964,10 +967,9 @@ public class WorkspaceService {
             userRequest.getEmail());
       }
 
-      var currentPao = Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(workspaceUuid), "getPao");
-      var addedGroups =
+      HashSet<String> addedGroups =
           TpsUtilities.getAddedGroups(
-              currentPao.getEffectiveAttributes(),
+              paoBeforeUpdate.getEffectiveAttributes(),
               dryRun.getResultingPao().getEffectiveAttributes());
       if (!addedGroups.isEmpty()) {
         logger.info(
