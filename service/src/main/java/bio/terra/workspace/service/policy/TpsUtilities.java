@@ -2,6 +2,7 @@ package bio.terra.workspace.service.policy;
 
 import bio.terra.policy.model.TpsPolicyInputs;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class TpsUtilities {
@@ -25,6 +26,38 @@ public class TpsUtilities {
             result.add(data.getValue());
           }
         }
+      }
+    }
+
+    return result;
+  }
+
+  public static HashSet<String> getAddedGroups(
+      TpsPolicyInputs originalPolicies, TpsPolicyInputs updatedPolicies) {
+    HashSet<String> result = new HashSet<>();
+    var originalGroups =
+        new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(originalPolicies));
+    var updatedGroups = new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(updatedPolicies));
+
+    for (String updatedGroup : updatedGroups) {
+      if (!originalGroups.contains(updatedGroup)) {
+        result.add(updatedGroup);
+      }
+    }
+
+    return result;
+  }
+
+  public static HashSet<String> getRemovedGroups(
+      TpsPolicyInputs originalPolicies, TpsPolicyInputs updatedPolicies) {
+    HashSet<String> result = new HashSet<>();
+    var originalGroups =
+        new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(originalPolicies));
+    var updatedGroups = new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(updatedPolicies));
+
+    for (String originalGroup : originalGroups) {
+      if (!updatedGroups.contains(originalGroup)) {
+        result.add(originalGroup);
       }
     }
 

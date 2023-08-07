@@ -32,6 +32,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.PolicyValidator;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.policy.TpsUtilities;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -962,6 +963,26 @@ public class WorkspaceService {
             workspaceUuid,
             userRequest.getEmail());
       }
+
+      var currentPao = Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(workspaceUuid), "getPao");
+      var addedGroups =
+          TpsUtilities.getAddedGroups(
+              currentPao.getEffectiveAttributes(),
+              dryRun.getResultingPao().getEffectiveAttributes());
+      if (!addedGroups.isEmpty()) {
+        logger.info(
+            "Group policies have changed, adding additional groups to auth domain in Sam for workspace {}",
+            workspaceUuid);
+        Rethrow.onInterrupted(
+            () ->
+                samService.addGroupsToAuthDomain(
+                    userRequest,
+                    SamConstants.SamResource.WORKSPACE,
+                    workspaceUuid.toString(),
+                    addedGroups.stream().toList()),
+            "updateAuthDomains");
+      }
+
       return result;
     }
   }
