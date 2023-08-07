@@ -13,7 +13,6 @@ import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -116,22 +115,24 @@ public class PolicyValidator {
     return validationErrors;
   }
 
-  /**
-   * @param policies the updated/dryrun policies
-   * @return validation errors *
-   */
   public List<String> validateWorkspaceConformsToGroupPolicy(
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
+    var groups = TpsUtilities.getGroupConstraintsFromInputs(policies.getEffectiveAttributes());
     var currentPao =
         Rethrow.onInterrupted(() -> tpsApiDispatch.getPao((workspace.getWorkspaceId())), "getPao");
-    HashSet<String> removedGroups =
-        TpsUtilities.getRemovedGroups(
-            currentPao.getEffectiveAttributes(), policies.getAttributes());
+    var existingGroups =
+        (currentPao == null)
+            ? new ArrayList<String>()
+            : TpsUtilities.getGroupConstraintsFromInputs(currentPao.getEffectiveAttributes());
 
-    if (!removedGroups.isEmpty()) {
-      return List.of("Removing group constraints not yet supported for this api call");
+    if (!groups.isEmpty()) {
+      if (groups.containsAll(existingGroups) && existingGroups.containsAll(groups)) {
+        // groups have not changed.
+        return List.of();
+      }
+      return List.of("policies with group constraints not yet supported for this api call");
+    } else {
+      return List.of();
     }
-
-    return List.of();
   }
 }

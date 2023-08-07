@@ -8,7 +8,6 @@ import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.workspace.common.BaseUnitTest;
-import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -59,99 +58,14 @@ public class TpsUtilitiesTest extends BaseUnitTest {
   }
 
   @Test
-  void testGetAddedGroups_noGroupPolicies() {
-    TpsPolicyInputs inputs = new TpsPolicyInputs().addInputsItem(createProtectedPolicyInput());
-    HashSet<String> results = TpsUtilities.getAddedGroups(inputs, inputs);
-    assertIterableEquals(List.of(), results);
-  }
-
-  @Test
-  void testGetAddedGroups_noGroupsAdded() {
-    TpsPolicyInputs inputs = new TpsPolicyInputs().addInputsItem(createGroupPolicyInput("group1"));
-    HashSet<String> results = TpsUtilities.getAddedGroups(inputs, inputs);
-    assertIterableEquals(List.of(), results);
-  }
-
-  @Test
-  void testGetAddedGroups_groupAdded() {
-    String group1Name = "group1";
-    String group2Name = "group2";
-
-    TpsPolicyInputs originalInputs =
-        new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name));
-    TpsPolicyInputs addedGroupInputs =
-        new TpsPolicyInputs()
-            .addInputsItem(createGroupPolicyInput(group1Name))
-            .addInputsItem(createGroupPolicyInput(group2Name));
-
-    HashSet<String> results = TpsUtilities.getAddedGroups(originalInputs, addedGroupInputs);
-    assertIterableEquals(List.of(group2Name), results);
-  }
-
-  @Test
-  void testGetAddedGroups_groupRemoved() {
-    String group1Name = "group1";
-    String group2Name = "group2";
-
-    TpsPolicyInputs originalInputs =
-        new TpsPolicyInputs()
-            .addInputsItem(createGroupPolicyInput(group1Name))
-            .addInputsItem(createGroupPolicyInput(group2Name));
-    TpsPolicyInputs removedGroupInputs =
-        new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name));
-
-    HashSet<String> results = TpsUtilities.getAddedGroups(originalInputs, removedGroupInputs);
-    assertIterableEquals(List.of(), results);
-  }
-
-  @Test
-  void testGetRemovedGroups_noGroupPolicies() {
-    TpsPolicyInputs inputs = new TpsPolicyInputs().addInputsItem(createProtectedPolicyInput());
-    HashSet<String> results = TpsUtilities.getRemovedGroups(inputs, inputs);
-    assertIterableEquals(List.of(), results);
-  }
-
-  @Test
-  void testGetRemovedGroups_noGroupsRemoved() {
-    TpsPolicyInputs inputs = new TpsPolicyInputs().addInputsItem(createGroupPolicyInput("group1"));
-    HashSet<String> results = TpsUtilities.getRemovedGroups(inputs, inputs);
-    assertIterableEquals(List.of(), results);
-  }
-
-  @Test
-  void testGetRemovedGroups_groupAdded() {
-    String group1Name = "group1";
-    TpsPolicyInputs originalInputs =
-        new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name));
-    TpsPolicyInputs addedGroupInputs =
-        new TpsPolicyInputs()
-            .addInputsItem(createGroupPolicyInput(group1Name))
-            .addInputsItem(createGroupPolicyInput("group2"));
-    HashSet<String> results = TpsUtilities.getRemovedGroups(originalInputs, addedGroupInputs);
-    assertIterableEquals(List.of(), results);
-  }
-
-  @Test
-  void testGetRemovedGroups_groupRemoved() {
-    String group1Name = "group1";
-    String group2Name = "group2";
-
-    TpsPolicyInputs originalInputs =
-        new TpsPolicyInputs()
-            .addInputsItem(createGroupPolicyInput(group1Name))
-            .addInputsItem(createGroupPolicyInput(group2Name));
-    TpsPolicyInputs removedGroupInputs =
-        new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name));
-
-    HashSet<String> results = TpsUtilities.getRemovedGroups(originalInputs, removedGroupInputs);
-    assertIterableEquals(List.of(group2Name), results);
-  }
-
-  @Test
   void testContainsProtectedDataPolicy() {
     assertTrue(
         TpsUtilities.containsProtectedDataPolicy(
-            new TpsPolicyInputs().addInputsItem(createProtectedPolicyInput())));
+            new TpsPolicyInputs()
+                .addInputsItem(
+                    new TpsPolicyInput()
+                        .namespace(TpsUtilities.TERRA_NAMESPACE)
+                        .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME))));
   }
 
   @Test
@@ -168,18 +82,5 @@ public class TpsUtilitiesTest extends BaseUnitTest {
   @Test
   void testContainsProtectedDataPolicy_null() {
     assertFalse(TpsUtilities.containsProtectedDataPolicy(null));
-  }
-
-  private TpsPolicyInput createGroupPolicyInput(String groupName) {
-    return new TpsPolicyInput()
-        .namespace(TpsUtilities.TERRA_NAMESPACE)
-        .name(TpsUtilities.GROUP_CONSTRAINT)
-        .addAdditionalDataItem(new TpsPolicyPair().key(TpsUtilities.GROUP_KEY).value(groupName));
-  }
-
-  private TpsPolicyInput createProtectedPolicyInput() {
-    return new TpsPolicyInput()
-        .namespace(TpsUtilities.TERRA_NAMESPACE)
-        .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME);
   }
 }
