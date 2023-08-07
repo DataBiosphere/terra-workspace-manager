@@ -35,8 +35,6 @@ public class TpsUtilities {
 
   public static HashSet<String> getAddedGroups(
       TpsPaoGetResult originalPolicies, TpsPaoGetResult updatedPolicies) {
-    HashSet<String> result = new HashSet<>();
-
     HashSet<String> originalGroups =
         originalPolicies == null
             ? new HashSet<>()
@@ -51,19 +49,12 @@ public class TpsUtilities {
                 TpsUtilities.getGroupConstraintsFromInputs(
                     updatedPolicies.getEffectiveAttributes()));
 
-    for (String updatedGroup : updatedGroups) {
-      if (!originalGroups.contains(updatedGroup)) {
-        result.add(updatedGroup);
-      }
-    }
-
-    return result;
+    updatedGroups.removeAll(originalGroups);
+    return updatedGroups;
   }
 
   public static HashSet<String> getRemovedGroups(
       TpsPaoGetResult originalPolicies, TpsPaoGetResult updatedPolicies) {
-    HashSet<String> result = new HashSet<>();
-
     HashSet<String> originalGroups =
         originalPolicies == null
             ? new HashSet<>()
@@ -78,13 +69,8 @@ public class TpsUtilities {
                 TpsUtilities.getGroupConstraintsFromInputs(
                     updatedPolicies.getEffectiveAttributes()));
 
-    for (String originalGroup : originalGroups) {
-      if (!updatedGroups.contains(originalGroup)) {
-        result.add(originalGroup);
-      }
-    }
-
-    return result;
+    originalGroups.removeAll(updatedGroups);
+    return originalGroups;
   }
 
   public static boolean containsProtectedDataPolicy(TpsPolicyInputs inputs) {
