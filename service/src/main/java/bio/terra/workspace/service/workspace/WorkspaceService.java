@@ -968,9 +968,7 @@ public class WorkspaceService {
       }
 
       HashSet<String> addedGroups =
-          TpsUtilities.getAddedGroups(
-              paoBeforeUpdate.getEffectiveAttributes(),
-              dryRun.getResultingPao().getEffectiveAttributes());
+          TpsUtilities.getAddedGroups(paoBeforeUpdate, dryRun.getResultingPao());
       if (!addedGroups.isEmpty()) {
         logger.info(
             "Group policies have changed, adding additional groups to auth domain in Sam for workspace {}",

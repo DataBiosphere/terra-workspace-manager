@@ -124,9 +124,7 @@ public class PolicyValidator {
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var currentPao =
         Rethrow.onInterrupted(() -> tpsApiDispatch.getPao((workspace.getWorkspaceId())), "getPao");
-    HashSet<String> removedGroups =
-        TpsUtilities.getRemovedGroups(
-            currentPao.getEffectiveAttributes(), policies.getAttributes());
+    HashSet<String> removedGroups = TpsUtilities.getRemovedGroups(currentPao, policies);
 
     if (!removedGroups.isEmpty()) {
       return List.of("Removing group constraints not yet supported for this api call");

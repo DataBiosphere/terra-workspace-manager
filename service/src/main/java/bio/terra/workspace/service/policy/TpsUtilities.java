@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.policy;
 
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,11 +34,22 @@ public class TpsUtilities {
   }
 
   public static HashSet<String> getAddedGroups(
-      TpsPolicyInputs originalPolicies, TpsPolicyInputs updatedPolicies) {
+      TpsPaoGetResult originalPolicies, TpsPaoGetResult updatedPolicies) {
     HashSet<String> result = new HashSet<>();
-    var originalGroups =
-        new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(originalPolicies));
-    var updatedGroups = new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(updatedPolicies));
+
+    HashSet<String> originalGroups =
+        originalPolicies == null
+            ? new HashSet<>()
+            : new HashSet<>(
+                TpsUtilities.getGroupConstraintsFromInputs(
+                    originalPolicies.getEffectiveAttributes()));
+
+    HashSet<String> updatedGroups =
+        updatedPolicies == null
+            ? new HashSet<>()
+            : new HashSet<>(
+                TpsUtilities.getGroupConstraintsFromInputs(
+                    updatedPolicies.getEffectiveAttributes()));
 
     for (String updatedGroup : updatedGroups) {
       if (!originalGroups.contains(updatedGroup)) {
@@ -49,11 +61,22 @@ public class TpsUtilities {
   }
 
   public static HashSet<String> getRemovedGroups(
-      TpsPolicyInputs originalPolicies, TpsPolicyInputs updatedPolicies) {
+      TpsPaoGetResult originalPolicies, TpsPaoGetResult updatedPolicies) {
     HashSet<String> result = new HashSet<>();
-    var originalGroups =
-        new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(originalPolicies));
-    var updatedGroups = new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(updatedPolicies));
+
+    HashSet<String> originalGroups =
+        originalPolicies == null
+            ? new HashSet<>()
+            : new HashSet<>(
+                TpsUtilities.getGroupConstraintsFromInputs(
+                    originalPolicies.getEffectiveAttributes()));
+
+    HashSet<String> updatedGroups =
+        updatedPolicies == null
+            ? new HashSet<>()
+            : new HashSet<>(
+                TpsUtilities.getGroupConstraintsFromInputs(
+                    updatedPolicies.getEffectiveAttributes()));
 
     for (String originalGroup : originalGroups) {
       if (!updatedGroups.contains(originalGroup)) {

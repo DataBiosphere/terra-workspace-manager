@@ -32,9 +32,7 @@ public class ValidateGroupPolicyAttributesStep implements Step {
 
     // In Milestone 2, we are able to add additional groups but cannot remove them.
     TpsPaoGetResult currentPao = tpsApiDispatch.getPao(workspaceId);
-    HashSet<String> removedGroups =
-        TpsUtilities.getRemovedGroups(
-            currentPao.getEffectiveAttributes(), mergedPao.getEffectiveAttributes());
+    HashSet<String> removedGroups = TpsUtilities.getRemovedGroups(currentPao, mergedPao);
     if (!removedGroups.isEmpty()) {
       throw new PolicyConflictException("Cannot remove groups from policy.");
     }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
@@ -60,14 +61,19 @@ public class TpsUtilitiesTest extends BaseUnitTest {
 
   @Test
   void testGetAddedGroups_noGroupPolicies() {
-    TpsPolicyInputs inputs = new TpsPolicyInputs().addInputsItem(createProtectedPolicyInput());
+    TpsPaoGetResult inputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(new TpsPolicyInputs().addInputsItem(createProtectedPolicyInput()));
     HashSet<String> results = TpsUtilities.getAddedGroups(inputs, inputs);
     assertIterableEquals(List.of(), results);
   }
 
   @Test
   void testGetAddedGroups_noGroupsAdded() {
-    TpsPolicyInputs inputs = new TpsPolicyInputs().addInputsItem(createGroupPolicyInput("group1"));
+    TpsPaoGetResult inputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs().addInputsItem(createGroupPolicyInput("group1")));
     HashSet<String> results = TpsUtilities.getAddedGroups(inputs, inputs);
     assertIterableEquals(List.of(), results);
   }
@@ -77,12 +83,16 @@ public class TpsUtilitiesTest extends BaseUnitTest {
     String group1Name = "group1";
     String group2Name = "group2";
 
-    TpsPolicyInputs originalInputs =
-        new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name));
-    TpsPolicyInputs addedGroupInputs =
-        new TpsPolicyInputs()
-            .addInputsItem(createGroupPolicyInput(group1Name))
-            .addInputsItem(createGroupPolicyInput(group2Name));
+    TpsPaoGetResult originalInputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name)));
+    TpsPaoGetResult addedGroupInputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs()
+                    .addInputsItem(createGroupPolicyInput(group1Name))
+                    .addInputsItem(createGroupPolicyInput(group2Name)));
 
     HashSet<String> results = TpsUtilities.getAddedGroups(originalInputs, addedGroupInputs);
     assertIterableEquals(List.of(group2Name), results);
@@ -93,12 +103,16 @@ public class TpsUtilitiesTest extends BaseUnitTest {
     String group1Name = "group1";
     String group2Name = "group2";
 
-    TpsPolicyInputs originalInputs =
-        new TpsPolicyInputs()
-            .addInputsItem(createGroupPolicyInput(group1Name))
-            .addInputsItem(createGroupPolicyInput(group2Name));
-    TpsPolicyInputs removedGroupInputs =
-        new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name));
+    TpsPaoGetResult originalInputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs()
+                    .addInputsItem(createGroupPolicyInput(group1Name))
+                    .addInputsItem(createGroupPolicyInput(group2Name)));
+    TpsPaoGetResult removedGroupInputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name)));
 
     HashSet<String> results = TpsUtilities.getAddedGroups(originalInputs, removedGroupInputs);
     assertIterableEquals(List.of(), results);
@@ -106,14 +120,19 @@ public class TpsUtilitiesTest extends BaseUnitTest {
 
   @Test
   void testGetRemovedGroups_noGroupPolicies() {
-    TpsPolicyInputs inputs = new TpsPolicyInputs().addInputsItem(createProtectedPolicyInput());
+    TpsPaoGetResult inputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(new TpsPolicyInputs().addInputsItem(createProtectedPolicyInput()));
     HashSet<String> results = TpsUtilities.getRemovedGroups(inputs, inputs);
     assertIterableEquals(List.of(), results);
   }
 
   @Test
   void testGetRemovedGroups_noGroupsRemoved() {
-    TpsPolicyInputs inputs = new TpsPolicyInputs().addInputsItem(createGroupPolicyInput("group1"));
+    TpsPaoGetResult inputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs().addInputsItem(createGroupPolicyInput("group1")));
     HashSet<String> results = TpsUtilities.getRemovedGroups(inputs, inputs);
     assertIterableEquals(List.of(), results);
   }
@@ -121,12 +140,16 @@ public class TpsUtilitiesTest extends BaseUnitTest {
   @Test
   void testGetRemovedGroups_groupAdded() {
     String group1Name = "group1";
-    TpsPolicyInputs originalInputs =
-        new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name));
-    TpsPolicyInputs addedGroupInputs =
-        new TpsPolicyInputs()
-            .addInputsItem(createGroupPolicyInput(group1Name))
-            .addInputsItem(createGroupPolicyInput("group2"));
+    TpsPaoGetResult originalInputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name)));
+    TpsPaoGetResult addedGroupInputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs()
+                    .addInputsItem(createGroupPolicyInput(group1Name))
+                    .addInputsItem(createGroupPolicyInput("group2")));
     HashSet<String> results = TpsUtilities.getRemovedGroups(originalInputs, addedGroupInputs);
     assertIterableEquals(List.of(), results);
   }
@@ -136,12 +159,16 @@ public class TpsUtilitiesTest extends BaseUnitTest {
     String group1Name = "group1";
     String group2Name = "group2";
 
-    TpsPolicyInputs originalInputs =
-        new TpsPolicyInputs()
-            .addInputsItem(createGroupPolicyInput(group1Name))
-            .addInputsItem(createGroupPolicyInput(group2Name));
-    TpsPolicyInputs removedGroupInputs =
-        new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name));
+    TpsPaoGetResult originalInputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs()
+                    .addInputsItem(createGroupPolicyInput(group1Name))
+                    .addInputsItem(createGroupPolicyInput(group2Name)));
+    TpsPaoGetResult removedGroupInputs =
+        new TpsPaoGetResult()
+            .effectiveAttributes(
+                new TpsPolicyInputs().addInputsItem(createGroupPolicyInput(group1Name)));
 
     HashSet<String> results = TpsUtilities.getRemovedGroups(originalInputs, removedGroupInputs);
     assertIterableEquals(List.of(group2Name), results);
