@@ -481,6 +481,7 @@ public class TpsApiTest {
     when(workspaceService.validateWorkspaceAndAction(any(), any(), any())).thenReturn(workspace);
     var result = dispatch.explain(existingPolicyId, 1, workspaceService, userRequest);
     assertNotNull(result);
+    assertNotNull(result.toApi());
   }
 
   @Pact(consumer = "wsm", provider = "tps")
