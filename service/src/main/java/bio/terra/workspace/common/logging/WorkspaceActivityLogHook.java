@@ -36,6 +36,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -301,12 +302,19 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   }
 
   private List<UUID> getControlledResourceToDeleteFromFlight(FlightContext context) {
-    List<ControlledResource> controlledResource =
-        checkNotNull(
-            context
-                .getInputParameters()
-                .get(CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {}));
-    return controlledResource.stream().map(WsmResource::getResourceId).toList();
+    var inputParams = context.getInputParameters();
+    if (inputParams.containsKey(ResourceKeys.RESOURCE_ID)) {
+      return List.of(
+          UUID.fromString(
+              FlightUtils.getRequired(inputParams, ResourceKeys.RESOURCE_ID, String.class)));
+    }
+    if (inputParams.containsKey(CONTROLLED_RESOURCES_TO_DELETE)) {
+      List<ControlledResource> controlledResource =
+          FlightUtils.getRequired(
+              inputParams, CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {});
+      return controlledResource.stream().map(WsmResource::getResourceId).toList();
+    }
+    return Collections.emptyList();
   }
 
   private void maybeLogControlledResourcesDeletionFlight(
