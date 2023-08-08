@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.policy;
 
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPolicyInputs;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class TpsUtilities {
@@ -29,6 +31,46 @@ public class TpsUtilities {
     }
 
     return result;
+  }
+
+  public static HashSet<String> getAddedGroups(
+      TpsPaoGetResult originalPolicies, TpsPaoGetResult updatedPolicies) {
+    HashSet<String> originalGroups =
+        originalPolicies == null
+            ? new HashSet<>()
+            : new HashSet<>(
+                TpsUtilities.getGroupConstraintsFromInputs(
+                    originalPolicies.getEffectiveAttributes()));
+
+    HashSet<String> updatedGroups =
+        updatedPolicies == null
+            ? new HashSet<>()
+            : new HashSet<>(
+                TpsUtilities.getGroupConstraintsFromInputs(
+                    updatedPolicies.getEffectiveAttributes()));
+
+    updatedGroups.removeAll(originalGroups);
+    return updatedGroups;
+  }
+
+  public static HashSet<String> getRemovedGroups(
+      TpsPaoGetResult originalPolicies, TpsPaoGetResult updatedPolicies) {
+    HashSet<String> originalGroups =
+        originalPolicies == null
+            ? new HashSet<>()
+            : new HashSet<>(
+                TpsUtilities.getGroupConstraintsFromInputs(
+                    originalPolicies.getEffectiveAttributes()));
+
+    HashSet<String> updatedGroups =
+        updatedPolicies == null
+            ? new HashSet<>()
+            : new HashSet<>(
+                TpsUtilities.getGroupConstraintsFromInputs(
+                    updatedPolicies.getEffectiveAttributes()));
+
+    originalGroups.removeAll(updatedGroups);
+    return originalGroups;
   }
 
   public static boolean containsProtectedDataPolicy(TpsPolicyInputs inputs) {
