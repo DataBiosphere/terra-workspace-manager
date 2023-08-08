@@ -60,18 +60,21 @@ import bio.terra.workspace.generated.model.ApiUpdateGcsBucketObjectReferenceRequ
 import bio.terra.workspace.generated.model.ApiUpdateGcsBucketReferenceRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.CreateGcsBucketStep;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsBucketCloudSyncStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.RetrieveGcsBucketCloudAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CompleteTransferOperationStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CopyGcsBucketDefinitionStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.RemoveBucketRolesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetBucketRolesStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetNoOpBucketCloneResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketInWorkingMapStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SetReferencedDestinationGcsBucketResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.TransferGcsBucketToGcsBucketStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CompleteTableCopyJobsStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CopyBigQueryDatasetDefinitionStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CopyBigQueryDatasetDifferentRegionStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CreateTableCopyJobsStep;
+import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetNoOpDatasetCloneResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetInWorkingMapStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.SetReferencedDestinationBigQueryDatasetResponseStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
@@ -254,12 +257,29 @@ public class MockGcpApi {
             RemoveBucketRolesStep.class);
     retryableSteps.forEach(
         step -> failureSteps.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
-
+    // Because FlightDebugInfo is set on the JobService object, it applies to both the clone flight
+    // and the controlled resource subflight. We cannot set lastStepFailure here or the subflight
+    // will also fail. The actual last step of the clone flight depends on the cloning instructions.
     if (shouldUndo) {
-      failureSteps.put(
-          GcsBucketCloudSyncStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+      switch (cloningInstructions) {
+        case NOTHING -> {
+          failureSteps.put(
+              SetNoOpBucketCloneResponseStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+        }
+          // Avoid undoing creation of a bucket we have copied data into by failing the flight
+          // earlier
+          // as the deletion can often take > 1h on the GCP side.
+        case RESOURCE, DEFINITION -> {
+          failureSteps.put(
+              CopyGcsBucketDefinitionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+        }
+        case REFERENCE, LINK_REFERENCE -> {
+          failureSteps.put(
+              SetReferencedDestinationGcsBucketResponseStep.class.getName(),
+              StepStatus.STEP_RESULT_FAILURE_FATAL);
+        }
+      }
     }
-
     jobService.setFlightDebugInfoForTest(
         FlightDebugInfo.newBuilder().doStepFailures(failureSteps).build());
 
@@ -787,8 +807,34 @@ public class MockGcpApi {
     retryableSteps.forEach(
         step -> failureSteps.put(step.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY));
 
+    // Because FlightDebugInfo is set on the JobService object, it applies to both the clone flight
+    // and the controlled resource subflight. We cannot set lastStepFailure here or the subflight
+    // will also fail. The actual last step of the clone flight depends on the cloning instructions.
     if (shouldUndo) {
-      failureSteps.put(CreateGcsBucketStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+      switch (cloningInstructions) {
+        case NOTHING -> {
+          failureSteps.put(
+              SetNoOpDatasetCloneResponseStep.class.getName(),
+              StepStatus.STEP_RESULT_FAILURE_FATAL);
+        }
+        case RESOURCE -> {
+          failureSteps.put(
+              CopyBigQueryDatasetDifferentRegionStep.class.getName(),
+              StepStatus.STEP_RESULT_FAILURE_FATAL);
+          failureSteps.put(
+              CompleteTableCopyJobsStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+        }
+        case DEFINITION -> {
+          failureSteps.put(
+              CopyBigQueryDatasetDefinitionStep.class.getName(),
+              StepStatus.STEP_RESULT_FAILURE_FATAL);
+        }
+        case REFERENCE, LINK_REFERENCE -> {
+          failureSteps.put(
+              SetReferencedDestinationBigQueryDatasetResponseStep.class.getName(),
+              StepStatus.STEP_RESULT_FAILURE_FATAL);
+        }
+      }
     }
 
     jobService.setFlightDebugInfoForTest(
