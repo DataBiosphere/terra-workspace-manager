@@ -49,12 +49,8 @@ public class TpsApiTest {
   static String existingPolicyState = "an existing policy";
   static String existingPolicyProviderStateValue = "${policyId}";
   static UUID secondPolicyId = UUID.fromString("a254714b-4519-4ce4-ad87-19a7143376f4");
-  // TODO: better second policy state name
-  static String secondPolicyState = "another existing policy";
-
-  // uuid
-  // state
-  // uuid provider value string
+  static String secondPolicyState = "a second existing policy";
+  static String secondPolicyProviderStateValue = "${secondPolicyId}";
 
   // A regex that matches any value of CloudPlatform that has a tps string
   static String cloudPlatformTpsRegex =
@@ -247,7 +243,8 @@ public class TpsApiTest {
   public RequestResponsePact linkPaoWhenBothExist(PactDslWithProvider builder) {
     var linkRequestShape =
         new PactDslJsonBody()
-            .valueFromProviderState("sourceObjectId", "${secondObjectId}", secondPolicyId)
+            .valueFromProviderState(
+                "sourceObjectId", secondPolicyProviderStateValue, secondPolicyId)
             .stringMatcher("updateMode", updateModeRegex);
     var linkResponseShape =
         new PactDslJsonBody()
@@ -282,7 +279,8 @@ public class TpsApiTest {
   public RequestResponsePact mergePaoWhenBothExist(PactDslWithProvider builder) {
     var linkRequestShape =
         new PactDslJsonBody()
-            .valueFromProviderState("sourceObjectId", "${secondObjectId}", secondPolicyId)
+            .valueFromProviderState(
+                "sourceObjectId", secondPolicyProviderStateValue, secondPolicyId)
             .stringMatcher("sourceObjectId", UUID_REGEX)
             .stringMatcher("updateMode", updateModeRegex);
     var linkResponseShape =
