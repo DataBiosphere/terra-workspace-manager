@@ -314,6 +314,10 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               inputParams, CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {});
       return controlledResource.stream().map(WsmResource::getResourceId).toList();
     }
+    logger.error(
+        String.format(
+            "Resource deletion flight %s is missing either RESOURCE_ID or CONTROLLED_RESOURCES_TO_DELETE.",
+            context.getFlightClassName()));
     return Collections.emptyList();
   }
 
