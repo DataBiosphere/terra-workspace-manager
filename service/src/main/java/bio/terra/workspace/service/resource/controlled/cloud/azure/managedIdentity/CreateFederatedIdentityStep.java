@@ -117,8 +117,7 @@ public class CreateFederatedIdentityStep implements Step {
         msiManager,
         aksApi,
         oidcIssuer,
-        uamiClientId
-    );
+        uamiClientId);
   }
 
   @VisibleForTesting
@@ -170,7 +169,14 @@ public class CreateFederatedIdentityStep implements Step {
   private void deleteK8sServiceAccount(CoreV1Api aksApi, String k8sNamespace, String uamiName)
       throws ApiException {
     aksApi.deleteNamespacedServiceAccount(
-        resolveKsaName(uamiName), k8sNamespace, null, null, null, null, null, new V1DeleteOptions());
+        resolveKsaName(uamiName),
+        k8sNamespace,
+        null,
+        null,
+        null,
+        null,
+        null,
+        new V1DeleteOptions());
   }
 
   private void createOrUpdateFederatedCredentials(
@@ -187,7 +193,9 @@ public class CreateFederatedIdentityStep implements Step {
             new FederatedIdentityCredentialInner()
                 .withIssuer(oidcIssuer)
                 .withAudiences(List.of("api://AzureADTokenExchange"))
-                .withSubject(String.format("system:serviceaccount:%s:%s", k8sNamespace, resolveKsaName(uamiName))));
+                .withSubject(
+                    String.format(
+                        "system:serviceaccount:%s:%s", k8sNamespace, resolveKsaName(uamiName))));
   }
 
   private void deleteFederatedCredentials(MsiManager msiManager, String mrgName, String uamiName) {

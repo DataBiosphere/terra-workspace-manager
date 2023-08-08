@@ -110,8 +110,7 @@ public class CreateFederatedIdentityStepTest {
             mockMsiManager,
             mockCoreV1Api,
             oidcIssuer,
-            uamiClientId
-        );
+            uamiClientId);
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
 
     assertThat(fedIdInnerCaptor.getValue().issuer(), equalTo(oidcIssuer));
@@ -194,8 +193,7 @@ public class CreateFederatedIdentityStepTest {
         mockMsiManager,
         mockCoreV1Api,
         oidcIssuer,
-        uamiClientId
-    );
+        uamiClientId);
   }
 
   private void setupMocks() {
