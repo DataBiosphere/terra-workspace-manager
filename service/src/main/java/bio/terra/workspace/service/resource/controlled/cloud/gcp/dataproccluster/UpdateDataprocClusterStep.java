@@ -106,10 +106,12 @@ public class UpdateDataprocClusterStep implements Step {
     if (lifecycleConfig != null) {
       updatedCluster.getConfig().setLifecycleConfig(new LifecycleConfig());
       updateMaskPaths.add(IDLE_DELETE_TTL);
-      updatedCluster
-          .getConfig()
-          .getLifecycleConfig()
-          .setIdleDeleteTtl(updateParameters.getLifecycleConfig().getIdleDeleteTtl());
+      if (lifecycleConfig.getIdleDeleteTtl() != null) {
+        updatedCluster
+            .getConfig()
+            .getLifecycleConfig()
+            .setIdleDeleteTtl(updateParameters.getLifecycleConfig().getIdleDeleteTtl());
+      }
       // Only one autoDeleteTtl and autoDeleteTime can be set (already validated in controller)
       if (lifecycleConfig.getAutoDeleteTtl() != null) {
         updateMaskPaths.add(AUTO_DELETE_TTL);
