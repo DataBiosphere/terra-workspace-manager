@@ -209,9 +209,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
             .updateParameters(
                 new ControlledDataprocClusterUpdateParameters()
                     .lifecycleConfig(
-                        new GcpDataprocClusterLifecycleConfig()
-                            .idleDeleteTtl(newIdleDeleteTtl)
-                            )),
+                        new GcpDataprocClusterLifecycleConfig().idleDeleteTtl(newIdleDeleteTtl))),
         getWorkspaceId(),
         resourceId);
 
