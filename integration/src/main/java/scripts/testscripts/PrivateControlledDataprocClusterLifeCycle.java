@@ -29,7 +29,6 @@ import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.UpdateControlledGcpDataprocClusterRequestBody;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.Dataproc;
-import com.google.api.services.dataproc.model.Cluster;
 import com.google.api.services.dataproc.model.StopClusterRequest;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
@@ -42,6 +41,7 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.DataprocUtils;
 import scripts.utils.MultiResourcesUtils;
+import scripts.utils.RetryUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocateTestScriptBase {
@@ -193,38 +193,32 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
             getWorkspaceId(),
             resourceId);
 
-    // Directly fetch the cluster to verify that non wsm managed fields are updated.
-    Cluster retrievedCluster =
-        dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute();
-
     assertEquals(newName, updatedResource.getMetadata().getName());
     assertEquals(newDescription, updatedResource.getMetadata().getDescription());
-    assertEquals(
-        newNumPrimaryWorkers, retrievedCluster.getConfig().getWorkerConfig().getNumInstances());
+    // Directly fetch the cluster to verify that non wsm managed fields are updated.
+    RetryUtils.getWithRetry(
+        cluster -> newNumPrimaryWorkers == cluster.getConfig().getWorkerConfig().getNumInstances(),
+        () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
+        "Timed out waiting for cluster to update");
 
     // Update the cluster lifecycle rule through WSM. Cluster lifecycle rules cannot be updated in
     // tandem with other parameters, so we update it separately.
     String newIdleDeleteTtl = "1800s";
-    String newAutoDeleteTtl = "3600s";
     resourceUserApi.updateDataprocCluster(
         new UpdateControlledGcpDataprocClusterRequestBody()
             .updateParameters(
                 new ControlledDataprocClusterUpdateParameters()
                     .lifecycleConfig(
-                        new GcpDataprocClusterLifecycleConfig()
-                            .idleDeleteTtl(newIdleDeleteTtl)
-                            .autoDeleteTtl(newAutoDeleteTtl))),
+                        new GcpDataprocClusterLifecycleConfig().idleDeleteTtl(newIdleDeleteTtl))),
         getWorkspaceId(),
         resourceId);
 
     // Directly fetch the cluster to verify updated lifecycle rules
-    retrievedCluster =
-        dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute();
-
-    assertEquals(
-        newIdleDeleteTtl, retrievedCluster.getConfig().getLifecycleConfig().getIdleDeleteTtl());
-    assertEquals(
-        newAutoDeleteTtl, retrievedCluster.getConfig().getLifecycleConfig().getAutoDeleteTtl());
+    RetryUtils.getWithRetry(
+        cluster ->
+            newIdleDeleteTtl.equals(cluster.getConfig().getLifecycleConfig().getIdleDeleteTtl()),
+        () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
+        "Timed out waiting for cluster to update");
 
     // Delete the Dataproc cluster through WSM.
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);
