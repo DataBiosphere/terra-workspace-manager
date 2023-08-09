@@ -8,16 +8,16 @@
 # Execution details
 #   This script is executed as root on all Dataproc nodes.
 #
-#   *** The post-startup script runs as root. ***
-#
 #   Note that the guest attribute is set to DONE whether the script runs successfully or not.
 #
 # How to test changes to this file:
-# Currently, the only way is to use swagger to create a new cluster and passing in
-#   TODO: Pending CLI support.
+# Currently, the only way is to use swagger to create a new cluster with the startup script gs url passed into the 'startup-script-uri' metadata field.
+#   TODO: Pending CLI support to create a cluster with a custom startup script via CLI
 #
 # Integration Tests
-#   TODO
+#   Please also make sure integration test `PrivateControlledDataprocClusterStartup` passes. Refer to
+#   https://github.com/DataBiosphere/terra-workspace-manager/tree/main/integration#Run-nightly-only-test-suite-locally
+#   for instruction on how to run the test.
 
 # Only run on the dataproc manager node. Exit silently if otherwise.
 readonly ROLE=$(/usr/share/google/get_metadata_value attributes/dataproc-role)
