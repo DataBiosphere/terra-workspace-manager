@@ -211,7 +211,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     // Set metadata
     Map<String, String> metadata = new HashMap<>();
     if (containerImageParameters != null) {
-      // User needs to run as Jupyter instead of root to have the startup.sh run successfully.
+      // User needs to run as Jupyter instead of root to have the post-startup.sh run successfully.
       // This is not a TERRA reserved metadata key, so it is overridable. If the creationParameter
       // says otherwise, we will set the value to what the user specified.
       metadata.put(NOTEBOOK_DISABLE_ROOT_METADATA_KEY, "true");

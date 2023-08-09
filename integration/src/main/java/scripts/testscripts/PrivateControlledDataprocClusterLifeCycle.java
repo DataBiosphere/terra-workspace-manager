@@ -266,8 +266,8 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
         DataprocUtils.createPrivateDataprocCluster(
             getWorkspaceId(),
             /*clusterId=*/ null,
-            /*location=*/ null, /*startupScriptUrl-*/
-            null,
+            /*location=*/ null,
+            /*startupScriptUrl=*/ null,
             resourceUserApi);
     assertNotNull(resourceWithoutClusterId.getDataprocCluster().getAttributes().getClusterId());
     UUID resourceId = resourceWithoutClusterId.getDataprocCluster().getMetadata().getResourceId();

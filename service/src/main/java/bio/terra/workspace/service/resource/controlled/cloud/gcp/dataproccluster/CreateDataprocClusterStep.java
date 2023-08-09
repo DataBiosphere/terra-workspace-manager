@@ -277,7 +277,7 @@ public class CreateDataprocClusterStep implements Step {
     Map<String, String> properties = new HashMap<>();
     cluster.getConfig().getSoftwareConfig().setProperties(properties);
 
-    // Metadata is set all cluster gce instance nodes
+    // Set metadata on all cluster vm nodes
     Map<String, String> metadata = new HashMap<>();
 
     // Set default startup script metadata

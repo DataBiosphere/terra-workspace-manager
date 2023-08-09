@@ -20,7 +20,7 @@
 #   TODO
 
 # Only run on the dataproc manager node. Exit silently if otherwise.
-ROLE=$(/usr/share/google/get_metadata_value attributes/dataproc-role)
+readonly ROLE=$(/usr/share/google/get_metadata_value attributes/dataproc-role)
 if [[ "${ROLE}" != 'Master' ]]; then exit 0; fi
 
 # Only run on first startup
