@@ -3,46 +3,28 @@
 # Name: startup.sh
 #
 # Description
-#   Default post startup script for Google Cloud Vertex AI Workbench VM
-#   running JupyterLab.
+#   Initialization script to setup Terra configurations in a Dataproc cluster manager node
 #
 # Execution details
-#   The post-startup script runs on Vertex AI notebook VMs during *instance creation*;
-#   it is not run on every instance start.
+#   This script is executed as root on all Dataproc nodes.
 #
 #   *** The post-startup script runs as root. ***
-#
-#   The startup script is executed from /opt/c2d/scripts/97-run-post-startup-script.sh
-#   which will:
-#     1- Get the GCS path from VM metadata (instance/attributes/post-startup-script)
-#     2- Download it to /opt/c2d/post_start.sh
-#     3- Execute /opt/c2d/post_start.sh
-#     4- Set the VM guest attribute "notebooks/handle_post_startup_script" to "DONE"
 #
 #   Note that the guest attribute is set to DONE whether the script runs successfully or not.
 #
 # How to test changes to this file:
-#   Copy this file to a GCS bucket:
-#   - gsutil cp service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/startup.sh gs://MYBUCKET
-#
-#   Create a new VM (JupyterLab provided by JupyterLab service):
-#   - terra resource create gcp-notebook \
-#       --name="test_post_startup" \
-#       --post-startup-script=gs://MYBUCKET/startup.sh
-#
-#   Create a new VM (JupyterLab provided by Docker image):
-#   - terra resource create gcp-notebook \
-#       --name="test_post_startup" \
-#       --container-repository gcr.io/deeplearning-platform-release/pytorch-gpu \
-#       --post-startup-script=gs://MYBUCKET/startup.sh
-#
-#   To test a new command in this script, be sure to run with "sudo" in a JupyterLab Terminal.
+# Currently, the only way is to use swagger to create a new cluster and passing in
+#   TODO: Pending CLI support.
 #
 # Integration Tests
-#   Please also make sure integration test `PrivateControlledAiNotebookInstancePostStartup` passes. Refer to
-#   https://github.com/DataBiosphere/terra-workspace-manager/tree/main/integration#Run-nightly-only-test-suite-locally
-#   for instruction on how to run the test.
-#
+#   TODO
+
+# Only run on the dataproc manager node. Exit silently if otherwise.
+ROLE=$(/usr/share/google/get_metadata_value attributes/dataproc-role)
+if [[ "${ROLE}" != 'Master' ]]; then exit 0; fi
+
+# Only run on first startup
+if [[ -f /etc/startup_was_launched ]]; then exit 0; fi
 
 set -o errexit
 set -o nounset
@@ -52,43 +34,33 @@ set -o xtrace
 # The linux user that JupyterLab will be running as. It's important to do some parts of setup in the
 # user space, such as setting Terra CLI settings which are persisted in the user's $HOME.
 # This post startup script is not run by the same user.
-readonly JUPYTER_USER="jupyter"
+readonly DATAPROC_USER="dataproc"
 
-# Create an alias for cases when we need to run a shell command as the jupyter user.
+# Create an alias for cases when we need to run a shell command as the dataproc user.
 # Note that we deliberately use "bash -l" instead of "sh" in order to get bash (instead of dash)
 # and to pick up changes to the .bashrc.
 #
 # This is intentionally not a Bash function, as that can suppress error propagation.
 # This is intentionally not a Bash alias as they are not supported in shell scripts.
-readonly RUN_AS_JUPYTER_USER="sudo -u ${JUPYTER_USER} bash -l -c"
+readonly RUN_AS_DATAPROC_USER="sudo -u ${DATAPROC_USER} bash -l -c"
+
+# Install python packages using the miniconda3 python binary
+readonly RUN_PIP="/opt/conda/miniconda3/bin/python -m pip"
 
 # Startup script status is propagated out to VM guest attributes
 readonly STATUS_ATTRIBUTE="startup_script/status"
 readonly MESSAGE_ATTRIBUTE="startup_script/message"
 
-# As much as possible, install tools into ~/.local
-# This allows for the same software to be installed whether JupyterLab is provided
-# by the VM (jupyter service) or a Docker image (docker service).
-# In the case of the Docker service, /home/jupyter is mounted into the container
-# as /home/jupyter.
-
-readonly USER_HOME_DIR="/home/${JUPYTER_USER}"
+# Create tool installation directories.
+readonly USER_HOME_DIR="/home/${DATAPROC_USER}"
 readonly USER_BASH_COMPLETION_DIR="${USER_HOME_DIR}/.bash_completion.d"
+readonly USER_HOME_LOCAL_DIR="${USER_HOME_DIR}/.local"
 readonly USER_HOME_LOCAL_BIN="${USER_HOME_DIR}/.local/bin"
 readonly USER_HOME_LOCAL_SHARE="${USER_HOME_DIR}/.local/share"
 readonly USER_TERRA_CONFIG_DIR="${USER_HOME_DIR}/.terra"
 readonly USER_SSH_DIR="${USER_HOME_DIR}/.ssh"
 
-# When a user opens a Terminal in JupyerLab, documented behavior
-# (https://github.com/jupyterlab/jupyterlab/issues/1733) is to create
-# an interactive non-login shell, which sources the ~/.bashrc.
-#
-# This is the behavior observed when JupyterLab is provided by a Docker image
-# from a DeepLearning Docker image.
-# However JupyterLab Terminals on Vertex AI Workbench instances (non Dockerized)
-# open a login shell, which sources the ~/.bash_profile.
-#
-# For consistency across these two environments, this startup script writes 
+# For consistency across these two environments, this startup script writes
 # to the ~/.bashrc, and has the ~/.bash_profile source the ~/.bashrc
 readonly USER_BASHRC="${USER_HOME_DIR}/.bashrc"
 readonly USER_BASH_PROFILE="${USER_HOME_DIR}/.bash_profile"
@@ -96,11 +68,8 @@ readonly USER_BASH_PROFILE="${USER_HOME_DIR}/.bash_profile"
 readonly POST_STARTUP_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.txt"
 readonly TERRA_BOOT_SERVICE_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/boot-output.txt"
 
-# When JupyterLab is provided by a Docker container, the default Deep Learning images
-# pick up jupyter_notebook_config.py provided by the host VM.
-# See https://jupyter-notebook.readthedocs.io/en/stable/config.html for details of
-# the notebook server options supported.
-readonly CONTAINER_NOTEBOOK_CONFIG="/opt/deeplearning/jupyter/jupyter_notebook_config.py"
+readonly JUPYTER_SERVICE_NAME="jupyter.service"
+readonly JUPYTER_SERVICE="/etc/systemd/system/${JUPYTER_SERVICE_NAME}"
 
 # Variables relevant for 3rd party software that gets installed
 readonly REQ_JAVA_VERSION=17
@@ -136,7 +105,7 @@ cd /tmp || exit
 
 # Send stdout and stderr from this script to a file for debugging.
 # Make the .terra directory as the user so that they own it and have correct linux permissions.
-${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_TERRA_CONFIG_DIR}'"
+${RUN_AS_DATAPROC_USER} "mkdir -p '${USER_TERRA_CONFIG_DIR}'"
 exec >> "${POST_STARTUP_OUTPUT_FILE}"
 exec 2>&1
 
@@ -203,15 +172,13 @@ trap 'exit_handler $? $LINENO $BASH_COMMAND' EXIT
 # Let the UI know the script has started
 set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 
-emit "Determining JupyterLab environment (jupyter.service or docker)"
+# Add dataproc user to sudoers
+emit "Adding dataproc user to sudoers"
+sudo usermod -aG sudo $DATAPROC_USER
 
-readonly INSTANCE_CONTAINER="$(get_metadata_value instance/attributes/container)"
-
-if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-  emit "Custom container for JupyterLab detected: ${INSTANCE_CONTAINER}."
-else
-  emit "Non-containerized JupyterLab detected."
-fi
+# Remove default user bashrc to ensure that the user's bashrc is sourced in non interactive shells
+${RUN_AS_DATAPROC_USER} "rm -f '${USER_BASHRC}'"
+${RUN_AS_DATAPROC_USER} "touch '${USER_BASHRC}'"
 
 emit "Resynchronizing apt package index..."
 
@@ -219,9 +186,9 @@ emit "Resynchronizing apt package index..."
 apt-get update
 
 # Create the target directories for installing into the HOME directory
-${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_BASH_COMPLETION_DIR}'"
-${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_HOME_LOCAL_BIN}'"
-${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_HOME_LOCAL_SHARE}'"
+${RUN_AS_DATAPROC_USER} "mkdir -p '${USER_BASH_COMPLETION_DIR}'"
+${RUN_AS_DATAPROC_USER} "mkdir -p '${USER_HOME_LOCAL_BIN}'"
+${RUN_AS_DATAPROC_USER} "mkdir -p '${USER_HOME_LOCAL_SHARE}'"
 
 # As described above, have the ~/.bash_profile source the ~/.bashrc
 cat << EOF >> "${USER_BASH_PROFILE}"
@@ -239,41 +206,42 @@ cat << EOF >> "${USER_BASHRC}"
 
 ### BEGIN: Terra-specific customizations ###
 
+# Set the correct java installation to use
+export JAVA_HOME="${USER_HOME_LOCAL_DIR}"
+
 # Prepend "${USER_HOME_LOCAL_BIN}" (if not already in the path)
-if [[ ":\${PATH}:" != *":${USER_HOME_LOCAL_BIN}:"* ]]; then 
+if [[ ":\${PATH}:" != *":${USER_HOME_LOCAL_BIN}:"* ]]; then
   export PATH="${USER_HOME_LOCAL_BIN}":"\${PATH}"
 fi
 EOF
 
-# Update the PATH for container JupyterLab
-if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-
-cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
-
-### BEGIN: Terra-specific customizations ###
-
-import os
-
-os.environ['PATH'] = "${USER_HOME_LOCAL_BIN}:" + os.environ['PATH']
-EOF
-
-fi
-
 emit "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
-${RUN_AS_JUPYTER_USER} "pip install --user \
+${RUN_AS_DATAPROC_USER} "${RUN_PIP} install --user \
   dsub \
   nbdime \
   nbstripout \
   pandas_gbq \
-  plotnine \
   pre-commit \
   pylint \
   pytest"
 
 # Install nbstripout for the jupyter user in all git repositories.
-${RUN_AS_JUPYTER_USER} "nbstripout --install --global"
+${RUN_AS_DATAPROC_USER} "nbstripout --install --global"
+
+# Install gcsfuse for bucket mounting
+# install gnupg and lsb-release (for gcsfuse)
+apt-get install -y \
+  gnupg \
+  lsb-release
+
+# install gcsfuse for bucket mounting
+export GCSFUSE_REPO=gcsfuse-$(lsb_release -c -s) \
+  && echo "deb https://packages.cloud.google.com/apt $GCSFUSE_REPO main" | tee /etc/apt/sources.list.d/gcsfuse.list \
+  && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+apt-get update \
+  && apt-get install -y gcsfuse
 
 ###########################################################
 # The Terra CLI requires Java 17 or higher
@@ -291,11 +259,11 @@ ${RUN_AS_JUPYTER_USER} "nbstripout --install --global"
 emit "Installing Java JDK ..."
 
 # Set up a known clean directory for downloading the TAR and unzipping it.
-${RUN_AS_JUPYTER_USER} "mkdir -p '${JAVA_INSTALL_TMP}'"
+${RUN_AS_DATAPROC_USER} "mkdir -p '${JAVA_INSTALL_TMP}'"
 pushd "${JAVA_INSTALL_TMP}"
 
 # Download the latest Java 17, untar it, and remove the TAR file
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_DATAPROC_USER} "\
   curl -Os https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz && \
   tar xfz jdk-17_linux-x64_bin.tar.gz && \
   rm jdk-17_linux-x64_bin.tar.gz"
@@ -304,41 +272,27 @@ ${RUN_AS_JUPYTER_USER} "\
 JAVA_DIRNAME="$(ls)"
 
 # Move it to ~/.local
-${RUN_AS_JUPYTER_USER} "mv '${JAVA_DIRNAME}' '${USER_HOME_LOCAL_SHARE}'"
+${RUN_AS_DATAPROC_USER} "mv '${JAVA_DIRNAME}' '${USER_HOME_LOCAL_SHARE}'"
 
 # Create a soft link in ~/.local/bin to the java runtime
 ln -s "${USER_HOME_LOCAL_SHARE}/${JAVA_DIRNAME}/bin/java" "${USER_HOME_LOCAL_BIN}"
-chown --no-dereference ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/java"
+chown --no-dereference ${DATAPROC_USER}:${DATAPROC_USER} "${USER_HOME_LOCAL_BIN}/java"
 
 # Clean up
 popd
 rmdir ${JAVA_INSTALL_TMP}
 
-if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-  # The DeepLearning Docker images don't have SSH client software installed by default
-  emit "Copying SSH client tools to ${USER_HOME_LOCAL_BIN}"
-  cp "$(which ssh)" "${USER_HOME_LOCAL_BIN}"
-  cp "$(which ssh-add)" "${USER_HOME_LOCAL_BIN}"
-  chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/ssh"
-  chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/ssh-add"
-
-  # The DeepLearning Docker images don't have less installed by default
-  emit "Copying 'less' to ${USER_HOME_LOCAL_BIN}"
-  cp "$(which less)" "${USER_HOME_LOCAL_BIN}"
-  chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/less"
-fi
-
 # Download Nextflow and install it
 emit "Installing Nextflow ..."
 
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_DATAPROC_USER} "\
   curl -s https://get.nextflow.io | bash && \
   mv nextflow '${NEXTFLOW_INSTALL_PATH}'"
 
 # Download Cromwell and install it
 emit "Installing Cromwell ..."
 
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_DATAPROC_USER} "\
   curl -LO 'https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar' && \
   mkdir -p '${CROMWELL_INSTALL_DIR}' && \
   mv 'cromwell-${CROMWELL_LATEST_VERSION}.jar' '${CROMWELL_INSTALL_DIR}'"
@@ -354,7 +308,7 @@ EOF
 emit "Installing Cromshell ..."
 
 apt-get -y install mailutils
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_DATAPROC_USER} "\
   curl -Os https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell && \
   chmod +x cromshell && \
   mv cromshell '${CROMSHELL_INSTALL_PATH}'"
@@ -362,23 +316,23 @@ ${RUN_AS_JUPYTER_USER} "\
 # Install & configure the Terra CLI
 emit "Installing the Terra CLI ..."
 
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_DATAPROC_USER} "\
   curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash && \
   cp terra '${TERRA_INSTALL_PATH}'"
 
 # Set browser manual login since that's the only login supported from a Vertex AI Notebook VM
-${RUN_AS_JUPYTER_USER} "terra config set browser MANUAL"
+${RUN_AS_DATAPROC_USER} "terra config set browser MANUAL"
 
 # Set the CLI terra server based on the terra server that created the VM.
 readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
 if [[ -n "${TERRA_SERVER}" ]]; then
-  ${RUN_AS_JUPYTER_USER} "terra server set --name=${TERRA_SERVER}"
+  ${RUN_AS_DATAPROC_USER} "terra server set --name=${TERRA_SERVER}"
 fi
 
 # Log in with app-default-credentials
-${RUN_AS_JUPYTER_USER} "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
+${RUN_AS_DATAPROC_USER} "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 # Generate the bash completion script
-${RUN_AS_JUPYTER_USER} "terra generate-completion > '${USER_BASH_COMPLETION_DIR}/terra'"
+${RUN_AS_DATAPROC_USER} "terra generate-completion > '${USER_BASH_COMPLETION_DIR}/terra'"
 
 ####################################
 # Shell and notebook environment
@@ -387,7 +341,7 @@ ${RUN_AS_JUPYTER_USER} "terra generate-completion > '${USER_BASH_COMPLETION_DIR}
 # Set the CLI terra workspace id using the VM metadata, if set.
 readonly TERRA_WORKSPACE="$(get_metadata_value "instance/attributes/terra-workspace-id")"
 if [[ -n "${TERRA_WORKSPACE}" ]]; then
-  ${RUN_AS_JUPYTER_USER} "terra workspace set --id='${TERRA_WORKSPACE}'"
+  ${RUN_AS_DATAPROC_USER} "terra workspace set --id='${TERRA_WORKSPACE}'"
 fi
 
 # Set variables into the ~/.bashrc such that they are available
@@ -407,18 +361,18 @@ fi
 
 # OWNER_EMAIL is really the Terra user account email address
 readonly OWNER_EMAIL="$(
-  ${RUN_AS_JUPYTER_USER} "terra workspace describe --format=json" | \
+  ${RUN_AS_DATAPROC_USER} "terra workspace describe --format=json" | \
   jq --raw-output ".userEmail")"
 
 # GOOGLE_PROJECT is the project id for the GCP project backing the workspace
 readonly GOOGLE_PROJECT="$(
-  ${RUN_AS_JUPYTER_USER} "terra workspace describe --format=json" | \
+  ${RUN_AS_DATAPROC_USER} "terra workspace describe --format=json" | \
   jq --raw-output ".googleProjectId")"
 
 # PET_SA_EMAIL is the pet service account for the Terra user and
 # is specific to the GCP project backing the workspace
 readonly PET_SA_EMAIL="$(
-  ${RUN_AS_JUPYTER_USER} "terra auth status --format=json" | \
+  ${RUN_AS_DATAPROC_USER} "terra auth status --format=json" | \
   jq --raw-output ".serviceAccountEmail")"
 
 # These are equivalent environment variables which are set for a
@@ -445,28 +399,6 @@ export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'
 export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'
 EOF
 
-# Make the environment variables available to notebooks in container JupyterLab
-if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-
-emit "Adding Terra environment variables to jupyter_notebook_config.py ..."
-
-cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
-
-import os
-
-# Set up a few legacy Terra-specific convenience variables
-os.environ['OWNER_EMAIL']='${OWNER_EMAIL}'
-os.environ['GOOGLE_PROJECT']='${GOOGLE_PROJECT}'
-os.environ['PET_SA_EMAIL']='${PET_SA_EMAIL}'
-
-# Set up a few Terra-specific convenience variables
-os.environ['TERRA_USER_EMAIL']='${OWNER_EMAIL}'
-os.environ['GOOGLE_CLOUD_PROJECT']='${GOOGLE_PROJECT}'
-os.environ['GOOGLE_SERVICE_ACCOUNT_EMAIL']='${PET_SA_EMAIL}'
-EOF
-
-fi
-
 #################
 # bash completion
 #################
@@ -474,7 +406,7 @@ fi
 # bash_completion is installed on Vertex AI notebooks, but the installed
 # completion scripts are *not* sourced from /etc/profile.
 # If we need it system-wide, we can install it there, but otherwise, let's
-# keep changes localized to the JUPYTER_USER.
+# keep changes localized to the DATAPROC_USER.
 #
 emit "Configuring bash completion for the VM..."
 
@@ -502,30 +434,51 @@ EOF
 emit "Setting up git integration..."
 
 # Create the user SSH directory 
-${RUN_AS_JUPYTER_USER} "mkdir -p ${USER_SSH_DIR} --mode 0700"
+${RUN_AS_DATAPROC_USER} "mkdir -p ${USER_SSH_DIR} --mode 0700"
 
 # Get the user's SSH key from Terra, and if set, write it to the user's .ssh directory
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_DATAPROC_USER} "\
   install --mode 0600 /dev/null '${USER_SSH_DIR}/id_rsa.tmp' && \
   terra user ssh-key get --include-private-key --format=JSON >> '${USER_SSH_DIR}/id_rsa.tmp' || true"
 if [[ -s "${USER_SSH_DIR}/id_rsa.tmp" ]]; then
-  ${RUN_AS_JUPYTER_USER} "\
+  ${RUN_AS_DATAPROC_USER} "\
     install --mode 0600 /dev/null '${USER_SSH_DIR}/id_rsa' && \
     jq -r '.privateSshKey' '${USER_SSH_DIR}/id_rsa.tmp' > '${USER_SSH_DIR}/id_rsa'"
 fi
 rm -f "${USER_SSH_DIR}/id_rsa.tmp"
 
 # Set the github known_hosts
-${RUN_AS_JUPYTER_USER} "ssh-keyscan -H github.com >> '${USER_SSH_DIR}/known_hosts'"
+${RUN_AS_DATAPROC_USER} "ssh-keyscan -H github.com >> '${USER_SSH_DIR}/known_hosts'"
 
 # Create git repos directory
-${RUN_AS_JUPYTER_USER} "mkdir -p '${TERRA_GIT_REPOS_DIR}'"
+${RUN_AS_DATAPROC_USER} "mkdir -p '${TERRA_GIT_REPOS_DIR}'"
 
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
-${RUN_AS_JUPYTER_USER} "cd '${TERRA_GIT_REPOS_DIR}' && terra git clone --all"
+${RUN_AS_DATAPROC_USER} "cd '${TERRA_GIT_REPOS_DIR}' && terra git clone --all"
+
+# Setup gitignore to avoid accidental checkin of data.
+
+cat << EOF | sudo --preserve-env -u "${DATAPROC_USER}" tee "${GIT_IGNORE}"
+# By default, all files should be ignored by git.
+# We want to be sure to exclude files containing data such as CSVs and images such as PNGs.
+*.*
+# Now, allow the file types that we do want to track via source control.
+!*.ipynb
+!*.py
+!*.r
+!*.R
+!*.wdl
+!*.sh
+# Allow documentation files.
+!*.md
+!*.rst
+!LICENSE*
+EOF
+
+${RUN_AS_DATAPROC_USER} "git config --global core.excludesfile '${GIT_IGNORE}'"
 
 # Create a script for starting the ssh-agent, which will be run as a daemon
 # process on boot.
@@ -584,16 +537,16 @@ done
 echo "SSH agent ${SSH_AGENT_PID} has exited."
 EOF
 chmod +x "${TERRA_SSH_AGENT_SCRIPT}"
-chown ${JUPYTER_USER}:${JUPYTER_USER} "${TERRA_SSH_AGENT_SCRIPT}"
+chown ${DATAPROC_USER}:${DATAPROC_USER} "${TERRA_SSH_AGENT_SCRIPT}"
 
-# Create a systemd service to run the boot script on system boot
+# Create a systemd service file for the ssh-agent
 cat << EOF >"${TERRA_SSH_AGENT_SERVICE}"
 [Unit]
 Description=Run an SSH agent for the Jupyter user
 
 [Service]
 ExecStart=${TERRA_SSH_AGENT_SCRIPT}
-User=${JUPYTER_USER}
+User=${DATAPROC_USER}
 Restart=always
 
 [Install]
@@ -643,7 +596,7 @@ source "${USER_BASHRC}"
 exit 0
 EOF
 chmod +x "${TERRA_BOOT_SCRIPT}"
-chown ${JUPYTER_USER}:${JUPYTER_USER} "${TERRA_BOOT_SCRIPT}"
+chown ${DATAPROC_USER}:${DATAPROC_USER} "${TERRA_BOOT_SCRIPT}"
 
 # Create a systemd service to run the boot script on system boot
 cat << EOF >"${TERRA_BOOT_SERVICE}"
@@ -653,38 +606,17 @@ After=jupyter.service
 
 [Service]
 ExecStart=${TERRA_BOOT_SCRIPT}
-User=${JUPYTER_USER}
+User=${DATAPROC_USER}
 RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# Enable and start the startup service
+# Enable and start the service
 systemctl daemon-reload
 systemctl enable "${TERRA_BOOT_SERVICE_NAME}"
 systemctl start "${TERRA_BOOT_SERVICE_NAME}"
-
-# Setup gitignore to avoid accidental checkin of data.
-
-cat << EOF | sudo --preserve-env -u "${JUPYTER_USER}" tee "${GIT_IGNORE}"
-# By default, all files should be ignored by git.
-# We want to be sure to exclude files containing data such as CSVs and images such as PNGs.
-*.*
-# Now, allow the file types that we do want to track via source control.
-!*.ipynb
-!*.py
-!*.r
-!*.R
-!*.wdl
-!*.sh
-# Allow documentation files.
-!*.md
-!*.rst
-!LICENSE*
-EOF
-
-${RUN_AS_JUPYTER_USER} "git config --global core.excludesfile '${GIT_IGNORE}'"
 
 # Indicate the end of Terra customizations of the ~/.bashrc
 cat << EOF >> "${USER_BASHRC}"
@@ -692,30 +624,48 @@ cat << EOF >> "${USER_BASHRC}"
 ### END: Terra-specific customizations ###
 EOF
 
-if [[ -n "${INSTANCE_CONTAINER}" ]]; then
+# Make sure the ~/.bashrc and ~/.bash_profile are owned by the jupyter user
+chown ${DATAPROC_USER}:${DATAPROC_USER} "${USER_BASHRC}"
+chown ${DATAPROC_USER}:${DATAPROC_USER} "${USER_BASH_PROFILE}"
 
-# Indicate the end of Terra customizations of the jupyter_notebook_config.py
-cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
 
-### END: Terra-specific customizations ###
+###################################
+# Configure Jupyter systemd service
+###################################
+
+# By default the dataproc jupyter optional component runs jupyter as the root user. We override the behavior by configuring the jupyter service to run as the dataproc user instead.
+
+emit "Configuring Jupyter systemd service..."
+
+# Modify the jupyter service configuration
+cat << EOF >${JUPYTER_SERVICE}
+[Unit]
+Description=Jupyter Notebook Server
+After=hadoop-yarn-resourcemanager.service
+
+[Service]
+Type=simple
+User=${DATAPROC_USER}
+Group=${DATAPROC_USER}
+EnvironmentFile=/etc/environment
+EnvironmentFile=/etc/default/jupyter
+WorkingDirectory=${USER_HOME_DIR}
+ExecStart=/bin/bash -c '/opt/conda/miniconda3/bin/jupyter lab'
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
-fi
+# reload systemctl daemon to load the updated configuration
+systemctl daemon-reload
 
-# Make sure the ~/.bashrc and ~/.bash_profile are owned by the jupyter user
-chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASHRC}"
-chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASH_PROFILE}"
+###########################################################################################
+# Restart JupyterLab so that environment variables are picked up in the Jupyter environment
+###########################################################################################
+emit "Restarting Jupyter service..."
 
-####################################
-# Restart JupyterLab or Docker so environment variables are picked up in Jupyter environment. See PF-2178.
-####################################
-if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-  emit "Restarting Docker service..."
-  systemctl restart docker.service
-else
-  emit "Restarting Jupyter service..."
-  systemctl restart jupyter.service
-fi
+systemctl restart ${JUPYTER_SERVICE_NAME}
 
 ####################################################################################
 # Run a set of tests that should be invariant to the workspace or user configuration
@@ -726,7 +676,7 @@ fi
 emit "--  Checking if installed Java version is ${REQ_JAVA_VERSION} or higher"
 
 # Get the current major version of Java: "11.0.12" => "11"
-readonly INSTALLED_JAVA_VERSION="$(${RUN_AS_JUPYTER_USER} "${JAVA_INSTALL_PATH} -version" 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')"
+readonly INSTALLED_JAVA_VERSION="$(${RUN_AS_DATAPROC_USER} "${JAVA_INSTALL_PATH} -version" 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')"
 if [[ "${INSTALLED_JAVA_VERSION}" -lt ${REQ_JAVA_VERSION} ]]; then
   >&2 emit "ERROR: Java version detected (${INSTALLED_JAVA_VERSION}) is less than required (${REQ_JAVA_VERSION})"
   exit 1
@@ -737,14 +687,14 @@ emit "SUCCESS: Java installed and version detected as ${INSTALLED_JAVA_VERSION}"
 # Test nextflow
 emit "--  Checking if Nextflow is properly installed"
 
-readonly INSTALLED_NEXTFLOW_VERSION="$(${RUN_AS_JUPYTER_USER} "${NEXTFLOW_INSTALL_PATH} -v" | sed -e 's#nextflow version \(.*\)#\1#')"
+readonly INSTALLED_NEXTFLOW_VERSION="$(${RUN_AS_DATAPROC_USER} "${NEXTFLOW_INSTALL_PATH} -v" | sed -e 's#nextflow version \(.*\)#\1#')"
 
 emit "SUCCESS: Nextflow installed and version detected as ${INSTALLED_NEXTFLOW_VERSION}"
 
 # Test Cromwell
 emit "--  Checking if installed Cromwell version is ${CROMWELL_LATEST_VERSION}"
 
-readonly INSTALLED_CROMWELL_VERSION="$(${RUN_AS_JUPYTER_USER} "java -jar ${CROMWELL_INSTALL_JAR} --version" | sed -e 's#cromwell \(.*\)#\1#')"
+readonly INSTALLED_CROMWELL_VERSION="$(${RUN_AS_DATAPROC_USER} "java -jar ${CROMWELL_INSTALL_JAR} --version" | sed -e 's#cromwell \(.*\)#\1#')"
 if [[ "${INSTALLED_CROMWELL_VERSION}" -ne ${CROMWELL_LATEST_VERSION} ]]; then
   >&2 emit "ERROR: Cromwell version detected (${INSTALLED_CROMWELL_VERSION}) is not equal to expected (${CROMWELL_LATEST_VERSION})"
   exit 1
@@ -774,7 +724,7 @@ if [[ ! -e "${TERRA_INSTALL_PATH}" ]]; then
   exit 1
 fi
 
-readonly INSTALLED_TERRA_VERSION="$(${RUN_AS_JUPYTER_USER} "${TERRA_INSTALL_PATH} version")"
+readonly INSTALLED_TERRA_VERSION="$(${RUN_AS_DATAPROC_USER} "${TERRA_INSTALL_PATH} version")"
 
 if [[ -z "${INSTALLED_TERRA_VERSION}" ]]; then
   >&2 emit "ERROR: Terra CLI did not execute or did not return a version number"
@@ -791,7 +741,7 @@ if [[ ! -e "${USER_SSH_DIR}" ]]; then
   exit 1
 fi
 readonly SSH_DIR_MODE="$(stat -c "%a %G %U" "${USER_SSH_DIR}")"
-if [[ "${SSH_DIR_MODE}" != "700 jupyter jupyter" ]]; then
+if [[ "${SSH_DIR_MODE}" != "700 dataproc dataproc" ]]; then
   >&2 emit "ERROR: user SSH directory permissions are incorrect: ${SSH_DIR_MODE}"
   exit 1
 fi
@@ -800,17 +750,16 @@ fi
 # If they do have the file, check the permissions
 if [[ -e "${USER_SSH_DIR}/id_rsa" ]]; then
   readonly SSH_KEY_FILE_MODE="$(stat -c "%a %G %U" "${USER_SSH_DIR}/id_rsa")"
-  if [[ "${SSH_KEY_FILE_MODE}" != "600 jupyter jupyter" ]]; then
+  if [[ "${SSH_KEY_FILE_MODE}" != "600 dataproc dataproc" ]]; then
     >&2 emit "ERROR: user SSH key file permissions are incorrect: ${SSH_DIR_MODE}/id_rsa"
     exit 1
   fi
 fi
 
-
 # GIT_IGNORE
 emit "--  Checking if gitignore is properly installed"
 
-readonly INSTALLED_GITIGNORE="$(${RUN_AS_JUPYTER_USER} "git config --global core.excludesfile")"
+readonly INSTALLED_GITIGNORE="$(${RUN_AS_DATAPROC_USER} "git config --global core.excludesfile")"
 
 if [[ "${INSTALLED_GITIGNORE}" != "${GIT_IGNORE}" ]]; then
   >&2 emit "ERROR: gitignore not set up at ${GIT_IGNORE}"
@@ -821,11 +770,12 @@ emit "SUCCESS: Gitignore installed at ${INSTALLED_GITIGNORE}"
 
 # This block is for test only. If the notebook execute successfully down to
 # here, we knows that the script executed successfully.
+readonly CLUSTER_NAME="$(get_metadata_value "instance/attributes/dataproc-cluster-name")-m"
+readonly CLUSTER_LOCATION="$(gcloud compute instances list $CLUSTER_NAME --format 'csv[no-heading](zone)')"
+
+
 readonly TERRA_TEST_VALUE="$(get_metadata_value "instance/attributes/terra-test-value")"
 readonly TERRA_GCP_NOTEBOOK_RESOURCE_NAME="$(get_metadata_value "instance/attributes/terra-gcp-notebook-resource-name")"
 if [[ -n "${TERRA_TEST_VALUE}" ]]; then
-  ${RUN_AS_JUPYTER_USER} "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
+  ${RUN_AS_DATAPROC_USER} "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
 fi
-
-# Let the UI know the script completed
-set_guest_attributes "${STATUS_ATTRIBUTE}" "COMPLETE"

@@ -86,7 +86,11 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpDataprocClusterResult creationResult =
         DataprocUtils.createPrivateDataprocCluster(
-            getWorkspaceId(), clusterId, /* region= */ null, resourceUserApi);
+            getWorkspaceId(),
+            clusterId,
+            /* region= */ null,
+            /*startupScriptUrl=*/ null,
+            resourceUserApi);
 
     UUID resourceId = creationResult.getDataprocCluster().getMetadata().getResourceId();
     GcpDataprocClusterResource resource =
@@ -260,7 +264,11 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
       ControlledGcpResourceApi resourceUserApi) throws Exception {
     CreatedControlledGcpDataprocClusterResult resourceWithoutClusterId =
         DataprocUtils.createPrivateDataprocCluster(
-            getWorkspaceId(), /*clusterId=*/ null, /*location=*/ null, resourceUserApi);
+            getWorkspaceId(),
+            /*clusterId=*/ null,
+            /*location=*/ null, /*startupScriptUrl-*/
+            null,
+            resourceUserApi);
     assertNotNull(resourceWithoutClusterId.getDataprocCluster().getAttributes().getClusterId());
     UUID resourceId = resourceWithoutClusterId.getDataprocCluster().getMetadata().getResourceId();
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);
