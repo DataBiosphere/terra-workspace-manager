@@ -23,7 +23,7 @@ ROLE=$(/usr/share/google/get_metadata_value attributes/dataproc-role)
 if [[ "${ROLE}" != 'Master' ]]; then exit 0; fi
 
 # Only run once
-#if [[ -f /etc/startup_was_launched ]]; then exit 0; fi
+if [[ -f /etc/startup_was_launched ]]; then exit 0; fi
 
 set -o errexit
 set -o nounset
@@ -68,7 +68,7 @@ readonly POST_STARTUP_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.
 readonly TERRA_BOOT_SERVICE_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/boot-output.txt"
 
 readonly JUPYTER_SERVICE_NAME="jupyter.service"
-readonly JUPYTER_SERVICE_PATH="/etc/systemd/system/${JUPYTER_SERVICE_NAME}"
+readonly JUPYTER_SERVICE="/etc/systemd/system/${JUPYTER_SERVICE_NAME}"
 
 # Variables relevant for 3rd party software that gets installed
 readonly REQ_JAVA_VERSION=17
@@ -637,7 +637,7 @@ chown ${DATAPROC_USER}:${DATAPROC_USER} "${USER_BASH_PROFILE}"
 emit "Configuring Jupyter systemd service..."
 
 # Modify the jupyter service configuration
-cat << EOF >/lib/systemd/system/jupyter.service
+cat << EOF >${JUPYTER_SERVICE}
 [Unit]
 Description=Jupyter Notebook Server
 After=hadoop-yarn-resourcemanager.service
@@ -659,12 +659,12 @@ EOF
 # reload systemctl daemon to load the updated configuration
 systemctl daemon-reload
 
-####################################
-# Restart JupyterLab or Docker so environment variables are picked up in the Jupyter environment.
-####################################
+###########################################################################################
+# Restart JupyterLab so that environment variables are picked up in the Jupyter environment
+###########################################################################################
 emit "Restarting Jupyter service..."
 
-systemctl restart jupyter.service
+systemctl restart ${JUPYTER_SERVICE_NAME}
 
 ####################################################################################
 # Run a set of tests that should be invariant to the workspace or user configuration
