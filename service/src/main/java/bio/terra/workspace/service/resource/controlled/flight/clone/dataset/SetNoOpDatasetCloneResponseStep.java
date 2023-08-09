@@ -10,10 +10,10 @@ import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import org.springframework.http.HttpStatus;
 
-public class SetNoOpBucketCloneResponseStep implements Step {
+public class SetNoOpDatasetCloneResponseStep implements Step {
   private final ControlledBigQueryDatasetResource sourceDataset;
 
-  public SetNoOpBucketCloneResponseStep(ControlledBigQueryDatasetResource sourceDataset) {
+  public SetNoOpDatasetCloneResponseStep(ControlledBigQueryDatasetResource sourceDataset) {
     this.sourceDataset = sourceDataset;
   }
 

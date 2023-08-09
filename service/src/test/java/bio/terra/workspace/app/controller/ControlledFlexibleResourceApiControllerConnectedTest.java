@@ -27,7 +27,6 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
@@ -68,7 +67,6 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
   @Autowired FeatureConfiguration features;
   @Autowired CrlService crlService;
   @Autowired WorkspaceActivityLogService activityLogService;
-  @Autowired SamService samService;
 
   private UUID workspaceId;
   private UUID workspaceId2;

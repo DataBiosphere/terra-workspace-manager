@@ -27,7 +27,7 @@ import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
@@ -37,9 +37,7 @@ import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateCloudContextRequest;
 import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
@@ -49,6 +47,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -77,22 +76,15 @@ import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-// Use application configuration profile in addition to the standard connected test profile
+// Use application configuration profile in addition to the standard unit test profile
 // inherited from the base class.
-@Tag("connectedPlus")
 @ActiveProfiles({"app-test"})
-class WorkspaceServiceTest extends BaseConnectedTest {
-  @MockBean private DataRepoService mockDataRepoService;
-  /** Mock SamService does nothing for all calls that would throw if unauthorized. */
-  @MockBean private SamService mockSamService;
-
+class WorkspaceServiceTest extends BaseUnitTestMockDataRepoService {
   @Autowired private MockMvc mockMvc;
   @Autowired private JobService jobService;
   @Autowired private ObjectMapper objectMapper;
@@ -103,31 +95,32 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @BeforeEach
   void setup() throws Exception {
-    doReturn(true).when(mockDataRepoService).snapshotReadable(any(), any(), any());
+    doReturn(true).when(mockDataRepoService()).snapshotReadable(any(), any(), any());
     // By default, allow all spend link calls as authorized. (All other isAuthorized calls return
     // false by Mockito default).
-    when(mockSamService.isAuthorized(
-            any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
+    when(mockSamService()
+            .isAuthorized(
+                any(), eq(SamResource.SPEND_PROFILE), any(), eq(SamSpendProfileAction.LINK)))
         .thenReturn(true);
     String policyGroup = "terra-workspace-manager-test-group@googlegroups.com";
     // Return a valid Google group for cloud sync, as Google validates groups added to GCP projects.
-    when(mockSamService.syncWorkspacePolicy(any(), any(), any())).thenReturn(policyGroup);
+    when(mockSamService().syncWorkspacePolicy(any(), any(), any())).thenReturn(policyGroup);
 
     doReturn(policyGroup)
-        .when(mockSamService)
+        .when(mockSamService())
         .syncResourcePolicy(
             any(ControlledResource.class),
             any(ControlledResourceIamRole.class),
             any(AuthenticatedUserRequest.class));
-    when(mockSamService.getUserStatusInfo(any()))
+    when(mockSamService().getUserStatusInfo(any()))
         .thenReturn(
             new UserStatusInfo()
                 .userEmail(USER_REQUEST.getEmail())
                 .userSubjectId(USER_REQUEST.getSubjectId()));
-    when(mockSamService.getUserEmailFromSamAndRethrowOnInterrupt(
-            any(AuthenticatedUserRequest.class)))
+    when(mockSamService()
+            .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(USER_REQUEST.getEmail());
-    when(mockSamService.listRequesterRoles(any(), eq(SamResource.WORKSPACE), any()))
+    when(mockSamService().listRequesterRoles(any(), eq(SamResource.WORKSPACE), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
   }
 
@@ -158,7 +151,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void getWorkspace_forbiddenMissing() throws Exception {
     doThrow(new ForbiddenException("forbid!"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(any(), any(), any(), any());
     mockMvc
         .perform(addAuth(get(String.format(WORKSPACES_V1, UUID.randomUUID())), USER_REQUEST))
@@ -171,7 +164,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, null, null, null, USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(any(), any(), any(), any());
     mockMvc
         .perform(addAuth(get(String.format(WORKSPACES_V1, request.getWorkspaceId())), USER_REQUEST))
@@ -204,7 +197,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void getWorkspaceByUserFacingId_forbiddenMissing() throws Exception {
     doThrow(new ForbiddenException("forbid!"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(any(), any(), any(), any());
     mockMvc
         .perform(
@@ -220,7 +213,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, null, null, null, USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(any(), any(), any(), any());
     mockMvc
         .perform(addAuth(get(String.format(WORKSPACES_V1_BY_UFID, userFacingId)), USER_REQUEST))
@@ -236,7 +229,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void getHighestRole_existing() {
-    when(mockSamService.listRequesterRoles(any(), any(), any()))
+    when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(ImmutableList.of(WsmIamRole.OWNER, WsmIamRole.WRITER));
 
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
@@ -248,7 +241,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
 
   @Test
   void getHighestRole_project_owner() {
-    when(mockSamService.listRequesterRoles(any(), any(), any()))
+    when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(ImmutableList.of(WsmIamRole.OWNER, WsmIamRole.PROJECT_OWNER));
 
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
@@ -305,7 +298,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void duplicateOperationSharesFailureResponse() throws Exception {
     String errorMsg = "fake SAM error message";
     doThrow(SamExceptionFactory.create(errorMsg, new ApiException(("test"))))
-        .when(mockSamService)
+        .when(mockSamService())
         .createWorkspaceWithDefaults(any(), any(), any(), any());
 
     assertThrows(
@@ -505,7 +498,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void testHandlesSamError() throws Exception {
     String apiErrorMsg = "test";
     ErrorReportException testex = new SamInternalServerErrorException(apiErrorMsg);
-    doThrow(testex).when(mockSamService).createWorkspaceWithDefaults(any(), any(), any(), any());
+    doThrow(testex).when(mockSamService()).createWorkspaceWithDefaults(any(), any(), any(), any());
     ErrorReportException exception =
         assertThrows(
             SamInternalServerErrorException.class,
@@ -549,7 +542,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
             .build();
     // Ensure the auth check in CheckSamWorkspaceAuthzStep always succeeds.
-    doReturn(true).when(mockSamService).isAuthorized(any(), any(), any(), any());
+    doReturn(true).when(mockSamService()).isAuthorized(any(), any(), any(), any());
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(CreateWorkspaceStartStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
@@ -583,6 +576,10 @@ class WorkspaceServiceTest extends BaseConnectedTest {
             .undoStepFailures(retrySteps)
             .build();
     jobService.setFlightDebugInfoForTest(debugInfo);
+
+    // Use delete-on-creation-failure feature so the workspace is not left broken on undo.
+    when(mockFeatureConfiguration().getStateRule())
+        .thenReturn(WsmResourceStateRule.DELETE_ON_FAILURE);
 
     // Service methods which wait for a flight to complete will throw an
     // InvalidResultStateException when that flight fails without a cause, which occurs when a
@@ -632,7 +629,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   @Test
   void deleteForbiddenMissingWorkspace() throws Exception {
     doThrow(new ForbiddenException("forbid!"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(any(), any(), any(), any());
     mockMvc
         .perform(addAuth(delete(String.format(WORKSPACES_V1, UUID.randomUUID())), USER_REQUEST))
@@ -645,7 +642,7 @@ class WorkspaceServiceTest extends BaseConnectedTest {
     workspaceService.createWorkspace(request, null, null, null, USER_REQUEST);
 
     doThrow(new ForbiddenException("forbid!"))
-        .when(mockSamService)
+        .when(mockSamService())
         .checkAuthz(any(), any(), any(), any());
 
     mockMvc
@@ -687,8 +684,9 @@ class WorkspaceServiceTest extends BaseConnectedTest {
   void createGoogleContextRawlsStageThrows() throws Exception {
     // RAWLS_WORKSPACE stage workspaces use existing Sam resources instead of owning them, so the
     // mock pretends our user has access to any workspace we ask about.
-    when(mockSamService.isAuthorized(
-            any(), eq(SamResource.WORKSPACE), any(), eq(SamConstants.SamWorkspaceAction.READ)))
+    when(mockSamService()
+            .isAuthorized(
+                any(), eq(SamResource.WORKSPACE), any(), eq(SamConstants.SamWorkspaceAction.READ)))
         .thenReturn(true);
     UUID workspaceId = UUID.randomUUID();
     Workspace request =

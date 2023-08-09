@@ -259,8 +259,17 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
 
   /** Asserts that Sam groups are granted their appropriate IAM roles on a GCP project. */
   private void assertPolicyGroupsSynced(UUID workspaceUuid, Project project) throws Exception {
-    Map<WsmIamRole, String> roleToSamGroup =
+    // Create a list of the roles which are synced to google groups in Sam
+    List<WsmIamRole> syncedRoles =
         Arrays.stream(WsmIamRole.values())
+            .filter(
+                r ->
+                    r != WsmIamRole.DISCOVERER
+                        && r != WsmIamRole.MANAGER
+                        && r != WsmIamRole.PROJECT_OWNER)
+            .toList();
+    Map<WsmIamRole, String> roleToSamGroup =
+        syncedRoles.stream()
             .collect(
                 Collectors.toMap(
                     Function.identity(),
@@ -278,11 +287,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
             .projects()
             .getIamPolicy(project.getProjectId(), new GetIamPolicyRequest())
             .execute();
-    for (WsmIamRole role : WsmIamRole.values()) {
-      // Don't check roles which aren't synced to GCP.
-      if (role.equals(WsmIamRole.MANAGER) || role.equals(WsmIamRole.DISCOVERER)) {
-        continue;
-      }
+    for (WsmIamRole role : syncedRoles) {
       assertRoleBindingInPolicy(
           role, roleToSamGroup.get(role), currentPolicy, project.getProjectId());
     }
