@@ -27,6 +27,7 @@ import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCre
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.AzureLandingZoneFixtures;
+import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
@@ -52,12 +53,12 @@ import org.mockito.Mock;
 public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
   private static final UUID LANDING_ZONE_ID = UUID.randomUUID();
   private static final UUID BILLING_PROFILE_ID = UUID.randomUUID();
-  private final UUID WORKSPACE_ID = UUID.randomUUID();
+  private static final UUID WORKSPACE_ID = UUID.randomUUID();
   private static final String JOB_ID = "CREATE_JOB_ID";
   private static final BearerToken BEARER_TOKEN = new BearerToken("fake-token");
   private static final OffsetDateTime CREATED_DATE = Instant.now().atOffset(ZoneOffset.UTC);
-
-  private final SpendProfileId SPEND_PROFILE_ID = new SpendProfileId(UUID.randomUUID().toString());
+  private static final SpendProfileId SPEND_PROFILE_ID =
+      new SpendProfileId(UUID.randomUUID().toString());
 
   private LandingZoneApiDispatch landingZoneApiDispatch;
   @Mock private LandingZoneService landingZoneService;
@@ -142,7 +143,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
 
     landingZoneApiDispatch = new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
 
-    var result =
+    ApiCreateLandingZoneResult result =
         landingZoneApiDispatch.createAzureLandingZone(BEARER_TOKEN, request, resultEndpoint);
 
     assertEquals(result.getLandingZoneId(), LANDING_ZONE_ID);
@@ -231,7 +232,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
     assertNotNull(response.getLandingzones());
     assertEquals(1, response.getLandingzones().size());
 
-    var firstLandingZone = response.getLandingzones().stream().findFirst().get();
+    ApiAzureLandingZone firstLandingZone = response.getLandingzones().stream().findFirst().get();
     assertEquals(LANDING_ZONE_ID, firstLandingZone.getLandingZoneId());
     assertEquals(BILLING_PROFILE_ID, firstLandingZone.getBillingProfileId());
     assertEquals("definition", firstLandingZone.getDefinition());
@@ -295,7 +296,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
   }
 
   private void setupLandingZoneResources() {
-    final List<LandingZoneResource> listSubnets1 =
+    List<LandingZoneResource> listSubnets1 =
         List.of(
             LandingZoneResource.builder()
                 .resourceName("fooSubnet11")
@@ -313,7 +314,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
                 .region("fooRegion1")
                 .build());
 
-    final List<LandingZoneResource> listResources1 =
+    List<LandingZoneResource> listResources1 =
         List.of(
             LandingZoneResource.builder()
                 .resourceId("Id31")
@@ -342,12 +343,12 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
 
   @Test
   public void getLandingZoneId_Success() {
-    var workspace = mock(Workspace.class);
+    Workspace workspace = mock(Workspace.class);
     when(workspace.getSpendProfileId()).thenReturn(Optional.of(SPEND_PROFILE_ID));
     when(workspaceService.getWorkspace(eq(WORKSPACE_ID))).thenReturn(workspace);
 
-    var landingZoneList = Collections.singletonList(mock(LandingZone.class));
-    var expectedLandingZoneId = UUID.randomUUID();
+    List<LandingZone> landingZoneList = Collections.singletonList(mock(LandingZone.class));
+    UUID expectedLandingZoneId = UUID.randomUUID();
     when(landingZoneList.get(0).landingZoneId()).thenReturn(expectedLandingZoneId);
     // this method should always return list which contains one item
     when(landingZoneService.getLandingZonesByBillingProfile(
@@ -362,7 +363,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
 
   @Test
   public void getLandingZoneId_billingProfileEmpty_failure() {
-    var workspace = mock(Workspace.class);
+    Workspace workspace = mock(Workspace.class);
     when(workspaceService.getWorkspace(eq(WORKSPACE_ID))).thenReturn(workspace);
     when(workspace.getSpendProfileId()).thenReturn(Optional.empty());
 
@@ -373,7 +374,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
 
   @Test
   public void getLandingZoneId_landingZoneNotFound_failure() {
-    var workspace = mock(Workspace.class);
+    Workspace workspace = mock(Workspace.class);
     when(workspace.getSpendProfileId()).thenReturn(Optional.of(SPEND_PROFILE_ID));
     when(workspaceService.getWorkspace(eq(WORKSPACE_ID))).thenReturn(workspace);
     when(landingZoneService.getLandingZonesByBillingProfile(

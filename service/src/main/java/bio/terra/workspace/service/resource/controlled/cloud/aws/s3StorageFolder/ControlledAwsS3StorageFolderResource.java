@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
@@ -64,16 +63,6 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
 
   public static ControlledAwsS3StorageFolderResource.Builder builder() {
     return new ControlledAwsS3StorageFolderResource.Builder();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
   }
 
   // -- getters used in serialization --

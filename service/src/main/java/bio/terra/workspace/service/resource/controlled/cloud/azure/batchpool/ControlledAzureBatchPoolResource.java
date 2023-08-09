@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -234,15 +233,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
-  @Override
   public void validate() {
     super.validate();
     if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_BATCH_POOL
@@ -266,7 +256,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       }
     }
     if (userAssignedIdentities != null) {
-      var inconsistentUamiCount =
+      long inconsistentUamiCount =
           userAssignedIdentities.stream()
               .filter(uami -> uami.name() != null && uami.clientId() != null)
               .count();

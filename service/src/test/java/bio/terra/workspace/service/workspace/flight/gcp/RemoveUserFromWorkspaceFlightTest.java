@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_NAME;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,6 +21,7 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
@@ -38,7 +39,6 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -74,15 +74,10 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("connectedPlus")
 public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
-  private static final Logger logger =
-      LoggerFactory.getLogger(RemoveUserFromWorkspaceFlightTest.class);
-
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ControlledResourceService controlledResourceService;
@@ -101,7 +96,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Create a workspace as the default test user
     Workspace workspace =
         connectedTestUtils.createWorkspace(userAccessUtils.defaultUserAuthRequest());
-    var workspaceUuid = workspace.getWorkspaceId();
+    UUID workspaceUuid = workspace.getWorkspaceId();
     // Add the secondary test user as a writer
     samService.grantWorkspaceRole(
         workspaceUuid,
@@ -115,13 +110,11 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest().getRequiredToken());
 
     // Create a GCP context as default user
-    var userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
     String makeContextJobId = UUID.randomUUID().toString();
     SpendProfile spendProfile =
         spendProfileService.authorizeLinking(
-            new SpendProfileId(DEFAULT_SPEND_PROFILE_NAME),
-            features.isBpmGcpEnabled(),
-            userRequest);
+            DEFAULT_SPEND_PROFILE_ID, features.isBpmGcpEnabled(), userRequest);
 
     workspaceService.createCloudContext(
         workspace, CloudPlatform.GCP, spendProfile, makeContextJobId, userRequest, null);
