@@ -768,14 +768,4 @@ fi
 
 emit "SUCCESS: Gitignore installed at ${INSTALLED_GITIGNORE}"
 
-# This block is for test only. If the notebook execute successfully down to
-# here, we knows that the script executed successfully.
-readonly CLUSTER_NAME="$(get_metadata_value "instance/attributes/dataproc-cluster-name")-m"
-readonly CLUSTER_LOCATION="$(gcloud compute instances list $CLUSTER_NAME --format 'csv[no-heading](zone)')"
-
-
-readonly TERRA_TEST_VALUE="$(get_metadata_value "instance/attributes/terra-test-value")"
-readonly TERRA_GCP_NOTEBOOK_RESOURCE_NAME="$(get_metadata_value "instance/attributes/terra-gcp-notebook-resource-name")"
-if [[ -n "${TERRA_TEST_VALUE}" ]]; then
-  ${RUN_AS_DATAPROC_USER} "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
-fi
+# TODO: Set cluster metadata for testing once we have CLI support.
