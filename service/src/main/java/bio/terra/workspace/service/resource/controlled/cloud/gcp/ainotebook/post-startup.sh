@@ -4,7 +4,22 @@
 #
 # Description
 #   Default post startup script for Google Cloud Vertex AI Workbench VM
-	@@ -23,18 +23,18 @@
+#   running JupyterLab.
+#
+# Execution details
+#   The post-startup script runs on Vertex AI notebook VMs during *instance creation*;
+#   it is not run on every instance start.
+#
+#   *** The post-startup script runs as root. ***
+#
+#   The startup script is executed from /opt/c2d/scripts/97-run-post-startup-script.sh
+#   which will:
+#     1- Get the GCS path from VM metadata (instance/attributes/post-startup-script)
+#     2- Download it to /opt/c2d/post_start.sh
+#     3- Execute /opt/c2d/post_start.sh
+#     4- Set the VM guest attribute "notebooks/handle_post_startup_script" to "DONE"
+#
+#   Note that the guest attribute is set to DONE whether the script runs successfully or not.
 #
 # How to test changes to this file:
 #   Copy this file to a GCS bucket:
