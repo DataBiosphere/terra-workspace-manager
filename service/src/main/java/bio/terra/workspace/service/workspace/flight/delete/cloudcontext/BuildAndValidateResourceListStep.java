@@ -43,15 +43,6 @@ public class BuildAndValidateResourceListStep implements Step {
     // respected throughout the rest of the flight.
     List<ControlledResource> resources = cloudContextService.makeOrderedResourceList(workspaceUuid);
 
-    // Verify that the caller is allowed to delete all resources.
-    for (ControlledResource resource : resources) {
-      samService.checkAuthz(
-          userRequest,
-          resource.getCategory().getSamResourceName(),
-          resource.getResourceId().toString(),
-          SamConstants.SamControlledResourceActions.DELETE_ACTION);
-    }
-
     // Generate pairs of (resourceId, flightId) maintaining the ordering
     List<ResourceDeleteFlightPair> resourcePairs = new ArrayList<>();
     for (ControlledResource resource : resources) {
