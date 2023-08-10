@@ -68,6 +68,7 @@ public class CreateGceInstanceStep implements Step {
   private static final String EXTERNAL_IP_TYPE = "ONE_TO_ONE_NAT";
   private static final String EXTERNAL_IP_NAME = "External IP";
   private static final String HOST_MAINTENANCE_BEHAVIOUR = "TERMINATE";
+  private static final String DATA_DISK_NAME = "data-disk";
 
   public CreateGceInstanceStep(
       ControlledGceInstanceResource resource,
@@ -193,7 +194,15 @@ public class CreateGceInstanceStep implements Step {
                 .setInitializeParams(
                     new AttachedDiskInitializeParams()
                         .setSourceImage(creationParameters.getVmImage())
-                        .setDiskSizeGb(Long.valueOf(100)))));
+                        .setDiskSizeGb(Long.valueOf(100))),
+            new AttachedDisk()
+                .setBoot(false)
+                .setDeviceName(DATA_DISK_NAME)
+                .setAutoDelete(true)
+                .setInitializeParams(
+                    new AttachedDiskInitializeParams()
+                        .setDiskType(creationParameters.getDataDiskType())
+                        .setDiskSizeGb(creationParameters.getDataDiskSizeGb()))));
 
     instance.setServiceAccounts(
         List.of(

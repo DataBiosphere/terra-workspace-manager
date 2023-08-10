@@ -211,6 +211,17 @@ components:
             environment installed directly on the VM. Specify the image by its family name, or
             use a specific version of a public operating system image.
           type: string
+        dataDiskType:
+          description: >-
+            The type of the data disk attached to this instance, defaults to standard
+            persistent disk (pd-standard). See https://cloud.google.com/compute/docs/disks#disk-types
+          type: string
+        dataDiskSizeGb:
+          description: >-
+            The size of the data disk in GB attached to this instance, up to a maximum
+            of 64000 GB (64 TB). If not specified, this defaults to 500.
+          type: integer
+          format: int64
 
     GcpGceInstanceGuestAccelerator:
       description: >-
