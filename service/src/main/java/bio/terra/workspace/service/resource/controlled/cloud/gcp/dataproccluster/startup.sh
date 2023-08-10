@@ -44,9 +44,6 @@ readonly DATAPROC_USER="dataproc"
 # This is intentionally not a Bash alias as they are not supported in shell scripts.
 readonly RUN_AS_DATAPROC_USER="sudo -u ${DATAPROC_USER} bash -l -c"
 
-# Install python packages using the miniconda3 python binary
-readonly RUN_PIP="/opt/conda/miniconda3/bin/python -m pip"
-
 # Startup script status is propagated out to VM guest attributes
 readonly STATUS_ATTRIBUTE="startup_script/status"
 readonly MESSAGE_ATTRIBUTE="startup_script/message"
@@ -218,7 +215,7 @@ EOF
 emit "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
-${RUN_AS_DATAPROC_USER} "${RUN_PIP} install --user \
+${RUN_AS_DATAPROC_USER} "pip3 install --user \
   dsub \
   nbdime \
   nbstripout \
