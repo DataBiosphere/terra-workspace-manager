@@ -36,17 +36,40 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 /**
- * Wrapper around <a href="{@docRoot}/azureDatabaseUtils/README.md">AzureDatabaseUtils</a>. Each
- * public method in this class is a wrapper around a command in AzureDatabaseUtils. Every call
- * creates a pod in the default namespace
+ * Wrapper around <a
+ * href="https://github.com/DataBiosphere/terra-workspace-manager/tree/main/azureDatabaseUtils">AzureDatabaseUtils</a>.
+ * Each public method in this class is a wrapper around a command in AzureDatabaseUtils. Every call
+ * creates a pod in the default namespace, waits for it to complete then deletes the pod. This
+ * pattern of launching a pod to run a command is used because the Azure database server is only
+ * accessible from the Landing Zone VNet and only by managed identities in the Landing Zone.
+ * Commands are designed to work within Stairway flights. The commands themselves are idempotent.
+ * Given the same pod name, they will not create a new pod if one already exists with that name and
+ * monitor the existing pod.
  */
 @Component
 public class AzureDatabaseUtilsRunner {
+
   private static final Logger logger = LoggerFactory.getLogger(AzureDatabaseUtilsRunner.class);
   public static final String POD_FAILED = "Failed";
   public static final String POD_SUCCEEDED = "Succeeded";
-  // namespace where we create the pod to create the database
   private static final String aksNamespace = "default";
+
+  public static final String COMMAND_CREATE_USER = "CreateUser";
+  public static final String COMMAND_CREATE_DATABASE_WITH_DB_ROLE = "CreateDatabaseWithDbRole";
+  public static final String COMMAND_DELETE_USER = "DeleteUser";
+  public static final String COMMAND_TEST_DATABASE_CONNECT = "TestDatabaseConnect";
+  public static final String COMMAND_CREATE_DATABASE = "CreateDatabase";
+
+  public static final String PARAM_SPRING_PROFILES_ACTIVE = "spring_profiles_active";
+  public static final String PARAM_NAMESPACE_ROLE = "NAMESPACE_ROLE";
+  public static final String PARAM_MANAGED_IDENTITY_OID = "MANAGED_IDENTITY_OID";
+  public static final String PARAM_DATABASE_NAMES = "DATABASE_NAMES";
+  public static final String PARAM_NEW_DB_NAME = "NEW_DB_NAME";
+  public static final String PARAM_DB_SERVER_NAME = "DB_SERVER_NAME";
+  public static final String PARAM_ADMIN_DB_USER_NAME = "ADMIN_DB_USER_NAME";
+  public static final String PARAM_CONNECT_TO_DATABASE = "CONNECT_TO_DATABASE";
+  public static final String PARAM_NEW_DB_USER_NAME = "NEW_DB_USER_NAME";
+  public static final String PARAM_NEW_DB_USER_OID = "NEW_DB_USER_OID";
 
   private final AzureConfiguration azureConfig;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
@@ -69,10 +92,11 @@ public class AzureDatabaseUtilsRunner {
 
   /**
    * Creates a database in the landing zone postgres server and grants the user access to it.
-   *
+   * TODO: remove as part of https://broadworkbench.atlassian.net/browse/WOR-1165
    * @param azureCloudContext
    * @param workspaceId
-   * @param podName
+   * @param podName name of the pod created to run the command, should be unique within the LZ and
+   *     stable across stairway retries
    * @param userName
    * @param userOid
    * @param databaseName
@@ -88,10 +112,10 @@ public class AzureDatabaseUtilsRunner {
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
-            new V1EnvVar().name("spring_profiles_active").value("CreateDatabase"),
-            new V1EnvVar().name("NEW_DB_USER_NAME").value(userName),
-            new V1EnvVar().name("NEW_DB_USER_OID").value(userOid),
-            new V1EnvVar().name("NEW_DB_NAME").value(databaseName));
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_CREATE_DATABASE),
+            new V1EnvVar().name(PARAM_NEW_DB_USER_NAME).value(userName),
+            new V1EnvVar().name(PARAM_NEW_DB_USER_OID).value(userOid),
+            new V1EnvVar().name(PARAM_NEW_DB_NAME).value(databaseName));
     runAzureDatabaseUtils(
         azureCloudContext,
         workspaceId,
@@ -105,8 +129,10 @@ public class AzureDatabaseUtilsRunner {
    *
    * @param azureCloudContext
    * @param workspaceId
-   * @param podName
-   * @param databaseName
+   * @param podName name of the pod created to run the command, should be unique within the LZ and
+   *     stable across stairway retries
+   * @param databaseName name of the database to create, a role with the same name will be created
+   *     with full privileges on the database
    * @throws InterruptedException
    */
   public void createDatabaseWithDbRole(
@@ -114,8 +140,9 @@ public class AzureDatabaseUtilsRunner {
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
-            new V1EnvVar().name("spring_profiles_active").value("CreateDatabaseWithDbRole"),
-            new V1EnvVar().name("NEW_DB_NAME").value(databaseName));
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(
+                COMMAND_CREATE_DATABASE_WITH_DB_ROLE),
+            new V1EnvVar().name(PARAM_NEW_DB_NAME).value(databaseName));
     runAzureDatabaseUtils(
         azureCloudContext,
         workspaceId,
@@ -124,31 +151,34 @@ public class AzureDatabaseUtilsRunner {
   }
 
   /**
-   * Creates a user in the landing zone postgres server and grants it access to roles associated to
-   * each of databaseNames.
+   * Creates a role for a namespace in the landing zone postgres server and grants it access to the
+   * role associated to each of databaseNames.
    *
    * @param azureCloudContext
    * @param workspaceId
-   * @param podName
-   * @param userName
-   * @param userOid
-   * @param databaseNames
+   * @param podName name of the pod created to run the command, should be unique within the LZ and
+   *     stable across stairway retries
+   * @param namespaceRoleName the name of the role to create
+   * @param managedIdentityOid the object (principal) id of the managed identity to associate to the
+   *     role
+   * @param databaseNames the names of the databases to grant access to. The role created will be
+   *     granted each associated database role.
    * @throws InterruptedException
    */
-  public void createUser(
+  public void createNamespaceRole(
       AzureCloudContext azureCloudContext,
       UUID workspaceId,
       String podName,
-      String userName,
-      String userOid,
+      String namespaceRoleName,
+      String managedIdentityOid,
       Set<String> databaseNames)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
-            new V1EnvVar().name("spring_profiles_active").value("CreateUser"),
-            new V1EnvVar().name("NEW_DB_USER_NAME").value(userName),
-            new V1EnvVar().name("NEW_DB_USER_OID").value(userOid),
-            new V1EnvVar().name("DATABASE_NAMES").value(String.join(",", databaseNames)));
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_CREATE_USER),
+            new V1EnvVar().name(PARAM_NAMESPACE_ROLE).value(namespaceRoleName),
+            new V1EnvVar().name(PARAM_MANAGED_IDENTITY_OID).value(managedIdentityOid),
+            new V1EnvVar().name(PARAM_DATABASE_NAMES).value(String.join(",", databaseNames)));
     runAzureDatabaseUtils(
         azureCloudContext,
         workspaceId,
@@ -161,17 +191,21 @@ public class AzureDatabaseUtilsRunner {
    *
    * @param azureCloudContext
    * @param workspaceId
-   * @param podName
-   * @param userName
+   * @param podName name of the pod created to run the command, should be unique within the LZ and
+   *     stable across stairway retries
+   * @param namespaceRoleName to delete
    * @throws InterruptedException
    */
-  public void deleteUser(
-      AzureCloudContext azureCloudContext, UUID workspaceId, String podName, String userName)
+  public void deleteNamespaceRole(
+      AzureCloudContext azureCloudContext,
+      UUID workspaceId,
+      String podName,
+      String namespaceRoleName)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
-            new V1EnvVar().name("spring_profiles_active").value("DeleteUser"),
-            new V1EnvVar().name("DB_USER_NAME").value(userName));
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_DELETE_USER),
+            new V1EnvVar().name(PARAM_NAMESPACE_ROLE).value(namespaceRoleName));
     runAzureDatabaseUtils(
         azureCloudContext,
         workspaceId,
@@ -180,11 +214,15 @@ public class AzureDatabaseUtilsRunner {
   }
 
   /**
-   * A function that can be used to test connectivity to the landing zone postgres server.
+   * A function that can be used to test connectivity to the landing zone postgres server. This is
+   * different from the other commands as it runs as a specified user rather than the database
+   * server admin and runs in a specified namespace rather than the default namespace, just like an
+   * app would run.
    *
    * @param azureCloudContext
    * @param workspaceId
-   * @param podName
+   * @param podName name of the pod created to run the command, should be unique within the LZ and
+   *     stable across stairway retries
    * @param databaseName
    * @throws InterruptedException
    */
@@ -199,10 +237,10 @@ public class AzureDatabaseUtilsRunner {
       throws InterruptedException {
     List<V1EnvVar> envVars =
         List.of(
-            new V1EnvVar().name("spring_profiles_active").value("TestDatabaseConnect"),
-            new V1EnvVar().name("DB_SERVER_NAME").value(dbServerName),
-            new V1EnvVar().name("ADMIN_DB_USER_NAME").value(ksaName),
-            new V1EnvVar().name("CONNECT_TO_DATABASE").value(databaseName));
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_TEST_DATABASE_CONNECT),
+            new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
+            new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(ksaName),
+            new V1EnvVar().name(PARAM_CONNECT_TO_DATABASE).value(databaseName));
 
     var podDefinition =
         new V1Pod()
@@ -360,8 +398,8 @@ public class AzureDatabaseUtilsRunner {
                     () -> new RuntimeException("No shared database admin identity found")));
 
     List<V1EnvVar> envVarsWithCommonArgs = new ArrayList<>();
-    envVarsWithCommonArgs.add(new V1EnvVar().name("DB_SERVER_NAME").value(dbServerName));
-    envVarsWithCommonArgs.add(new V1EnvVar().name("ADMIN_DB_USER_NAME").value(adminDbUserName));
+    envVarsWithCommonArgs.add(new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName));
+    envVarsWithCommonArgs.add(new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(adminDbUserName));
     envVarsWithCommonArgs.addAll(envVars);
 
     return new V1Pod()

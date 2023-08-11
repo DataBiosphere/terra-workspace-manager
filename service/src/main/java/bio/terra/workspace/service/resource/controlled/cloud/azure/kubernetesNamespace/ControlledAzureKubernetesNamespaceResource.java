@@ -43,6 +43,17 @@ import java.util.UUID;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A {@link ControlledResource} representing a Kubernetes namespace in an Azure Kubernetes Service.
+ * In the Terra context, a Kubernetes namespace can be thought of analogous to a virtual machine.
+ * It's a unit of compute that can be used to run containers with an identity. There are 3 flavors
+ * of this resource: 1. A namespace that does not have a managed identity associated with it. This
+ * can be used for processes that do not need long-lived or independent access external resources.
+ * 2. A namespace that has a managed identity associated with it. The identity can be a workspace
+ * manged identity or a pet managed identity. 3. A namespace that requires access to workspace
+ * databases. This is a special case of #2 where database a role is created for the namespace's
+ * managed identity and that role is granted access to the specified databases.
+ */
 public class ControlledAzureKubernetesNamespaceResource extends ControlledResource {
   private final String kubernetesNamespace;
   private final String kubernetesServiceAccount;
@@ -139,7 +150,8 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     > create the federated credentials (both KSA and federated credentials in managed identity)
 
     if databases are provided:
-    > create database login role with access to appropriate databases, ensuring databases exist
+    > create namespace role with access to appropriate databases,
+    ensuring databases exist and access is permitted
      */
 
     final List<Step> createNamespaceSteps =
@@ -160,7 +172,7 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   private List<Step> getSetupDatabaseAccessSteps(FlightBeanBag flightBeanBag) {
     if (requiresDatabases()) {
       return List.of(
-          new CreateDatabaseUserStep(
+          new CreateNamespaceRoleStep(
               getWorkspaceId(),
               flightBeanBag.getAzureDatabaseUtilsRunner(),
               this,
@@ -234,7 +246,7 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     > delete federated credentials
 
     if databases are provided:
-    > delete database login role
+    > delete namespace role
     */
     final List<Step> deleteKubernetesNamespaceSteps =
         List.of(
@@ -252,7 +264,7 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   private List<Step> getDatabaseAccessDeleteSteps(FlightBeanBag flightBeanBag) {
     if (requiresDatabases()) {
       return List.of(
-          new DeleteDatabaseUserStep(
+          new DeleteNamespaceRoleStep(
               getWorkspaceId(), flightBeanBag.getAzureDatabaseUtilsRunner(), this));
     } else {
       return List.of();

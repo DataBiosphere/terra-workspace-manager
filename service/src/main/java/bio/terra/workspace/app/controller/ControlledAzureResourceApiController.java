@@ -766,7 +766,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         userRequest, workspaceId, ControllerValidationUtils.samCreateAction(commonFields));
     workspaceService.validateWorkspaceAndContextState(workspaceId, CloudPlatform.AZURE);
 
-    // the namespace must be unique across all workspaces in the LZ
+    // append the workspace id to ensure the namespace is unique across all workspaces in the LZ
     var kubernetesNamespace =
         body.getAzureKubernetesNamespace().getNamespacePrefix() + "-" + workspaceId;
     var resource =

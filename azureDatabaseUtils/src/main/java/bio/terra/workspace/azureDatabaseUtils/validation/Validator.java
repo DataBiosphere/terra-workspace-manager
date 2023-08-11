@@ -20,7 +20,7 @@ public class Validator {
     }
   }
 
-  public void validateUserOidFormat(String userOid) {
+  public void validateOidFormat(String userOid) {
     UUID.fromString(Objects.requireNonNull(userOid, "userOid must be specified"));
   }
 }

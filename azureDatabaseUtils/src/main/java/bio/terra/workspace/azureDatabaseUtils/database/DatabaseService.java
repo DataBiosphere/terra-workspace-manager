@@ -24,7 +24,7 @@ public class DatabaseService {
       String newDbName, String newDbUserName, String newDbUserOid) {
     validator.validateDatabaseNameFormat(newDbName);
     validator.validateRoleNameFormat(newDbUserName);
-    validator.validateUserOidFormat(newDbUserOid);
+    validator.validateOidFormat(newDbUserOid);
 
     logger.info(
         "Creating database {} with user {} and OID {}", newDbName, newDbUserName, newDbUserOid);
@@ -41,32 +41,32 @@ public class DatabaseService {
     logger.info("Creating database {} with db role of same name", newDbName);
 
     databaseDao.createDatabase(newDbName);
-    databaseDao.createRole(newDbName);
-    databaseDao.grantAllPrivileges(newDbName, newDbName);
+    databaseDao.createRole(newDbName); // create a role with the same name as the database
+    databaseDao.grantAllPrivileges(newDbName, newDbName); // db name and role name are the same
     databaseDao.revokeAllPublicPrivileges(newDbName);
   }
 
-  public void createLoginRole(
-      String newDbUserName, String newDbUserOid, Set<String> databaseNames) {
-    validator.validateRoleNameFormat(newDbUserName);
-    validator.validateUserOidFormat(newDbUserOid);
+  public void createNamespaceRole(
+      String namespaceRole, String managedIdentityOid, Set<String> databaseNames) {
+    validator.validateRoleNameFormat(namespaceRole);
+    validator.validateOidFormat(managedIdentityOid);
     databaseNames.forEach(validator::validateDatabaseNameFormat);
 
     logger.info(
-        "Creating login role {} with OID {} for databases {}",
-        newDbUserName,
-        newDbUserOid,
+        "Creating namespace role {} with OID {} for databases {}",
+        namespaceRole,
+        managedIdentityOid,
         databaseNames);
 
-    databaseDao.createRoleForManagedIdentity(newDbUserName, newDbUserOid);
-    databaseNames.forEach(databaseName -> databaseDao.grantRole(newDbUserName, databaseName));
+    databaseDao.createRoleForManagedIdentity(namespaceRole, managedIdentityOid);
+    databaseNames.forEach(databaseName -> databaseDao.grantRole(namespaceRole, databaseName));
   }
 
-  public void deleteLoginRole(String newDbUserName) {
-    validator.validateRoleNameFormat(newDbUserName);
+  public void deleteNamespaceRole(String namespaceRole) {
+    validator.validateRoleNameFormat(namespaceRole);
 
-    logger.info("Deleting login role {}", newDbUserName);
+    logger.info("Deleting namespace role {}", namespaceRole);
 
-    databaseDao.deleteRole(newDbUserName);
+    databaseDao.deleteRole(namespaceRole);
   }
 }

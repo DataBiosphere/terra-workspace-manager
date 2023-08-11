@@ -18,12 +18,12 @@ Which command is run is determined by the spring profile that is active. The com
 * `CreateDatabaseWithDbRole` - creates a database with a given name and grant access new role of the same name. Environment variables:
   * `spring_profiles_active` - must be set to `CreateDatabaseWithDbRole`
   * `NEW_DB_NAME` - the name of the database to create
-* `CreateUser` - creates a user with a given name and grant access to a managed identity. Environment variables:
+* `CreateNamespaceRole` - creates a user with a given name and grant access to a managed identity. Environment variables:
   * `spring_profiles_active` - must be set to `CreateUser`
   * `NEW_DB_USER_NAME` - the name of the role to create
   * `NEW_DB_USER_OID` - the OID of the manged identity
   * `DATABASE_NAMES` - a comma separated list of databases to grant access to
-* `DeleteUser` - deletes a user with a given name. Environment variables:
+* `DeleteNamespaceRole` - deletes a user with a given name. Environment variables:
   * `spring_profiles_active` - must be set to `DeleteUser`
   * `DB_USER_NAME` - the name of the role to delete
 * `TestDatabaseConnect` - A command to be used in connected tests to verify database permissions. Environment variables:

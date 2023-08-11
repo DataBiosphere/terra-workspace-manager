@@ -10,13 +10,13 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteDatabaseUserStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(DeleteDatabaseUserStep.class);
+public class DeleteNamespaceRoleStep implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(DeleteNamespaceRoleStep.class);
   private final UUID workspaceId;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
   private final ControlledAzureKubernetesNamespaceResource resource;
 
-  public DeleteDatabaseUserStep(
+  public DeleteNamespaceRoleStep(
       UUID workspaceId,
       AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
       ControlledAzureKubernetesNamespaceResource resource) {
@@ -26,13 +26,13 @@ public class DeleteDatabaseUserStep implements Step {
   }
 
   private String getDeletePodName() {
-    return "delete-user-" + this.resource.getKubernetesServiceAccount();
+    return "delete-namespace-role-" + this.resource.getKubernetesServiceAccount();
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
-    logger.info("Deleting database user for namespace {}", resource.getKubernetesNamespace());
-    azureDatabaseUtilsRunner.deleteUser(
+    logger.info("Deleting namespace role for namespace {}", resource.getKubernetesNamespace());
+    azureDatabaseUtilsRunner.deleteNamespaceRole(
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),

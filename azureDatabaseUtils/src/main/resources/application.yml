@@ -8,7 +8,8 @@ env:
     newDbUserOid: ${NEW_DB_USER_OID:newuseroid}
     newDbName: ${NEW_DB_NAME:newdb}
     databaseNames: ${DATABASE_NAMES:db1,db2,db3}
-    dbUserName: ${DB_USER_NAME:user}
+    namespaceRole: ${NAMESPACE_ROLE}
+    managedIdentityOid: ${MANAGED_IDENTITY_OID}
 
 spring:
   datasource:

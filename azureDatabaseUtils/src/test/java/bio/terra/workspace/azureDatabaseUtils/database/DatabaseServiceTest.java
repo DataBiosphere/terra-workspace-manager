@@ -31,7 +31,7 @@ public class DatabaseServiceTest extends BaseUnitTest {
 
     verify(validator).validateDatabaseNameFormat(newDbName);
     verify(validator).validateRoleNameFormat(newDbUserName);
-    verify(validator).validateUserOidFormat(newDbUserOid);
+    verify(validator).validateOidFormat(newDbUserOid);
   }
 
   @Test

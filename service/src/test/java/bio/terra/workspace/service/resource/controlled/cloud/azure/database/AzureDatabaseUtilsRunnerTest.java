@@ -117,7 +117,7 @@ public class AzureDatabaseUtilsRunnerTest {
 
     setupMocks(podName, AzureDatabaseUtilsRunner.POD_SUCCEEDED);
 
-    azureDatabaseUtilsRunner.createUser(
+    azureDatabaseUtilsRunner.createNamespaceRole(
         mockAzureCloudContext, workspaceId, podName, userName, userOid, databaseNames);
 
     assertResults(
@@ -140,7 +140,8 @@ public class AzureDatabaseUtilsRunnerTest {
 
     setupMocks(podName, AzureDatabaseUtilsRunner.POD_SUCCEEDED);
 
-    azureDatabaseUtilsRunner.deleteUser(mockAzureCloudContext, workspaceId, podName, userName);
+    azureDatabaseUtilsRunner.deleteNamespaceRole(
+        mockAzureCloudContext, workspaceId, podName, userName);
 
     assertResults(Map.of("spring_profiles_active", "DeleteUser", "DB_USER_NAME", userName));
   }
@@ -157,7 +158,7 @@ public class AzureDatabaseUtilsRunnerTest {
     assertThrows(
         RetryException.class,
         () ->
-            azureDatabaseUtilsRunner.deleteUser(
+            azureDatabaseUtilsRunner.deleteNamespaceRole(
                 mockAzureCloudContext, workspaceId, podName, userName));
   }
 

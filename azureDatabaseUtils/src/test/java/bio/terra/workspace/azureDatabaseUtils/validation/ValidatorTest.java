@@ -37,11 +37,11 @@ public class ValidatorTest extends BaseUnitTest {
   void testOidValidation() {
     final String newDbUserOid = "not a uuid";
     assertThrows(
-        IllegalArgumentException.class, () -> validator.validateUserOidFormat(newDbUserOid));
+        IllegalArgumentException.class, () -> validator.validateOidFormat(newDbUserOid));
   }
 
   @Test
   void testMissingOidValidation() {
-    assertThrows(NullPointerException.class, () -> validator.validateUserOidFormat(null));
+    assertThrows(NullPointerException.class, () -> validator.validateOidFormat(null));
   }
 }
