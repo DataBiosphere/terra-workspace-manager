@@ -194,6 +194,9 @@ components:
         region:
           type: string
           description: GCP region.
+        imageVersion:
+          type: string
+          description: Dataproc image version with specific software versions installed for Spark, Hadoop, etc. Defaults to the latest debian image if not specified. See https://cloud.google.com/dataproc/docs/concepts/versioning/dataproc-version-clusters#supported_dataproc_versions.
         initializationScripts:
           type: array
           items:
