@@ -221,7 +221,7 @@ public class CreateDataprocClusterStep implements Step {
                         .setOptionalComponents(creationParameters.getComponents())));
 
     // Set dataproc image version
-    if(creationParameters.getImageVersion() != null) {
+    if (creationParameters.getImageVersion() != null) {
       cluster.getConfig().getSoftwareConfig().setImageVersion(creationParameters.getImageVersion());
     }
 
