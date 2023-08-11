@@ -54,9 +54,9 @@ public class AzureDatabaseUtilsRunner {
   public static final String POD_SUCCEEDED = "Succeeded";
   private static final String aksNamespace = "default";
 
-  public static final String COMMAND_CREATE_USER = "CreateUser";
+  public static final String COMMAND_CREATE_NAMESPACE_ROLE = "CreateNamespaceRole";
   public static final String COMMAND_CREATE_DATABASE_WITH_DB_ROLE = "CreateDatabaseWithDbRole";
-  public static final String COMMAND_DELETE_USER = "DeleteUser";
+  public static final String COMMAND_DELETE_NAMESPACE_ROLE = "DeleteNamespaceRole";
   public static final String COMMAND_TEST_DATABASE_CONNECT = "TestDatabaseConnect";
   public static final String COMMAND_CREATE_DATABASE = "CreateDatabase";
 
@@ -175,7 +175,7 @@ public class AzureDatabaseUtilsRunner {
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
-            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_CREATE_USER),
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_CREATE_NAMESPACE_ROLE),
             new V1EnvVar().name(PARAM_NAMESPACE_ROLE).value(namespaceRoleName),
             new V1EnvVar().name(PARAM_MANAGED_IDENTITY_OID).value(managedIdentityOid),
             new V1EnvVar().name(PARAM_DATABASE_NAMES).value(String.join(",", databaseNames)));
@@ -204,7 +204,7 @@ public class AzureDatabaseUtilsRunner {
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
-            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_DELETE_USER),
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_DELETE_NAMESPACE_ROLE),
             new V1EnvVar().name(PARAM_NAMESPACE_ROLE).value(namespaceRoleName));
     runAzureDatabaseUtils(
         azureCloudContext,
