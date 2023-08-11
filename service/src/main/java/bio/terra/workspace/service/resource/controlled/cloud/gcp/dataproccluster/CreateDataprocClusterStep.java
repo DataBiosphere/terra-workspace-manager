@@ -234,13 +234,17 @@ public class CreateDataprocClusterStep implements Step {
       cluster
           .getConfig()
           .setWorkerConfig(
-              getInstanceGroupConfig(creationParameters.getPrimaryWorkerConfig(), false));
+              getInstanceGroupConfig(
+                  creationParameters.getPrimaryWorkerConfig(),
+                  /* isSecondaryWorkerConfig=*/ false));
     }
     if (creationParameters.getSecondaryWorkerConfig() != null) {
       cluster
           .getConfig()
           .setSecondaryWorkerConfig(
-              getInstanceGroupConfig(creationParameters.getSecondaryWorkerConfig(), true));
+              getInstanceGroupConfig(
+                  creationParameters.getSecondaryWorkerConfig(),
+                  /* isSecondaryWorkerConfig=*/ true));
     }
 
     // Configure cluster lifecycle
