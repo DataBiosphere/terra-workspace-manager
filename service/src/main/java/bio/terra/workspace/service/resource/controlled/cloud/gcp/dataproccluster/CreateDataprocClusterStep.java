@@ -195,14 +195,6 @@ public class CreateDataprocClusterStep implements Step {
                 .setTempBucket(tempBucketName)
                 .setMasterConfig(
                     getInstanceGroupConfig(creationParameters.getManagerNodeConfig(), false))
-                .setWorkerConfig(
-                    getInstanceGroupConfig(creationParameters.getPrimaryWorkerConfig(), false))
-                .setSecondaryWorkerConfig(
-                    creationParameters.getSecondaryWorkerConfig() != null
-                        ? getInstanceGroupConfig(
-                            creationParameters.getSecondaryWorkerConfig(), true)
-                        : getInstanceGroupConfig(
-                            creationParameters.getPrimaryWorkerConfig(), false))
                 .setGceClusterConfig(
                     new GceClusterConfig()
                         // TODO PF-2878: replace leonardo tag once new dataproc firewall rule is in
@@ -235,6 +227,24 @@ public class CreateDataprocClusterStep implements Step {
               initializationScripts.stream()
                   .map(script -> new NodeInitializationAction().setExecutableFile(script))
                   .collect(Collectors.toList()));
+    }
+
+    // Set primary and secondary worker configs
+    if (creationParameters.getPrimaryWorkerConfig() != null) {
+      cluster
+          .getConfig()
+          .setWorkerConfig(
+              getInstanceGroupConfig(
+                  creationParameters.getPrimaryWorkerConfig(),
+                  /* isSecondaryWorkerConfig=*/ false));
+    }
+    if (creationParameters.getSecondaryWorkerConfig() != null) {
+      cluster
+          .getConfig()
+          .setSecondaryWorkerConfig(
+              getInstanceGroupConfig(
+                  creationParameters.getSecondaryWorkerConfig(),
+                  /* isSecondaryWorkerConfig=*/ true));
     }
 
     // Configure cluster lifecycle

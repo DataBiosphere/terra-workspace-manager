@@ -186,7 +186,6 @@ components:
       - configBucket
       - tempBucket
       - managerNodeConfig
-      - primaryWorkerConfig
       properties:
         clusterId:
           type: string
