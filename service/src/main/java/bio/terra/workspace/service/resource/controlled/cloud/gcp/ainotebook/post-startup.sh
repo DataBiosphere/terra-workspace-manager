@@ -3,7 +3,7 @@
 # Name: post-startup.sh
 #
 # NOTE FOR CONTRIBUTORS:
-#   This startup script shares logic with the dataproc cluster here: /Users/rogerwangcs/local_dev/terra-workspace-manager/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/dataproccluster/startup.sh.
+#   This startup script shares logic with the dataproc cluster here: service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/dataproccluster/startup.sh.
 #   Please ensure that changes to shared logic are reflected in both scripts.
 #
 # Description
@@ -28,9 +28,7 @@
 #     1- Get the GCS path from VM metadata (instance/attributes/post-startup-script)
 #     2- Download it to /opt/c2d/post_start.sh
 #     3- Execute /opt/c2d/post_start.sh
-#     4- Set the VM guest attribute "notebooks/handle_post_startup_script" to "DONE"
-#
-#   Note that the guest attribute is set to DONE whether the script runs successfully or not.
+#     4- Set the instance/guest-attributes/startup_script/status attribute to COMPLETED as noted above.
 #
 # How to test changes to this file:
 #   Copy this file to a GCS bucket:
@@ -62,7 +60,6 @@ set -o xtrace
 
 # The non-root linux user that JupyterLab will be running as. It's important to do some parts of setup in the
 # user space, such as setting Terra CLI settings which are persisted in the user's $HOME.
-# This post startup script is not run by the same user.
 readonly LOGIN_USER="jupyter"
 
 # Create an alias for cases when we need to run a shell command as the jupyter user.

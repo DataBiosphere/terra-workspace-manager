@@ -3,7 +3,7 @@
 # Name: startup.sh
 #
 # NOTE FOR CONTRIBUTORS:
-#   This startup script closely mirrors the startup script used for Vertex AI Notebook instances here: /Users/rogerwangcs/local_dev/terra-workspace-manager/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh.
+#   This startup script closely mirrors the startup script used for Vertex AI Notebook instances here: service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh.
 #   Please ensure that changes to shared logic are reflected in both scripts.
 #
 # Description:
@@ -44,7 +44,6 @@ set -o xtrace
 
 # The linux user that JupyterLab will be running as. It's important to do some parts of setup in the
 # user space, such as setting Terra CLI settings which are persisted in the user's $HOME.
-# This post startup script is not run by the same user.
 readonly LOGIN_USER="dataproc"
 
 # Create an alias for cases when we need to run a shell command as the login user.
