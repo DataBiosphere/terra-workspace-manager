@@ -232,8 +232,7 @@ public class CreateDataprocClusterStep implements Step {
       cluster.getConfig().getSoftwareConfig().setImageVersion(creationParameters.getImageVersion());
     }
 
-    // Set initialization script
-    // TODO PF-2828: Add WSM default post-startup script
+    // Set initialization scripts
     List<String> initializationScripts = creationParameters.getInitializationScripts();
     if (initializationScripts != null) {
       cluster
