@@ -288,10 +288,6 @@ public class CreateDataprocClusterStep implements Step {
       }
     }
 
-    // Set additional cluster properties
-    Map<String, String> properties = new HashMap<>();
-    cluster.getConfig().getSoftwareConfig().setProperties(properties);
-
     // Set metadata on all cluster vm nodes
     Map<String, String> metadata = new HashMap<>();
 
