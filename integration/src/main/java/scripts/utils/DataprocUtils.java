@@ -98,6 +98,10 @@ public class DataprocUtils {
                 new GcpDataprocClusterInstanceGroupConfig()
                     .numInstances(2)
                     .machineType("n2-standard-2"))
+            .secondaryWorkerConfig(
+                new GcpDataprocClusterInstanceGroupConfig()
+                    .numInstances(2)
+                    .machineType("n2-standard-2"))
             .components(List.of("JUPYTER"))
             .lifecycleConfig(new GcpDataprocClusterLifecycleConfig().idleDeleteTtl("3600s"));
 

@@ -423,6 +423,10 @@ public class ControlledGcpResourceFixtures {
             new ApiGcpDataprocClusterInstanceGroupConfig()
                 .numInstances(2)
                 .machineType("n2-standard-2"))
+        .secondaryWorkerConfig(
+            new ApiGcpDataprocClusterInstanceGroupConfig()
+                .numInstances(2)
+                .machineType("n2-standard-2"))
         .lifecycleConfig(new ApiGcpDataprocClusterLifecycleConfig().idleDeleteTtl("3600s"));
   }
 

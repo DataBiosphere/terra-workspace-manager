@@ -8,7 +8,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.CloudContextService;
@@ -42,15 +41,6 @@ public class BuildAndValidateResourceListStep implements Step {
     // Get a list of resources in the order they are to be deleted. That order must be
     // respected throughout the rest of the flight.
     List<ControlledResource> resources = cloudContextService.makeOrderedResourceList(workspaceUuid);
-
-    // Verify that the caller is allowed to delete all resources.
-    for (ControlledResource resource : resources) {
-      samService.checkAuthz(
-          userRequest,
-          resource.getCategory().getSamResourceName(),
-          resource.getResourceId().toString(),
-          SamConstants.SamControlledResourceActions.DELETE_ACTION);
-    }
 
     // Generate pairs of (resourceId, flightId) maintaining the ordering
     List<ResourceDeleteFlightPair> resourcePairs = new ArrayList<>();

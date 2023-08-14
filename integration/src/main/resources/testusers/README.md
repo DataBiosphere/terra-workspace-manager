@@ -5,7 +5,7 @@ Workspace Manager currently uses 3 test users for running integration tests with
 - `elijah.thunderlord@test.firecloud.org`
 - `liam.dragonmaw@test.firecloud.org`
 
-Tests generate credentials for these users via domain-wide delegation. More information about test user configuration (including information for setting up additional test users) is available [on Confluence](https://broadinstitute.atlassian.net/wiki/spaces/GAWB/pages/115259774/The+Testerson+Family+and+the+Order+of+the+QA). See the linked "Test Horde" sheet when setting up additional test users.
+Tests generate credentials for these users via domain-wide delegation. More information about test user configuration (including information for setting up additional test users) is available [on Confluence](https://broadworkbench.atlassian.net/wiki/spaces/QA/pages/2730524689/The+Testerson+Family+and+the+Order+of+the+QA). See the linked "Test Horde" sheet when setting up additional test users.
 
 Workspace Manager integration tests also talk to a number of external resources.
 These include:

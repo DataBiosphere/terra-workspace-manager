@@ -316,6 +316,13 @@ workspace:
 feature:
   tps-enabled: true
   temporary-grant-enabled: true
+landingzone:
+  sam:
+    landing-zone-resource-users:
+      - leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
+      - workspace-wsmtest@terra-kernel-k8s.iam.gserviceaccount.com
+      - Elizabeth.Shadowmoon@test.firecloud.org
+
 EOF
 else
   cat /dev/null > "${outputdir}/local-properties.yml"
