@@ -12,7 +12,7 @@
 # Metadata and guest attributes:
 #   This script uses the following GCE metadata and guest attributes for startup orchestration:
 #   - attributes/dataproc-role: Read by the script to determine if it's running on the manager node or a worker node. Possible values are "Master" or "Worker".
-#   - instance/guest-attributes/startup_script/status: Set by this script, storing the status of this script's execution. Possible values are "RUNNING", "COMPLETE", or "ERROR".
+#   - instance/guest-attributes/startup_script/status: Set by this script, storing the status of this script's execution. Possible values are "STARTED", "COMPLETE", or "ERROR".
 #   - instance/guest-attributes/startup_script/message: Set by this script, storing the message of this script's execution. If the status is "ERROR", this message will contain an error message, otherwise it will be empty.
 #   - instance/attributes/terra-cli-server: Read by this script to configure the Terra CLI server.
 #   - instance/attributes/terra-workspace-id: Read by this script to configure the Terra CLI workspace.
