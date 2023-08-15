@@ -154,7 +154,8 @@ public class ControlledDataprocClusterResource extends ControlledResource {
             petSaEmail,
             workspaceUserFacingId,
             flightBeanBag.getCrlService(),
-            flightBeanBag.getCliConfiguration()),
+            flightBeanBag.getCliConfiguration(),
+            flightBeanBag.getVersionConfiguration()),
         gcpRetryRule);
     flight.addStep(
         new DataprocClusterCloudSyncStep(

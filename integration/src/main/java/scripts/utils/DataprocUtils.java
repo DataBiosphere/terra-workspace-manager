@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +52,7 @@ public class DataprocUtils {
       UUID workspaceUuid,
       @Nullable String clusterId,
       @Nullable String region,
+      @Nullable String startupScriptUrl,
       ControlledGcpResourceApi resourceApi)
       throws Exception {
 
@@ -102,6 +104,10 @@ public class DataprocUtils {
                     .machineType("n2-standard-2"))
             .components(List.of("JUPYTER"))
             .lifecycleConfig(new GcpDataprocClusterLifecycleConfig().idleDeleteTtl("3600s"));
+
+    if (startupScriptUrl != null) {
+      creationParameters.metadata(Map.of("startup-script-url", startupScriptUrl));
+    }
 
     var commonParameters =
         makeControlledResourceCommonFields(

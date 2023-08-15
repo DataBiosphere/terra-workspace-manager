@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import static bio.terra.workspace.common.utils.GcpUtils.INSTANCE_SERVICE_ACCOUNT_SCOPES;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.MAIN_BRANCH;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.NOTEBOOK_DISABLE_ROOT_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.PROXY_MODE_METADATA_KEY;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
@@ -59,7 +60,6 @@ public class CreateAiNotebookInstanceStep implements Step {
   protected static final String DEFAULT_POST_STARTUP_SCRIPT =
       "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/%s/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh";
 
-  private static final String MAIN_BRANCH = "main";
   /** The Notebook instance metadata value used to set the service account proxy mode. */
   // git secrets gets a false positive if 'service_account' is double quoted.
   private static final String PROXY_MODE_SA_VALUE = "service_" + "account";
