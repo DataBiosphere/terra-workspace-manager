@@ -28,7 +28,8 @@
 #     1- Get the GCS path from VM metadata (instance/attributes/post-startup-script)
 #     2- Download it to /opt/c2d/post_start.sh
 #     3- Execute /opt/c2d/post_start.sh
-#     4- Set the instance/guest-attributes/startup_script/status attribute to COMPLETED as noted above.
+#     4- Set the VM guest attribute "notebooks/handle_post_startup_script" to "DONE".
+#        Note that this attribute is set to DONE whether the script runs successfully or not.
 #
 # How to test changes to this file:
 #   Copy this file to a GCS bucket:
