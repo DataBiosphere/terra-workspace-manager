@@ -35,10 +35,14 @@ public class RetrieveDataprocClusterResourceAttributesStep implements Step {
       ApiControlledDataprocClusterUpdateParameters existingUpdateParameters =
           new ApiControlledDataprocClusterUpdateParameters();
 
-      existingUpdateParameters.setNumPrimaryWorkers(
-          cluster.getConfig().getWorkerConfig().getNumInstances());
-      existingUpdateParameters.setNumSecondaryWorkers(
-          cluster.getConfig().getSecondaryWorkerConfig().getNumInstances());
+      if (cluster.getConfig().getWorkerConfig() != null) {
+        existingUpdateParameters.setNumPrimaryWorkers(
+            cluster.getConfig().getWorkerConfig().getNumInstances());
+      }
+      if (cluster.getConfig().getSecondaryWorkerConfig() != null) {
+        existingUpdateParameters.setNumSecondaryWorkers(
+            cluster.getConfig().getSecondaryWorkerConfig().getNumInstances());
+      }
       if (cluster.getConfig().getAutoscalingConfig() != null) {
         existingUpdateParameters.setAutoscalingPolicy(
             cluster.getConfig().getAutoscalingConfig().getPolicyUri());
