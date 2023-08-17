@@ -232,6 +232,11 @@ ${RUN_AS_LOGIN_USER} "mkdir -p '${USER_BASH_COMPLETION_DIR}'"
 ${RUN_AS_LOGIN_USER} "mkdir -p '${USER_HOME_LOCAL_BIN}'"
 ${RUN_AS_LOGIN_USER} "mkdir -p '${USER_HOME_LOCAL_SHARE}'"
 
+# Remove the Vertex AI-installed "tutorials" directory.
+# End users think that they are VWB tutorials which is just confusing.
+emit "Removing the pre-installed Vertex AI tutorials directory"
+rm -rf "${USER_HOME_DIR}/tutorials"
+
 # As described above, have the ~/.bash_profile source the ~/.bashrc
 cat << EOF >> "${USER_BASH_PROFILE}"
 
