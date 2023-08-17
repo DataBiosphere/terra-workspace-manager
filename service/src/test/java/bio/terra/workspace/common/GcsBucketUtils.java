@@ -161,22 +161,18 @@ public class GcsBucketUtils {
   public void assertBucketHasNoFiles(
       AuthenticatedUserRequest userRequest, String projectId, String bucketName) throws Exception {
     StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
-    RetryUtils.getWithRetryOnException(
-        () -> countFiles(storageCow, bucketName),
-        /*totalDuration=*/ Duration.ofMinutes(5),
-        /*initialSleep=*/ Duration.ofSeconds(5),
-        /*factorIncrease=*/ 1.0,
-        /*sleepDurationMax=*/ Duration.ofSeconds(30),
-        null);
-
-    int numFiles = 0;
-    for (BlobCow blob : storageCow.get(bucketName).list().iterateAll()) {
-      numFiles++;
-    }
+    int numFiles =
+        RetryUtils.getWithRetryOnException(
+            () -> countFiles(storageCow, bucketName),
+            /*totalDuration=*/ Duration.ofMinutes(5),
+            /*initialSleep=*/ Duration.ofSeconds(5),
+            /*factorIncrease=*/ 1.0,
+            /*sleepDurationMax=*/ Duration.ofSeconds(30),
+            null);
     assertEquals(0, numFiles);
   }
 
-  private Integer countFiles(StorageCow storageCow, String bucketName) {
+  private int countFiles(StorageCow storageCow, String bucketName) {
     int numFiles = 0;
     for (BlobCow blob : storageCow.get(bucketName).list().iterateAll()) {
       numFiles++;
