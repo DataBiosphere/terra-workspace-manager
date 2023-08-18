@@ -23,6 +23,7 @@ import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneRequest;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
+import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResourcesByPurpose;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseAzureUnitTest;
@@ -147,6 +148,29 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
         landingZoneApiDispatch.createAzureLandingZone(BEARER_TOKEN, request, resultEndpoint);
 
     assertEquals(result.getLandingZoneId(), LANDING_ZONE_ID);
+  }
+
+  @Test
+  void listAzureLandingZoneResources_TagPropagation() {
+    setupLandingZoneResources();
+    ApiAzureLandingZoneResourcesList response =
+            landingZoneApiDispatch.listAzureLandingZoneResources(BEARER_TOKEN, LANDING_ZONE_ID);
+
+    verify(landingZoneService, times(1))
+            .listResourcesWithPurposes(
+                    eq(BEARER_TOKEN),
+                    eq(LANDING_ZONE_ID));
+    assertNotNull(response);
+    assertNotNull(response.getResources());
+    assertEquals(2, response.getResources().size());
+    response.getResources().forEach( resGroup -> {
+      assertEquals(3, resGroup.getDeployedResources().size(),
+              "deployed resources size for type " + resGroup.getPurpose());
+      resGroup.getDeployedResources().forEach( res -> {
+        assertNotNull(res.getTags(), "tags null for resource id " + res.getResourceId());
+        assertEquals(2, res.getTags().size(), "tags size for resource id " + res.getResourceId());
+      });
+    });
   }
 
   @Test
@@ -302,16 +326,19 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
                 .resourceName("fooSubnet11")
                 .resourceParentId("fooNetworkVNetId1")
                 .region("fooRegion1")
+                .tags(Map.of("subnetTag1", "subnetValue1", "subnetTag2", "subnetValue2"))
                 .build(),
             LandingZoneResource.builder()
                 .resourceName("fooSubnet12")
                 .resourceParentId("fooNetworkVNetId2")
                 .region("fooRegion2")
+                .tags(Map.of("subnetTag1", "subnetValue1", "subnetTag3", "subnetValue3"))
                 .build(),
             LandingZoneResource.builder()
                 .resourceName("fooSubnet13")
                 .resourceParentId("fooNetworkVNetId1")
                 .region("fooRegion1")
+                .tags(Map.of("subnetTag1", "subnetValue1", "subnetTag4", "subnetValue4"))
                 .build());
 
     List<LandingZoneResource> listResources1 =
@@ -320,16 +347,19 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
                 .resourceId("Id31")
                 .resourceType("fooType31")
                 .region("fooRegion1")
+                .tags(Map.of("resourceTag1", "resourceValue1", "resourceTag2", "resourceValue2"))
                 .build(),
             LandingZoneResource.builder()
                 .resourceId("Id32")
                 .resourceType("fooType32")
                 .region("fooRegion2")
+                .tags(Map.of("resourceTag1", "resourceValue1", "resourceTag3", "resourceValue4"))
                 .build(),
             LandingZoneResource.builder()
                 .resourceId("Id33")
                 .resourceType("fooType33")
                 .region("fooRegion1")
+                .tags(Map.of("resourceTag1", "resourceValue1", "resourceTag3", "resourceValue4"))
                 .build());
 
     when(landingZoneService.listResourcesByPurpose(
@@ -338,6 +368,10 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
     when(landingZoneService.listResourcesByPurpose(
             BEARER_TOKEN, LANDING_ZONE_ID, ResourcePurpose.SHARED_RESOURCE))
         .thenReturn(listResources1);
+    when(landingZoneService.listResourcesWithPurposes(BEARER_TOKEN, LANDING_ZONE_ID))
+        .thenReturn(new LandingZoneResourcesByPurpose(Map.of(
+            SubnetResourcePurpose.WORKSPACE_STORAGE_SUBNET, listSubnets1,
+            ResourcePurpose.SHARED_RESOURCE, listResources1)));
     landingZoneApiDispatch = new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
   }
 
