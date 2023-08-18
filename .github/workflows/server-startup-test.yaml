@@ -2,7 +2,6 @@
 # This test can be manually launched to just start the server and
 # immediately exit. The immediate exist is accomplished by setting
 # specific configuration flags.
-
 name: Server Startup Test
 on:
   workflow_dispatch: {}
@@ -71,6 +70,12 @@ jobs:
           vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
           target: local
 
+      # Configure up so the cronjobs do not start
       - name: Start the server with immediate exit
-        run: |
-          ./gradlew service:bootRun --args='--workspace.startup.exit-after-initialization=true --workspace.dangling-resource-cleanup.enabled=false --workspace.temporary-grant-revoke.revokeenabled=false --workspace.private-resource-cleanup.enabled=false'
+        env:
+          spring_profiles_active: human-readable-logging
+          workspace_startup_exitafterinitialization: true
+          workspace_danglingresourcecleanup_enabled: false
+          workspace_temporarygrantrevoke_revokeenabled: false
+          workspace_privateresourcecleanup_enabled: false
+        run: ./gradlew service:bootRun
