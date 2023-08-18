@@ -11,10 +11,8 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.StackdriverExporter;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import javax.sql.DataSource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {
