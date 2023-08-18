@@ -154,23 +154,33 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
   void listAzureLandingZoneResources_TagPropagation() {
     setupLandingZoneResources();
     ApiAzureLandingZoneResourcesList response =
-            landingZoneApiDispatch.listAzureLandingZoneResources(BEARER_TOKEN, LANDING_ZONE_ID);
+        landingZoneApiDispatch.listAzureLandingZoneResources(BEARER_TOKEN, LANDING_ZONE_ID);
 
     verify(landingZoneService, times(1))
-            .listResourcesWithPurposes(
-                    eq(BEARER_TOKEN),
-                    eq(LANDING_ZONE_ID));
+        .listResourcesWithPurposes(eq(BEARER_TOKEN), eq(LANDING_ZONE_ID));
     assertNotNull(response);
     assertNotNull(response.getResources());
     assertEquals(2, response.getResources().size());
-    response.getResources().forEach( resGroup -> {
-      assertEquals(3, resGroup.getDeployedResources().size(),
-              "deployed resources size for type " + resGroup.getPurpose());
-      resGroup.getDeployedResources().forEach( res -> {
-        assertNotNull(res.getTags(), "tags null for resource id " + res.getResourceId());
-        assertEquals(2, res.getTags().size(), "tags size for resource id " + res.getResourceId());
-      });
-    });
+    response
+        .getResources()
+        .forEach(
+            resGroup -> {
+              assertEquals(
+                  3,
+                  resGroup.getDeployedResources().size(),
+                  "deployed resources size for type " + resGroup.getPurpose());
+              resGroup
+                  .getDeployedResources()
+                  .forEach(
+                      res -> {
+                        assertNotNull(
+                            res.getTags(), "tags null for resource id " + res.getResourceId());
+                        assertEquals(
+                            2,
+                            res.getTags().size(),
+                            "tags size for resource id " + res.getResourceId());
+                      });
+            });
   }
 
   @Test
@@ -369,9 +379,11 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
             BEARER_TOKEN, LANDING_ZONE_ID, ResourcePurpose.SHARED_RESOURCE))
         .thenReturn(listResources1);
     when(landingZoneService.listResourcesWithPurposes(BEARER_TOKEN, LANDING_ZONE_ID))
-        .thenReturn(new LandingZoneResourcesByPurpose(Map.of(
-            SubnetResourcePurpose.WORKSPACE_STORAGE_SUBNET, listSubnets1,
-            ResourcePurpose.SHARED_RESOURCE, listResources1)));
+        .thenReturn(
+            new LandingZoneResourcesByPurpose(
+                Map.of(
+                    SubnetResourcePurpose.WORKSPACE_STORAGE_SUBNET, listSubnets1,
+                    ResourcePurpose.SHARED_RESOURCE, listResources1)));
     landingZoneApiDispatch = new LandingZoneApiDispatch(landingZoneService, featureConfiguration);
   }
 
