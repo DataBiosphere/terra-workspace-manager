@@ -20,6 +20,7 @@
 # Execution details:
 #   By default, this script is executed as root on all Dataproc vm nodes on every startup.
 #   However, the script will exit early if it's not running on the Dataproc manager node and also if it's not the first time the script is run.
+#   NOTE: This script is executed before the dataproc startup script that installs software components and jupyter.
 #
 # How to test changes to this file:
 # Currently, the only way is to use swagger to create a new cluster with the startup script gs url passed into the 'startup-script-uri' metadata field.
@@ -676,12 +677,7 @@ EOF
 # reload systemctl daemon to load the updated configuration
 systemctl daemon-reload
 
-###########################################################################################
-# Restart JupyterLab so that environment variables are picked up in the Jupyter environment
-###########################################################################################
-emit "Restarting Jupyter service..."
-
-systemctl restart ${JUPYTER_SERVICE_NAME}
+# The jupyter service will be restarted by the default dataproc startup script and pick up the modified service configuration and environment variables.
 
 ####################################################################################
 # Run a set of tests that should be invariant to the workspace or user configuration
