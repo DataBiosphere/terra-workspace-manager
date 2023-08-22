@@ -363,13 +363,13 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
                 .resourceId("Id32")
                 .resourceType("fooType32")
                 .region("fooRegion2")
-                .tags(Map.of("resourceTag1", "resourceValue1", "resourceTag3", "resourceValue4"))
+                .tags(Map.of("resourceTag1", "resourceValue1", "resourceTag3", "resourceValue3"))
                 .build(),
             LandingZoneResource.builder()
                 .resourceId("Id33")
                 .resourceType("fooType33")
                 .region("fooRegion1")
-                .tags(Map.of("resourceTag1", "resourceValue1", "resourceTag3", "resourceValue4"))
+                .tags(Map.of("resourceTag1", "resourceValue1", "resourceTag4", "resourceValue4"))
                 .build());
 
     when(landingZoneService.listResourcesByPurpose(
