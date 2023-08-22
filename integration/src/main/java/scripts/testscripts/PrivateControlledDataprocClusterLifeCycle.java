@@ -186,6 +186,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     var newName = "new-cluster-name";
     var newDescription = "new description for the cluster";
     int newNumPrimaryWorkers = 3;
+    int newNumSecondaryWorkers = 3;
     GcpDataprocClusterResource updatedResource =
         resourceUserApi.updateDataprocCluster(
             new UpdateControlledGcpDataprocClusterRequestBody()
@@ -193,7 +194,8 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
                 .name(newName)
                 .updateParameters(
                     new ControlledDataprocClusterUpdateParameters()
-                        .numPrimaryWorkers(newNumPrimaryWorkers)),
+                        .numPrimaryWorkers(newNumPrimaryWorkers)
+                        .numSecondaryWorkers(newNumSecondaryWorkers)),
             getWorkspaceId(),
             resourceId);
 
@@ -201,7 +203,10 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     assertEquals(newDescription, updatedResource.getMetadata().getDescription());
     // Directly fetch the cluster to verify that non wsm managed fields are updated.
     RetryUtils.getWithRetry(
-        cluster -> newNumPrimaryWorkers == cluster.getConfig().getWorkerConfig().getNumInstances(),
+        cluster ->
+            newNumPrimaryWorkers == cluster.getConfig().getWorkerConfig().getNumInstances()
+                && newNumSecondaryWorkers
+                    == cluster.getConfig().getSecondaryWorkerConfig().getNumInstances(),
         () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
         "Timed out waiting for cluster to update");
 

@@ -93,7 +93,8 @@ public class UpdateDataprocClusterStep implements Step {
       updateMaskPaths.add(NUM_SECONDARY_WORKERS);
       updatedCluster
           .getConfig()
-          .setSecondaryWorkerConfig(new InstanceGroupConfig().setNumInstances(3));
+          .setSecondaryWorkerConfig(
+              new InstanceGroupConfig().setNumInstances(updateParameters.getNumSecondaryWorkers()));
     }
     if (updateParameters.getAutoscalingPolicy() != null) {
       updateMaskPaths.add(AUTOSCALING_POLICY);
@@ -105,11 +106,13 @@ public class UpdateDataprocClusterStep implements Step {
     ApiGcpDataprocClusterLifecycleConfig lifecycleConfig = updateParameters.getLifecycleConfig();
     if (lifecycleConfig != null) {
       updatedCluster.getConfig().setLifecycleConfig(new LifecycleConfig());
-      updateMaskPaths.add(IDLE_DELETE_TTL);
-      updatedCluster
-          .getConfig()
-          .getLifecycleConfig()
-          .setIdleDeleteTtl(updateParameters.getLifecycleConfig().getIdleDeleteTtl());
+      if (lifecycleConfig.getIdleDeleteTtl() != null) {
+        updateMaskPaths.add(IDLE_DELETE_TTL);
+        updatedCluster
+            .getConfig()
+            .getLifecycleConfig()
+            .setIdleDeleteTtl(updateParameters.getLifecycleConfig().getIdleDeleteTtl());
+      }
       // Only one autoDeleteTtl and autoDeleteTime can be set (already validated in controller)
       if (lifecycleConfig.getAutoDeleteTtl() != null) {
         updateMaskPaths.add(AUTO_DELETE_TTL);
