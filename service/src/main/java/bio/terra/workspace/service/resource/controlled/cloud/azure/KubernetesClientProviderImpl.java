@@ -46,7 +46,7 @@ public class KubernetesClientProviderImpl implements KubernetesClientProvider {
             .manager()
             .serviceClient()
             .getManagedClusters()
-            .listClusterUserCredentials(mrgName, aksClusterName)
+            .listClusterAdminCredentials(mrgName, aksClusterName)
             .kubeconfigs()
             .stream()
             .findFirst()
