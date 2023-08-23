@@ -50,7 +50,7 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
     assertDatasetsAreEqualIgnoringLastUpdatedDate(createdDataset, fetchedDataset);
 
     // Delete the workspace, which should delete the included context and resource
-    workspaceApi.deleteWorkspace(getWorkspaceId());
+    WorkspaceAllocateTestScriptBase.deleteWorkspaceAsync(workspaceApi, getWorkspaceId());
 
     // Confirm the workspace is deleted
     var workspaceMissingException =
@@ -72,15 +72,14 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
    */
   @Override
   public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
-      throws Exception {
-    var e =
-        assertThrows(
-            ApiException.class,
-            () ->
-                workspaceApi.deleteWorkspaceV2(
-                    new DeleteWorkspaceV2Request()
-                        .jobControl(new JobControl().id(UUID.randomUUID().toString())),
-                    getWorkspaceId()));
-    assertEquals(HttpStatus.SC_NOT_FOUND, e.getCode());
+      throws Exception {        
+    try {
+      workspaceApi.deleteWorkspaceV2(
+          new DeleteWorkspaceV2Request()
+              .jobControl(new JobControl().id(UUID.randomUUID().toString())),
+          getWorkspaceId());
+    } catch (ApiException e) {
+      assertEquals(HttpStatus.SC_NOT_FOUND, e.getCode());
+    }
   }
 }
