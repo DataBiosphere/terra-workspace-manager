@@ -27,8 +27,72 @@ on:
         required: true
 
 jobs:
+  build-test-publish-azureDatabaseUtils:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Construct docker image name and tag
+        id: image-name
+        run: echo name=us.gcr.io/broad-dsp-gcr-public/azure-database-utils:${GITHUB_SHA} >> $GITHUB_OUTPUT
+
+      - name: Run tests
+        run: ./gradlew --build-cache :azureDatabaseUtils:test --scan
+
+      - name: Build docker
+        run: ./gradlew --build-cache :azureDatabaseUtils:jibDockerBuild --image=${{ steps.image-name.outputs.name }} -Djib.console=plain --scan
+
+      - name: Run Trivy vulnerability scanner
+        # Link to the github location of the action https://github.com/broadinstitute/dsp-appsec-trivy-action
+        uses: broadinstitute/dsp-appsec-trivy-action@v1
+        with:
+          image: ${{ steps.image-name.outputs.name }}
+
+      - name: Auth to Google
+        uses: google-github-actions/auth@v1
+        with:
+          version: '411.0.0'
+          credentials_json: ${{ secrets.GCR_PUBLISH_KEY }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Explicitly auth Docker for GCR
+        run: gcloud auth configure-docker --quiet
+
+      - name: Push GCR image
+        run: "docker push ${{ steps.image-name.outputs.name }}"
+
+      - name: SonarQube scan
+        run: ./gradlew --build-cache :azureDatabaseUtils:sonarqube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   test-job:
     runs-on: ubuntu-latest
+    # the azure connected tests require azureDatabaseUtils to be built and published
+    needs: build-test-publish-azureDatabaseUtils
 
     # A note on our use of a matrix here:
     # Github workflows don't really support reusing code very well. Every workflow runs on a clean
@@ -39,7 +103,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gradleTask: [unitTest, connectedTest, azureUnitTest, azureConnectedTest]
+        gradleTask: [unitTest, connectedTest, azureUnitTest, azureConnectedTest, awsUnitTest]
 
     steps:
     - name: Checkout current code

@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.policy.flight;
 
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoConflict;
 import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
@@ -42,16 +44,18 @@ public class MergePolicyAttributesStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // Create PAOs if they don't exist; catch TPS exceptions and retry
+    TpsPaoGetResult destinationPao;
     try {
-      tpsApiDispatch.createPaoIfNotExist(sourceWorkspaceId);
-      tpsApiDispatch.createPaoIfNotExist(destinationWorkspaceId);
+      tpsApiDispatch.getOrCreatePao(sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+      destinationPao =
+          tpsApiDispatch.getOrCreatePao(
+              destinationWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
     } catch (Exception ex) {
       logger.info("Attempt to create a PAO for workspace failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
 
     // Save the destination attributes so we can restore them if the flight fails
-    TpsPaoGetResult destinationPao = tpsApiDispatch.getPao(destinationWorkspaceId);
     TpsPolicyInputs destinationAttributes = destinationPao.getAttributes();
     context.getWorkingMap().put(WorkspaceFlightMapKeys.POLICIES, destinationAttributes);
 
@@ -62,13 +66,12 @@ public class MergePolicyAttributesStep implements Step {
             : tpsApiDispatch.mergePao(
                 sourceWorkspaceId, destinationWorkspaceId, TpsUpdateMode.FAIL_ON_CONFLICT);
     if (!result.isUpdateApplied()) {
-      List<String> conflictList =
-          result.getConflicts().stream().map(c -> c.getNamespace() + ':' + c.getName()).toList();
       for (TpsPaoConflict conflict : result.getConflicts()) {
         logger.info("Policy conflict: {}", conflict);
       }
       throw new PolicyConflictException(
-          "Destination workspace policies conflict with source workspace policies", conflictList);
+          "Destination workspace policies conflict with source workspace policies",
+          result.getConflicts());
     }
 
     context

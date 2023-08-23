@@ -1,6 +1,9 @@
 package bio.terra.workspace.service.iam;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.*;
+import static bio.terra.workspace.common.mocks.MockDataRepoApi.CREATE_REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.*;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_GRANT_ROLE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -18,6 +21,7 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.sam.exception.SamBadRequestException;
 import bio.terra.common.sam.exception.SamNotFoundException;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -27,6 +31,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiGrantRoleRequestBody;
 import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
@@ -44,7 +49,6 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
@@ -54,6 +58,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.dsde.workbench.client.sam.ApiException;
+import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
+import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipRequest;
+import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -102,10 +110,7 @@ class SamServiceTest extends BaseConnectedTest {
     // Authz checks happen in the controller, so this uses mockMvc to pretend these are real
     // requests instead of hooking into the service layer directly.
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     samService.grantWorkspaceRole(
         workspaceUuid,
@@ -114,10 +119,7 @@ class SamServiceTest extends BaseConnectedTest {
         userAccessUtils.getSecondUserEmail());
     // After being granted permission, secondary user can read the workspace.
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_OK));
   }
 
@@ -139,7 +141,9 @@ class SamServiceTest extends BaseConnectedTest {
         .perform(
             addJsonContentType(
                     addAuth(
-                        post(String.format(CREATE_SNAPSHOT_PATH_FORMAT, workspaceUuid)),
+                        post(
+                            String.format(
+                                CREATE_REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT, workspaceUuid)),
                         secondaryUserRequest()))
                 .content(objectMapper.writeValueAsString(referenceRequest)))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
@@ -155,14 +159,19 @@ class SamServiceTest extends BaseConnectedTest {
             .perform(
                 addJsonContentType(
                         addAuth(
-                            post(String.format(CREATE_SNAPSHOT_PATH_FORMAT, workspaceUuid)),
+                            post(
+                                String.format(
+                                    CREATE_REFERENCED_DATA_REPO_SNAPSHOTS_PATH_FORMAT,
+                                    workspaceUuid)),
                             secondaryUserRequest()))
                     .content(objectMapper.writeValueAsString(referenceRequest)))
             .andExpect(status().is(HttpStatus.SC_OK))
             .andReturn()
             .getResponse()
             .getContentAsString();
-    var response = objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
+    ApiDataRepoSnapshotResource response =
+        objectMapper.readValue(serializedResponse, ApiDataRepoSnapshotResource.class);
+
     ReferencedResource ref =
         referenceResourceService.getReferenceResource(
             workspaceUuid, response.getMetadata().getResourceId());
@@ -177,10 +186,7 @@ class SamServiceTest extends BaseConnectedTest {
   void removedReaderCannotRead() throws Exception {
     // Before being granted permission, secondary user should be rejected.
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
     // After being granted permission, secondary user can read the workspace.
     samService.grantWorkspaceRole(
@@ -189,10 +195,7 @@ class SamServiceTest extends BaseConnectedTest {
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_OK));
     // After removing permission, secondary user can no longer read.
     samService.removeWorkspaceRole(
@@ -201,10 +204,7 @@ class SamServiceTest extends BaseConnectedTest {
         WsmIamRole.READER,
         userAccessUtils.getSecondUserEmail());
     mockMvc
-        .perform(
-            addAuth(
-                get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, workspaceUuid)),
-                secondaryUserRequest()))
+        .perform(addAuth(get(String.format(WORKSPACES_V1, workspaceUuid)), secondaryUserRequest()))
         .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }
 
@@ -222,15 +222,73 @@ class SamServiceTest extends BaseConnectedTest {
                 userAccessUtils.getSecondUserEmail()));
   }
 
+  private void createBillingProjectResource(
+      AuthenticatedUserRequest userRequest, String projectName) throws ApiException {
+    ResourcesApi resourceApi = samService.samResourcesApi(userRequest.getRequiredToken());
+    CreateResourceRequestV2 createResourceRequest =
+        new CreateResourceRequestV2()
+            .resourceId(projectName)
+            .putPoliciesItem(
+                "owner",
+                new AccessPolicyMembershipRequest()
+                    .addRolesItem("owner")
+                    .addMemberEmailsItem(userRequest.getEmail()))
+            .authDomain(List.of());
+    resourceApi.createResourceV2("billing-project", createResourceRequest);
+  }
+
+  private void deleteBillingProjectResource(
+      AuthenticatedUserRequest userRequest, String projectName) throws ApiException {
+    ResourcesApi resourceApi = samService.samResourcesApi(userRequest.getRequiredToken());
+    resourceApi.deleteResourceV2("billing-project", projectName);
+  }
+
+  @Test
+  void projectOwnerRole() throws ApiException, InterruptedException {
+    Workspace workspace = null;
+    AuthenticatedUserRequest workspaceCreatorRequest = defaultUserRequest();
+    AuthenticatedUserRequest billingProjectOwnerRequest = billingUserRequest();
+    String billingProjectId = UUID.randomUUID().toString();
+    try {
+      // Create a Sam resource for the billing project (in Terra CWB production,
+      // done in Rawls at billing project creation time)
+      createBillingProjectResource(billingProjectOwnerRequest, billingProjectId);
+
+      // Create a workspace, passing the optional billing project ID.
+      workspace = createWorkspaceForUser(workspaceCreatorRequest, billingProjectId);
+
+      // Verify creator has role "owner".
+      AccessibleWorkspace workspaceCreatorRole =
+          samService
+              .listWorkspaceIdsAndHighestRoles(workspaceCreatorRequest, WsmIamRole.READER)
+              .get(workspace.workspaceId());
+      assertEquals(WsmIamRole.OWNER, workspaceCreatorRole.highestRole());
+
+      // Verify billing project owner has role "project owner".
+      AccessibleWorkspace billingProjectOwnerRole =
+          samService
+              .listWorkspaceIdsAndHighestRoles(billingProjectOwnerRequest, WsmIamRole.READER)
+              .get(workspace.workspaceId());
+      assertEquals(WsmIamRole.PROJECT_OWNER, billingProjectOwnerRole.highestRole());
+
+    } finally {
+      if (workspace != null) {
+        workspaceService.deleteWorkspace(workspace, workspaceCreatorRequest);
+      }
+      deleteBillingProjectResource(billingProjectOwnerRequest, billingProjectId);
+    }
+  }
+
   @Test
   void permissionsApiFailsInRawlsWorkspace() throws Exception {
     UUID workspaceUuid = UUID.randomUUID();
     // RAWLS_WORKSPACEs do not own their own Sam resources, so we need to manage them separately.
-    samService.createWorkspaceWithDefaults(defaultUserRequest(), workspaceUuid, new ArrayList<>());
+    samService.createWorkspaceWithDefaults(
+        defaultUserRequest(), workspaceUuid, new ArrayList<>(), null);
 
     Workspace rawlsWorkspace =
         WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
-    workspaceService.createWorkspace(rawlsWorkspace, null, null, defaultUserRequest());
+    workspaceService.createWorkspace(rawlsWorkspace, null, null, null, defaultUserRequest());
     ApiGrantRoleRequestBody request =
         new ApiGrantRoleRequestBody().memberEmail(userAccessUtils.getSecondUserEmail());
     mockMvc
@@ -238,9 +296,7 @@ class SamServiceTest extends BaseConnectedTest {
             addJsonContentType(
                 addAuth(
                     post(String.format(
-                            ADD_USER_TO_WORKSPACE_PATH_FORMAT,
-                            workspaceUuid,
-                            WsmIamRole.READER.toSamRole()))
+                            WORKSPACES_V1_GRANT_ROLE, workspaceUuid, WsmIamRole.READER.toSamRole()))
                         .content(objectMapper.writeValueAsString(request)),
                     defaultUserRequest())))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
@@ -330,13 +386,13 @@ class SamServiceTest extends BaseConnectedTest {
 
   @Test
   void listWorkspaceIdsAndHighestRoles() throws Exception {
-    Map<UUID, WorkspaceDescription> actual =
+    Map<UUID, AccessibleWorkspace> actual =
         samService.listWorkspaceIdsAndHighestRoles(
             userAccessUtils.defaultUserAuthRequest(), WsmIamRole.READER);
 
-    WorkspaceDescription match = actual.get(workspaceUuid);
+    AccessibleWorkspace match = actual.get(workspaceUuid);
     assertEquals(WsmIamRole.OWNER, match.highestRole());
-    assertTrue(match.missingAuthDomains().isEmpty());
+    assertTrue(match.missingAuthDomainGroups().isEmpty());
   }
 
   @Test
@@ -349,7 +405,7 @@ class SamServiceTest extends BaseConnectedTest {
         userAccessUtils.getSecondUserEmail());
 
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     // Workspace reader should have read access on a user-shared resource via inheritance
@@ -383,7 +439,7 @@ class SamServiceTest extends BaseConnectedTest {
 
     ControlledResource bucketResource =
         ControlledGcsBucketResource.builder()
-            .bucketName(ControlledResourceFixtures.uniqueBucketName())
+            .bucketName(ControlledGcpResourceFixtures.uniqueBucketName())
             .common(commonFields)
             .build();
 
@@ -414,7 +470,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void duplicateResourceCreateIgnored() throws Exception {
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
     // This duplicate call should complete without throwing.
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
@@ -425,7 +481,7 @@ class SamServiceTest extends BaseConnectedTest {
   @Test
   void duplicateResourceDeleteIgnored() throws Exception {
     ControlledResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
     samService.createControlledResource(bucketResource, null, null, defaultUserRequest());
 
     samService.deleteControlledResource(bucketResource, defaultUserRequest());
@@ -462,14 +518,22 @@ class SamServiceTest extends BaseConnectedTest {
         null, null, Optional.of(userAccessUtils.secondUserAccessToken().getTokenValue()));
   }
 
-  /** Create a workspace using the default test user for connected tests, return its ID. */
-  private Workspace createWorkspaceDefaultUser() {
-    return createWorkspaceForUser(defaultUserRequest());
+  private AuthenticatedUserRequest billingUserRequest() {
+    return new AuthenticatedUserRequest(
+        userAccessUtils.billingUser().getEmail(),
+        null,
+        Optional.of(userAccessUtils.billingUserAccessToken().getTokenValue()));
   }
 
-  private Workspace createWorkspaceForUser(AuthenticatedUserRequest userRequest) {
+  /** Create a workspace using the default test user for connected tests, return its ID. */
+  private Workspace createWorkspaceDefaultUser() {
+    return createWorkspaceForUser(defaultUserRequest(), null);
+  }
+
+  private Workspace createWorkspaceForUser(
+      AuthenticatedUserRequest userRequest, String projectOwnerGroupId) {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
-    workspaceService.createWorkspace(workspace, null, null, userRequest);
+    workspaceService.createWorkspace(workspace, null, null, projectOwnerGroupId, userRequest);
     return workspace;
   }
 }

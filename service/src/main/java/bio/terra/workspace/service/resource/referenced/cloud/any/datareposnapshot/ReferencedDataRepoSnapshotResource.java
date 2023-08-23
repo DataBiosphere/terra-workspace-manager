@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
@@ -11,6 +10,7 @@ import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -112,16 +112,6 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
         .attributes(toApiAttributes());
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
@@ -131,6 +121,11 @@ public class ReferencedDataRepoSnapshotResource extends ReferencedResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().gcpDataRepoSnapshot(toApiAttributes());
+  }
+
+  @Override
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(new UpdateDataRepoSnapshotReferenceStep());
   }
 
   @Override

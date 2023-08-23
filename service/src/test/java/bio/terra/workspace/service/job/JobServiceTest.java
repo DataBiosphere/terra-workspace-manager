@@ -13,6 +13,7 @@ import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -22,7 +23,6 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.model.EnumeratedJob;
 import bio.terra.workspace.service.job.model.EnumeratedJobs;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +35,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
 class JobServiceTest extends BaseUnitTest {
-  private final AuthenticatedUserRequest testUser =
+  private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest()
           .subjectId("StairwayUnit")
           .email("stairway@unit.com")
@@ -66,7 +66,7 @@ class JobServiceTest extends BaseUnitTest {
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
                 .workspaceId(UUID.randomUUID().toString())
-                .userRequest(testUser)
+                .userRequest(userRequest)
                 .operationType(OperationType.DELETE));
   }
 
@@ -81,7 +81,7 @@ class JobServiceTest extends BaseUnitTest {
                 .description("description")
                 .jobId(testJobId)
                 .flightClass(JobServiceTestFlight.class)
-                .userRequest(testUser)
+                .userRequest(userRequest)
                 .workspaceId(UUID.randomUUID().toString())
                 .operationType(OperationType.DELETE));
   }
@@ -96,7 +96,7 @@ class JobServiceTest extends BaseUnitTest {
                 .description("description")
                 .jobId("test-job-id")
                 .flightClass(JobServiceTestFlight.class)
-                .userRequest(testUser)
+                .userRequest(userRequest)
                 .workspaceId(UUID.randomUUID().toString())
                 .submit());
   }
@@ -110,14 +110,14 @@ class JobServiceTest extends BaseUnitTest {
     // The fids list should be in exactly the same order as the database ordered by submit time.
 
     List<String> jobIds1 = new ArrayList<>();
-    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
     for (int i = 0; i < 3; i++) {
       String jobId = runFlight(workspace1, makeDescription(i));
       jobIds1.add(jobId);
     }
 
     List<String> jobIds2 = new ArrayList<>();
-    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
 
     for (int i = 0; i < 4; i++) {
       String jobId = runFlight(workspace2, makeDescription(i));
@@ -215,7 +215,7 @@ class JobServiceTest extends BaseUnitTest {
             .newJob()
             .description(description)
             .flightClass(JobServiceTestFlight.class)
-            .userRequest(testUser)
+            .userRequest(userRequest)
             .workspaceId(workspaceUuid.toString())
             .operationType(OperationType.CREATE)
             .submit();

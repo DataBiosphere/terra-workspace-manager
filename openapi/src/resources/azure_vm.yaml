@@ -17,23 +17,15 @@ components:
         vmImage:
           description: A valid data which identifies the VM image
           type: string
-        ipId:
-          description: A valid WSM identifier for an Azure Ip that corresponds to a valid azure resource
-          type: string
-          format: uuid
         diskId:
           description: A valid WSM identifier for an Azure Disk that corresponds to a valid azure resource
-          type: string
-          format: uuid
-        networkId:
-          description: A valid WSM identifier for an Azure Network that corresponds to a valid azure resource
           type: string
           format: uuid
 
     AzureVmResource:
       type: object
       description: Description of an Azure vm
-      required: [metadata, attributes]
+      required: [ metadata, attributes ]
       properties:
         metadata:
           description: the resource metadata common to all resources

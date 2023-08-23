@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
@@ -12,7 +11,8 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -98,16 +98,6 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
         .attributes(toApiAttributes());
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(new ReferencedGcsBucketAttributes(bucketName));
@@ -116,6 +106,11 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
   @Override
   public ApiResourceAttributesUnion toApiAttributesUnion() {
     return new ApiResourceAttributesUnion().gcpGcsBucket(toApiAttributes());
+  }
+
+  @Override
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(new UpdateGcsBucketReferenceStep());
   }
 
   @Override
@@ -129,7 +124,7 @@ public class ReferencedGcsBucketResource extends ReferencedResource {
     }
     // Validate in case there's a typo and user gave wrong name. This gives a slightly more usable
     // error message than "You do not have access to bucket".
-    ResourceValidationUtils.validateBucketNameAllowsUnderscore(getBucketName());
+    GcpResourceValidationUtils.validateGcsBucketNameAllowsUnderscore(getBucketName());
   }
 
   @Override

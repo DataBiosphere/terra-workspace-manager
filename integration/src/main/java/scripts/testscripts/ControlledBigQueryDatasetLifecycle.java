@@ -53,7 +53,7 @@ import scripts.utils.MultiResourcesUtils;
 import scripts.utils.SamClientUtils;
 
 // TODO: This test no longer clones. Extend WorkspaceAllocateTestScriptBase instead of
-// GcpWorkspaceCloneTestScriptBase.
+//  GcpWorkspaceCloneTestScriptBase.
 public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScriptBase {
   private static final Logger logger =
       LoggerFactory.getLogger(ControlledBigQueryDatasetLifecycle.class);
@@ -196,7 +196,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
 
     // Workspace owner can update the dataset resource through WSM
     String resourceDescription = "a description for WSM";
-    Long defaultTableLifetimeSec = 5400L;
+    long defaultTableLifetimeSec = 5400L;
     var updateDatasetRequest =
         new UpdateControlledGcpBigQueryDatasetRequestBody()
             .description(resourceDescription)

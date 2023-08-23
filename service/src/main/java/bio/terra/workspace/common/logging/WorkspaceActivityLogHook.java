@@ -3,7 +3,6 @@ package bio.terra.workspace.common.logging;
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.APPLICATION_IDS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.FOLDER_ID;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.UPDATED_WORKSPACES;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.USER_TO_REMOVE;
@@ -16,6 +15,7 @@ import bio.terra.stairway.StairwayHook;
 import bio.terra.workspace.common.exception.UnhandledActivityLogException;
 import bio.terra.workspace.common.exception.UnhandledDeletionFlightException;
 import bio.terra.workspace.common.logging.model.ActivityFlight;
+import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.FolderDao;
@@ -28,24 +28,18 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.flight.UpdateAzureControlledResourceRegionFlight;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.flight.UpdateGcpControlledResourceRegionFlight;
-import bio.terra.workspace.service.resource.controlled.flight.backfill.UpdateControlledBigQueryDatasetsLifetimeFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.base.Preconditions;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +73,7 @@ public class WorkspaceActivityLogHook implements StairwayHook {
   @Override
   public HookAction endFlight(FlightContext context) throws InterruptedException {
     String flightClassName = context.getFlightClassName();
-    logger.info(String.format("endFlight %s: %s", flightClassName, context.getFlightStatus()));
+    logger.info("endFlight {}: {}", flightClassName, context.getFlightStatus());
     var workspaceId =
         context.getInputParameters().get(WorkspaceFlightMapKeys.WORKSPACE_ID, String.class);
     var operationType =
@@ -107,6 +101,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     var subjectId = userStatusInfo.getUserSubjectId();
 
     ActivityFlight af = ActivityFlight.fromFlightClassName(flightClassName);
+    if (af.shouldSkipLogInHook()) {
+      return HookAction.CONTINUE;
+    }
     if (workspaceId == null) {
       return maybeLogFlightWithoutWorkspaceId(
           context, flightClassName, operationType, userEmail, subjectId);
@@ -117,39 +114,30 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     if (operationType == OperationType.DELETE) {
       switch (af.getActivityLogChangedTarget()) {
         case WORKSPACE -> maybeLogWorkspaceDeletionFlight(workspaceUuid, userEmail, subjectId);
-        case AZURE_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-            CloudPlatform.AZURE, workspaceUuid, userEmail, subjectId);
-        case GCP_CLOUD_CONTEXT -> maybeLogCloudContextDeletionFlight(
-            CloudPlatform.GCP, workspaceUuid, userEmail, subjectId);
-        case RESOURCE -> maybeLogControlledResourcesDeletionFlight(
-            context, workspaceUuid, userEmail, subjectId);
         case FOLDER -> maybeLogFolderDeletionFlight(context, workspaceUuid, userEmail, subjectId);
-        case APPLICATION, USER -> throw new UnhandledDeletionFlightException(
-            String.format(
-                "Activity log should be updated for deletion flight %s failures", flightClassName));
+        default -> {
+          if (af.isResourceFlight()) {
+            maybeLogControlledResourcesDeletionFlight(context, workspaceUuid, userEmail, subjectId);
+          } else {
+            throw new UnhandledDeletionFlightException(
+                String.format(
+                    "Activity log should be updated for deletion flight %s failures",
+                    flightClassName));
+          }
+        }
       }
       return HookAction.CONTINUE;
     }
     // Always log when the flight succeeded.
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       switch (af.getActivityLogChangedTarget()) {
-        case WORKSPACE, AZURE_CLOUD_CONTEXT, GCP_CLOUD_CONTEXT -> activityLogDao.writeActivity(
+        case WORKSPACE -> activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(
                 userEmail,
                 subjectId,
                 operationType,
                 getClonedWorkspaceId(context, operationType, workspaceUuid).toString(),
-                af.getActivityLogChangedTarget()));
-        case RESOURCE -> activityLogDao.writeActivity(
-            getAffectedWorkspaceId(context, operationType, workspaceUuid),
-            new DbWorkspaceActivityLog(
-                userEmail,
-                subjectId,
-                operationType,
-                getRequired(context.getInputParameters(), ResourceKeys.RESOURCE, WsmResource.class)
-                    .getResourceId()
-                    .toString(),
                 af.getActivityLogChangedTarget()));
         case FOLDER -> activityLogDao.writeActivity(
             workspaceUuid,
@@ -169,9 +157,39 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 af.getActivityLogChangedTarget()));
         case APPLICATION -> logApplicationAbleFlight(
             workspaceUuid, context, userEmail, subjectId, operationType);
+        default -> {
+          if (af.isResourceFlight()) {
+            logSuccessfulResourceFlight(
+                context, operationType, userEmail, subjectId, workspaceUuid);
+            break;
+          }
+          throw new UnhandledActivityLogException(
+              String.format(
+                  "A successful Flight %s for %s is not logged.",
+                  flightClassName, af.getActivityLogChangedTarget()));
+        }
       }
     }
     return HookAction.CONTINUE;
+  }
+
+  private void logSuccessfulResourceFlight(
+      FlightContext context,
+      OperationType operationType,
+      String userEmail,
+      String subjectId,
+      UUID workspaceUuid) {
+
+    WsmResource resource =
+        getRequired(context.getInputParameters(), ResourceKeys.RESOURCE, WsmResource.class);
+    activityLogDao.writeActivity(
+        getAffectedWorkspaceId(context, operationType, workspaceUuid),
+        new DbWorkspaceActivityLog(
+            userEmail,
+            subjectId,
+            operationType,
+            resource.getResourceId().toString(),
+            resource.getResourceType().getActivityLogChangedTarget()));
   }
 
   /**
@@ -186,10 +204,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       String subjectId) {
     if (SyncGcpIamRolesFlight.class.getName().equals(flightClassName)) {
       maybeLogForSyncGcpIamRolesFlight(context, operationType, userEmail, subjectId);
-    } else if (UpdateGcpControlledResourceRegionFlight.class.getName().equals(flightClassName)
-        || UpdateAzureControlledResourceRegionFlight.class.getName().equals(flightClassName)
-        || UpdateControlledBigQueryDatasetsLifetimeFlight.class.getName().equals(flightClassName)) {
-      maybeLogUpdateControlledResourceFieldsFlight(context, operationType, userEmail, subjectId);
     } else {
       throw new UnhandledActivityLogException(
           String.format(
@@ -257,10 +271,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     try {
       workspaceDao.getWorkspace(workspaceUuid);
       logger.warn(
-          String.format(
-              "Workspace %s is failed to be deleted; "
-                  + "not writing deletion to workspace activity log",
-              workspaceUuid));
+          "Workspace {} is failed to be deleted; "
+              + "not writing deletion to workspace activity log",
+          workspaceUuid);
     } catch (WorkspaceNotFoundException e) {
       activityLogDao.writeActivity(
           workspaceUuid,
@@ -270,27 +283,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
               OperationType.DELETE,
               workspaceUuid.toString(),
               ActivityLogChangedTarget.WORKSPACE));
-    }
-  }
-
-  private void maybeLogCloudContextDeletionFlight(
-      CloudPlatform cloudPlatform, UUID workspaceUuid, String userEmail, String subjectId) {
-    Optional<String> cloudContext = workspaceDao.getCloudContext(workspaceUuid, cloudPlatform);
-    if (cloudContext.isEmpty()) {
-      activityLogDao.writeActivity(
-          workspaceUuid,
-          new DbWorkspaceActivityLog(
-              userEmail,
-              subjectId,
-              OperationType.DELETE,
-              workspaceUuid.toString(),
-              ActivityLogChangedTarget.WORKSPACE));
-    } else {
-      logger.warn(
-          String.format(
-              "CloudContext in workspace %s deletion fails; not writing deletion "
-                  + "to workspace activity log",
-              workspaceUuid));
     }
   }
 
@@ -309,6 +301,26 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     }
   }
 
+  private List<UUID> getControlledResourceToDeleteFromFlight(FlightContext context) {
+    var inputParams = context.getInputParameters();
+    if (inputParams.containsKey(ResourceKeys.RESOURCE_ID)) {
+      return List.of(
+          UUID.fromString(
+              FlightUtils.getRequired(inputParams, ResourceKeys.RESOURCE_ID, String.class)));
+    }
+    if (inputParams.containsKey(CONTROLLED_RESOURCES_TO_DELETE)) {
+      List<ControlledResource> controlledResource =
+          FlightUtils.getRequired(
+              inputParams, CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {});
+      return controlledResource.stream().map(WsmResource::getResourceId).toList();
+    }
+    logger.error(
+        String.format(
+            "Resource deletion flight %s is missing either RESOURCE_ID or CONTROLLED_RESOURCES_TO_DELETE.",
+            context.getFlightClassName()));
+    return Collections.emptyList();
+  }
+
   private void maybeLogControlledResourcesDeletionFlight(
       FlightContext context, UUID workspaceUuid, String userEmail, String subjectId) {
     List<UUID> resourceIds = getControlledResourceToDeleteFromFlight(context);
@@ -316,11 +328,18 @@ public class WorkspaceActivityLogHook implements StairwayHook {
       try {
         resourceDao.getResource(workspaceUuid, resourceId);
         logger.warn(
-            String.format(
-                "Controlled resource %s in workspace %s is failed to be deleted; "
-                    + "not writing deletion to workspace activity log",
-                resourceId, workspaceUuid));
+            "Controlled resource {} in workspace {} is failed to be deleted; "
+                + "not writing deletion to workspace activity log",
+            resourceId,
+            workspaceUuid);
       } catch (ResourceNotFoundException e) {
+        // Cannot get the resource type from the resource since it's deleted. But we can still
+        // infer it from previous log entry.
+        var changeSubjectType =
+            activityLogDao
+                .getLastUpdatedDetails(workspaceUuid, resourceId.toString())
+                .map(ActivityLogChangeDetails::changeSubjectType)
+                .orElse(ActivityLogChangedTarget.RESOURCE);
         activityLogDao.writeActivity(
             workspaceUuid,
             new DbWorkspaceActivityLog(
@@ -328,18 +347,9 @@ public class WorkspaceActivityLogHook implements StairwayHook {
                 subjectId,
                 OperationType.DELETE,
                 resourceId.toString(),
-                ActivityLogChangedTarget.RESOURCE));
+                changeSubjectType));
       }
     }
-  }
-
-  private List<UUID> getControlledResourceToDeleteFromFlight(FlightContext context) {
-    List<ControlledResource> controlledResource =
-        checkNotNull(
-            context
-                .getInputParameters()
-                .get(CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {}));
-    return controlledResource.stream().map(WsmResource::getResourceId).toList();
   }
 
   private void maybeLogForSyncGcpIamRolesFlight(
@@ -352,32 +362,6 @@ public class WorkspaceActivityLogHook implements StairwayHook {
           UUID.fromString(id),
           new DbWorkspaceActivityLog(
               userEmail, subjectId, operationType, id, ActivityLogChangedTarget.WORKSPACE));
-    }
-  }
-
-  private void maybeLogUpdateControlledResourceFieldsFlight(
-      FlightContext context, OperationType operationType, String userEmail, String subjectId) {
-    if (!context.getFlightStatus().equals(FlightStatus.SUCCESS)) {
-      return;
-    }
-    FlightUtils.validateRequiredEntries(
-        context.getWorkingMap(), CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP);
-
-    Map<UUID, String> resourceIdToWorkspaceIdMap =
-        Preconditions.checkNotNull(
-            context
-                .getWorkingMap()
-                .get(CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP, new TypeReference<>() {}));
-
-    for (Map.Entry<UUID, String> pair : resourceIdToWorkspaceIdMap.entrySet()) {
-      activityLogDao.writeActivity(
-          UUID.fromString(pair.getValue()),
-          new DbWorkspaceActivityLog(
-              userEmail,
-              subjectId,
-              operationType,
-              pair.getKey().toString(),
-              ActivityLogChangedTarget.RESOURCE));
     }
   }
 }

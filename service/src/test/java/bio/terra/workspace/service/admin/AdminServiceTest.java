@@ -2,11 +2,9 @@ package bio.terra.workspace.service.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.iam.IamCow;
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
@@ -21,8 +19,7 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.CustomGcpIamRole;
-import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.services.iam.v1.model.Role;
 import com.google.common.collect.ImmutableList;
@@ -52,7 +49,7 @@ public class AdminServiceTest extends BaseConnectedTest {
   @Autowired WorkspaceDao workspaceDao;
   @Autowired WorkspaceConnectedTestUtils connectedTestUtils;
   @Autowired UserAccessUtils userAccessUtils;
-  @Autowired CloudSyncRoleMapping cloudSyncRoleMapping;
+  @Autowired GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping;
   @Autowired CrlService crlService;
   @Autowired WorkspaceActivityLogDao workspaceActivityLogDao;
 
@@ -80,7 +77,7 @@ public class AdminServiceTest extends BaseConnectedTest {
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId());
     projectIds =
-        workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP).values().stream()
+        workspaceDao.getWorkspaceIdToGcpCloudContextMap().values().stream()
             .map(cloudContext -> GcpCloudContext.deserialize(cloudContext).getGcpProjectId())
             .toList();
   }
@@ -115,7 +112,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
           projectId,
-          cloudSyncRoleMapping
+          gcpCloudSyncRoleMapping
               .getCustomGcpProjectIamRoles()
               .get(WsmIamRole.READER)
               .getIncludedPermissions());
@@ -152,7 +149,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
           projectId,
-          cloudSyncRoleMapping
+          gcpCloudSyncRoleMapping
               .getCustomGcpProjectIamRoles()
               .get(WsmIamRole.READER)
               .getIncludedPermissions());
@@ -210,15 +207,6 @@ public class AdminServiceTest extends BaseConnectedTest {
     assertTrue(newChangeTimestampOfWorkspace1.isEqual(lastChangeTimestampOfWorkspace1));
 
     cleanUpWorkspace();
-  }
-
-  @Test
-  public void syncIamRoles_noProjectsFound_throwsInternalServerErrorException() {
-    assertThrows(
-        InternalServerErrorException.class,
-        () ->
-            adminService.syncIamRoleForAllGcpProjects(
-                userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ false));
   }
 
   private void updateCustomRole(CustomGcpIamRole customRole, String projectId)

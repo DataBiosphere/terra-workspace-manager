@@ -6,7 +6,7 @@ paths:
     get:
       summary: Get the cloud location info.
       operationId: getLocationInfo
-      tags: [policy]
+      tags: [ policy ]
       responses:
         '200':
           description: Success
@@ -32,7 +32,7 @@ components:
     WsmPolicyComponent:
       type: string
       description: Enum representing a policy-bearing Terra component.
-      enum: [ 'WSM' ]
+      enum: [ 'BPM', 'TDR', 'WSM' ]
 
     WsmPolicyObjectId:
       description: |
@@ -45,11 +45,11 @@ components:
     WsmPolicyObjectType:
       type: string
       description: Enum representing an object type of a policy-bearing Terra component.
-      enum: [ 'workspace' ]
+      enum: [ 'billing-profile', 'dataset', 'snapshot', 'workspace' ]
 
     WsmPolicy:
       type: object
-      required: [objectId, component, objectType]
+      required: [ objectId, component, objectType ]
       properties:
         objectId:
           $ref: '#/components/schemas/WsmPolicyObjectId'
@@ -68,10 +68,16 @@ components:
           uniqueItems: true
           items:
             $ref: '#/components/schemas/WsmPolicyObjectId'
+        createdDate:
+          description: ISO 8601 format date-time of when TPS created the policy
+          type: string
+        lastUpdatedDate:
+          description: ISO 8601 format date-time of the last update of the effective policy
+          type: string
 
     WsmPolicyInputs:
       type: object
-      required: [inputs]
+      required: [ inputs ]
       properties:
         inputs:
           type: array
@@ -80,7 +86,7 @@ components:
 
     WsmPolicyInput:
       type: object
-      required: [namespace, name]
+      required: [ namespace, name ]
       properties:
         namespace:
           description: Namespace of the policy input; e.g., 'terra'
@@ -118,7 +124,7 @@ components:
     WsmPolicyConflict:
       type: object
       description: Describes a policy conflict between two policies
-      required: [targetPolicy, conflictPolicy, namespace, name]
+      required: [ targetPolicy, conflictPolicy, namespace, name ]
       properties:
         namespace:
           description: Namespace of the conflicting policy; e.g., terra
@@ -154,7 +160,7 @@ components:
     WsmPolicyUpdateRequest:
       description: Update request body
       type: object
-      required: [updateMode]
+      required: [ updateMode ]
       properties:
         removeAttributes:
           $ref: '#/components/schemas/WsmPolicyInputs'
@@ -165,7 +171,7 @@ components:
 
     WsmPolicyUpdateResult:
       type: object
-      required: [updateApplied, conflicts]
+      required: [ updateApplied, conflicts ]
       properties:
         updateApplied:
           description: |
@@ -239,6 +245,12 @@ components:
         properties:
           description: The properties of the policy object. Empty if no access.
           $ref: '#/components/schemas/Properties'
+        createdDate:
+          description: ISO 8601 format date-time of when TPS created the policy
+          type: string
+        lastUpdatedDate:
+          description: ISO 8601 format date-time of the last update of the effective policy
+          type: string
 
     WsmPolicyExplainResult:
       type: object
@@ -261,7 +273,7 @@ components:
     WsmPolicyLocation:
       description: TPS location object description.
       type: object
-      required: [name, description]
+      required: [ name, description ]
       properties:
         name:
           description: The location name

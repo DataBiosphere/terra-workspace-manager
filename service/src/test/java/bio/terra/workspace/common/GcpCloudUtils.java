@@ -1,16 +1,10 @@
 package bio.terra.workspace.common;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import bio.terra.cloudres.google.bigquery.BigQueryCow;
-import bio.terra.cloudres.google.storage.BlobCow;
-import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.workspace.common.utils.RetryUtils;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import com.google.api.gax.paging.Page;
@@ -27,13 +21,6 @@ import com.google.cloud.bigquery.StandardTableDefinition;
 import com.google.cloud.bigquery.Table;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.BucketInfo;
-import com.google.cloud.storage.BucketInfo.LifecycleRule;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -53,9 +40,6 @@ public class GcpCloudUtils {
 
   public static final String BQ_EMPLOYEE_TABLE_NAME = "employee";
   public static final int BQ_EMPLOYEE_ID = 100;
-
-  private static final String GCS_FILE_NAME = "foo";
-  private static final String GCS_FILE_CONTENTS = "bar";
 
   @FunctionalInterface
   public interface SupplierWithException<T> {
@@ -124,59 +108,6 @@ public class GcpCloudUtils {
     assertNull(actualTables);
   }
 
-  /** Adds a file called "foo" with the contents "bar". */
-  public void addFileToBucket(GoogleCredentials userCredential, String projectId, String bucketName)
-      throws Exception {
-    Storage storageClient = getGcpStorageClient(userCredential, projectId);
-    BlobId blobId = BlobId.of(bucketName, GCS_FILE_NAME);
-    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
-
-    // Create a blob with retry to allow permission propagation
-    RetryUtils.getWithRetryOnException(
-        () -> storageClient.create(blobInfo, GCS_FILE_CONTENTS.getBytes(StandardCharsets.UTF_8)));
-  }
-
-  /** Asserts bucket has file as per addFileToBucket(). */
-  public void assertBucketFiles(
-      AuthenticatedUserRequest userRequest,
-      GoogleCredentials userCredential,
-      String projectId,
-      String bucketName) {
-    Storage storageClient = getGcpStorageClient(userCredential, projectId);
-    String actualContents =
-        new String(storageClient.readAllBytes(bucketName, GCS_FILE_NAME), StandardCharsets.UTF_8);
-    assertEquals(GCS_FILE_CONTENTS, actualContents);
-  }
-
-  /** Asserts table is populated as per populateBqTable(). */
-  public void assertBucketHasNoFiles(
-      AuthenticatedUserRequest userRequest, String projectId, String bucketName) throws Exception {
-    StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
-    int numFiles = 0;
-    for (BlobCow blob : storageCow.get(bucketName).list().iterateAll()) {
-      numFiles++;
-    }
-    assertEquals(0, numFiles);
-  }
-
-  public void assertBucketAttributes(
-      AuthenticatedUserRequest userRequest,
-      String projectId,
-      String bucketName,
-      String expectedLocation,
-      ApiGcpGcsBucketDefaultStorageClass expectedStorageClass,
-      List<LifecycleRule> expectedLifecycleRules)
-      throws Exception {
-    StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
-    BucketInfo actualBucketInfo =
-        RetryUtils.getWithRetryOnException(() -> storageCow.get(bucketName).getBucketInfo());
-
-    assertThat(expectedLocation, equalToIgnoringCase(actualBucketInfo.getLocation()));
-    assertEquals(expectedStorageClass.name(), actualBucketInfo.getStorageClass().name());
-    assertThat(
-        actualBucketInfo.getLifecycleRules(), containsInAnyOrder(expectedLifecycleRules.toArray()));
-  }
-
   private static BigQuery getGcpBigQueryClient(GoogleCredentials userCredential, String projectId) {
     return BigQueryOptions.newBuilder()
         .setCredentials(userCredential)
@@ -185,28 +116,21 @@ public class GcpCloudUtils {
         .getService();
   }
 
-  private static Storage getGcpStorageClient(GoogleCredentials userCredential, String projectId) {
-    return StorageOptions.newBuilder()
-        .setCredentials(userCredential)
-        .setProjectId(projectId)
-        .build()
-        .getService();
-  }
   /**
    * Get a result from a call that might throw an exception. Treat the exception as retryable, sleep
-   * for 15 seconds, and retry up to 40 times. This structure is useful for situations where we are
+   * for 15 seconds, and retry up to 80 times. This structure is useful for situations where we are
    * waiting on a cloud IAM permission change to take effect.
    *
    * @param supplier - code returning the result or throwing an exception
    * @param <T> - type of result
    * @return - result from supplier, the first time it doesn't throw, or null if all tries have been
    *     exhausted
-   * @throws InterruptedException
+   * @throws InterruptedException InterruptedException
    */
   public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
       throws Exception {
     T result = null;
-    int numTries = 40;
+    int numTries = 80;
     Duration sleepDuration = Duration.ofSeconds(15);
     while (numTries > 0) {
       try {

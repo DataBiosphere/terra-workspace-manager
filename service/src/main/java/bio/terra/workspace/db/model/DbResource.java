@@ -1,12 +1,13 @@
 package bio.terra.workspace.db.model;
 
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -15,27 +16,31 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
 /**
  * This class is used to have a common structure to hold the database view of a resource. It
  * includes all possible fields for a reference or controlled resource and (currently) maps
  * one-to-one with the resource table.
  */
-public class DbResource {
+public class DbResource implements DbStateful {
   private UUID workspaceUuid;
   private CloudPlatform cloudPlatform;
   private UUID resourceId;
   private String name;
   private String description;
   private StewardshipType stewardshipType;
-  private WsmResourceFamily cloudResourceType;
   private WsmResourceType resourceType;
   private CloningInstructions cloningInstructions;
   private String attributes;
   @Nullable List<ResourceLineageEntry> resourceLineage;
+  private WsmResourceState state;
+  private String flightId;
+  private ErrorReportException error;
   // controlled resource fields
   @Nullable private AccessScopeType accessScope;
   @Nullable private ManagedByType managedBy;
@@ -51,6 +56,29 @@ public class DbResource {
 
   private static final Supplier<RuntimeException> MISSING_REQUIRED_FIELD =
       () -> new MissingRequiredFieldsException("Missing required field");
+
+  @Override
+  public String makeSqlRowPredicate(MapSqlParameterSource params) {
+    params
+        .addValue("workspace_id", getWorkspaceId().toString())
+        .addValue("resource_id", getResourceId().toString());
+    return "workspace_id = :workspace_id AND resource_id = :resource_id";
+  }
+
+  @Override
+  public String getObjectTypeString() {
+    return "resource";
+  }
+
+  @Override
+  public String getObjectId() {
+    return getResourceId().toString();
+  }
+
+  @Override
+  public String getTableName() {
+    return "resource";
+  }
 
   public UUID getWorkspaceId() {
     return workspaceUuid;
@@ -103,11 +131,6 @@ public class DbResource {
 
   public DbResource stewardshipType(StewardshipType stewardshipType) {
     this.stewardshipType = stewardshipType;
-    return this;
-  }
-
-  public DbResource cloudResourceType(WsmResourceFamily cloudResourceType) {
-    this.cloudResourceType = cloudResourceType;
     return this;
   }
 
@@ -215,7 +238,7 @@ public class DbResource {
     return this;
   }
 
-  public OffsetDateTime getCreatedDate() {
+  public @Nullable OffsetDateTime getCreatedDate() {
     return createdDate;
   }
 
@@ -224,7 +247,7 @@ public class DbResource {
     return this;
   }
 
-  public String getRegion() {
+  public @Nullable String getRegion() {
     return region;
   }
 
@@ -233,7 +256,7 @@ public class DbResource {
     return this;
   }
 
-  public String getLastUpdatedByEmail() {
+  public @Nullable String getLastUpdatedByEmail() {
     return lastUpdatedByEmail;
   }
 
@@ -242,7 +265,66 @@ public class DbResource {
     return this;
   }
 
-  public OffsetDateTime getLastUpdatedDate() {
+  public @Nullable OffsetDateTime getLastUpdatedDate() {
     return lastUpdatedDate;
+  }
+
+  @Override
+  public WsmResourceState getState() {
+    return state;
+  }
+
+  public DbResource state(WsmResourceState state) {
+    this.state = state;
+    return this;
+  }
+
+  @Override
+  public String getFlightId() {
+    return flightId;
+  }
+
+  public DbResource flightId(String flightId) {
+    this.flightId = flightId;
+    return this;
+  }
+
+  public ErrorReportException getError() {
+    return error;
+  }
+
+  public DbResource error(ErrorReportException error) {
+    this.error = error;
+    return this;
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", DbResource.class.getSimpleName() + "[", "]")
+        .add("workspaceUuid=" + workspaceUuid)
+        .add("cloudPlatform=" + cloudPlatform)
+        .add("resourceId=" + resourceId)
+        .add("name='" + name + "'")
+        .add("description='" + description + "'")
+        .add("stewardshipType=" + stewardshipType)
+        .add("resourceType=" + resourceType)
+        .add("cloningInstructions=" + cloningInstructions)
+        .add("attributes='" + attributes + "'")
+        .add("resourceLineage=" + resourceLineage)
+        .add("state=" + state)
+        .add("flightId='" + flightId + "'")
+        .add("error=" + error)
+        .add("accessScope=" + accessScope)
+        .add("managedBy=" + managedBy)
+        .add("applicationId='" + applicationId + "'")
+        .add("assignedUser='" + assignedUser + "'")
+        .add("privateResourceState=" + privateResourceState)
+        .add("properties=" + properties)
+        .add("createdByEmail='" + createdByEmail + "'")
+        .add("createdDate=" + createdDate)
+        .add("region='" + region + "'")
+        .add("lastUpdatedByEmail='" + lastUpdatedByEmail + "'")
+        .add("lastUpdatedDate=" + lastUpdatedDate)
+        .toString();
   }
 }

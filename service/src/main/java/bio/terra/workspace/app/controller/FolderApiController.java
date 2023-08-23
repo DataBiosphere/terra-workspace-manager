@@ -5,6 +5,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -15,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiFolderList;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiUpdateFolderRequestBody;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.folder.FolderService;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -26,6 +28,7 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.OperationType;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
 import java.util.Optional;
@@ -38,69 +41,80 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 public class FolderApiController extends ControllerBase implements FolderApi {
-
-  private final FolderService folderService;
   private final WorkspaceService workspaceService;
-  private final JobApiUtils jobApiUtils;
-  private final JobService jobService;
   private final WorkspaceActivityLogService workspaceActivityLogService;
+  private final FolderService folderService;
 
   @Autowired
   public FolderApiController(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
       SamService samService,
-      FolderService folderService,
-      WorkspaceService workspaceService,
-      JobApiUtils jobApiUtils,
+      FeatureConfiguration features,
+      FeatureService featureService,
       JobService jobService,
-      WorkspaceActivityLogService workspaceActivityLogService) {
-    super(authenticatedUserRequestFactory, request, samService);
-    this.folderService = folderService;
+      JobApiUtils jobApiUtils,
+      WorkspaceService workspaceService,
+      WorkspaceActivityLogService workspaceActivityLogService,
+      FolderService folderService) {
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.workspaceService = workspaceService;
-    this.jobApiUtils = jobApiUtils;
-    this.jobService = jobService;
     this.workspaceActivityLogService = workspaceActivityLogService;
+    this.folderService = folderService;
   }
 
   @Traced
   @Override
-  public ResponseEntity<ApiFolder> createFolder(UUID workspaceId, ApiCreateFolderRequestBody body) {
+  public ResponseEntity<ApiFolder> createFolder(
+      UUID workspaceUuid, ApiCreateFolderRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
     var folderId = UUID.randomUUID();
     Folder folder =
         folderService.createFolder(
             new Folder(
                 folderId,
-                workspaceId,
+                workspaceUuid,
                 body.getDisplayName(),
                 body.getDescription(),
                 body.getParentFolderId(),
                 convertApiPropertyToMap(body.getProperties()),
-                getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
+                samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
                 /*createdDate=*/ null));
     workspaceActivityLogService.writeActivity(
         userRequest,
-        workspaceId,
+        workspaceUuid,
         OperationType.CREATE,
         folderId.toString(),
         ActivityLogChangedTarget.FOLDER);
     return new ResponseEntity<>(
-        buildFolder(folderService.getFolder(workspaceId, folderId), workspaceId), HttpStatus.OK);
+        buildFolder(folderService.getFolder(workspaceUuid, folderId), workspaceUuid),
+        HttpStatus.OK);
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiFolder> updateFolder(
-      UUID workspaceId, UUID folderId, ApiUpdateFolderRequestBody body) {
+      UUID workspaceUuid, UUID folderId, ApiUpdateFolderRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
+
     Folder folder =
         folderService.updateFolder(
-            workspaceId,
+            workspaceUuid,
             folderId,
             body.getDisplayName(),
             body.getDescription(),
@@ -108,50 +122,53 @@ public class FolderApiController extends ControllerBase implements FolderApi {
             body.isUpdateParent());
     workspaceActivityLogService.writeActivity(
         userRequest,
-        workspaceId,
+        workspaceUuid,
         OperationType.UPDATE,
         folderId.toString(),
         ActivityLogChangedTarget.FOLDER);
-    return new ResponseEntity<>(buildFolder(folder, workspaceId), HttpStatus.OK);
+    return new ResponseEntity<>(buildFolder(folder, workspaceUuid), HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<ApiFolder> getFolder(UUID workspaceId, UUID folderId) {
+  public ResponseEntity<ApiFolder> getFolder(UUID workspaceUuid, UUID folderId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
-    Folder folder = folderService.getFolder(workspaceId, folderId);
-    return new ResponseEntity<>(buildFolder(folder, workspaceId), HttpStatus.OK);
+    Folder folder = folderService.getFolder(workspaceUuid, folderId);
+    return new ResponseEntity<>(buildFolder(folder, workspaceUuid), HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<ApiFolderList> listFolders(UUID workspaceId) {
+  public ResponseEntity<ApiFolderList> listFolders(UUID workspaceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
-    List<Folder> folders = folderService.listFolders(workspaceId);
+    List<Folder> folders = folderService.listFolders(workspaceUuid);
 
     var response =
         new ApiFolderList()
-            .folders(folders.stream().map(f -> buildFolder(f, workspaceId)).toList());
+            .folders(folders.stream().map(f -> buildFolder(f, workspaceUuid)).toList());
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
   @Traced
   @Override
-  public ResponseEntity<ApiJobResult> deleteFolderAsync(UUID workspaceId, UUID folderId) {
+  public ResponseEntity<ApiJobResult> deleteFolderAsync(UUID workspaceUuid, UUID folderId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     // If requester is writer and folder has private resources (not owned by requester), requester
     // won't have permission to delete private resources. That access control check is done in
     // folderService#deleteFolder.
-    workspaceService.validateWorkspaceAndAction(userRequest, workspaceId, SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
 
-    String jobId = folderService.deleteFolder(workspaceId, folderId, userRequest);
+    String jobId = folderService.deleteFolder(workspaceUuid, folderId, userRequest);
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
@@ -159,9 +176,9 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   @Traced
   @Override
   public ResponseEntity<ApiJobResult> getDeleteFolderResult(
-      UUID workspaceId, UUID folderId, String jobId) {
+      UUID workspaceUuid, UUID folderId, String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
@@ -171,8 +188,10 @@ public class FolderApiController extends ControllerBase implements FolderApi {
   public ResponseEntity<Void> updateFolderProperties(
       UUID workspaceUuid, UUID folderUuid, List<ApiProperty> properties) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
 
     validatePropertiesUpdateRequestBody(properties);
 
@@ -193,8 +212,11 @@ public class FolderApiController extends ControllerBase implements FolderApi {
       UUID workspaceUuid, UUID folderUuid, List<String> propertyKeys) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     validatePropertiesDeleteRequestBody(propertyKeys);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
+
     folderService.deleteFolderProperties(workspaceUuid, folderUuid, propertyKeys);
     workspaceActivityLogService.writeActivity(
         userRequest,
@@ -205,9 +227,9 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  private ApiFolder buildFolder(Folder folder, UUID workspaceId) {
+  private ApiFolder buildFolder(Folder folder, UUID workspaceUuid) {
     Optional<ActivityLogChangeDetails> lastUpdatedDetail =
-        workspaceActivityLogService.getLastUpdatedDetails(workspaceId, folder.id().toString());
+        workspaceActivityLogService.getLastUpdatedDetails(workspaceUuid, folder.id().toString());
     return new ApiFolder()
         .id(folder.id())
         .displayName(folder.displayName())

@@ -23,6 +23,8 @@ import bio.terra.workspace.model.StewardshipType;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.DataRepoUtils;
@@ -32,6 +34,8 @@ import scripts.utils.ParameterUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestScriptBase {
+  private static final Logger logger =
+      LoggerFactory.getLogger(ReferencedDataRepoSnapshotLifecycle.class);
 
   private String tdrInstance;
   private String snapshotId;
@@ -163,6 +167,7 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
   }
 
   private void testUpdateReference(ReferencedGcpResourceApi ownerApi) throws Exception {
+    logger.info("Entering testUpdateReference");
     ReferencedGcpResourceApi partialAccessApi =
         ClientTestUtils.getReferencedGcpResourceClient(partialAccessUser, server);
     ResourceApi partialAccessResourceApi =
@@ -170,6 +175,7 @@ public class ReferencedDataRepoSnapshotLifecycle extends WorkspaceAllocateTestSc
     // Update snapshot's name and description
     String newSnapshotReferenceName = "newSnapshotReferenceName";
     String newSnapshotReferenceDescription = "a new description of another snapshot reference";
+    logger.info("Update only name and description");
     DataRepoSnapshotResource snapshotResource =
         updateDataRepoSnapshotReferenceResource(
             ownerApi,

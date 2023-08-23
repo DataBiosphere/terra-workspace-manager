@@ -1,0 +1,25 @@
+# Common AWS responses
+# These responses should be referenced from the source like this:
+#  $ref: '#/components/responses/<item-you-want>
+components:
+  responses:
+    GenerateAwsResourceCloudNameResponse:
+      description: Response to generate a AWS resource cloud name.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsResourceCloudName'
+
+    DeleteControlledAwsResourceResponse:
+      description: Response Payload for deleting AWS controlled resources.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledAwsResourceResult'
+
+    GetControlledAwsResourceCredentialResponse:
+      description: Response to get a AWS resource credential.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AwsCredential'

@@ -5,7 +5,7 @@ paths:
     post:
       summary: Create a new controlled Azure Storage Container with private access
       operationId: createAzureStorageContainer
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -31,7 +31,7 @@ paths:
     post:
       summary: Clone an Azure Storage Container
       operationId: cloneAzureStorageContainer
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -73,9 +73,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/WorkspaceId'
         - $ref: '#/components/parameters/ResourceId'
-      summary: Delete an Azure Storage Container
+      summary: |
+        Delete a controlled Azure Storage Container resource. This is async, 
+        because the operation can take a few minutes. OpenAPI does not support 
+        request body in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureStorageContainer
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -103,7 +106,7 @@ paths:
     post:
       summary: Create a SAS token to access the storage container
       operationId: createAzureStorageContainerSasToken
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       responses:
         '200':
           description: Response to create SAS token
@@ -154,6 +157,11 @@ components:
           format: uuid
         cloningInstructions:
           $ref: "#/components/schemas/CloningInstructionsEnum"
+        prefixesToClone:
+          description: if a non-empty value is specified, cloning will be limited to the blobs that start with a prefix in this array
+          type: array
+          items:
+            type: string
         name:
           $ref: "#/components/schemas/Name"
         description:
@@ -186,12 +194,6 @@ components:
       type: object
       required: [ storageContainerName ]
       properties:
-        storageAccountId:
-          description: >-
-            The resource ID of the storage account in which the container will be created.
-            If this parameter is not defined shared storage account from landing zone will be used.
-          type: string
-          format: uuid
         storageContainerName:
           description: A valid storage container name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
           type: string

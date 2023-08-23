@@ -34,13 +34,14 @@ import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiResourceQuota;
-import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -52,17 +53,19 @@ public class LandingZoneApiDispatch {
   private static final String AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE =
       "Microsoft.Storage/storageAccounts";
   private static final String AZURE_BATCH_ACCOUNT_RESOURCE_TYPE = "Microsoft.Batch/batchAccounts";
+  private static final String AZURE_KUBERNETES_CLUSTER_RESOURCE_TYPE =
+      "Microsoft.ContainerService/managedClusters";
+  private static final String AZURE_DATABASE_RESOURCE_TYPE =
+      "Microsoft.DBforPostgreSQL/flexibleServers";
+  private static final String AZURE_UAMI_RESOURCE_TYPE =
+      "Microsoft.ManagedIdentity/userAssignedIdentities";
 
   private final LandingZoneService landingZoneService;
-  private final WorkspaceService workspaceService;
   private final FeatureConfiguration features;
 
   public LandingZoneApiDispatch(
-      LandingZoneService landingZoneService,
-      WorkspaceService workspaceService,
-      FeatureConfiguration features) {
+      LandingZoneService landingZoneService, FeatureConfiguration features) {
     this.landingZoneService = landingZoneService;
-    this.workspaceService = workspaceService;
     this.features = features;
   }
 
@@ -81,6 +84,7 @@ public class LandingZoneApiDispatch {
 
     LandingZoneRequest landingZoneRequest =
         LandingZoneRequest.builder()
+            .landingZoneId(body.getLandingZoneId())
             .definition(body.getDefinition())
             .version(body.getVersion())
             .parameters(
@@ -160,14 +164,10 @@ public class LandingZoneApiDispatch {
 
   private ApiDeleteAzureLandingZoneResult toApiDeleteAzureLandingZoneResult(
       LandingZoneJobService.AsyncJobResult<StartLandingZoneDeletion> jobResult) {
-
-    ApiDeleteAzureLandingZoneResult result =
-        new ApiDeleteAzureLandingZoneResult()
-            .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
-            .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
-            .landingZoneId(jobResult.getResult().landingZoneId());
-
-    return result;
+    return new ApiDeleteAzureLandingZoneResult()
+        .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
+        .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
+        .landingZoneId(jobResult.getResult().landingZoneId());
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(
@@ -199,6 +199,23 @@ public class LandingZoneApiDispatch {
     return getSharedResourceByType(bearerToken, landingZoneId, AZURE_BATCH_ACCOUNT_RESOURCE_TYPE);
   }
 
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedKubernetesCluster(
+      BearerToken bearerToken, UUID landingZoneId) {
+    return getSharedResourceByType(
+        bearerToken, landingZoneId, AZURE_KUBERNETES_CLUSTER_RESOURCE_TYPE);
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedDatabase(
+      BearerToken bearerToken, UUID landingZoneId) {
+    return getSharedResourceByType(bearerToken, landingZoneId, AZURE_DATABASE_RESOURCE_TYPE);
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedDatabaseAdminIdentity(
+      BearerToken bearerToken, UUID landingZoneId) {
+    return getResourceByTypeAndPurpose(
+        bearerToken, landingZoneId, AZURE_UAMI_RESOURCE_TYPE, ResourcePurpose.POSTGRES_ADMIN);
+  }
+
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose) {
     features.azureEnabledCheck();
@@ -222,6 +239,7 @@ public class LandingZoneApiDispatch {
       return new ApiAzureLandingZoneDeployedResource()
           .resourceId(resource.resourceId())
           .resourceType(resource.resourceType())
+          .tags(resource.tags())
           .region(resource.region());
     }
     if (purpose.getClass().equals(SubnetResourcePurpose.class)) {
@@ -229,6 +247,7 @@ public class LandingZoneApiDispatch {
           .resourceParentId(resource.resourceParentId().orElse(null)) // Only available for subnets
           .resourceName(resource.resourceName().orElse(null)) // Only available for subnets
           .resourceType(resource.resourceType())
+          .tags(resource.tags())
           .region(resource.region());
     }
     throw new LandingZoneUnsupportedPurposeException(
@@ -264,8 +283,7 @@ public class LandingZoneApiDispatch {
         .landingZone(azureLandingZone);
   }
 
-  public UUID getLandingZoneId(BearerToken token, UUID workspaceId) {
-    Workspace workspace = workspaceService.getWorkspace(workspaceId);
+  public UUID getLandingZoneId(BearerToken token, Workspace workspace) {
     Optional<UUID> profileId = workspace.getSpendProfileId().map(sp -> UUID.fromString(sp.getId()));
 
     if (profileId.isEmpty()) {
@@ -281,7 +299,7 @@ public class LandingZoneApiDispatch {
         .map(LandingZone::landingZoneId)
         .orElseThrow(
             () ->
-                new IllegalStateException(
+                new LandingZoneNotFoundException(
                     String.format(
                         "Could not find a landing zone for the given billing profile: '%s'. Please"
                             + " check that the landing zone deployment is complete"
@@ -314,6 +332,11 @@ public class LandingZoneApiDispatch {
     features.azureEnabledCheck();
     LandingZone landingZoneRecord = landingZoneService.getLandingZone(bearerToken, landingZoneId);
     return toApiAzureLandingZone(landingZoneRecord);
+  }
+
+  public String getAzureLandingZoneRegion(BearerToken bearerToken, UUID landingZoneId) {
+    features.azureEnabledCheck();
+    return landingZoneService.getLandingZoneRegion(bearerToken, landingZoneId);
   }
 
   public ApiAzureLandingZoneList listAzureLandingZones(
@@ -376,12 +399,31 @@ public class LandingZoneApiDispatch {
 
   private Optional<ApiAzureLandingZoneDeployedResource> getSharedResourceByType(
       BearerToken bearerToken, UUID landingZoneId, String resourceType) {
-    return listAzureLandingZoneResourcesByPurpose(
-            bearerToken, landingZoneId, ResourcePurpose.SHARED_RESOURCE)
+    return getResourceByTypeAndPurpose(
+        bearerToken, landingZoneId, resourceType, ResourcePurpose.SHARED_RESOURCE);
+  }
+
+  @NotNull
+  private Optional<ApiAzureLandingZoneDeployedResource> getResourceByTypeAndPurpose(
+      BearerToken bearerToken, UUID landingZoneId, String resourceType, ResourcePurpose purpose) {
+    return listAzureLandingZoneResourcesByPurpose(bearerToken, landingZoneId, purpose)
         .getResources()
         .stream()
         .flatMap(r -> r.getDeployedResources().stream())
         .filter(r -> StringUtils.equalsIgnoreCase(r.getResourceType(), resourceType))
         .findFirst();
+  }
+
+  public String getLandingZoneRegion(AuthenticatedUserRequest userRequest, Workspace workspace) {
+    final BearerToken token = new BearerToken(userRequest.getRequiredToken());
+    var lzId = getLandingZoneId(token, workspace);
+    return getAzureLandingZoneRegion(token, lzId);
+  }
+
+  public ApiAzureLandingZone getLandingZone(
+      AuthenticatedUserRequest userRequest, Workspace workspace) {
+    final BearerToken token = new BearerToken(userRequest.getRequiredToken());
+    var lzId = getLandingZoneId(token, workspace);
+    return getAzureLandingZone(token, lzId);
   }
 }

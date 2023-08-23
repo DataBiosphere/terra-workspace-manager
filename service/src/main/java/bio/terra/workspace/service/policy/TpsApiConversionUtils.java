@@ -97,7 +97,9 @@ public class TpsApiConversionUtils {
         .attributes(apiFromTpsPolicyInputs(tpsPao.getAttributes()))
         .effectiveAttributes(apiFromTpsPolicyInputs(tpsPao.getEffectiveAttributes()))
         .deleted(tpsPao.isDeleted())
-        .sourcesObjectIds(tpsPao.getSourcesObjectIds());
+        .sourcesObjectIds(tpsPao.getSourcesObjectIds())
+        .createdDate(tpsPao.getCreatedDate())
+        .lastUpdatedDate(tpsPao.getLastUpdatedDate());
   }
 
   public static List<ApiWsmPolicyConflict> apiFromTpsPaoConflictList(
@@ -127,6 +129,22 @@ public class TpsApiConversionUtils {
 
   public static ApiWsmPolicyObjectType apiFromTpsObjectType(TpsObjectType tpsObjectType) {
     return ApiWsmPolicyObjectType.fromValue(tpsObjectType.getValue());
+  }
+
+  public static TpsPaoDescription tpsFromApiPaoDescription(
+      ApiWsmPolicyDescription apiWsmPolicyDescription) {
+    return new TpsPaoDescription()
+        .objectId(apiWsmPolicyDescription.getObjectId())
+        .component(tpsFromApiComponent(apiWsmPolicyDescription.getComponent()))
+        .objectType(tpsFromApiObjectType(apiWsmPolicyDescription.getObjectType()));
+  }
+
+  public static TpsComponent tpsFromApiComponent(ApiWsmPolicyComponent apiWsmPolicyComponent) {
+    return TpsComponent.fromValue(apiWsmPolicyComponent.toString());
+  }
+
+  public static TpsObjectType tpsFromApiObjectType(ApiWsmPolicyObjectType apiWsmPolicyObjectType) {
+    return TpsObjectType.fromValue(apiWsmPolicyObjectType.toString());
   }
 
   public static TpsPolicyInput tpsFromApiPolicyInput(ApiWsmPolicyInput apiInput) {
@@ -201,7 +219,9 @@ public class TpsApiConversionUtils {
         source.isDeleted(),
         access,
         name,
-        properties);
+        properties,
+        source.getCreatedDate(),
+        source.getLastUpdatedDate());
   }
 
   public static ApiWsmPolicyExplanation convertExplanation(TpsPolicyExplanation explanation) {

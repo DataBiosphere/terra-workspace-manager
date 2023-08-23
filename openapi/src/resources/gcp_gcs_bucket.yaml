@@ -5,7 +5,7 @@ components:
         Bucket properties included in post-creation, get, and update. Others must be
         retrieved from GCS using the name.
       type: object
-      required: [bucketName]
+      required: [ bucketName ]
       properties:
         bucketName:
           description: Name of created bucket (not the resource name).

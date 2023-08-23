@@ -3,11 +3,8 @@ package bio.terra.workspace.service.resource.controlled.flight.delete;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import java.util.UUID;
@@ -38,14 +35,8 @@ public class DeleteSamResourceStep implements Step {
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
     WsmResource wsmResource = resourceDao.getResource(workspaceUuid, resourceId);
     ControlledResource resource = wsmResource.castToControlledResource();
-    // deleteControlledResource already handles duplicate deletion, so we do not need to explicitly
-    // handle it inside this step.
-    final AuthenticatedUserRequest userRequest =
-        FlightUtils.getRequired(
-            flightContext.getInputParameters(),
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
-    samService.deleteControlledResource(resource, userRequest);
+    logger.info("try to delete Sam controlled resource: {}", resource.getResourceId());
+    samService.deleteControlledResource(resource, samService.getWsmServiceAccountToken());
     return StepResult.getStepResultSuccess();
   }
 

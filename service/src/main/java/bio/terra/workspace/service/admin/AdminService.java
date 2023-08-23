@@ -5,16 +5,15 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRolesFlight;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobBuilder;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -27,21 +26,26 @@ public class AdminService {
 
   private final JobService jobService;
   private final WorkspaceDao workspaceDao;
+  private final GcpCloudContextService gcpCloudContextService;
 
-  public AdminService(JobService jobService, WorkspaceDao workspaceDao) {
+  public AdminService(
+      JobService jobService,
+      WorkspaceDao workspaceDao,
+      GcpCloudContextService gcpCloudContextService) {
     this.jobService = jobService;
     this.workspaceDao = workspaceDao;
+    this.gcpCloudContextService = gcpCloudContextService;
   }
 
   @Nullable
   public String syncIamRoleForAllGcpProjects(AuthenticatedUserRequest userRequest, boolean wetRun) {
     Map<UUID, String> workspaceIdToGcpProjectIdMap = new HashMap<>();
-    for (Map.Entry<UUID, String> cloudContext :
-        workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP).entrySet()) {
-      workspaceIdToGcpProjectIdMap.put(
-          cloudContext.getKey(),
-          Objects.requireNonNull(GcpCloudContext.deserialize(cloudContext.getValue()))
-              .getGcpProjectId());
+    for (Map.Entry<UUID, DbCloudContext> cloudContextEntry :
+        workspaceDao.getWorkspaceIdToGcpCloudContextMap().entrySet()) {
+      // Cloud contexts that are broken or in the process of being created may not have project id.
+      gcpCloudContextService
+          .getGcpProject(cloudContextEntry.getKey())
+          .ifPresent(s -> workspaceIdToGcpProjectIdMap.put(cloudContextEntry.getKey(), s));
     }
 
     if (workspaceIdToGcpProjectIdMap.isEmpty()) {
@@ -50,7 +54,7 @@ public class AdminService {
     JobBuilder job =
         jobService
             .newJob()
-            .description("sync custom iam roles in all gcp projects")
+            .description("sync custom iam roles in all active gcp projects")
             .jobId(UUID.randomUUID().toString())
             .flightClass(SyncGcpIamRolesFlight.class)
             .userRequest(userRequest)

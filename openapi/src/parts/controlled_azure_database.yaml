@@ -1,0 +1,135 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/databases:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Database
+      operationId: createAzureDatabase
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureDatabaseRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureDatabaseResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/databases/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure Database create job.
+      operationId: getCreateAzureDatabaseResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureDatabaseResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureDatabaseResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/databases/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure Database resource
+      operationId: getAzureDatabase
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          description: Response to get database
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureDatabaseResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete a controlled Azure Database resource.
+      operationId: deleteAzureDatabase
+      tags: [ ControlledAzureResource ]
+      responses:
+        '204':
+          description: Success
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+
+components:
+  schemas:
+    AzureDatabaseCreationParameters:
+      description: >-
+        Database-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ name ]
+      properties:
+        name:
+          description: A valid database name
+          type: string
+          pattern: ^[a-zA-Z][a-zA-Z0-9_]{0,31}$
+        owner:
+          description: Resource id of an azure managed identity in this workspace to be the owner of the database, required for shared databases. For private databases, the owner will be determined from privateResourceUser.
+          type: string
+          format: uuid
+        k8sNamespace:
+          description: The kubernetes namespace from which the database will be accessed. A database created with this specified will not be usable with a KubernetesNamespace controlled resource. Will be removed once Leonardo switches to use KubernetesNamespace controlled resources.
+          type: string
+          deprecated: true
+        allowAccessForAllWorkspaceUsers:
+          description: Whether to allow users in the workspace to create kubernetes namespaces that can connect to this database.
+          type: boolean
+          default: false
+
+    CreatedControlledAzureDatabaseResult:
+      description: Response payload for requesting a new Azure database
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureDatabase:
+          $ref: '#/components/schemas/AzureDatabaseResource'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    CreateControlledAzureDatabaseRequestBody:
+      description: Payload for requesting a new controlled Azure Database resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureDatabase:
+          $ref: '#/components/schemas/AzureDatabaseCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+  responses:
+    CreateControlledAzureDatabaseResponse:
+      description: Response to create controlled Azure Database
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureDatabaseResult'

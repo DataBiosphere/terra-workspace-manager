@@ -2,10 +2,10 @@ package bio.terra.workspace.service.logging;
 
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import io.opencensus.contrib.spring.aop.Traced;
@@ -27,7 +27,7 @@ public class WorkspaceActivityLogService {
   }
 
   @Traced
-  /** Writes the change activity. */
+  // Writes the change activity
   public void writeActivity(
       AuthenticatedUserRequest userRequest,
       UUID workspaceUuid,
@@ -35,7 +35,7 @@ public class WorkspaceActivityLogService {
       String changeSubjectId,
       ActivityLogChangedTarget objectType) {
     UserStatusInfo userStatusInfo =
-        SamRethrow.onInterrupted(
+        Rethrow.onInterrupted(
             () -> samService.getUserStatusInfo(userRequest), "Get user status info from SAM");
     workspaceActivityLogDao.writeActivity(
         workspaceUuid,

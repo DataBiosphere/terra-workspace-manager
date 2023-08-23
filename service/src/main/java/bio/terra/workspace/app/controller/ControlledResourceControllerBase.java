@@ -2,11 +2,16 @@ package bio.terra.workspace.app.controller;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobService;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -14,17 +19,21 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Super class for controllers containing common code. The code in here requires the @Autowired
  * beans from the @Controller classes, so it is better as a superclass rather than static methods.
  */
 public class ControlledResourceControllerBase extends ControllerBase {
-  private final ControlledResourceService controlledResourceService;
+  protected final ControlledResourceService controlledResourceService;
+  protected final ControlledResourceMetadataManager controlledResourceMetadataManager;
+  protected final WorkspaceService workspaceService;
 
   /**
    * The region field of these wsm resource type are filled during the creation flight because the
@@ -43,14 +52,25 @@ public class ControlledResourceControllerBase extends ControllerBase {
   public ControlledResourceControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
+      SamService samService,
+      FeatureConfiguration featureConfiguration,
+      FeatureService featureService,
+      JobService jobService,
+      JobApiUtils jobApiUtils,
       ControlledResourceService controlledResourceService,
-      SamService samService) {
-    super(authenticatedUserRequestFactory, request, samService);
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      WorkspaceService workspaceService) {
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        featureConfiguration,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.controlledResourceService = controlledResourceService;
-  }
-
-  public ControlledResourceService getControlledResourceService() {
-    return controlledResourceService;
+    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
+    this.workspaceService = workspaceService;
   }
 
   public ControlledResourceFields toCommonFields(
@@ -64,11 +84,11 @@ public class ControlledResourceControllerBase extends ControllerBase {
     AccessScopeType accessScopeType = AccessScopeType.fromApi(apiCommonFields.getAccessScope());
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
-    String userEmail = getSamService().getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
+    String userEmail = samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
 
     if (!WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS.contains(wsmResourceType)) {
       checkArgument(
-          region != null,
+          StringUtils.isNotEmpty(region),
           "Controlled resource must have an associated region specified"
               + "on creation except for Azure storage containers, Azure VMs, Azure batch pools, "
               + "Vertex AI notebooks, and Flexible resources");

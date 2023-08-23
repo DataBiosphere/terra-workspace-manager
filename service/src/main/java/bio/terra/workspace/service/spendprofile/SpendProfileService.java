@@ -7,8 +7,8 @@ import bio.terra.profile.client.ApiException;
 import bio.terra.profile.model.CreateProfileRequest;
 import bio.terra.profile.model.ProfileModel;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
@@ -55,6 +55,8 @@ public class SpendProfileService {
         spendProfileConfiguration);
   }
 
+  /** This constructor is only used for unit testing. DO NOT USE FOR PRODUCTION */
+  @VisibleForTesting
   public SpendProfileService(
       SamService samService,
       List<SpendProfile> spendProfiles,
@@ -80,12 +82,9 @@ public class SpendProfileService {
   public SpendProfile authorizeLinking(
       SpendProfileId spendProfileId, boolean bpmEnabled, AuthenticatedUserRequest userRequest) {
 
-    SpendProfile spend;
-    if (bpmEnabled) {
-      // profiles returned from BPM means we are auth'ed
-      spend = getSpendProfileFromBpm(userRequest, spendProfileId);
-    } else {
-      if (!SamRethrow.onInterrupted(
+    SpendProfile spend = null;
+    if (spendProfiles.containsKey(spendProfileId)) {
+      if (!Rethrow.onInterrupted(
           () ->
               samService.isAuthorized(
                   userRequest,
@@ -96,6 +95,20 @@ public class SpendProfileService {
         throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
       }
       spend = spendProfiles.get(spendProfileId);
+    } else if (bpmEnabled) {
+      // profiles returned from BPM means we are auth'ed
+      spend = getSpendProfileFromBpm(userRequest, spendProfileId);
+    } else {
+      if (!Rethrow.onInterrupted(
+          () ->
+              samService.isAuthorized(
+                  userRequest,
+                  SamConstants.SamResource.SPEND_PROFILE,
+                  spendProfileId.getId(),
+                  SamConstants.SamSpendProfileAction.LINK),
+          "isAuthorized")) {
+        throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
+      }
     }
 
     if (spend == null) {

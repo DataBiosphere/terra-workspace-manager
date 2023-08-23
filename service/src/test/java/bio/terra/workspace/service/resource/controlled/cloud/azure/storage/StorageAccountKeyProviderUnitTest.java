@@ -6,10 +6,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
+import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import bio.terra.workspace.service.workspace.model.AzureCloudContextFields;
+import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.resourcemanager.storage.models.StorageAccountKey;
@@ -19,7 +23,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 
-public class StorageAccountKeyProviderUnitTest extends BaseUnitTest {
+public class StorageAccountKeyProviderUnitTest extends BaseAzureUnitTest {
 
   @Test
   public void getStorageAccountKey() {
@@ -27,7 +31,14 @@ public class StorageAccountKeyProviderUnitTest extends BaseUnitTest {
     var crlService = mock(CrlService.class);
     var storageManager = mock(StorageManager.class);
     var azureConfiguration = new AzureConfiguration();
-    var azureCloudContext = new AzureCloudContext("fake", "fake", "fake");
+    var azureCloudContext =
+        new AzureCloudContext(
+            new AzureCloudContextFields("fake", "fake", "fake"),
+            new CloudContextCommonFields(
+                new SpendProfileId("fake"),
+                WsmResourceState.READY,
+                /*flightId=*/ null,
+                /*error=*/ null));
     when(azureCloudContextService.getRequiredAzureCloudContext(any()))
         .thenReturn(azureCloudContext);
     when(crlService.getStorageManager(

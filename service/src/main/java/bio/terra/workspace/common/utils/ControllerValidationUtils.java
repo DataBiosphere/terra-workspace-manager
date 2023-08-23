@@ -1,19 +1,16 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.common.exception.ValidationException;
-import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
+import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.apache.commons.validator.routines.InetAddressValidator;
@@ -97,10 +94,11 @@ public final class ControllerValidationUtils {
     switch (platform) {
       case GCP:
       case AZURE:
+      case AWS:
         break;
       default:
         throw new CloudPlatformNotImplementedException(
-            "Invalid cloud platform. Currently, only AZURE and GCP are supported.");
+            "Invalid cloud platform. Currently, only GCP, AZURE and AWS are supported.");
     }
   }
 
@@ -119,6 +117,12 @@ public final class ControllerValidationUtils {
   }
 
   /** Return the appropriate IAM action for creating the specified controlled resource in Sam. */
+  public static String getSamAction(ApiControlledResourceCommonFields common) {
+    return samCreateAction(
+        AccessScopeType.fromApi(common.getAccessScope()),
+        ManagedByType.fromApi(common.getManagedBy()));
+  }
+
   public static String samCreateAction(ControlledResourceFields commonFields) {
     return samCreateAction(commonFields.getAccessScope(), commonFields.getManagedBy());
   }
@@ -130,9 +134,9 @@ public final class ControllerValidationUtils {
   }
 
   /**
-   * Validate the format of an ipAddress or range of addresses for Azure SAS tokens. We can't do
-   * this directly in the generated spring code yet, because the swagger codegen plugin doesn't
-   * support the use of oneOf in schema generation.
+   * Validate the format of an ipAddress or range of addresses. We can't do this directly in the
+   * generated spring code yet, because the swagger codegen plugin doesn't support the use of oneOf
+   * in schema generation.
    *
    * @param ipRange a single ip address, or a range of ip addresses separated by a dash ('-')
    */
@@ -146,78 +150,6 @@ public final class ControllerValidationUtils {
       if (!validator.isValid(address)) {
         throw new ValidationException("Invalid ip address or ip address range: " + ipRange);
       }
-    }
-  }
-
-  /**
-   * Validate that the expiration duration (in seconds) is between 1 and the maximum allowed
-   * duration (in minutes).
-   *
-   * @param sasExpirationDuration user-specified duration in seconds (note that null is allowed)
-   * @param maxDurationMinutes maximum allowed duration in minutes
-   * @throws ValidationException if sasExpiration is not positive or is greater than maximum allowed
-   *     duration. Does not throw an exception if sasExpiration is null.
-   */
-  public static void validateSasExpirationDuration(
-      @Nullable Long sasExpirationDuration, Long maxDurationMinutes) {
-    if (sasExpirationDuration == null) {
-      return;
-    }
-    if (sasExpirationDuration <= 0) {
-      throw new ValidationException(
-          "sasExpirationDuration must be positive: " + sasExpirationDuration);
-    }
-    long maxDurationSeconds = 60 * maxDurationMinutes;
-    if (sasExpirationDuration > maxDurationSeconds) {
-      throw new ValidationException(
-          String.format(
-              "sasExpirationDuration cannot be greater than allowed maximum (%d): %d",
-              maxDurationSeconds, sasExpirationDuration));
-    }
-  }
-
-  /**
-   * Validate an azure blob name. Blob name may be a string or null, and must be > 1 char and < 1024
-   * chars in length.
-   *
-   * @param blobName Blob name to validate, or null.
-   */
-  public static void validateSasBlobName(@Nullable String blobName) {
-    if (blobName == null) {
-      return;
-    }
-    if (blobName.isEmpty()) {
-      throw new ValidationException("Blob name may not be empty");
-    }
-    if (blobName.length() > 1024) {
-      throw new ValidationException("Blob name must be <= 1024 chars");
-    }
-  }
-
-  /**
-   * Validate that a user has provided an Azure cloud context if one cannot be fetched from BPM
-   *
-   * @param apiAzureContext Azure cloud context included as request body parameter
-   * @param isBpmEnabled whether BPM (SpendProfileService) is enabled, in which case
-   *     AzureCloudContext should not be present
-   * @return AzureCloudContext to use for request
-   */
-  public static AzureCloudContext validateAzureContextRequestBody(
-      @Nullable ApiAzureContext apiAzureContext, boolean isBpmEnabled) {
-    Optional<AzureCloudContext> optionalAzureCloudContext =
-        Optional.ofNullable(apiAzureContext).map(AzureCloudContext::fromApi);
-    // if BPM is enabled for Azure, then the coordinates should be obtained from BPM.
-    if (isBpmEnabled) {
-      if (optionalAzureCloudContext.isPresent()) {
-        throw new CloudContextRequiredException(
-            "AzureContext should not be supplied when creating an Azure cloud context for a workspace if BPM is enabled");
-      }
-      return null;
-    } else {
-      return optionalAzureCloudContext.orElseThrow(
-          () ->
-              new CloudContextRequiredException(
-                  "AzureContext is required when creating an Azure cloud context for a workspace if BPM is disabled"));
     }
   }
 

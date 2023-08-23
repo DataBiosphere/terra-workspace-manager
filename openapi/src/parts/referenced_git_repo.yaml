@@ -58,6 +58,8 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
@@ -143,7 +145,7 @@ components:
     CreateGitRepoReferenceRequestBody:
       type: object
       description: A request to create a reference to a Git repo.
-      required: [metadata, gitrepo]
+      required: [ metadata, gitrepo ]
       properties:
         metadata:
           $ref: '#/components/schemas/ReferenceResourceCommonFields'

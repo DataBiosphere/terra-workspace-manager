@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.configuration.external;
 
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -17,9 +18,8 @@ public class FeatureConfiguration {
   private boolean alpha1Enabled;
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
-  private boolean bpmAzureEnabled;
   private boolean temporaryGrantEnabled;
-  private boolean dataprocEnabled;
+  private WsmResourceStateRule stateRule;
 
   public boolean isAzureEnabled() {
     return azureEnabled;
@@ -53,14 +53,6 @@ public class FeatureConfiguration {
     this.bpmGcpEnabled = bpmGcpEnabled;
   }
 
-  public boolean isBpmAzureEnabled() {
-    return bpmAzureEnabled;
-  }
-
-  public void setBpmAzureEnabled(boolean bpmAzureEnabled) {
-    this.bpmAzureEnabled = bpmAzureEnabled;
-  }
-
   public boolean isTemporaryGrantEnabled() {
     return temporaryGrantEnabled;
   }
@@ -69,12 +61,13 @@ public class FeatureConfiguration {
     this.temporaryGrantEnabled = temporaryGrantEnabled;
   }
 
-  public boolean isDataprocEnabled() {
-    return dataprocEnabled;
+  public WsmResourceStateRule getStateRule() {
+    return stateRule;
   }
 
-  public void setDataprocEnabled(boolean dataprocEnabled) {
-    this.dataprocEnabled = dataprocEnabled;
+  public FeatureConfiguration setStateRule(WsmResourceStateRule stateRule) {
+    this.stateRule = stateRule;
+    return this;
   }
 
   public void azureEnabledCheck() {
@@ -104,9 +97,8 @@ public class FeatureConfiguration {
     logger.info("Feature: azure-enabled: {}", isAzureEnabled());
     logger.info("Feature: alpha1-enabled: {}", isAlpha1Enabled());
     logger.info("Feature: tps-enabled: {}", isTpsEnabled());
-    logger.info("Feature: bpm-azure-enabled: {}", isBpmAzureEnabled());
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());
     logger.info("Feature: temporary-grant-enabled: {}", isTemporaryGrantEnabled());
-    logger.info("Feature: dataproc-enabled: {}", isDataprocEnabled());
+    logger.info("Feature: state-rule: {}", getStateRule());
   }
 }

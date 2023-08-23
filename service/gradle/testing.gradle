@@ -54,6 +54,8 @@ test {
   maxParallelForks = runnerThreads
 }
 
+// GCP, non-cloud-specific
+
 task unitTest(type: Test) {
   useJUnitPlatform {
     includeTags "unit"
@@ -103,6 +105,28 @@ task connectedTest(type: Test) {
   maxParallelForks = runnerThreads
 }
 
+// AZURE
+
+task azureUnitTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "azure-unit"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+  maxParallelForks = runnerThreads
+}
+
+// Use the azureConnected test tag for PR runs.
+// No retries; devs can manually rerun
+task azureConnectedTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "azureConnected"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+  maxParallelForks = runnerThreads
+}
+
 task azureConnectedPlusTest(type: Test) {
   environment.put('TEST_ENV', System.getenv("TEST_ENV"))
   useJUnitPlatform {
@@ -131,22 +155,60 @@ task azureConnectedPlusTest(type: Test) {
   maxParallelForks = runnerThreads
 }
 
-// Use the azureConnected test tag for PR runs.
-// No retries; devs can manually rerun
-task azureConnectedTest(type: Test) {
+// AWS
+
+task awsUnitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "azureConnected"
+    includeTags "aws-unit"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
   maxParallelForks = runnerThreads
 }
 
-task azureUnitTest(type: Test) {
+task awsConnectedTest(type: Test) {
   useJUnitPlatform {
-    includeTags "azure-unit"
+    includeTags "aws-connected"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
   maxParallelForks = runnerThreads
 }
+
+task awsConnectedPlusTest(type: Test) {
+  useJUnitPlatform {
+    includeTags "aws-connected-plus"
+  }
+  outputs.upToDateWhen { false }
+  finalizedBy tasks.combinedJaCoCoReport
+
+  // For GHA runs, retry failing tests. If 2nd time passes, workflow will still
+  // fail and oncall will still be notified. This way, oncall dosen't have to
+  // rerun workflow in GHA.
+  retry {
+    // This is set automatically on Github Actions runners, and never set
+    // otherwise.
+    if (System.getenv().containsKey("CI")) {
+      // Max retries per test.
+      maxRetries = 1
+      // Max total test failures.
+      // This is an estimate based on current failure rates, but if more
+      // than 5 tests fail in a run it's likely a real source of failure
+      // and we should stop retrying.
+      maxFailures = 5
+    }
+    failOnPassedAfterRetry = true
+  }
+  maxParallelForks = runnerThreads
+}
+
+// PACT
+
+task pactTests(type: Test) {
+  useJUnitPlatform {
+    includeTags "pact-test"
+  }
+  environment.put('pact.rootDir', "$buildDir/pacts")
+  environment.put('pact.provider.version', "$project.version")
+}
+

@@ -2,7 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
@@ -19,7 +19,7 @@ public final class AzureVmHelper {
   public static final String WORKING_MAP_SUBNET_NAME = "SubnetName";
   public static final String WORKING_MAP_VM_ID = "VmId";
   public static final String WORKING_MAP_PET_ID = "PetId";
-  private static int NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS = 180;
+  private static final int NIC_RESERVED_FOR_ANOTHER_VM_ERROR_RETRY_SECONDS = 180;
   private static final Logger logger = LoggerFactory.getLogger(AzureVmHelper.class);
 
   public static StepResult deleteVm(
@@ -61,15 +61,15 @@ public final class AzureVmHelper {
           .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), networkInterfaceName);
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
-      if (ManagementExceptionUtils.isExceptionCode(
-          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Azure Network Interface {} in managed resource group {} already deleted",
             networkInterfaceName,
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
-      } else if (ManagementExceptionUtils.isExceptionCode(
-          e, ManagementExceptionUtils.NIC_RESERVED_FOR_ANOTHER_VM)) {
+      } else if (AzureManagementExceptionUtils.isExceptionCode(
+          e, AzureManagementExceptionUtils.NIC_RESERVED_FOR_ANOTHER_VM)) {
         // In case of this particular error Azure asks to wait for 180 seconds before next retry. At
         // least at the time this code was written.
         // It would be good to have retry delay as a part of details field, so we can adjust
@@ -109,8 +109,8 @@ public final class AzureVmHelper {
               .virtualMachines()
               .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), vmName);
     } catch (ManagementException e) {
-      if (ManagementExceptionUtils.isExceptionCode(
-          e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         // TODO: if vm gets deleted before this process finishes, the Identity assignment still
         // needs to be updated to remove access to vm.
         // This is going to be a more tedious process involving traversing through all identities in
@@ -237,7 +237,8 @@ public final class AzureVmHelper {
   private static StepResult handleNotFound(
       ManagementException e, String resourceType, String resourceName, String resourceId) {
     // Stairway steps may run multiple times, so we may already have deleted this resource.
-    if (ManagementExceptionUtils.isExceptionCode(e, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+    if (AzureManagementExceptionUtils.isExceptionCode(
+        e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
       logger.info(
           "Azure {} {} in managed resource group {} already deleted",
           resourceType,

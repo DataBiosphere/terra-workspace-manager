@@ -31,7 +31,7 @@ paths:
     get:
       summary: Get a controlled Azure Disk resource
       operationId: getAzureDisk
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       responses:
         '200':
           description: Response to get disk
@@ -47,9 +47,11 @@ paths:
           $ref: '#/components/responses/ServerError'
     post:
       summary: |
-        Delete an azure Disk
+        Delete a controlled Azure Disk resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureDisk
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -64,7 +66,7 @@ paths:
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
-          $ref: '#components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -76,7 +78,7 @@ paths:
     get:
       summary: Retrieve information about an azure disk deletion job.
       operationId: getDeleteAzureDiskResult
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       responses:
         '200':
           $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
@@ -85,7 +87,7 @@ paths:
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
-          $ref: '#components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -96,15 +98,10 @@ components:
         Disk-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [ name, region, size ]
+      required: [ name, size ]
       properties:
         name:
           description: A valid disk name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
-          type: string
-        region:
-          description: |
-            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
-            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString())
           type: string
         size:
           description: |
@@ -130,4 +127,3 @@ components:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskCreationParameters'
-  

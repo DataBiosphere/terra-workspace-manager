@@ -11,6 +11,7 @@ import bio.terra.testrunner.common.utils.AuthenticationUtils;
 import bio.terra.testrunner.runner.config.ServerSpecification;
 import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledAzureResourceApi;
+import bio.terra.workspace.api.ControlledFlexibleResourceApi;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.JobsApi;
 import bio.terra.workspace.api.ReferencedGcpResourceApi;
@@ -27,6 +28,7 @@ import bio.terra.workspace.model.RoleBindingList;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.dataproc.Dataproc;
 import com.google.api.services.iam.v1.Iam;
 import com.google.api.services.notebooks.v1.AIPlatformNotebooks;
 import com.google.auth.http.HttpCredentialsAdapter;
@@ -132,6 +134,15 @@ public class ClientTestUtils {
             AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES)));
   }
 
+  public static Dataproc getDataprocClient(TestUserSpecification testUser)
+      throws GeneralSecurityException, IOException {
+    return new Dataproc(
+        GoogleNetHttpTransport.newTrustedTransport(),
+        JacksonFactory.getDefaultInstance(),
+        new HttpCredentialsAdapter(
+            AuthenticationUtils.getDelegatedUserCredential(testUser, TEST_USER_SCOPES)));
+  }
+
   public static Iam getGcpIamClient(TestUserSpecification testUser)
       throws GeneralSecurityException, IOException {
     return new Iam(
@@ -183,6 +194,12 @@ public class ClientTestUtils {
       TestUserSpecification testUser, ServerSpecification server) throws IOException {
     final ApiClient apiClient = getClientForTestUser(testUser, server);
     return new ControlledGcpResourceApi(apiClient);
+  }
+
+  public static ControlledFlexibleResourceApi getControlledFlexResourceClient(
+      TestUserSpecification testUser, ServerSpecification server) throws IOException {
+    final ApiClient apiClient = getClientForTestUser(testUser, server);
+    return new ControlledFlexibleResourceApi(apiClient);
   }
 
   public static ControlledAzureResourceApi getControlledAzureResourceClient(
@@ -308,7 +325,7 @@ public class ClientTestUtils {
       @Nullable List<Class<? extends Exception>> retryExceptionList)
       throws Exception {
 
-    T result = null;
+    T result;
     Instant endTime = Instant.now().plus(totalDuration);
 
     while (true) {
@@ -370,7 +387,7 @@ public class ClientTestUtils {
 
   /** @return a generated unique resource name consisting of letters, numbers, and underscores. */
   public static String generateCloudResourceName() {
-    String name = RESOURCE_NAME_PREFIX + UUID.randomUUID().toString();
+    String name = RESOURCE_NAME_PREFIX + UUID.randomUUID();
     return name.replace("-", "_");
   }
 

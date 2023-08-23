@@ -78,7 +78,7 @@ public class CreateTableCopyJobsStep implements Step {
     workingMap.put(ControlledResourceKeys.SOURCE_CLONE_INPUTS, sourceInputs);
 
     final DatasetCloneInputs destinationInputs = getDestinationInputs(flightContext);
-    workingMap.put(ControlledResourceKeys.DESTINATION_CLONE_INPUTS, destinationInputs);
+    workingMap.put(ControlledResourceKeys.DESTINATION_STORAGE_TRANSFER_INPUTS, destinationInputs);
 
     final BigQueryCow bigQueryCow = crlService.createWsmSaBigQueryCow();
     // TODO(jaycarlton):  remove usage of this client when it's all in CRL PF-942
@@ -204,7 +204,7 @@ public class CreateTableCopyJobsStep implements Step {
 
   private DatasetCloneInputs getSourceInputs() {
     final String sourceProjectId =
-        gcpCloudContextService.getRequiredGcpProject(sourceDataset.getWorkspaceId());
+        gcpCloudContextService.getRequiredReadyGcpProject(sourceDataset.getWorkspaceId());
     final String sourceDatasetName = sourceDataset.getDatasetName();
     return new DatasetCloneInputs(
         sourceDataset.getWorkspaceId(), sourceProjectId, sourceDatasetName);
@@ -216,7 +216,7 @@ public class CreateTableCopyJobsStep implements Step {
             .getInputParameters()
             .get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     final String destinationProjectId =
-        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
+        gcpCloudContextService.getRequiredReadyGcpProject(destinationWorkspaceId);
     final String destinationDatasetName =
         flightContext
             .getWorkingMap()

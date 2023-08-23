@@ -6,7 +6,7 @@ paths:
       - $ref: '#/components/parameters/WetRun'
       summary: Sync custom IAM roles for all workspaces.
       operationId: syncIamRoles
-      tags: [Admin]
+      tags: [ Admin ]
       responses:
         '200':
           $ref: '#/components/responses/JobResultResponse'
@@ -39,23 +39,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/admin/v1/resources/controlled/backfillRegions:
-    patch:
-      parameters:
-      - $ref: '#/components/parameters/WetRun'
-      - $ref: '#/components/parameters/Platform'
-      summary: Backfill controlled resources that is missing a region field.
-      operationId: backfillControlledResourcesRegions
-      tags: [Admin]
-      responses:
-        '200':
-          $ref: '#/components/responses/JobResultResponse'
-        '202':
-          $ref: '#/components/responses/JobResultResponse'
-        '403':
-          $ref: '#/components/responses/PermissionDenied'
-        '500':
-          $ref: '#/components/responses/ServerError'
   /api/admin/v1/resources/controlled/backfillRegions/result/{jobId}:
     parameters:
     - $ref: '#/components/parameters/JobId'

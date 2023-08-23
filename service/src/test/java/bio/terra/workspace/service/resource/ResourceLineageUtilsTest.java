@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseUnitTest;
@@ -10,7 +10,6 @@ import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotAttributes;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
@@ -27,9 +26,6 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
   @Test
   public void constructResourceNullLineage_resourceLineageEmptyArray() {
     UUID randomId = UUID.randomUUID();
-    String resourceName = "testdatarepo-" + randomId;
-    Map<String, String> propertyMap = new HashMap<>();
-
     var resource =
         ReferencedDataRepoSnapshotResource.builder()
             .wsmResourceFields(
@@ -60,7 +56,6 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .name(resourceName)
             .description("description of " + resourceName)
             .stewardshipType(StewardshipType.REFERENCED)
-            .cloudResourceType(WsmResourceFamily.DATA_REPO_SNAPSHOT)
             .resourceType(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT)
             .cloningInstructions(CloningInstructions.COPY_REFERENCE)
             .attributes(attributesJson)
@@ -76,8 +71,6 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
   @Test
   public void constructResourceWithLineage_matchingLineageArray() {
     UUID randomId = UUID.randomUUID();
-    String resourceName = "testdatarepo-" + randomId;
-    Map<String, String> propertyMap = new HashMap<>();
     var lineageEntry = new ResourceLineageEntry(randomId, randomId);
     var lineage = new ArrayList<ResourceLineageEntry>();
     lineage.add(lineageEntry);
@@ -115,7 +108,6 @@ public class ResourceLineageUtilsTest extends BaseUnitTest {
             .name(resourceName)
             .description("description of " + resourceName)
             .stewardshipType(StewardshipType.REFERENCED)
-            .cloudResourceType(WsmResourceFamily.DATA_REPO_SNAPSHOT)
             .resourceType(WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT)
             .cloningInstructions(CloningInstructions.COPY_REFERENCE)
             .attributes(attributesJson)

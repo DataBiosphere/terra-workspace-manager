@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.folder;
 
-import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,6 +10,8 @@ import bio.terra.common.exception.ForbiddenException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
@@ -40,7 +41,9 @@ import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapsho
 import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -72,8 +75,10 @@ public class FolderServiceTest extends BaseConnectedTest {
   @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private ReferencedResourceService referencedResourceService;
   @Autowired private SamService samService;
+  @Autowired private GcpCloudContextService gcpCloudContextService;
 
   private UUID workspaceId;
+  private String projectId;
   // foo/
   private Folder fooFolder;
   // foo/bar/
@@ -95,6 +100,8 @@ public class FolderServiceTest extends BaseConnectedTest {
         workspaceConnectedTestUtils
             .createWorkspaceWithGcpContext(userAccessUtils.defaultUserAuthRequest())
             .getWorkspaceId();
+    projectId = gcpCloudContextService.getRequiredReadyGcpProject(workspaceId);
+
     samService.grantWorkspaceRole(
         workspaceId,
         userAccessUtils.defaultUserAuthRequest(),
@@ -112,7 +119,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     controlledAiNotebookInFooBarLoo =
         ControlledAiNotebookInstanceResource.builder()
             .common(
-                makeDefaultControlledResourceFieldsBuilder()
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                     .workspaceUuid(workspaceId)
                     .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
                     .managedBy(ManagedByType.MANAGED_BY_USER)
@@ -120,7 +127,7 @@ public class FolderServiceTest extends BaseConnectedTest {
                     .properties(
                         Map.of(ResourceProperties.FOLDER_ID_KEY, FOO_BAR_LOO_FOLDER_ID.toString()))
                     .build())
-            .projectId("my-gcp-project")
+            .projectId(projectId)
             .instanceId(TestUtils.appendRandomNumber("my-ai-notebook-instance"))
             .location("us-east1-b")
             .build();
@@ -136,7 +143,7 @@ public class FolderServiceTest extends BaseConnectedTest {
         ReferencedBigQueryDataTableResource.builder()
             .wsmResourceFields(
                 createWsmResourceCommonFieldsWithFolderId(workspaceId, FOO_FOLDER_ID))
-            .projectId("my-gcp-project")
+            .projectId(projectId)
             .datasetId("my_special_dataset")
             .dataTableId("my_secret_table")
             .build();
@@ -169,7 +176,7 @@ public class FolderServiceTest extends BaseConnectedTest {
   }
 
   @Test
-  void deleteFolder_successWithStepRetry() {
+  void deleteFolder_successWithStepRetry() throws InterruptedException {
     createFoldersAndResources();
     // foo/bar/loo contains a private notebook, thus the folder cannot be deleted by non-owner.
     assertThrows(
@@ -210,25 +217,27 @@ public class FolderServiceTest extends BaseConnectedTest {
     assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
   }
 
-  private void createFoldersAndResources() {
+  private void createFoldersAndResources() throws InterruptedException {
     fooFolder = createFolder("foo", FOO_FOLDER_ID, null);
     fooBarFolder = createFolder("bar", FOO_BAR_FOLDER_ID, FOO_FOLDER_ID);
     fooFooFolder = createFolder("Foo", FOO_FOO_FOLDER_ID, FOO_FOLDER_ID);
     fooBarLooFolder = createFolder("loo", FOO_BAR_LOO_FOLDER_ID, FOO_BAR_FOLDER_ID);
 
+    String notebookJobId =
+        controlledResourceService.createAiNotebookInstance(
+            controlledAiNotebookInFooBarLoo,
+            ControlledGcpResourceFixtures.defaultNotebookCreationParameters(),
+            ControlledResourceIamRole.EDITOR,
+            new ApiJobControl().id(UUID.randomUUID().toString()),
+            "falseResultPath",
+            userAccessUtils.defaultUserAuthRequest());
+
+    // Create everything else in parallel with the notebook
     controlledResourceService.createControlledResourceSync(
         controlledBucket2InFooFoo,
         /*privateResourceIamRole=*/ null,
         userAccessUtils.secondUserAuthRequest(),
-        ControlledResourceFixtures.getGoogleBucketCreationParameters());
-
-    controlledResourceService.createAiNotebookInstance(
-        controlledAiNotebookInFooBarLoo,
-        ControlledResourceFixtures.defaultNotebookCreationParameters(),
-        ControlledResourceIamRole.EDITOR,
-        new ApiJobControl().id(UUID.randomUUID().toString()),
-        "falseResultPath",
-        userAccessUtils.defaultUserAuthRequest());
+        ControlledGcpResourceFixtures.getGoogleBucketCreationParameters());
 
     referencedResourceService.createReferenceResource(
         referencedBucketInFooFoo, userAccessUtils.defaultUserAuthRequest());
@@ -240,13 +249,27 @@ public class FolderServiceTest extends BaseConnectedTest {
 
     referencedResourceService.createReferenceResource(
         referencedGitRepoInFooBarLoo, userAccessUtils.defaultUserAuthRequest());
+
+    // Wait for the AI notebook create to complete
+    StairwayTestUtils.pollUntilComplete(
+        notebookJobId,
+        jobService.getStairway(),
+        /* polling interval */ Duration.ofSeconds(30),
+        /* maximum wait */ Duration.ofMinutes(20));
   }
 
   @Test
   void deleteFolder_failsAtLastStep_throwsInvalidResultsStateException() {
-    fooFolder = createFolder("foo", FOO_FOLDER_ID, null);
+    var fooFolderId = UUID.randomUUID();
+    fooFolder = createFolder("foo", fooFolderId, null);
     referencedResourceService.createReferenceResource(
-        referencedBqTableInFoo, userAccessUtils.secondUserAuthRequest());
+        ReferencedBigQueryDataTableResource.builder()
+            .wsmResourceFields(createWsmResourceCommonFieldsWithFolderId(workspaceId, fooFolderId))
+            .projectId(projectId)
+            .datasetId("my_special_dataset")
+            .dataTableId("my_secret_table")
+            .build(),
+        userAccessUtils.secondUserAuthRequest());
     Map<String, StepStatus> retrySteps = new HashMap<>();
     retrySteps.put(
         DeleteReferencedResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -256,7 +279,7 @@ public class FolderServiceTest extends BaseConnectedTest {
 
     var jobId =
         folderService.deleteFolder(
-            workspaceId, FOO_FOLDER_ID, userAccessUtils.defaultUserAuthRequest());
+            workspaceId, fooFolderId, userAccessUtils.defaultUserAuthRequest());
 
     jobService.waitForJob(jobId);
     // Service methods which wait for a flight to complete will throw an
@@ -266,7 +289,7 @@ public class FolderServiceTest extends BaseConnectedTest {
         InvalidResultStateException.class,
         () -> jobService.retrieveJobResult(jobId, Boolean.class));
     assertThrows(
-        FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, FOO_FOLDER_ID));
+        FolderNotFoundException.class, () -> folderService.getFolder(workspaceId, fooFolderId));
     assertTrue(resourceDao.enumerateResources(workspaceId, null, null, 0, 100).isEmpty());
   }
 
@@ -285,7 +308,7 @@ public class FolderServiceTest extends BaseConnectedTest {
 
   private static ControlledResourceFields createControlledResourceCommonFieldWithFolderId(
       UUID workspaceId, UUID folderId) {
-    return makeDefaultControlledResourceFieldsBuilder()
+    return ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
         .workspaceUuid(workspaceId)
         .properties(Map.of(ResourceProperties.FOLDER_ID_KEY, folderId.toString()))
         .build();

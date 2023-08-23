@@ -46,7 +46,7 @@ paths:
     get:
       summary: Get an existing Folder.
       operationId: getFolder
-      tags: [Folder]
+      tags: [ Folder ]
       responses:
         '200':
           description: OK
@@ -63,7 +63,7 @@ paths:
     patch:
       summary: Update an existing folder.
       operationId: updateFolder
-      tags: [Folder]
+      tags: [ Folder ]
       requestBody:
         required: true
         content:
@@ -84,9 +84,11 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     post:
-      summary: Delete a folder asynchronously.
+      summary: |
+        Delete a folder asynchronously. OpenAPI does not support request body in 
+        DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteFolderAsync
-      tags: [Folder]
+      tags: [ Folder ]
       responses:
         '200':
           $ref: '#/components/responses/JobResultResponse'
@@ -184,7 +186,7 @@ components:
             $ref: '#/components/schemas/Folder'
     Folder:
       type: object
-      required: [id, displayName, createdBy, createdDate, lastUpdatedBy, lastUpdatedDate]
+      required: [ id, displayName, createdBy, createdDate, lastUpdatedBy, lastUpdatedDate ]
       properties:
         id:
           description: The ID of the folder. Immutable.
@@ -214,7 +216,7 @@ components:
           format: date-time
     CreateFolderRequestBody:
       type: object
-      required: [displayName]
+      required: [ displayName ]
       properties:
         displayName:
           description: |

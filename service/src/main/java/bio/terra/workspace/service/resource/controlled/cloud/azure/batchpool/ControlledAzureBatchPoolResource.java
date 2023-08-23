@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -10,14 +9,14 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolAttributes;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -209,7 +208,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
 
   // Azure resources currently do not implement updating.
   @Override
-  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {}
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   public ApiAzureBatchPoolAttributes toApiAttributes() {
     return new ApiAzureBatchPoolAttributes().id(getId()).vmSize(getVmSize());
@@ -234,15 +233,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
-  @Override
   public void validate() {
     super.validate();
     if (getResourceType() != WsmResourceType.CONTROLLED_AZURE_BATCH_POOL
@@ -250,8 +240,8 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
         || getStewardshipType() != StewardshipType.CONTROLLED) {
       throw new InconsistentFieldsException("Expected controlled AZURE_BATCH_POOL");
     }
-    ResourceValidationUtils.validateAzureBatchPoolId(getId());
-    ResourceValidationUtils.validateBatchPoolDisplayName(getDisplayName());
+    AzureResourceValidationUtils.validateAzureBatchPoolId(getId());
+    AzureResourceValidationUtils.validateAzureBatchPoolDisplayName(getDisplayName());
     if (deploymentConfiguration != null) {
       if (deploymentConfiguration.virtualMachineConfiguration() != null
           && deploymentConfiguration.cloudServiceConfiguration() != null) {
@@ -266,7 +256,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       }
     }
     if (userAssignedIdentities != null) {
-      var inconsistentUamiCount =
+      long inconsistentUamiCount =
           userAssignedIdentities.stream()
               .filter(uami -> uami.name() != null && uami.clientId() != null)
               .count();

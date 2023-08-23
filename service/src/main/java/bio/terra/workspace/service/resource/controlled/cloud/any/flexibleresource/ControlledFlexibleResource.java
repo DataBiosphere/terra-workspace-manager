@@ -1,9 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
@@ -16,10 +14,10 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flight.update.UpdateControlledFlexibleResourceAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -67,22 +65,14 @@ public class ControlledFlexibleResource extends ControlledResource {
     return new ControlledFlexibleResource.Builder();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   // -- getters used in serialization --
 
+  @Override
   public WsmResourceFields getWsmResourceFields() {
     return super.getWsmResourceFields();
   }
 
+  @Override
   public WsmControlledResourceFields getWsmControlledResourceFields() {
     return super.getWsmControlledResourceFields();
   }
@@ -134,16 +124,9 @@ public class ControlledFlexibleResource extends ControlledResource {
   public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {}
 
   @Override
-  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
-    ControlledFlexibleResource resource =
-        getResourceFromFlightInputParameters(flight, WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
-    // Update the flex resource's attributes
-    RetryRule dbRetry = RetryRules.shortDatabase();
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new UpdateControlledFlexibleResourceAttributesStep(
-            flightBeanBag.getResourceDao(),
-            resource.castByEnum(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE)),
-        dbRetry);
+        new UpdateControlledFlexibleResourceAttributesStep(), RetryRules.shortDatabase());
   }
 
   public ApiFlexibleResourceAttributes toApiAttributes() {
@@ -190,12 +173,20 @@ public class ControlledFlexibleResource extends ControlledResource {
     ResourceValidationUtils.validateFlexResourceDataSize(getData());
   }
 
+  // Decode the base64, so we can store the string directly in the database.
   public static String getDecodedJSONFromByteArray(@Nullable byte[] encodedJSON) {
-    // Decode the base64, so we can store the string directly in the database.
     if (encodedJSON == null) {
       return null;
     }
     return new String(encodedJSON, StandardCharsets.UTF_8);
+  }
+
+  // Encode the string in base64, so we can pass it through the API.
+  public static byte[] getEncodedJSONFromString(@Nullable String decodedJSON) {
+    if (decodedJSON == null) {
+      return null;
+    }
+    return decodedJSON.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override

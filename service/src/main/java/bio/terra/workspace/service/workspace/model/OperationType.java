@@ -11,6 +11,7 @@ public enum OperationType {
   CLONE(ApiOperationType.CLONE),
   CREATE(ApiOperationType.CREATE),
   DELETE(ApiOperationType.DELETE),
+  DATA_TRANSFER(ApiOperationType.DATA_TRANSFER),
   DELETE_PROPERTIES(ApiOperationType.DELETE),
   UPDATE_PROPERTIES(ApiOperationType.UPDATE),
   GRANT_WORKSPACE_ROLE(ApiOperationType.GRANT_WORKSPACE_ROLE),

@@ -5,7 +5,7 @@ plugins {
     id 'application'
 
     // Terra Test Runner Plugin.
-    id 'bio.terra.test-runner-plugin' version '0.1.7-SNAPSHOT'
+    id 'bio.terra.test-runner-plugin' version '0.1.8-SNAPSHOT'
 }
 
 dependencies {
@@ -15,23 +15,22 @@ dependencies {
         guava = "29.0-jre"
         jackson = "2.10.2"
         jersey = "2.32"
-        kubernetesClient = "10.0.0"
+        kubernetesClient = "18.0.0"
         logback = "1.2.3"
         slf4j = "1.7.25"
         hamcrest = "2.2"
         jUnit = "5.7.0"
 
-        googleApi = "1.23.0"
-        googleCloud = "1.108.0"
-        googleOauth2 = "0.20.0"
+        googleApi = "1.32.1"
         googleContainer = "v1-rev93-1.25.0"
-        googleIam = "v1-rev20201112-1.30.10"
-        googleNotebook = "v1-rev20201110-1.30.10"
+        googleIam = "v1-rev20220526-1.32.1"
+        googleNotebook = "v1-rev20220716-1.32.1"
+        googleDataproc = "v1-rev20210812-1.32.1"
 
         datarepoClient = "1.0.155-SNAPSHOT"
-        testRunnerVersion = "0.1.7-SNAPSHOT"
-        samClient = "0.1-41409f6"
-        tclClient = "0.0.66-SNAPSHOT"
+        testRunnerVersion = "0.1.9-SNAPSHOT"
+        samClient = "0.1-d606036"
+        tclClient = "0.0.88-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
@@ -48,11 +47,12 @@ dependencies {
     constraints {
         implementation 'com.google.guava:guava:30.1.1-jre'
     }
-    implementation platform('com.google.cloud:libraries-bom:20.2.0')
-    implementation "com.google.api-client:google-api-client"
+    implementation platform('com.google.cloud:libraries-bom:26.0.0')
+    implementation "com.google.api-client:google-api-client:${googleApi}"
     implementation "com.google.apis:google-api-services-container:${googleContainer}"
     implementation "com.google.apis:google-api-services-iam:${googleIam}"
     implementation "com.google.apis:google-api-services-notebooks:${googleNotebook}"
+    implementation "com.google.apis:google-api-services-dataproc:${googleDataproc}"
     implementation "com.google.auth:google-auth-library-oauth2-http"
     implementation "com.google.cloud:google-cloud-bigquery"
     implementation "com.google.cloud:google-cloud-storage"
@@ -72,7 +72,7 @@ dependencies {
 
     // Use Terra Common Library on client side to retry direct Sam calls
     implementation("bio.terra:terra-common-lib:${tclClient}") {
-        exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.12"
+        exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
 
 

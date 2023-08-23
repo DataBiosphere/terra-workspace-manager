@@ -1,16 +1,16 @@
 package bio.terra.workspace.app.controller;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.generated.controller.AdminApi;
-import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.service.admin.AdminService;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import io.opencensus.contrib.spring.aop.Traced;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,33 +20,34 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class AdminApiController extends ControllerBase implements AdminApi {
   private final AdminService adminService;
-  private final JobApiUtils jobApiUtils;
-  private final JobService jobService;
-  private final ControlledResourceService controlledResourceService;
 
   @Autowired
   public AdminApiController(
-      AdminService adminService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
+      FeatureConfiguration features,
+      FeatureService featureService,
       SamService samService,
-      JobApiUtils jobApiUtils,
       JobService jobService,
-      ControlledResourceService controlledResourceService) {
-    super(authenticatedUserRequestFactory, request, samService);
+      JobApiUtils jobApiUtils,
+      AdminService adminService) {
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.adminService = adminService;
-    this.jobApiUtils = jobApiUtils;
-    this.jobService = jobService;
-    this.controlledResourceService = controlledResourceService;
   }
 
   @Traced
   @Override
   public ResponseEntity<ApiJobResult> syncIamRoles(Boolean wetRun) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    SamRethrow.onInterrupted(
-        () -> getSamService().checkAdminAuthz(userRequest),
-        "check whether the user has admin access");
+    Rethrow.onInterrupted(
+        () -> samService.checkAdminAuthz(userRequest), "check whether the user has admin access");
 
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(userRequest, Boolean.TRUE.equals(wetRun));
@@ -62,29 +63,8 @@ public class AdminApiController extends ControllerBase implements AdminApi {
 
   private ResponseEntity<ApiJobResult> getApiJobResult(String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    SamRethrow.onInterrupted(
-        () -> getSamService().checkAdminAuthz(userRequest),
-        "check whether the user has admin access");
-    ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
-    return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
-  }
-
-  @Traced
-  @Override
-  public ResponseEntity<ApiJobResult> backfillControlledResourcesRegions(
-      ApiCloudPlatform cloudPlatform, Boolean wetRun) {
-    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    SamRethrow.onInterrupted(
-        () -> getSamService().checkAdminAuthz(userRequest),
-        "check whether the user has admin access");
-
-    String jobId =
-        switch (cloudPlatform) {
-          case GCP -> controlledResourceService.updateGcpControlledResourcesRegionAsync(
-              userRequest, Boolean.TRUE.equals(wetRun));
-          case AZURE -> controlledResourceService.updateAzureControlledResourcesRegionAsync(
-              userRequest, Boolean.TRUE.equals(wetRun));
-        };
+    Rethrow.onInterrupted(
+        () -> samService.checkAdminAuthz(userRequest), "check whether the user has admin access");
     ApiJobResult response = jobApiUtils.fetchJobResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }

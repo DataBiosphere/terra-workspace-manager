@@ -4,15 +4,14 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRI
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.USER_SET_PROPERTY;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UFID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_BY_UUID_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.WORKSPACES_V1_PATH;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
-import static bio.terra.workspace.common.utils.MockMvcUtils.buildWsmRegionPolicyInput;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_BY_UFID;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_CREATE;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_POLICIES_EXPLAIN;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.WORKSPACES_V1_POLICIES_MERGE_CHECK;
+import static bio.terra.workspace.common.mocks.MockWorkspaceV1Api.buildWsmRegionPolicyInput;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.emptyString;
@@ -28,14 +27,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseConnectedTest;
+import bio.terra.workspace.common.fixtures.PolicyFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
+import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
 import bio.terra.workspace.generated.model.ApiIamRole;
 import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
-import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplainResult;
@@ -54,13 +55,11 @@ import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -76,15 +75,23 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * <p>Use this instead of WorkspaceApiControllerTest, if you want to use real
  * bio.terra.workspace.service.iam.SamService.
  */
+
+// TODO: PF-2694 authorization check of the billing profile moved to the controller
+//  where it is supposed to be. We need a test that exercises the user with no access to
+//  billing profile generates the correct error. That test is removed from
+//  CreateContextGcpFlightTest since it makes a direct call to workspaceService. We
+//  want to see a SpendUnauthorizedException (Forbidden)
 @Tag("connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
+  @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
+  @Autowired private MockGcpApi mockGcpApi;
   @Autowired private ObjectMapper objectMapper;
   @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private SamService samService;
 
   private ApiCreatedWorkspace workspace;
@@ -94,13 +101,15 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @BeforeAll
   public void setup() throws Exception {
     workspace =
-        mockMvcUtils.createWorkspaceWithoutCloudContext(userAccessUtils.defaultUserAuthRequest());
+        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(
+            userAccessUtils.defaultUserAuthRequest());
   }
 
   /** Clean up workspaces from Broad dev SAM. */
   @AfterAll
   public void cleanup() throws Exception {
-    mockMvcUtils.deleteWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+    mockWorkspaceV2Api.deleteWorkspaceAndWait(
+        userAccessUtils.defaultUserAuthRequest(), workspace.getId());
   }
 
   @Test
@@ -114,7 +123,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
       throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -130,7 +139,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
       throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -147,7 +156,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       getWorkspace_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -165,7 +174,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   public void getWorkspaceByUserFacingId_requesterIsOwner_returnsFullWorkspace() throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
 
     ApiWorkspaceDescription gotWorkspace =
         getWorkspaceByUserFacingId(
@@ -178,9 +188,10 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleNotSet_throws()
       throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
 
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -198,9 +209,10 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToReader_throws()
           throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
 
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -218,9 +230,10 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       getWorkspaceByUserFacingId_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
     ApiWorkspaceDescription workspaceDescription =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
 
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -235,27 +248,22 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertStrippedWorkspace(gotWorkspace);
   }
 
-  @Disabled("Assert by list size is not reliable if other tests have failed")
-  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void listWorkspaces_requesterIsOwner_returnsFullWorkspace() throws Exception {
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.defaultUserAuthRequest());
 
-    assertThat(
-        String.format(
-            "Expected 1 workspace. Got %s: %s", listedWorkspaces.size(), listedWorkspaces),
-        listedWorkspaces.stream().map(ApiWorkspaceDescription::getId).toList(),
-        hasSize(1));
-    assertFullWorkspace(listedWorkspaces.get(0));
+    List<ApiWorkspaceDescription> matchedWorkspace =
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+
+    assertEquals(1, matchedWorkspace.size(), "Did not find expected workspace");
+    assertFullWorkspace(matchedWorkspace.get(0));
   }
 
-  @Disabled("Assert by list size is not reliable if other tests have failed")
-  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleNotSet_returnsNoWorkspaces()
       throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -263,16 +271,16 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest());
-    assertTrue(listedWorkspaces.isEmpty());
+    List<ApiWorkspaceDescription> matchedWorkspace =
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+    assertTrue(matchedWorkspace.isEmpty());
   }
 
-  @Disabled("Assert by list size is not reliable if other tests have failed")
-  // TODO: PF-2413 Assert by list size is not reliable if other tests have failed
   @Test
   public void
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToReader_returnsNoWorkspaces()
           throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -280,13 +288,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
     List<ApiWorkspaceDescription> listedWorkspaces =
         listWorkspaces(userAccessUtils.secondUserAuthRequest(), Optional.of(ApiIamRole.READER));
-
-    assertTrue(listedWorkspaces.isEmpty());
+    List<ApiWorkspaceDescription> matchedWorkspace =
+        listedWorkspaces.stream().filter(l -> l.getId().equals(workspace.getId())).toList();
+    assertTrue(matchedWorkspace.isEmpty());
   }
 
   @Test
   public void grantRole_logsAnActivity() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -304,13 +313,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   @Test
   public void removeRole_logsAnActivity() throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
         userAccessUtils.getSecondUserEmail());
 
-    mockMvcUtils.removeRole(
+    mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -330,7 +339,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void
       listWorkspaces_requesterIsDiscoverer_requestMinHighestRoleSetToDiscoverer_returnsStrippedWorkspace()
           throws Exception {
-    mockMvcUtils.grantRole(
+    mockWorkspaceV1Api.grantRole(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
         WsmIamRole.DISCOVERER,
@@ -356,6 +365,8 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     assertEquals(workspace.getId(), source.getObjectId());
     assertFalse(source.isDeleted());
     assertEquals(0, result.getExplanation().size());
+    assertNotNull(source.getCreatedDate());
+    assertNotNull(source.getLastUpdatedDate());
   }
 
   @Test
@@ -372,13 +383,13 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   public void mergeCheck_workspaceWithDifferentRegion() throws Exception {
     // Create workspace with US region constraint.
     UUID targetWorkspaceId =
-        mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), "usa");
+        mockWorkspaceV1Api.createWorkspaceWithRegionConstraint(
+            userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.US_REGION);
 
     // Create workspace with Europe region constraint.
     UUID sourceWorkspaceId =
-        mockMvcUtils.createWorkspaceWithRegionConstraint(
-            userAccessUtils.defaultUserAuthRequest(), "eu");
+        mockWorkspaceV1Api.createWorkspaceWithRegionConstraint(
+            userAccessUtils.defaultUserAuthRequest(), PolicyFixtures.EUROPE_REGION);
 
     // Both workspaces have conflicting policy.
     ApiWsmPolicyMergeCheckResult result =
@@ -391,16 +402,17 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_resourceWithDifferentRegion() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraintAndCloudContext(
+              userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
-      mockMvcUtils.createControlledGcsBucket(
+      mockGcpApi.createControlledGcsBucket(
           userRequest,
           targetWorkspaceId,
           "resource-name",
@@ -411,7 +423,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
       // Create source workspace with US central region constraint.
       sourceWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
 
       // Target workspace has compatible policy (usa) with source.
       // However, target has resource (us-east1) that will conflict with the policy (us-central1) in
@@ -422,24 +434,24 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       assertEquals(0, result.getConflicts().size());
       assertEquals(1, result.getResourcesWithConflict().size());
     } finally {
-      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
-      mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, sourceWorkspaceId);
     }
   }
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_existingResourceNoPolicyOnSource() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
-    UUID sourceWorkspaceId = null;
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraintAndCloudContext(
+              userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
-      mockMvcUtils.createControlledGcsBucket(
+      mockGcpApi.createControlledGcsBucket(
           userRequest,
           targetWorkspaceId,
           "resource-name",
@@ -455,23 +467,24 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       assertEquals(0, result.getConflicts().size());
       assertEquals(0, result.getResourcesWithConflict().size());
     } finally {
-      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, targetWorkspaceId);
     }
   }
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void mergeCheck_caseInsensitiveRegion() throws Exception {
-    var userRequest = userAccessUtils.defaultUserAuthRequest();
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID targetWorkspaceId = null;
     UUID sourceWorkspaceId = null;
     try {
       //  Create target workspace with US region constraint.
       targetWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraintAndCloudContext(userRequest, "usa");
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraintAndCloudContext(
+              userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
 
       // Then add a resource with US east region to the target.
-      mockMvcUtils.createControlledGcsBucket(
+      mockGcpApi.createControlledGcsBucket(
           userRequest,
           targetWorkspaceId,
           "resource-name",
@@ -482,7 +495,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
       // Create source workspace with US central region constraint.
       sourceWorkspaceId =
-          mockMvcUtils.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraint(userRequest, "gcp.us-central1");
 
       // Target workspace has a compatible policy with the source.
       // But target has a resource in US-CENTRAL1, which doesn't match the casing of the policy.
@@ -493,58 +506,120 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       assertEquals(0, result.getConflicts().size());
       assertEquals(0, result.getResourcesWithConflict().size());
     } finally {
-      mockMvcUtils.deleteWorkspace(userRequest, targetWorkspaceId);
-      mockMvcUtils.deleteWorkspace(userRequest, sourceWorkspaceId);
+      if (targetWorkspaceId != null) {
+        mockWorkspaceV1Api.deleteWorkspace(userRequest, targetWorkspaceId);
+      }
+      if (sourceWorkspaceId != null) {
+        mockWorkspaceV1Api.deleteWorkspace(userRequest, sourceWorkspaceId);
+      }
     }
   }
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
-  public void listValidRegions() throws Exception {
-    ApiRegions gcps =
-        listValid(
-            workspace.getId(),
-            ApiCloudPlatform.GCP.name(),
-            userAccessUtils.defaultUserAuthRequest());
-    ApiRegions azures =
-        listValid(
-            workspace.getId(),
-            ApiCloudPlatform.AZURE.name(),
-            userAccessUtils.defaultUserAuthRequest());
+  public void mergeCheck_addGroup() throws Exception {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      targetWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.DEFAULT_GROUP);
+      sourceWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.ALT_GROUP);
 
-    assertFalse(gcps.isEmpty());
-    // Not an azure workspace so not valid azure regions.
-    assertTrue(azures.isEmpty());
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
+
+      // Adding an additional group should not conflict
+      assertEquals(0, result.getConflicts().size());
+    } finally {
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, sourceWorkspaceId);
+    }
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergeCheck_combineGroupAndRegion() throws Exception {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      targetWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.DEFAULT_GROUP);
+      sourceWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithRegionConstraintAndCloudContext(
+              userRequest, apiCloudPlatform, PolicyFixtures.US_REGION);
+
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
+
+      assertEquals(0, result.getConflicts().size());
+    } finally {
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, sourceWorkspaceId);
+    }
+  }
+
+  @Test
+  @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
+  public void mergeCheck_noGroupChange() throws Exception {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    UUID targetWorkspaceId = null;
+    UUID sourceWorkspaceId = null;
+    try {
+      targetWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.DEFAULT_GROUP);
+      sourceWorkspaceId =
+          mockWorkspaceV1Api.createWorkspaceWithGroupConstraint(
+              userRequest, PolicyFixtures.DEFAULT_GROUP);
+
+      ApiWsmPolicyMergeCheckResult result =
+          mergeCheck(userRequest, targetWorkspaceId, sourceWorkspaceId);
+
+      // No change to groups, should merge just fine.
+      assertEquals(0, result.getConflicts().size());
+    } finally {
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, targetWorkspaceId);
+      mockWorkspaceV1Api.deleteWorkspace(userRequest, sourceWorkspaceId);
+    }
   }
 
   @Test
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void updatePolicies_tpsEnabledAndPolicyUpdated() throws Exception {
     ApiWorkspaceDescription workspaceWithoutPolicy =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
     // add attributes
-    String usRegion = "usa";
+    String usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
-        mockMvcUtils.updateRegionPolicy(
+        mockWorkspaceV1Api.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
 
     assertTrue(result.isUpdateApplied());
     ApiWorkspaceDescription updatedWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertEquals(1, updatedWorkspace.getPolicies().size());
     assertEquals(
         usRegion, updatedWorkspace.getPolicies().get(0).getAdditionalData().get(0).getValue());
 
     // remove attributes
     ApiWsmPolicyUpdateResult removeResult =
-        mockMvcUtils.removeRegionPolicy(
+        mockWorkspaceV1Api.removeRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
 
     assertTrue(removeResult.isUpdateApplied());
     workspaceWithoutPolicy =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertEquals(0, workspaceWithoutPolicy.getPolicies().size());
   }
 
@@ -552,56 +627,93 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void updatePolicies_tpsEnabledAndPolicyConflict() throws Exception {
     ApiWorkspaceDescription workspaceWithoutPolicy =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertTrue(workspaceWithoutPolicy.getPolicies().isEmpty());
 
-    var usRegion = "usa";
+    String usRegion = PolicyFixtures.US_REGION;
     ApiWsmPolicyUpdateResult result =
-        mockMvcUtils.updateRegionPolicy(
+        mockWorkspaceV1Api.updateRegionPolicy(
             userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
 
     assertTrue(result.isUpdateApplied());
     ApiWorkspaceDescription updatedWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertEquals(1, updatedWorkspace.getPolicies().size());
 
-    mockMvcUtils.updatePoliciesExpect(
+    mockWorkspaceV1Api.updatePoliciesAndExpect(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
-        HttpStatus.SC_CONFLICT,
-        buildWsmRegionPolicyInput("europe"),
-        ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT);
-    mockMvcUtils.updatePoliciesExpect(
+        buildWsmRegionPolicyInput(PolicyFixtures.EUROPE_REGION),
+        ApiWsmPolicyUpdateMode.FAIL_ON_CONFLICT,
+        HttpStatus.SC_CONFLICT);
+    mockWorkspaceV1Api.updatePoliciesAndExpect(
         userAccessUtils.defaultUserAuthRequest(),
         workspace.getId(),
-        HttpStatus.SC_CONFLICT,
-        buildWsmRegionPolicyInput("asia"),
-        ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT);
+        buildWsmRegionPolicyInput("asiapacific"),
+        ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT,
+        HttpStatus.SC_CONFLICT);
     updatedWorkspace =
-        mockMvcUtils.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspace.getId());
+        mockWorkspaceV1Api.getWorkspace(
+            userAccessUtils.defaultUserAuthRequest(), workspace.getId());
     assertEquals(1, updatedWorkspace.getPolicies().size());
     assertEquals(
         usRegion, updatedWorkspace.getPolicies().get(0).getAdditionalData().get(0).getValue());
 
     // clean up
-    mockMvcUtils.removeRegionPolicy(
+    mockWorkspaceV1Api.removeRegionPolicy(
         userAccessUtils.defaultUserAuthRequest(), workspace.getId(), usRegion);
   }
 
-  private ApiRegions listValid(
-      UUID workspaceId, String platform, AuthenticatedUserRequest userRequest) throws Exception {
-    var serializedResponse =
-        mockMvc
-            .perform(
-                addAuth(
-                    get(String.format(WORKSPACES_V1_LIST_VALID_REGIONS_PATH_FORMAT, workspaceId))
-                        .queryParam("platform", platform),
-                    userRequest))
-            .andExpect(status().is(HttpStatus.SC_OK))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    return objectMapper.readValue(serializedResponse, ApiRegions.class);
+  @Test
+  public void updatePolicies_requesterIsWriter_throws() throws Exception {
+    mockWorkspaceV1Api.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.WRITER,
+        userAccessUtils.noBillingUser().getEmail());
+
+    mockWorkspaceV1Api.updatePoliciesAndExpect(
+        userAccessUtils.noBillingAccessUserAuthRequest(),
+        workspace.getId(),
+        buildWsmRegionPolicyInput("asiapacific"),
+        ApiWsmPolicyUpdateMode.ENFORCE_CONFLICT,
+        HttpStatus.SC_FORBIDDEN);
+  }
+
+  @Test
+  public void workspaceOwnerCannotAbandonWorkspace() throws Exception {
+    // Default user should be the only workspace owner, and so should not be able to remove
+    // themselves.
+    mockWorkspaceV1Api.removeRoleExpectBadRequest(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getDefaultUserEmail());
+    // After adding a second user, they should be able to remove themselves.
+    mockWorkspaceV1Api.grantRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getSecondUserEmail());
+    mockWorkspaceV1Api.removeRole(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getDefaultUserEmail());
+    // Reset workspace to starting setup, where default user is an owner and secondary user has no
+    // role.
+    mockWorkspaceV1Api.grantRole(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getDefaultUserEmail());
+    mockWorkspaceV1Api.removeRole(
+        userAccessUtils.secondUserAuthRequest(),
+        workspace.getId(),
+        WsmIamRole.OWNER,
+        userAccessUtils.getSecondUserEmail());
   }
 
   private ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest request, UUID id)
@@ -612,11 +724,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   private ApiWorkspaceDescription getWorkspace(
       AuthenticatedUserRequest request, UUID id, Optional<ApiIamRole> minimumHighestRole)
       throws Exception {
-    MockHttpServletRequestBuilder requestBuilder =
-        get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id));
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+    MockHttpServletRequestBuilder requestBuilder = get(String.format(WORKSPACES_V1, id));
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     String serializedResponse =
         mockMvc
             .perform(addAuth(requestBuilder, request))
@@ -633,11 +743,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       Optional<ApiIamRole> minimumHighestRole,
       int statusCode)
       throws Exception {
-    MockHttpServletRequestBuilder requestBuilder =
-        get(String.format(WORKSPACES_V1_BY_UUID_PATH_FORMAT, id));
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+    MockHttpServletRequestBuilder requestBuilder = get(String.format(WORKSPACES_V1, id));
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     mockMvc.perform(addAuth(requestBuilder, userRequest)).andExpect(status().is(statusCode));
   }
 
@@ -653,10 +761,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       Optional<ApiIamRole> minimumHighestRole)
       throws Exception {
     MockHttpServletRequestBuilder requestBuilder =
-        get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId));
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+        get(String.format(WORKSPACES_V1_BY_UFID, userFacingId));
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     String serializedResponse =
         mockMvc
             .perform(addAuth(requestBuilder, request))
@@ -674,10 +781,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
       int statusCode)
       throws Exception {
     MockHttpServletRequestBuilder requestBuilder =
-        get(String.format(WORKSPACES_V1_BY_UFID_PATH_FORMAT, userFacingId));
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+        get(String.format(WORKSPACES_V1_BY_UFID, userFacingId));
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     mockMvc.perform(addAuth(requestBuilder, userRequest)).andExpect(status().is(statusCode));
   }
 
@@ -688,10 +794,9 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   private List<ApiWorkspaceDescription> listWorkspaces(
       AuthenticatedUserRequest request, Optional<ApiIamRole> minimumHighestRole) throws Exception {
-    MockHttpServletRequestBuilder requestBuilder = get(WORKSPACES_V1_PATH);
-    if (minimumHighestRole.isPresent()) {
-      requestBuilder.param("minimumHighestRole", minimumHighestRole.get().name());
-    }
+    MockHttpServletRequestBuilder requestBuilder = get(WORKSPACES_V1_CREATE);
+    minimumHighestRole.ifPresent(
+        apiIamRole -> requestBuilder.param("minimumHighestRole", apiIamRole.name()));
     String serializedResponse =
         mockMvc
             .perform(addAuth(requestBuilder, request))
@@ -706,11 +811,11 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   private ApiWsmPolicyExplainResult explainPolicies(
       AuthenticatedUserRequest userRequest, UUID workspaceId, int depth) throws Exception {
-    var serializedResponse =
+    String serializedResponse =
         mockMvc
             .perform(
                 addAuth(
-                    get(String.format(WORKSPACES_V1_EXPLAIN_POLICIES_PATH_FORMAT, workspaceId))
+                    get(String.format(WORKSPACES_V1_POLICIES_EXPLAIN, workspaceId))
                         .queryParam("depth", String.valueOf(depth)),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_OK))
@@ -723,18 +828,14 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   private ApiWsmPolicyMergeCheckResult mergeCheck(
       AuthenticatedUserRequest userRequest, UUID targetWorkspaceId, UUID sourceWorkspaceId)
       throws Exception {
-    var request = new ApiMergeCheckRequest().workspaceId(sourceWorkspaceId);
-
-    var content = objectMapper.writeValueAsString(request);
-
-    var serializedResponse =
+    ApiMergeCheckRequest request = new ApiMergeCheckRequest().workspaceId(sourceWorkspaceId);
+    String serializedResponse =
         mockMvc
             .perform(
                 addAuth(
                     addJsonContentType(
-                        post(String.format(
-                                WORKSPACES_V1_MERGE_CHECK_POLICIES_PATH_FORMAT, targetWorkspaceId))
-                            .content(content)),
+                        post(String.format(WORKSPACES_V1_POLICIES_MERGE_CHECK, targetWorkspaceId))
+                            .content(objectMapper.writeValueAsString(request))),
                     userRequest))
             .andExpect(status().is(HttpStatus.SC_ACCEPTED))
             .andReturn()

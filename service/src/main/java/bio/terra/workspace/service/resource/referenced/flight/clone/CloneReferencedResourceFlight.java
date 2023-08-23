@@ -8,13 +8,18 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.MergeGroupsStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.ValidateGroupPolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.ValidateWorkspaceAgainstPolicyStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateResourceInDbStartStep;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -65,6 +70,13 @@ public class CloneReferencedResourceFlight extends Flight {
                 inputParameters.get(WorkspaceFlightMapKeys.MERGE_POLICIES, Boolean.class))
             .orElse(false);
 
+    var resourceStateRule =
+        FlightUtils.getRequired(
+            inputParameters, ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);
+
+    addStep(
+        new CreateResourceInDbStartStep(
+            appContext.getResourceDao(), resourceStateRule, destinationResource));
     if (mergePolicies) {
       addStep(
           new MergePolicyAttributesDryRunStep(
@@ -78,9 +90,14 @@ public class CloneReferencedResourceFlight extends Flight {
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
               null, // referenced resources don't have a location.
+              cloningInstructions,
               userRequest,
               appContext.getResourceDao(),
               appContext.getTpsApiDispatch()));
+
+      addStep(
+          new ValidateGroupPolicyAttributesStep(
+              destinationWorkspaceId, appContext.getTpsApiDispatch()));
 
       addStep(
           new MergePolicyAttributesStep(
@@ -88,14 +105,22 @@ public class CloneReferencedResourceFlight extends Flight {
               destinationWorkspaceId,
               cloningInstructions,
               appContext.getTpsApiDispatch()));
+
+      addStep(
+          new MergeGroupsStep(
+              userRequest,
+              destinationWorkspaceId,
+              appContext.getTpsApiDispatch(),
+              appContext.getSamService()));
     }
 
     addStep(
-        new CloneReferenceResourceStep(
-            userRequest,
-            appContext.getReferencedResourceService(),
+        new CreateResourceInDbFinishStep(
+            appContext.getResourceDao(),
+            destinationResource,
             sourceResource,
-            destinationResource),
+            userRequest,
+            appContext.getWorkspaceActivityLogService()),
         shortDatabaseRetryRule);
   }
 }

@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.referenced.terra.workspace;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
@@ -101,16 +100,6 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
         .attributes(toApiAttributes());
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(new ReferencedTerraWorkspaceAttributes(referencedWorkspaceId));
@@ -141,8 +130,7 @@ public class ReferencedTerraWorkspaceResource extends ReferencedResource {
           SamConstants.SamWorkspaceAction.READ);
     } catch (InterruptedException e) {
       throw new InvalidReferenceException(
-          "Requester does not have read access to workspace " + referencedWorkspaceId.toString(),
-          e);
+          "Requester does not have read access to workspace " + referencedWorkspaceId, e);
     }
   }
 

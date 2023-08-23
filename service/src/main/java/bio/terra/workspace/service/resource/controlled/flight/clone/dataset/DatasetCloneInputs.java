@@ -43,7 +43,7 @@ public class DatasetCloneInputs {
   /**
    * The dataset ID includes the project name.
    *
-   * @return
+   * @return DatasetId
    */
   @JsonIgnore
   public String getDatasetId() {

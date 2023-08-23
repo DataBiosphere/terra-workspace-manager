@@ -10,17 +10,18 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
-import bio.terra.workspace.service.resource.controlled.flight.create.StoreMetadataStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.CreateResourceInDbStartStep;
 import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.UUID;
@@ -42,25 +43,24 @@ public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
     UUID workspaceUuid = UUID.randomUUID();
     Workspace workspace =
         WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
-    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 
-    gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, "flight-testentersinfo");
-    gcpCloudContextService.createGcpCloudContextFinish(
-        workspaceUuid, new GcpCloudContext("fake-project"), "flight-testentersinfo");
+    WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+        workspaceDao, workspaceUuid, WorkspaceUnitTestUtils.GCP_PROJECT_ID);
 
-    StoreMetadataStep storeGoogleBucketMetadataStep = new StoreMetadataStep(resourceDao);
-
-    // Stub the flight map as of this step
     ControlledGcsBucketResource bucketResource =
-        ControlledResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+        ControlledGcpResourceFixtures.makeDefaultControlledGcsBucketBuilder(workspaceUuid).build();
+    CreateResourceInDbStartStep storeGoogleBucketMetadataStep =
+        new CreateResourceInDbStartStep(
+            resourceDao, WsmResourceStateRule.DELETE_ON_FAILURE, bucketResource);
 
-    final FlightMap inputFlightMap = new FlightMap();
+    FlightMap inputFlightMap = new FlightMap();
     inputFlightMap.put(ResourceKeys.RESOURCE, bucketResource);
     inputFlightMap.makeImmutable();
 
     doReturn(inputFlightMap).when(mockFlightContext).getInputParameters();
 
-    final StepResult result = storeGoogleBucketMetadataStep.doStep(mockFlightContext);
+    StepResult result = storeGoogleBucketMetadataStep.doStep(mockFlightContext);
     assertThat(result, equalTo(StepResult.getStepResultSuccess()));
 
     WsmResource daoResource =

@@ -1,17 +1,16 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
+import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import com.google.common.base.CharMatcher;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
-import javax.ws.rs.BadRequestException;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class ControlledAiNotebookHandler implements WsmResourceHandler {
 
-  private static final int MAX_INSTANCE_NAME_LENGTH = 63;
   private static ControlledAiNotebookHandler theHandler;
   private final GcpCloudContextService gcpCloudContextService;
 
@@ -50,14 +48,12 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
         Optional.ofNullable(attributes.getProjectId())
             .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceId()));
 
-    var resource =
-        ControlledAiNotebookInstanceResource.builder()
-            .common(new ControlledResourceFields(dbResource))
-            .instanceId(attributes.getInstanceId())
-            .location(attributes.getLocation())
-            .projectId(projectId)
-            .build();
-    return resource;
+    return ControlledAiNotebookInstanceResource.builder()
+        .common(new ControlledResourceFields(dbResource))
+        .instanceId(attributes.getInstanceId())
+        .location(attributes.getLocation())
+        .projectId(projectId)
+        .build();
   }
 
   /**
@@ -67,30 +63,8 @@ public class ControlledAiNotebookHandler implements WsmResourceHandler {
    * with a lowercase alpha character, only alphanumerics and '-' of max length 63. I don't have a
    * documentation link, but gcloud will complain otherwise.
    */
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String aiNotebookName) {
-    String generatedName = aiNotebookName.toLowerCase();
-    generatedName =
-        generatedName.length() > MAX_INSTANCE_NAME_LENGTH
-            ? generatedName.substring(0, MAX_INSTANCE_NAME_LENGTH)
-            : generatedName;
-
-    // AI notebook name only allows numbers, dash("-"), and lower case letters.
-    generatedName =
-        CharMatcher.inRange('0', '9')
-            .or(CharMatcher.inRange('a', 'z'))
-            .or(CharMatcher.is('-'))
-            .retainFrom(generatedName);
-    // The name cannot start or end with dash("-")
-    generatedName = CharMatcher.is('-').trimFrom(generatedName);
-    // The name cannot start with number.
-    generatedName = CharMatcher.inRange('0', '9').trimLeadingFrom(generatedName);
-    if (generatedName.length() == 0) {
-      throw new BadRequestException(
-          String.format(
-              "Cannot generate a valid AI notebook name from %s, it must contains"
-                  + " alphanumerical characters.",
-              aiNotebookName));
-    }
-    return generatedName;
+    return GcpUtils.generateInstanceCloudName(workspaceUuid, aiNotebookName);
   }
 }

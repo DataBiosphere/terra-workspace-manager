@@ -25,16 +25,15 @@ public class ControlledAzureDiskHandler implements WsmResourceHandler {
     ControlledAzureDiskAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureDiskAttributes.class);
 
-    var resource =
-        ControlledAzureDiskResource.builder()
-            .diskName(attributes.getDiskName())
-            .size(attributes.getSize())
-            .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
-            .build();
-    return resource;
+    return ControlledAzureDiskResource.builder()
+        .diskName(attributes.getDiskName())
+        .size(attributes.getSize())
+        .common(new ControlledResourceFields(dbResource, attributes.getRegion()))
+        .build();
   }
 
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
+    throw new FeatureNotSupportedException("Generate cloud name feature is not implemented yet");
   }
 }

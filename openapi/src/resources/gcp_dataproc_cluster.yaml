@@ -1,0 +1,29 @@
+components:
+  schemas:
+    GcpDataprocClusterAttributes:
+      description: >-
+        Dataproc cluster properties included in post-creation, get, and update. Others must be
+        retrieved from GCP using the specification.
+      type: object
+      required: [ projectId, region, clusterId ]
+      properties:
+        projectId:
+          description: The GCP project id for the project containing the dataproc cluster.
+          type: string
+        region:
+          description: The GCP region containing the dataproc cluster, e.g. 'us-east1'
+          type: string
+        clusterId:
+          description: An dataproc cluster id unique to this project and region.
+          type: string
+
+    GcpDataprocClusterResource:
+      type: object
+      description: Description of a Dataproc cluster resource.
+      required: [metadata, attributes]
+      properties:
+        metadata:
+          description: the resource metadata common to all resources
+          $ref: '#/components/schemas/ResourceMetadata'
+        attributes:
+          $ref: '#/components/schemas/GcpDataprocClusterAttributes'

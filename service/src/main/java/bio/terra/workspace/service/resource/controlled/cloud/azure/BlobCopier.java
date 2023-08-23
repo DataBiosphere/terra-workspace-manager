@@ -11,6 +11,8 @@ import com.azure.storage.blob.models.BlobCopyInfo;
 import com.azure.storage.blob.models.BlobItem;
 import com.azure.storage.blob.options.BlobBeginCopyOptions;
 import java.time.Duration;
+import java.util.List;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,23 +33,31 @@ public class BlobCopier {
    * Attempts to copy all blobs from the source container to the destination container. The calling
    * principal must have READ-level access on the storage container resource.
    *
-   * @param sourceStorageAccount Azure storage account for the source container
-   * @param destinationStorageAccount Azure storage account for the destination container
-   * @param sourceContainer Azure storage container containing the blobs to be copied
-   * @param destinationContainer Azure storage container that will receive the copied blobs
+   * @param sourceStorageData Azure storage container containing the blobs to be copied
+   * @param destStorageData Azure storage container that will receive the copied blobs
+   * @param prefixesToCopy optional array of prefixes that will filter which blobs to copy
    * @return BlobCopyResult containing the status of each copy operation
    */
-  public BlobCopierResult copyBlobs(StorageData sourceStorageData, StorageData destStorageData) {
+  public BlobCopierResult copyBlobs(
+      StorageData sourceStorageData,
+      StorageData destStorageData,
+      @Nullable List<String> prefixesToCopy) {
     var sourceBlobContainerClient =
         storageAccessService.buildBlobContainerClient(sourceStorageData);
     var destinationBlobContainerClient =
         storageAccessService.buildBlobContainerClient(destStorageData);
 
-    // directories are presented as zero-length blobs, filter these out as they are
-    // not copy-able
+    // Directories are presented as zero-length blobs, filter these out as they are not
+    // copy-able. Also filter out blobs that should not be copied if `prefixToCopy` was specified.
+    var copyAllBlobs = prefixesToCopy == null || prefixesToCopy.size() == 0;
     var blobItems =
         sourceBlobContainerClient.listBlobs().stream()
-            .filter(blobItem -> blobItem.getProperties().getContentLength() > 0);
+            .filter(
+                blobItem ->
+                    blobItem.getProperties().getContentLength() > 0
+                        && (copyAllBlobs
+                            || prefixesToCopy.stream()
+                                .anyMatch(prefix -> blobItem.getName().startsWith(prefix))));
 
     var blobPollers =
         blobItems.map(

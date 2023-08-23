@@ -9,7 +9,6 @@ import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.utils.AzureTestUtils;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -18,7 +17,7 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteContr
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
-import bio.terra.workspace.service.workspace.flight.azure.CreateAzureContextFlight;
+import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +25,7 @@ import java.util.function.BiFunction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @Profile("azure-test")
 @Component
@@ -42,7 +42,7 @@ public class AzureConnectedTestUtils {
     FlightState createAzureContextFlightState =
         StairwayTestUtils.blockUntilFlightCompletes(
             jobService.getStairway(),
-            CreateAzureContextFlight.class,
+            CreateCloudContextFlight.class,
             azureTestUtils.createAzureContextInputParameters(workspaceUuid, userRequest),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
@@ -60,12 +60,12 @@ public class AzureConnectedTestUtils {
     createResource(workspaceUuid, userRequest, resource, resourceType, null);
   }
 
-  public void createResource(
+  public <T> void createResource(
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest,
       ControlledResource resource,
       WsmResourceType resourceType,
-      ApiAzureVmCreationParameters vmCreationParameters)
+      T creationParameters)
       throws InterruptedException {
 
     FlightState flightState =
@@ -73,7 +73,7 @@ public class AzureConnectedTestUtils {
             jobService.getStairway(),
             CreateControlledResourceFlight.class,
             azureTestUtils.createControlledResourceInputParameters(
-                workspaceUuid, userRequest, resource, vmCreationParameters),
+                workspaceUuid, userRequest, resource, creationParameters),
             STAIRWAY_FLIGHT_TIMEOUT,
             null);
 
@@ -111,12 +111,17 @@ public class AzureConnectedTestUtils {
     assertEquals(FlightStatus.SUCCESS, deleteControlledResourceFlightState.getFlightStatus());
 
     if (findResource != null) {
-      TimeUnit.SECONDS.sleep(5);
-      com.azure.core.exception.HttpResponseException exception =
-          assertThrows(
-              com.azure.core.exception.HttpResponseException.class,
-              () -> findResource.apply(azureResourceGroupId, resourceName));
-      assertEquals(404, exception.getResponse().getStatusCode());
+      Awaitility.await()
+          .atMost(1, TimeUnit.MINUTES)
+          .pollInterval(5, TimeUnit.SECONDS)
+          .untilAsserted(
+              () -> {
+                com.azure.core.exception.HttpResponseException exception =
+                    assertThrows(
+                        com.azure.core.exception.HttpResponseException.class,
+                        () -> findResource.apply(azureResourceGroupId, resourceName));
+                assertEquals(404, exception.getResponse().getStatusCode());
+              });
     }
   }
 

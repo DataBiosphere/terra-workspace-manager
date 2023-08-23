@@ -45,9 +45,15 @@ public class AwaitCreateCloudContextFlightStep implements Step {
                                 "Subflight had unexpected status %s. No exception for subflight found.",
                                 subflightState.getFlightStatus()))));
       }
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw ie;
     } catch (DatabaseOperationException | FlightWaitTimedOutException e) {
       // Retry for database issues or expired wait loop
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    } catch (Exception e) {
+      // Error for any other exception
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 
     return StepResult.getStepResultSuccess();

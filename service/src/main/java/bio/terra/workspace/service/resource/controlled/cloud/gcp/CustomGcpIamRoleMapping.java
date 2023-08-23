@@ -23,17 +23,14 @@ import com.google.common.collect.Table;
  */
 public class CustomGcpIamRoleMapping {
   static final ImmutableList<String> GCS_BUCKET_READER_PERMISSIONS =
-      ImmutableList.of("storage.objects.list", "storage.objects.get");
+      ImmutableList.of("storage.buckets.get", "storage.objects.list", "storage.objects.get");
   static final ImmutableList<String> GCS_BUCKET_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(GCS_BUCKET_READER_PERMISSIONS)
           .add("storage.objects.create", "storage.objects.delete", "storage.objects.update")
           .build();
   static final ImmutableList<String> GCS_BUCKET_EDITOR_PERMISSIONS =
-      new ImmutableList.Builder<String>()
-          .addAll(GCS_BUCKET_WRITER_PERMISSIONS)
-          .add("storage.buckets.get")
-          .build();
+      new ImmutableList.Builder<String>().addAll(GCS_BUCKET_WRITER_PERMISSIONS).build();
   static final ImmutableList<String> BIG_QUERY_DATASET_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.datasets.get",
@@ -98,6 +95,44 @@ public class CustomGcpIamRoleMapping {
               "notebooks.operations.get",
               "notebooks.operations.list")
           .build();
+  static final ImmutableList<String> GCE_INSTANCE_READER_PERMISSIONS =
+      ImmutableList.of("compute.instances.get", "compute.instances.list");
+  static final ImmutableList<String> GCE_INSTANCE_WRITER_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(GCE_INSTANCE_READER_PERMISSIONS)
+          .add(
+              "compute.instances.start",
+              "compute.instances.stop",
+              "compute.instances.use",
+              "compute.instances.reset",
+              "compute.instances.setMachineType")
+          .build();
+  static final ImmutableList<String> GCE_INSTANCE_EDITOR_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(GCE_INSTANCE_WRITER_PERMISSIONS)
+          .add(
+              "compute.instances.getIamPolicy",
+              "compute.zoneOperations.get",
+              "compute.zoneOperations.delete",
+              "compute.zoneOperations.list")
+          .build();
+  static final ImmutableList<String> DATAPROC_CLUSTER_READER_PERMISSIONS =
+      ImmutableList.of("compute.instances.get", "compute.instances.list", "dataproc.clusters.get");
+  static final ImmutableList<String> DATAPROC_CLUSTER_WRITER_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(DATAPROC_CLUSTER_READER_PERMISSIONS)
+          .add(
+              "dataproc.clusters.use",
+              "dataproc.clusters.start",
+              "dataproc.clusters.stop",
+              "dataproc.clusters.update")
+          .build();
+  static final ImmutableList<String> DATAPROC_CLUSTER_EDITOR_PERMISSIONS =
+      new ImmutableList.Builder<String>()
+          .addAll(DATAPROC_CLUSTER_WRITER_PERMISSIONS)
+          .add("dataproc.clusters.getIamPolicy")
+          .build();
+
   public static final Table<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>
       CUSTOM_GCP_RESOURCE_IAM_ROLES =
           new ImmutableTable.Builder<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>()
@@ -167,6 +202,50 @@ public class CustomGcpIamRoleMapping {
                       WsmResourceFamily.AI_NOTEBOOK_INSTANCE,
                       ControlledResourceIamRole.EDITOR,
                       AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS))
+              // GCE instance
+              .put(
+                  WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE,
+                  ControlledResourceIamRole.READER,
+                  CustomGcpIamRole.ofResource(
+                      WsmResourceFamily.GCE_INSTANCE,
+                      ControlledResourceIamRole.READER,
+                      GCE_INSTANCE_READER_PERMISSIONS))
+              .put(
+                  WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE,
+                  ControlledResourceIamRole.WRITER,
+                  CustomGcpIamRole.ofResource(
+                      WsmResourceFamily.GCE_INSTANCE,
+                      ControlledResourceIamRole.WRITER,
+                      GCE_INSTANCE_WRITER_PERMISSIONS))
+              .put(
+                  WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE,
+                  ControlledResourceIamRole.EDITOR,
+                  CustomGcpIamRole.ofResource(
+                      WsmResourceFamily.GCE_INSTANCE,
+                      ControlledResourceIamRole.EDITOR,
+                      GCE_INSTANCE_EDITOR_PERMISSIONS))
+              // Dataproc cluster
+              .put(
+                  WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER,
+                  ControlledResourceIamRole.READER,
+                  CustomGcpIamRole.ofResource(
+                      WsmResourceFamily.DATAPROC_CLUSTER,
+                      ControlledResourceIamRole.READER,
+                      DATAPROC_CLUSTER_READER_PERMISSIONS))
+              .put(
+                  WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER,
+                  ControlledResourceIamRole.WRITER,
+                  CustomGcpIamRole.ofResource(
+                      WsmResourceFamily.DATAPROC_CLUSTER,
+                      ControlledResourceIamRole.WRITER,
+                      DATAPROC_CLUSTER_WRITER_PERMISSIONS))
+              .put(
+                  WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER,
+                  ControlledResourceIamRole.EDITOR,
+                  CustomGcpIamRole.ofResource(
+                      WsmResourceFamily.DATAPROC_CLUSTER,
+                      ControlledResourceIamRole.EDITOR,
+                      DATAPROC_CLUSTER_EDITOR_PERMISSIONS))
               .build();
 
   private CustomGcpIamRoleMapping() {}

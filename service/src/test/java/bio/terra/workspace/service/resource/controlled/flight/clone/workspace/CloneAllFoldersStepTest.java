@@ -14,11 +14,12 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.FolderDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,7 +48,7 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
   private static final String DEFAULT_USER_EMAIL = "foo@gmail.com";
 
   @BeforeEach
-  public void setup() throws InterruptedException {
+  public void setup() {
 
     SOURCE_WORKSPACE_ID = WorkspaceUnitTestUtils.createWorkspaceWithGcpContext(workspaceDao);
 
@@ -143,6 +144,6 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
 
   @AfterEach
   public void clean_up() {
-    workspaceDao.deleteWorkspace(SOURCE_WORKSPACE_ID);
+    WorkspaceFixtures.deleteWorkspaceFromDb(SOURCE_WORKSPACE_ID, workspaceDao);
   }
 }

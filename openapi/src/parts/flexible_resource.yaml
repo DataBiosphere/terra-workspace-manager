@@ -73,15 +73,74 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  # TODO (PF-2540) - Add clone endpoint here.
+  /api/workspaces/v1/{workspaceId}/resources/controlled/any/flexibleResources/{resourceId}/clone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    post:
+      summary: Clone a flexible resource.
+      operationId: cloneFlexibleResource
+      tags: [ ControlledFlexibleResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneControlledFlexibleResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CloneControlledFlexibleResourceResponse'
+        '202':
+          $ref: '#/components/responses/CloneControlledFlexibleResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
 
 components:
   schemas:
-    # TODO (PF-2540) - Add three schemas for cloning flexible resources.
+    CloneControlledFlexibleResourceResult:
+      description: Result of successful flexible resource clone.
+      type: object
+      properties:
+        effectiveCloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
+        sourceWorkspaceId:
+          description: Workspace ID of the source resource for this clone.
+          type: string
+          format: uuid
+        sourceResourceId:
+          description: ID of the source resource.
+          type: string
+          format: uuid
+        resource:
+          $ref: '#/components/schemas/FlexibleResource'
+
+    CloneControlledFlexibleResourceRequest:
+      description: >-
+        Values to be assigned with the cloned flex resource for a given source flex resource.
+        Only COPY_RESOURCE and COPY_NOTHING are defined for flex resources.
+        Set name and description null to maintain the original values.
+      type: object
+      required: [ destinationWorkspaceId]
+      properties:
+        destinationWorkspaceId:
+          description: ID of workspace to be cloned into
+          type: string
+          format: uuid
+        cloningInstructions:
+          $ref: "#/components/schemas/CloningInstructionsEnum"
+        name:
+          $ref: "#/components/schemas/Name"
+        description:
+          type: string
+
     CreatedControlledFlexibleResource:
       description: Response payload for requesting a new controlled flexible resource.
       type: object
-      required: [resourceId, flexibleResource]
+      required: [ resourceId, flexibleResource ]
       properties:
         resourceId:
           description: UUID of newly-created resource.
@@ -92,7 +151,7 @@ components:
     CreateControlledFlexibleResourceRequestBody:
       description: Payload for requesting a new controlled flexible resource.
       type: object
-      required: [common, flexibleResource]
+      required: [ common, flexibleResource ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
@@ -121,9 +180,8 @@ components:
           description: JSON encoded in base 64.
           type: string
           format: byte
-          # TODO (PF-2540): Include cloning instructions when cloning is added.
-#       cloningInstructions:
-#         $ref: '#/components/schemas/CloningInstructionsEnum'
+        cloningInstructions:
+          $ref: '#/components/schemas/CloningInstructionsEnum'
 
     UpdateControlledFlexibleResourceRequestBody:
       type: object
@@ -139,7 +197,12 @@ components:
           $ref: '#/components/schemas/FlexibleResourceUpdateParameters'
 
   responses:
-    # TODO (PF-2540) - Add clone response.
+    CloneControlledFlexibleResourceResponse:
+      description: Response for successful flexible resource clone.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CloneControlledFlexibleResourceResult'
     ControlledFlexibleResourceResponse:
       description: Response containing a controlled flexible resource.
       content:

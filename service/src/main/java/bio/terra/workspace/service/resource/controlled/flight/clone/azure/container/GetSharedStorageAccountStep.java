@@ -11,6 +11,7 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,19 +20,26 @@ public class GetSharedStorageAccountStep implements Step {
   private final UUID workspaceId;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;
+  private final WorkspaceService workspaceService;
 
   public GetSharedStorageAccountStep(
-      UUID workspaceId, LandingZoneApiDispatch landingZoneApiDispatch, SamService samService) {
+      UUID workspaceId,
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      SamService samService,
+      WorkspaceService workspaceService) {
     this.workspaceId = workspaceId;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
+    this.workspaceService = workspaceService;
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
       var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-      UUID landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspaceId);
+      UUID landingZoneId =
+          landingZoneApiDispatch.getLandingZoneId(
+              bearerToken, workspaceService.getWorkspace(workspaceId));
       Optional<ApiAzureLandingZoneDeployedResource> existingSharedStorageAccount =
           landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
       if (existingSharedStorageAccount.isPresent()) {
@@ -47,7 +55,7 @@ public class GetSharedStorageAccountStep implements Step {
               String.format(
                   "Shared storage account not found in landing zone. Landing zone ID='%s'.",
                   landingZoneId)));
-    } catch (IllegalStateException illegalStateException) { // Thrown by landingZoneApiDispatch
+    } catch (LandingZoneNotFoundException lzne) { // Thrown by landingZoneApiDispatch
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new LandingZoneNotFoundException(

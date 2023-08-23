@@ -4,6 +4,8 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertA
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiProperty;
@@ -13,10 +15,12 @@ import bio.terra.workspace.generated.model.ApiResourceList;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiResourceType;
 import bio.terra.workspace.generated.model.ApiStewardshipType;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -24,6 +28,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.util.List;
@@ -40,28 +45,33 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class ResourceApiController extends ControllerBase implements ResourceApi {
-
   private final WsmResourceService resourceService;
   private final WorkspaceService workspaceService;
   private final ReferencedResourceService referencedResourceService;
 
-  private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
-  private final HttpServletRequest request;
-
   @Autowired
   public ResourceApiController(
-      WsmResourceService resourceService,
-      WorkspaceService workspaceService,
-      ReferencedResourceService referencedResourceService,
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      SamService samService) {
-    super(authenticatedUserRequestFactory, request, samService);
+      SamService samService,
+      FeatureConfiguration features,
+      FeatureService featureService,
+      JobService jobService,
+      JobApiUtils jobApiUtils,
+      WsmResourceService resourceService,
+      WorkspaceService workspaceService,
+      ReferencedResourceService referencedResourceService) {
+    super(
+        authenticatedUserRequestFactory,
+        request,
+        samService,
+        features,
+        featureService,
+        jobService,
+        jobApiUtils);
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
     this.referencedResourceService = referencedResourceService;
-    this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
-    this.request = request;
   }
 
   @Traced
@@ -107,11 +117,12 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
 
   @Traced
   @Override
-  public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceId) {
+  public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
-    boolean isValid = referencedResourceService.checkAccess(workspaceUuid, resourceId, userRequest);
+    boolean isValid =
+        referencedResourceService.checkAccess(workspaceUuid, resourceUuid, userRequest);
     return new ResponseEntity<>(isValid, HttpStatus.OK);
   }
 
@@ -120,9 +131,10 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
   public ResponseEntity<Void> updateResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<ApiProperty> properties) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
-
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
     validatePropertiesUpdateRequestBody(properties);
     Map<String, String> propertiesMap = convertApiPropertyToMap(properties);
     ResourceValidationUtils.validateProperties(propertiesMap);
@@ -137,8 +149,10 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
       UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     validatePropertiesDeleteRequestBody(propertyKeys);
-    workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    Workspace workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.WRITE);
+    workspaceService.validateWorkspaceState(workspace);
     resourceService.deleteResourceProperties(workspaceUuid, resourceUuid, propertyKeys);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }

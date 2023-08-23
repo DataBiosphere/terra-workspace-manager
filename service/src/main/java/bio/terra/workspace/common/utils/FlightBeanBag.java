@@ -1,6 +1,7 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -13,6 +14,7 @@ import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.buffer.BufferService;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.datarepo.DataRepoService;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
@@ -25,9 +27,10 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.Stora
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
-import bio.terra.workspace.service.workspace.CloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
+import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,15 +50,18 @@ public class FlightBeanBag {
   private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfig;
+  private final AwsCloudContextService awsCloudContextService;
+  private final AwsConfiguration awsConfig;
   private final BucketCloneRolesService bucketCloneRolesService;
   private final BufferService bufferService;
   private final CliConfiguration cliConfiguration;
-  private final CloudSyncRoleMapping cloudSyncRoleMapping;
+  private final GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping;
   private final ControlledResourceMetadataManager controlledResourceMetadataManager;
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final DataRepoService dataRepoService;
   private final FeatureConfiguration featureConfiguration;
+  private final FeatureService featureService;
   private final FolderDao folderDao;
   private final GrantDao grantDao;
   private final GrantService grantService;
@@ -81,15 +87,18 @@ public class FlightBeanBag {
       GcpCloudContextService gcpCloudContextService,
       AzureCloudContextService azureCloudContextService,
       AzureConfiguration azureConfig,
+      AwsCloudContextService awsCloudContextService,
+      AwsConfiguration awsConfig,
       BucketCloneRolesService bucketCloneRolesService,
       BufferService bufferService,
       CliConfiguration cliConfiguration,
-      CloudSyncRoleMapping cloudSyncRoleMapping,
+      GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping,
       ControlledResourceMetadataManager controlledResourceMetadataManager,
       ControlledResourceService controlledResourceService,
       CrlService crlService,
       DataRepoService dataRepoService,
       FeatureConfiguration featureConfiguration,
+      FeatureService featureService,
       FolderDao folderDao,
       GrantDao grantDao,
       GrantService grantService,
@@ -111,15 +120,18 @@ public class FlightBeanBag {
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
+    this.awsCloudContextService = awsCloudContextService;
+    this.awsConfig = awsConfig;
     this.bucketCloneRolesService = bucketCloneRolesService;
     this.bufferService = bufferService;
     this.cliConfiguration = cliConfiguration;
-    this.cloudSyncRoleMapping = cloudSyncRoleMapping;
+    this.gcpCloudSyncRoleMapping = gcpCloudSyncRoleMapping;
     this.controlledResourceMetadataManager = controlledResourceMetadataManager;
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.dataRepoService = dataRepoService;
     this.featureConfiguration = featureConfiguration;
+    this.featureService = featureService;
     this.folderDao = folderDao;
     this.grantDao = grantDao;
     this.grantService = grantService;
@@ -159,6 +171,14 @@ public class FlightBeanBag {
     return azureConfig;
   }
 
+  public AwsCloudContextService getAwsCloudContextService() {
+    return awsCloudContextService;
+  }
+
+  public AwsConfiguration getAwsConfig() {
+    return awsConfig;
+  }
+
   public BucketCloneRolesService getBucketCloneRolesService() {
     return bucketCloneRolesService;
   }
@@ -171,8 +191,8 @@ public class FlightBeanBag {
     return controlledResourceMetadataManager;
   }
 
-  public CloudSyncRoleMapping getCloudSyncRoleMapping() {
-    return cloudSyncRoleMapping;
+  public GcpCloudSyncRoleMapping getCloudSyncRoleMapping() {
+    return gcpCloudSyncRoleMapping;
   }
 
   public ControlledResourceService getControlledResourceService() {
@@ -189,6 +209,10 @@ public class FlightBeanBag {
 
   public FeatureConfiguration getFeatureConfiguration() {
     return featureConfiguration;
+  }
+
+  public FeatureService getFeatureService() {
+    return featureService;
   }
 
   public GrantDao getGrantDao() {

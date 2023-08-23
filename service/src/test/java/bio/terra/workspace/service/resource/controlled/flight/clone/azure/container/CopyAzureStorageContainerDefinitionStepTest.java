@@ -40,7 +40,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
   private FlightMap inputParams;
   @Mock private ControlledResourceService controlledResourceService;
 
-  private final AuthenticatedUserRequest testUser =
+  private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest()
           .subjectId("fake-sub")
           .email("fake@ecample.com")
@@ -68,7 +68,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
       String storageContainerName, String resourceName, UUID resourceId, UUID workspaceId) {
     return new ControlledAzureStorageContainerResource.Builder()
         .storageContainerName(storageContainerName)
-        .storageAccountId(UUID.randomUUID())
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .resourceId(resourceId)
@@ -95,7 +94,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     inputParams.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
         destContainerName);
-    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), testUser);
+    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     workingMap.put(
         ControlledResourceKeys.SHARED_STORAGE_ACCOUNT,
         new ApiAzureLandingZoneDeployedResource()
@@ -110,13 +109,14 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     var createdContainer =
         buildContainerResource(destContainerName, destResourceName, destResourceId, workspaceId);
 
-    when(controlledResourceService.createControlledResourceSync(any(), any(), eq(testUser), any()))
+    when(controlledResourceService.createControlledResourceSync(
+            any(), any(), eq(userRequest), any()))
         .thenReturn(createdContainer);
 
     var step =
         new CopyAzureStorageContainerDefinitionStep(
             mockSamService(),
-            testUser,
+            userRequest,
             sourceContainer,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION);
@@ -134,10 +134,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     assertEquals(cloned.getName(), destResourceName);
     assertEquals(cloned.getCloningInstructions(), CloningInstructions.COPY_DEFINITION);
     assertEquals(sharedAccountRegion, cloned.getRegion());
-    assertNull(
-        cloned.getStorageAccountId(),
-        "Storage account should be null since this is a landing zone backed workspace");
-    assertEquals(sharedAccountRegion, cloned.getRegion());
   }
 
   @Test
@@ -146,7 +142,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
     inputParams.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME, "fake");
-    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), testUser);
+    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     var sourceContainer =
         buildContainerResource(
@@ -158,7 +154,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     var step =
         new CopyAzureStorageContainerDefinitionStep(
             mockSamService(),
-            testUser,
+            userRequest,
             sourceContainer,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION);
@@ -178,7 +174,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     var step =
         new CopyAzureStorageContainerDefinitionStep(
             mockSamService(),
-            testUser,
+            userRequest,
             null,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION);
@@ -186,6 +182,6 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     var result = step.undoStep(flightContext);
 
     assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
-    verify(controlledResourceService).deleteControlledResourceSync(any(), any(), any());
+    verify(controlledResourceService).deleteControlledResourceSync(any(), any(), eq(false), any());
   }
 }

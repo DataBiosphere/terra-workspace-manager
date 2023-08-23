@@ -3,18 +3,17 @@ package bio.terra.workspace.db;
 import static bio.terra.workspace.service.resource.model.StewardshipType.CONTROLLED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.REFERENCED;
 import static bio.terra.workspace.service.resource.model.StewardshipType.fromSql;
-import static bio.terra.workspace.service.resource.model.WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET;
 import static java.util.stream.Collectors.toList;
 
 import bio.terra.common.db.ReadTransaction;
 import bio.terra.common.db.WriteTransaction;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.db.model.DbUpdater;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetAttributes;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
@@ -22,13 +21,15 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.CommonUpdateParameters;
 import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -66,7 +67,8 @@ public class ResourceDao {
         SELECT workspace_id, cloud_platform, resource_id, name, description, stewardship_type,
         resource_type, exact_resource_type, cloning_instructions, attributes,
         access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-        resource_lineage, properties, created_date, created_by_email, region
+        resource_lineage, properties, created_date, created_by_email, region,
+        state, flight_id, error
         FROM resource
       """;
 
@@ -83,7 +85,6 @@ public class ResourceDao {
               .name(rs.getString("name"))
               .description(rs.getString("description"))
               .stewardshipType(fromSql(rs.getString("stewardship_type")))
-              .cloudResourceType(WsmResourceFamily.fromSql(rs.getString("resource_type")))
               .resourceType(WsmResourceType.fromSql(rs.getString("exact_resource_type")))
               .cloningInstructions(
                   CloningInstructions.fromSql(rs.getString("cloning_instructions")))
@@ -96,7 +97,7 @@ public class ResourceDao {
                   Optional.ofNullable(rs.getString("managed_by"))
                       .map(ManagedByType::fromSql)
                       .orElse(null))
-              .applicationId(Optional.ofNullable(rs.getString("associated_app")).orElse(null))
+              .applicationId(rs.getString("associated_app"))
               .assignedUser(rs.getString("assigned_user"))
               .privateResourceState(
                   Optional.ofNullable(rs.getString("private_resource_state"))
@@ -115,53 +116,125 @@ public class ResourceDao {
                   OffsetDateTime.ofInstant(
                       rs.getTimestamp("created_date").toInstant(), ZoneId.of("UTC")))
               .createdByEmail(rs.getString("created_by_email"))
-              // TODO(PF-2290): throw if resource is controlled resource and the region is null once
-              // we backfill the existing resource rows with regions.
-              .region(rs.getString("region"));
+              .region(rs.getString("region"))
+              .state(WsmResourceState.fromDb(rs.getString("state")))
+              .error(StateDao.deserializeException(rs.getString("error")))
+              .flightId(rs.getString("flight_id"));
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
+  private final StateDao stateDao;
 
   // -- Common Resource Methods -- //
 
   @Autowired
   public ResourceDao(
-      NamedParameterJdbcTemplate jdbcTemplate, WorkspaceActivityLogDao workspaceActivityLogDao) {
+      NamedParameterJdbcTemplate jdbcTemplate,
+      WorkspaceActivityLogDao workspaceActivityLogDao,
+      StateDao stateDao) {
     this.jdbcTemplate = jdbcTemplate;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
+    this.stateDao = stateDao;
   }
 
+  /**
+   * For flight-based resource deletion, test and make the state transition to DELETING.
+   *
+   * <p>The DELETING state is resolve by either a call to deleteResourceSuccess or
+   * deleteResourceFailure.
+   *
+   * @param workspaceUuid workspace id
+   * @param resourceId resource id
+   * @param flightId flight id
+   */
   @WriteTransaction
-  public boolean deleteResource(UUID workspaceUuid, UUID resourceId) {
-    final String sql =
+  public void deleteResourceStart(UUID workspaceUuid, UUID resourceId, String flightId) {
+    DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    stateDao.updateState(
+        dbResource,
+        /*expectedFlightId=*/ null,
+        flightId,
+        WsmResourceState.DELETING,
+        /*exception=*/ null);
+  }
+
+  /**
+   * Successful end state of a delete operation. The operation succeeded, so it is safe to delete
+   * the metadata
+   *
+   * @param workspaceUuid workspace id
+   * @param resourceId resource id
+   */
+  @WriteTransaction
+  public void deleteResourceSuccess(UUID workspaceUuid, UUID resourceId, String flightId) {
+    DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    if (!stateDao.isResourceInState(dbResource, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
+      // Validate the state transition to not exists
+      stateDao.updateState(
+          dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+      deleteResourceWorker(workspaceUuid, resourceId, /*resourceType=*/ null);
+    }
+  }
+
+  /**
+   * Failure end state of a delete operation. The only way to get to this code is if a delete flight
+   * manages to UNDO without creating a dismal failure. That seems unlikely, but rather than assume
+   * it never happens, we allow this transition.
+   *
+   * @param workspaceUuid workspace of the resource
+   * @param resourceId identifier of the resource
+   * @param flightId flight id performing the delete
+   * @param exception that caused the failure
+   */
+  @WriteTransaction
+  public void deleteResourceFailure(
+      UUID workspaceUuid, UUID resourceId, String flightId, @Nullable Exception exception) {
+    DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    stateDao.updateState(
+        dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
+  }
+
+  /**
+   * For deleting metadata-only referenced resources; there are no state transitions. We simply
+   * delete the metadata.
+   *
+   * @param workspaceUuid workspace id
+   * @param resourceId resource id
+   */
+  @WriteTransaction
+  public void deleteReferencedResource(UUID workspaceUuid, UUID resourceId) {
+    deleteResourceWorker(workspaceUuid, resourceId, /*resourceType=*/ null);
+  }
+
+  /**
+   * Delete metadata-only referenced resource with an extra check to make sure it is of the right
+   * resource type.
+   *
+   * @param workspaceUuid workspace id
+   * @param resourceId resource id
+   * @param resourceType resource type to check
+   * @return true if resource was deleted, false otherwise
+   */
+  @WriteTransaction
+  public boolean deleteReferencedResourceForResourceType(
+      UUID workspaceUuid, UUID resourceId, WsmResourceType resourceType) {
+    return deleteResourceWorker(workspaceUuid, resourceId, resourceType);
+  }
+
+  private boolean deleteResourceWorker(
+      UUID workspaceUuid, UUID resourceId, @Nullable WsmResourceType resourceType) {
+    String sql =
         "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString());
-    int rowsAffected = jdbcTemplate.update(sql, params);
-    boolean deleted = rowsAffected > 0;
 
-    logger.info(
-        "{} record for resource {} in workspace {}",
-        (deleted ? "Deleted" : "No Delete - did not find"),
-        resourceId,
-        workspaceUuid);
+    if (resourceType != null) {
+      sql = sql + " AND exact_resource_type = :exact_resource_type";
+      params.addValue("exact_resource_type", resourceType.toSql());
+    }
 
-    return deleted;
-  }
-
-  @WriteTransaction
-  public boolean deleteResourceForResourceType(
-      UUID workspaceUuid, UUID resourceId, WsmResourceType resourceType) {
-    final String sql =
-        "DELETE FROM resource WHERE workspace_id = :workspace_id AND resource_id = :resource_id"
-            + " AND exact_resource_type = :exact_resource_type";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceUuid.toString())
-            .addValue("resource_id", resourceId.toString())
-            .addValue("exact_resource_type", resourceType.toSql());
     int rowsAffected = jdbcTemplate.update(sql, params);
     boolean deleted = rowsAffected > 0;
 
@@ -171,37 +244,7 @@ public class ResourceDao {
         resourceId,
         resourceType,
         workspaceUuid);
-
     return deleted;
-  }
-
-  /**
-   * enumerateReferences - temporary This is a temporary implementation to support the old
-   * DataReference model. It also does not filter by what is visible to the user. I think we will
-   * probably change to use a single enumerate across all resources.
-   *
-   * @param workspaceUuid workspace of interest
-   * @param offset paging support
-   * @param limit paging support
-   * @return list of reference resources
-   */
-  @ReadTransaction
-  public List<ReferencedResource> enumerateReferences(UUID workspaceUuid, int offset, int limit) {
-    String sql =
-        RESOURCE_SELECT_SQL
-            + " AND stewardship_type = :stewardship_type ORDER BY name OFFSET :offset LIMIT :limit";
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("workspace_id", workspaceUuid.toString())
-            .addValue("stewardship_type", REFERENCED.toSql())
-            .addValue("offset", offset)
-            .addValue("limit", limit);
-    List<DbResource> dbResourceList = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
-
-    return dbResourceList.stream()
-        .map(this::constructResource)
-        .map(ReferencedResource.class::cast)
-        .collect(toList());
   }
 
   /**
@@ -351,32 +394,28 @@ public class ResourceDao {
         .collect(Collectors.toList());
   }
 
-  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
   /**
-   * Returns a list of all controlled BigQuery datasets with empty default table lifetime and
-   * default partition lifetime.
+   * Returns a list of all resources in the READY state in any workspace, filtering by a provided
+   * list of wsm resource types.
+   *
+   * @param wsmResourceTypes List of wsm resource types to filter by.
    */
   @ReadTransaction
-  public List<ControlledBigQueryDatasetResource>
-      listControlledBigQueryDatasetsWithoutBothLifetime() {
-
+  public List<ControlledResource> listReadyResourcesByType(List<WsmResourceType> wsmResourceTypes) {
     String sql =
         RESOURCE_SELECT_SQL_WITHOUT_WORKSPACE_ID
-            + " WHERE stewardship_type = :controlled_resource"
-            + " AND exact_resource_type = :controlled_gcp_big_query_dataset"
-            + " AND ((attributes -> 'defaultTableLifetime') IS NULL)"
-            + " AND ((attributes -> 'defaultPartitionLifetime') IS NULL)";
+            + " WHERE state = :state AND exact_resource_type IN (:resource_types)";
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("controlled_resource", CONTROLLED.toSql())
-            .addValue("controlled_gcp_big_query_dataset", CONTROLLED_GCP_BIG_QUERY_DATASET.toSql());
+            .addValue("state", WsmResourceState.READY.toDb())
+            .addValue(
+                "resource_types",
+                wsmResourceTypes.stream().map(WsmResourceType::toSql).collect(Collectors.toList()));
 
     List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
     return dbResources.stream()
         .map(this::constructResource)
         .map(WsmResource::castToControlledResource)
-        .map(
-            r -> (ControlledBigQueryDatasetResource) r.castByEnum(CONTROLLED_GCP_BIG_QUERY_DATASET))
         .collect(Collectors.toList());
   }
 
@@ -482,7 +521,7 @@ public class ResourceDao {
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("resource_id", resourceId.toString());
 
-    return constructResource(getDbResource(sql, params));
+    return constructResource(getDbResourceRequired(sql, params));
   }
 
   /**
@@ -501,24 +540,7 @@ public class ResourceDao {
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("name", name);
 
-    return constructResource(getDbResource(sql, params));
-  }
-
-  // -- Reference Methods -- //
-
-  /**
-   * Create a referenced resource row in the database We do creates in flights where the same create
-   * is issued more than once.
-   *
-   * @param resource a filled in referenced resource
-   * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
-   */
-  @WriteTransaction
-  public void createReferencedResource(WsmResource resource) throws DuplicateResourceException {
-    if (resource.getStewardshipType() != REFERENCED) {
-      throw new InternalLogicException("Expected a referenced resource");
-    }
-    storeResource(resource);
+    return constructResource(getDbResourceRequired(sql, params));
   }
 
   private boolean updateResourceWorker(
@@ -546,17 +568,17 @@ public class ResourceDao {
     if (null != cloningInstructions) {
       params.addValue("cloning_instructions", cloningInstructions.toSql());
     }
-    StringBuilder sb = new StringBuilder("UPDATE resource SET ");
 
-    sb.append(DbUtils.setColumnsClause(params, "attributes"));
-
-    sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
+    String sb =
+        "UPDATE resource SET "
+            + DbUtils.setColumnsClause(params, "attributes")
+            + " WHERE workspace_id = :workspace_id AND resource_id = :resource_id";
 
     params
         .addValue("workspace_id", workspaceUuid.toString())
         .addValue("resource_id", resourceId.toString());
 
-    int rowsAffected = jdbcTemplate.update(sb.toString(), params);
+    int rowsAffected = jdbcTemplate.update(sb, params);
     boolean updated = rowsAffected > 0;
 
     logger.info(
@@ -593,38 +615,99 @@ public class ResourceDao {
     return updated;
   }
 
-  // TODO (PF-2269): Clean this up once the back-fill is done in all Terra environments.
-  /**
-   * Update a BigQuery dataset's default table lifetime and default partition lifetime.
-   *
-   * @return whether the dataset's lifetimes are successfully updated.
-   */
   @WriteTransaction
-  public boolean updateBigQueryDatasetDefaultTableAndPartitionLifetime(
-      ControlledBigQueryDatasetResource dataset,
-      @Nullable Long defaultTableLifetime,
-      @Nullable Long defaultPartitionLifetime) {
-    String newAttributes =
-        DbSerDes.toJson(
-            new ControlledBigQueryDatasetAttributes(
-                dataset.getDatasetName(),
-                dataset.getProjectId(),
-                defaultTableLifetime,
-                defaultPartitionLifetime));
-    boolean updated =
-        updateResource(
-            dataset.getWorkspaceId(), dataset.getResourceId(), null, null, newAttributes, null);
+  public DbUpdater updateResourceStart(
+      UUID workspaceUuid,
+      UUID resourceId,
+      CommonUpdateParameters commonUpdateParameters,
+      String flightId) {
+    DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    if (dbResource == null) {
+      throw new ResourceNotFoundException(
+          String.format("Cannot find resource %s in workspace %s.", resourceId, workspaceUuid));
+    }
 
-    logger.info(
-        "{} resource {} default table lifetime to {} and default partition lifetime to {}.",
-        (updated ? "Updated" : "No Update - did not find"),
-        dataset.getResourceId(),
-        dataset.getDefaultTableLifetime(),
-        dataset.getDefaultPartitionLifetime());
+    stateDao.updateState(dbResource, null, flightId, WsmResourceState.UPDATING, null);
 
-    return updated;
+    DbUpdater dbUpdater =
+        new DbUpdater(
+            dbResource.getName(),
+            dbResource.getDescription(),
+            dbResource.getCloningInstructions(),
+            dbResource.getAttributes());
+    dbUpdater.updateFromCommonParameters(commonUpdateParameters);
+
+    return dbUpdater;
   }
 
+  @WriteTransaction
+  public void updateResourceSuccess(
+      UUID workspaceUuid, UUID resourceId, DbUpdater dbUpdater, String flightId) {
+
+    var params = new MapSqlParameterSource();
+    boolean somethingChanged = false;
+
+    if (dbUpdater.isNameUpdated()) {
+      params.addValue("name", dbUpdater.getUpdatedName());
+      somethingChanged = true;
+    }
+    if (dbUpdater.isDescriptionUpdated()) {
+      params.addValue("description", dbUpdater.getUpdatedDescription());
+      somethingChanged = true;
+    }
+    if (dbUpdater.isCloningInstructionsUpdated()) {
+      params.addValue("cloning_instructions", dbUpdater.getUpdatedCloningInstructions().toSql());
+      somethingChanged = true;
+    }
+    if (dbUpdater.isJsonAttributesUpdated()) {
+      params.addValue("attributes", dbUpdater.getUpdatedJsonAttributes());
+      somethingChanged = true;
+    }
+
+    if (somethingChanged) {
+      StringBuilder sb = new StringBuilder("UPDATE resource SET ");
+      sb.append(DbUtils.setColumnsClause(params, "attributes"));
+      sb.append(" WHERE workspace_id = :workspace_id AND resource_id = :resource_id");
+
+      params
+          .addValue("workspace_id", workspaceUuid.toString())
+          .addValue("resource_id", resourceId.toString());
+
+      int rowsAffected = 0;
+      try {
+        rowsAffected = jdbcTemplate.update(sb.toString(), params);
+      } catch (DuplicateKeyException e) {
+        throw new DuplicateResourceException(
+            String.format(
+                "A resource already exists in the workspace that has the same name (%s)",
+                dbUpdater.getUpdatedName()));
+      }
+      boolean updated = rowsAffected > 0;
+
+      logger.info(
+          "{} record for resource {} in workspace {}",
+          (updated ? "Updated" : "No Update - did not find"),
+          resourceId,
+          workspaceUuid);
+    } else {
+      logger.info(
+          "No changes made on update of resource {} in workspace {}", resourceId, workspaceUuid);
+    }
+
+    DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    stateDao.updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+  }
+
+  @WriteTransaction
+  public void updateResourceFailure(UUID workspaceUuid, UUID resourceId, String flightId) {
+    DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
+    stateDao.updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+  }
+
+  // TODO: [PF-2269, PF-2556] this can go away when backfill
+  // updateBigQueryDatasetDefaultTableAndPartitionLifetime
+  //  stops using it and when we are defaulting zone so we do not have to update it in the notebook
+  // flight.
   /**
    * Update name, description, and/or attributes of the resource.
    *
@@ -646,49 +729,133 @@ public class ResourceDao {
   }
 
   /**
-   * Update name, description, and/or cloning instructions of the resource.
+   * Create the record for a resource being created. This will return successfully if it finds an
+   * existing row with the same resource id, in the CREATING state, with a matching flightId. That
+   * allows creating flights to retry the metadata create step simply by re-issuing this create
+   * call.
    *
-   * @param name name of the resource, may be null if it does not need to be updated
-   * @param description description of the resource, may be null if it does not need to be updated
+   * <p>The CREATING state is resolve by either a call to createResourceSuccess or
+   * createResourceFailure.
+   *
+   * @param resource a filled in resource object
+   * @param flightId flight id performing the create
+   * @throws DuplicateResourceException on a duplicate resource
    */
   @WriteTransaction
-  public boolean updateResource(
-      UUID workspaceUuid,
-      UUID resourceId,
-      @Nullable String name,
-      @Nullable String description,
-      @Nullable CloningInstructions cloningInstructions) {
-    return updateResourceWorker(
-        workspaceUuid, resourceId, name, description, /*attributes=*/ null, cloningInstructions);
+  public void createResourceStart(WsmResource resource, String flightId)
+      throws DuplicateResourceException {
+    DbResource dbResource =
+        getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
+    if (stateDao.isResourceInState(dbResource, WsmResourceState.CREATING, flightId)) {
+      return; // It was a retry. We are done here
+    }
+
+    // Enforce that there is a cloud context for a controlled resource
+    if (resource.getStewardshipType() == CONTROLLED) {
+      ControlledResource controlledResource = resource.castToControlledResource();
+      CloudPlatform cloudPlatform = controlledResource.getResourceType().getCloudPlatform();
+      if ((cloudPlatform != CloudPlatform.ANY)
+          && !cloudContextExists(controlledResource.getWorkspaceId(), cloudPlatform)) {
+        throw new CloudContextRequiredException(
+            "No cloud context found in which to create a controlled resource");
+      }
+
+      // Ensure the resource is unique
+      verifyUniqueness(resource);
+    }
+    storeResource(resource, flightId, WsmResourceState.CREATING);
   }
 
   /**
-   * Create a controlled resource in the database
+   * Successful completion of a create, transitions from CREATING to READY.
    *
-   * @param controlledResource controlled resource to create
+   * @param resource the resource object successfully created
+   * @param flightId flight id doing the creation
+   * @return created resource
+   */
+  @WriteTransaction
+  public WsmResource createResourceSuccess(WsmResource resource, String flightId) {
+    DbResource dbResource =
+        getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
+    stateDao.updateState(
+        dbResource,
+        flightId,
+        /*targetFlightId=*/ null,
+        WsmResourceState.READY,
+        /*exception=*/ null);
+    return getResource(resource.getWorkspaceId(), resource.getResourceId());
+  }
+
+  /**
+   * Failed completion of a create. How we handle this case depends on the resource state rule. The
+   * rule is a configuration parameter that is typically an input parameter to flights.
+   *
+   * <p>If the rule is DELETE_ON_FAILURE, then we delete the metadata.
+   *
+   * <p>If the rule is BROKEN_ON_FAILURE, we update the metadata to the BROKEN state and remember
+   * the exception causing the failure.
+   *
+   * @param resource the resource object successfully created
+   * @param flightId flight id doing the creation
+   * @param exception the exception for the failure
+   * @param resourceStateRule how to handle failures
+   */
+  @WriteTransaction
+  public void createResourceFailure(
+      WsmResource resource,
+      String flightId,
+      @Nullable Exception exception,
+      WsmResourceStateRule resourceStateRule) {
+    DbResource dbResource =
+        getDbResourceFromIds(resource.getWorkspaceId(), resource.getResourceId());
+    try {
+      switch (resourceStateRule) {
+        case DELETE_ON_FAILURE -> {
+          // There is no guarantee this is the flight which created this resource. Validate that it
+          // is before attempting to delete the workspace.
+          stateDao.updateState(
+              dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+          deleteResourceWorker(
+              resource.getWorkspaceId(), resource.getResourceId(), /*resourceType=*/ null);
+        }
+        case BROKEN_ON_FAILURE -> {
+          stateDao.updateState(
+              dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+        }
+        default -> throw new InternalLogicException("Invalid switch case");
+      }
+    } catch (ResourceStateConflictException e) {
+      // Thrown by updateState during an invalid state transition. This indicates that the
+      // caller is not the same flight that created the resource.
+      logger.info(
+          "Skipping resource delete in createResourceFailure. This is expected for duplicate 'createResource' requests. Cause: ",
+          e);
+    }
+  }
+
+  /**
+   * Create a referenced resource row in the database. Sometimes we create referenced resources
+   * outside of a flight. In that case, the only operation is the database insert. We store the row
+   * directly in the READY state.
+   *
+   * @param resource a filled in referenced resource
    * @throws DuplicateResourceException on a duplicate resource_id or (workspace_id, name)
    */
   @WriteTransaction
-  public void createControlledResource(ControlledResource controlledResource)
-      throws DuplicateResourceException {
-
-    CloudPlatform cloudPlatform = controlledResource.getResourceType().getCloudPlatform();
-
-    if ((cloudPlatform != CloudPlatform.ANY)
-        && !cloudContextExists(controlledResource.getWorkspaceId(), cloudPlatform)) {
-      throw new CloudContextRequiredException(
-          "No cloud context found in which to create a controlled resource");
+  public void createReferencedResource(WsmResource resource) throws DuplicateResourceException {
+    if (resource.getStewardshipType() != REFERENCED) {
+      throw new InternalLogicException("Expected a referenced resource");
     }
-
-    verifyUniqueness(controlledResource);
-    storeResource(controlledResource);
+    storeResource(resource, null, WsmResourceState.READY);
   }
 
   private boolean cloudContextExists(UUID workspaceUuid, CloudPlatform cloudPlatform) {
     // Check existence of the cloud context for this workspace
     final String sql =
-        "SELECT COUNT(*) FROM cloud_context"
-            + " WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform";
+        """
+      SELECT COUNT(*) FROM cloud_context
+      WHERE workspace_id = :workspace_id AND cloud_platform = :cloud_platform
+      """;
 
     MapSqlParameterSource params =
         new MapSqlParameterSource()
@@ -701,7 +868,8 @@ public class ResourceDao {
   // Verify that the resource to be created doesn't already exist according to per-resource type
   // uniqueness rules. This prevents a race condition allowing a new resource to point to the same
   // cloud artifact as another, even if it has a different resource name and ID.
-  private void verifyUniqueness(ControlledResource controlledResource) {
+  private void verifyUniqueness(WsmResource resource) {
+    ControlledResource controlledResource = resource.castToControlledResource();
     Optional<UniquenessCheckAttributes> optionalUniquenessCheck =
         controlledResource.getUniquenessCheckAttributes();
 
@@ -818,34 +986,19 @@ public class ResourceDao {
     return (count != null && count > 0);
   }
 
-  private void storeResource(WsmResource resource) {
-
-    // TODO: add resource locking to fix this
-    //  We create resources in flights, so we have steps that call resource creation that may
-    //  get run more than once. The safe solution is to "lock" the resource by writing the flight id
-    //  into the row at creation. Then it is possible on a re-insert to know whether the error is
-    //  because this flight step is re-running or because some other flight used the same resource
-    //  id. The small risk we have here is that a duplicate resource id of will appear to be
-    //  successfully created, but in fact will be silently rejected.
-
-    final String countSql = "SELECT COUNT(*) FROM resource WHERE resource_id = :resource_id";
-    MapSqlParameterSource countParams =
-        new MapSqlParameterSource().addValue("resource_id", resource.getResourceId().toString());
-    Integer count = jdbcTemplate.queryForObject(countSql, countParams, Integer.class);
-    if (count != null && count == 1) {
-      return;
-    }
-
+  private void storeResource(WsmResource resource, String flightId, WsmResourceState state) {
     final String sql =
         """
         INSERT INTO resource (workspace_id, cloud_platform, resource_id, name, description,
           stewardship_type, exact_resource_type, resource_type, cloning_instructions, attributes,
           access_scope, managed_by, associated_app, assigned_user, private_resource_state,
-          resource_lineage, properties, created_by_email, region)
+          resource_lineage, properties, created_by_email, region,
+          state, flight_id)
         VALUES (:workspace_id, :cloud_platform, :resource_id, :name, :description,
           :stewardship_type, :exact_resource_type, :resource_type, :cloning_instructions,
           cast(:attributes AS jsonb), :access_scope, :managed_by, :associated_app, :assigned_user,
-          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb, :created_by_email, :region);
+          :private_resource_state, :resource_lineage::jsonb, :properties::jsonb, :created_by_email, :region,
+          :state, :flight_id);
         """;
     final var params =
         new MapSqlParameterSource()
@@ -863,7 +1016,9 @@ public class ResourceDao {
             .addValue("properties", DbSerDes.propertiesToJson(resource.getProperties()))
             // Only set created_by_email and don't need to set created_by_date; that is set by
             // defaultValueComputed
-            .addValue("created_by_email", resource.getCreatedByEmail());
+            .addValue("created_by_email", resource.getCreatedByEmail())
+            .addValue("state", state.toDb())
+            .addValue("flight_id", flightId);
     if (resource.getStewardshipType().equals(CONTROLLED)) {
       ControlledResource controlledResource = resource.castToControlledResource();
       //noinspection deprecation
@@ -991,15 +1146,28 @@ public class ResourceDao {
     return handler.makeResourceFromDb(dbResource);
   }
 
-  private DbResource getDbResource(String sql, MapSqlParameterSource params) {
+  private DbResource getDbResourceFromIds(UUID workspaceUuid, UUID resourceId) {
+    final String sql = RESOURCE_SELECT_SQL + " AND resource_id = :resource_id";
+    var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("resource_id", resourceId.toString());
+    return getDbResource(sql, params);
+  }
+
+  private @Nullable DbResource getDbResource(String sql, MapSqlParameterSource params) {
     try {
-      DbResource dbResource = jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
-      if (dbResource == null) {
-        throw new InternalLogicException("Failed to get DbResource");
-      }
-      return dbResource;
+      return jdbcTemplate.queryForObject(sql, params, DB_RESOURCE_ROW_MAPPER);
     } catch (EmptyResultDataAccessException e) {
+      return null;
+    }
+  }
+
+  private DbResource getDbResourceRequired(String sql, MapSqlParameterSource params) {
+    DbResource dbResource = getDbResource(sql, params);
+    if (dbResource == null) {
       throw new ResourceNotFoundException("Resource not found.");
     }
+    return dbResource;
   }
 }

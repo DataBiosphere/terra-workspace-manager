@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
@@ -13,13 +12,13 @@ import bio.terra.workspace.generated.model.ApiAzureDiskAttributes;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -58,16 +57,6 @@ public class ControlledAzureDiskResource extends ControlledResource {
 
   public static ControlledAzureDiskResource.Builder builder() {
     return new ControlledAzureDiskResource.Builder();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
   }
 
   // -- getters used in serialization --
@@ -142,7 +131,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
 
   // Azure resources currently do not implement updating.
   @Override
-  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {}
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   public ApiAzureDiskResource toApiResource() {
     return new ApiAzureDiskResource().metadata(super.toApiMetadata()).attributes(toApiAttributes());
@@ -181,8 +170,7 @@ public class ControlledAzureDiskResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureDisk.");
     }
-    ResourceValidationUtils.validateAzureRegion(getRegion());
-    ResourceValidationUtils.validateAzureDiskName(getDiskName());
+    AzureResourceValidationUtils.validateAzureDiskName(getDiskName());
   }
 
   @Override

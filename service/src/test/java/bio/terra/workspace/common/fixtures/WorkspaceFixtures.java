@@ -1,12 +1,22 @@
 package bio.terra.workspace.common.fixtures;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-
+import bio.terra.common.exception.ApiException;
+import bio.terra.common.exception.NotFoundException;
+import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
+import bio.terra.stairway.FlightMap;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
@@ -20,6 +30,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 
 public class WorkspaceFixtures {
 
+  public static final UUID WORKSPACE_ID = UUID.fromString("00000000-fcf0-4981-bb96-6b8dd634e7c0");
   public static final String WORKSPACE_NAME = "TestWorkspace";
   public static final ApiProperty TYPE_PROPERTY =
       new ApiProperty().key(Properties.TYPE).value("type");
@@ -29,8 +40,19 @@ public class WorkspaceFixtures {
       new ApiProperty().key(Properties.VERSION).value("version 3");
   public static final ApiProperty USER_SET_PROPERTY =
       new ApiProperty().key("userkey").value("uservalue");
-
-  public static final String DEFAULT_SPEND_PROFILE = "wm-default-spend-profile";
+  public static final String DEFAULT_SPEND_PROFILE_NAME = "wm-default-spend-profile";
+  public static final SpendProfileId DEFAULT_SPEND_PROFILE_ID =
+      new SpendProfileId(DEFAULT_SPEND_PROFILE_NAME);
+  public static final SpendProfile DEFAULT_SPEND_PROFILE =
+      SpendProfile.buildGcpSpendProfile(DEFAULT_SPEND_PROFILE_ID, "billingAccountId");
+  public static final String DEFAULT_USER_EMAIL = "fake@gmail.com";
+  public static final String DEFAULT_USER_SUBJECT_ID = "subjectId123456";
+  public static final SamUser SAM_USER =
+      new SamUser(DEFAULT_USER_EMAIL, DEFAULT_USER_SUBJECT_ID, new BearerToken("token"));
+  public static final ApiException API_EXCEPTION = new ApiException("error");
+  public static final NotFoundException NOT_FOUND_EXCEPTION = new NotFoundException("not found");
+  public static final UnauthorizedException UNAUTHORIZED_EXCEPTION =
+      new UnauthorizedException("unauthorized");
 
   /**
    * Generate the request body for creating an MC_WORKSPACE stage workspace.
@@ -42,15 +64,22 @@ public class WorkspaceFixtures {
   }
 
   public static Workspace createDefaultMcWorkspace() {
+    return createDefaultMcWorkspace(DEFAULT_SPEND_PROFILE_ID);
+  }
+
+  public static Workspace createDefaultMcWorkspace(SpendProfileId spendProfileId) {
     return new Workspace(
         UUID.randomUUID(),
         RandomStringUtils.randomAlphabetic(10).toLowerCase(Locale.ROOT),
         "default workspace",
         "this is an awesome workspace",
-        new SpendProfileId("default-spend"),
+        spendProfileId,
         Collections.emptyMap(),
         WorkspaceStage.MC_WORKSPACE,
         DEFAULT_USER_EMAIL,
+        null,
+        null,
+        null,
         null);
   }
 
@@ -65,6 +94,18 @@ public class WorkspaceFixtures {
 
   public static Workspace buildMcWorkspace(@Nullable UUID workspaceUuid) {
     return buildWorkspace(workspaceUuid, WorkspaceStage.MC_WORKSPACE);
+  }
+
+  public static void createWorkspaceInDb(Workspace workspace, WorkspaceDao workspaceDao) {
+    var flightId = UUID.randomUUID().toString();
+    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ null, flightId);
+    workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId);
+  }
+
+  public static boolean deleteWorkspaceFromDb(UUID workspaceUuid, WorkspaceDao workspaceDao) {
+    var flightId = UUID.randomUUID().toString();
+    workspaceDao.deleteWorkspaceStart(workspaceUuid, flightId);
+    return workspaceDao.deleteWorkspaceSuccess(workspaceUuid, flightId);
   }
 
   /**
@@ -98,8 +139,30 @@ public class WorkspaceFixtures {
         .description("A test workspace created by createWorkspaceRequestBody")
         .userFacingId(getUserFacingId(workspaceId))
         .stage(stageModel)
-        .spendProfile(DEFAULT_SPEND_PROFILE)
+        .spendProfile(DEFAULT_SPEND_PROFILE_NAME)
         .properties(properties);
+  }
+
+  public static FlightMap createCloudContextInputs(
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest,
+      CloudPlatform cloudPlatform,
+      SpendProfile spendProfile) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    inputs.put(WorkspaceFlightMapKeys.CLOUD_PLATFORM, cloudPlatform);
+    inputs.put(WorkspaceFlightMapKeys.SPEND_PROFILE, spendProfile);
+    return inputs;
+  }
+
+  public static FlightMap deleteCloudContextInputs(
+      UUID workspaceUuid, AuthenticatedUserRequest userRequest, CloudPlatform cloudPlatform) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
+    inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    inputs.put(WorkspaceFlightMapKeys.CLOUD_PLATFORM, cloudPlatform);
+    return inputs;
   }
 
   public static String getUserFacingId(UUID workspaceId) {

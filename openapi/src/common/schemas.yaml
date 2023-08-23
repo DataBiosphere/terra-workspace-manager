@@ -6,19 +6,19 @@ components:
     AccessScope:
       type: string
       description: Specifies the resource as shared or private
-      enum: ['SHARED_ACCESS', 'PRIVATE_ACCESS']
+      enum: [ 'SHARED_ACCESS', 'PRIVATE_ACCESS' ]
 
     CloudPlatform:
       type: string
       description: Enum representing a cloud platform type.
-      enum: ['AZURE', 'GCP']
+      enum: [ 'GCP', 'AZURE', 'AWS' ]
 
     CloneReferencedResourceRequestBody:
       description: >-
         Cloning options for referenced resources. If optional parameters are omitted,
         the source values will be used.
       type: object
-      required: [destinationWorkspaceId]
+      required: [ destinationWorkspaceId ]
       properties:
         cloningInstructions:
           $ref: '#/components/schemas/CloningInstructionsEnum'
@@ -60,7 +60,7 @@ components:
     ControlledResourceIamRole:
       description: Enum containing all IAM roles on controlled resources available to users
       type: string
-      enum: [ 'READER', 'WRITER', 'EDITOR']
+      enum: [ 'READER', 'WRITER', 'EDITOR' ]
   
     ControlledResourceMetadata:
       type: object
@@ -110,24 +110,9 @@ components:
       type: integer
       format: int64
 
-    DeleteControlledAzureResourceRequest:
-      type: object
-      required: [ jobControl ]
-      properties:
-        jobControl:
-          $ref: '#/components/schemas/JobControl'
-
-    DeleteControlledAzureResourceResult:
-      type: object
-      properties:
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'
-
     ErrorReport:
       type: object
-      required: [message, statusCode, causes]
+      required: [ message, statusCode, causes ]
       properties:
         message:
           type: string
@@ -140,7 +125,7 @@ components:
 
     JobReport:
       type: object
-      required: [id, status, statusCode, resultURL]
+      required: [ id, status, statusCode, resultURL ]
       properties:
         id:
           description: caller-provided unique identifier for the job
@@ -151,7 +136,7 @@ components:
         status:
           description: status of the job
           type: string
-          enum: [RUNNING, SUCCEEDED, FAILED]
+          enum: [ 'RUNNING', 'SUCCEEDED', 'FAILED' ]
         statusCode:
           description: HTTP code providing status of the job.
           type: integer
@@ -171,7 +156,7 @@ components:
   
     JobControl:
       type: object
-      required: [id]
+      required: [ id ]
       properties:
         id:
           description: >-
@@ -179,8 +164,7 @@ components:
             a ShortUUID, or other globally unique identifier.
           type: string
         # TODO: In the future, notification configuration will also be part of JobControl.
-  
-      
+
     ManagedBy:
       type: string
       description: Specifies the controller of the resource, workspace users or an application
@@ -189,6 +173,20 @@ components:
     Name:
       type: string
       pattern: '^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$'
+
+    OperationState:
+      type: object
+      description: Common operation state properties for cloud context and workspaces
+      required: [ state ]
+      properties:
+        state:
+          $ref: '#/components/schemas/State'
+        errorReport:
+          # Null if the object is not in a broken state
+          $ref: '#/components/schemas/ErrorReport'
+        jobId:
+          # Null if the no WSM operation is running on the object (create, update, delete)
+          type: string
 
     PrivateResourceUser:
       description: >-
@@ -292,11 +290,24 @@ components:
           description: Timestamp where the resource was last updated
           type: string
           format: date-time
+        state:
+          $ref: '#/components/schemas/State'
+        errorReport:
+          # Null if the object is not in a broken state
+          $ref: '#/components/schemas/ErrorReport'
+        jobId:
+          # Null if the no WSM operation is running on the object (create, update, delete)
+          type: string
+
+    State:
+      type: string
+      description: WSM object state
+      enum: [ 'BROKEN', 'CREATING', 'DELETING', 'READY', 'UPDATING' ]
 
     StewardshipType:
       description: Enum containing valid stewardship types. Used for enumeration
       type: string
-      enum: ['REFERENCED', 'CONTROLLED']
+      enum: [ 'REFERENCED', 'CONTROLLED' ]
 
     FolderId:
       description: Id of a given folder. Unique and immutable within a workspace.

@@ -1,0 +1,25 @@
+databaseChangeLog:
+- changeSet:
+    id: Add state to resources and cloud contexts
+    author: dd
+    changes:
+    - addColumn:
+        tableName: resource
+        columns:
+            - column:
+                  name: state
+                  type: text
+                  value: "READY"
+                  remarks: |
+                      String for of the state enum. See WsmResourceState.
+            - column:
+                  name: flight_id
+                  type: text
+                  remarks: |
+                      For transition states (e.g., updating), the flight doing the transition
+            - column:
+                  name: error
+                  type: text
+                  remarks: |
+                      Serialized exception; must be a subclass of ErrorReportException
+        

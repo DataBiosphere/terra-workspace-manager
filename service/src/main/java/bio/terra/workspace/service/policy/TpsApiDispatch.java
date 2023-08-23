@@ -72,43 +72,61 @@ public class TpsApiDispatch {
 
   // -- Policy Attribute Object Interface --
   @Traced
-  public void createPao(UUID workspaceUuid, @Nullable TpsPolicyInputs policyInputs) {
+  public void createPao(
+      UUID objectId,
+      @Nullable TpsPolicyInputs policyInputs,
+      TpsComponent component,
+      TpsObjectType objectType)
+      throws InterruptedException {
     features.tpsEnabledCheck();
     TpsPolicyInputs inputs = (policyInputs == null) ? new TpsPolicyInputs() : policyInputs;
 
     TpsApi tpsApi = policyApi();
     try {
-      tpsApi.createPao(
-          new TpsPaoCreateRequest()
-              .objectId(workspaceUuid)
-              .component(TpsComponent.WSM)
-              .objectType(TpsObjectType.WORKSPACE)
-              .attributes(inputs));
+      TpsRetry.retry(
+          () ->
+              tpsApi.createPao(
+                  new TpsPaoCreateRequest()
+                      .objectId(objectId)
+                      .component(component)
+                      .objectType(objectType)
+                      .attributes(inputs)));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
   }
 
-  // Since policy attributes were added later in development, not all existing
-  // workspaces have an associated policy attribute object. This function creates
-  // an empty one if it does not exist.
+  /**
+   * Get a PAO. Create an empty PAO if it does not exist.
+   *
+   * <p>Since policy attributes were added later in development, not all existing workspaces have an
+   * associated policy attribute object. This function creates an empty one if it does not exist.
+   *
+   * @param objectId TPS object to get
+   * @param component component name
+   * @param objectType object type
+   * @return PAO
+   * @throws InterruptedException on timer interrupt
+   */
   @Traced
-  public void createPaoIfNotExist(UUID workspaceId) {
-    Optional<TpsPaoGetResult> pao = getPaoIfExists(workspaceId);
+  public TpsPaoGetResult getOrCreatePao(
+      UUID objectId, TpsComponent component, TpsObjectType objectType) throws InterruptedException {
+    Optional<TpsPaoGetResult> pao = getPaoIfExists(objectId);
     if (pao.isPresent()) {
-      return;
+      return pao.get();
     }
     // Workspace doesn't have a PAO, so create an empty one for it.
-    createPao(workspaceId, null);
+    createPao(objectId, null, component, objectType);
+    return getPao(objectId);
   }
 
   @Traced
-  public void deletePao(UUID workspaceUuid) {
+  public void deletePao(UUID workspaceUuid) throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     try {
       try {
-        tpsApi.deletePao(workspaceUuid);
+        TpsRetry.retry(() -> tpsApi.deletePao(workspaceUuid));
       } catch (ApiException e) {
         throw convertApiException(e);
       }
@@ -117,7 +135,7 @@ public class TpsApiDispatch {
     }
   }
 
-  private Optional<TpsPaoGetResult> getPaoIfExists(UUID workspaceUuid) {
+  private Optional<TpsPaoGetResult> getPaoIfExists(UUID workspaceUuid) throws InterruptedException {
     features.tpsEnabledCheck();
     try {
       TpsPaoGetResult pao = getPao(workspaceUuid);
@@ -128,11 +146,11 @@ public class TpsApiDispatch {
   }
 
   @Traced
-  public TpsPaoGetResult getPao(UUID workspaceUuid) {
+  public TpsPaoGetResult getPao(UUID workspaceUuid) throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     try {
-      return tpsApi.getPao(workspaceUuid);
+      return TpsRetry.retry(() -> tpsApi.getPao(workspaceUuid));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -140,14 +158,14 @@ public class TpsApiDispatch {
 
   @Traced
   public TpsPaoUpdateResult linkPao(
-      UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode) {
+      UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode)
+      throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
-
+    TpsPaoSourceRequest sourceRequest =
+        new TpsPaoSourceRequest().sourceObjectId(sourceObjectId).updateMode(updateMode);
     try {
-      return tpsApi.linkPao(
-          new TpsPaoSourceRequest().sourceObjectId(sourceObjectId).updateMode(updateMode),
-          workspaceUuid);
+      return TpsRetry.retry(() -> tpsApi.linkPao(sourceRequest, workspaceUuid));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -155,14 +173,14 @@ public class TpsApiDispatch {
 
   @Traced
   public TpsPaoUpdateResult mergePao(
-      UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode) {
+      UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode)
+      throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
-
+    TpsPaoSourceRequest sourceRequest =
+        new TpsPaoSourceRequest().sourceObjectId(sourceObjectId).updateMode(updateMode);
     try {
-      return tpsApi.mergePao(
-          new TpsPaoSourceRequest().sourceObjectId(sourceObjectId).updateMode(updateMode),
-          workspaceUuid);
+      return TpsRetry.retry(() -> tpsApi.mergePao(sourceRequest, workspaceUuid));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -170,14 +188,14 @@ public class TpsApiDispatch {
 
   @Traced
   public TpsPaoUpdateResult replacePao(
-      UUID workspaceUuid, TpsPolicyInputs policyInputs, TpsUpdateMode updateMode) {
+      UUID workspaceUuid, TpsPolicyInputs policyInputs, TpsUpdateMode updateMode)
+      throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
-
+    TpsPaoReplaceRequest replaceRequest =
+        new TpsPaoReplaceRequest().newAttributes(policyInputs).updateMode(updateMode);
     try {
-      return tpsApi.replacePao(
-          new TpsPaoReplaceRequest().newAttributes(policyInputs).updateMode(updateMode),
-          workspaceUuid);
+      return TpsRetry.retry(() -> tpsApi.replacePao(replaceRequest, workspaceUuid));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -188,28 +206,30 @@ public class TpsApiDispatch {
       UUID workspaceUuid,
       TpsPolicyInputs addAttributes,
       TpsPolicyInputs removeAttributes,
-      TpsUpdateMode updateMode) {
+      TpsUpdateMode updateMode)
+      throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
+    TpsPaoUpdateRequest updateRequest =
+        new TpsPaoUpdateRequest()
+            .addAttributes(addAttributes)
+            .removeAttributes(removeAttributes)
+            .updateMode(updateMode);
     try {
-      return tpsApi.updatePao(
-          new TpsPaoUpdateRequest()
-              .addAttributes(addAttributes)
-              .removeAttributes(removeAttributes)
-              .updateMode(updateMode),
-          workspaceUuid);
+      return TpsRetry.retry(() -> tpsApi.updatePao(updateRequest, workspaceUuid));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
   }
 
   @Traced
-  public List<String> listValidRegions(UUID workspaceId, CloudPlatform platform) {
+  public List<String> listValidRegions(UUID workspaceId, CloudPlatform platform)
+      throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     TpsRegions tpsRegions;
     try {
-      tpsRegions = tpsApi.listValidRegions(workspaceId, platform.toTps());
+      tpsRegions = TpsRetry.retry(() -> tpsApi.listValidRegions(workspaceId, platform.toTps()));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -220,12 +240,16 @@ public class TpsApiDispatch {
   }
 
   @Traced
-  public List<String> listValidRegionsForPao(TpsPaoGetResult tpsPao, CloudPlatform platform) {
+  public List<String> listValidRegionsForPao(TpsPaoGetResult tpsPao, CloudPlatform platform)
+      throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     TpsRegions tpsRegions;
     try {
-      tpsRegions = tpsApi.listValidByPolicyInput(tpsPao.getEffectiveAttributes(), platform.toTps());
+      tpsRegions =
+          TpsRetry.retry(
+              () ->
+                  tpsApi.listValidByPolicyInput(tpsPao.getEffectiveAttributes(), platform.toTps()));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -235,15 +259,17 @@ public class TpsApiDispatch {
     return new ArrayList<>();
   }
 
+  @Traced
   public PolicyExplainResult explain(
       UUID workspaceId,
       int depth,
       WorkspaceService workspaceService,
-      AuthenticatedUserRequest userRequest) {
+      AuthenticatedUserRequest userRequest)
+      throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     try {
-      TpsPaoExplainResult tpsResult = tpsApi.explainPao(workspaceId, depth);
+      TpsPaoExplainResult tpsResult = TpsRetry.retry(() -> tpsApi.explainPao(workspaceId, depth));
       return new PolicyExplainResult(
           tpsResult.getObjectId(),
           tpsResult.getDepth(),
@@ -263,11 +289,13 @@ public class TpsApiDispatch {
     }
   }
 
-  public TpsLocation getLocationInfo(CloudPlatform platform, String location) {
+  @Traced
+  public TpsLocation getLocationInfo(CloudPlatform platform, String location)
+      throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
     try {
-      return tpsApi.getLocationInfo(platform.toTps(), location);
+      return TpsRetry.retry(() -> tpsApi.getLocationInfo(platform.toTps(), location));
     } catch (ApiException e) {
       throw convertApiException(e);
     }

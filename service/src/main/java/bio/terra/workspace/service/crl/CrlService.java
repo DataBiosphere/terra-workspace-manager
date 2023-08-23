@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.crl;
 
+import bio.terra.cloudres.azure.resourcemanager.common.AzureResourceCleanupRecorder;
+import bio.terra.cloudres.azure.resourcemanager.common.AzureResponseLogger;
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
 import bio.terra.cloudres.google.api.services.common.Defaults;
@@ -7,6 +9,7 @@ import bio.terra.cloudres.google.bigquery.BigQueryCow;
 import bio.terra.cloudres.google.billing.CloudBillingClientCow;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.cloudres.google.compute.CloudComputeCow;
+import bio.terra.cloudres.google.dataproc.DataprocCow;
 import bio.terra.cloudres.google.iam.IamCow;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.serviceusage.ServiceUsageCow;
@@ -22,15 +25,21 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.credential.TokenCredential;
+import com.azure.core.http.policy.HttpLogDetailLevel;
+import com.azure.core.http.policy.HttpLogOptions;
+import com.azure.core.http.policy.UserAgentPolicy;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.batch.BatchManager;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.containerservice.ContainerServiceManager;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.msi.MsiManager;
+import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
 import com.azure.resourcemanager.relay.RelayManager;
 import com.azure.resourcemanager.resources.ResourceManager;
+import com.azure.resourcemanager.resources.fluentcore.arm.AzureConfigurable;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.bigquery.Bigquery;
@@ -41,6 +50,7 @@ import com.google.api.services.storage.StorageScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.billing.v1.ProjectBillingInfo;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
@@ -55,6 +65,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -65,9 +76,13 @@ public class CrlService {
   /** How long to keep the resource before Janitor does the cleanup. */
   private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
 
+  @Value("${azure.customer.usage-attribute:}")
+  private String azureCustomerUsageAttribute;
+
   private final ClientConfig clientConfig;
   private final CrlConfiguration crlConfig;
   private final AIPlatformNotebooksCow crlNotebooksCow;
+  private final DataprocCow crlDataprocCow;
   private final CloudResourceManagerCow crlResourceManagerCow;
   private final CloudBillingClientCow crlBillingClientCow;
   private final CloudComputeCow crlComputeCow;
@@ -83,6 +98,7 @@ public class CrlService {
       clientConfig = buildClientConfig();
       try {
         this.crlNotebooksCow = AIPlatformNotebooksCow.create(clientConfig, creds);
+        this.crlDataprocCow = DataprocCow.create(clientConfig, creds);
         this.crlResourceManagerCow = CloudResourceManagerCow.create(clientConfig, creds);
         this.crlBillingClientCow = new CloudBillingClientCow(clientConfig, creds);
         this.crlComputeCow = CloudComputeCow.create(clientConfig, creds);
@@ -95,6 +111,7 @@ public class CrlService {
     } else {
       clientConfig = null;
       crlNotebooksCow = null;
+      crlDataprocCow = null;
       crlResourceManagerCow = null;
       crlBillingClientCow = null;
       crlComputeCow = null;
@@ -107,6 +124,12 @@ public class CrlService {
   public AIPlatformNotebooksCow getAIPlatformNotebooksCow() {
     assertCrlInUse();
     return crlNotebooksCow;
+  }
+
+  /** @return CRL {@link DataprocCow} which wraps Google Dataproc API */
+  public DataprocCow getDataprocCow() {
+    assertCrlInUse();
+    return crlDataprocCow;
   }
 
   /** @return CRL {@link CloudResourceManagerCow} which wraps Google Cloud Resource Manager API */
@@ -158,8 +181,9 @@ public class CrlService {
     final var azureProfile = getAzureProfile(azureCloudContext);
 
     // We must use FQDN because there are two `Defaults` symbols imported otherwise.
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, ComputeManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ComputeManager.configure()))
         .authenticate(azureCreds, azureProfile);
   }
 
@@ -169,9 +193,11 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
-            clientConfig, RelayManager.configure())
-        .authenticate(azureCreds, azureProfile);
+    RelayManager.Configurable relayManagerConfigurable =
+        configureRelayManager(
+            bio.terra.cloudres.azure.resourcemanager.relay.Defaults.crlConfigure(
+                clientConfig, RelayManager.configure()));
+    return relayManagerConfigurable.authenticate(azureCreds, azureProfile);
   }
 
   /** Returns an Azure {@link StorageManager} configured for use with CRL. */
@@ -180,8 +206,9 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, StorageManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, StorageManager.configure()))
         .authenticate(azureCreds, azureProfile);
   }
 
@@ -191,9 +218,11 @@ public class CrlService {
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
 
-    return bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
-            clientConfig, BatchManager.configure())
-        .authenticate(azureCreds, azureProfile);
+    BatchManager.Configurable batchManagerConfigurable =
+        configureBatchManager(
+            bio.terra.cloudres.azure.resourcemanager.batch.Defaults.crlConfigure(
+                clientConfig, BatchManager.configure()));
+    return batchManagerConfigurable.authenticate(azureCreds, azureProfile);
   }
 
   /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
@@ -202,8 +231,9 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, ResourceManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ResourceManager.configure()))
         .authenticate(azureCreds, azureProfile)
         .withSubscription(azureCloudContext.getAzureSubscriptionId());
   }
@@ -214,8 +244,9 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, MsiManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, MsiManager.configure()))
         .authenticate(azureCreds, azureProfile);
   }
 
@@ -225,9 +256,42 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    return bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
-            clientConfig, MonitorManager.configure())
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, MonitorManager.configure()))
         .authenticate(azureCreds, azureProfile);
+  }
+
+  public ContainerServiceManager getContainerServiceManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+    return configureAzureResourceManager(
+            bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
+                clientConfig, ContainerServiceManager.configure()))
+        .authenticate(azureCreds, azureProfile);
+  }
+
+  public PostgreSqlManager getPostgreSqlManager(
+      AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
+    final var azureCreds = getManagedAppCredentials(azureConfig);
+    final var azureProfile = getAzureProfile(azureCloudContext);
+    // PostgreSqlManager.configure does not return the right type, so inline
+    // bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure
+    PostgreSqlManager.Configurable postgreSqlConfigurable =
+        configurePostgreSqlManager(
+            PostgreSqlManager.configure()
+                .withLogOptions(
+                    new HttpLogOptions()
+                        .setRequestLogger(new AzureResourceCleanupRecorder(clientConfig))
+                        .setResponseLogger(new AzureResponseLogger(clientConfig))
+                        // Since we are providing our own loggers this value isn't actually used;
+                        // however it
+                        // does need to be set to a value other than NONE for the loggers to fire.
+                        .setLogLevel(HttpLogDetailLevel.BASIC)));
+    return postgreSqlConfigurable.authenticate(azureCreds, azureProfile);
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -245,7 +309,7 @@ public class CrlService {
    * Create a vanilla Bigquery client object, for testing things that aren't in CRL yet.
    * TODO(jaycarlton): PF-942 implement needed endpoints in CRL and use them here
    *
-   * @return
+   * @return Bigquery
    */
   public Bigquery createWsmSaNakedBigQueryClient() {
     assertCrlInUse();
@@ -530,7 +594,48 @@ public class CrlService {
     }
   }
 
-  public boolean canCreateAzureIp(String ipName, AuthenticatedUserRequest userRequest) {
-    return true; // TODO: check azure acls?
+  /**
+   * Set the billing account on a GCP project. The main purpose of this method is to allow mocking
+   * the setting for unit tests.
+   *
+   * @param projectId project id string
+   * @param billingAccountId billing account id
+   */
+  public void updateGcpProjectBilling(String projectId, String billingAccountId) {
+    ProjectBillingInfo setBilling =
+        ProjectBillingInfo.newBuilder()
+            .setBillingAccountName("billingAccounts/" + billingAccountId)
+            .build();
+
+    getCloudBillingClientCow().updateProjectBillingInfo("projects/" + projectId, setBilling);
+  }
+
+  private <T extends AzureConfigurable<T>> T configureAzureResourceManager(T configurable) {
+    if (StringUtils.isNotEmpty(azureCustomerUsageAttribute)) {
+      configurable.withPolicy(new UserAgentPolicy(azureCustomerUsageAttribute));
+    }
+    return configurable;
+  }
+
+  private RelayManager.Configurable configureRelayManager(RelayManager.Configurable configurable) {
+    if (StringUtils.isNotEmpty(azureCustomerUsageAttribute)) {
+      configurable.withPolicy(new UserAgentPolicy(azureCustomerUsageAttribute));
+    }
+    return configurable;
+  }
+
+  private BatchManager.Configurable configureBatchManager(BatchManager.Configurable configurable) {
+    if (StringUtils.isNotEmpty(azureCustomerUsageAttribute)) {
+      configurable.withPolicy(new UserAgentPolicy(azureCustomerUsageAttribute));
+    }
+    return configurable;
+  }
+
+  private PostgreSqlManager.Configurable configurePostgreSqlManager(
+      PostgreSqlManager.Configurable configurable) {
+    if (StringUtils.isNotEmpty(azureCustomerUsageAttribute)) {
+      configurable.withPolicy(new UserAgentPolicy(azureCustomerUsageAttribute));
+    }
+    return configurable;
   }
 }

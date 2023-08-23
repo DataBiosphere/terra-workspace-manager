@@ -3,7 +3,7 @@ components:
     DataRepoSnapshotAttributes:
       description: Attributes of a data repository snapshot
       type: object
-      required: [instanceName, snapshot]
+      required: [ instanceName, snapshot ]
       properties:
         instanceName:
           description: The name of the Data Repo instance
@@ -15,7 +15,7 @@ components:
     DataRepoSnapshotResource:
       type: object
       description: A Data Repo snapshot resource
-      required: [metadata, attributes]
+      required: [ metadata, attributes ]
       properties:
         metadata:
           description: the resource metadata common to all resources

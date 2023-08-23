@@ -7,8 +7,11 @@ import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.resource.controlled.flight.create.GetCloudContextStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetAwsCloudContextStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetGcpCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -29,32 +32,56 @@ public class DeleteControlledResourcesFlight extends Flight {
   public DeleteControlledResourcesFlight(FlightMap inputParameters, Object beanBag)
       throws InterruptedException {
     super(inputParameters, beanBag);
-    final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
+    FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
-    final UUID workspaceUuid =
+    UUID workspaceUuid =
         UUID.fromString(
             FlightUtils.getRequired(
                 inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
+    var resourceStateRule =
+        inputParameters.get(
+            WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);
     List<ControlledResource> controlledResources =
         inputParameters.get(
             ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {});
+
     for (ControlledResource controlledResource : controlledResources) {
-      addStep(flightBeanBag, controlledResource, workspaceUuid);
+      addResourceDeleteSteps(flightBeanBag, controlledResource, workspaceUuid, resourceStateRule);
     }
   }
 
-  public void addStep(
-      FlightBeanBag flightBeanBag, ControlledResource resource, UUID workspaceUuid) {
+  /**
+   * Generate the steps for deleting one of the resources on our incoming list.
+   *
+   * @param flightBeanBag
+   * @param resource
+   * @param workspaceUuid
+   */
+  protected void addResourceDeleteSteps(
+      FlightBeanBag flightBeanBag,
+      ControlledResource resource,
+      UUID workspaceUuid,
+      WsmResourceStateRule resourceStateRule) {
     final RetryRule cloudRetry = RetryRules.cloud();
+    final RetryRule dbRetry = RetryRules.shortDatabase();
+
+    addStep(
+        new DeleteMetadataStartStep(
+            flightBeanBag.getResourceDao(), workspaceUuid, resource.getResourceId()),
+        dbRetry);
 
     // Get the cloud context for the resource we are deleting
-    addStep(
-        new GetCloudContextStep(
-            workspaceUuid,
-            resource.getResourceType().getCloudPlatform(),
-            flightBeanBag.getGcpCloudContextService(),
-            flightBeanBag.getAzureCloudContextService()),
-        cloudRetry);
+    switch (resource.getResourceType().getCloudPlatform()) {
+      case GCP -> addStep(
+          new GetGcpCloudContextStep(workspaceUuid, flightBeanBag.getGcpCloudContextService()),
+          cloudRetry);
+      case AZURE -> addStep(
+          new GetAzureCloudContextStep(workspaceUuid, flightBeanBag.getAzureCloudContextService()),
+          cloudRetry);
+      case AWS -> addStep(
+          new GetAwsCloudContextStep(workspaceUuid, flightBeanBag.getAwsCloudContextService()),
+          cloudRetry);
+    }
 
     // Delete the cloud resource. This has unique logic for each resource type. Depending on the
     // specifics of the resource type, this step may require the flight to run asynchronously.

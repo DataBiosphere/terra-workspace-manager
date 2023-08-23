@@ -9,8 +9,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.Operation;
 import java.io.IOException;
@@ -36,12 +34,7 @@ public class DeleteAiNotebookInstanceStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    final GcpCloudContext gcpCloudContext =
-        flightContext
-            .getWorkingMap()
-            .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
-
-    InstanceName instanceName = resource.toInstanceName(gcpCloudContext.getGcpProjectId());
+    InstanceName instanceName = resource.toInstanceName();
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
       Optional<Operation> rawOperation = deleteIfFound(instanceName, notebooks);

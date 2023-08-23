@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.DbSerDes;
@@ -12,7 +11,8 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -117,16 +117,6 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
         .attributes(toApiAttributes());
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   @Override
   public String attributesToJson() {
     return DbSerDes.toJson(
@@ -139,13 +129,18 @@ public class ReferencedBigQueryDatasetResource extends ReferencedResource {
   }
 
   @Override
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(new UpdateBigQueryDatasetReferenceStep());
+  }
+
+  @Override
   public void validate() {
     super.validate();
     if (Strings.isNullOrEmpty(getProjectId()) || Strings.isNullOrEmpty(getDatasetName())) {
       throw new MissingRequiredFieldException(
           "Missing required field for ReferenceBigQueryDatasetAttributes.");
     }
-    ResourceValidationUtils.validateBqDatasetName(getDatasetName());
+    GcpResourceValidationUtils.validateBqDatasetName(getDatasetName());
   }
 
   @Override

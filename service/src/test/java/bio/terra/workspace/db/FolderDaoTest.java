@@ -1,7 +1,7 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.unit.WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,7 +32,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_returnSameFolder() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder =
         getFolder(
             "foo",
@@ -47,7 +47,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void getFolder_createdDateNotNull() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder =
         getFolder(
             "foo",
@@ -64,7 +64,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_duplicateDisplayName_fails() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     var secondFolder = getFolder("foo", workspaceUuid);
     folderDao.createFolder(folder);
@@ -75,7 +75,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_duplicateFolderId_fails() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     folderDao.createFolder(folder);
 
@@ -84,7 +84,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_duplicateName_fails() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     var secondFolder = getFolder("foo", workspaceUuid);
     folderDao.createFolder(folder);
@@ -95,7 +95,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_multipleFoldersAndLayers() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     var secondFolder = getFolder("bar", workspaceUuid);
 
@@ -112,8 +112,8 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void listFolders_allFoldersInTheSameWorkspaceListed() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
-    UUID secondWorkspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
+    UUID secondWorkspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     var secondFolder = getFolder("bar", workspaceUuid);
     var thirdFolder = getFolder("foo", secondWorkspaceUuid);
@@ -133,7 +133,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void listFolders_listsSubFolders() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     // foo/bar
     var secondFolder = getFolder("bar", workspaceUuid, folder.id());
@@ -163,7 +163,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void createFolder_parentFolderNotExist_returnsEmptyList() {
-    UUID workspaceId = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceId = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder = getFolder("foo", workspaceId, UUID.randomUUID());
 
     assertThrows(FolderNotFoundException.class, () -> folderDao.createFolder(folder));
@@ -171,7 +171,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolder_updatesSuccessfully() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder secondFolder = getFolder("bar", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
@@ -208,7 +208,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolderProperties_updatesSuccessfully() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
 
@@ -222,7 +222,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolderProperties_folderDoesNotExist_throwsFolderNotFoundException() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
 
     assertThrows(
         FolderNotFoundException.class,
@@ -233,7 +233,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolderProperties_noUpdate_throwsMissingRequiredFieldsException() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
 
     assertThrows(
         MissingRequiredFieldsException.class,
@@ -242,7 +242,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteFolderProperties_updatesSuccessfully() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
     assertEquals("bar", createdFolder.properties().get("foo"));
@@ -255,7 +255,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteFolderProperties_folderNotExist_throwsFolderNotFoundException() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
 
     assertThrows(
         FolderNotFoundException.class,
@@ -266,7 +266,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteFolderProperties_nothingToDelete_throwsMissingRequiredFieldsException() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
 
     assertThrows(
         MissingRequiredFieldsException.class,
@@ -275,7 +275,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolder_formCycle_throwsBadRequestException() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder secondFolder = getFolder("bar", workspaceUuid, /*parentFolderId=*/ folder.id());
     Folder thirdFolder = getFolder("garr", workspaceUuid, /*parentFolderId=*/ secondFolder.id());
@@ -334,7 +334,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolder_duplicateFolderName_throwsException() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder secondFolder = getFolder("bar", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
@@ -358,7 +358,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void updateFolder_noFieldsAreUpdated_throwMissingFieldsException() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     Folder folder = getFolder("foo", workspaceUuid);
     Folder createdFolder = folderDao.createFolder(folder);
 
@@ -383,7 +383,7 @@ public class FolderDaoTest extends BaseUnitTest {
             folderDao.getFolderRequired(
                 /*workspaceId=*/ UUID.randomUUID(), /*folderId=*/ UUID.randomUUID()));
 
-    UUID workspaceId = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceId = createWorkspaceWithoutCloudContext(workspaceDao);
 
     assertThrows(
         FolderNotFoundException.class,
@@ -392,7 +392,7 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteFoldersRecursive_subFolderDeleted() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     // second and third folders are under folder foo.
     var secondFolder = getFolder("bar", workspaceUuid, folder.id());
@@ -411,14 +411,14 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteFoldersRecursive_invalidFolder_nothingIsDeleted() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
 
     assertFalse(folderDao.deleteFoldersRecursive(workspaceUuid, UUID.randomUUID()));
   }
 
   @Test
   public void deleteAllFolders_noFolder_returnsFalse() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
 
     assertFalse(folderDao.deleteAllFolders(workspaceUuid));
   }
@@ -430,14 +430,14 @@ public class FolderDaoTest extends BaseUnitTest {
 
   @Test
   public void deleteAllFolders_allFoldersAreDeletedInTheWorkspace() {
-    UUID workspaceUuid = createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspaceUuid = createWorkspaceWithoutCloudContext(workspaceDao);
     var folder = getFolder("foo", workspaceUuid);
     // second and third folders are under folder foo.
     var secondFolder = getFolder("bar", workspaceUuid, folder.id());
     var thirdFolder = getFolder("garrr", workspaceUuid, folder.id());
-    var createdFolder = folderDao.createFolder(folder);
-    var createdSecondFolder = folderDao.createFolder(secondFolder);
-    var createdThirdFolder = folderDao.createFolder(thirdFolder);
+    folderDao.createFolder(folder);
+    folderDao.createFolder(secondFolder);
+    folderDao.createFolder(thirdFolder);
 
     assertTrue(folderDao.deleteAllFolders(workspaceUuid));
 

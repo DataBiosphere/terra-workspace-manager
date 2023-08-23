@@ -13,6 +13,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.ws.rs.BadRequestException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -50,17 +51,15 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
         Optional.ofNullable(attributes.getProjectId())
             .orElse(gcpCloudContextService.getRequiredGcpProject(dbResource.getWorkspaceId()));
 
-    var resource =
-        ControlledBigQueryDatasetResource.builder()
-            .datasetName(
-                ControlledBigQueryDatasetHandler.getHandler()
-                    .generateCloudName(dbResource.getWorkspaceId(), attributes.getDatasetName()))
-            .projectId(projectId)
-            .defaultTableLifetime(attributes.getDefaultTableLifetime())
-            .defaultPartitionLifetime(attributes.getDefaultPartitionLifetime())
-            .common(new ControlledResourceFields(dbResource))
-            .build();
-    return resource;
+    return ControlledBigQueryDatasetResource.builder()
+        .datasetName(
+            ControlledBigQueryDatasetHandler.getHandler()
+                .generateCloudName(dbResource.getWorkspaceId(), attributes.getDatasetName()))
+        .projectId(projectId)
+        .defaultTableLifetime(attributes.getDefaultTableLifetime())
+        .defaultPartitionLifetime(attributes.getDefaultPartitionLifetime())
+        .common(new ControlledResourceFields(dbResource))
+        .build();
   }
 
   /**
@@ -70,12 +69,9 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
    * to 1024 characters. Spaces are not allowed. For details, see
    * https://cloud.google.com/bigquery/docs/datasets#dataset-naming.
    */
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String bqDatasetName) {
     String generatedName = bqDatasetName.replace("-", "_");
-    generatedName =
-        generatedName.length() > MAX_DATASET_NAME_LENGTH
-            ? generatedName.substring(0, MAX_DATASET_NAME_LENGTH)
-            : generatedName;
 
     // The regular expression only allow legal character combinations which start with alphanumeric
     //  letter, alphanumeric letter and underscore ("_") in the string, and alphanumeric letter at
@@ -87,13 +83,14 @@ public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
             .retainFrom(generatedName);
     // The name cannot start or end with dash("-")
     generatedName = CharMatcher.is('_').trimFrom(generatedName);
+
     if (generatedName.length() == 0) {
       throw new BadRequestException(
           String.format(
-              "Cannot generate a valid big query dataset name from %s, it must contains"
+              "Cannot generate a valid big query dataset name from %s, it must contain"
                   + " alphanumerical characters.",
               bqDatasetName));
     }
-    return generatedName;
+    return StringUtils.truncate(generatedName, MAX_DATASET_NAME_LENGTH);
   }
 }

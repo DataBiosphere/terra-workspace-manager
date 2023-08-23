@@ -129,7 +129,6 @@ components:
         |`d`         | Delete      |
         |`l`         | List        |
 
-
         For example:
           * To construct a SAS with permissions limited to read, write and list the caller would supply the string
         `rwl`.
@@ -189,7 +188,7 @@ components:
     Platform:
       name: platform
       in: query
-      description: The cloud platform (gcp, azure)
+      description: The cloud platform (gcp, azure, aws)
       required: true
       schema:
         $ref: '#/components/schemas/CloudPlatform'

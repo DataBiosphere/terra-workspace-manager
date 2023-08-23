@@ -4,7 +4,7 @@ paths:
     post:
       summary: Create a new Workspace.
       operationId: createWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         required: true
         content:
@@ -48,7 +48,7 @@ paths:
     get:
       summary: Get an existing Workspace.
       operationId: getWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       parameters:
       - $ref: '#/components/parameters/MinimumHighestRole'
       responses:
@@ -67,7 +67,7 @@ paths:
     patch:
       summary: Update an existing Workspace.
       operationId: updateWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         required: true
         content:
@@ -88,9 +88,12 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
-      summary: Delete a Workspace.
+      deprecated: true
+      summary: |
+        Delete a Workspace.
+        Deprecated in favor of the async V2 version.
       operationId: deleteWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '204':
           description: Success
@@ -110,7 +113,7 @@ paths:
     get:
       summary: Get an existing Workspace by userFacingId.
       operationId: getWorkspaceByUserFacingId
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '200':
           description: OK
@@ -131,7 +134,7 @@ paths:
     post:
       summary: Clone a workspace and its eligible resources
       operationId: cloneWorkspace
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         description: Details of workspace clone operation
         required: true
@@ -160,7 +163,7 @@ paths:
     get:
       summary: Retrieve information about a gcp bucket clone job.
       operationId: getCloneWorkspaceResult
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '200':
           $ref: '#/components/responses/CloneWorkspaceResponse'
@@ -177,7 +180,7 @@ paths:
     patch:
       summary: Update policies for a workspace
       operationId: updatePolicies
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         required: true
         content:
@@ -208,7 +211,7 @@ paths:
     get:
       summary: Read all IAM roles and their members in a workspace.
       operationId: getRoles
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '200':
           description: Response to list permissions calls
@@ -230,7 +233,7 @@ paths:
     post:
       summary: Grant an IAM role to a user or group.
       operationId: grantRole
-      tags: [Workspace]
+      tags: [ Workspace ]
       requestBody:
         required: true
         content:
@@ -255,7 +258,7 @@ paths:
     delete:
       summary: Remove an IAM role from a user or group.
       operationId: removeRole
-      tags: [Workspace]
+      tags: [ Workspace ]
       responses:
         '204':
           description: Role removed successfully
@@ -390,6 +393,102 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2:
+    post:
+      summary: Create a new Workspace and a new cloud context asynchronously
+      operationId: createWorkspaceV2
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceV2Request'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '202':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Get the result of a async job to create a workspace.
+      operationId: getCreateWorkspaceV2Result
+      tags: [ Workspace ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '202':
+          $ref: '#/components/responses/CreateWorkspaceV2Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/{workspaceId}/delete:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: |
+        Deletes a workspace and all of its cloud contexts and data.
+        This async delete requires a body, but that is not allowed on standard
+        delete method, so this is done as a POST and labeled as delete in the path.
+      operationId: deleteWorkspaceV2
+      tags: [ Workspace ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteWorkspaceV2Request'
+      responses:
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/{workspaceId}/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: |
+        Gets the result of an async workspace delete.
+      operationId: getDeleteWorkspaceV2Result
+      tags: [ Workspace ]
+      responses:
+        '200':
+          $ref: '#/components/responses/JobResultResponse'
+        '202':
+          $ref: '#/components/responses/JobResultResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
   parameters:
     WsmPolicyDepth:
@@ -407,6 +506,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CloneWorkspaceResult'
+
+    CreateWorkspaceV2Response:
+      description: Description of a workspace
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateWorkspaceV2Result'
 
   schemas:
     ClonedWorkspace:
@@ -470,6 +576,9 @@ components:
             additional policies create a conflict with the existing workspace,
             cloning will fail.
           $ref: '#/components/schemas/WsmPolicyInputs'
+        projectOwnerGroupId:
+          description: Optional Sam resource group ID which allows the group to be added as project owner on the destination workspace
+          type: string
 
     ResourceCloneDetails:
       description: >-
@@ -554,6 +663,66 @@ components:
           type: array
           items:
             type: string
+        projectOwnerGroupId:
+          description: Optional Sam resource group ID which allows the group to be added as project owner on the workspace
+          type: string
+
+    CreateWorkspaceV2Request:
+      type: object
+      required: [ id, jobControl ]
+      properties:
+        id:
+          description: The ID of the workspace
+          type: string
+          format: uuid
+        userFacingId:
+          $ref: '#/components/schemas/UserFacingId'
+        displayName:
+          description: The human readable name of the workspace
+          type: string
+        description:
+          description: A description of the workspace
+          type: string
+        policies:
+          $ref: '#/components/schemas/WsmPolicyInputs'
+        stage:
+          $ref: '#/components/schemas/WorkspaceStageModel'
+        properties:
+          $ref: '#/components/schemas/Properties'
+        applicationIds:
+          description: List of application ids to enable for this workspace
+          type: array
+          items:
+            type: string
+        cloudPlatform:
+          description: Optional cloud platform for the cloud context to create within the workspace
+          $ref: '#/components/schemas/CloudPlatform'
+        spendProfile:
+          description: ID of the spend profile for the cloud context, if any
+          type: string
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    CreateWorkspaceV2Result:
+      description: Result of an asynchronous workspace create
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        workspaceId:
+          type: string
+          format: uuid
+
+    DeleteWorkspaceV2Request:
+      type: object
+      required: [ jobControl ]
+      description: |
+        Request body for asynchronously deleting a workspace.
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
 
     GrantRoleRequestBody:
       description: The body for a request to grant a role to a single user.
@@ -566,7 +735,7 @@ components:
     IamRole:
       description: Enum containing all valid IAM roles on a Workspace
       type: string
-      enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER']
+      enum: ['DISCOVERER', 'READER', 'WRITER', 'APPLICATION', 'OWNER', 'PROJECT_OWNER']
 
     MergeCheckRequest:
       description: Request with a workspace id
@@ -635,7 +804,8 @@ components:
             returned.
           $ref: '#/components/schemas/IamRole'
         spendProfile:
-          description: ID of provided spend profile
+          deprecated: true
+          description: ID of provided spend profile. DEPRECATED. Use spend profile in the cloud context
           type: string
         stage:
           $ref: '#/components/schemas/WorkspaceStageModel'
@@ -645,6 +815,9 @@ components:
         azureContext:
           description: Azure context, if one exists
           $ref: '#/components/schemas/AzureContext'
+        awsContext:
+          description: AWS context, if one exists
+          $ref: '#/components/schemas/AwsContext'
         properties:
           $ref: '#/components/schemas/Properties'
         createdDate:
@@ -670,6 +843,8 @@ components:
           description: The auth domains that the user is missing for this workspace
           items:
             type: string
+        operationState:
+          $ref: '#/components/schemas/OperationState'
 
     WorkspaceDescriptionList:
       type: object

@@ -1,9 +1,8 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -11,14 +10,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.ControlledResourceBatchPoolFixtures;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.generated.model.ApiAzureBatchPoolCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserAssignedIdentity;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import com.azure.core.management.Region;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
@@ -35,7 +37,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
   @Autowired ControlledAzureResourceApiController controller;
 
   @BeforeEach
-  void setUp() throws InterruptedException {
+  void setUp() {
     when(mockSamService()
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);
@@ -46,8 +48,8 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     UUID workspaceId = UUID.randomUUID();
     mockMvc
         .perform(
-            addAuth(
-                post(String.format(CREATE_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+            MockMvcUtils.addAuth(
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -58,24 +60,25 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
   @Test
   public void createBatchPool400WithInconsistentUAMI() throws Exception {
-    final ApiControlledResourceCommonFields commonFields =
+    ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
-    var creationParameters =
-        ControlledResourceBatchPoolFixtures.createBatchPoolWithRequiredParameters();
+    ApiAzureBatchPoolCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.createAzureBatchPoolWithRequiredParameters();
+
     // name and clientId are mutually exclusive
     creationParameters.userAssignedIdentities(
         List.of(
             new ApiAzureBatchPoolUserAssignedIdentity().clientId(UUID.randomUUID()).name("name")));
 
-    final ApiCreateControlledAzureBatchPoolRequestBody batchPoolRequest =
+    ApiCreateControlledAzureBatchPoolRequestBody batchPoolRequest =
         new ApiCreateControlledAzureBatchPoolRequestBody()
             .common(commonFields)
             .azureBatchPool(creationParameters);
 
     UUID workspaceId = UUID.randomUUID();
     ControlledAzureBatchPoolResource resource =
-        ControlledResourceBatchPoolFixtures.createAzureBatchPoolResource(
+        ControlledAzureResourceFixtures.createAzureBatchPoolResource(
             creationParameters,
             controller.toCommonFields(
                 workspaceId,
@@ -87,11 +90,12 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
     when(getMockControlledResourceService()
             .createControlledResourceSync(eq(resource), any(), any(), any()))
         .thenReturn(resource);
+    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
 
     mockMvc
         .perform(
-            addAuth(
-                post(String.format(CREATE_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+            MockMvcUtils.addAuth(
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -102,20 +106,21 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
   @Test
   public void createBatchPoolWithRequiredParametersSuccess() throws Exception {
-    final ApiControlledResourceCommonFields commonFields =
+    ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
-    var creationParameters =
-        ControlledResourceBatchPoolFixtures.createBatchPoolWithRequiredParameters();
+    ApiAzureBatchPoolCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.createAzureBatchPoolWithRequiredParameters();
 
-    final ApiCreateControlledAzureBatchPoolRequestBody batchPoolRequest =
+    ApiCreateControlledAzureBatchPoolRequestBody batchPoolRequest =
         new ApiCreateControlledAzureBatchPoolRequestBody()
             .common(commonFields)
             .azureBatchPool(creationParameters);
 
+    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
     UUID workspaceId = UUID.randomUUID();
     ControlledAzureBatchPoolResource resource =
-        ControlledResourceBatchPoolFixtures.createAzureBatchPoolResource(
+        ControlledAzureResourceFixtures.createAzureBatchPoolResource(
             creationParameters,
             controller.toCommonFields(
                 workspaceId,
@@ -131,8 +136,8 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
     mockMvc
         .perform(
-            addAuth(
-                post(String.format(CREATE_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+            MockMvcUtils.addAuth(
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")

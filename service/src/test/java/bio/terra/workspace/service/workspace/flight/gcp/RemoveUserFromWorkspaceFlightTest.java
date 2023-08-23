@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.gcp;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,6 +11,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.GcpCloudUtils;
@@ -19,6 +21,7 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
@@ -35,15 +38,21 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceF
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
-import bio.terra.workspace.service.workspace.flight.CheckUserStillInWorkspaceStep;
-import bio.terra.workspace.service.workspace.flight.ClaimUserPrivateResourcesStep;
-import bio.terra.workspace.service.workspace.flight.MarkPrivateResourcesAbandonedStep;
-import bio.terra.workspace.service.workspace.flight.ReleasePrivateResourceCleanupClaimsStep;
-import bio.terra.workspace.service.workspace.flight.RemovePrivateResourceAccessStep;
-import bio.terra.workspace.service.workspace.flight.RemoveUserFromSamStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.model.CloudContextHolder;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
+import bio.terra.workspace.service.workspace.flight.cloud.gcp.RevokePetUsagePermissionStep;
+import bio.terra.workspace.service.workspace.flight.removeuser.CheckUserStillInWorkspaceStep;
+import bio.terra.workspace.service.workspace.flight.removeuser.ClaimUserPrivateResourcesStep;
+import bio.terra.workspace.service.workspace.flight.removeuser.MarkPrivateResourcesAbandonedStep;
+import bio.terra.workspace.service.workspace.flight.removeuser.ReleasePrivateResourceCleanupClaimsStep;
+import bio.terra.workspace.service.workspace.flight.removeuser.RemovePrivateResourceAccessStep;
+import bio.terra.workspace.service.workspace.flight.removeuser.RemoveUserFromSamStep;
+import bio.terra.workspace.service.workspace.flight.removeuser.ValidateUserRoleStep;
+import bio.terra.workspace.service.workspace.model.CloudContext;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -69,7 +78,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Tag("connectedPlus")
 public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
-
   private static final Duration STAIRWAY_FLIGHT_TIMEOUT = Duration.ofMinutes(5);
   @Autowired private WorkspaceService workspaceService;
   @Autowired private ControlledResourceService controlledResourceService;
@@ -79,6 +87,8 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
   @Autowired private PetSaService petSaService;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceConnectedTestUtils connectedTestUtils;
+  @Autowired private SpendProfileService spendProfileService;
+  @Autowired private FeatureConfiguration features;
 
   @Test
   @DisabledIfEnvironmentVariable(named = "TEST_ENV", matches = BUFFER_SERVICE_DISABLED_ENVS_REG_EX)
@@ -86,7 +96,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     // Create a workspace as the default test user
     Workspace workspace =
         connectedTestUtils.createWorkspace(userAccessUtils.defaultUserAuthRequest());
-    var workspaceUuid = workspace.getWorkspaceId();
+    UUID workspaceUuid = workspace.getWorkspaceId();
     // Add the secondary test user as a writer
     samService.grantWorkspaceRole(
         workspaceUuid,
@@ -100,14 +110,19 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
         userAccessUtils.defaultUserAuthRequest().getRequiredToken());
 
     // Create a GCP context as default user
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
     String makeContextJobId = UUID.randomUUID().toString();
-    workspaceService.createGcpCloudContext(
-        workspace, makeContextJobId, userAccessUtils.defaultUserAuthRequest());
+    SpendProfile spendProfile =
+        spendProfileService.authorizeLinking(
+            DEFAULT_SPEND_PROFILE_ID, features.isBpmGcpEnabled(), userRequest);
+
+    workspaceService.createCloudContext(
+        workspace, CloudPlatform.GCP, spendProfile, makeContextJobId, userRequest, null);
     jobService.waitForJob(makeContextJobId);
-    JobApiUtils.AsyncJobResult<CloudContextHolder> createContextJobResult =
-        jobApiUtils.retrieveAsyncJobResult(makeContextJobId, CloudContextHolder.class);
+    JobApiUtils.AsyncJobResult<CloudContext> createContextJobResult =
+        jobApiUtils.retrieveAsyncJobResult(makeContextJobId, CloudContext.class);
     assertEquals(StatusEnum.SUCCEEDED, createContextJobResult.getJobReport().getStatus());
-    GcpCloudContext cloudContext = createContextJobResult.getResult().getGcpCloudContext();
+    GcpCloudContext cloudContext = createContextJobResult.getResult().castByEnum(CloudPlatform.GCP);
 
     // Create a private dataset for secondary user
     String datasetId = RandomStringUtils.randomAlphabetic(8);
@@ -144,6 +159,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
 
     // Run the "removeUser" flight to the very end, then undo it, retrying steps along the way.
     Map<String, StepStatus> retrySteps = new HashMap<>();
+    retrySteps.put(ValidateUserRoleStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(RemoveUserFromSamStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         CheckUserStillInWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
@@ -284,6 +300,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     }
     return true;
   }
+
   // Call GCP IAM service directly to determine whether a user can impersonate the provided pet SA.
   private boolean canImpersonateSa(Iam iamClient, String projectId, String petSaEmail)
       throws Exception {

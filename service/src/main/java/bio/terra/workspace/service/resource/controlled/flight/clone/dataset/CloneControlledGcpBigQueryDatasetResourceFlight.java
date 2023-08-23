@@ -7,8 +7,10 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.MergeGroupsStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesDryRunStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.ValidateGroupPolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.ValidateWorkspaceAgainstPolicyStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
@@ -56,7 +58,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
     if (CloningInstructions.COPY_NOTHING == resolvedCloningInstructions) {
       addStep(
-          new SetNoOpBucketCloneResponseStep(
+          new SetNoOpDatasetCloneResponseStep(
               sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET)));
       return;
     }
@@ -83,9 +85,14 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               destinationWorkspaceId,
               sourceResource.getResourceType().getCloudPlatform(),
               destLocation,
+              resolvedCloningInstructions,
               userRequest,
               flightBeanBag.getResourceDao(),
               flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new ValidateGroupPolicyAttributesStep(
+              destinationWorkspaceId, flightBeanBag.getTpsApiDispatch()));
 
       addStep(
           new MergePolicyAttributesStep(
@@ -93,6 +100,13 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
               destinationWorkspaceId,
               resolvedCloningInstructions,
               flightBeanBag.getTpsApiDispatch()));
+
+      addStep(
+          new MergeGroupsStep(
+              userRequest,
+              destinationWorkspaceId,
+              flightBeanBag.getTpsApiDispatch(),
+              flightBeanBag.getSamService()));
     }
     addStep(
         new RetrieveControlledResourceMetadataStep(
@@ -147,7 +161,8 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
                   flightBeanBag.getSamService(),
                   sourceDataset,
                   userRequest,
-                  flightBeanBag.getGcpCloudContextService()));
+                  flightBeanBag.getGcpCloudContextService()),
+              RetryRules.cloudLongRunning());
         } else {
           addStep(
               new CreateTableCopyJobsStep(

@@ -1,0 +1,416 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/dataproc-clusters:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Gcp Dataproc cluster
+      operationId: createDataprocCluster
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledGcpDataprocClusterRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpDataprocClusterResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcpDataprocClusterResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/dataproc-clusters/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a Dataproc cluster create job.
+      operationId: getCreateDataprocClusterResult
+      tags: [ ControlledGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreatedControlledGcpDataprocClusterResponse'
+        '202':
+          $ref: '#/components/responses/CreatedControlledGcpDataprocClusterResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/dataproc-clusters/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Dataproc cluster resource
+      operationId: getDataprocCluster
+      tags: [ ControlledGcpResource ]
+      responses:
+        '200':
+          description: Response to get a Dataproc cluster.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GcpDataprocClusterResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled Dataproc cluster resource. This is async, 
+        because the operation can take ~5 minutes. OpenAPI does not support 
+        request body in DELETE, but async state requires it. Hence this is a POST.
+      operationId: deleteDataprocCluster
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledGcpDataprocClusterRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpDataprocClusterResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpDataprocClusterResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update a controlled Dataproc cluster resource.
+      operationId: updateDataprocCluster
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateControlledGcpDataprocClusterRequestBody'
+      responses:
+        '200':
+          description: Response to update a Dataproc cluster.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GcpDataprocClusterResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/dataproc-clusters/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about a GCP Dataproc cluster delete job.
+      operationId: getDeleteDataprocClusterResult
+      tags: [ ControlledGcpResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledGcpDataprocClusterResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledGcpDataprocClusterResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/gcp/dataproc-clusters/generateName:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Generate a cloud native controlled Dataproc cluster name.
+      operationId: generateDataprocClusterCloudId
+      tags: [ ControlledGcpResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateGcpDataprocClusterCloudIdRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataprocClusterCloudIdResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    CreateControlledGcpDataprocClusterRequestBody:
+      description: Payload for requesting a new controlled Dataproc cluster.
+      type: object
+      required: [ common, dataprocCluster, jobControl ]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        dataprocCluster:
+          $ref: '#/components/schemas/GcpDataprocClusterCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    CreatedControlledGcpDataprocClusterResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+        dataprocCluster:
+          $ref: '#/components/schemas/GcpDataprocClusterResource'
+
+    GcpDataprocClusterCreationParameters:
+      type: object
+      required:
+      - configBucket
+      - tempBucket
+      - managerNodeConfig
+      properties:
+        clusterId:
+          type: string
+          description: Dataproc cluster name.
+        region:
+          type: string
+          description: GCP region.
+        imageVersion:
+          type: string
+          description: Dataproc image version with specific software versions installed for Spark, Hadoop, etc. Defaults to the latest debian image if not specified. See https://cloud.google.com/dataproc/docs/concepts/versioning/dataproc-version-clusters#supported_dataproc_versions.
+        initializationScripts:
+          type: array
+          items:
+            type: string
+          description: List of initialization scripts to run on create. In gs url format.
+        components:
+          type: array
+          items:
+              type: string
+          uniqueItems: true
+          description: List of optional components to install on the cluster manager node. See full list of available components here https://cloud.google.com/dataproc/docs/concepts/components/overview.
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+          description: Map of additional properties to set on the cluster. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/cluster-properties.
+        softwareFramework:
+          type: string
+          enum: ["HAIL"]
+          description: Software framework to setup the cluster with. Currently supported values are ['hail'].
+        configBucket:
+          type: string
+          format: uuid
+          description: Staging bucket controlled resource uuid.
+        tempBucket:
+          type: string
+          format: uuid
+          description: Temp bucket controlled resource uuid.
+        autoscalingPolicy:
+          type: string
+          description: URI of autoscaling policy.
+        metadata:
+          type: object
+          description: Metadata key-value pairs.
+          additionalProperties:
+            type: string
+        managerNodeConfig:
+          $ref: '#/components/schemas/GcpDataprocClusterInstanceGroupConfig'
+        primaryWorkerConfig:
+          $ref: '#/components/schemas/GcpDataprocClusterInstanceGroupConfig'
+        secondaryWorkerConfig:
+          $ref: '#/components/schemas/GcpDataprocClusterInstanceGroupConfig'
+        lifecycleConfig:
+          $ref: '#/components/schemas/GcpDataprocClusterLifecycleConfig'
+
+    GcpDataprocClusterInstanceGroupConfig:
+      type: object
+      required:
+      - numInstances
+      - machineType
+      properties:
+        numInstances:
+          type: integer
+          format: int32
+          description: Number of instances in the instance group.
+        machineType:
+          type: string
+          description: Compute engine machine type.
+        imageUri:
+          type: string
+          description: Compute engine image used for cluster instances.
+        acceleratorConfig:
+          $ref: '#/components/schemas/GcpDataprocClusterAcceleratorConfig'
+        diskConfig:
+          $ref: '#/components/schemas/GcpDataprocClusterDiskConfig'
+        preemptibility:
+          type: string
+          enum: [ "NON_PREEMPTIBLE", "PREEMPTIBLE", "SPOT" ]
+          description: Optionally specify instance preemptibility. Default is "NON_PREEMPTIBLE". See https://cloud.google.com/dataproc/docs/concepts/compute/secondary-vms.
+
+    GcpDataprocClusterAcceleratorConfig:
+      description: >-
+        The hardware accelerator used on instances. If you use accelerators, make sure that your
+        configuration has enough vCPUs and memory to support the machineType you have selected.
+        See https://cloud.google.com/dataproc/docs/reference/rest/v1/InstanceGroupConfig#AcceleratorConfig
+      type: object
+      required: [ type, cardCount ]
+      properties:
+        type:
+          description: Type of this accelerator
+          type: string
+        cardCount:
+          description: Number of cards of this accelerator.
+          type: integer
+          format: int32
+
+    GcpDataprocClusterDiskConfig:
+      description: >-
+        Specifies the config of disk options for a group of VM instances.
+        See https://cloud.google.com/dataproc/docs/reference/rest/v1/InstanceGroupConfig#DiskConfig
+      type: object
+      properties:
+        bootDiskType:
+          type: string
+          default: "pd-standard"
+          description: The type of the boot disk.
+        bootDiskSizeGb:
+          type: integer
+          format: int32
+          default: 500
+          description: The size of the boot disk in GB.
+        numLocalSsds:
+          type: integer
+          format: int32
+          default: 0
+          description: The number of local SSDs.
+        localSsdInterface:
+          type: string
+          default: "scsi"
+          description: The interface of local SSDs.
+
+    GcpDataprocClusterLifecycleConfig:
+      description: >-
+        Specifies the config of lifecycle options for a cluster.
+        See https://cloud.google.com/dataproc/docs/reference/rest/v1/ClusterConfig#LifecycleConfig
+      type: object
+      properties:
+        idleDeleteTtl:
+          type: string
+          description: Duration of idling before cluster is deleted. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/scheduled-deletion.
+          example: 1800s
+        autoDeleteTime:
+          type: string
+          format: date-time
+          description: Date of cluster deletion in UTC "Zulu" format. Must not be specified if autoDeleteTtl is specified.
+          example: 2014-10-02T15:01:23.045123456Z
+        autoDeleteTtl:
+          type: string
+          description: Duration of cluster life in seconds. Must not be specified if autoDeleteTime is specified.
+          example: 3.5s
+
+
+    DeleteControlledGcpDataprocClusterRequest:
+      type: object
+      required: [ jobControl ]
+      properties:
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+    DeleteControlledGcpDataprocClusterResult:
+      type: object
+      properties:
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    UpdateControlledGcpDataprocClusterRequestBody:
+      type: object
+      description: Update a Dataproc cluster's metadata
+      properties:
+        name:
+          description: Optional. New name to give to this resource. The resource name will not be updated if this is omitted.
+          type: string
+        description:
+          description: Optional. New description to give to this resource. The resource description will not be updated if this is omitted.
+          type: string
+        updateParameters:
+          $ref: '#/components/schemas/ControlledDataprocClusterUpdateParameters'
+
+    ControlledDataprocClusterUpdateParameters:
+      description: >-
+        Cluster parameters that can be updated. Cluster lifecycle rules can be modified or removed on clusters created with lifecycle rules, though this isn't documented. See https://cloud.google.com/dataproc/docs/reference/rest/v1/projects.regions.clusters/patch#query-parameters for list other updatable configurations.
+      properties:
+        numPrimaryWorkers:
+          type: integer
+          format: int32
+          description: Number of primary workers to scale to.
+        numSecondaryWorkers:
+            type: integer
+            format: int32
+            description: Number of secondary workers to scale to.
+        autoscalingPolicy:
+          type: string
+          description: URI of autoscaling policy.
+        lifecycleConfig:
+          $ref: '#/components/schemas/GcpDataprocClusterLifecycleConfig'
+        gracefulDecommissionTimeout:
+          type: string
+          description: Duration to wait for graceful decommission to finish. See https://cloud.google.com/dataproc/docs/concepts/compute/dataproc-cluster-lifecycle#graceful_decommission_timeout.
+          example: 1800s
+
+    DataprocClusterCloudId:
+      description: Dataproc cluster cloud native ID
+      type: object
+      required: [ generatedDataprocClusterCloudId ]
+      properties:
+        generatedDataprocClusterCloudId:
+          type: string
+
+    GenerateGcpDataprocClusterCloudIdRequestBody:
+      type: object
+      required: [ dataprocClusterName ]
+      properties:
+        dataprocClusterName:
+          type: string
+
+  responses:
+    CreatedControlledGcpDataprocClusterResponse:
+      description: Response for creating a controlled Dataproc cluster resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledGcpDataprocClusterResult'
+
+    DeleteControlledGcpDataprocClusterResponse:
+      description: Response for deleting a controlled Dataproc cluster resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DeleteControlledGcpDataprocClusterResult'
+
+    DataprocClusterCloudIdResponse:
+      description: A valid Dataproc cluster name per https://cloud.google.com/dataproc/docs/guides/create-cluster.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DataprocClusterCloudId'

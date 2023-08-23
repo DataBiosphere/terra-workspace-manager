@@ -23,17 +23,15 @@ public class ControlledAzureBatchPoolHandler implements WsmResourceHandler {
   public WsmResource makeResourceFromDb(DbResource dbResource) {
     ControlledAzureBatchPoolAttributes attributes =
         DbSerDes.fromJson(dbResource.getAttributes(), ControlledAzureBatchPoolAttributes.class);
-    var resource =
-        ControlledAzureBatchPoolResource.builder()
-            .id(attributes.getId())
-            .vmSize(attributes.getVmSize())
-            .common(new ControlledResourceFields(dbResource))
-            .build();
-    return resource;
+    return ControlledAzureBatchPoolResource.builder()
+        .id(attributes.getId())
+        .vmSize(attributes.getVmSize())
+        .common(new ControlledResourceFields(dbResource))
+        .build();
   }
 
   @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
+    throw new FeatureNotSupportedException("Generate cloud name feature is not implemented yet");
   }
 }

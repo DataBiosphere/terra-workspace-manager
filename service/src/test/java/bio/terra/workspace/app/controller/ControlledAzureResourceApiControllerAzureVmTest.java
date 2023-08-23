@@ -1,10 +1,10 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.CREATE_AZURE_VM_PATH_FORMAT;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addAuth;
-import static bio.terra.workspace.common.utils.MockMvcUtils.addJsonContentType;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.addJsonContentType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -13,7 +13,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -37,7 +39,7 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
   @Autowired ControlledAzureResourceApiController controller;
 
   @BeforeEach
-  void setUp() throws InterruptedException {
+  void setUp() {
     when(mockSamService()
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);
@@ -49,7 +51,7 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
     mockMvc
         .perform(
             addAuth(
-                post(String.format(CREATE_AZURE_VM_PATH_FORMAT, workspaceId))
+                post(String.format(CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT, workspaceId))
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
@@ -61,12 +63,14 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
   @Test
   public void createAzureVmWithoutDisk() throws Exception {
     UUID workspaceId = UUID.randomUUID();
+    setupMockLandingZoneRegion(Region.US_SOUTH_CENTRAL);
 
-    final ApiControlledResourceCommonFields commonFields =
+    ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
-    var creationParameters = ControlledResourceFixtures.getAzureVmCreationParameters().diskId(null);
-    final ApiCreateControlledAzureVmRequestBody vmRequest =
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters().diskId(null);
+    ApiCreateControlledAzureVmRequestBody vmRequest =
         new ApiCreateControlledAzureVmRequestBody()
             .common(commonFields)
             .azureVm(creationParameters)
@@ -87,12 +91,13 @@ public class ControlledAzureResourceApiControllerAzureVmTest extends BaseAzureUn
             new JobApiUtils.AsyncJobResult<ControlledAzureVmResource>()
                 .result(resource)
                 .jobReport(new ApiJobReport().status(ApiJobReport.StatusEnum.SUCCEEDED)));
+    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
 
     mockMvc
         .perform(
             addJsonContentType(
                 addAuth(
-                    post(String.format(CREATE_AZURE_VM_PATH_FORMAT, workspaceId))
+                    post(String.format(CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT, workspaceId))
                         .content(objectMapper.writeValueAsString(vmRequest)),
                     USER_REQUEST)))
         .andExpect(status().is(HttpStatus.SC_OK));

@@ -5,7 +5,7 @@ paths:
     post:
       summary: Create a new GCS bucket reference in a workspace.
       operationId: createBucketReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       requestBody:
         required: true
         content:
@@ -31,7 +31,7 @@ paths:
     get:
       summary: Gets a reference to a bucket from a workspace.
       operationId: getBucketReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/GcpGcsBucketReferenceResponse'
@@ -44,7 +44,7 @@ paths:
     post:
       summary: Update name, description or the referencing target of a bucket reference in a workspace
       operationId: updateBucketReferenceResource
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       requestBody:
         required: true
         content:
@@ -58,12 +58,14 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
     delete:
       summary: Delete Gcp bucket reference
       operationId: deleteBucketReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       responses:
         '204':
           description: OK
@@ -81,7 +83,7 @@ paths:
     post:
       summary: Clone a referenced GCS Bucket resource
       operationId: cloneGcpGcsBucketReference
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       requestBody:
         required: true
         content:
@@ -107,7 +109,7 @@ paths:
     get:
       summary: Gets a reference to a Gcp bucket by name.
       operationId: getBucketReferenceByName
-      tags: [ReferencedGcpResource]
+      tags: [ ReferencedGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/GcpGcsBucketReferenceResponse'
@@ -123,7 +125,7 @@ components:
     CreateGcpGcsBucketReferenceRequestBody:
       type: object
       description: A request to create a reference to a GCS bucket.
-      required: [metadata, bucket]
+      required: [ metadata, bucket ]
       properties:
         metadata:
           $ref: '#/components/schemas/ReferenceResourceCommonFields'

@@ -1,12 +1,18 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.USER_REQUEST;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.common.utils.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockDataRepoApi;
+import bio.terra.workspace.common.mocks.MockGcpApi;
+import bio.terra.workspace.common.mocks.MockGitRepoApi;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -24,6 +30,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
+  @Autowired MockGcpApi mockGcpApi;
+  @Autowired MockDataRepoApi mockDataRepoApi;
+  @Autowired MockGitRepoApi mockGitRepoApi;
   @Autowired ObjectMapper objectMapper;
 
   @BeforeEach
@@ -41,13 +51,19 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     // Needed for assertion that requester has role on workspace.
     when(mockSamService().listRequesterRoles(any(), any(), any()))
         .thenReturn(List.of(WsmIamRole.OWNER));
+    when(mockSamService()
+            .isAuthorized(
+                any(),
+                eq(SamConstants.SamResource.SPEND_PROFILE),
+                any(),
+                eq(SamConstants.SamSpendProfileAction.LINK)))
+        .thenReturn(true);
   }
 
   @Test
   public void cloneReferencedDataRepoSnapshot_copyDefinition_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedDataRepoSnapshot(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -59,9 +75,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedDataRepoSnapshot_copyResource_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedDataRepoSnapshot(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -73,9 +88,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedBqDataset_copyDefinition_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedBqDataset(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGcpApi.cloneReferencedBqDatasetAndExpect(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -87,9 +101,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedBqDataset_copyResource_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedBqDataset(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGcpApi.cloneReferencedBqDatasetAndExpect(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -101,9 +114,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedBqTable_copyDefinition_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedBqTable(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGcpApi.cloneReferencedBqDataTableAndExpect(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -115,9 +127,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedBqTable_copyResource_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedBqTable(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGcpApi.cloneReferencedBqDataTableAndExpect(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -129,9 +140,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedGcsBucket_copyDefinition_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedGcsBucket(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGcpApi.cloneReferencedGcsBucketAndExpect(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -143,9 +153,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedGcsBucket_copyResource_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedGcsBucket(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGcpApi.cloneReferencedGcsBucketAndExpect(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -157,9 +166,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedGcsObject_copyDefinition_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedGcsObject(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGcpApi.cloneReferencedGcsObjectAndExpect(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -171,9 +179,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedGcsObject_copyResource_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedGcsObject(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGcpApi.cloneReferencedGcsObjectAndExpect(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -185,9 +192,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedGitRepo_copyDefinition_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedGitRepo(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGitRepoApi.cloneReferencedGitRepo(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),
@@ -199,9 +205,8 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
 
   @Test
   public void cloneReferencedGitRepo_copyResource_throws400() throws Exception {
-    UUID workspaceId = mockMvcUtils.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
-
-    mockMvcUtils.cloneReferencedGitRepo(
+    UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
+    mockGitRepoApi.cloneReferencedGitRepo(
         USER_REQUEST,
         workspaceId,
         /*sourceResourceId=*/ UUID.randomUUID(),

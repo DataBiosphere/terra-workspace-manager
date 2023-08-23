@@ -1,15 +1,15 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer;
 
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
+import bio.terra.cloudres.azure.resourcemanager.storage.data.CreateStorageContainerRequestData;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.resourcemanager.data.CreateStorageContainerRequestData;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
@@ -66,15 +66,16 @@ public class CreateAzureStorageContainerStep implements Step {
           .create(
               Defaults.buildContext(
                   CreateStorageContainerRequestData.builder()
-                      .setStorageAccountId(resource.getStorageAccountId())
                       .setStorageContainerName(resource.getStorageContainerName())
+                      .setStorageAccountName(storageAccountName)
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+                      .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
+                      .setTenantId(azureCloudContext.getAzureTenantId())
                       .build()));
     } catch (ManagementException e) {
       logger.error(
-          "Failed to create the Azure storage container '{}' with storage account with the ID '{}'. Error Code: {}",
+          "Failed to create the Azure storage container '{}'. Error Code: {}",
           resource.getStorageContainerName(),
-          resource.getStorageAccountId(),
           e.getValue().getCode(),
           e);
 
@@ -88,9 +89,9 @@ public class CreateAzureStorageContainerStep implements Step {
    * Deletes the storage container if the container is available. If the storage container is
    * available and deletes fails, the failure is considered fatal and must looked into it.
    *
-   * @param context
+   * @param context context
    * @return Step result.
-   * @throws InterruptedException
+   * @throws InterruptedException InterruptedException
    */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
@@ -114,8 +115,8 @@ public class CreateAzureStorageContainerStep implements Step {
           .storageAccounts()
           .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), storageAccountName);
     } catch (ManagementException ex) {
-      if (ManagementExceptionUtils.isExceptionCode(
-          ex, ManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          ex, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.warn(
             "Deletion of the storage container is not required. Parent storage account does not exist. {}",
             storageAccountName);
@@ -136,8 +137,8 @@ public class CreateAzureStorageContainerStep implements Step {
               storageAccountName,
               resource.getStorageContainerName());
     } catch (ManagementException ex) {
-      if (ManagementExceptionUtils.isExceptionCode(
-          ex, ManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          ex, AzureManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
         logger.warn(
             "Deletion of the storage container is not required. Storage container does not exist. {}",
             resource.getStorageContainerName());

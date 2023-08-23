@@ -1,18 +1,23 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.iam.SamUser;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.controller.shared.ControllerUtils;
+import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiJobReport.StatusEnum;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
@@ -22,29 +27,48 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 
 /**
- * Super class for controllers containing common code. The code in here requires the @Autowired
- * beans from the @Controller classes, so it is better as a superclass rather than static methods.
+ * Super class for controllers containing common code.
+ *
+ * <p>NOTE: I started to migrate this to a separate ControllerUtils class rather than use the class
+ * hierarchy. Using a super class was based on an incorrect understanding of how HttpServletRequest
+ * is handled; it is not necessary. I only did as much of this refactoring as I needed for the
+ * workspace/v2 work, leaving the rest of it for later.
+ *
+ * <p>Making it a separate utility class lets us decompose controller modules (which are getting
+ * large) into smaller pieces.
  */
 public class ControllerBase {
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
   private final HttpServletRequest request;
-  private final SamService samService;
+  protected final SamService samService;
+  protected final FeatureConfiguration features;
+  protected final FeatureService featureService;
+  protected final JobService jobService;
+  protected final JobApiUtils jobApiUtils;
 
   public ControllerBase(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
       HttpServletRequest request,
-      SamService samService) {
+      SamService samService,
+      FeatureConfiguration features,
+      FeatureService featureService,
+      JobService jobService,
+      JobApiUtils jobApiUtils) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
     this.request = request;
     this.samService = samService;
-  }
-
-  public SamService getSamService() {
-    return samService;
+    this.features = features;
+    this.featureService = featureService;
+    this.jobService = jobService;
+    this.jobApiUtils = jobApiUtils;
   }
 
   public AuthenticatedUserRequest getAuthenticatedInfo() {
     return authenticatedUserRequestFactory.from(request);
+  }
+
+  public SamUser getSamUser() {
+    return samService.getSamUser(request);
   }
 
   /**
@@ -60,7 +84,7 @@ public class ControllerBase {
    * @return a string with the result endpoint URL
    */
   public String getAsyncResultEndpoint(String jobId, String resultWord) {
-    return String.format("%s/%s/%s", request.getServletPath(), resultWord, jobId);
+    return ControllerUtils.getAsyncResultEndpoint(request, resultWord, jobId);
   }
 
   /**
@@ -81,7 +105,7 @@ public class ControllerBase {
    * response or error report bodies.
    */
   public static HttpStatus getAsyncResponseCode(ApiJobReport jobReport) {
-    return jobReport.getStatus() == StatusEnum.RUNNING ? HttpStatus.ACCEPTED : HttpStatus.OK;
+    return ControllerUtils.getAsyncResponseCode(jobReport);
   }
 
   /**
@@ -118,65 +142,60 @@ public class ControllerBase {
 
     // Private access scope
     switch (managedBy) {
-      case MANAGED_BY_APPLICATION:
-        {
-          // Supplying a user is optional for applications
-          if (inputUser == null) {
-            return new PrivateUserRole.Builder().present(false).build();
-          }
-
-          // We have a private user, so make sure the email is present and valid
-          String userEmail = commonFields.getPrivateResourceUser().getUserName();
-          ControllerValidationUtils.validateEmail(userEmail);
-
-          // Validate that the assigned user is a member of the workspace. It must have at least
-          // READ action.
-          SamRethrow.onInterrupted(
-              () ->
-                  samService.userIsAuthorized(
-                      SamConstants.SamResource.WORKSPACE,
-                      workspaceUuid.toString(),
-                      SamConstants.SamWorkspaceAction.READ,
-                      userEmail,
-                      userRequest),
-              "validate private user is workspace member");
-
-          // Translate the incoming role list into our internal model form
-          // This also validates that the incoming API model values are correct.
-          var iamRole =
-              ControlledResourceIamRole.fromApiModel(
-                  commonFields.getPrivateResourceUser().getPrivateResourceIamRole());
-
-          if (iamRole != ControlledResourceIamRole.READER
-              && iamRole != ControlledResourceIamRole.WRITER) {
-            throw new ValidationException(
-                "For application private controlled resources, only READER and WRITER roles are allowed. Found "
-                    + iamRole.toApiModel());
-          }
-
-          return new PrivateUserRole.Builder()
-              .present(true)
-              .userEmail(userEmail)
-              .role(iamRole)
-              .build();
+      case MANAGED_BY_APPLICATION -> {
+        // Supplying a user is optional for applications
+        if (inputUser == null) {
+          return new PrivateUserRole.Builder().present(false).build();
         }
 
-      case MANAGED_BY_USER:
-        {
-          validateNoInputUser(inputUser);
+        // We have a private user, so make sure the email is present and valid
+        String userEmail = commonFields.getPrivateResourceUser().getUserName();
+        ControllerValidationUtils.validateEmail(userEmail);
 
-          // At this time, all private resources grant EDITOR permission to the resource user.
-          // This could be parameterized if we ever have reason to grant different permissions
-          // to different objects.
-          return new PrivateUserRole.Builder()
-              .present(true)
-              .userEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
-              .role(ControlledResourceIamRole.EDITOR)
-              .build();
+        // Validate that the assigned user is a member of the workspace. It must have at least
+        // READ action.
+        Rethrow.onInterrupted(
+            () ->
+                samService.userIsAuthorized(
+                    SamConstants.SamResource.WORKSPACE,
+                    workspaceUuid.toString(),
+                    SamConstants.SamWorkspaceAction.READ,
+                    userEmail,
+                    userRequest),
+            "validate private user is workspace member");
+
+        // Translate the incoming role list into our internal model form
+        // This also validates that the incoming API model values are correct.
+        var iamRole =
+            ControlledResourceIamRole.fromApiModel(
+                commonFields.getPrivateResourceUser().getPrivateResourceIamRole());
+
+        if (iamRole != ControlledResourceIamRole.READER
+            && iamRole != ControlledResourceIamRole.WRITER) {
+          throw new ValidationException(
+              "For application private controlled resources, only READER and WRITER roles are allowed. Found "
+                  + iamRole.toApiModel());
         }
 
-      default:
-        throw new InternalLogicException("Unknown managedBy enum");
+        return new PrivateUserRole.Builder()
+            .present(true)
+            .userEmail(userEmail)
+            .role(iamRole)
+            .build();
+      }
+      case MANAGED_BY_USER -> {
+        validateNoInputUser(inputUser);
+
+        // At this time, all private resources grant EDITOR permission to the resource user.
+        // This could be parameterized if we ever have reason to grant different permissions
+        // to different objects.
+        return new PrivateUserRole.Builder()
+            .present(true)
+            .userEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest))
+            .role(ControlledResourceIamRole.EDITOR)
+            .build();
+      }
+      default -> throw new InternalLogicException("Unknown managedBy enum");
     }
   }
 

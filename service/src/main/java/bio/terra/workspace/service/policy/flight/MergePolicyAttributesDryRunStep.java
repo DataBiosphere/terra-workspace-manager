@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.policy.flight;
 
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.stairway.FlightContext;
@@ -11,7 +13,6 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +42,9 @@ public class MergePolicyAttributesDryRunStep implements Step {
       throws InterruptedException, RetryException {
     // Create PAOs if they don't exist; catch TPS exceptions and retry
     try {
-      tpsApiDispatch.createPaoIfNotExist(sourceWorkspaceId);
-      tpsApiDispatch.createPaoIfNotExist(destinationWorkspaceId);
+      tpsApiDispatch.getOrCreatePao(sourceWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
+      tpsApiDispatch.getOrCreatePao(
+          destinationWorkspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
     } catch (Exception ex) {
       logger.info("Attempt to create a PAO for workspace failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
@@ -56,11 +58,7 @@ public class MergePolicyAttributesDryRunStep implements Step {
                 sourceWorkspaceId, destinationWorkspaceId, TpsUpdateMode.DRY_RUN);
 
     if (!dryRunResults.getConflicts().isEmpty()) {
-      List<String> conflictList =
-          dryRunResults.getConflicts().stream()
-              .map(c -> c.getNamespace() + ':' + c.getName())
-              .toList();
-      throw new PolicyConflictException("Policy merge has conflicts", conflictList);
+      throw new PolicyConflictException("Policy merge has conflicts", dryRunResults.getConflicts());
     }
 
     flightContext

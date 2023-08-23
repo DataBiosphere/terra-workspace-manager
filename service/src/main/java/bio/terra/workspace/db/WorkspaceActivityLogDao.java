@@ -15,6 +15,8 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -48,6 +50,7 @@ public class WorkspaceActivityLogDao {
                 ? OperationType.UNKNOWN
                 : OperationType.valueOf(changeTypeString);
         return new ActivityLogChangeDetails(
+            UUID.fromString(rs.getString("workspace_id")),
             OffsetDateTime.ofInstant(rs.getTimestamp("change_date").toInstant(), ZoneId.of("UTC")),
             rs.getString("actor_email"),
             rs.getString("actor_subject_id"),
@@ -116,7 +119,7 @@ public class WorkspaceActivityLogDao {
   public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(UUID workspaceId) {
     final String sql =
         """
-            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
+            SELECT workspace_id, change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
             FROM workspace_activity_log
             WHERE workspace_id = :workspace_id AND change_type NOT IN (:change_type)
             ORDER BY change_date DESC
@@ -139,7 +142,7 @@ public class WorkspaceActivityLogDao {
       UUID workspaceId, String changeSubjectId) {
     final String sql =
         """
-            SELECT change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
+            SELECT workspace_id, change_date, actor_email, actor_subject_id, change_subject_id, change_subject_type, change_type
             FROM workspace_activity_log
             WHERE workspace_id = :workspace_id AND change_subject_id = :change_subject_id
             ORDER BY change_date DESC
@@ -153,5 +156,51 @@ public class WorkspaceActivityLogDao {
     return Optional.ofNullable(
         DataAccessUtils.singleResult(
             jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER)));
+  }
+
+  /**
+   * Given a list of workspace ids, return a list of last update activity log details
+   *
+   * @param workspaceIdList list of workspace ids
+   * @return list of last update activity log details
+   */
+  @Traced
+  @ReadTransaction
+  public List<ActivityLogChangeDetails> getLastUpdatedDetailsForList(Set<UUID> workspaceIdList) {
+    if (workspaceIdList.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    // This is a query that uses group by/max to build a result table of
+    // (workspace_id, max(date)) that we self-join to the activity log table
+    // to do a bulk retrieval of last-updated information.
+    final String sql =
+        """
+      SELECT
+        A.workspace_id,
+        A.change_date,
+        A.actor_email,
+        A.actor_subject_id,
+        A.change_subject_id,
+        A.change_subject_type,
+        A.change_type
+      FROM
+        (SELECT workspace_id, max(change_date) AS mxdate
+         FROM workspace_activity_log
+         WHERE workspace_id IN (:workspace_ids)
+           AND change_type NOT IN (:change_type)
+         GROUP BY workspace_id) X
+      JOIN
+        workspace_activity_log A
+      ON X.workspace_id = A.workspace_id AND X.mxdate = A.change_date
+      """;
+
+    List<String> textIdList = workspaceIdList.stream().map(UUID::toString).toList();
+    final var params =
+        new MapSqlParameterSource()
+            .addValue("workspace_ids", textIdList)
+            .addValue("change_type", NON_UPDATE_TYPE_OPERATION);
+
+    return jdbcTemplate.query(sql, params, ACTIVITY_LOG_CHANGE_DETAILS_ROW_MAPPER);
   }
 }

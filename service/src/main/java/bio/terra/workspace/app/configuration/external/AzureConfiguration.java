@@ -1,5 +1,6 @@
 package bio.terra.workspace.app.configuration.external;
 
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,9 @@ public class AzureConfiguration {
   private Long sasTokenExpiryTimeMaximumMinutesOffset;
   private String corsAllowedOrigins;
   private String azureMonitorLinuxAgentVersion;
+  private List<String> protectedDataLandingZoneDefs;
+  private String azureDatabaseUtilImage;
+  private Integer azureDatabaseUtilLogsTailLines;
 
   public String getManagedAppClientId() {
     return managedAppClientId;
@@ -81,5 +85,29 @@ public class AzureConfiguration {
 
   public void setAzureMonitorLinuxAgentVersion(String azureMonitorLinuxAgentVersion) {
     this.azureMonitorLinuxAgentVersion = azureMonitorLinuxAgentVersion;
+  }
+
+  public List<String> getProtectedDataLandingZoneDefs() {
+    return protectedDataLandingZoneDefs;
+  }
+
+  public void setProtectedDataLandingZoneDefs(List<String> protectedDataLandingZoneDefs) {
+    this.protectedDataLandingZoneDefs = protectedDataLandingZoneDefs;
+  }
+
+  public String getAzureDatabaseUtilImage() {
+    return azureDatabaseUtilImage;
+  }
+
+  public void setAzureDatabaseUtilImage(String azureDatabaseUtilImage) {
+    this.azureDatabaseUtilImage = azureDatabaseUtilImage;
+  }
+
+  public Integer getAzureDatabaseUtilLogsTailLines() {
+    return azureDatabaseUtilLogsTailLines;
+  }
+
+  public void setAzureDatabaseUtilLogsTailLines(Integer azureDatabaseUtilLogsTailLines) {
+    this.azureDatabaseUtilLogsTailLines = azureDatabaseUtilLogsTailLines;
   }
 }

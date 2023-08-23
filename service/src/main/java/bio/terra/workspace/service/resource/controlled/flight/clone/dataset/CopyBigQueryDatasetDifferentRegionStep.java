@@ -7,9 +7,9 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.common.utils.RetryUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.SamRethrow;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -56,17 +56,18 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputParameters = flightContext.getInputParameters();
-    FlightUtils.validateRequiredEntries(
-        inputParameters, ControlledResourceKeys.DESTINATION_DATASET_NAME);
-
     UUID destinationWorkspaceId =
-        inputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+        FlightUtils.getRequired(
+            inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     String destinationProjectId =
-        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
+        gcpCloudContextService.getRequiredReadyGcpProject(destinationWorkspaceId);
 
     String destinationDatasetId =
-        inputParameters.get(ControlledResourceKeys.DESTINATION_DATASET_NAME, String.class);
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(),
+            ControlledResourceKeys.DESTINATION_DATASET_NAME,
+            String.class);
 
     Map<String, Value> params = new HashMap<>();
     String sourceDatasetId = sourceDataset.getDatasetName();
@@ -86,20 +87,21 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
     try (DataTransferServiceClient dataTransferServiceClient = DataTransferServiceClient.create()) {
       ProjectName parent = ProjectName.of(destinationProjectId);
       String petSaEmail =
-          SamRethrow.onInterrupted(
+          Rethrow.onInterrupted(
               () ->
                   samService.getOrCreatePetSaEmail(
-                      gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId),
-                      userRequest.getRequiredToken()),
+                      destinationProjectId, userRequest.getRequiredToken()),
               "CopyBigQueryDatasetDifferentRegionStep");
 
       TransferConfig config =
-          dataTransferServiceClient.createTransferConfig(
-              CreateTransferConfigRequest.newBuilder()
-                  .setParent(parent.toString())
-                  .setTransferConfig(transferConfig)
-                  .setServiceAccountName(petSaEmail)
-                  .build());
+          RetryUtils.getWithRetryOnException(
+              () ->
+                  dataTransferServiceClient.createTransferConfig(
+                      CreateTransferConfigRequest.newBuilder()
+                          .setParent(parent.toString())
+                          .setTransferConfig(transferConfig)
+                          .setServiceAccountName(petSaEmail)
+                          .build()));
 
       var now = Instant.now();
 
@@ -126,6 +128,11 @@ public class CopyBigQueryDatasetDifferentRegionStep implements Step {
         if (!currentRun.getState().equals(TransferState.SUCCEEDED)) {
           String errorMessage = currentRun.getErrorStatus().getMessage();
           logger.warn("Job {} failed: {}", currentRunName, errorMessage);
+          if (errorMessage.contains(
+              "service account needs iam.serviceAccounts.getAccessToken permission")) {
+            return new StepResult(
+                StepStatus.STEP_RESULT_FAILURE_RETRY, new RuntimeException(errorMessage));
+          }
           return new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException(errorMessage));
         }

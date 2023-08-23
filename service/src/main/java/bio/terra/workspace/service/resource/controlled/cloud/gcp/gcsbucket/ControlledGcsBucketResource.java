@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
@@ -14,13 +13,13 @@ import bio.terra.workspace.generated.model.ApiGcpGcsBucketAttributes;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -31,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
@@ -66,16 +66,6 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   public static ControlledGcsBucketResource.Builder builder() {
     return new ControlledGcsBucketResource.Builder();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
   }
 
   // -- getters used in serialization --
@@ -146,7 +136,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
   }
 
   @Override
-  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
     ControlledGcsBucketResource resource =
         getResourceFromFlightInputParameters(flight, WsmResourceType.CONTROLLED_GCP_GCS_BUCKET);
     RetryRule gcpRetry = RetryRules.cloud();
@@ -226,30 +216,21 @@ public class ControlledGcsBucketResource extends ControlledResource {
     }
     // Allow underscore bucket name to be backward compatible. The database contains bucket with
     // underscore bucketname.
-    ResourceValidationUtils.validateBucketNameAllowsUnderscore(bucketName);
+    GcpResourceValidationUtils.validateGcsBucketNameAllowsUnderscore(bucketName);
   }
 
   public void validateForNewBucket() {
     validate();
     // Disallow underscore in new terra managed GCS bucket.
-    ResourceValidationUtils.validateBucketNameDisallowUnderscore(bucketName);
+    GcpResourceValidationUtils.validateGcsBucketNameDisallowUnderscore(bucketName);
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    if (!super.equals(o)) {
-      return false;
-    }
-
-    ControlledGcsBucketResource that = (ControlledGcsBucketResource) o;
-
-    return bucketName.equals(that.bucketName);
+    if (this == o) return true;
+    if (!(o instanceof ControlledGcsBucketResource that)) return false;
+    if (!super.equals(o)) return false;
+    return Objects.equal(bucketName, that.bucketName);
   }
 
   @Override
@@ -271,9 +252,7 @@ public class ControlledGcsBucketResource extends ControlledResource {
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + bucketName.hashCode();
-    return result;
+    return Objects.hashCode(super.hashCode(), bucketName);
   }
 
   public static class Builder {

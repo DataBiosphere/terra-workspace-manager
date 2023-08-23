@@ -13,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -61,13 +60,15 @@ public abstract class ControlledResource extends WsmResource {
   }
 
   /**
-   * Construct the ControlledResource from the fields builder
+   * Construct the ControlledResource from the fields builder NOTE: we make a copy of the
+   * WsmResourceFields. This seems prudent, so the created resource cannot be mutated by some input
+   * field builder.
    *
    * @param fields container for building WsmResource and Controlled resource
    */
   protected ControlledResource(ControlledResourceFields fields) {
     super(
-        new WsmResourceFields.Builder<>()
+        WsmResourceFields.builder()
             .workspaceUuid(fields.getWorkspaceId())
             .resourceId(fields.getResourceId())
             .name(fields.getName())
@@ -79,6 +80,9 @@ public abstract class ControlledResource extends WsmResource {
             .createdDate(fields.getCreatedDate())
             .lastUpdatedByEmail(fields.getLastUpdatedByEmail())
             .lastUpdatedDate(fields.getLastUpdatedDate())
+            .state(fields.getState())
+            .flightId(fields.getFlightId())
+            .error(fields.getError())
             .build());
     this.wsmControlledResourceFields = fields.getWsmControlledResourceFields();
   }
@@ -134,16 +138,6 @@ public abstract class ControlledResource extends WsmResource {
    */
   public abstract void addDeleteSteps(
       DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag);
-
-  /**
-   * The UpdateControlledResourceFlight calls this method to populate the resource-specific step(s)
-   * to create the specific cloud resource.
-   *
-   * @param flight The update flight
-   * @param flightBeanBag Bean bag for finding Spring singletons.
-   */
-  public abstract void addUpdateSteps(
-      UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag);
 
   public <T extends ControlledResource> T getResourceFromFlightInputParameters(
       Flight flight, WsmResourceType resourceType) {

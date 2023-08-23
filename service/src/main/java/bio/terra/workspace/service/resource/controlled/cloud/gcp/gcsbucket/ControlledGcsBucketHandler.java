@@ -8,6 +8,7 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.ws.rs.BadRequestException;
 import org.apache.commons.lang3.StringUtils;
@@ -57,16 +58,14 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
    * In addition, bucket names cannot begin with the "goog" prefix. For details, see
    * https://cloud.google.com/storage/docs/naming-buckets.
    */
-  public String generateCloudName(UUID workspaceUuid, String bucketName) {
+  @Override
+  public String generateCloudName(@Nullable UUID workspaceUuid, String bucketName) {
     Preconditions.checkNotNull(workspaceUuid);
 
     String projectId = gcpCloudContextService.getRequiredGcpProject(workspaceUuid);
+
     String generatedName =
         String.format("%s-%s", bucketName, projectId).toLowerCase().replace("_", "-");
-    generatedName =
-        generatedName.length() > MAX_BUCKET_NAME_LENGTH
-            ? generatedName.substring(0, MAX_BUCKET_NAME_LENGTH)
-            : generatedName;
 
     // The regular expression only allow legal character combinations which start with alphanumeric
     // letter, but not start with "google" or "goog", dash("-") in the string, and alphanumeric
@@ -77,12 +76,15 @@ public class ControlledGcsBucketHandler implements WsmResourceHandler {
             .or(CharMatcher.inRange('a', 'z'))
             .or(CharMatcher.is('-'))
             .retainFrom(generatedName);
-    // The name cannot start or end with dash("-")
+    // Truncate before trimming characters to ensure the name does not end with dash("-").
+    generatedName = StringUtils.truncate(generatedName, MAX_BUCKET_NAME_LENGTH);
+    // The name cannot start or end with dash("-").
     generatedName = CharMatcher.is('-').trimFrom(generatedName);
+
     if (generatedName.length() == 0) {
       throw new BadRequestException(
           String.format(
-              "Cannot generate a gcs bucket name from %s, it must contains"
+              "Cannot generate a gcs bucket name from %s, it must contain"
                   + " alphanumerical characters.",
               bucketName));
     }

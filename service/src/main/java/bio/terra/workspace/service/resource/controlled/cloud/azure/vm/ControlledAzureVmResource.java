@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
@@ -13,14 +12,13 @@ import bio.terra.workspace.generated.model.ApiAzureVmAttributes;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -35,9 +33,6 @@ public class ControlledAzureVmResource extends ControlledResource {
   private final String vmName;
   private final String vmSize;
   private final String vmImage;
-
-  private final UUID ipId;
-  private final UUID networkId;
   private final UUID diskId;
 
   @JsonCreator
@@ -48,45 +43,23 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("vmName") String vmName,
       @JsonProperty("vmSize") String vmSize,
       @JsonProperty("vmImage") String vmImage,
-      @JsonProperty("ipId") UUID ipId,
-      @JsonProperty("networkId") UUID networkId,
       @JsonProperty("diskId") UUID diskId) {
     super(resourceFields, controlledResourceFields);
     this.vmName = vmName;
     this.vmSize = vmSize;
     this.vmImage = vmImage;
-    this.ipId = ipId;
-    this.networkId = networkId;
     this.diskId = diskId;
     validate();
   }
 
   private ControlledAzureVmResource(
-      ControlledResourceFields common,
-      String vmName,
-      String vmSize,
-      String vmImage,
-      UUID ipId,
-      UUID networkId,
-      UUID diskId) {
+      ControlledResourceFields common, String vmName, String vmSize, String vmImage, UUID diskId) {
     super(common);
     this.vmName = vmName;
     this.vmImage = vmImage;
     this.vmSize = vmSize;
-    this.ipId = ipId;
-    this.networkId = networkId;
     this.diskId = diskId;
     validate();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
   }
 
   // -- getters used in serialization --
@@ -111,14 +84,6 @@ public class ControlledAzureVmResource extends ControlledResource {
 
   public String getVmImage() {
     return vmImage;
-  }
-
-  public UUID getIpId() {
-    return ipId;
-  }
-
-  public UUID getNetworkId() {
-    return networkId;
   }
 
   public UUID getDiskId() {
@@ -167,7 +132,8 @@ public class ControlledAzureVmResource extends ControlledResource {
             this,
             flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
-            flightBeanBag.getSamService()),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWorkspaceService()),
         cloudRetry);
     flight.addStep(
         new CreateAzureVmStep(
@@ -176,9 +142,6 @@ public class ControlledAzureVmResource extends ControlledResource {
             this,
             flightBeanBag.getResourceDao()),
         cloudRetry);
-    flight.addStep(
-        new UpdateControlledResourceRegionStep(flightBeanBag.getResourceDao(), getResourceId()),
-        RetryRules.shortDatabase());
     flight.addStep(
         new AssignManagedIdentityAzureVmStep(
             flightBeanBag.getAzureConfig(),
@@ -192,7 +155,8 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getCrlService(),
             this,
             flightBeanBag.getLandingZoneApiDispatch(),
-            flightBeanBag.getSamService()),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWorkspaceService()),
         cloudRetry);
   }
 
@@ -214,7 +178,7 @@ public class ControlledAzureVmResource extends ControlledResource {
 
   // Azure resources currently do not implement updating.
   @Override
-  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {}
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   public ApiAzureVmAttributes toApiAttributes() {
     return new ApiAzureVmAttributes()
@@ -222,9 +186,7 @@ public class ControlledAzureVmResource extends ControlledResource {
         .region(getRegion())
         .vmSize(getVmSize())
         .vmImage(getVmImage())
-        .ipId(getIpId())
-        .diskId(getDiskId())
-        .networkId(getNetworkId());
+        .diskId(getDiskId());
   }
 
   public ApiAzureVmResource toApiResource() {
@@ -242,13 +204,7 @@ public class ControlledAzureVmResource extends ControlledResource {
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAzureVmAttributes(
-            getVmName(),
-            getRegion(),
-            getVmSize(),
-            getVmImage(),
-            getIpId(),
-            getNetworkId(),
-            getDiskId()));
+            getVmName(), getRegion(), getVmSize(), getVmImage(), getDiskId()));
   }
 
   @Override
@@ -271,8 +227,7 @@ public class ControlledAzureVmResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required valid vmImage field for ControlledAzureVm.");
     }
-    ResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
-    ResourceValidationUtils.validateAzureVmSize(getVmSize());
+    AzureResourceValidationUtils.validateAzureIPorSubnetName(getVmName());
   }
 
   @Override
@@ -311,11 +266,8 @@ public class ControlledAzureVmResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String vmName;
-    private String region;
     private String vmSize;
     private String vmImage;
-    private UUID ipId;
-    private UUID networkId;
     private UUID diskId;
 
     public Builder common(ControlledResourceFields common) {
@@ -338,24 +290,13 @@ public class ControlledAzureVmResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureVmResource.Builder ipId(UUID ipId) {
-      this.ipId = ipId;
-      return this;
-    }
-
-    public ControlledAzureVmResource.Builder networkId(UUID networkId) {
-      this.networkId = networkId;
-      return this;
-    }
-
     public ControlledAzureVmResource.Builder diskId(UUID diskId) {
       this.diskId = diskId;
       return this;
     }
 
     public ControlledAzureVmResource build() {
-      return new ControlledAzureVmResource(
-          common, vmName, vmSize, vmImage, ipId, networkId, diskId);
+      return new ControlledAzureVmResource(common, vmName, vmSize, vmImage, diskId);
     }
   }
 }

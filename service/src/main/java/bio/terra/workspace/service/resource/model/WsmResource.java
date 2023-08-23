@@ -5,16 +5,22 @@ import static bio.terra.workspace.service.resource.model.CloningInstructions.COP
 import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_REFERENCE;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
+import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.CloneInstructionNotSupportedException;
+import bio.terra.workspace.common.utils.ErrorReportUtils;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.db.exception.InvalidMetadataException;
 import bio.terra.workspace.db.model.DbResource;
+import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.generated.model.ApiResourceLineage;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -102,6 +108,17 @@ public abstract class WsmResource {
     return wsmResourceFields.getLastUpdatedDate();
   }
 
+  public WsmResourceState getState() {
+    return wsmResourceFields.getState();
+  }
+
+  public @Nullable String getFlightId() {
+    return wsmResourceFields.getFlightId();
+  }
+
+  public @Nullable ErrorReportException getError() {
+    return wsmResourceFields.getError();
+  }
   /**
    * Sub-classes must identify their stewardship type
    *
@@ -158,7 +175,23 @@ public abstract class WsmResource {
    * @param <T> implicit
    * @return cast to subtype
    */
-  public abstract <T> T castByEnum(WsmResourceType expectedType);
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+    }
+    return (T) this;
+  }
+
+  /**
+   * The UpdateResourceFlight calls this method to populate the resource-specific step(s) to modify
+   * resource attributes and/or cloud resources. We provide a default implementation for the "no
+   * steps" case.
+   *
+   * @param flight The update flight
+   * @param flightBeanBag Bean bag for finding Spring singletons.
+   */
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   /**
    * Build a ReferencedResource clone object of this resource object. Both controlled and referenced
@@ -254,7 +287,6 @@ public abstract class WsmResource {
    */
   public ApiResourceMetadata toApiMetadata() {
     ApiProperties apiProperties = convertMapToApiProperties(getProperties());
-
     ApiResourceMetadata apiResourceMetadata =
         new ApiResourceMetadata()
             .workspaceId(getWorkspaceId())
@@ -269,7 +301,13 @@ public abstract class WsmResource {
             .createdBy(getCreatedByEmail())
             .createdDate(getCreatedDate())
             .lastUpdatedBy(Optional.ofNullable(getLastUpdatedByEmail()).orElse(getCreatedByEmail()))
-            .lastUpdatedDate(Optional.ofNullable(getLastUpdatedDate()).orElse(getCreatedDate()));
+            .lastUpdatedDate(Optional.ofNullable(getLastUpdatedDate()).orElse(getCreatedDate()))
+            .state(getState().toApi())
+            .errorReport(
+                Optional.ofNullable(getError())
+                    .map(ErrorReportUtils::buildApiErrorReport)
+                    .orElse(null))
+            .jobId(getFlightId());
     ApiResourceLineage apiResourceLineage = new ApiResourceLineage();
     apiResourceLineage.addAll(
         getResourceLineage().stream().map(ResourceLineageEntry::toApiModel).toList());
@@ -314,6 +352,13 @@ public abstract class WsmResource {
       throw new InvalidMetadataException("Resource is not a controlled resource");
     }
     return (ControlledResource) this;
+  }
+
+  public CloningInstructions computeCloningInstructions(
+      @Nullable ApiCloningInstructionsEnum apiCloningInstructions) {
+    return Optional.ofNullable(apiCloningInstructions)
+        .map(CloningInstructions::fromApiModel)
+        .orElse(getCloningInstructions());
   }
 
   @Override

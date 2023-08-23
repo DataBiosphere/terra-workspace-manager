@@ -20,6 +20,12 @@ public final class WorkspaceFlightMapKeys {
   public static final String UPDATED_WORKSPACES = "updatedWorkspaces";
   public static final String SPEND_PROFILE = "spendProfile";
   public static final String PET_SA_CREDENTIALS = "petSaCredentials";
+  public static final String CLOUD_PLATFORM = "cloudPlatform";
+  public static final String CLOUD_CONTEXT = "cloudContext";
+  public static final String FLIGHT_IDS = "flightIds";
+  public static final String CREATE_CLOUD_CONTEXT_FLIGHT_ID = "createCloudContextFlightId";
+  public static final String RESOURCE_DELETE_FLIGHT_PAIR_LIST = "resourceDeleteFlightPairList";
+  public static final String PROJECT_OWNER_GROUP_ID = "projectOwnerGroupId";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -30,53 +36,49 @@ public final class WorkspaceFlightMapKeys {
 
     public static final String CREATION_PARAMETERS = "creationParameters";
     public static final String PRIVATE_RESOURCE_IAM_ROLE = "privateResourceIamRole";
-    public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
-    public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
-    public static final String WORKSPACE_ID_TO_AZURE_CLOUD_CONTEXT_MAP =
-        "workspaceIdToAzureCloudContextMap";
-    public static final String UPDATE_PARAMETERS = "updateParameters";
-    public static final String UPDATE_FLEX_DATA = "updateFlexData";
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
 
-    public static final String CONTROLLED_RESOURCES_WITHOUT_REGION =
-        "controlledResourcesWithoutRegion";
-    public static final String CONTROLLED_BIG_QUERY_DATASETS_WITHOUT_LIFETIME =
-        "controlledBigQueryDatasetsWithoutLifetime";
-    public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_TABLE_LIFETIME_MAP =
-        "controlledBigQueryDatasetToTableLifetimeMap";
-    public static final String CONTROLLED_BIG_QUERY_DATASET_RESOURCE_ID_TO_PARTITION_LIFETIME_MAP =
-        "controlledBigQueryDatasetToPartitionLifetimeMap";
-    public static final String CONTROLLED_RESOURCE_ID_TO_REGION_MAP =
-        "controlledResourceToRegionMap";
-    public static final String CONTROLLED_RESOURCE_ID_TO_WORKSPACE_ID_MAP =
-        "controlledResourceIdToWorkspaceIdMap";
+    public static final String CLOUD_PET_SERVICE_ACCOUNT = "cloudPetServiceAccount";
+
+    // Shared Instance Keys
+    public static final String CREATE_GCE_INSTANCE_NETWORK_NAME = "createGceInstanceNetworkName";
+    public static final String CREATE_GCE_INSTANCE_LOCATION = "createGceInstanceLocation";
+    public static final String CREATE_GCE_INSTANCE_SUBNETWORK_NAME =
+        "createGceInstanceSubnetworkName";
+
     // Notebooks keys
-    public static final String CREATE_NOTEBOOK_NETWORK_NAME = "createNotebookNetworkName";
     public static final String CREATE_NOTEBOOK_PARAMETERS = "createNotebookParameters";
-    public static final String CREATE_NOTEBOOK_LOCATION = "createNotebookLocation";
-    public static final String CREATE_NOTEBOOK_SUBNETWORK_NAME = "createNotebookSubnetworkName";
-    public static final String NOTEBOOK_PET_SERVICE_ACCOUNT = "notebookPetServiceAccount";
+
+    // GCE Instance keys
+    public static final String CREATE_GCE_INSTANCE_PARAMETERS = "createGceInstanceParameters";
+
+    // Dataproc Cluster keys
+    public static final String CREATE_DATAPROC_CLUSTER_PARAMETERS =
+        "createDataprocClusterParameters";
 
     // Cloning Keys
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";
     public static final String CLONE_DEFINITION_RESULT = "cloneDefinitionResult";
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
-    public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
-    public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
-        "createAzureCloudContextFlightId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
-    public static final String DESTINATION_CLONE_INPUTS = "destinationCloneInputs";
+
+    public static final String SIGNED_URL_LIST = "signedUrlList";
+    public static final String DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST =
+        "destinationBucketNameForSignedUrlList";
+    public static final String DESTINATION_STORAGE_TRANSFER_INPUTS =
+        "destinationStorageTransferInputs";
     public static final String DESTINATION_DATASET_NAME = "destinationDatasetName";
     public static final String DESTINATION_REFERENCED_RESOURCE = "destinationReferencedResource";
     public static final String DESTINATION_WORKSPACE_ID = "destinationWorkspaceId";
     public static final String LOCATION = "location";
     public static final String RESOURCE_ID_TO_CLONE_RESULT = "resourceIdToCloneResult";
     public static final String RESOURCES_TO_CLONE = "resourcesToClone";
+    public static final String PREFIXES_TO_CLONE = "prefixesToClone";
     public static final String CONTROLLED_RESOURCES_TO_DELETE = "controlledResourcesToDelete";
     public static final String SOURCE_CLONE_INPUTS = "sourceCloneInputs";
     public static final String SOURCE_WORKSPACE_ID = "sourceWorkspaceId";
@@ -90,6 +92,26 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
+
+    // Deletion keys
+    public static final String FORCE_DELETE = "forceDelete";
+
+    // GCP
+    public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
+    public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
+
+    // Azure
+    public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
+    public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
+        "createAzureCloudContextFlightId";
+
+    // AWS
+    public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
+    public static final String AWS_ENVIRONMENT_USER_ROLE_ARN = "awsEnvironmentUserRoleArn";
+    public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN = "awsEnvironmentNotebookRoleArn";
+    public static final String AWS_LANDING_ZONE_KMS_KEY_ARN = "awsLandingZoneKmsKeyArn";
+    public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
+        "awsLandingZoneNotebookLifecycleConfigArn";
   }
 
   public static class FolderKeys {
@@ -117,11 +139,16 @@ public final class WorkspaceFlightMapKeys {
     public static final String PREVIOUS_RESOURCE_DESCRIPTION = "previousResourceDescription";
     public static final String PREVIOUS_ATTRIBUTES = "previousAttributes";
     public static final String PREVIOUS_CLONING_INSTRUCTIONS = "previousCloningInstructions";
-    // additional keys for job filtering
     public static final String STEWARDSHIP_TYPE = "stewardshipType";
     public static final String RESOURCE = "resource";
     public static final String DESTINATION_RESOURCE = "destinationResource";
     public static final String CLONING_INSTRUCTIONS = "cloningInstructions";
+    public static final String RESOURCE_STATE_RULE = "resourceStateRule";
+    public static final String RESOURCE_STATE_CHANGED = "resourceStateChanged";
+    public static final String UPDATE_PARAMETERS = "updateParameters";
+    public static final String COMMON_UPDATE_PARAMETERS = "commonUpdateParameters";
+    public static final String DB_UPDATER = "dbUpdater";
+    public static final String UPDATE_COMPLETE = "updateComplete";
 
     private ResourceKeys() {}
   }

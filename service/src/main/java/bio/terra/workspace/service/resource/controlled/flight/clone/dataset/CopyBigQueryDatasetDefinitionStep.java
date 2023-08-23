@@ -92,7 +92,7 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
         Optional.ofNullable(inputParameters.get(ControlledResourceKeys.LOCATION, String.class))
             .orElse(sourceDataset.getRegion());
     String destinationProjectId =
-        gcpCloudContextService.getRequiredGcpProject(destinationWorkspaceId);
+        gcpCloudContextService.getRequiredReadyGcpProject(destinationWorkspaceId);
     UUID destinationResourceId =
         inputParameters.get(ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     UUID destinationFolderId =
@@ -151,7 +151,10 @@ public class CopyBigQueryDatasetDefinitionStep implements Step {
                 ControlledBigQueryDatasetResource.class);
     if (clonedDataset != null) {
       controlledResourceService.deleteControlledResourceSync(
-          clonedDataset.getWorkspaceId(), clonedDataset.getResourceId(), userRequest);
+          clonedDataset.getWorkspaceId(),
+          clonedDataset.getResourceId(),
+          /* forceDelete= */ false,
+          userRequest);
     }
     return StepResult.getStepResultSuccess();
   }

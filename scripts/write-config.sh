@@ -311,9 +311,18 @@ workspace:
     sas-token-expiry-time-maximum-minutes-offset: 1440
   policy:
     base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
+  cli:
+    server-name: broad-dev
 feature:
   tps-enabled: true
   temporary-grant-enabled: true
+landingzone:
+  sam:
+    landing-zone-resource-users:
+      - leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
+      - workspace-wsmtest@terra-kernel-k8s.iam.gserviceaccount.com
+      - Elizabeth.Shadowmoon@test.firecloud.org
+
 EOF
 else
   cat /dev/null > "${outputdir}/local-properties.yml"

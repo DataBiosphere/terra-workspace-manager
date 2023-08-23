@@ -1,0 +1,56 @@
+databaseChangeLog:
+- changeSet:
+    id: Add state to workspaces and cloud contexts
+    author: dd
+    changes:
+    - addColumn:
+        tableName: workspace
+        columns:
+            - column:
+                  name: state
+                  type: text
+                  value: "READY"
+                  remarks: |
+                      String for of the state enum. See WsmResourceState.
+            - column:
+                  name: flight_id
+                  type: text
+                  remarks: |
+                      For transition states (e.g., updating), the flight doing the transition
+            - column:
+                  name: error
+                  type: text
+                  remarks: |
+                      Serialized exception; must be a subclass of ErrorReportException
+
+    - addColumn:
+        tableName: cloud_context
+        columns:
+          - column:
+              name: spend_profile
+              type: text
+          - column:
+              name: state
+              type: text
+              value: "READY"
+              remarks: |
+                String for of the state enum. See WsmResourceState.
+          - column:
+              name: flight_id
+              type: text
+              remarks: |
+                For transition states (e.g., updating), the flight doing the transition
+                This field will mirror the creating_flight field. After this change is deployed,
+                we will make a follow-up change to remove the creating_flight field.
+          - column:
+              name: error
+              type: text
+              remarks: |
+                Serialized exception; must be a subclass of ErrorReportException
+
+    - sql:
+        # Fill in the spend profile on existing cloud contexts from the workspace spend profile
+        sql: |
+          UPDATE cloud_context SET spend_profile = 
+            (SELECT spend_profile FROM workspace WHERE workspace_id = cloud_context.workspace_id)
+            WHERE cloud_context.spend_profile = NULL

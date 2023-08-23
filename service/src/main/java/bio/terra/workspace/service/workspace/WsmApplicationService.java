@@ -9,8 +9,8 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
-import bio.terra.workspace.service.workspace.flight.application.able.AbleEnum;
-import bio.terra.workspace.service.workspace.flight.application.able.ApplicationAbleFlight;
+import bio.terra.workspace.service.workspace.flight.application.AbleEnum;
+import bio.terra.workspace.service.workspace.flight.application.ApplicationAbleFlight;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
@@ -72,13 +72,13 @@ public class WsmApplicationService {
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
     return commonAbleJob(
         // Wrap in arraylist for JSON serialization
-        userRequest, workspace, new ArrayList<String>(List.of(applicationId)), AbleEnum.DISABLE);
+        userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.DISABLE);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
     return commonAbleJob(
-        userRequest, workspace, new ArrayList<String>(List.of(applicationId)), AbleEnum.ENABLE);
+        userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.ENABLE);
   }
 
   // Common method to launch and wait for enable and disable flights.
@@ -148,7 +148,7 @@ public class WsmApplicationService {
     List<String> missing = new ArrayList<>();
     for (WsmDbApplication dbApp : dbAppMap.values()) {
       if (!dbApp.isMatched()) {
-        missing.add(dbApp.getWsmApplication().getApplicationId().toString());
+        missing.add(dbApp.getWsmApplication().getApplicationId());
       }
     }
     if (missing.size() > 0) {

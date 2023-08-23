@@ -4,6 +4,9 @@ import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.cloudres.google.api.services.common.OperationUtils;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.ConflictException;
+import bio.terra.common.exception.ForbiddenException;
+import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -13,11 +16,21 @@ import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.IdTokenCredentials;
+import com.google.auth.oauth2.IdTokenProvider;
 import com.google.cloud.ServiceOptions;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.CharMatcher;
+import com.google.common.collect.ImmutableList;
 import io.grpc.Status.Code;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -77,37 +90,30 @@ public class GcpUtils {
       throws RetryException, IOException, InterruptedException {
     operation = OperationUtils.pollUntilComplete(operation, pollingInterval, timeout);
     if (operation.getOperationAdapter().getError() != null) {
-      int code = operation.getOperationAdapter().getError().getCode();
-      if (is4xxClientError(code)) {
-        // do not waste time retrying on client error.
-        throw new BadRequestException(
-            String.format("Gcp calls failed with client error code %s. Do not retry", code));
-      } else {
-        throw new RetryException(
+      // Mapping details of gRPC status codes to HTTP in
+      // https://chromium.googlesource.com/external/github.com/grpc/grpc/+/refs/tags/v1.21.4-pre1/doc/statuscodes.md
+      int intCode = operation.getOperationAdapter().getError().getCode();
+      // Do not waste time retrying on client error.
+      Code code = Code.values()[intCode];
+      String errorMessage = operation.getOperationAdapter().getError().getMessage();
+      switch (code) {
+          // 400
+        case INVALID_ARGUMENT, OUT_OF_RANGE, FAILED_PRECONDITION -> throw new BadRequestException(
+            errorMessage);
+          // 401
+        case UNAUTHENTICATED -> throw new UnauthorizedException(errorMessage);
+          // 403 - This includes the "CPU quota limit exceeded" error for AI notebooks.
+        case PERMISSION_DENIED -> throw new ForbiddenException(errorMessage);
+          // 409
+        case ALREADY_EXISTS, ABORTED -> throw new ConflictException(errorMessage);
+          // 429
+        case RESOURCE_EXHAUSTED -> throw new BadRequestException(errorMessage);
+        default -> throw new RetryException(
             String.format(
                 "Error polling operation. name [%s] message [%s]",
-                operation.getOperationAdapter().getName(),
-                operation.getOperationAdapter().getError().getMessage()));
+                operation.getOperationAdapter().getName(), errorMessage));
       }
     }
-  }
-
-  /**
-   * Check whether the grpc status code is a client error.
-   *
-   * <p>Details of mapping of gRPC status code to http in
-   * https://chromium.googlesource.com/external/github.com/grpc/grpc/+/refs/tags/v1.21.4-pre1/doc/statuscodes.md
-   *
-   * @param code gRPC status code.
-   */
-  private static boolean is4xxClientError(int code) {
-    return Code.INVALID_ARGUMENT.value() == code // 400
-        || Code.OUT_OF_RANGE.value() == code // 400
-        || Code.FAILED_PRECONDITION.value() == code // 400
-        || Code.ALREADY_EXISTS.value() == code // 409
-        || Code.ABORTED.value() == code // 409
-        || Code.UNAUTHENTICATED.value() == code // 401
-        || Code.RESOURCE_EXHAUSTED.value() == code; // 429
   }
 
   public static String getControlPlaneProjectId() {
@@ -142,6 +148,32 @@ public class GcpUtils {
     }
   }
 
+  /**
+   * Obtains an OIDC token from Service Account that this WSM service instance is running as.
+   *
+   * @param audience 'aud' claim to include in the OIDC JWT
+   * @return OIDC JWT representing the WSM SA
+   */
+  public static String getWsmSaJwt(String audience) {
+    try {
+      GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
+
+      IdTokenCredentials idTokenCredentials =
+          IdTokenCredentials.newBuilder()
+              .setIdTokenProvider((IdTokenProvider) googleCredentials)
+              .setTargetAudience(audience)
+              .setOptions(
+                  Arrays.asList(
+                      IdTokenProvider.Option.FORMAT_FULL, IdTokenProvider.Option.LICENSES_TRUE))
+              .build();
+
+      return idTokenCredentials.refreshAccessToken().getTokenValue();
+    } catch (IOException e) {
+      throw new SaCredentialsMissingException(
+          "Unable to get WSM service account JWT. Ensure WSM is actually running as a service account");
+    }
+  }
+
   public static GoogleCredentials getGoogleCredentialsFromUserRequest(
       AuthenticatedUserRequest userRequest) {
     // The expirationTime argument is only used for refresh tokens, not access tokens.
@@ -155,7 +187,7 @@ public class GcpUtils {
    * "-[a-z]".
    */
   public static String parseRegion(String location) {
-    return location.replaceAll("(?!^)-[a-z]$", "");
+    return location.replaceAll("(?!^)-[a-zA-Z]$", "");
   }
 
   // Methods for building member strings using in GCP IAM bindings
@@ -190,5 +222,68 @@ public class GcpUtils {
 
   public static String fromSaMember(String member) {
     return stripPrefix(member, SA_PREFIX);
+  }
+
+  @VisibleForTesting public static final int MAX_INSTANCE_NAME_LENGTH = 63;
+
+  /**
+   * Generate GCE instance name that meets the requirements for a valid instance.
+   *
+   * <p>The resource name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+   * name must be 1-63 characters long and match the regular expression [a-z]([-a-z0-9]*[a-z0-9])?
+   * which means the first character must be a lowercase letter, and all following characters must
+   * be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.
+   * https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert
+   */
+  public static String generateInstanceCloudName(
+      @Nullable UUID workspaceUuid, String instanceName) {
+    // GCE instance name only allows numbers, dash("-"), and lower case letters.
+    String generatedName =
+        CharMatcher.inRange('0', '9')
+            .or(CharMatcher.inRange('a', 'z'))
+            .or(CharMatcher.is('-'))
+            .retainFrom(instanceName.toLowerCase());
+    // The name must start with a letter.
+    generatedName =
+        CharMatcher.inRange('0', '9').or(CharMatcher.is('-')).trimLeadingFrom(generatedName);
+    // Truncate before trimming characters to ensure the name does not end with dash("-").
+    generatedName = StringUtils.truncate(generatedName, MAX_INSTANCE_NAME_LENGTH);
+    // The name cannot end with dash("-").
+    generatedName = CharMatcher.is('-').trimTrailingFrom(generatedName);
+
+    if (generatedName.length() == 0) {
+      throw new BadRequestException(
+          String.format(
+              "Cannot generate a valid GCE instance name from %s, it must contain"
+                  + " alphanumerical characters.",
+              instanceName));
+    }
+    return generatedName;
+  }
+
+  /** Service account for the instance needs to contain these scopes to interact with SAM. */
+  public static final List<String> INSTANCE_SERVICE_ACCOUNT_SCOPES =
+      ImmutableList.of(
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/userinfo.profile");
+
+  public static String toNetworkString(String projectId, String networkName) {
+    return String.format("projects/%s/global/networks/%s", projectId, networkName);
+  }
+
+  public static String toSubnetworkString(String projectId, String region, String subnetworkName) {
+    return String.format(
+        "projects/%s/regions/%s/subnetworks/%s", projectId, region, subnetworkName);
+  }
+
+  public static String toMachineTypeString(String zone, String machineType) {
+    return String.format("zones/%s/machineTypes/%s", zone, machineType);
+  }
+
+  public static String toAcceleratorTypeString(
+      String projectId, String zone, String acceleratorType) {
+    return String.format(
+        "projects/%s/zones/%s/acceleratorTypes/%s", projectId, zone, acceleratorType);
   }
 }

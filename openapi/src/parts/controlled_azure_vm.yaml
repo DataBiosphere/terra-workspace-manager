@@ -5,7 +5,7 @@ paths:
     post:
       summary: Asynchronoulsy create a new controlled Azure VM
       operationId: createAzureVm
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -61,9 +61,11 @@ paths:
           $ref: '#/components/responses/ServerError'
     post:
       summary: |
-        Delete an azure Vm
+        Delete a controlled Azure VM resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureVm
-      tags: [ControlledAzureResource]
+      tags: [ ControlledAzureResource ]
       requestBody:
         required: true
         content:
@@ -78,7 +80,7 @@ paths:
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
-          $ref: '#components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -98,7 +100,7 @@ paths:
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '404':
-          $ref: '#components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -109,31 +111,16 @@ components:
         Vm-specific properties to be set on creation. These are a subset of the values
         accepted by the azure resource API
       type: object
-      required: [name, vmSize, vmImage]
+      required: [ name, vmSize, vmImage ]
       properties:
         name:
           description: A valid vm name per https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules
           type: string
-        region:
-          description: |
-            A valid region string representation per https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.management.resourcemanager.fluent.core.region.
-            It is best to look at the Region class definition for valid strings (e.g. 'eastus' == Region.US_EAST.toString()).
-            Note: This property is no longer used, but it's kept to avoid breaking changes with existing clients. The vm's region is set to the same region as the virtual network.
-          type: string
-          deprecated: true
         vmSize:
-          description: A valid image size as per com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes
+          description: A valid image size as per https://learn.microsoft.com/en-us/azure/virtual-machines/sizes
           type: string
-        ipId:
-          description: A valid WSM identifier for an Azure Ip that corresponds to a valid azure resource
-          type: string
-          format: uuid
         diskId:
           description: A valid WSM identifier for an Azure Disk that corresponds to a valid azure resource
-          type: string
-          format: uuid
-        networkId:
-          description: A valid WSM identifier for an Azure Network that corresponds to a valid azure resource
           type: string
           format: uuid
         vmImage:
@@ -148,7 +135,7 @@ components:
         ephemeralOSDisk:
           description: Whether or not to use an ephemeral OS disk and where to place it. https://docs.microsoft.com/en-us/azure/virtual-machines/ephemeral-os-disks
           type: string
-          enum: ['NONE', 'OS_CACHE', 'TMP_DISK']
+          enum: [ 'NONE', 'OS_CACHE', 'TMP_DISK' ]
         customData:
           description: Supply base64 encoded custom data for vm. https://docs.microsoft.com/en-us/azure/virtual-machines/custom-data
           type: string
@@ -184,7 +171,7 @@ components:
       description: >-
         Azure VM custom script extension definition. Azure documentation https://docs.microsoft.com/en-us/azure/virtual-machines/extensions/custom-script-linux
       type: object
-      required: [name, publisher]
+      required: [ name, publisher ]
       properties:
         name:
           description: A name of the extension
@@ -220,7 +207,7 @@ components:
     AzureVmCustomScriptExtensionSetting:
       description: Azure VM extension settings
       type: object
-      required: [key, value]
+      required: [ key, value ]
       properties:
         key:
           description: Name of the settings entry
@@ -232,7 +219,7 @@ components:
     AzureVmCustomScriptExtensionTag:
       description: List of tags for VM extension
       type: object
-      required: [key, value]
+      required: [ key, value ]
       properties:
         key:
           description: Name of the tag
@@ -244,7 +231,7 @@ components:
     AzureVmUser:
       description: User credentials which are required for VM creation
       type: object
-      required: [name, password]
+      required: [ name, password ]
       properties:
         name:
           description: Specifies an SSH root user name for the Linux virtual machine
@@ -256,7 +243,7 @@ components:
     CreateControlledAzureVmRequestBody:
       description: Payload for requesting a new controlled Azure VM resource.
       type: object
-      required: ["common", "azureVm", "jobControl"]
+      required: [ common, azureVm, jobControl ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'

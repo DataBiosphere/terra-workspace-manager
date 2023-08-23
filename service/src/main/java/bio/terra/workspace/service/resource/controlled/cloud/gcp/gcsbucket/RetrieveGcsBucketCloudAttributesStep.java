@@ -8,8 +8,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
-import bio.terra.workspace.generated.model.ApiGcpGcsBucketUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -57,7 +55,7 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
       throws InterruptedException, RetryException {
     final FlightMap workingMap = flightContext.getWorkingMap();
     final String projectId =
-        gcpCloudContextService.getRequiredGcpProject(bucketResource.getWorkspaceId());
+        gcpCloudContextService.getRequiredReadyGcpProject(bucketResource.getWorkspaceId());
     // get the storage cow
     final StorageCow storageCow = crlService.createStorageCow(projectId);
 
@@ -72,19 +70,14 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
     // get the attributes
     final BucketInfo existingBucketInfo = existingBucketCow.getBucketInfo();
     switch (retrievalMode) {
-      case UPDATE_PARAMETERS:
-        final ApiGcpGcsBucketUpdateParameters existingUpdateParameters =
-            GcsApiConversions.toUpdateParameters(existingBucketInfo);
-        workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
-        break;
-      case CREATION_PARAMETERS:
-        final ApiGcpGcsBucketCreationParameters creationParameters =
-            GcsApiConversions.toCreationParameters(existingBucketInfo);
-        workingMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-        break;
-      default:
-        throw new BadRequestException(
-            String.format("Unsupported Retrieval mode %s", retrievalMode));
+      case UPDATE_PARAMETERS -> workingMap.put(
+          ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS,
+          GcsApiConversions.toUpdateParameters(existingBucketInfo));
+      case CREATION_PARAMETERS -> workingMap.put(
+          ControlledResourceKeys.CREATION_PARAMETERS,
+          GcsApiConversions.toCreationParameters(existingBucketInfo));
+      default -> throw new BadRequestException(
+          String.format("Unsupported Retrieval mode %s", retrievalMode));
     }
 
     return StepResult.getStepResultSuccess();

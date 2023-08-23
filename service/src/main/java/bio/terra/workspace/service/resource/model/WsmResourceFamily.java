@@ -8,16 +8,25 @@ import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
 public enum WsmResourceFamily {
-  AI_NOTEBOOK_INSTANCE(
-      "AI_NOTEBOOK_INSTANCE",
-      ApiResourceType.AI_NOTEBOOK,
-      null, // no reference type for notebooks,
-      WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE),
+  // ANY
+  GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null),
+  TERRA_WORKSPACE(
+      "TERRA_WORKSPACE",
+      ApiResourceType.TERRA_WORKSPACE,
+      WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
+      null),
   DATA_REPO_SNAPSHOT(
       "DATA_REPO_SNAPSHOT",
       ApiResourceType.DATA_REPO_SNAPSHOT,
       WsmResourceType.REFERENCED_ANY_DATA_REPO_SNAPSHOT,
       null), // no controlled type for snapshots
+
+  // GCP
+  AI_NOTEBOOK_INSTANCE(
+      "AI_NOTEBOOK_INSTANCE",
+      ApiResourceType.AI_NOTEBOOK,
+      null, // no reference type for notebooks,
+      WsmResourceType.CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE),
   GCS_BUCKET(
       "GCS_BUCKET",
       ApiResourceType.GCS_BUCKET,
@@ -38,24 +47,30 @@ public enum WsmResourceFamily {
       ApiResourceType.BIG_QUERY_DATA_TABLE,
       WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATA_TABLE,
       null), // no controlled type for BQ data table
-  AZURE_IP("AZURE_IP", ApiResourceType.AZURE_IP, null, WsmResourceType.CONTROLLED_AZURE_IP),
-  AZURE_RELAY_NAMESPACE(
-      "AZURE_RELAY_NAMESPACE",
-      ApiResourceType.AZURE_RELAY_NAMESPACE,
+  GCE_INSTANCE(
+      "GCE_INSTANCE",
+      ApiResourceType.GCE_INSTANCE,
+      null, // no reference type for instances
+      WsmResourceType.CONTROLLED_GCP_GCE_INSTANCE),
+  DATAPROC_CLUSTER(
+      "DATAPROC_CLUSTER",
+      ApiResourceType.DATAPROC_CLUSTER,
+      null, // no reference type for dataproc clusters
+      WsmResourceType.CONTROLLED_GCP_DATAPROC_CLUSTER),
+
+  // AZURE
+  AZURE_MANAGED_IDENTITY(
+      "AZURE_MANAGED_IDENTITY",
+      ApiResourceType.AZURE_MANAGED_IDENTITY,
       null,
-      WsmResourceType.CONTROLLED_AZURE_RELAY_NAMESPACE),
+      WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY),
+  AZURE_DATABASE(
+      "AZURE_DATABASE",
+      ApiResourceType.AZURE_DATABASE,
+      null,
+      WsmResourceType.CONTROLLED_AZURE_DATABASE),
   AZURE_DISK("AZURE_DISK", ApiResourceType.AZURE_DISK, null, WsmResourceType.CONTROLLED_AZURE_DISK),
-  AZURE_NETWORK(
-      "AZURE_NETWORK",
-      ApiResourceType.AZURE_NETWORK,
-      null,
-      WsmResourceType.CONTROLLED_AZURE_NETWORK),
   AZURE_VM("AZURE_VM", ApiResourceType.AZURE_VM, null, WsmResourceType.CONTROLLED_AZURE_VM),
-  AZURE_STORAGE_ACCOUNT(
-      "AZURE_STORAGE_ACCOUNT",
-      ApiResourceType.AZURE_STORAGE_ACCOUNT,
-      null,
-      WsmResourceType.CONTROLLED_AZURE_STORAGE_ACCOUNT),
   AZURE_STORAGE_CONTAINER(
       "AZURE_STORAGE_CONTAINER",
       ApiResourceType.AZURE_STORAGE_CONTAINER,
@@ -66,12 +81,20 @@ public enum WsmResourceFamily {
       ApiResourceType.AZURE_BATCH_POOL,
       null,
       WsmResourceType.CONTROLLED_AZURE_BATCH_POOL),
-  GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null),
-  TERRA_WORKSPACE(
-      "TERRA_WORKSPACE",
-      ApiResourceType.TERRA_WORKSPACE,
-      WsmResourceType.REFERENCED_ANY_TERRA_WORKSPACE,
-      null),
+
+  // AWS
+  AWS_S3_STORAGE_FOLDER(
+      "AWS_S3_STORAGE_FOLDER",
+      ApiResourceType.AWS_S3_STORAGE_FOLDER,
+      null, // TODO(TERRA-195) add support for referenced buckets
+      WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER),
+  AWS_SAGEMAKER_NOTEBOOK(
+      "AWS_SAGEMAKER_NOTEBOOK",
+      ApiResourceType.AWS_SAGEMAKER_NOTEBOOK,
+      null, // no reference type for notebooks,
+      WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK),
+
+  // FLEXIBLE
   FLEXIBLE_RESOURCE(
       "FLEXIBLE_RESOURCE",
       ApiResourceType.FLEXIBLE_RESOURCE,

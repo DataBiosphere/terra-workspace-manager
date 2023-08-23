@@ -5,15 +5,16 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import java.util.HashSet;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
 
 public class ValidateWorkspaceAgainstPolicyStep implements Step {
@@ -23,11 +24,13 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
   private final AuthenticatedUserRequest userRequest;
   private final ResourceDao resourceDao;
   private final TpsApiDispatch tpsApiDispatch;
+  private final CloningInstructions cloningInstructions;
 
   public ValidateWorkspaceAgainstPolicyStep(
       UUID workspaceId,
       CloudPlatform cloudPlatform,
       String destinationLocation,
+      CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest,
       ResourceDao resourceDao,
       TpsApiDispatch tpsApiDispatch) {
@@ -37,15 +40,17 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
     this.tpsApiDispatch = tpsApiDispatch;
     this.resourceDao = resourceDao;
     this.destinationLocation = destinationLocation;
+    this.cloningInstructions = cloningInstructions;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     final TpsPaoGetResult effectivePolicies =
-        flightContext
-            .getWorkingMap()
-            .get(WorkspaceFlightMapKeys.EFFECTIVE_POLICIES, TpsPaoGetResult.class);
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(),
+            WorkspaceFlightMapKeys.EFFECTIVE_POLICIES,
+            TpsPaoGetResult.class);
 
     if (cloudPlatform != CloudPlatform.GCP) {
       // We can only validate GCP right now. We'll need to add other platforms
@@ -53,36 +58,32 @@ public class ValidateWorkspaceAgainstPolicyStep implements Step {
       return StepResult.getStepResultSuccess();
     }
 
-    // Validate the workspace controlled resources against any region policies.
-    HashSet<String> validRegions = new HashSet<>();
-    for (String validRegion :
-        tpsApiDispatch.listValidRegionsForPao(effectivePolicies, cloudPlatform)) {
-      validRegions.add(validRegion.toLowerCase());
-    }
-    List<ControlledResource> existingResources =
-        resourceDao.listControlledResources(workspaceId, cloudPlatform);
+    var validRegions = tpsApiDispatch.listValidRegionsForPao(effectivePolicies, cloudPlatform);
 
-    for (var existingResource : existingResources) {
-      if (existingResource.getRegion() == null) {
-        // Some resources don't have regions. IE: Git repos.
-        continue;
-      }
-      if (!validRegions.contains(existingResource.getRegion().toLowerCase())) {
-        throw new PolicyConflictException("Workspace contains resources in violation of policy.");
-      }
+    var validationErrors =
+        new ArrayList<>(
+            ResourceValidationUtils.validateExistingResourceRegions(
+                workspaceId, validRegions, cloudPlatform, resourceDao));
+
+    if (!cloningInstructions.isReferenceClone()
+        && destinationLocation != null
+        && !validRegions.contains(destinationLocation.toLowerCase())) {
+      validationErrors.add(
+          String.format(
+              "The specified destination location '%s' violates region policies",
+              destinationLocation));
     }
 
-    if (destinationLocation != null && !validRegions.contains(destinationLocation.toLowerCase())) {
-      throw new PolicyConflictException(
-          "The specified destination location violates region policies");
+    if (validationErrors.isEmpty()) {
+      return StepResult.getStepResultSuccess();
+    } else {
+      throw new PolicyConflictException(validationErrors);
     }
-
-    return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Validation step so there should be nothing to undo, only propagate the flight failure.
-    return context.getResult();
+    // Nothing to do. Continue undoing.
+    return StepResult.getStepResultSuccess();
   }
 }

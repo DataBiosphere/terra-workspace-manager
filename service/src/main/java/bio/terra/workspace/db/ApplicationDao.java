@@ -112,7 +112,7 @@ public class ApplicationDao {
 
     var params =
         new MapSqlParameterSource()
-            .addValue("application_id", app.getApplicationId().toString())
+            .addValue("application_id", app.getApplicationId())
             .addValue("display_name", app.getDisplayName())
             .addValue("description", app.getDescription())
             .addValue(SERVICE_ACCOUNT, app.getServiceAccount())
@@ -144,7 +144,7 @@ public class ApplicationDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
-            .addValue("application_id", applicationId.toString());
+            .addValue("application_id", applicationId);
 
     Integer count = jdbcTemplate.queryForObject(countAppUsesSql, params, Integer.class);
     if (count != null && count > 0) {
@@ -233,7 +233,7 @@ public class ApplicationDao {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("workspace_id", workspaceUuid.toString())
-            .addValue("application_id", applicationId.toString());
+            .addValue("application_id", applicationId);
 
     try {
       jdbcTemplate.update(sql, params);
@@ -331,14 +331,14 @@ public class ApplicationDao {
   private WsmApplication getApplicationOrThrow(String applicationId) {
     final String sql = APPLICATION_QUERY + " WHERE application_id = :application_id";
 
-    var params = new MapSqlParameterSource().addValue("application_id", applicationId.toString());
+    var params = new MapSqlParameterSource().addValue("application_id", applicationId);
 
     try {
       return DataAccessUtils.requiredSingleResult(
           jdbcTemplate.query(sql, params, APPLICATION_ROW_MAPPER));
     } catch (EmptyResultDataAccessException e) {
       throw new ApplicationNotFoundException(
-          String.format("Application %s not found.", applicationId.toString()));
+          String.format("Application %s not found.", applicationId));
     }
   }
 

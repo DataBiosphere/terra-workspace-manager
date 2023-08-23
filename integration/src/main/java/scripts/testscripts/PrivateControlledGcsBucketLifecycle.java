@@ -40,6 +40,7 @@ import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.GcsBucketAccessTester;
 import scripts.utils.GcsBucketUtils;
 import scripts.utils.MultiResourcesUtils;
+import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestScriptBase {
@@ -172,7 +173,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
                 GcsBucketUtils.makeControlledGcsBucket(
                     privateUserResourceApi,
                     getWorkspaceId(),
-                    RESOURCE_PREFIX + UUID.randomUUID().toString(),
+                    RESOURCE_PREFIX + UUID.randomUUID(),
                     /*bucketName=*/ null,
                     AccessScope.PRIVATE_ACCESS,
                     ManagedBy.USER,
@@ -197,21 +198,21 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
                 GcsBucketUtils.makeControlledGcsBucket(
                     privateUserResourceApi,
                     getWorkspaceId(),
-                    RESOURCE_PREFIX + UUID.randomUUID().toString(),
+                    RESOURCE_PREFIX + UUID.randomUUID(),
                     /*bucketName=*/ null,
                     AccessScope.PRIVATE_ACCESS,
                     ManagedBy.USER,
                     CloningInstructionsEnum.NOTHING,
                     privateUserNoEmail));
-    assertThat(ex.getMessage(), containsString("MethodArgumentNotValidException"));
+    TestUtils.assertContains(ex.getMessage(), "MethodArgumentNotValidException");
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, ex.getCode());
 
-    String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID().toString());
+    String uniqueBucketName = String.format("terra-%s-bucket", UUID.randomUUID());
     CreatedControlledGcpGcsBucket bucketWithBucketNameSpecified =
         GcsBucketUtils.makeControlledGcsBucket(
             privateUserResourceApi,
             getWorkspaceId(),
-            RESOURCE_PREFIX + UUID.randomUUID().toString(),
+            RESOURCE_PREFIX + UUID.randomUUID(),
             /*bucketName=*/ uniqueBucketName,
             AccessScope.PRIVATE_ACCESS,
             ManagedBy.USER,

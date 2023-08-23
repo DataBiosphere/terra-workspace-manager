@@ -27,13 +27,13 @@ public class ControlledAzureStorageContainerHandler implements WsmResourceHandle
             dbResource.getAttributes(), ControlledAzureStorageContainerAttributes.class);
 
     return ControlledAzureStorageContainerResource.builder()
-        .storageAccountId(attributes.getStorageAccountId())
         .storageContainerName(attributes.getStorageContainerName())
         .common(new ControlledResourceFields(dbResource))
         .build();
   }
 
+  @Override
   public String generateCloudName(@Nullable UUID workspaceUuid, String resourceName) {
-    throw new FeatureNotSupportedException("This generate cloud name feature is not implement yet");
+    throw new FeatureNotSupportedException("Generate cloud name feature is not implemented yet");
   }
 }

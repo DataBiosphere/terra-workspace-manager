@@ -1,8 +1,9 @@
 package bio.terra.workspace.common.fixtures;
 
 import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertMapToApiProperties;
+import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.DEFAULT_RESOURCE_PROPERTIES;
 import static bio.terra.workspace.common.fixtures.ControlledResourceFixtures.RESOURCE_DESCRIPTION;
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.TestUtils.appendRandomNumber;
 
 import bio.terra.workspace.common.utils.TestUtils;
@@ -11,12 +12,14 @@ import bio.terra.workspace.generated.model.ApiReferenceResourceCommonFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
+import bio.terra.workspace.service.resource.referenced.cloud.any.gitrepo.ReferencedGitRepoResource;
 import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
-import java.util.Map;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdatatable.ReferencedBigQueryDataTableResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsbucket.ReferencedGcsBucketResource;
+import bio.terra.workspace.service.resource.referenced.cloud.gcp.gcsobject.ReferencedGcsObjectResource;
 import java.util.UUID;
 
 public class ReferenceResourceFixtures {
-  private static final Map<String, String> DEFAULT_RESOURCE_PROPERTIES = Map.of("foo", "bar");
 
   public static WsmResourceFields.Builder<?> makeDefaultWsmResourceFieldBuilder(UUID workspaceId) {
     return WsmResourceFields.builder()
@@ -43,7 +46,19 @@ public class ReferenceResourceFixtures {
             .name(resourceName)
             .build(),
         "terra",
-        "polaroid");
+        UUID.randomUUID().toString());
+  }
+
+  public static ReferencedGitRepoResource makeGitRepoResource(
+      UUID workspaceUuid, String gitRepoUrl) {
+    UUID resourceId = UUID.randomUUID();
+    String resourceName = "testgitrepo-" + resourceId;
+    return new ReferencedGitRepoResource(
+        makeDefaultWsmResourceFieldBuilder(workspaceUuid)
+            .resourceId(resourceId)
+            .name(resourceName)
+            .build(),
+        gitRepoUrl);
   }
 
   public static ReferencedBigQueryDatasetResource makeReferencedBqDatasetResource(
@@ -52,10 +67,47 @@ public class ReferenceResourceFixtures {
     return new ReferencedBigQueryDatasetResource(
         makeDefaultWsmResourceFieldBuilder(workspaceId)
             .resourceId(resourceId)
-            .name("testbq-" + resourceId)
+            .name(TestUtils.appendRandomNumber("testbq_"))
             .build(),
         projectId,
         bqDataset);
+  }
+
+  public static ReferencedBigQueryDataTableResource makeReferencedBqDataTableResource(
+      UUID workspaceId, String projectId, String bqDataset, String file) {
+    UUID resourceId = UUID.randomUUID();
+
+    return new ReferencedBigQueryDataTableResource(
+        makeDefaultWsmResourceFieldBuilder(workspaceId)
+            .resourceId(resourceId)
+            .name(TestUtils.appendRandomNumber("testbq_"))
+            .build(),
+        projectId,
+        bqDataset,
+        file);
+  }
+
+  public static ReferencedGcsBucketResource makeReferencedGcsBucketResource(
+      UUID workspaceId, String bucketName) {
+    UUID resourceId = UUID.randomUUID();
+    return new ReferencedGcsBucketResource(
+        makeDefaultWsmResourceFieldBuilder(workspaceId)
+            .resourceId(resourceId)
+            .name(TestUtils.appendRandomNumber("testgcs"))
+            .build(),
+        bucketName);
+  }
+
+  public static ReferencedGcsObjectResource makeReferencedGcsObjectResource(
+      UUID workspaceId, String bucketName, String file) {
+    UUID resourceId = UUID.randomUUID();
+    return new ReferencedGcsObjectResource(
+        makeDefaultWsmResourceFieldBuilder(workspaceId)
+            .resourceId(resourceId)
+            .name(TestUtils.appendRandomNumber("testgcs"))
+            .build(),
+        bucketName,
+        file);
   }
 
   public static ApiReferenceResourceCommonFields makeDefaultReferencedResourceFieldsApi() {

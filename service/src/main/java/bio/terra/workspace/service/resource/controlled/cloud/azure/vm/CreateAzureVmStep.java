@@ -7,15 +7,14 @@ import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachin
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.utils.AzureManagementException;
-import bio.terra.workspace.common.utils.AzureVmUtils;
+import bio.terra.workspace.common.exception.AzureManagementException;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
+import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.ManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.ip.ControlledAzureIpResource;
 import bio.terra.workspace.service.resource.controlled.exception.AzureNetworkInterfaceNameNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -29,7 +28,6 @@ import com.azure.resourcemanager.compute.models.ImageReference;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.NetworkInterface;
-import com.azure.resourcemanager.network.models.PublicIpAddress;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -56,10 +54,11 @@ public class CreateAzureVmStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightMap inputMap = context.getInputParameters();
-    FlightUtils.validateRequiredEntries(inputMap, ControlledResourceKeys.CREATION_PARAMETERS);
+    FlightMap inputParameters = context.getInputParameters();
+    FlightUtils.validateRequiredEntries(
+        inputParameters, ControlledResourceKeys.CREATION_PARAMETERS);
     var creationParameters =
-        inputMap.get(
+        inputParameters.get(
             ControlledResourceKeys.CREATION_PARAMETERS, ApiAzureVmCreationParameters.class);
 
     final AzureCloudContext azureCloudContext =
@@ -67,14 +66,6 @@ public class CreateAzureVmStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-
-    final Optional<ControlledAzureIpResource> ipResource =
-        Optional.ofNullable(resource.getIpId())
-            .map(
-                ipId ->
-                    resourceDao
-                        .getResource(resource.getWorkspaceId(), ipId)
-                        .castByEnum(WsmResourceType.CONTROLLED_AZURE_IP));
 
     final Optional<ControlledAzureDiskResource> diskResource =
         Optional.ofNullable(resource.getDiskId())
@@ -95,15 +86,6 @@ public class CreateAzureVmStep implements Step {
                       .disks()
                       .getByResourceGroup(
                           azureCloudContext.getAzureResourceGroupId(), diskRes.getDiskName()));
-
-      Optional<PublicIpAddress> existingAzureIp =
-          ipResource.map(
-              ipRes ->
-                  computeManager
-                      .networkManager()
-                      .publicIpAddresses()
-                      .getByResourceGroup(
-                          azureCloudContext.getAzureResourceGroupId(), ipRes.getIpName()));
 
       if (!context.getWorkingMap().containsKey(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY)) {
         logger.error(
@@ -157,9 +139,8 @@ public class CreateAzureVmStep implements Step {
                       .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
                       .setNetwork(networkInterface.primaryIPConfiguration().getNetwork())
                       .setSubnetName(subnetName)
-                      .setPublicIpAddress(existingAzureIp.orElse(null))
                       .setDisk(existingAzureDisk.orElse(null))
-                      .setImage(AzureVmUtils.getImageData(creationParameters.getVmImage()))
+                      .setImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
                       .build()));
 
       context.getWorkingMap().put(AzureVmHelper.WORKING_MAP_VM_ID, createdVm.id());
@@ -168,7 +149,7 @@ public class CreateAzureVmStep implements Step {
       // Stairway steps may run multiple times, so we may already have created this resource. In all
       // other cases, surface the exception and attempt to retry.
       return switch (e.getValue().getCode()) {
-        case ManagementExceptionUtils.CONFLICT -> {
+        case AzureManagementExceptionUtils.CONFLICT -> {
           logger.info(
               "Azure Vm {} in managed resource group {} already exists",
               resource.getVmName(),
@@ -176,14 +157,12 @@ public class CreateAzureVmStep implements Step {
           yield StepResult.getStepResultSuccess();
         }
 
-        case ManagementExceptionUtils.RESOURCE_NOT_FOUND -> {
+        case AzureManagementExceptionUtils.RESOURCE_NOT_FOUND -> {
           logger.error(
               "Either the disk, ip, or network passed into this createVm does not exist "
                   + String.format(
-                      "%nResource Group: %s%n\tIp Name: %s%n\tNetwork Name: %s%n\tDisk Name: %s",
+                      "%nResource Group: %s%n\tDisk Name: %s",
                       azureCloudContext.getAzureResourceGroupId(),
-                      ipResource.map(ControlledAzureIpResource::getIpName).orElse("<no public ip>"),
-                      resource.getNetworkId(),
                       diskResource
                           .map(ControlledAzureDiskResource::getDiskName)
                           .orElse("<no disk>")));
@@ -191,14 +170,14 @@ public class CreateAzureVmStep implements Step {
               StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
         }
 
-        case ManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR -> {
+        case AzureManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR -> {
           logger.error("Error provisioning VM extension");
           yield new StepResult(
               StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
         }
 
         default -> new StepResult(
-            ManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
+            AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
       };
     }
     return StepResult.getStepResultSuccess();
@@ -249,13 +228,13 @@ public class CreateAzureVmStep implements Step {
               .withType(creationParameters.getCustomScriptExtension().getType())
               .withVersion(creationParameters.getCustomScriptExtension().getVersion())
               .withPublicSettings(
-                  AzureVmUtils.settingsFrom(
+                  AzureUtils.vmSettingsFrom(
                       creationParameters.getCustomScriptExtension().getPublicSettings()))
               .withProtectedSettings(
-                  AzureVmUtils.settingsFrom(
+                  AzureUtils.vmSettingsFrom(
                       creationParameters.getCustomScriptExtension().getProtectedSettings()))
               .withTags(
-                  AzureVmUtils.tagsFrom(creationParameters.getCustomScriptExtension().getTags()));
+                  AzureUtils.vmTagsFrom(creationParameters.getCustomScriptExtension().getTags()));
 
       if (creationParameters.getCustomScriptExtension().isMinorVersionAutoUpgrade()) {
         customScriptExtension.withMinorVersionAutoUpgrade();

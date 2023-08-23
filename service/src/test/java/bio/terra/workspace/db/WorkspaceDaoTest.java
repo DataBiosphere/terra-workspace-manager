@@ -1,29 +1,42 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.common.utils.MockMvcUtils.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_APPLICATION;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_OWNER;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_READER;
+import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_WRITER;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.in;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
+import bio.terra.workspace.db.exception.FieldSizeExceededException;
+import bio.terra.workspace.db.exception.ResourceStateConflictException;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
+import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.db.model.DbWorkspace;
+import bio.terra.workspace.db.model.DbWorkspaceDescription;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
+import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
+import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
+import bio.terra.workspace.service.workspace.model.GcpCloudContextFields;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-import bio.terra.workspace.unit.WorkspaceUnitTestUtils;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,8 +44,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,10 +58,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 class WorkspaceDaoTest extends BaseUnitTest {
   private static final String PROJECT_ID = "my-project1";
-  private static final String POLICY_OWNER = "policy-owner";
-  private static final String POLICY_WRITER = "policy-writer";
-  private static final String POLICY_READER = "policy-reader";
-  private static final String POLICY_APPLICATION = "policy-application";
 
   @Autowired private NamedParameterJdbcTemplate jdbcTemplate;
   @Autowired private WorkspaceDao workspaceDao;
@@ -67,16 +76,20 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @AfterEach
   void tearDown() {
-    workspaceDao.deleteWorkspace(workspaceUuid);
+    try {
+      WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao);
+    } catch (WorkspaceNotFoundException e) {
+      // this is just fine for these tests
+    }
   }
 
   @Test
   void verifyCreatedWorkspaceExists() {
-    workspaceDao.createWorkspace(
+    Workspace workspace =
         WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
             .spendProfileId(spendProfileId)
-            .build(), /* applicationIds */
-        null);
+            .build();
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
@@ -84,19 +97,24 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     assertEquals(workspaceUuid.toString(), queryOutput.get("workspace_id"));
     assertEquals(spendProfileId.getId(), queryOutput.get("spend_profile"));
+
+    Workspace gotWorkspace = workspaceDao.getWorkspace(workspaceUuid);
+    assertEquals(WorkspaceStage.MC_WORKSPACE, gotWorkspace.workspaceStage());
   }
 
   @Test
   void createAndDeleteWorkspace() {
-    workspaceDao.createWorkspace(defaultWorkspace(workspaceUuid), /* applicationIds */ null);
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
+            .spendProfileId(spendProfileId)
+            .build();
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
 
     MapSqlParameterSource params =
         new MapSqlParameterSource().addValue("id", workspaceUuid.toString());
     Map<String, Object> queryOutput = jdbcTemplate.queryForMap(READ_SQL, params);
-
     assertEquals(workspaceUuid.toString(), queryOutput.get("workspace_id"));
-
-    assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
+    assertTrue(WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao));
 
     // Assert the object no longer exists after deletion
     assertThrows(
@@ -104,104 +122,107 @@ class WorkspaceDaoTest extends BaseUnitTest {
   }
 
   @Test
-  void createAndGetWorkspace() {
-    Workspace createdWorkspace = defaultWorkspace(workspaceUuid);
-    workspaceDao.createWorkspace(createdWorkspace, /* applicationIds */ null);
-
+  void createAndGetRawlsWorkspace() {
+    Workspace createdWorkspace = defaultRawlsWorkspace(workspaceUuid);
+    WorkspaceFixtures.createWorkspaceInDb(createdWorkspace, workspaceDao);
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
 
-    assertEquals(workspace, createdWorkspace);
-  }
-
-  @Test
-  public void createWorkspace_storeCreatedBy() {
-    Workspace createdWorkspace = defaultWorkspace(workspaceUuid);
-    workspaceDao.createWorkspace(createdWorkspace, /* applicationIds */ null);
-
-    Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
-
+    assertEquals(workspace.workspaceId(), createdWorkspace.workspaceId());
+    assertEquals(workspace.userFacingId(), createdWorkspace.userFacingId());
+    assertEquals(workspace.spendProfileId(), createdWorkspace.spendProfileId());
+    assertEquals(workspace.workspaceStage(), createdWorkspace.workspaceStage());
+    assertEquals(WorkspaceStage.RAWLS_WORKSPACE, workspace.workspaceStage());
+    assertEquals(WsmResourceState.READY, workspace.state());
     assertNotNull(workspace.createdDate());
     assertEquals(DEFAULT_USER_EMAIL, workspace.createdByEmail());
   }
 
   @Test
   void getWorkspacesFromList() {
-    Workspace realWorkspace = defaultWorkspace(workspaceUuid);
-    workspaceDao.createWorkspace(realWorkspace, /* applicationIds */ null);
+    Workspace realWorkspace = defaultRawlsWorkspace(workspaceUuid);
+    WorkspaceFixtures.createWorkspaceInDb(realWorkspace, workspaceDao);
     UUID fakeWorkspaceId = UUID.randomUUID();
-    List<Workspace> workspaceList =
-        workspaceDao.getWorkspacesMatchingList(
+    Map<UUID, DbWorkspaceDescription> workspaceList =
+        workspaceDao.getWorkspaceDescriptionMapFromIdList(
             ImmutableSet.of(realWorkspace.getWorkspaceId(), fakeWorkspaceId), 0, 1);
     // The DAO should return all workspaces this user has access to, including realWorkspace but
     // not including the fake workspace id.
-    assertThat(workspaceList, hasItem(equalTo(realWorkspace)));
-    List<UUID> workspaceIdList =
-        workspaceList.stream().map(Workspace::getWorkspaceId).collect(Collectors.toList());
-    assertThat(workspaceIdList, not(hasItem(equalTo(fakeWorkspaceId))));
+    DbWorkspaceDescription realWorkspaceDescription =
+        workspaceList.get(realWorkspace.getWorkspaceId());
+    assertEquals(realWorkspaceDescription.getWorkspace(), realWorkspace);
+    assertThat(workspaceList.keySet(), not(hasItem(equalTo(fakeWorkspaceId))));
   }
 
   @Test
   void getWorkspaceToCloudContextMap_getAllGcpCloudContexts() {
-    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
-    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
-    UUID workspace3 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
-    UUID workspace4 = WorkspaceUnitTestUtils.createWorkspaceWithoutGcpContext(workspaceDao);
+    UUID workspace1 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
+    UUID workspace2 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
+    UUID workspace3 = WorkspaceUnitTestUtils.createWorkspaceWithoutCloudContext(workspaceDao);
 
     String project1 = "gcp-project-1";
     String project2 = "gcp-project-2";
     String project3 = "gcp-project-3";
-    String project4 = "azure-project";
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace1, project1);
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace2, project2);
     WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(workspaceDao, workspace3, project3);
-    WorkspaceUnitTestUtils.createCloudContextInDatabase(
-        workspaceDao, workspace4, project4, CloudPlatform.AZURE);
-    Map<UUID, String> workspaceIdToGcpContextMap = new HashMap<>();
 
-    workspaceIdToGcpContextMap.putAll(
-        workspaceDao.getWorkspaceIdToCloudContextMap(CloudPlatform.GCP));
+    Map<UUID, DbCloudContext> workspaceIdToGcpContextMap =
+        new HashMap<>(workspaceDao.getWorkspaceIdToGcpCloudContextMap());
 
-    for (Map.Entry<UUID, String> cloudContext : workspaceIdToGcpContextMap.entrySet()) {
-      workspaceIdToGcpContextMap.put(
-          cloudContext.getKey(),
-          GcpCloudContext.deserialize(cloudContext.getValue()).getGcpProjectId());
-    }
-    assertEquals(project1, workspaceIdToGcpContextMap.get(workspace1));
-    assertEquals(project2, workspaceIdToGcpContextMap.get(workspace2));
-    assertEquals(project3, workspaceIdToGcpContextMap.get(workspace3));
-    assertFalse(workspaceIdToGcpContextMap.containsValue(project4));
+    GcpCloudContext context1 =
+        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace1));
+    GcpCloudContext context2 =
+        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace2));
+    GcpCloudContext context3 =
+        GcpCloudContext.deserialize(workspaceIdToGcpContextMap.get(workspace3));
+
+    assertContext(project1, context1);
+    assertContext(project2, context2);
+    assertContext(project3, context3);
+  }
+
+  private void assertContext(String projectId, GcpCloudContext cloudContext) {
+    assertEquals(projectId, cloudContext.getGcpProjectId());
+    assertEquals(CloudPlatform.GCP, cloudContext.getCloudPlatform());
+    assertEquals(WsmResourceState.READY, cloudContext.getCommonFields().state());
+    assertNull(cloudContext.getCommonFields().flightId());
+    assertNull(cloudContext.getCommonFields().error());
   }
 
   @Test
   void offsetSkipsWorkspaceInList() {
-    Workspace firstWorkspace = defaultWorkspace(workspaceUuid);
-    workspaceDao.createWorkspace(firstWorkspace, /* applicationIds */ null);
+    Workspace firstWorkspace = defaultRawlsWorkspace(workspaceUuid);
+    WorkspaceFixtures.createWorkspaceInDb(firstWorkspace, workspaceDao);
     Workspace secondWorkspace =
         WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
-    workspaceDao.createWorkspace(secondWorkspace, /* applicationIds */ null);
-    List<Workspace> workspaceList =
-        workspaceDao.getWorkspacesMatchingList(
+    WorkspaceFixtures.createWorkspaceInDb(secondWorkspace, workspaceDao);
+    Map<UUID, DbWorkspaceDescription> workspaceMap =
+        workspaceDao.getWorkspaceDescriptionMapFromIdList(
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             1,
             10);
-    assertEquals(1, workspaceList.size());
-    assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
+    assertEquals(1, workspaceMap.size());
+    assertTrue(
+        workspaceMap.containsKey(firstWorkspace.getWorkspaceId())
+            || workspaceMap.containsKey(secondWorkspace.getWorkspaceId()));
   }
 
   @Test
   void listWorkspaceLimitEnforced() {
-    Workspace firstWorkspace = defaultWorkspace(workspaceUuid);
-    workspaceDao.createWorkspace(firstWorkspace, /* applicationIds */ null);
+    Workspace firstWorkspace = defaultRawlsWorkspace(workspaceUuid);
+    WorkspaceFixtures.createWorkspaceInDb(firstWorkspace, workspaceDao);
     Workspace secondWorkspace =
         WorkspaceFixtures.buildWorkspace(null, WorkspaceStage.RAWLS_WORKSPACE);
-    workspaceDao.createWorkspace(secondWorkspace, /* applicationIds */ null);
-    List<Workspace> workspaceList =
-        workspaceDao.getWorkspacesMatchingList(
+    WorkspaceFixtures.createWorkspaceInDb(secondWorkspace, workspaceDao);
+    Map<UUID, DbWorkspaceDescription> workspaceMap =
+        workspaceDao.getWorkspaceDescriptionMapFromIdList(
             ImmutableSet.of(firstWorkspace.getWorkspaceId(), secondWorkspace.getWorkspaceId()),
             0,
             1);
-    assertEquals(1, workspaceList.size());
-    assertThat(workspaceList.get(0), in(ImmutableList.of(firstWorkspace, secondWorkspace)));
+    assertEquals(1, workspaceMap.size());
+    assertTrue(
+        workspaceMap.containsKey(firstWorkspace.getWorkspaceId())
+            || workspaceMap.containsKey(secondWorkspace.getWorkspaceId()));
   }
 
   @Test
@@ -218,43 +239,12 @@ class WorkspaceDaoTest extends BaseUnitTest {
         WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
             .properties(propertyGenerate)
             .build();
-    workspaceDao.createWorkspace(initalWorkspace, /* applicationIds= */ null);
-
+    WorkspaceFixtures.createWorkspaceInDb(initalWorkspace, workspaceDao);
     Map<String, String> propertyUpdate = Map.of("foo", "updateBar", "tal", "lass");
     workspaceDao.updateWorkspaceProperties(workspaceUuid, propertyUpdate);
     propertyGenerate.putAll(propertyUpdate);
 
     assertEquals(propertyGenerate, workspaceDao.getWorkspace(workspaceUuid).getProperties());
-  }
-
-  @Nested
-  class McWorkspace {
-
-    UUID mcWorkspaceId;
-    Workspace mcWorkspace;
-
-    @BeforeEach
-    void setup() {
-      mcWorkspaceId = UUID.randomUUID();
-      mcWorkspace =
-          WorkspaceFixtures.defaultWorkspaceBuilder(mcWorkspaceId)
-              .workspaceStage(WorkspaceStage.MC_WORKSPACE)
-              .build();
-      workspaceDao.createWorkspace(mcWorkspace, /* applicationIds= */ null);
-    }
-
-    @Test
-    void createAndGetMcWorkspace() {
-      Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
-
-      assertEquals(mcWorkspace, workspace);
-    }
-
-    @Test
-    void getStageMatchesWorkspace() {
-      Workspace workspace = workspaceDao.getWorkspace(mcWorkspaceId);
-      assertEquals(WorkspaceStage.MC_WORKSPACE, workspace.getWorkspaceStage());
-    }
   }
 
   @Test
@@ -264,17 +254,34 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
   @Test
   void deleteNonExistentWorkspaceFails() {
-    assertFalse(workspaceDao.deleteWorkspace(workspaceUuid));
+    assertThrows(
+        WorkspaceNotFoundException.class,
+        () -> workspaceDao.deleteWorkspaceStart(workspaceUuid, UUID.randomUUID().toString()));
   }
 
   @Test
   void duplicateWorkspaceFails() {
-    Workspace workspace = defaultWorkspace(workspaceUuid);
-    workspaceDao.createWorkspace(workspace, /* applicationIds */ null);
-
+    Workspace workspace = defaultRawlsWorkspace(workspaceUuid);
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
     assertThrows(
         DuplicateWorkspaceException.class,
-        () -> workspaceDao.createWorkspace(workspace, /* applicationIds= */ null));
+        () -> WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao));
+  }
+
+  @Test
+  void duplicateWorkspaceCreateFailureDoesNotDelete() {
+    Workspace workspace = defaultRawlsWorkspace(workspaceUuid);
+    // Create the workspace normally
+    WorkspaceFixtures.createWorkspaceInDb(workspace, workspaceDao);
+    // A later call to createWorkspaceFailure should only delete if the caller is the same flight
+    // which created the workspace.
+    workspaceDao.createWorkspaceFailure(
+        workspaceUuid,
+        /*flightId=*/ UUID.randomUUID().toString(),
+        /*exception=*/ null,
+        WsmResourceStateRule.DELETE_ON_FAILURE);
+    Workspace workspaceAfterDelete = workspaceDao.getWorkspace(workspaceUuid);
+    assertEquals(workspace, workspaceAfterDelete);
   }
 
   @Test
@@ -285,8 +292,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
         WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
             .properties(propertyGenerate)
             .build();
-    workspaceDao.createWorkspace(initalWorkspace, /* applicationIds= */ null);
-
+    WorkspaceFixtures.createWorkspaceInDb(initalWorkspace, workspaceDao);
     List<String> propertyUpdate = new ArrayList<>(Arrays.asList("foo", "foo1"));
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyUpdate);
 
@@ -295,22 +301,57 @@ class WorkspaceDaoTest extends BaseUnitTest {
     assertEquals(updatedProperty, workspaceDao.getWorkspace(workspaceUuid).getProperties());
   }
 
+  @Test
+  void workspaceCreateErrorDeserializes() {
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceUuid)
+            .spendProfileId(spendProfileId)
+            .build();
+    var flightId = UUID.randomUUID().toString();
+    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ null, flightId);
+    var exception = new FieldSizeExceededException("This is a random ErrorReportException");
+    workspaceDao.createWorkspaceFailure(
+        workspaceUuid, flightId, exception, WsmResourceStateRule.BROKEN_ON_FAILURE);
+    DbWorkspace errorWorkspace = workspaceDao.getDbWorkspace(workspaceUuid);
+    // The deserialized exception will also include the original exception class name, so this
+    // isn't an exact match.
+    assertThat(errorWorkspace.getError().getMessage(), containsString(exception.getMessage()));
+    assertEquals(exception.getStatusCode(), errorWorkspace.getError().getStatusCode());
+  }
+
   @Nested
   class TestGcpCloudContext {
 
     @BeforeEach
     void setUp() {
-      workspaceDao.createWorkspace(defaultWorkspace(workspaceUuid), /* applicationIds */ null);
+      WorkspaceFixtures.createWorkspaceInDb(defaultRawlsWorkspace(workspaceUuid), workspaceDao);
     }
 
     @Test
     void createDeleteGcpCloudContext() {
-      String flightId = "flight-createdeletegcpcloudcontext";
-      gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightId);
-      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceUuid, "mismatched-flight-id");
+      // Run the normal case
+      WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+          workspaceDao, workspaceUuid, PROJECT_ID);
+      WorkspaceUnitTestUtils.deleteCloudContextInDatabase(
+          workspaceDao, workspaceUuid, CloudPlatform.GCP);
 
-      GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.createGcpCloudContextFinish(workspaceUuid, gcpCloudContext, flightId);
+      // Mismatched flight id
+      String flightId = UUID.randomUUID().toString();
+      workspaceDao.createCloudContextStart(
+          workspaceUuid, CloudPlatform.GCP, DEFAULT_SPEND_PROFILE_ID, flightId);
+
+      String gcpContextString = makeCloudContext().serialize();
+
+      // This should fail
+      assertThrows(
+          ResourceStateConflictException.class,
+          () ->
+              workspaceDao.createCloudContextSuccess(
+                  workspaceUuid, CloudPlatform.GCP, gcpContextString, "mismatched-flight-id"));
+
+      // This should succeed
+      workspaceDao.createCloudContextSuccess(
+          workspaceUuid, CloudPlatform.GCP, gcpContextString, flightId);
 
       Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
       Optional<GcpCloudContext> cloudContext =
@@ -322,14 +363,23 @@ class WorkspaceDaoTest extends BaseUnitTest {
       checkCloudContext(cloudContext);
 
       // delete with mismatched flight id - it should not delete
-      gcpCloudContextService.deleteGcpCloudContextWithCheck(workspaceUuid, "mismatched-flight-id");
+      workspaceDao.deleteCloudContextStart(workspaceUuid, CloudPlatform.GCP, flightId);
+      assertThrows(
+          ResourceStateConflictException.class,
+          () ->
+              workspaceDao.deleteCloudContextSuccess(
+                  workspaceUuid, CloudPlatform.GCP, "mismatched-flight-id"));
 
-      // Make sure the context is still there
+      // Make sure the context is still there; it will remain in the DELETING state
+      // so normal retrieval in checkCloudContext will error.
       cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceUuid);
-      checkCloudContext(cloudContext);
+      assertTrue(cloudContext.isPresent());
+      assertNotNull(cloudContext.get().getCommonFields());
+      assertEquals(WsmResourceState.DELETING, cloudContext.get().getCommonFields().state());
+      assertEquals(flightId, cloudContext.get().getCommonFields().flightId());
 
-      // delete with no check - should delete
-      gcpCloudContextService.deleteGcpCloudContext(workspaceUuid);
+      // finish the delete with a matching flight id
+      workspaceDao.deleteCloudContextSuccess(workspaceUuid, CloudPlatform.GCP, flightId);
       cloudContext = gcpCloudContextService.getGcpCloudContext(workspaceUuid);
       assertTrue(cloudContext.isEmpty());
     }
@@ -341,45 +391,92 @@ class WorkspaceDaoTest extends BaseUnitTest {
 
     @Test
     void deleteWorkspaceWithCloudContext() {
-      String flightId = "flight-deleteworkspacewithcloudcontext";
-      gcpCloudContextService.createGcpCloudContextStart(workspaceUuid, flightId);
-      GcpCloudContext gcpCloudContext = makeCloudContext();
-      gcpCloudContextService.createGcpCloudContextFinish(workspaceUuid, gcpCloudContext, flightId);
-
-      assertTrue(workspaceDao.deleteWorkspace(workspaceUuid));
+      WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+          workspaceDao, workspaceUuid, PROJECT_ID);
+      assertTrue(WorkspaceFixtures.deleteWorkspaceFromDb(workspaceUuid, workspaceDao));
       assertThrows(
           WorkspaceNotFoundException.class, () -> workspaceDao.getWorkspace(workspaceUuid));
 
       assertTrue(gcpCloudContextService.getGcpCloudContext(workspaceUuid).isEmpty());
     }
+
+    @Test
+    void workspaceCreateErrorDeserializes() {
+      var flightId = UUID.randomUUID().toString();
+      workspaceDao.createCloudContextStart(
+          workspaceUuid, CloudPlatform.GCP, DEFAULT_SPEND_PROFILE_ID, flightId);
+      var exception = new FieldSizeExceededException("This is a random ErrorReportException");
+      workspaceDao.createCloudContextFailure(
+          workspaceUuid,
+          CloudPlatform.GCP,
+          flightId,
+          exception,
+          WsmResourceStateRule.BROKEN_ON_FAILURE);
+      // Error deserializes from getCloudContext
+      DbCloudContext errorDbContext =
+          workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).get();
+      // The deserialized exception will also include the original exception class name, so this
+      // isn't an exact match.
+      assertThat(errorDbContext.getError().getMessage(), containsString(exception.getMessage()));
+      assertEquals(exception.getStatusCode(), errorDbContext.getError().getStatusCode());
+      // Error deserializes from getWorkspaceDescription
+      GcpCloudContext brokenGcpContext =
+          workspaceDao.getWorkspaceDescription(workspaceUuid).getGcpCloudContext();
+      assertThat(
+          brokenGcpContext.getCommonFields().error().getMessage(),
+          containsString(exception.getMessage()));
+      assertEquals(
+          exception.getStatusCode(), brokenGcpContext.getCommonFields().error().getStatusCode());
+      // Error deserializes from getWorkspaceDescriptionMapFromIdList
+      Map<UUID, DbWorkspaceDescription> descriptionMap =
+          workspaceDao.getWorkspaceDescriptionMapFromIdList(
+              Set.of(workspaceUuid), /*offset=*/ 0, /*limit=*/ 100);
+      GcpCloudContext secondBrokenGcpContext =
+          descriptionMap.get(workspaceUuid).getGcpCloudContext();
+      assertThat(
+          secondBrokenGcpContext.getCommonFields().error().getMessage(),
+          containsString(exception.getMessage()));
+      assertEquals(
+          exception.getStatusCode(),
+          secondBrokenGcpContext.getCommonFields().error().getStatusCode());
+    }
+
+    @Test
+    void duplicateCloudContextCreateDoesNotDelete() {
+      // Run the normal case
+      WorkspaceUnitTestUtils.createGcpCloudContextInDatabase(
+          workspaceDao, workspaceUuid, PROJECT_ID);
+      // Later calls to createCloudContextFailure (e.g. from duplicate requests) should not undo
+      // cloud contexts they did not create.
+      workspaceDao.createCloudContextFailure(
+          workspaceUuid,
+          CloudPlatform.GCP,
+          UUID.randomUUID().toString(),
+          /*exception=*/ null,
+          WsmResourceStateRule.DELETE_ON_FAILURE);
+      assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isPresent());
+    }
   }
 
-  @Test
-  void cloudTypeBackwardsCompatibility() {
-    assertEquals(CloudPlatform.GCP, CloudPlatform.valueOf("GCP"));
-    assertEquals("GCP", CloudPlatform.GCP.toString());
-  }
-
-  private Workspace defaultWorkspace(UUID workspaceUuid) {
+  private Workspace defaultRawlsWorkspace(UUID workspaceUuid) {
     return WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
   }
 
   private GcpCloudContext makeCloudContext() {
     return new GcpCloudContext(
-        PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION);
+        new GcpCloudContextFields(
+            PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
+        new CloudContextCommonFields(
+            DEFAULT_SPEND_PROFILE_ID, WsmResourceState.READY, /*flightId=*/ null, /*error=*/ null));
   }
 
   private void checkCloudContext(Optional<GcpCloudContext> optionalContext) {
     assertTrue(optionalContext.isPresent());
     GcpCloudContext context = optionalContext.get();
     assertEquals(PROJECT_ID, context.getGcpProjectId());
-    assertTrue(context.getSamPolicyOwner().isPresent());
-    assertEquals(POLICY_OWNER, context.getSamPolicyOwner().get());
-    assertTrue(context.getSamPolicyWriter().isPresent());
-    assertEquals(POLICY_WRITER, context.getSamPolicyWriter().get());
-    assertTrue(context.getSamPolicyReader().isPresent());
-    assertEquals(POLICY_READER, context.getSamPolicyReader().get());
-    assertTrue(context.getSamPolicyApplication().isPresent());
-    assertEquals(POLICY_APPLICATION, context.getSamPolicyApplication().get());
+    assertEquals(POLICY_OWNER, context.getSamPolicyOwner());
+    assertEquals(POLICY_WRITER, context.getSamPolicyWriter());
+    assertEquals(POLICY_READER, context.getSamPolicyReader());
+    assertEquals(POLICY_APPLICATION, context.getSamPolicyApplication());
   }
 }

@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
@@ -13,13 +12,13 @@ import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetAttributes;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
-import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
+import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -29,10 +28,10 @@ import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.Refer
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.Nullable;
 
 public class ControlledBigQueryDatasetResource extends ControlledResource {
@@ -75,16 +74,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   public static ControlledBigQueryDatasetResource.Builder builder() {
     return new ControlledBigQueryDatasetResource.Builder();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
   }
 
   // -- getters used in serialization --
@@ -153,7 +142,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
             flightBeanBag.getControlledResourceService(),
             flightBeanBag.getCrlService(),
             this,
-            flightBeanBag.getGcpCloudContextService(),
             userRequest),
         cloudRetry);
   }
@@ -166,27 +154,9 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
   }
 
   @Override
-  public void addUpdateSteps(UpdateControlledResourceFlight flight, FlightBeanBag flightBeanBag) {
-    final RetryRule gcpRetryRule = RetryRules.cloud();
-    ControlledBigQueryDatasetResource resource =
-        getResourceFromFlightInputParameters(
-            flight, WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-
-    // Retrieve existing attributes in case of undo later.
+  public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
-        new RetrieveBigQueryDatasetCloudAttributesStep(
-            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService()),
-        gcpRetryRule);
-
-    // Update the dataset's cloud attributes.
-    flight.addStep(
-        new UpdateBigQueryDatasetStep(
-            resource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET),
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getGcpCloudContextService()),
-        gcpRetryRule);
+        new UpdateBigQueryDatasetStep(flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
   public ApiGcpBigQueryDatasetAttributes toApiAttributes() {
@@ -258,26 +228,18 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required field projectId for BigQuery dataset");
     }
-    ResourceValidationUtils.validateBqDatasetName(getDatasetName());
+    GcpResourceValidationUtils.validateBqDatasetName(getDatasetName());
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    ControlledBigQueryDatasetResource that = (ControlledBigQueryDatasetResource) o;
-
-    return new EqualsBuilder()
-        .appendSuper(super.equals(o))
-        .append(datasetName, that.datasetName)
-        .append(projectId, that.projectId)
-        .isEquals();
+    if (this == o) return true;
+    if (!(o instanceof ControlledBigQueryDatasetResource that)) return false;
+    if (!super.equals(o)) return false;
+    return Objects.equal(datasetName, that.datasetName)
+        && Objects.equal(projectId, that.projectId)
+        && Objects.equal(defaultTableLifetime, that.defaultTableLifetime)
+        && Objects.equal(defaultPartitionLifetime, that.defaultPartitionLifetime);
   }
 
   @Override
@@ -301,11 +263,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder(17, 37)
-        .appendSuper(super.hashCode())
-        .append(datasetName)
-        .append(projectId)
-        .toHashCode();
+    return Objects.hashCode(
+        super.hashCode(), datasetName, projectId, defaultTableLifetime, defaultPartitionLifetime);
   }
 
   public static class Builder {

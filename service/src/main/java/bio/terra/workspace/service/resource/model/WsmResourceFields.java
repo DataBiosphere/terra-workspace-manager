@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.model;
 
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.db.model.DbResource;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,6 +27,7 @@ import javax.annotation.Nullable;
  */
 @JsonDeserialize(builder = WsmResourceFields.Builder.class)
 public class WsmResourceFields {
+  private static final String RESOURCE_DESCRIPTIOR = "WsmResourceFields";
   private final UUID workspaceUuid;
   private final UUID resourceId;
   private final String name;
@@ -37,6 +39,9 @@ public class WsmResourceFields {
   @Nullable private final OffsetDateTime createdDate;
   private final String lastUpdatedByEmail;
   @Nullable private final OffsetDateTime lastUpdatedDate;
+  private final WsmResourceState state;
+  @Nullable private final String flightId;
+  @Nullable private final ErrorReportException error;
 
   /** construct from database resource */
   public WsmResourceFields(DbResource dbResource) {
@@ -51,6 +56,9 @@ public class WsmResourceFields {
     createdDate = dbResource.getCreatedDate();
     lastUpdatedByEmail = dbResource.getLastUpdatedByEmail();
     lastUpdatedDate = dbResource.getLastUpdatedDate();
+    state = dbResource.getState();
+    flightId = dbResource.getFlightId();
+    error = dbResource.getError();
   }
 
   protected WsmResourceFields(Builder<?> builder) {
@@ -65,6 +73,9 @@ public class WsmResourceFields {
     this.createdDate = builder.createdDate;
     this.lastUpdatedByEmail = builder.lastUpdatedByEmail;
     this.lastUpdatedDate = builder.lastUpdatedDate;
+    this.state = builder.state;
+    this.flightId = builder.flightId;
+    this.error = builder.error;
   }
 
   public static WsmResourceFields.Builder<?> builder() {
@@ -128,6 +139,18 @@ public class WsmResourceFields {
     return lastUpdatedDate;
   }
 
+  public WsmResourceState getState() {
+    return state;
+  }
+
+  public @Nullable String getFlightId() {
+    return flightId;
+  }
+
+  public @Nullable ErrorReportException getError() {
+    return error;
+  }
+
   public boolean partialEqual(Object o) {
     if (this == o) return true;
     if (!(o instanceof WsmResourceFields that)) return false;
@@ -149,12 +172,15 @@ public class WsmResourceFields {
         && Objects.equal(name, that.name)
         && Objects.equal(description, that.description)
         && cloningInstructions == that.cloningInstructions
+        && Objects.equal(resourceLineage, that.resourceLineage)
         && Objects.equal(properties, that.properties)
         && Objects.equal(createdByEmail, that.createdByEmail)
         && Objects.equal(createdDate, that.createdDate)
         && Objects.equal(lastUpdatedByEmail, that.lastUpdatedByEmail)
         && Objects.equal(lastUpdatedDate, that.lastUpdatedDate)
-        && Objects.equal(resourceLineage, that.getResourceLineage());
+        && state == that.state
+        && Objects.equal(flightId, that.flightId)
+        && Objects.equal(error, that.error);
   }
 
   @Override
@@ -170,7 +196,10 @@ public class WsmResourceFields {
         createdByEmail,
         createdDate,
         lastUpdatedByEmail,
-        lastUpdatedDate);
+        lastUpdatedDate,
+        state,
+        flightId,
+        error);
   }
 
   /**
@@ -193,16 +222,22 @@ public class WsmResourceFields {
     private OffsetDateTime createdDate;
     private String lastUpdatedByEmail;
     private OffsetDateTime lastUpdatedDate;
+    private WsmResourceState state = WsmResourceState.NOT_EXISTS;
+    private String flightId;
+    private ErrorReportException error;
 
     public Builder() {}
 
     public void validate() {
-      ResourceValidationUtils.checkFieldNonNull(workspaceUuid, "workspaceId");
-      ResourceValidationUtils.checkFieldNonNull(resourceId, "resourceId");
-      ResourceValidationUtils.checkFieldNonNull(name, "name");
-      ResourceValidationUtils.checkFieldNonNull(cloningInstructions, "cloningInstructions");
-      ResourceValidationUtils.checkFieldNonNull(properties, "properties");
-      ResourceValidationUtils.checkFieldNonNull(createdByEmail, "createdByEmail");
+      ResourceValidationUtils.checkFieldNonNull(workspaceUuid, "workspaceId", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkFieldNonNull(resourceId, "resourceId", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkStringNonEmpty(name, "name", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkFieldNonNull(
+          cloningInstructions, "cloningInstructions", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkFieldNonNull(properties, "properties", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkStringNonEmpty(
+          createdByEmail, "createdByEmail", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.checkFieldNonNull(state, "state", RESOURCE_DESCRIPTIOR);
     }
 
     public WsmResourceFields build() {
@@ -273,6 +308,24 @@ public class WsmResourceFields {
     @SuppressWarnings("unchecked")
     public T lastUpdatedDate(OffsetDateTime lastUpdatedDate) {
       this.lastUpdatedDate = lastUpdatedDate;
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T state(WsmResourceState state) {
+      this.state = state;
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T flightId(@Nullable String flightId) {
+      this.flightId = flightId;
+      return (T) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public T error(@Nullable ErrorReportException error) {
+      this.error = error;
       return (T) this;
     }
   }

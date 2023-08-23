@@ -5,7 +5,7 @@ paths:
     post:
       summary: Create a new controlled Gcp bucket
       operationId: createBucket
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -27,7 +27,7 @@ paths:
     get:
       summary: Get a controlled GCS bucket resource
       operationId: getBucket
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/GetControlledGcpGcsBucketResponse'
@@ -54,16 +54,17 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/ServerError'
     post:
       summary: |
-        Delete a controlled GCS bucket resource. This is async, because deleting the bucket and contents can
-        take a very long time. NOTE: this cannot be an HTTP DELETE, because something between generated code
-        and server behavior does not support delete operations with bodies. We require the body for the async
-        state, so this is a POST.
+        Delete a controlled GCS bucket resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteBucket
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -86,7 +87,7 @@ paths:
     post:
       summary: Generate a cloud native controlled Gcp bucket name
       operationId: generateGcpGcsBucketCloudName
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -108,7 +109,7 @@ paths:
     post:
       summary: Clone a GCS Bucket
       operationId: cloneGcsBucket
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       requestBody:
         required: true
         content:
@@ -134,7 +135,7 @@ paths:
     get:
       summary: Retrieve information about a gcp bucket clone job.
       operationId: getCloneGcsBucketResult
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/ClonedControlledGcpGcsBucketResponse'
@@ -152,7 +153,7 @@ paths:
     get:
       summary: Retrieve information about a gcp bucket deletion job.
       operationId: getDeleteBucketResult
-      tags: [ControlledGcpResource]
+      tags: [ ControlledGcpResource ]
       responses:
         '200':
           $ref: '#/components/responses/DeleteControlledGcpGcsBucketResponse'
@@ -168,7 +169,7 @@ components:
     CreatedControlledGcpGcsBucket:
       description: Response Payload for requesting a new controlled GCS bucket.
       type: object
-      required: [resourceId, gcpBucket]
+      required: [ resourceId, gcpBucket ]
       properties:
         resourceId:
           description: UUID of a newly-created resource.
@@ -233,6 +234,7 @@ components:
         - NEARLINE
         - COLDLINE
         - ARCHIVE
+
     GcpGcsBucketLifecycle:
       description: >-
         Options to control automatic deletion or storage class change for a bucket.
@@ -362,6 +364,7 @@ components:
           type: string
         jobControl:
           $ref: '#/components/schemas/JobControl'
+
     ClonedControlledGcpGcsBucket:
       description: >-
         Response object for clone of a GCS Bucket. Destination workspace and
@@ -381,6 +384,7 @@ components:
           format: uuid
         bucket:
           $ref: "#/components/schemas/CreatedControlledGcpGcsBucket"
+
     CloneControlledGcpGcsBucketResult:
       description: >-
         API result class for cloning a GCS bucket.
@@ -392,6 +396,7 @@ components:
           $ref: '#/components/schemas/JobReport'
         errorReport:
           $ref: '#/components/schemas/ErrorReport'
+
     CloneReferencedGcpGcsBucketResourceResult:
       description: >-
         API result class for cloning a referenced GCS Bucket resource. Includes source workspace
@@ -411,6 +416,7 @@ components:
           format: uuid
         resource:
           $ref: '#/components/schemas/GcpGcsBucketResource'
+
     DeleteControlledGcpGcsBucketRequest:
       type: object
       required: [ jobControl ]
@@ -445,7 +451,6 @@ components:
       properties:
         generatedBucketCloudName:
           type: string
-
 
   responses:
     CreatedControlledGcpGcsBucketResponse:

@@ -27,9 +27,7 @@ public class DeleteMetadataStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    // deleteResource is idempotent, and here we don't care whether the resource was actually
-    // deleted or just not found.
-    resourceDao.deleteResource(workspaceUuid, resourceId);
+    resourceDao.deleteResourceSuccess(workspaceUuid, resourceId, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 
