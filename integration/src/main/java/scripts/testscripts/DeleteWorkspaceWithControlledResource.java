@@ -74,10 +74,18 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
   public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {        
     try {
-      workspaceApi.deleteWorkspaceV2(
+      var jobId = UUID.randomUUID().toString();
+      JobResult deleteResult = workspaceApi.deleteWorkspaceV2(
           new DeleteWorkspaceV2Request()
-              .jobControl(new JobControl().id(UUID.randomUUID().toString())),
+              .jobControl(new JobControl().id(jobId)),
           getWorkspaceId());
+      deleteResult =
+          ClientTestUtils.pollWhileRunning(
+              deleteResult,
+              () -> workspaceApi.getDeleteWorkspaceV2Result(getWorkspaceId(), jobId),
+              JobResult::getJobReport,
+              Duration.ofSeconds(10));
+      assertEquals(HttpStatus.SC_NOT_FOUND, deleteResult.getErrorReport().getStatusCode());
     } catch (ApiException e) {
       assertEquals(HttpStatus.SC_NOT_FOUND, e.getCode());
     }
