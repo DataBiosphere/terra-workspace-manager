@@ -116,10 +116,17 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
   @Override
   protected void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
-    deleteWorkspaceAsync(workspaceApi, workspaceUuid);
+    deleteWorkspaceAsyncAssertSuccess(workspaceApi, workspaceUuid);
   }
 
-  public static void deleteWorkspaceAsync(WorkspaceApi workspaceApi, UUID workspaceUuid)
+  public static void deleteWorkspaceAsyncAssertSuccess(
+      WorkspaceApi workspaceApi, UUID workspaceUuid) throws ApiException, InterruptedException {
+    JobResult deleteResult = deleteWorkspaceAsync(workspaceApi, workspaceUuid);
+    ClientTestUtils.assertJobSuccess(
+        "Delete Workspace v2", deleteResult.getJobReport(), deleteResult.getErrorReport());
+  }
+
+  public static JobResult deleteWorkspaceAsync(WorkspaceApi workspaceApi, UUID workspaceUuid)
       throws ApiException, InterruptedException {
     var jobId = UUID.randomUUID().toString();
     JobResult deleteResult =
@@ -131,8 +138,7 @@ public abstract class WorkspaceAllocateTestScriptBase extends WorkspaceApiTestSc
             () -> workspaceApi.getDeleteWorkspaceV2Result(workspaceUuid, jobId),
             JobResult::getJobReport,
             Duration.ofSeconds(10));
-    ClientTestUtils.assertJobSuccess(
-        "Delete Workspace v2", deleteResult.getJobReport(), deleteResult.getErrorReport());
+    return deleteResult;
   }
 
   /**
