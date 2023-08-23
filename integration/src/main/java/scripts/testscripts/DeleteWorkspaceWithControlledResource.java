@@ -8,11 +8,7 @@ import bio.terra.testrunner.runner.config.TestUserSpecification;
 import bio.terra.workspace.api.ControlledGcpResourceApi;
 import bio.terra.workspace.api.WorkspaceApi;
 import bio.terra.workspace.client.ApiException;
-import bio.terra.workspace.model.DeleteWorkspaceV2Request;
 import bio.terra.workspace.model.GcpBigQueryDatasetResource;
-import bio.terra.workspace.model.JobControl;
-import bio.terra.workspace.model.JobResult;
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
@@ -52,7 +48,8 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
     assertDatasetsAreEqualIgnoringLastUpdatedDate(createdDataset, fetchedDataset);
 
     // Delete the workspace, which should delete the included context and resource
-    WorkspaceAllocateTestScriptBase.deleteWorkspaceAsync(workspaceApi, getWorkspaceId());
+    WorkspaceAllocateTestScriptBase.deleteWorkspaceAsyncAssertSuccess(
+        workspaceApi, getWorkspaceId());
 
     // Confirm the workspace is deleted
     var workspaceMissingException =
@@ -72,16 +69,7 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
   public void doCleanup(List<TestUserSpecification> testUsers, WorkspaceApi workspaceApi)
       throws Exception {
     try {
-      var jobId = UUID.randomUUID().toString();
-      JobResult deleteResult =
-          workspaceApi.deleteWorkspaceV2(
-              new DeleteWorkspaceV2Request().jobControl(new JobControl().id(jobId)),
-              getWorkspaceId());
-      ClientTestUtils.pollWhileRunning(
-          deleteResult,
-          () -> workspaceApi.getDeleteWorkspaceV2Result(getWorkspaceId(), jobId),
-          JobResult::getJobReport,
-          Duration.ofSeconds(10));
+      WorkspaceAllocateTestScriptBase.deleteWorkspaceAsync(workspaceApi, getWorkspaceId());
     } catch (ApiException e) {
       // If this test succeeds, it will clean up the workspace as part of the user journey, meaning
       // a "not found" exception should not be considered an error here.
