@@ -129,6 +129,13 @@ public class UpdateDataprocClusterStep implements Step {
                 updateParameters.getLifecycleConfig().getAutoDeleteTime().toString());
       }
     }
+
+    // Do not update if there are no fields to update. The cluster update api requires at least one
+    // field to update.
+    if (updateMaskPaths.size() == 0) {
+      return StepResult.getStepResultSuccess();
+    }
+
     try {
       crlService
           .getDataprocCow()
