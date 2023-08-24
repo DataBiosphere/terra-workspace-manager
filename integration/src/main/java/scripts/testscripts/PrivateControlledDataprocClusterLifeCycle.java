@@ -248,7 +248,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     assertThat(
         "WSM throws a bad request exception",
         badClusterUpdateParameter.getCode(),
-        equalTo(HttpStatus.SC_NOT_FOUND));
+        equalTo(HttpStatus.SC_BAD_REQUEST));
 
     // Delete the Dataproc cluster through WSM.
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);
