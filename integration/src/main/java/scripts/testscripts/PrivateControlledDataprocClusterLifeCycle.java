@@ -246,7 +246,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
 
     // Verify that WSM throws a bad request exception
     assertThat(
-        "Error from GCP is 403 or 404",
+        "WSM throws a bad request exception",
         badClusterUpdateParameter.getCode(),
         equalTo(HttpStatus.SC_NOT_FOUND));
 
