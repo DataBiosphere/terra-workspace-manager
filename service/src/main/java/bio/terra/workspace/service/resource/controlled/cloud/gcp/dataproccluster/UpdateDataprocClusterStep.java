@@ -4,6 +4,8 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.dataproc.ClusterName;
+import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -93,7 +95,8 @@ public class UpdateDataprocClusterStep implements Step {
       updateMaskPaths.add(NUM_SECONDARY_WORKERS);
       updatedCluster
           .getConfig()
-          .setSecondaryWorkerConfig(new InstanceGroupConfig().setNumInstances(3));
+          .setSecondaryWorkerConfig(
+              new InstanceGroupConfig().setNumInstances(updateParameters.getNumSecondaryWorkers()));
     }
     if (updateParameters.getAutoscalingPolicy() != null) {
       updateMaskPaths.add(AUTOSCALING_POLICY);
@@ -105,11 +108,13 @@ public class UpdateDataprocClusterStep implements Step {
     ApiGcpDataprocClusterLifecycleConfig lifecycleConfig = updateParameters.getLifecycleConfig();
     if (lifecycleConfig != null) {
       updatedCluster.getConfig().setLifecycleConfig(new LifecycleConfig());
-      updateMaskPaths.add(IDLE_DELETE_TTL);
-      updatedCluster
-          .getConfig()
-          .getLifecycleConfig()
-          .setIdleDeleteTtl(updateParameters.getLifecycleConfig().getIdleDeleteTtl());
+      if (lifecycleConfig.getIdleDeleteTtl() != null) {
+        updateMaskPaths.add(IDLE_DELETE_TTL);
+        updatedCluster
+            .getConfig()
+            .getLifecycleConfig()
+            .setIdleDeleteTtl(updateParameters.getLifecycleConfig().getIdleDeleteTtl());
+      }
       // Only one autoDeleteTtl and autoDeleteTime can be set (already validated in controller)
       if (lifecycleConfig.getAutoDeleteTtl() != null) {
         updateMaskPaths.add(AUTO_DELETE_TTL);
@@ -126,6 +131,13 @@ public class UpdateDataprocClusterStep implements Step {
                 updateParameters.getLifecycleConfig().getAutoDeleteTime().toString());
       }
     }
+
+    // Do not update if there are no fields to update. The cluster update api requires at least one
+    // field to update.
+    if (updateMaskPaths.size() == 0) {
+      return StepResult.getStepResultSuccess();
+    }
+
     try {
       crlService
           .getDataprocCow()
@@ -137,9 +149,11 @@ public class UpdateDataprocClusterStep implements Step {
               updateParameters.getGracefulDecommissionTimeout())
           .execute();
     } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
-          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
+        throw new BadRequestException(
+            String.format("Bad cluster update parameters: %s", e.getMessage()));
+      } else if (HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
+        throw new NotFoundException(String.format("Cluster not found: %s", e.getMessage()));
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (IOException e) {
