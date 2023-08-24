@@ -4,6 +4,8 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.dataproc.ClusterName;
+import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -147,9 +149,11 @@ public class UpdateDataprocClusterStep implements Step {
               updateParameters.getGracefulDecommissionTimeout())
           .execute();
     } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
-          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
+        throw new BadRequestException(
+            String.format("Bad cluster update parameters: %s", e.getMessage()));
+      } else if (HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
+        throw new NotFoundException(String.format("Cluster not found: %s", e.getMessage()));
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (IOException e) {

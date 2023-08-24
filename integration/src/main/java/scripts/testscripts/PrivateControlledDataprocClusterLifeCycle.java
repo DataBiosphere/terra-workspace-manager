@@ -229,6 +229,27 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
         () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
         "Timed out waiting for cluster to update");
 
+    // Update the cluster with a bad parameter format
+    String badAutoscalingPolicy = "bad-policy";
+    ApiException badClusterUpdateParameter =
+        assertThrows(
+            ApiException.class,
+            () ->
+                resourceUserApi.updateDataprocCluster(
+                    new UpdateControlledGcpDataprocClusterRequestBody()
+                        .updateParameters(
+                            new ControlledDataprocClusterUpdateParameters()
+                                .autoscalingPolicy(badAutoscalingPolicy)),
+                    getWorkspaceId(),
+                    resourceId),
+            "Cluster update with bad parameter format");
+
+    // Verify that WSM throws a bad request exception
+    assertThat(
+        "Error from GCP is 403 or 404",
+        badClusterUpdateParameter.getCode(),
+        equalTo(HttpStatus.SC_NOT_FOUND));
+
     // Delete the Dataproc cluster through WSM.
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);
 
