@@ -16,6 +16,7 @@
 #   - instance/guest-attributes/startup_script/message: Set by this script, storing the message of this script's execution. If the status is "ERROR", this message will contain an error message, otherwise it will be empty.
 #   - instance/attributes/terra-cli-server: Read by this script to configure the Terra CLI server.
 #   - instance/attributes/terra-workspace-id: Read by this script to configure the Terra CLI workspace.
+#   - instance/attributes/software-framework: Read by this script to optionally install software on the cluster manager node. Currently supported value is: "HAIL".
 #
 # Execution details:
 #   By default, this script is executed as root on all Dataproc vm nodes on every startup.
@@ -55,8 +56,8 @@ readonly LOGIN_USER="dataproc"
 # This is intentionally not a Bash alias as they are not supported in shell scripts.
 readonly RUN_AS_LOGIN_USER="sudo -u ${LOGIN_USER} bash -l -c"
 
-# Create an alias for the correct python3 pip binnary
-readonly RUN_PIP="/opt/conda/miniconda3/bin/pip"
+# Create an alias for the miniconda bin directory. Used to install pip packages and run python and ipython.
+readonly MINICONDA_BIN="/opt/conda/miniconda3/bin/"
 
 # Startup script status is propagated out to VM guest attributes
 readonly STATUS_ATTRIBUTE="startup_script/status"
@@ -107,6 +108,10 @@ readonly TERRA_BOOT_SERVICE="/etc/systemd/system/${TERRA_BOOT_SERVICE_NAME}"
 readonly TERRA_SSH_AGENT_SCRIPT="${USER_TERRA_CONFIG_DIR}/ssh-agent-start.sh"
 readonly TERRA_SSH_AGENT_SERVICE_NAME="terra-ssh-agent.service"
 readonly TERRA_SSH_AGENT_SERVICE="/etc/systemd/system/${TERRA_SSH_AGENT_SERVICE_NAME}"
+
+# Variables for optional software frameworks
+readonly GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME="google-dataproc-component-gateway.service"
+readonly HAIL_SCRIPT_PATH="${USER_TERRA_CONFIG_DIR}/install-hail.py"
 
 # Location of gitignore configuration file for users
 readonly GIT_IGNORE="${USER_HOME_DIR}/gitignore_global"
@@ -229,7 +234,7 @@ EOF
 emit "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
-${RUN_AS_LOGIN_USER} "${RUN_PIP} install --user \
+${RUN_AS_LOGIN_USER} "${MINICONDA_BIN}pip install --user \
   dsub \
   nbdime \
   nbstripout \
@@ -667,12 +672,197 @@ Group=${LOGIN_USER}
 EnvironmentFile=/etc/environment
 EnvironmentFile=/etc/default/jupyter
 WorkingDirectory=${USER_HOME_DIR}
-ExecStart=/bin/bash -c '/opt/conda/miniconda3/bin/jupyter lab'
+ExecStart=/bin/bash -c '/opt/conda/miniconda3/bin/jupyter notebook &>> ${USER_HOME_DIR}/jupyter_notebook.log'
 Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
 EOF
+
+############################
+# Install Software Framework
+############################
+
+# If the script executer has set the "software-framework" property to "hail", then install hail after dataproc optional components are installed
+
+readonly SOFTWARE_FRAMEWORK="$(get_metadata_value "instance/attributes/software-framework")"
+
+if [[ "${SOFTWARE_FRAMEWORK}" == "HAIL" ]]; then
+  emit "Installing Hail..."
+
+  # Create a script to install hail
+  cat << EOF >"${HAIL_SCRIPT_PATH}"
+#!${MINICONDA_BIN}python
+# This modified hail installation script installs the necessary hail packages and jupyter extensions, but does not install jupyter or set up a jupyter service as it already handled by dataproc's jupyter optional component.
+# See: https://storage.googleapis.com/hail-common/hailctl/dataproc/0.2.120/init_notebook.py
+import json
+import os
+import subprocess as sp
+import sys
+from subprocess import check_output
+
+assert sys.version_info > (3, 0), sys.version_info
+
+if sys.version_info >= (3, 7):
+    def safe_call(*args, **kwargs):
+        sp.run(args, capture_output=True, check=True, **kwargs)
+else:
+    def safe_call(*args, **kwargs):
+        try:
+            sp.check_output(args, stderr=sp.STDOUT, **kwargs)
+        except sp.CalledProcessError as e:
+            print(e.output).decode()
+            raise e
+
+
+def get_metadata(key):
+    return check_output(['/usr/share/google/get_metadata_value', 'attributes/{}'.format(key)]).decode()
+
+def mkdir_if_not_exists(path):
+    os.makedirs(path, exist_ok=True)
+
+
+# additional packages to install
+pip_pkgs = [
+    'setuptools',
+    'mkl<2020',
+    'lxml<5',
+    'google-cloud-storage',
+    'https://github.com/hail-is/jgscm/archive/v0.1.13+hail.zip',
+    'qtconsole==4.5.*'
+]
+
+# add user-requested packages
+try:
+    user_pkgs = get_metadata('PKGS')
+except Exception:
+    pass
+else:
+    pip_pkgs.extend(user_pkgs.split('|'))
+
+print('pip packages are {}'.format(pip_pkgs))
+command = ['${MINICONDA_BIN}pip', 'install']
+command.extend(pip_pkgs)
+safe_call(*command)
+
+print('getting metadata')
+
+wheel_path = get_metadata('WHEEL')
+wheel_name = wheel_path.split('/')[-1]
+
+print('copying wheel')
+safe_call('gsutil', 'cp', wheel_path, f'/home/hail/{wheel_name}')
+
+safe_call('${MINICONDA_BIN}pip', 'install', '--no-dependencies', f'/home/hail/{wheel_name}')
+
+print('setting environment')
+
+spark_lib_base = '/usr/lib/spark/python/lib/'
+files_to_add = [os.path.join(spark_lib_base, x) for x in os.listdir(spark_lib_base) if x.endswith('.zip')]
+
+env_to_set = {
+    'PYTHONHASHSEED': '0',
+    'PYTHONPATH': ':'.join(files_to_add),
+    'SPARK_HOME': '/usr/lib/spark/',
+    'PYSPARK_PYTHON': '${MINICONDA_BIN}python',
+    'PYSPARK_DRIVER_PYTHON': '${MINICONDA_BIN}python',
+}
+
+print('setting environment')
+
+for e, value in env_to_set.items():
+    safe_call('/bin/sh', '-c',
+              'set -ex; echo "export {}={}" | tee -a /etc/environment /usr/lib/spark/conf/spark-env.sh'.format(e, value))
+
+hail_jar = sp.check_output([
+    '/bin/sh', '-c',
+    'set -ex; ${MINICONDA_BIN}python -m pip show hail | grep Location | sed "s/Location: //"'
+]).decode('ascii').strip() + '/hail/backend/hail-all-spark.jar'
+
+conf_to_set = [
+    'spark.executorEnv.PYTHONHASHSEED=0',
+    'spark.app.name=Hail',
+    # the below are necessary to make 'submit' work
+    'spark.jars={}'.format(hail_jar),
+    'spark.driver.extraClassPath={}'.format(hail_jar),
+    'spark.executor.extraClassPath=./hail-all-spark.jar',
+]
+
+print('setting spark-defaults.conf')
+
+with open('/etc/spark/conf/spark-defaults.conf', 'a') as out:
+    out.write('\n')
+    for c in conf_to_set:
+        out.write(c)
+        out.write('\n')
+
+# create Jupyter kernel spec file
+kernel = {
+    'argv': [
+        '${MINICONDA_BIN}python',
+        '-m',
+        'ipykernel',
+        '-f',
+        '{connection_file}'
+    ],
+    'display_name': 'Hail',
+    'language': 'python',
+    'env': {
+        **env_to_set,
+        'HAIL_SPARK_MONITOR': '1',
+        'SPARK_MONITOR_UI': 'http://localhost:8088/proxy/%APP_ID%',
+    }
+}
+
+# write kernel spec file to default Jupyter kernel directory
+mkdir_if_not_exists('/opt/conda/default/share/jupyter/kernels/hail/')
+with open('/opt/conda/default/share/jupyter/kernels/hail/kernel.json', 'w') as f:
+    json.dump(kernel, f)
+
+# create Jupyter configuration file
+mkdir_if_not_exists('/opt/conda/default/etc/jupyter/')
+with open('/opt/conda/default/etc/jupyter/jupyter_notebook_config.py', 'w') as f:
+    opts = [
+        'c.Application.log_level = "DEBUG"',
+        'c.NotebookApp.ip = "127.0.0.1"',
+        'c.NotebookApp.open_browser = False',
+        'c.NotebookApp.port = 8123',
+        'c.NotebookApp.token = ""',
+        'c.NotebookApp.contents_manager_class = "jgscm.GoogleStorageContentManager"'
+    ]
+    f.write('\n'.join(opts) + '\n')
+
+print('copying spark monitor')
+spark_monitor_gs = 'gs://hail-common/sparkmonitor-3b2bc8c22921f5c920fc7370f3a160d820db1f51/sparkmonitor-0.0.11-py3-none-any.whl'
+spark_monitor_wheel = '/home/hail/' + spark_monitor_gs.split('/')[-1]
+safe_call('gsutil', 'cp', spark_monitor_gs, spark_monitor_wheel)
+safe_call('${MINICONDA_BIN}pip', 'install', spark_monitor_wheel)
+
+# setup jupyter-spark extension
+safe_call('${MINICONDA_BIN}jupyter', 'serverextension', 'enable', '--user', '--py', 'sparkmonitor')
+safe_call('${MINICONDA_BIN}jupyter', 'nbextension', 'install', '--user', '--py', 'sparkmonitor')
+safe_call('${MINICONDA_BIN}jupyter', 'nbextension', 'enable', '--user', '--py', 'sparkmonitor')
+safe_call('${MINICONDA_BIN}jupyter', 'nbextension', 'enable', '--user', '--py', 'widgetsnbextension')
+safe_call("""${MINICONDA_BIN}ipython profile create && echo "c.InteractiveShellApp.extensions.append('sparkmonitor.kernelextension')" >> $(${MINICONDA_BIN}ipython profile locate default)/ipython_kernel_config.py""", shell=True)
+
+# Restart jupyter service
+#safe_call('service', 'jupyter', 'restart')
+
+print("hail installed successfully.")
+
+EOF
+
+  # Fork the following into background process to wait for dataproc to finish installing optional components including jupyter and start the proxy gateway service. Then safely install hail.
+  (
+    while ! systemctl is-active --quiet ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME}; do
+      sleep 5
+      emit "Waiting for ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME} to start..."
+    done
+
+    emit "Starting hail install script..."
+     ${MINICONDA_BIN}python ${HAIL_SCRIPT_PATH}
+  ) &
+fi
 
 # reload systemctl daemon to load the updated configuration
 systemctl daemon-reload
