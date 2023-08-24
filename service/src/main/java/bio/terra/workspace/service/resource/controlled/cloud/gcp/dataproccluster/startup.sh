@@ -56,8 +56,11 @@ readonly LOGIN_USER="dataproc"
 # This is intentionally not a Bash alias as they are not supported in shell scripts.
 readonly RUN_AS_LOGIN_USER="sudo -u ${LOGIN_USER} bash -l -c"
 
-# Create an alias for the miniconda bin directory. Used to install pip packages and run python and ipython.
-readonly MINICONDA_BIN="/opt/conda/miniconda3/bin/"
+# Set variables for key binaries to ensure we pick up the ones we want (that may not always be in PATH)
+readonly RUN_PIP="/opt/conda/miniconda3/bin/pip"
+readonly RUN_PYTHON="/opt/conda/miniconda3/bin/python"
+readonly RUN_JUPYTER="/opt/conda/miniconda3/bin/jupyter"
+readonly RUN_IPYTHON="/opt/conda/miniconda3/bin/ipython"
 
 # Startup script status is propagated out to VM guest attributes
 readonly STATUS_ATTRIBUTE="startup_script/status"
@@ -234,7 +237,7 @@ EOF
 emit "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
-${RUN_AS_LOGIN_USER} "${MINICONDA_BIN}pip install --user \
+${RUN_AS_LOGIN_USER} "${RUN_PIP} install --user \
   dsub \
   nbdime \
   nbstripout \
@@ -683,17 +686,21 @@ EOF
 # Install Software Framework
 ############################
 
-# If the script executer has set the "software-framework" property to "hail", then install hail after dataproc optional components are installed
+# If the script executer has set the "software-framework" property to "hail",
+# then install hail after dataproc optional components are installed.
 
 readonly SOFTWARE_FRAMEWORK="$(get_metadata_value "instance/attributes/software-framework")"
 
 if [[ "${SOFTWARE_FRAMEWORK}" == "HAIL" ]]; then
   emit "Installing Hail..."
 
-  # Create a script to install hail
+  # Create the hail install script. The script is based off of hail's init_notebook.py
+  # #script that is executed by hailctl dataproc start. This modified script excludes
+  # the step of starting a jupyter service.
   cat << EOF >"${HAIL_SCRIPT_PATH}"
-#!${MINICONDA_BIN}python
-# This modified hail installation script installs the necessary hail packages and jupyter extensions, but does not install jupyter or set up a jupyter service as it already handled by dataproc's jupyter optional component.
+#!${RUN_PYTHON}
+# This modified hail installation script installs the necessary hail packages and jupyter extensions,
+# but does not install jupyter or set up a jupyter service as it already handled by dataproc's jupyter optional component.
 # See: https://storage.googleapis.com/hail-common/hailctl/dataproc/0.2.120/init_notebook.py
 import json
 import os
@@ -726,10 +733,7 @@ def mkdir_if_not_exists(path):
 pip_pkgs = [
     'setuptools',
     'mkl<2020',
-    'lxml<5',
-    'google-cloud-storage',
-    'https://github.com/hail-is/jgscm/archive/v0.1.13+hail.zip',
-    'qtconsole==4.5.*'
+    'lxml<5'
 ]
 
 # add user-requested packages
@@ -741,7 +745,7 @@ else:
     pip_pkgs.extend(user_pkgs.split('|'))
 
 print('pip packages are {}'.format(pip_pkgs))
-command = ['${MINICONDA_BIN}pip', 'install']
+command = ['${RUN_PIP}', 'install']
 command.extend(pip_pkgs)
 safe_call(*command)
 
@@ -753,7 +757,7 @@ wheel_name = wheel_path.split('/')[-1]
 print('copying wheel')
 safe_call('gsutil', 'cp', wheel_path, f'/home/hail/{wheel_name}')
 
-safe_call('${MINICONDA_BIN}pip', 'install', '--no-dependencies', f'/home/hail/{wheel_name}')
+safe_call('${RUN_PIP}', 'install', '--no-dependencies', f'/home/hail/{wheel_name}')
 
 print('setting environment')
 
@@ -764,8 +768,8 @@ env_to_set = {
     'PYTHONHASHSEED': '0',
     'PYTHONPATH': ':'.join(files_to_add),
     'SPARK_HOME': '/usr/lib/spark/',
-    'PYSPARK_PYTHON': '${MINICONDA_BIN}python',
-    'PYSPARK_DRIVER_PYTHON': '${MINICONDA_BIN}python',
+    'PYSPARK_PYTHON': '${RUN_PYTHON}',
+    'PYSPARK_DRIVER_PYTHON': '${RUN_PYTHON}',
 }
 
 print('setting environment')
@@ -776,7 +780,7 @@ for e, value in env_to_set.items():
 
 hail_jar = sp.check_output([
     '/bin/sh', '-c',
-    'set -ex; ${MINICONDA_BIN}python -m pip show hail | grep Location | sed "s/Location: //"'
+    'set -ex; ${RUN_PYTHON} -m pip show hail | grep Location | sed "s/Location: //"'
 ]).decode('ascii').strip() + '/hail/backend/hail-all-spark.jar'
 
 conf_to_set = [
@@ -799,7 +803,7 @@ with open('/etc/spark/conf/spark-defaults.conf', 'a') as out:
 # create Jupyter kernel spec file
 kernel = {
     'argv': [
-        '${MINICONDA_BIN}python',
+        '${RUN_PYTHON}',
         '-m',
         'ipykernel',
         '-f',
@@ -819,40 +823,26 @@ mkdir_if_not_exists('/opt/conda/default/share/jupyter/kernels/hail/')
 with open('/opt/conda/default/share/jupyter/kernels/hail/kernel.json', 'w') as f:
     json.dump(kernel, f)
 
-# create Jupyter configuration file
-mkdir_if_not_exists('/opt/conda/default/etc/jupyter/')
-with open('/opt/conda/default/etc/jupyter/jupyter_notebook_config.py', 'w') as f:
-    opts = [
-        'c.Application.log_level = "DEBUG"',
-        'c.NotebookApp.ip = "127.0.0.1"',
-        'c.NotebookApp.open_browser = False',
-        'c.NotebookApp.port = 8123',
-        'c.NotebookApp.token = ""',
-        'c.NotebookApp.contents_manager_class = "jgscm.GoogleStorageContentManager"'
-    ]
-    f.write('\n'.join(opts) + '\n')
-
 print('copying spark monitor')
 spark_monitor_gs = 'gs://hail-common/sparkmonitor-3b2bc8c22921f5c920fc7370f3a160d820db1f51/sparkmonitor-0.0.11-py3-none-any.whl'
 spark_monitor_wheel = '/home/hail/' + spark_monitor_gs.split('/')[-1]
 safe_call('gsutil', 'cp', spark_monitor_gs, spark_monitor_wheel)
-safe_call('${MINICONDA_BIN}pip', 'install', spark_monitor_wheel)
+safe_call('${RUN_PIP}', 'install', spark_monitor_wheel)
 
 # setup jupyter-spark extension
-safe_call('${MINICONDA_BIN}jupyter', 'serverextension', 'enable', '--user', '--py', 'sparkmonitor')
-safe_call('${MINICONDA_BIN}jupyter', 'nbextension', 'install', '--user', '--py', 'sparkmonitor')
-safe_call('${MINICONDA_BIN}jupyter', 'nbextension', 'enable', '--user', '--py', 'sparkmonitor')
-safe_call('${MINICONDA_BIN}jupyter', 'nbextension', 'enable', '--user', '--py', 'widgetsnbextension')
-safe_call("""${MINICONDA_BIN}ipython profile create && echo "c.InteractiveShellApp.extensions.append('sparkmonitor.kernelextension')" >> $(${MINICONDA_BIN}ipython profile locate default)/ipython_kernel_config.py""", shell=True)
-
-# Restart jupyter service
-#safe_call('service', 'jupyter', 'restart')
+safe_call('${RUN_JUPYTER}', 'serverextension', 'enable', '--user', '--py', 'sparkmonitor')
+safe_call('${RUN_JUPYTER}', 'nbextension', 'install', '--user', '--py', 'sparkmonitor')
+safe_call('${RUN_JUPYTER}', 'nbextension', 'enable', '--user', '--py', 'sparkmonitor')
+safe_call('${RUN_JUPYTER}', 'nbextension', 'enable', '--user', '--py', 'widgetsnbextension')
+safe_call("""${RUN_IPYTHON} profile create && echo "c.InteractiveShellApp.extensions.append('sparkmonitor.kernelextension')" >> $(${RUN_IPYTHON} profile locate default)/ipython_kernel_config.py""", shell=True)
 
 print("hail installed successfully.")
 
 EOF
 
-  # Fork the following into background process to wait for dataproc to finish installing optional components including jupyter and start the proxy gateway service. Then safely install hail.
+  # Fork the following into background process to wait for dataproc to finish
+  # installing optional components including jupyter and start the proxy gateway service.
+  # Then safely install hail.
   (
     while ! systemctl is-active --quiet ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME}; do
       sleep 5
@@ -860,14 +850,17 @@ EOF
     done
 
     emit "Starting hail install script..."
-     ${MINICONDA_BIN}python ${HAIL_SCRIPT_PATH}
+    ${RUN_PYTHON} ${HAIL_SCRIPT_PATH}
+    emit "Restarting jupyter service..."
+    systemctl restart ${JUPYTER_SERVICE_NAME}
   ) &
 fi
 
 # reload systemctl daemon to load the updated configuration
 systemctl daemon-reload
 
-# The jupyter service will be restarted by the default dataproc startup script and pick up the modified service configuration and environment variables.
+# The jupyter service will be restarted by the default dataproc startup script
+# and pick up the modified service configuration and environment variables.
 
 ####################################################################################
 # Run a set of tests that should be invariant to the workspace or user configuration
