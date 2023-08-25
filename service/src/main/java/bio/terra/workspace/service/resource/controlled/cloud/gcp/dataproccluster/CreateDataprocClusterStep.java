@@ -150,9 +150,10 @@ public class CreateDataprocClusterStep implements Step {
         if (HttpStatus.CONFLICT.value() == e.getStatusCode()) {
           logger.debug("Dataproc cluster {} already created.", clusterName.formatName());
           return StepResult.getStepResultSuccess();
-        } else if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
+        } else if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
+            || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
           // Don't retry bad requests, which won't change. Instead, fail faster.
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+          throw new BadRequestException(e.getDetails().getMessage());
         }
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
