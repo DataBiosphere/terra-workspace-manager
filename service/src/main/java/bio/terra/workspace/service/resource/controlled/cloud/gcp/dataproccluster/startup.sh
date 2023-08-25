@@ -267,6 +267,10 @@ else
   emit "gcsfuse already installed. Skipping installation."
 fi
 
+# Set gcloud region config property to the region of the Dataproc cluster
+readonly DATAPROC_REGION="$(get_metadata_value "instance/attributes/dataproc-region")"
+${RUN_AS_LOGIN_USER} "gcloud config set dataproc/region ${DATAPROC_REGION}"
+
 ###########################################################
 # The Terra CLI requires Java 17 or higher
 #
@@ -858,9 +862,7 @@ EOF
   )" &
 fi
 
-"$(echo "hello")"
-
-# reload systemctl daemon to load the updated configuration
+# reload systemctl daemon to load the updated jupyter configuration
 systemctl daemon-reload
 
 # The jupyter service will be restarted by the default dataproc startup script
