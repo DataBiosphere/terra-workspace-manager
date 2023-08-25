@@ -686,8 +686,8 @@ EOF
 # Install Software Framework
 ############################
 
-# If the script executer has set the "software-framework" property to "hail",
-# then install hail after dataproc optional components are installed.
+# If the script executer has set the "software-framework" property to "HAIL",
+# then install Hail after dataproc optional components are installed.
 
 readonly SOFTWARE_FRAMEWORK="$(get_metadata_value "instance/attributes/software-framework")"
 
@@ -695,13 +695,15 @@ if [[ "${SOFTWARE_FRAMEWORK}" == "HAIL" ]]; then
   emit "Installing Hail..."
 
   # Create the hail install script. The script is based off of hail's init_notebook.py
-  # #script that is executed by hailctl dataproc start. This modified script excludes
+  # script that is executed by hailctl dataproc start. This modified script excludes
   # the step of starting a jupyter service.
   cat << EOF >"${HAIL_SCRIPT_PATH}"
 #!${RUN_PYTHON}
 # This modified hail installation script installs the necessary hail packages and jupyter extensions,
-# but does not install jupyter or set up a jupyter service as it already handled by dataproc's jupyter optional component.
+# but does not install jupyter or set up a jupyter service as it already handled by the Dataproc jupyter optional component.
 # See: https://storage.googleapis.com/hail-common/hailctl/dataproc/0.2.120/init_notebook.py
+# Note that we intentionally did not make any updates to this script for style
+# such that it easier to track changes.
 import json
 import os
 import subprocess as sp
@@ -843,7 +845,7 @@ EOF
   # Fork the following into background process to wait for dataproc to finish
   # installing optional components including jupyter and start the proxy gateway service.
   # Then safely install hail.
-  (
+  "$(
     while ! systemctl is-active --quiet ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME}; do
       sleep 5
       emit "Waiting for ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME} to start..."
@@ -853,8 +855,10 @@ EOF
     ${RUN_PYTHON} ${HAIL_SCRIPT_PATH}
     emit "Restarting jupyter service..."
     systemctl restart ${JUPYTER_SERVICE_NAME}
-  ) &
+  )" &
 fi
+
+"$(echo "hello")"
 
 # reload systemctl daemon to load the updated configuration
 systemctl daemon-reload
