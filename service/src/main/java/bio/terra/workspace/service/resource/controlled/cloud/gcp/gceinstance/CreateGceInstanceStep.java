@@ -22,6 +22,7 @@ import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceGuestAccelerator;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -130,10 +131,9 @@ public class CreateGceInstanceStep implements Step {
               zone,
               resource.getInstanceId());
           return StepResult.getStepResultSuccess();
-        } else if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
-          // Don't retry bad requests, which won't change. Instead fail faster.
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
         }
+        // Throw bad request exception for malformed parameters
+        GcpFlightExceptionUtils.handleGcpBadRequestException(e);
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
 

@@ -28,6 +28,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -123,10 +124,9 @@ public class CreateAiNotebookInstanceStep implements Step {
         if (HttpStatus.CONFLICT.value() == e.getStatusCode()) {
           logger.debug("Notebook instance {} already created.", instanceName.formatName());
           return StepResult.getStepResultSuccess();
-        } else if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
-          // Don't retry bad requests, which won't change. Instead fail faster.
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
         }
+        // Throw bad request exception for malformed parameters
+        GcpFlightExceptionUtils.handleGcpBadRequestException(e);
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
 
