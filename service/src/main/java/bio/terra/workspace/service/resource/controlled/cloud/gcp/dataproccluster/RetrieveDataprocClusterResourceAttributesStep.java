@@ -49,9 +49,9 @@ public class RetrieveDataprocClusterResourceAttributesStep implements Step {
       }
       // GracefulDecommissionTimeout is a property on the autoscaling policy, not the cluster.
 
-      // Due to the irreversible nature of lifecycleConfig, we do not track its value. Cannot add
-      // lifecycle to clusters without it. So if we remove a cluster's lifecycleConfig, we cannot
-      // add it back.
+      // Due to the irreversible nature of lifecycleConfig, we do not track its value. Lifecycle
+      // configurations (idleDeleteTtl, autoDeleteTime, autoDeleteTtl) can only be modified or
+      // removed, not added.
 
       workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
     } catch (GoogleJsonResponseException e) {

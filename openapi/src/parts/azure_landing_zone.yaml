@@ -333,6 +333,11 @@ components:
         region:
           description: A region where an Azure resource deployed.
           type: string
+        tags:
+          description: Tags for this Azure resource.
+          type: object
+          additionalProperties:
+            type: string
 
     AzureLandingZoneDefinitionList:
       type: object

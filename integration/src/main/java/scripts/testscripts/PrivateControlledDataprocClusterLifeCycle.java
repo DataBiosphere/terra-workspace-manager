@@ -186,6 +186,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     var newName = "new-cluster-name";
     var newDescription = "new description for the cluster";
     int newNumPrimaryWorkers = 3;
+    int newNumSecondaryWorkers = 3;
     GcpDataprocClusterResource updatedResource =
         resourceUserApi.updateDataprocCluster(
             new UpdateControlledGcpDataprocClusterRequestBody()
@@ -193,7 +194,8 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
                 .name(newName)
                 .updateParameters(
                     new ControlledDataprocClusterUpdateParameters()
-                        .numPrimaryWorkers(newNumPrimaryWorkers)),
+                        .numPrimaryWorkers(newNumPrimaryWorkers)
+                        .numSecondaryWorkers(newNumSecondaryWorkers)),
             getWorkspaceId(),
             resourceId);
 
@@ -201,7 +203,10 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     assertEquals(newDescription, updatedResource.getMetadata().getDescription());
     // Directly fetch the cluster to verify that non wsm managed fields are updated.
     RetryUtils.getWithRetry(
-        cluster -> newNumPrimaryWorkers == cluster.getConfig().getWorkerConfig().getNumInstances(),
+        cluster ->
+            newNumPrimaryWorkers == cluster.getConfig().getWorkerConfig().getNumInstances()
+                && newNumSecondaryWorkers
+                    == cluster.getConfig().getSecondaryWorkerConfig().getNumInstances(),
         () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
         "Timed out waiting for cluster to update");
 
@@ -223,6 +228,27 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
             newIdleDeleteTtl.equals(cluster.getConfig().getLifecycleConfig().getIdleDeleteTtl()),
         () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
         "Timed out waiting for cluster to update");
+
+    // Update the cluster with a bad parameter format
+    String badAutoscalingPolicy = "bad-policy";
+    ApiException badClusterUpdateParameter =
+        assertThrows(
+            ApiException.class,
+            () ->
+                resourceUserApi.updateDataprocCluster(
+                    new UpdateControlledGcpDataprocClusterRequestBody()
+                        .updateParameters(
+                            new ControlledDataprocClusterUpdateParameters()
+                                .autoscalingPolicy(badAutoscalingPolicy)),
+                    getWorkspaceId(),
+                    resourceId),
+            "Cluster update with bad parameter format");
+
+    // Verify that WSM throws a bad request exception
+    assertThat(
+        "WSM throws a bad request exception",
+        badClusterUpdateParameter.getCode(),
+        equalTo(HttpStatus.SC_BAD_REQUEST));
 
     // Delete the Dataproc cluster through WSM.
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);
