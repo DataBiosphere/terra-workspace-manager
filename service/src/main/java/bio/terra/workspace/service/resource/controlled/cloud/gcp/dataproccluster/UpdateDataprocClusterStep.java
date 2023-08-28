@@ -4,8 +4,6 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys.UPDATE_PARAMETERS;
 
 import bio.terra.cloudres.google.dataproc.ClusterName;
-import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.NotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
@@ -16,6 +14,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiControlledDataprocClusterUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterLifecycleConfig;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.model.AutoscalingConfig;
 import com.google.api.services.dataproc.model.Cluster;
@@ -25,7 +24,6 @@ import com.google.api.services.dataproc.model.LifecycleConfig;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.http.HttpStatus;
 
 public class UpdateDataprocClusterStep implements Step {
 
@@ -149,12 +147,8 @@ public class UpdateDataprocClusterStep implements Step {
               updateParameters.getGracefulDecommissionTimeout())
           .execute();
     } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
-        throw new BadRequestException(
-            String.format("Bad cluster update parameters: %s", e.getMessage()));
-      } else if (HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
-        throw new NotFoundException(String.format("Cluster not found: %s", e.getMessage()));
-      }
+      // Throw bad request exception for malformed parameters
+      GcpFlightExceptionUtils.handleGcpBadRequestException(e);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
