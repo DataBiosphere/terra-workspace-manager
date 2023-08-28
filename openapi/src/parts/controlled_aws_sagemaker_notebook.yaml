@@ -194,7 +194,7 @@ components:
         instanceType:
           description: A valid instance type per https://docs.aws.amazon.com/general/latest/gr/sageMaker.html
           type: string
-          default: "ml.t2.medium"
+          default: "ml.t3.medium"
         region:
           description: A valid SageMaker Notebook region per https://docs.aws.amazon.com/general/latest/gr/sageMaker.html.
           type: string
