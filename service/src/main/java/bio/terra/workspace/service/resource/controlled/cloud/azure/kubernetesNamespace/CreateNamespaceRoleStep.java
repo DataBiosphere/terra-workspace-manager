@@ -147,8 +147,8 @@ public class CreateNamespaceRoleStep implements Step {
     };
   }
 
-  private DatabaseResolution validatePrivateScopeAccess(DatabaseResolution resolution,
-      ControlledAzureDatabaseResource dbResource) {
+  private DatabaseResolution validatePrivateScopeAccess(
+      DatabaseResolution resolution, ControlledAzureDatabaseResource dbResource) {
     if (dbResource.getAssignedUser().equals(resource.getAssignedUser())) {
       return resolution;
     } else {
@@ -161,8 +161,8 @@ public class CreateNamespaceRoleStep implements Step {
     }
   }
 
-  private DatabaseResolution validateSharedScopeAccess(DatabaseResolution resolution,
-      ControlledAzureDatabaseResource dbResource) {
+  private DatabaseResolution validateSharedScopeAccess(
+      DatabaseResolution resolution, ControlledAzureDatabaseResource dbResource) {
     if (dbResource.getAllowAccessForAllWorkspaceUsers()
         || dbResource.getDatabaseOwner().equals(resource.getManagedIdentity())) {
       return resolution;

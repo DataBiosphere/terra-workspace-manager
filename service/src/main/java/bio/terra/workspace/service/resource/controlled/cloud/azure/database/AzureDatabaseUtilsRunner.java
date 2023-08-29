@@ -91,8 +91,9 @@ public class AzureDatabaseUtilsRunner {
   }
 
   /**
-   * Creates a database in the landing zone postgres server and grants the user access to it.
-   * TODO: remove as part of https://broadworkbench.atlassian.net/browse/WOR-1165
+   * Creates a database in the landing zone postgres server and grants the user access to it. TODO:
+   * remove as part of https://broadworkbench.atlassian.net/browse/WOR-1165
+   *
    * @param azureCloudContext
    * @param workspaceId
    * @param podName name of the pod created to run the command, should be unique within the LZ and
@@ -140,8 +141,9 @@ public class AzureDatabaseUtilsRunner {
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
-            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(
-                COMMAND_CREATE_DATABASE_WITH_DB_ROLE),
+            new V1EnvVar()
+                .name(PARAM_SPRING_PROFILES_ACTIVE)
+                .value(COMMAND_CREATE_DATABASE_WITH_DB_ROLE),
             new V1EnvVar().name(PARAM_NEW_DB_NAME).value(databaseName));
     runAzureDatabaseUtils(
         azureCloudContext,

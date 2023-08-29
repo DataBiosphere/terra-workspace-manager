@@ -36,8 +36,7 @@ public class ValidatorTest extends BaseUnitTest {
   @Test
   void testOidValidation() {
     final String newDbUserOid = "not a uuid";
-    assertThrows(
-        IllegalArgumentException.class, () -> validator.validateOidFormat(newDbUserOid));
+    assertThrows(IllegalArgumentException.class, () -> validator.validateOidFormat(newDbUserOid));
   }
 
   @Test
