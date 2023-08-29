@@ -25,5 +25,5 @@ public class AwsResourceConstants {
    * observed: 45+ minutes waitUntilStopped: Stopping->Stopped typically takes 3-5 minutes
    * waitUntilDeleted: Deleting->[Deleted] typically takes 2-4 minutes
    */
-  public static final Duration SAGEMAKER_WAITER_TIMEOUT = Duration.ofMinutes(60);
+  public static final Duration SAGEMAKER_WAITER_TIMEOUT = Duration.ofMinutes(30);
 }
