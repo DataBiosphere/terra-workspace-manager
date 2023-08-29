@@ -123,10 +123,10 @@ public class AzureDatabaseUtilsRunnerTest {
     assertResults(
         Map.of(
             "spring_profiles_active",
-            "CreateUser",
-            "NEW_DB_USER_NAME",
+            "CreateNamespaceRole",
+            "NAMESPACE_ROLE",
             userName,
-            "NEW_DB_USER_OID",
+            "MANAGED_IDENTITY_OID",
             userOid,
             "DATABASE_NAMES",
             String.join(",", databaseNames)));
@@ -143,7 +143,8 @@ public class AzureDatabaseUtilsRunnerTest {
     azureDatabaseUtilsRunner.deleteNamespaceRole(
         mockAzureCloudContext, workspaceId, podName, userName);
 
-    assertResults(Map.of("spring_profiles_active", "DeleteUser", "DB_USER_NAME", userName));
+    assertResults(
+        Map.of("spring_profiles_active", "DeleteNamespaceRole", "NAMESPACE_ROLE", userName));
   }
 
   @Test
