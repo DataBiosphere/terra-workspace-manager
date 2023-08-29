@@ -51,9 +51,8 @@ public class ControllerUtils {
   }
 
   /**
-   * Generate an ApiOperation state from the internal ingredients
-   * State can be null if we have stripped data from the workspace
-   * description for a discoverer.
+   * Generate an ApiOperation state from the internal ingredients State can be null if we have
+   * stripped data from the workspace description for a discoverer.
    *
    * @param flightId flight id
    * @param state if null, then we return null for the operation state
@@ -67,10 +66,10 @@ public class ControllerUtils {
       opstate = new ApiOperationState().jobId(flightId).state(state.toApi());
       if (error != null) {
         opstate.errorReport(
-          new ApiErrorReport()
-            .message(error.getMessage())
-            .statusCode(error.getStatusCode().value())
-            .causes(error.getCauses()));
+            new ApiErrorReport()
+                .message(error.getMessage())
+                .statusCode(error.getStatusCode().value())
+                .causes(error.getCauses()));
       }
     }
     return opstate;
