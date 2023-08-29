@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
@@ -34,7 +33,6 @@ public class ControlledAzureVmResource extends ControlledResource {
   private final String vmName;
   private final String vmSize;
   private final String vmImage;
-
   private final UUID diskId;
 
   @JsonCreator
@@ -62,16 +60,6 @@ public class ControlledAzureVmResource extends ControlledResource {
     this.vmSize = vmSize;
     this.diskId = diskId;
     validate();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
   }
 
   // -- getters used in serialization --

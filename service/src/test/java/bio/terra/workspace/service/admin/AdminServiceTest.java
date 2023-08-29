@@ -2,11 +2,9 @@ package bio.terra.workspace.service.admin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.cloudres.google.iam.IamCow;
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
@@ -209,15 +207,6 @@ public class AdminServiceTest extends BaseConnectedTest {
     assertTrue(newChangeTimestampOfWorkspace1.isEqual(lastChangeTimestampOfWorkspace1));
 
     cleanUpWorkspace();
-  }
-
-  @Test
-  public void syncIamRoles_noProjectsFound_throwsInternalServerErrorException() {
-    assertThrows(
-        InternalServerErrorException.class,
-        () ->
-            adminService.syncIamRoleForAllGcpProjects(
-                userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ false));
   }
 
   private void updateCustomRole(CustomGcpIamRole customRole, String projectId)

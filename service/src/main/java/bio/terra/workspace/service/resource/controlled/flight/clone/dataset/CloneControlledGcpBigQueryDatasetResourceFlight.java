@@ -58,7 +58,7 @@ public class CloneControlledGcpBigQueryDatasetResourceFlight extends Flight {
 
     if (CloningInstructions.COPY_NOTHING == resolvedCloningInstructions) {
       addStep(
-          new SetNoOpBucketCloneResponseStep(
+          new SetNoOpDatasetCloneResponseStep(
               sourceResource.castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET)));
       return;
     }

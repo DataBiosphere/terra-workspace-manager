@@ -23,6 +23,7 @@ import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -153,15 +154,30 @@ public class GcsBucketUtils {
     assertEquals(fileContent, actualContents);
   }
 
-  /** Asserts table is populated as per populateBqTable(). */
+  /**
+   * Asserts that the bucket is empty. Retries for 5 minutes to accommodate permission propagation
+   * delay
+   */
   public void assertBucketHasNoFiles(
-      AuthenticatedUserRequest userRequest, String projectId, String bucketName) {
+      AuthenticatedUserRequest userRequest, String projectId, String bucketName) throws Exception {
     StorageCow storageCow = crlService.createStorageCow(projectId, userRequest);
+    int numFiles =
+        RetryUtils.getWithRetryOnException(
+            () -> countFiles(storageCow, bucketName),
+            /*totalDuration=*/ Duration.ofMinutes(5),
+            /*initialSleep=*/ Duration.ofSeconds(5),
+            /*factorIncrease=*/ 1.0,
+            /*sleepDurationMax=*/ Duration.ofSeconds(30),
+            null);
+    assertEquals(0, numFiles);
+  }
+
+  private int countFiles(StorageCow storageCow, String bucketName) {
     int numFiles = 0;
     for (BlobCow blob : storageCow.get(bucketName).list().iterateAll()) {
       numFiles++;
     }
-    assertEquals(0, numFiles);
+    return numFiles;
   }
 
   public void assertBucketAttributes(

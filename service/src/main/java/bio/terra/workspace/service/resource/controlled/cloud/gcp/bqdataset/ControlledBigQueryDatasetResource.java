@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
@@ -75,16 +74,6 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   public static ControlledBigQueryDatasetResource.Builder builder() {
     return new ControlledBigQueryDatasetResource.Builder();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
   }
 
   // -- getters used in serialization --
@@ -166,8 +155,8 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
-    final RetryRule gcpRetryRule = RetryRules.cloud();
-    flight.addStep(new UpdateBigQueryDatasetStep(flightBeanBag.getCrlService()), gcpRetryRule);
+    flight.addStep(
+        new UpdateBigQueryDatasetStep(flightBeanBag.getCrlService()), RetryRules.cloud());
   }
 
   public ApiGcpBigQueryDatasetAttributes toApiAttributes() {

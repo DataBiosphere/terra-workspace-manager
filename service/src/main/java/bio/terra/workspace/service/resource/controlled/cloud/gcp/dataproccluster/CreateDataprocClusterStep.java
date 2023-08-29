@@ -1,6 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluster;
 
 import static bio.terra.workspace.common.utils.GcpUtils.INSTANCE_SERVICE_ACCOUNT_SCOPES;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.ENABLE_GUEST_ATTRIBUTES_METADATA_KEY;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.MAIN_BRANCH;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.STARTUP_SCRIPT_URL_METADATA_KEY;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_DATAPROC_CLUSTER_PARAMETERS;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_SUBNETWORK_NAME;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_RESOURCE_REGION;
@@ -16,12 +19,14 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
+import bio.terra.workspace.app.configuration.external.VersionConfiguration;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterInstanceGroupConfig;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterLifecycleConfig;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -68,6 +73,11 @@ public class CreateDataprocClusterStep implements Step {
   private final String workspaceUserFacingId;
   private final CrlService crlService;
   private final CliConfiguration cliConfiguration;
+  private final VersionConfiguration versionConfiguration;
+
+  /** Default startup script when creating a dataproc cluster */
+  protected static final String DEFAULT_STARTUP_SCRIPT =
+      "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/%s/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/dataproccluster/startup.sh";
 
   public CreateDataprocClusterStep(
       ControlledResourceService controlledResourceService,
@@ -75,13 +85,15 @@ public class CreateDataprocClusterStep implements Step {
       String petEmail,
       String workspaceUserFacingId,
       CrlService crlService,
-      CliConfiguration cliConfiguration) {
+      CliConfiguration cliConfiguration,
+      VersionConfiguration versionConfiguration) {
     this.petEmail = petEmail;
     this.resource = resource;
     this.workspaceUserFacingId = workspaceUserFacingId;
     this.controlledResourceService = controlledResourceService;
     this.crlService = crlService;
     this.cliConfiguration = cliConfiguration;
+    this.versionConfiguration = versionConfiguration;
   }
 
   @Override
@@ -122,7 +134,8 @@ public class CreateDataprocClusterStep implements Step {
             creationParameters,
             stagingBucket.getBucketName(),
             tempBucket.getBucketName(),
-            cliConfiguration.getServerName());
+            cliConfiguration.getServerName(),
+            versionConfiguration.getGitHash());
 
     DataprocCow dataprocCow = crlService.getDataprocCow();
     try {
@@ -138,10 +151,9 @@ public class CreateDataprocClusterStep implements Step {
         if (HttpStatus.CONFLICT.value() == e.getStatusCode()) {
           logger.debug("Dataproc cluster {} already created.", clusterName.formatName());
           return StepResult.getStepResultSuccess();
-        } else if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
-          // Don't retry bad requests, which won't change. Instead, fail faster.
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
         }
+        // Throw bad request exception for malformed parameters
+        GcpFlightExceptionUtils.handleGcpBadRequestException(e);
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
 
@@ -161,7 +173,8 @@ public class CreateDataprocClusterStep implements Step {
       ApiGcpDataprocClusterCreationParameters creationParameters,
       String stagingBucketName,
       String tempBucketName,
-      String cliServer) {
+      String cliServer,
+      String gitHash) {
     Cluster cluster = new Cluster();
     setFields(
         clusterId,
@@ -171,7 +184,8 @@ public class CreateDataprocClusterStep implements Step {
         serviceAccountEmail,
         workspaceUserFacingId,
         cliServer,
-        cluster);
+        cluster,
+        gitHash);
     setNetworks(cluster, projectId, flightContext.getWorkingMap());
     return cluster;
   }
@@ -185,7 +199,8 @@ public class CreateDataprocClusterStep implements Step {
       String serviceAccountEmail,
       String workspaceUserFacingId,
       String cliServer,
-      Cluster cluster) {
+      Cluster cluster,
+      String gitHash) {
 
     cluster
         .setClusterName(clusterId)
@@ -195,14 +210,6 @@ public class CreateDataprocClusterStep implements Step {
                 .setTempBucket(tempBucketName)
                 .setMasterConfig(
                     getInstanceGroupConfig(creationParameters.getManagerNodeConfig(), false))
-                .setWorkerConfig(
-                    getInstanceGroupConfig(creationParameters.getPrimaryWorkerConfig(), false))
-                .setSecondaryWorkerConfig(
-                    creationParameters.getSecondaryWorkerConfig() != null
-                        ? getInstanceGroupConfig(
-                            creationParameters.getSecondaryWorkerConfig(), true)
-                        : getInstanceGroupConfig(
-                            creationParameters.getPrimaryWorkerConfig(), false))
                 .setGceClusterConfig(
                     new GceClusterConfig()
                         // TODO PF-2878: replace leonardo tag once new dataproc firewall rule is in
@@ -220,8 +227,12 @@ public class CreateDataprocClusterStep implements Step {
                         .setProperties(creationParameters.getProperties())
                         .setOptionalComponents(creationParameters.getComponents())));
 
-    // Set initialization script
-    // TODO PF-2828: Add WSM default post-startup script
+    // Set dataproc image version
+    if (creationParameters.getImageVersion() != null) {
+      cluster.getConfig().getSoftwareConfig().setImageVersion(creationParameters.getImageVersion());
+    }
+
+    // Set initialization scripts
     List<String> initializationScripts = creationParameters.getInitializationScripts();
     if (initializationScripts != null) {
       cluster
@@ -230,6 +241,24 @@ public class CreateDataprocClusterStep implements Step {
               initializationScripts.stream()
                   .map(script -> new NodeInitializationAction().setExecutableFile(script))
                   .collect(Collectors.toList()));
+    }
+
+    // Set primary and secondary worker configs
+    if (creationParameters.getPrimaryWorkerConfig() != null) {
+      cluster
+          .getConfig()
+          .setWorkerConfig(
+              getInstanceGroupConfig(
+                  creationParameters.getPrimaryWorkerConfig(),
+                  /* isSecondaryWorkerConfig=*/ false));
+    }
+    if (creationParameters.getSecondaryWorkerConfig() != null) {
+      cluster
+          .getConfig()
+          .setSecondaryWorkerConfig(
+              getInstanceGroupConfig(
+                  creationParameters.getSecondaryWorkerConfig(),
+                  /* isSecondaryWorkerConfig=*/ true));
     }
 
     // Configure cluster lifecycle
@@ -258,13 +287,21 @@ public class CreateDataprocClusterStep implements Step {
       }
     }
 
-    // Set additional cluster properties
-    Map<String, String> properties = new HashMap<>();
-    cluster.getConfig().getSoftwareConfig().setProperties(properties);
-
     // Set metadata on all cluster vm nodes
     Map<String, String> metadata = new HashMap<>();
+
+    // Set default startup script metadata
+    String gitHashOrDefault = StringUtils.isEmpty(gitHash) ? MAIN_BRANCH : gitHash;
+    metadata.put(
+        STARTUP_SCRIPT_URL_METADATA_KEY, String.format(DEFAULT_STARTUP_SCRIPT, gitHashOrDefault));
+
+    // Add user provided metadata, overriding any previously set defaults
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
+
+    // Add enable guest attributes metadata key
+    metadata.put(ENABLE_GUEST_ATTRIBUTES_METADATA_KEY, "TRUE");
+
+    // Add reserved terra metadata keys and throw if they have been previously set
     addDefaultMetadata(metadata, workspaceUserFacingId, cliServer);
     cluster.getConfig().getGceClusterConfig().setMetadata(metadata);
 

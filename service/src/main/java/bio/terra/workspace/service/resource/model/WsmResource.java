@@ -5,6 +5,7 @@ import static bio.terra.workspace.service.resource.model.CloningInstructions.COP
 import static bio.terra.workspace.service.resource.model.CloningInstructions.COPY_REFERENCE;
 import static bio.terra.workspace.service.workspace.model.WorkspaceConstants.ResourceProperties.FOLDER_ID_KEY;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.common.exception.CloneInstructionNotSupportedException;
@@ -174,7 +175,13 @@ public abstract class WsmResource {
    * @param <T> implicit
    * @return cast to subtype
    */
-  public abstract <T> T castByEnum(WsmResourceType expectedType);
+  @SuppressWarnings("unchecked")
+  public <T> T castByEnum(WsmResourceType expectedType) {
+    if (getResourceType() != expectedType) {
+      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
+    }
+    return (T) this;
+  }
 
   /**
    * The UpdateResourceFlight calls this method to populate the resource-specific step(s) to modify
