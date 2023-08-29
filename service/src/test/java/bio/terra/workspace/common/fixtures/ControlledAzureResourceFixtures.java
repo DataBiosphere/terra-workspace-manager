@@ -437,6 +437,28 @@ public class ControlledAzureResourceFixtures {
         .databases(new HashSet<>(creationParameters.getDatabases()));
   }
 
+  public static ControlledAzureKubernetesNamespaceResource.Builder
+  makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
+      ApiAzureKubernetesNamespaceCreationParameters creationParameters, UUID workspaceId,
+      String assignedUser) {
+    var namespace = creationParameters.getNamespacePrefix() + "-" + workspaceId.toString();
+    return ControlledAzureKubernetesNamespaceResource.builder()
+        .common(
+            ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                .workspaceUuid(workspaceId)
+                .name(getAzureName("k8s"))
+                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .assignedUser(assignedUser)
+                .iamRole(ControlledResourceIamRole.EDITOR)
+                .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .build())
+        .kubernetesServiceAccount(creationParameters.getNamespacePrefix() + "-ksa")
+        .kubernetesNamespace(namespace)
+        .databases(new HashSet<>(creationParameters.getDatabases()));
+  }
+
   public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(
       UUID owner, String k8sNamespace) {
     return new ApiAzureDatabaseCreationParameters()
