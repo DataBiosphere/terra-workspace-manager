@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace.model;
 
 import bio.terra.common.exception.ErrorReportException;
-import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.app.controller.shared.ControllerUtils;
 import bio.terra.workspace.generated.model.ApiOperationState;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
@@ -13,14 +13,6 @@ public record CloudContextCommonFields(
     ErrorReportException error) {
 
   public ApiOperationState toApi() {
-    var opstate = new ApiOperationState().jobId(flightId).state(state.toApi());
-    if (error != null) {
-      opstate.errorReport(
-          new ApiErrorReport()
-              .message(error().getMessage())
-              .statusCode(error().getStatusCode().value())
-              .causes(error().getCauses()));
-    }
-    return opstate;
+    return ControllerUtils.toApiOperationState(flightId, state, error);
   }
 }

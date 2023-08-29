@@ -1,6 +1,11 @@
 package bio.terra.workspace.app.controller.shared;
 
+import bio.terra.common.exception.ErrorReportException;
+import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiOperationState;
+import bio.terra.workspace.service.resource.model.WsmResourceState;
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 
@@ -43,5 +48,26 @@ public class ControllerUtils {
     return jobReport.getStatus() == ApiJobReport.StatusEnum.RUNNING
         ? HttpStatus.ACCEPTED
         : HttpStatus.OK;
+  }
+
+  /**
+   * Generate an ApiOperation state from the internal ingredients
+   *
+   * @param flightId flight id
+   * @param state state
+   * @param error nullable exception
+   * @return ApiOperationState object
+   */
+  public static ApiOperationState toApiOperationState(
+      String flightId, WsmResourceState state, @Nullable ErrorReportException error) {
+    var opstate = new ApiOperationState().jobId(flightId).state(state.toApi());
+    if (error != null) {
+      opstate.errorReport(
+          new ApiErrorReport()
+              .message(error.getMessage())
+              .statusCode(error.getStatusCode().value())
+              .causes(error.getCauses()));
+    }
+    return opstate;
   }
 }
