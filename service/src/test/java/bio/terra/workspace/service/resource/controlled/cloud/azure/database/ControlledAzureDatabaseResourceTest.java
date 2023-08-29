@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseAttributes;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
@@ -22,23 +23,9 @@ import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
 @Tag("azure-unit")
-public class ControlledAzureDatabaseResourceTest {
-  private MockitoSession mockito;
-
+public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbingTest {
   private final UUID workspaceId = UUID.randomUUID();
   @Mock private FlightBeanBag mockFlightBeanBag;
-
-  @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
-  }
 
   @Test
   void testCorrectPrivateDatabaseSteps() {

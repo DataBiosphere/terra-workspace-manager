@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
@@ -38,8 +39,7 @@ import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
 @Tag("azure-unit")
-public class AzureDatabaseUtilsRunnerTest {
-  private MockitoSession mockito;
+public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest {
   private AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
   @Mock private AzureConfiguration mockAzureConfig;
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
@@ -53,10 +53,7 @@ public class AzureDatabaseUtilsRunnerTest {
   @Mock private ApiAzureLandingZoneDeployedResource mockAdminIdentity;
 
   @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
+  public void createAzureDatabaseUtilsRunner() {
     azureDatabaseUtilsRunner =
         new AzureDatabaseUtilsRunner(
             mockAzureConfig,
@@ -64,11 +61,6 @@ public class AzureDatabaseUtilsRunnerTest {
             mockWorkspaceService,
             mockSamService,
             mockKubernetesClientProvider);
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
   }
 
   @Test

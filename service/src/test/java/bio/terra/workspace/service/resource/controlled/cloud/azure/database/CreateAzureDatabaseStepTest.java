@@ -16,6 +16,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
@@ -42,9 +43,7 @@ import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
 
 @Tag("azure-unit")
-public class CreateAzureDatabaseStepTest {
-  private MockitoSession mockito;
-
+public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private AzureConfiguration mockAzureConfig;
   @Mock private CrlService mockCrlService;
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
@@ -68,18 +67,6 @@ public class CreateAzureDatabaseStepTest {
       ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
               creationParameters, workspaceId, null)
           .build();
-
-  @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
-  }
 
   @Test
   // TODO: remove with https://broadworkbench.atlassian.net/browse/WOR-1165

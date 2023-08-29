@@ -14,6 +14,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -36,9 +37,7 @@ import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
 
 @Tag("azure-unit")
-public class CreateAzureManagedIdentityStepTest {
-  private MockitoSession mockito;
-
+public class CreateAzureManagedIdentityStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private MsiManager mockMsiManager;
   @Mock private Identities mockIdentities;
   @Mock private Blank mockIdentitiesStage1;
@@ -50,18 +49,6 @@ public class CreateAzureManagedIdentityStepTest {
   @Mock private FlightContext mockFlightContext;
   @Mock private FlightMap mockWorkingMap;
   @Mock private AzureCloudContext mockAzureCloudContext;
-
-  @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
-  }
 
   @Test
   void testAlreadyExists() throws InterruptedException {

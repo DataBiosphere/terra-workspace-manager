@@ -8,6 +8,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -24,8 +25,7 @@ import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
 @Tag("azure-unit")
-public class ValidateDatabaseOwnerStepTest {
-  private MockitoSession mockito;
+public class ValidateDatabaseOwnerStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private FlightContext mockFlightContext;
   @Mock private ResourceDao mockResourceDao;
   @Mock private WsmResource mockWsmResource;
@@ -37,18 +37,6 @@ public class ValidateDatabaseOwnerStepTest {
       ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
               creationParameters, UUID.randomUUID())
           .build();
-
-  @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
-  }
 
   @Test
   void testExists() throws InterruptedException {

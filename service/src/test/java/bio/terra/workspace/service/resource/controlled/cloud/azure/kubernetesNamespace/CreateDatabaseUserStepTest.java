@@ -10,6 +10,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
@@ -29,25 +30,12 @@ import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
 @Tag("azure-unit")
-public class CreateDatabaseUserStepTest {
-  private MockitoSession mockito;
+public class CreateDatabaseUserStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private AzureDatabaseUtilsRunner mockAzureDatabaseUtilsRunner;
   @Mock private ResourceDao mockResourceDao;
   @Mock private AzureCloudContext mockAzureCloudContext;
   @Mock private FlightMap mockWorkingMap;
   @Mock private FlightContext mockFlightContext;
-
-  @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
-  }
 
   @Test
   void testSuccess() throws InterruptedException {
