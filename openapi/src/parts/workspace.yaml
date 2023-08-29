@@ -784,7 +784,7 @@ components:
 
     WorkspaceDescription:
       type: object
-      required: [id, userFacingId, highestRole, createdBy, lastUpdatedBy, createdDate, lastUpdatedDate, operationState]
+      required: [id, userFacingId, highestRole, createdBy, lastUpdatedBy, createdDate, lastUpdatedDate]
       properties:
         id:
           description: The ID of the workspace. Immutable.

@@ -52,21 +52,26 @@ public class ControllerUtils {
 
   /**
    * Generate an ApiOperation state from the internal ingredients
+   * State can be null if we have stripped data from the workspace
+   * description for a discoverer.
    *
    * @param flightId flight id
-   * @param state state
+   * @param state if null, then we return null for the operation state
    * @param error nullable exception
    * @return ApiOperationState object
    */
-  public static ApiOperationState toApiOperationState(
-      String flightId, WsmResourceState state, @Nullable ErrorReportException error) {
-    var opstate = new ApiOperationState().jobId(flightId).state(state.toApi());
-    if (error != null) {
-      opstate.errorReport(
+  public static @Nullable ApiOperationState toApiOperationState(
+      String flightId, @Nullable WsmResourceState state, @Nullable ErrorReportException error) {
+    ApiOperationState opstate = null;
+    if (state != null) {
+      opstate = new ApiOperationState().jobId(flightId).state(state.toApi());
+      if (error != null) {
+        opstate.errorReport(
           new ApiErrorReport()
-              .message(error.getMessage())
-              .statusCode(error.getStatusCode().value())
-              .causes(error.getCauses()));
+            .message(error.getMessage())
+            .statusCode(error.getStatusCode().value())
+            .causes(error.getCauses()));
+      }
     }
     return opstate;
   }
