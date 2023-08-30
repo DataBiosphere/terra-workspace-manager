@@ -216,7 +216,8 @@ public class CreateDataprocClusterStep implements Step {
                         // place
                         .setTags(List.of("leonardo"))
                         .setServiceAccount(serviceAccountEmail)
-                        .setServiceAccountScopes(INSTANCE_SERVICE_ACCOUNT_SCOPES))
+                        .setServiceAccountScopes(INSTANCE_SERVICE_ACCOUNT_SCOPES)
+                        .setInternalIpOnly(true))
                 .setAutoscalingConfig(
                     new AutoscalingConfig().setPolicyUri(creationParameters.getAutoscalingPolicy()))
                 // Enable dataproc component gateway to set up reverse proxy and web interfaces. See
