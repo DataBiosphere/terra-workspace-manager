@@ -23,14 +23,9 @@ import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.models.Identities;
 import com.azure.resourcemanager.msi.models.Identity;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoSession;
-import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
 
 @Tag("azure-unit")

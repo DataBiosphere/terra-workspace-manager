@@ -6,7 +6,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
-public abstract class BaseMockitoStrictStubbingTest  {
+public abstract class BaseMockitoStrictStubbingTest {
   protected MockitoSession mockito;
 
   @BeforeEach

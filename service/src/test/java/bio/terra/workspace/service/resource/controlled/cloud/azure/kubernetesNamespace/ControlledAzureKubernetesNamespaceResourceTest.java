@@ -20,8 +20,7 @@ import org.mockito.Mock;
 
 @Tag("azure-unit")
 public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoStrictStubbingTest {
-  @Mock
-  private FlightBeanBag mockFlightBeanBag;
+  @Mock private FlightBeanBag mockFlightBeanBag;
 
   @Test
   void testToApiResource() {
@@ -102,10 +101,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
     var steps = resource.getCreateSteps(mockFlightBeanBag);
     assertThat(
         steps.stream().map(Object::getClass).toList(),
-        equalTo(
-            List.of(
-                KubernetesNamespaceGuardStep.class,
-                CreateKubernetesNamespaceStep.class)));
+        equalTo(List.of(KubernetesNamespaceGuardStep.class, CreateKubernetesNamespaceStep.class)));
   }
 
   @Test
@@ -114,7 +110,8 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
             null, List.of());
     var resource =
-        ControlledAzureResourceFixtures.makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
+        ControlledAzureResourceFixtures
+            .makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, UUID.randomUUID(), UUID.randomUUID().toString())
             .build();
 
@@ -188,9 +185,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
     var steps = resource.getDeleteSteps(mockFlightBeanBag);
     assertThat(
         steps.stream().map(Object::getClass).toList(),
-        equalTo(
-            List.of(
-                DeleteKubernetesNamespaceStep.class)));
+        equalTo(List.of(DeleteKubernetesNamespaceStep.class)));
   }
 
   @Test
@@ -199,7 +194,8 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
             null, List.of());
     var resource =
-        ControlledAzureResourceFixtures.makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
+        ControlledAzureResourceFixtures
+            .makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, UUID.randomUUID(), UUID.randomUUID().toString())
             .build();
 

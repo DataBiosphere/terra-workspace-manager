@@ -438,9 +438,10 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ControlledAzureKubernetesNamespaceResource.Builder
-  makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
-      ApiAzureKubernetesNamespaceCreationParameters creationParameters, UUID workspaceId,
-      String assignedUser) {
+      makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
+          ApiAzureKubernetesNamespaceCreationParameters creationParameters,
+          UUID workspaceId,
+          String assignedUser) {
     var namespace = creationParameters.getNamespacePrefix() + "-" + workspaceId.toString();
     return ControlledAzureKubernetesNamespaceResource.builder()
         .common(

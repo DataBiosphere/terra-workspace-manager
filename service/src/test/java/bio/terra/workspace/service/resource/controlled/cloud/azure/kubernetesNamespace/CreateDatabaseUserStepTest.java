@@ -20,14 +20,9 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoSession;
-import org.mockito.quality.Strictness;
 
 @Tag("azure-unit")
 public class CreateDatabaseUserStepTest extends BaseMockitoStrictStubbingTest {
