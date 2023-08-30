@@ -150,6 +150,10 @@ public class JobApiUtils {
   private ApiJobReport.StatusEnum mapFlightStatusToApi(FlightStatus flightStatus) {
     switch (flightStatus) {
       case RUNNING:
+      case QUEUED:
+      case WAITING:
+      case READY:
+      case READY_TO_RESTART:
         return ApiJobReport.StatusEnum.RUNNING;
       case SUCCESS:
         return ApiJobReport.StatusEnum.SUCCEEDED;
