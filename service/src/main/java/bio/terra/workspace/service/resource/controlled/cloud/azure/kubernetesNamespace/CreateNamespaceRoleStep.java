@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -112,7 +113,8 @@ public class CreateNamespaceRoleStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private DatabaseResolution getDatabaseResource(UUID databaseResourceId) {
+  @VisibleForTesting
+  DatabaseResolution getDatabaseResource(UUID databaseResourceId) {
     try {
       var wsmResource = resourceDao.getResource(resource.getWorkspaceId(), databaseResourceId);
       if (wsmResource.getResourceType() == WsmResourceType.CONTROLLED_AZURE_DATABASE) {
@@ -136,7 +138,8 @@ public class CreateNamespaceRoleStep implements Step {
     }
   }
 
-  private DatabaseResolution validateDatabaseAccess(DatabaseResolution resolution) {
+  @VisibleForTesting
+  DatabaseResolution validateDatabaseAccess(DatabaseResolution resolution) {
     if (resolution.resource().isEmpty()) {
       return resolution;
     }

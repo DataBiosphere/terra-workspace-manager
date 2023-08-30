@@ -483,7 +483,8 @@ public class ControlledAzureResourceFixtures {
                 .build())
         .databaseName(creationParameters.getName())
         .databaseOwner(creationParameters.getOwner())
-        .k8sNamespace(creationParameters.getK8sNamespace());
+        .k8sNamespace(creationParameters.getK8sNamespace())
+        .allowAccessForAllWorkspaceUsers(creationParameters.isAllowAccessForAllWorkspaceUsers());
   }
 
   public static ControlledAzureDatabaseResource.Builder
