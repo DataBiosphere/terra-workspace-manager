@@ -146,10 +146,14 @@ public class GcsBucketUtils {
       String projectId,
       String bucketName,
       String fileName,
-      String fileContent) {
+      String fileContent)
+      throws Exception {
     Storage storageClient = getGcpStorageClient(userCredential, projectId);
     String actualContents =
-        new String(storageClient.readAllBytes(bucketName, fileName), StandardCharsets.UTF_8);
+        RetryUtils.getWithRetryOnException(
+            () ->
+                new String(
+                    storageClient.readAllBytes(bucketName, fileName), StandardCharsets.UTF_8));
     assertEquals(fileContent, actualContents);
   }
 
