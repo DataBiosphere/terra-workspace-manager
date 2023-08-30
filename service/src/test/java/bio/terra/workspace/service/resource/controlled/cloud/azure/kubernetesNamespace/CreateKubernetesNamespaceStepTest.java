@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNa
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -86,8 +85,7 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
             null,
             null))
         .thenThrow(new ApiException(HttpStatus.CONFLICT.value(), "message"));
-    when(mockKubernetesClientProvider.stepResultFromException(any(), eq(HttpStatus.CONFLICT)))
-        .thenReturn(StepResult.getStepResultSuccess());
+    when(mockKubernetesClientProvider.stepResultFromException(any(), any())).thenCallRealMethod();
 
     var result =
         new CreateKubernetesNamespaceStep(workspaceId, mockKubernetesClientProvider, resource)
@@ -138,7 +136,8 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
     when(mockCoreV1Api.deleteNamespace(
             resource.getKubernetesNamespace(), null, null, null, null, null, null))
         .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "message"));
-    when(mockKubernetesClientProvider.stepResultFromException(any(), eq(HttpStatus.NOT_FOUND)))
+    when(mockKubernetesClientProvider.stepResultFromException(any(), any()))
+        .thenCallRealMethod()
         .thenReturn(StepResult.getStepResultSuccess());
 
     var result =
