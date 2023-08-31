@@ -232,7 +232,7 @@ cat << EOF >> "${USER_BASHRC}"
 # Set the correct java version for terra CLI
 # Note: Aliases set in ~/.bashrc are not available in jupyter notebooks.
 #       This workaround allows users to run terra CLI in terminals.
-alias terra='JAVA_HOME="${JAVA_17_HOME}" terra'
+alias terra='JAVA_HOME="${USER_HOME_LOCAL_DIR}" terra'
 
 # Prepend "${USER_HOME_LOCAL_BIN}" (if not already in the path)
 if [[ ":\${PATH}:" != *":${USER_HOME_LOCAL_BIN}:"* ]]; then
@@ -879,7 +879,7 @@ fi
   emit "Configuring Jupyter service..."
 
   # Remove the default GCSContentsManager and set jupyter file tree's root directory to the LOGIN_USER's home directory.
-  sed -i -e '/c.GCSContentsManager/d' -e '/CombinedContentsManager/d' "$JUPYTER_CONFIG"
+  sed -i -e "/c.GCSContentsManager/d" -e "/CombinedContentsManager/d" "${JUPYTER_CONFIG}"
   echo -e "c.FileContentsManager.root_dir = '${USER_HOME_DIR}'\n" | tee -a "${JUPYTER_CONFIG}"
 
   # Restart jupyter to load configurations
