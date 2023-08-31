@@ -158,6 +158,9 @@ public class WorkspaceApiUtils {
         .policies(
             TpsApiConversionUtils.apiEffectivePolicyListFromTpsPao(
                 workspaceDescriptions.workspacePolicies()))
-        .missingAuthDomains(workspaceDescriptions.missingAuthDomains());
+        .missingAuthDomains(workspaceDescriptions.missingAuthDomains())
+        .operationState(
+            ControllerUtils.toApiOperationState(
+                workspace.flightId(), workspace.state(), workspace.error()));
   }
 }

@@ -26,6 +26,7 @@ import bio.terra.workspace.generated.model.ApiGcpDataprocClusterCreationParamete
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterInstanceGroupConfig;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterLifecycleConfig;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -150,10 +151,9 @@ public class CreateDataprocClusterStep implements Step {
         if (HttpStatus.CONFLICT.value() == e.getStatusCode()) {
           logger.debug("Dataproc cluster {} already created.", clusterName.formatName());
           return StepResult.getStepResultSuccess();
-        } else if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
-          // Don't retry bad requests, which won't change. Instead, fail faster.
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
         }
+        // Throw bad request exception for malformed parameters
+        GcpFlightExceptionUtils.handleGcpBadRequestException(e);
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
 

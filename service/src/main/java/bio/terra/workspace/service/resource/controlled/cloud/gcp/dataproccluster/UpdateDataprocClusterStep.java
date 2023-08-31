@@ -14,6 +14,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.generated.model.ApiControlledDataprocClusterUpdateParameters;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterLifecycleConfig;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.model.AutoscalingConfig;
 import com.google.api.services.dataproc.model.Cluster;
@@ -23,7 +24,6 @@ import com.google.api.services.dataproc.model.LifecycleConfig;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.http.HttpStatus;
 
 public class UpdateDataprocClusterStep implements Step {
 
@@ -93,7 +93,8 @@ public class UpdateDataprocClusterStep implements Step {
       updateMaskPaths.add(NUM_SECONDARY_WORKERS);
       updatedCluster
           .getConfig()
-          .setSecondaryWorkerConfig(new InstanceGroupConfig().setNumInstances(3));
+          .setSecondaryWorkerConfig(
+              new InstanceGroupConfig().setNumInstances(updateParameters.getNumSecondaryWorkers()));
     }
     if (updateParameters.getAutoscalingPolicy() != null) {
       updateMaskPaths.add(AUTOSCALING_POLICY);
@@ -105,11 +106,13 @@ public class UpdateDataprocClusterStep implements Step {
     ApiGcpDataprocClusterLifecycleConfig lifecycleConfig = updateParameters.getLifecycleConfig();
     if (lifecycleConfig != null) {
       updatedCluster.getConfig().setLifecycleConfig(new LifecycleConfig());
-      updateMaskPaths.add(IDLE_DELETE_TTL);
-      updatedCluster
-          .getConfig()
-          .getLifecycleConfig()
-          .setIdleDeleteTtl(updateParameters.getLifecycleConfig().getIdleDeleteTtl());
+      if (lifecycleConfig.getIdleDeleteTtl() != null) {
+        updateMaskPaths.add(IDLE_DELETE_TTL);
+        updatedCluster
+            .getConfig()
+            .getLifecycleConfig()
+            .setIdleDeleteTtl(updateParameters.getLifecycleConfig().getIdleDeleteTtl());
+      }
       // Only one autoDeleteTtl and autoDeleteTime can be set (already validated in controller)
       if (lifecycleConfig.getAutoDeleteTtl() != null) {
         updateMaskPaths.add(AUTO_DELETE_TTL);
@@ -126,6 +129,13 @@ public class UpdateDataprocClusterStep implements Step {
                 updateParameters.getLifecycleConfig().getAutoDeleteTime().toString());
       }
     }
+
+    // Do not update if there are no fields to update. The cluster update api requires at least one
+    // field to update.
+    if (updateMaskPaths.size() == 0) {
+      return StepResult.getStepResultSuccess();
+    }
+
     try {
       crlService
           .getDataprocCow()
@@ -137,10 +147,8 @@ public class UpdateDataprocClusterStep implements Step {
               updateParameters.getGracefulDecommissionTimeout())
           .execute();
     } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
-          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-      }
+      // Throw bad request exception for malformed parameters
+      GcpFlightExceptionUtils.handleGcpBadRequestException(e);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);

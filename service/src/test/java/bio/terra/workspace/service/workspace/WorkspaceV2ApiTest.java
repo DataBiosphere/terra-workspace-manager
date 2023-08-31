@@ -1,11 +1,16 @@
 package bio.terra.workspace.service.workspace;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.mocks.MockMvcUtils;
+import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.mocks.MockWorkspaceV2Api;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceV2Result;
+import bio.terra.workspace.generated.model.ApiState;
+import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
@@ -16,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Tag("connected")
 public class WorkspaceV2ApiTest extends BaseConnectedTest {
   @Autowired MockMvcUtils mockMvcUtils;
+  @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired MockWorkspaceV2Api mockWorkspaceV2Api;
   @Autowired UserAccessUtils userAccessUtils;
 
@@ -36,6 +42,10 @@ public class WorkspaceV2ApiTest extends BaseConnectedTest {
     ApiCreateWorkspaceV2Result result =
         mockWorkspaceV2Api.createWorkspaceAndWait(defaultUserRequest, cloudPlatform);
     UUID workspaceUuid = result.getWorkspaceId();
+
+    ApiWorkspaceDescription workspaceDescription =
+        mockWorkspaceV1Api.getWorkspace(defaultUserRequest, workspaceUuid);
+    assertEquals(ApiState.READY, workspaceDescription.getOperationState().getState());
 
     mockWorkspaceV2Api.deleteWorkspaceAndWait(defaultUserRequest, workspaceUuid);
   }
