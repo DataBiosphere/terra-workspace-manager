@@ -85,6 +85,8 @@ readonly TERRA_BOOT_SERVICE_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/boot-output.tx
 
 readonly JUPYTER_SERVICE_NAME="jupyter.service"
 readonly JUPYTER_SERVICE="/etc/systemd/system/${JUPYTER_SERVICE_NAME}"
+readonly ETC_JUPYTER="/etc/jupyter"
+readonly JUPYTER_CONFIG="${ETC_JUPYTER}/jupyter_notebook_config.py"
 
 # Variables relevant for 3rd party software that gets installed
 readonly REQ_JAVA_VERSION=17
@@ -191,9 +193,11 @@ trap 'exit_handler $? $LINENO $BASH_COMMAND' EXIT
 # Let the UI know the script has started
 set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 
-# Add login user to sudoers
-emit "Adding login user to sudoers"
+# Add login user to sudoers and enable sudo without password on it
+emit "Adding login user to sudoers..."
+readonly NO_PROMPT_SUDOERS_FILE="/etc/sudoers.d/no-sudo-password-prompt-${LOGIN_USER}"
 sudo usermod -aG sudo $LOGIN_USER
+echo "$LOGIN_USER ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee $NO_PROMPT_SUDOERS_FILE
 
 # Remove default user bashrc to ensure that the user's bashrc is sourced in non interactive shells
 ${RUN_AS_LOGIN_USER} "rm -f '${USER_BASHRC}'"
@@ -225,8 +229,10 @@ cat << EOF >> "${USER_BASHRC}"
 
 ### BEGIN: Terra-specific customizations ###
 
-# Set the correct java installation to use
-export JAVA_HOME="${USER_HOME_LOCAL_DIR}"
+# Set the correct java version for terra CLI
+# Note: Aliases set in ~/.bashrc are not available in jupyter notebooks.
+#       This workaround allows users to run terra CLI in terminals.
+alias terra='JAVA_HOME="${JAVA_17_HOME}" terra'
 
 # Prepend "${USER_HOME_LOCAL_BIN}" (if not already in the path)
 if [[ ":\${PATH}:" != *":${USER_HOME_LOCAL_BIN}:"* ]]; then
@@ -679,7 +685,7 @@ Group=${LOGIN_USER}
 EnvironmentFile=/etc/environment
 EnvironmentFile=/etc/default/jupyter
 WorkingDirectory=${USER_HOME_DIR}
-ExecStart=/bin/bash -c '/opt/conda/miniconda3/bin/jupyter notebook &>> ${USER_HOME_DIR}/jupyter_notebook.log'
+ExecStart=/bin/bash --login -c '/opt/conda/miniconda3/bin/jupyter notebook &>> ${USER_HOME_DIR}/jupyter_notebook.log'
 Restart=on-failure
 
 [Install]
@@ -845,22 +851,40 @@ safe_call("""${RUN_IPYTHON} profile create && echo "c.InteractiveShellApp.extens
 print("hail installed successfully.")
 
 EOF
+fi
 
-  # Fork the following into background process to wait for dataproc to finish
-  # installing optional components including jupyter and start the proxy gateway service.
-  # Then safely install hail.
-  "$(
-    while ! systemctl is-active --quiet ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME}; do
-      sleep 5
-      emit "Waiting for ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME} to start..."
-    done
+# Fork the following into background process to execute after dataproc finishes
+# setting up its optional components.
+#
+# Post dataproc setup tasks:
+# 1. Wait for the dataproc component gateway service to start.
+# 2. Install hail if it has been enabled.
+# 3. Configure jupyter service config
+#    a. Remove Dataproc's GCSContentsManager as we support bucket mounts in local file system.
+#    b. Set jupyter file tree's root directory to the LOGIN_USER's home directory.
+# 4. Restart jupyter service
+#
+"$(
+  while ! systemctl is-active --quiet ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME}; do
+    sleep 5
+    emit "Waiting for ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME} to start..."
+  done
 
+  # Execute software specific post startup customizations
+  if [[ "${SOFTWARE_FRAMEWORK}" == "HAIL" ]]; then
     emit "Starting hail install script..."
     ${RUN_PYTHON} ${HAIL_SCRIPT_PATH}
-    emit "Restarting jupyter service..."
-    systemctl restart ${JUPYTER_SERVICE_NAME}
-  )" &
-fi
+  fi
+
+  emit "Configuring Jupyter service..."
+
+  # Remove the default GCSContentsManager and set jupyter file tree's root directory to the LOGIN_USER's home directory.
+  sed -i -e '/c.GCSContentsManager/d' -e '/CombinedContentsManager/d' "$JUPYTER_CONFIG"
+  echo -e "c.FileContentsManager.root_dir = '${USER_HOME_DIR}'\n" | tee -a "${JUPYTER_CONFIG}"
+
+  # Restart jupyter to load configurations
+  systemctl restart ${JUPYTER_SERVICE_NAME}
+)" &
 
 # reload systemctl daemon to load the updated jupyter configuration
 systemctl daemon-reload
