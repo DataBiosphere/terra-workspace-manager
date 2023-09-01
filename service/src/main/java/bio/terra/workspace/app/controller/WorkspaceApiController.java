@@ -479,9 +479,15 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCreateCloudContextResult> createCloudContext(
       UUID uuid, @Valid ApiCreateCloudContextRequest body) {
-    ApiCloudPlatform cloudPlatform = body.getCloudPlatform();
-    ControllerValidationUtils.validateCloudPlatform(cloudPlatform);
+    ApiCloudPlatform apiCloudPlatform = body.getCloudPlatform();
+    ControllerValidationUtils.validateCloudPlatform(apiCloudPlatform);
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    CloudPlatform cloudPlatform = CloudPlatform.fromApiCloudPlatform(apiCloudPlatform);
+    if (cloudPlatform == CloudPlatform.AWS) {
+      featureService.featureEnabledCheck(FeatureService.AWS_ENABLED, userRequest.getEmail());
+    }
+
     String jobId = body.getJobControl().getId();
     String resultPath = getAsyncResultEndpoint(jobId);
 
@@ -505,12 +511,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             spendProfileId, features.isBpmGcpEnabled(), userRequest);
 
     workspaceService.createCloudContext(
-        workspace,
-        CloudPlatform.fromApiCloudPlatform(cloudPlatform),
-        spendProfile,
-        jobId,
-        userRequest,
-        resultPath);
+        workspace, cloudPlatform, spendProfile, jobId, userRequest, resultPath);
 
     ApiCreateCloudContextResult response = fetchCreateCloudContextResult(jobId);
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
