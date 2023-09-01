@@ -196,7 +196,7 @@ public class AwsCloudContextService implements CloudContextService {
    */
   public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
     try {
-      featureService.awsEnabledCheck();
+      featureService.featureEnabledCheck(FeatureService.AWS_ENABLED);
       initializeEnvironmentDiscovery();
 
       if (this.environmentDiscovery == null) {

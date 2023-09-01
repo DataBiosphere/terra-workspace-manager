@@ -2,6 +2,7 @@ package bio.terra.workspace.common;
 
 import static org.mockito.Mockito.when;
 
+import bio.terra.workspace.service.features.FeatureService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.TestInstance;
@@ -16,6 +17,6 @@ public class BaseAwsUnitTest extends BaseUnitTestMocks {
 
   @BeforeAll
   public void init() throws Exception {
-    when(mockFeatureService().awsEnabled()).thenReturn(true);
+    when(mockFeatureService().isFeatureEnabled(FeatureService.AWS_ENABLED)).thenReturn(true);
   }
 }
