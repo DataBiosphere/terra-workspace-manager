@@ -22,7 +22,9 @@ import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.LandingZoneBatchAccountFinder;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.StorageAccountKeyProvider;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.BucketCloneRolesService;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
@@ -79,6 +81,8 @@ public class FlightBeanBag {
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final WorkspaceActivityLogService workspaceActivityLogService;
   private final LandingZoneBatchAccountFinder landingZoneBatchAccountFinder;
+  private final KubernetesClientProvider kubernetesClientProvider;
+  private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
 
   @Lazy
   @Autowired
@@ -115,7 +119,9 @@ public class FlightBeanBag {
       StorageAccountKeyProvider storageAccountKeyProvider,
       LandingZoneApiDispatch landingZoneApiDispatch,
       WorkspaceActivityLogService workspaceActivityLogService,
-      LandingZoneBatchAccountFinder landingZoneBatchAccountFinder) {
+      LandingZoneBatchAccountFinder landingZoneBatchAccountFinder,
+      KubernetesClientProvider kubernetesClientProvider,
+      AzureDatabaseUtilsRunner azureDatabaseUtilsRunner) {
     this.applicationDao = applicationDao;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
@@ -149,6 +155,8 @@ public class FlightBeanBag {
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.workspaceActivityLogService = workspaceActivityLogService;
     this.landingZoneBatchAccountFinder = landingZoneBatchAccountFinder;
+    this.kubernetesClientProvider = kubernetesClientProvider;
+    this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -285,5 +293,13 @@ public class FlightBeanBag {
 
   public WorkspaceActivityLogService getWorkspaceActivityLogService() {
     return workspaceActivityLogService;
+  }
+
+  public KubernetesClientProvider getKubernetesClientProvider() {
+    return kubernetesClientProvider;
+  }
+
+  public AzureDatabaseUtilsRunner getAzureDatabaseUtilsRunner() {
+    return azureDatabaseUtilsRunner;
   }
 }

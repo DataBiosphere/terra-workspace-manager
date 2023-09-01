@@ -14,6 +14,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.database.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace.ControlledAzureKubernetesNamespaceHandler;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace.ControlledAzureKubernetesNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityHandler;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerHandler;
@@ -155,6 +157,14 @@ public enum WsmResourceType {
       ActivityLogChangedTarget.CONTROLLED_GCP_GCE_INSTANCE),
 
   // AZURE
+  CONTROLLED_AZURE_KUBERNETES_NAMESPACE(
+      CloudPlatform.AZURE,
+      StewardshipType.CONTROLLED,
+      "CONTROLLED_AZURE_KUBERNETES_NAMESPACE",
+      ApiResourceType.AZURE_KUBERNETES_NAMESPACE,
+      ControlledAzureKubernetesNamespaceResource.class,
+      ControlledAzureKubernetesNamespaceHandler::getHandler,
+      ActivityLogChangedTarget.CONTROLLED_AZURE_KUBERNETES_NAMESPACE),
   CONTROLLED_AZURE_MANAGED_IDENTITY(
       CloudPlatform.AZURE,
       StewardshipType.CONTROLLED,

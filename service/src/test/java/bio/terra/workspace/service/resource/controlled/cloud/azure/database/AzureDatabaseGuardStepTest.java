@@ -12,6 +12,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
@@ -24,19 +25,13 @@ import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
 import com.azure.resourcemanager.postgresqlflexibleserver.models.Databases;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoSession;
-import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
 
 @Tag("azure-unit")
-public class AzureDatabaseGuardStepTest {
-  private MockitoSession mockito;
+public class AzureDatabaseGuardStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private FlightContext mockFlightContext;
   @Mock private FlightMap mockWorkingMap;
   @Mock private AzureCloudContext mockAzureCloudContext;
@@ -49,18 +44,6 @@ public class AzureDatabaseGuardStepTest {
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
   @Mock private ApiAzureLandingZoneDeployedResource mockDatabase;
   @Mock private WorkspaceService mockWorkspaceService;
-
-  @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
-  }
 
   @Test
   void testSuccess() throws InterruptedException {
@@ -84,7 +67,8 @@ public class AzureDatabaseGuardStepTest {
   void testAlreadyExists() throws InterruptedException {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID(), "default");
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)
@@ -116,7 +100,8 @@ public class AzureDatabaseGuardStepTest {
   private StepResult testWithError(HttpStatus httpStatus) throws InterruptedException {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID(), "default");
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)

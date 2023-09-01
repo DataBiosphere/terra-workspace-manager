@@ -13,6 +13,7 @@ components:
         - GCS_BUCKET
         - GCS_OBJECT
         - DATAPROC_CLUSTER
+        - AZURE_KUBERNETES_NAMESPACE
         - AZURE_MANAGED_IDENTITY
         - AZURE_DATABASE
         - AZURE_DISK
@@ -48,6 +49,8 @@ components:
           $ref: '#/components/schemas/GcpGcsObjectAttributes'
         gcpAiNotebookInstance:
           $ref: '#/components/schemas/GcpAiNotebookInstanceAttributes'
+        azureKubernetesNamespace:
+          $ref: '#/components/schemas/AzureKubernetesNamespaceAttributes'
         azureManagedIdentity:
           $ref: '#/components/schemas/AzureManagedIdentityAttributes'
         azureDatabase:

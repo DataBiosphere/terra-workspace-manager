@@ -16,6 +16,7 @@ import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
+import bio.terra.workspace.generated.model.ApiAzureKubernetesNamespaceResource;
 import bio.terra.workspace.generated.model.ApiAzureManagedIdentityResource;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
@@ -25,6 +26,7 @@ import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContai
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDatabaseRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
+import bio.terra.workspace.generated.model.ApiCreateControlledAzureKubernetesNamespaceRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureManagedIdentityRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContainerRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
@@ -32,6 +34,7 @@ import bio.terra.workspace.generated.model.ApiCreatedAzureStorageContainerSasTok
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureBatchPool;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDatabaseResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
+import bio.terra.workspace.generated.model.ApiCreatedControlledAzureKubernetesNamespaceResult;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureManagedIdentity;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorageContainer;
 import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVmResult;
@@ -56,6 +59,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptio
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace.ControlledAzureKubernetesNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
@@ -70,6 +74,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -740,5 +745,103 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .validateWorkspaceOrControlledResourceReadAccess(userRequest, workspaceId, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureKubernetesNamespaceResult>
+      createAzureKubernetesNamespace(
+          UUID workspaceId, ApiCreateControlledAzureKubernetesNamespaceRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    final ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceId,
+            body.getCommon(),
+            landingZoneApiDispatch.getLandingZoneRegion(
+                userRequest, workspaceService.getWorkspace(workspaceId)),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_DATABASE);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceId, ControllerValidationUtils.samCreateAction(commonFields));
+    workspaceService.validateWorkspaceAndContextState(workspaceId, CloudPlatform.AZURE);
+
+    // append the workspace id to ensure the namespace is unique across all workspaces in the LZ
+    var kubernetesNamespace =
+        body.getAzureKubernetesNamespace().getNamespacePrefix() + "-" + workspaceId;
+    var resource =
+        ControlledAzureKubernetesNamespaceResource.builder()
+            .common(commonFields)
+            .kubernetesNamespace(kubernetesNamespace)
+            .kubernetesServiceAccount(kubernetesNamespace + "-ksa")
+            .managedIdentity(body.getAzureKubernetesNamespace().getManagedIdentity())
+            .databases(new HashSet<>(body.getAzureKubernetesNamespace().getDatabases()))
+            .build();
+
+    var jobId =
+        controlledResourceService.createControlledResourceAsync(
+            resource,
+            commonFields.getIamRole(),
+            userRequest,
+            body.getAzureKubernetesNamespace(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
+
+    return new ResponseEntity<>(
+        fetchCreateControlledKubernetesNamespaceResult(jobId), HttpStatus.OK);
+  }
+
+  private ApiCreatedControlledAzureKubernetesNamespaceResult
+      fetchCreateControlledKubernetesNamespaceResult(String jobId) {
+    final JobApiUtils.AsyncJobResult<ControlledAzureKubernetesNamespaceResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureKubernetesNamespaceResource.class);
+
+    ApiAzureKubernetesNamespaceResource apiResource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      var resource = jobResult.getResult();
+      apiResource = resource.toApiResource();
+    }
+    return new ApiCreatedControlledAzureKubernetesNamespaceResult()
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .azureKubernetesNamespace(apiResource);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureKubernetesNamespace(
+      UUID workspaceId, UUID resourceId, ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceId, resourceId, body, "Azure Kubernetes Namespace");
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureKubernetesNamespaceResource> getAzureKubernetesNamespace(
+      UUID workspaceId, UUID resourceId) {
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    features.azureEnabledCheck();
+    final ControlledAzureKubernetesNamespaceResource resource =
+        controlledResourceMetadataManager
+            .validateWorkspaceOrControlledResourceReadAccess(userRequest, workspaceId, resourceId)
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_KUBERNETES_NAMESPACE);
+    return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiCreatedControlledAzureKubernetesNamespaceResult>
+      getCreateAzureKubernetesNamespaceResult(UUID workspaceId, String jobId) {
+    features.azureEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    var result = fetchCreateControlledKubernetesNamespaceResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult>
+      getDeleteAzureKubernetesNamespaceResult(UUID workspaceId, String jobId) {
+    features.azureEnabledCheck();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    return getJobDeleteResult(jobId);
   }
 }

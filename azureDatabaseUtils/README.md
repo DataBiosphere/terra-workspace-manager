@@ -1,21 +1,35 @@
 # About
 This little utility is used to run database operations in an Azure landing zone where the 
 database is only accessible to landing zone managed identities and only on the
-landing zone virtual network.
+landing zone virtual network. See [AzureDatabaseUtilsRunner](../service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/azure/database/AzureDatabaseUtilsRunner.java)
+for the code that launches this utility.
 
 The utility is parameterized only by environment variables to make it easier to run from kubernetes
 without risk of command injection.
 
-This utility is designed to house multiple commands. Which command is run is determined by the
-spring profile that is active. The commands are:
-* `CreateDatabase` - creates a database with a given name and grant access to a managed identity. Used in the [CreateAzureDatabaseStep](../service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/azure/database/CreateAzureDatabaseStep.java). Environment variables:
+This utility is designed to house multiple commands. 
+Each command must be idempotent to allow for stairway retries. 
+Which command is run is determined by the spring profile that is active. The commands are:
+* `CreateDatabase` - creates a database with a given name and grant access to a managed identity. Environment variables:
   * `spring_profiles_active` - must be set to `CreateDatabase`
   * `NEW_DB_NAME` - the name of the database to create
   * `NEW_DB_USER_NAME` - the name of the user to create (good idea to make this the same as the managed identity)
   * `NEW_DB_USER_OID` - the OID of the manged identity
-* `CreateDatabaseWithDbRole` - creates a database with a given name and grant access new role of the same name. Used in the [CreateAzureDatabaseStep](../service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/azure/database/CreateAzureDatabaseStep.java). Environment variables:
+* `CreateDatabaseWithDbRole` - creates a database with a given name and grant access new role of the same name. Environment variables:
   * `spring_profiles_active` - must be set to `CreateDatabaseWithDbRole`
   * `NEW_DB_NAME` - the name of the database to create
+* `CreateNamespaceRole` - creates a namespace role with a given name and allows a managed identity to authenticate to that role. Environment variables:
+  * `spring_profiles_active` - must be set to `CreateNamespaceRole`
+  * `NAMESPACE_ROLE` - the name of the role to create
+  * `MANAGED_IDENTITY_OID` - the OID of the manged identity
+  * `DATABASE_NAMES` - a comma separated list of databases to grant access to
+* `DeleteNamespaceRole` - deletes a namespace role with a given name. Environment variables:
+  * `spring_profiles_active` - must be set to `DeleteNamespaceRole`
+  * `NAMESPACE_ROLE` - the name of the role to delete
+* `TestDatabaseConnect` - A command to be used in connected tests to verify database permissions. Environment variables:
+  * `spring_profiles_active` - must be set to `TestDatabaseConnect`
+  * `CONNECT_TO_DATABASE` - the name of the database to connect to
+  * `ADMIN_DB_USER_NAME` - the name of the user to connect as
 
 Common environment variables:
 * `DB_SERVER_NAME` - fully qualified name of the database server
