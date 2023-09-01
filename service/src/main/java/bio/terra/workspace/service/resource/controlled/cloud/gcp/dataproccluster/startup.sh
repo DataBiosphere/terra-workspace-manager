@@ -204,7 +204,7 @@ set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 # Add login user to sudoers and enable sudo without password on it
 emit "Adding login user to sudoers..."
 readonly NO_PROMPT_SUDOERS_FILE="/etc/sudoers.d/no-sudo-password-prompt-${LOGIN_USER}"
-sudo usermod -aG sudo $LOGIN_USER
+usermod -aG sudo "${LOGIN_USER}"
 echo "${LOGIN_USER} ALL=(ALL:ALL) NOPASSWD: ALL" > "${NO_PROMPT_SUDOERS_FILE}"
 
 # Remove default user bashrc to ensure that the user's bashrc is sourced in non interactive shells
@@ -694,7 +694,7 @@ chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASH_PROFILE}"
 # Configure Jupyter systemd service
 ###################################
 
-# By default the dataproc jupyter optional component runs jupyter as the root user.
+# By default the Dataproc jupyter optional component runs jupyter as the root user.
 # We override the behavior by configuring the jupyter service to run as the login user instead.
 
 emit "Configuring Jupyter systemd service..."
@@ -724,19 +724,19 @@ EOF
 ############################
 
 # If the script executer has set the "software-framework" property to "HAIL",
-# then install Hail after dataproc optional components are installed.
+# then install Hail after Dataproc optional components are installed.
 
 readonly SOFTWARE_FRAMEWORK="$(get_metadata_value "instance/attributes/software-framework")"
 
 if [[ "${SOFTWARE_FRAMEWORK}" == "HAIL" ]]; then
   emit "Installing Hail..."
 
-  # Create the hail install script. The script is based off of hail's init_notebook.py
-  # script that is executed by hailctl dataproc start. This modified script excludes
+  # Create the Hail install script. The script is based off of Hail's init_notebook.py
+  # script that is executed by 'hailctl dataproc start'. This modified script excludes
   # the step of starting a jupyter service.
   cat << EOF >"${HAIL_SCRIPT_PATH}"
 #!${RUN_PYTHON}
-# This modified hail installation script installs the necessary hail packages and jupyter extensions,
+# This modified Hail installation script installs the necessary Hail packages and jupyter extensions,
 # but does not install jupyter or set up a jupyter service as it already handled by the Dataproc jupyter optional component.
 # See: https://storage.googleapis.com/hail-common/hailctl/dataproc/0.2.120/init_notebook.py
 # Note that we intentionally did not make any updates to this script for style
@@ -880,12 +880,12 @@ print("hail installed successfully.")
 EOF
 fi
 
-# Fork the following into background process to execute after dataproc finishes
+# Fork the following into background process to execute after Dataproc finishes
 # setting up its optional components.
 #
-# Post dataproc setup tasks:
-# 1. Wait for the dataproc component gateway service to start.
-# 2. Install hail if it has been enabled.
+# Post Dataproc setup tasks:
+# 1. Wait for the Dataproc component gateway service to start.
+# 2. Install Hail if it has been enabled.
 # 3. Configure jupyter service config
 #    a. Remove Dataproc's GCSContentsManager as we support bucket mounts in local file system.
 #    b. Set jupyter file tree's root directory to the LOGIN_USER's home directory.
@@ -899,7 +899,7 @@ fi
 
   # Execute software specific post startup customizations
   if [[ "${SOFTWARE_FRAMEWORK}" == "HAIL" ]]; then
-    emit "Starting hail install script..."
+    emit "Starting Hail install script..."
     ${RUN_PYTHON} ${HAIL_SCRIPT_PATH}
   fi
 
@@ -907,7 +907,7 @@ fi
 
   # Remove the default GCSContentsManager and set jupyter file tree's root directory to the LOGIN_USER's home directory.
   sed -i -e "/c.GCSContentsManager/d" -e "/CombinedContentsManager/d" "${JUPYTER_CONFIG}"
-  echo -e "c.FileContentsManager.root_dir = '${USER_HOME_DIR}'\n" | tee -a "${JUPYTER_CONFIG}"
+  echo "c.FileContentsManager.root_dir = '${USER_HOME_DIR}'" >> "${JUPYTER_CONFIG}"
 
   # Restart jupyter to load configurations
   systemctl restart ${JUPYTER_SERVICE_NAME}
@@ -916,7 +916,7 @@ fi
 # reload systemctl daemon to load the updated jupyter configuration
 systemctl daemon-reload
 
-# The jupyter service will be restarted by the default dataproc startup script
+# The jupyter service will be restarted by the default Dataproc startup script
 # and pick up the modified service configuration and environment variables.
 
 ####################################################################################
@@ -989,6 +989,14 @@ if [[ ! -e "${TERRA_COMMAND_PATH}" ]]; then
   >&2 emit "ERROR: Terra CLI was not renamed to ${TERRA_COMMAND_PATH}"
   exit 1
 fi
+
+emit "--  Checking if the Terra CLI wrapper is properly created"
+
+if [[ ! -e "${TERRA_WRAPPER_PATH}" ]]; then
+  >&2 emit "ERROR: Terra CLI wrapper does not exist ${TERRA_WRAPPER_PATH}"
+  exit 1
+fi
+
 
 emit "SUCCESS: Terra CLI installed and version detected as ${INSTALLED_TERRA_VERSION}"
 
