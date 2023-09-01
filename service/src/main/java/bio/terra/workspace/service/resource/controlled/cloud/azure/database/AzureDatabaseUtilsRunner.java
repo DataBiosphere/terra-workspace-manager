@@ -310,7 +310,7 @@ public class AzureDatabaseUtilsRunner {
     } catch (InterruptedException e) {
       throw e;
     } catch (Exception e) {
-      throw new RuntimeException("timed out waiting for azure database utils container", e);
+      throw new RuntimeException("exception waiting for azure database utils container", e);
     }
   }
 
@@ -348,15 +348,9 @@ public class AzureDatabaseUtilsRunner {
       logger.info("Status = {} for azure database utils pod = {}", status, podName);
       return status;
     } catch (ApiException e) {
-      kubernetesClientProvider
-          .convertApiException(e)
-          .ifPresent(
-              (ex) -> {
-                throw ex;
-              });
-      throw new RuntimeException(
-          "This should not have happened, convertApiException above should have returned an exception",
-          e);
+      // this is called in a retry loop, so we don't want to throw an exception here
+      logger.error("Error checking azure database utils pod {} status", podName, e);
+      return Optional.of("Error checking status");
     }
   }
 

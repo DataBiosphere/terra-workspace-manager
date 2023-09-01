@@ -56,8 +56,7 @@ public class DeleteKubernetesNamespaceStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private void waitForDeletion(CoreV1Api coreApiClient)
-      throws InterruptedException, RetryException {
+  private void waitForDeletion(CoreV1Api coreApiClient) throws InterruptedException {
     try {
       RetryUtils.getWithRetry(
           this::isNamespaceGone,
@@ -70,7 +69,7 @@ public class DeleteKubernetesNamespaceStep implements Step {
       throw e;
     } catch (Exception e) {
       throw new RuntimeException(
-          "timeout waiting for namespace %s to be deleted"
+          "Error waiting for namespace %s to be deleted"
               .formatted(resource.getKubernetesNamespace()),
           e);
     }
@@ -80,21 +79,24 @@ public class DeleteKubernetesNamespaceStep implements Step {
     return namespacePhase.isEmpty();
   }
 
-  private Optional<String> getNamespaceStatus(CoreV1Api coreApiClient) throws ApiException {
+  private Optional<String> getNamespaceStatus(CoreV1Api coreApiClient) {
     try {
       var namespace = coreApiClient.readNamespace(resource.getKubernetesNamespace(), null);
       var phase = Optional.ofNullable(namespace.getStatus()).map(V1NamespaceStatus::getPhase);
       logger.info("Status = {} for azure namespace = {}", phase, resource.getKubernetesNamespace());
       return phase;
     } catch (ApiException e) {
-      kubernetesClientProvider
-          .convertApiException(e, HttpStatus.NOT_FOUND)
-          .ifPresent(
-              (ex) -> {
-                throw ex;
-              });
-      // If we get here, the namespace is gone, great!
-      return Optional.empty();
+      if (e.getCode() == HttpStatus.NOT_FOUND.value()) {
+        return Optional.empty();
+      } else {
+        // this is called in a retry loop, so we don't want to throw an exception here
+        logger.error(
+            "Error reading namespace {} for workspace {}",
+            resource.getKubernetesNamespace(),
+            workspaceId,
+            e);
+        return Optional.of("Error checking namespace status");
+      }
     }
   }
 
