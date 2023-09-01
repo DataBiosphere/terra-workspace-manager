@@ -85,8 +85,7 @@ readonly TERRA_BOOT_SERVICE_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/boot-output.tx
 
 readonly JUPYTER_SERVICE_NAME="jupyter.service"
 readonly JUPYTER_SERVICE="/etc/systemd/system/${JUPYTER_SERVICE_NAME}"
-readonly ETC_JUPYTER="/etc/jupyter"
-readonly JUPYTER_CONFIG="${ETC_JUPYTER}/jupyter_notebook_config.py"
+readonly JUPYTER_CONFIG="/etc/jupyter/jupyter_notebook_config.py"
 
 # Variables relevant for 3rd party software that gets installed
 readonly REQ_JAVA_VERSION=17
@@ -100,6 +99,15 @@ readonly CROMWELL_INSTALL_DIR="${USER_HOME_LOCAL_SHARE}/java"
 readonly CROMWELL_INSTALL_JAR="${CROMWELL_INSTALL_DIR}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
 
 readonly CROMSHELL_INSTALL_PATH="${USER_HOME_LOCAL_BIN}/cromshell"
+
+
+# We need to set the correct Java installation for the Terra CLI (17) which conflicts with the
+# version that Hail needs (8 or 11).
+#
+# We can't set up aliases or bash functions in the .bashrc (as they won't be available in Jupyter notebooks).
+# Instead, let's create a wrapper script for the terra command.
+readonly TERRA_COMMAND_PATH="${USER_HOME_LOCAL_BIN}/terra_cli"
+readonly TERRA_WRAPPER_PATH="${USER_HOME_LOCAL_BIN}/terra"
 
 # Variables for Terra-specific code installed on the VM
 readonly TERRA_INSTALL_PATH="${USER_HOME_LOCAL_BIN}/terra"
@@ -197,7 +205,7 @@ set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 emit "Adding login user to sudoers..."
 readonly NO_PROMPT_SUDOERS_FILE="/etc/sudoers.d/no-sudo-password-prompt-${LOGIN_USER}"
 sudo usermod -aG sudo $LOGIN_USER
-echo "$LOGIN_USER ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee $NO_PROMPT_SUDOERS_FILE
+echo "${LOGIN_USER} ALL=(ALL:ALL) NOPASSWD: ALL" > "${NO_PROMPT_SUDOERS_FILE}"
 
 # Remove default user bashrc to ensure that the user's bashrc is sourced in non interactive shells
 ${RUN_AS_LOGIN_USER} "rm -f '${USER_BASHRC}'"
@@ -228,11 +236,6 @@ EOF
 cat << EOF >> "${USER_BASHRC}"
 
 ### BEGIN: Terra-specific customizations ###
-
-# Set the correct java version for terra CLI
-# Note: Aliases set in ~/.bashrc are not available in jupyter notebooks.
-#       This workaround allows users to run terra CLI in terminals.
-alias terra='JAVA_HOME="${USER_HOME_LOCAL_DIR}" terra'
 
 # Prepend "${USER_HOME_LOCAL_BIN}" (if not already in the path)
 if [[ ":\${PATH}:" != *":${USER_HOME_LOCAL_BIN}:"* ]]; then
@@ -432,6 +435,30 @@ export TERRA_USER_EMAIL='${OWNER_EMAIL}'
 export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'
 export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'
 EOF
+
+#############################
+# Configure Terra CLI Wrapper
+#############################
+# Create a wrapper script that sets $JAVA_HOME and then executes the 'terra' command.
+
+# Move the installed 'terra' binary to a new location
+mv "${TERRA_WRAPPER_PATH}" "${TERRA_COMMAND_PATH}"
+
+# Create the wrapper script
+cat << EOF >> "${TERRA_WRAPPER_PATH}"
+#!/bin/bash
+
+# Set JAVA_HOME before calling the terra cli
+export JAVA_HOME="${USER_HOME_LOCAL_DIR}"
+
+# Execute terra
+"${TERRA_COMMAND_PATH}" "\$@"
+
+EOF
+
+# Make sure the wrapper script is executable by the login user
+chmod +x "${TERRA_WRAPPER_PATH}"
+chown "${LOGIN_USER}":"${LOGIN_USER}" "${TERRA_WRAPPER_PATH}"
 
 #################
 # bash completion
@@ -953,6 +980,13 @@ readonly INSTALLED_TERRA_VERSION="$(${RUN_AS_LOGIN_USER} "${TERRA_INSTALL_PATH} 
 
 if [[ -z "${INSTALLED_TERRA_VERSION}" ]]; then
   >&2 emit "ERROR: Terra CLI did not execute or did not return a version number"
+  exit 1
+fi
+
+emit "--  Checking if the original Terra CLI has been renamed to terra_cli"
+
+if [[ ! -e "${TERRA_COMMAND_PATH}" ]]; then
+  >&2 emit "ERROR: Terra CLI was not renamed to ${TERRA_COMMAND_PATH}"
   exit 1
 fi
 
