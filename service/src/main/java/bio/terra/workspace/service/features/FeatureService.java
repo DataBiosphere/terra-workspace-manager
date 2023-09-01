@@ -2,11 +2,16 @@ package bio.terra.workspace.service.features;
 
 import bio.terra.common.flagsmith.FlagsmithService;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class FeatureService {
+  // list of features
+  public static final String AWS_ENABLED = "vwb__aws_enabled";
+  public static final String WSM_STACKDRIVER_EXPORTER_ENABLED =
+      "terra__wsm_stackdriver_exporter_enabled";
   private final FlagsmithService flagsmithService;
 
   @Autowired
@@ -14,19 +19,22 @@ public class FeatureService {
     this.flagsmithService = flagsmithService;
   }
 
-  public boolean awsEnabled() {
-    return flagsmithService.isFeatureEnabled("terra__aws_enabled").orElse(false);
+  public boolean isFeatureEnabled(String featureName) {
+    return isFeatureEnabled(featureName, /* userEmail= */ null);
   }
 
-  public void awsEnabledCheck() {
-    if (!awsEnabled()) {
-      throw new FeatureNotSupportedException("AWS feature are not enabled");
+  public boolean isFeatureEnabled(String featureName, @Nullable String userEmail) {
+    return flagsmithService.isFeatureEnabled(featureName, userEmail).orElse(false);
+  }
+
+  public void featureEnabledCheck(String featureName) {
+    featureEnabledCheck(featureName, /* userEmail= */ null);
+  }
+
+  public void featureEnabledCheck(String featureName, @Nullable String userEmail) {
+    if (!isFeatureEnabled(featureName, userEmail)) {
+      throw new FeatureNotSupportedException(
+          String.format("Feature %s not supported for user %s", featureName, userEmail));
     }
-  }
-
-  public boolean stackdriverExporterEnabled() {
-    return flagsmithService
-        .isFeatureEnabled("terra__wsm_stackdriver_exporter_enabled")
-        .orElse(false);
   }
 }

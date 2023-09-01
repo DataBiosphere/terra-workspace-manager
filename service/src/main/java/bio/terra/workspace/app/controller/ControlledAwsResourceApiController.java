@@ -238,9 +238,9 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreatedControlledAwsS3StorageFolder> createAwsS3StorageFolder(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsS3StorageFolderRequestBody body) {
-    featureService.awsEnabledCheck();
-
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    featureService.featureEnabledCheck(FeatureService.AWS_ENABLED, userRequest.getEmail());
+
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest,
@@ -426,9 +426,9 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreateControlledAwsSageMakerNotebookResult> createAwsSageMakerNotebook(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsSageMakerNotebookRequestBody body) {
-    featureService.awsEnabledCheck();
-
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    featureService.featureEnabledCheck(FeatureService.AWS_ENABLED, userRequest.getEmail());
+
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest,

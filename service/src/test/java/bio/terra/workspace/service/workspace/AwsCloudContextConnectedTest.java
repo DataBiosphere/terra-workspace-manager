@@ -15,6 +15,7 @@ import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -51,7 +52,8 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
 
   @Test
   void discoverEnvironmentTest() throws IOException {
-    Assertions.assertDoesNotThrow(() -> mockFeatureService.awsEnabledCheck());
+    Assertions.assertDoesNotThrow(
+        () -> mockFeatureService.featureEnabledCheck(FeatureService.AWS_ENABLED));
 
     // Log the AWS config
     logger.info("AWS Configuration: {}", awsConfiguration.toString());

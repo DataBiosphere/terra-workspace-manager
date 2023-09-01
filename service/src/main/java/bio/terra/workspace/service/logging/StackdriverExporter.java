@@ -21,7 +21,7 @@ public class StackdriverExporter {
   }
 
   public void initialize() {
-    if (!featureService.stackdriverExporterEnabled()) {
+    if (!featureService.isFeatureEnabled(FeatureService.WSM_STACKDRIVER_EXPORTER_ENABLED)) {
       logger.info("Stackdriver exporter is not enabled, skip initializing.");
       return;
     }
