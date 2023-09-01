@@ -85,6 +85,7 @@ readonly TERRA_BOOT_SERVICE_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/boot-output.tx
 
 readonly JUPYTER_SERVICE_NAME="jupyter.service"
 readonly JUPYTER_SERVICE="/etc/systemd/system/${JUPYTER_SERVICE_NAME}"
+readonly JUPYTER_CONFIG="/etc/jupyter/jupyter_notebook_config.py"
 
 # Variables relevant for 3rd party software that gets installed
 readonly REQ_JAVA_VERSION=17
@@ -98,6 +99,15 @@ readonly CROMWELL_INSTALL_DIR="${USER_HOME_LOCAL_SHARE}/java"
 readonly CROMWELL_INSTALL_JAR="${CROMWELL_INSTALL_DIR}/cromwell-${CROMWELL_LATEST_VERSION}.jar"
 
 readonly CROMSHELL_INSTALL_PATH="${USER_HOME_LOCAL_BIN}/cromshell"
+
+
+# We need to set the correct Java installation for the Terra CLI (17) which conflicts with the
+# version that Hail needs (8 or 11).
+#
+# We can't set up aliases or bash functions in the .bashrc (as they won't be available in Jupyter notebooks).
+# Instead, let's create a wrapper script for the terra command.
+readonly TERRA_COMMAND_PATH="${USER_HOME_LOCAL_BIN}/terra_cli"
+readonly TERRA_WRAPPER_PATH="${USER_HOME_LOCAL_BIN}/terra"
 
 # Variables for Terra-specific code installed on the VM
 readonly TERRA_INSTALL_PATH="${USER_HOME_LOCAL_BIN}/terra"
@@ -191,9 +201,11 @@ trap 'exit_handler $? $LINENO $BASH_COMMAND' EXIT
 # Let the UI know the script has started
 set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 
-# Add login user to sudoers
-emit "Adding login user to sudoers"
-sudo usermod -aG sudo $LOGIN_USER
+# Add login user to sudoers and enable sudo without password on it
+emit "Adding login user to sudoers..."
+readonly NO_PROMPT_SUDOERS_FILE="/etc/sudoers.d/no-sudo-password-prompt-${LOGIN_USER}"
+usermod -aG sudo "${LOGIN_USER}"
+echo "${LOGIN_USER} ALL=(ALL:ALL) NOPASSWD: ALL" > "${NO_PROMPT_SUDOERS_FILE}"
 
 # Remove default user bashrc to ensure that the user's bashrc is sourced in non interactive shells
 ${RUN_AS_LOGIN_USER} "rm -f '${USER_BASHRC}'"
@@ -224,9 +236,6 @@ EOF
 cat << EOF >> "${USER_BASHRC}"
 
 ### BEGIN: Terra-specific customizations ###
-
-# Set the correct java installation to use
-export JAVA_HOME="${USER_HOME_LOCAL_DIR}"
 
 # Prepend "${USER_HOME_LOCAL_BIN}" (if not already in the path)
 if [[ ":\${PATH}:" != *":${USER_HOME_LOCAL_BIN}:"* ]]; then
@@ -426,6 +435,30 @@ export TERRA_USER_EMAIL='${OWNER_EMAIL}'
 export GOOGLE_CLOUD_PROJECT='${GOOGLE_PROJECT}'
 export GOOGLE_SERVICE_ACCOUNT_EMAIL='${PET_SA_EMAIL}'
 EOF
+
+#############################
+# Configure Terra CLI Wrapper
+#############################
+# Create a wrapper script that sets $JAVA_HOME and then executes the 'terra' command.
+
+# Move the installed 'terra' binary to a new location
+mv "${TERRA_WRAPPER_PATH}" "${TERRA_COMMAND_PATH}"
+
+# Create the wrapper script
+cat << EOF >> "${TERRA_WRAPPER_PATH}"
+#!/bin/bash
+
+# Set JAVA_HOME before calling the terra cli
+export JAVA_HOME="${USER_HOME_LOCAL_DIR}"
+
+# Execute terra
+"${TERRA_COMMAND_PATH}" "\$@"
+
+EOF
+
+# Make sure the wrapper script is executable by the login user
+chmod +x "${TERRA_WRAPPER_PATH}"
+chown "${LOGIN_USER}":"${LOGIN_USER}" "${TERRA_WRAPPER_PATH}"
 
 #################
 # bash completion
@@ -661,7 +694,7 @@ chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASH_PROFILE}"
 # Configure Jupyter systemd service
 ###################################
 
-# By default the dataproc jupyter optional component runs jupyter as the root user.
+# By default the Dataproc jupyter optional component runs jupyter as the root user.
 # We override the behavior by configuring the jupyter service to run as the login user instead.
 
 emit "Configuring Jupyter systemd service..."
@@ -679,7 +712,7 @@ Group=${LOGIN_USER}
 EnvironmentFile=/etc/environment
 EnvironmentFile=/etc/default/jupyter
 WorkingDirectory=${USER_HOME_DIR}
-ExecStart=/bin/bash -c '/opt/conda/miniconda3/bin/jupyter notebook &>> ${USER_HOME_DIR}/jupyter_notebook.log'
+ExecStart=/bin/bash --login -c '/opt/conda/miniconda3/bin/jupyter notebook &>> ${USER_HOME_DIR}/jupyter_notebook.log'
 Restart=on-failure
 
 [Install]
@@ -691,19 +724,19 @@ EOF
 ############################
 
 # If the script executer has set the "software-framework" property to "HAIL",
-# then install Hail after dataproc optional components are installed.
+# then install Hail after Dataproc optional components are installed.
 
 readonly SOFTWARE_FRAMEWORK="$(get_metadata_value "instance/attributes/software-framework")"
 
 if [[ "${SOFTWARE_FRAMEWORK}" == "HAIL" ]]; then
   emit "Installing Hail..."
 
-  # Create the hail install script. The script is based off of hail's init_notebook.py
-  # script that is executed by hailctl dataproc start. This modified script excludes
+  # Create the Hail install script. The script is based off of Hail's init_notebook.py
+  # script that is executed by 'hailctl dataproc start'. This modified script excludes
   # the step of starting a jupyter service.
   cat << EOF >"${HAIL_SCRIPT_PATH}"
 #!${RUN_PYTHON}
-# This modified hail installation script installs the necessary hail packages and jupyter extensions,
+# This modified Hail installation script installs the necessary Hail packages and jupyter extensions,
 # but does not install jupyter or set up a jupyter service as it already handled by the Dataproc jupyter optional component.
 # See: https://storage.googleapis.com/hail-common/hailctl/dataproc/0.2.120/init_notebook.py
 # Note that we intentionally did not make any updates to this script for style
@@ -845,27 +878,45 @@ safe_call("""${RUN_IPYTHON} profile create && echo "c.InteractiveShellApp.extens
 print("hail installed successfully.")
 
 EOF
-
-  # Fork the following into background process to wait for dataproc to finish
-  # installing optional components including jupyter and start the proxy gateway service.
-  # Then safely install hail.
-  "$(
-    while ! systemctl is-active --quiet ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME}; do
-      sleep 5
-      emit "Waiting for ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME} to start..."
-    done
-
-    emit "Starting hail install script..."
-    ${RUN_PYTHON} ${HAIL_SCRIPT_PATH}
-    emit "Restarting jupyter service..."
-    systemctl restart ${JUPYTER_SERVICE_NAME}
-  )" &
 fi
+
+# Fork the following into background process to execute after Dataproc finishes
+# setting up its optional components.
+#
+# Post Dataproc setup tasks:
+# 1. Wait for the Dataproc component gateway service to start.
+# 2. Install Hail if it has been enabled.
+# 3. Configure jupyter service config
+#    a. Remove Dataproc's GCSContentsManager as we support bucket mounts in local file system.
+#    b. Set jupyter file tree's root directory to the LOGIN_USER's home directory.
+# 4. Restart jupyter service
+#
+"$(
+  while ! systemctl is-active --quiet ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME}; do
+    sleep 5
+    emit "Waiting for ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME} to start..."
+  done
+
+  # Execute software specific post startup customizations
+  if [[ "${SOFTWARE_FRAMEWORK}" == "HAIL" ]]; then
+    emit "Starting Hail install script..."
+    ${RUN_PYTHON} ${HAIL_SCRIPT_PATH}
+  fi
+
+  emit "Configuring Jupyter service..."
+
+  # Remove the default GCSContentsManager and set jupyter file tree's root directory to the LOGIN_USER's home directory.
+  sed -i -e "/c.GCSContentsManager/d" -e "/CombinedContentsManager/d" "${JUPYTER_CONFIG}"
+  echo "c.FileContentsManager.root_dir = '${USER_HOME_DIR}'" >> "${JUPYTER_CONFIG}"
+
+  # Restart jupyter to load configurations
+  systemctl restart ${JUPYTER_SERVICE_NAME}
+)" &
 
 # reload systemctl daemon to load the updated jupyter configuration
 systemctl daemon-reload
 
-# The jupyter service will be restarted by the default dataproc startup script
+# The jupyter service will be restarted by the default Dataproc startup script
 # and pick up the modified service configuration and environment variables.
 
 ####################################################################################
@@ -931,6 +982,21 @@ if [[ -z "${INSTALLED_TERRA_VERSION}" ]]; then
   >&2 emit "ERROR: Terra CLI did not execute or did not return a version number"
   exit 1
 fi
+
+emit "--  Checking if the original Terra CLI has been renamed to terra_cli"
+
+if [[ ! -e "${TERRA_COMMAND_PATH}" ]]; then
+  >&2 emit "ERROR: Terra CLI was not renamed to ${TERRA_COMMAND_PATH}"
+  exit 1
+fi
+
+emit "--  Checking if the Terra CLI wrapper is properly created"
+
+if [[ ! -e "${TERRA_WRAPPER_PATH}" ]]; then
+  >&2 emit "ERROR: Terra CLI wrapper does not exist ${TERRA_WRAPPER_PATH}"
+  exit 1
+fi
+
 
 emit "SUCCESS: Terra CLI installed and version detected as ${INSTALLED_TERRA_VERSION}"
 
