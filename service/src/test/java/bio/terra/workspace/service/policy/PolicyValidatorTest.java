@@ -265,22 +265,21 @@ public class PolicyValidatorTest extends BaseUnitTest {
   @Test
   void validateWorkspaceConformsToProtectedDataPolicy_noCloudPlatform() {
     Workspace workspace =
-            WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-                    .spendProfileId(SPEND_PROFILE_ID)
-                    .build();
+        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
+            .spendProfileId(SPEND_PROFILE_ID)
+            .build();
 
     TpsPaoGetResult protectedDataPolicy =
-            createPao(
-                    new TpsPolicyInput()
-                            .namespace(TpsUtilities.TERRA_NAMESPACE)
-                            .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME));
+        createPao(
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME));
 
-    when(mockWorkspaceDao.listCloudPlatforms(workspace.workspaceId()))
-            .thenReturn(List.of());
+    when(mockWorkspaceDao.listCloudPlatforms(workspace.workspaceId())).thenReturn(List.of());
 
     List<String> results =
-            policyValidator.validateWorkspaceConformsToProtectedDataPolicy(
-                    workspace, protectedDataPolicy, userRequest);
+        policyValidator.validateWorkspaceConformsToProtectedDataPolicy(
+            workspace, protectedDataPolicy, userRequest);
     assertEquals(1, results.size());
   }
 
