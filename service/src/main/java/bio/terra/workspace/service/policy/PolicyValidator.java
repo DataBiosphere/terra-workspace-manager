@@ -90,7 +90,11 @@ public class PolicyValidator {
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var validationErrors = new ArrayList<String>();
     if (TpsUtilities.containsProtectedDataPolicy(policies.getEffectiveAttributes())) {
-      for (var cloudPlatform : workspaceDao.listCloudPlatforms(workspace.workspaceId())) {
+      List<CloudPlatform> cloudPlatforms = workspaceDao.listCloudPlatforms(workspace.workspaceId());
+      if (cloudPlatforms.isEmpty()) {
+        validationErrors.add("Unable to import protected snapshot into unprotected workspace");
+      }
+      for (var cloudPlatform : cloudPlatforms) {
         switch (cloudPlatform) {
           case AZURE -> {
             var landingZone = landingZoneApiDispatch.getLandingZone(userRequest, workspace);
