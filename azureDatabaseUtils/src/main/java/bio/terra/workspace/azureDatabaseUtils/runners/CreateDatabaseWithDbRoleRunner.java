@@ -1,6 +1,6 @@
-package bio.terra.workspace.azureDatabaseUtils;
+package bio.terra.workspace.azureDatabaseUtils.runners;
 
-import bio.terra.workspace.azureDatabaseUtils.create.CreateDatabaseService;
+import bio.terra.workspace.azureDatabaseUtils.database.DatabaseService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -10,17 +10,17 @@ import org.springframework.stereotype.Component;
 @Profile("CreateDatabaseWithDbRole")
 @Component
 public class CreateDatabaseWithDbRoleRunner implements ApplicationRunner {
-  @Value("${azureDatabaseUtils.create.newDbName}")
+  @Value("${env.params.newDbName}")
   private String newDbName;
 
-  private final CreateDatabaseService createDatabaseService;
+  private final DatabaseService databaseService;
 
-  public CreateDatabaseWithDbRoleRunner(CreateDatabaseService createDatabaseService) {
-    this.createDatabaseService = createDatabaseService;
+  public CreateDatabaseWithDbRoleRunner(DatabaseService databaseService) {
+    this.databaseService = databaseService;
   }
 
   @Override
   public void run(ApplicationArguments args) {
-    createDatabaseService.createDatabaseWithDbRole(newDbName);
+    databaseService.createDatabaseWithDbRole(newDbName);
   }
 }

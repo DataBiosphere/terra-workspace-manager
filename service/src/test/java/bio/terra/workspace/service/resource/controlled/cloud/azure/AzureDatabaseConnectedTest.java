@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.common.iam.BearerToken;
@@ -12,7 +13,9 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.WsmResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace.ControlledAzureKubernetesNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -21,6 +24,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.resourcemanager.msi.models.Identity;
 import com.azure.resourcemanager.postgresqlflexibleserver.models.Database;
+import io.kubernetes.client.openapi.ApiException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +48,8 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
   @Autowired private WsmResourceService wsmResourceService;
   @Autowired private LandingZoneApiDispatch landingZoneApiDispatch;
   @Autowired private SamService samService;
+  @Autowired private KubernetesClientProvider kubernetesClientProvider;
+  @Autowired private AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
 
   private Workspace sharedWorkspace;
   private UUID workspaceUuid;
@@ -67,7 +73,7 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     var uamiResource = createManagedIdentity(userRequest);
-    var dbResource = createDatabase(userRequest, uamiResource);
+    var dbResource = createDatabase(userRequest, uamiResource, "default");
 
     // Verify that the resources we created
     var resourceList = wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100);
@@ -95,8 +101,79 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
               assertNotNull(actualDatabase);
             });
 
+    azureDatabaseUtilsRunner.testDatabaseConnect(
+        azureTestUtils.getAzureCloudContext(),
+        workspaceUuid,
+        "default",
+        "test-connect",
+        getDbServerName(),
+        dbResource.getDatabaseName(),
+        uamiResource.getManagedIdentityName());
+
     deleteDatabase(userRequest, dbResource);
     deleteManagedIdentity(userRequest, uamiResource);
+  }
+
+  @Test
+  public void createAndDeleteK8sNamespaceWithDatabase() throws InterruptedException {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+
+    var uamiResource = createManagedIdentity(userRequest);
+    var dbResource = createDatabase(userRequest, uamiResource, null);
+    var k8sResource = createKubernetesNamespace(userRequest, uamiResource, List.of(dbResource));
+
+    // Verify that the resources we created
+    var resourceList = wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100);
+    checkForResource(resourceList, uamiResource);
+    checkForResource(resourceList, dbResource);
+    checkForResource(resourceList, k8sResource);
+
+    // wait for azure to sync then make sure the resources actually exist
+    Awaitility.await()
+        .atMost(1, TimeUnit.MINUTES)
+        .pollInterval(5, TimeUnit.SECONDS)
+        .untilAsserted(
+            () -> {
+              var actualUami =
+                  getManagedIdentityFunction()
+                      .apply(
+                          azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                          uamiResource.getManagedIdentityName());
+              assertNotNull(actualUami);
+
+              var actualDatabase =
+                  getDatabaseFunction()
+                      .apply(
+                          azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                          dbResource.getDatabaseName());
+              assertNotNull(actualDatabase);
+            });
+
+    azureDatabaseUtilsRunner.testDatabaseConnect(
+        azureTestUtils.getAzureCloudContext(),
+        workspaceUuid,
+        k8sResource.getKubernetesNamespace(),
+        "test-connect",
+        getDbServerName(),
+        dbResource.getDatabaseName(),
+        k8sResource.getKubernetesServiceAccount());
+
+    deleteKubernetesNamespace(userRequest, k8sResource);
+    deleteDatabase(userRequest, dbResource);
+    deleteManagedIdentity(userRequest, uamiResource);
+  }
+
+  private void deleteKubernetesNamespace(
+      AuthenticatedUserRequest userRequest, ControlledAzureKubernetesNamespaceResource k8sResource)
+      throws InterruptedException {
+    azureUtils.submitControlledResourceDeletionFlight(
+        workspaceUuid,
+        userRequest,
+        k8sResource,
+        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+        k8sResource.getKubernetesNamespace(),
+        null);
+    assertNamespaceDeleted(k8sResource.getKubernetesNamespace());
   }
 
   private void deleteDatabase(
@@ -112,24 +189,47 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
   }
 
   @NotNull
-  private BiFunction<String, String, Database> getDatabaseFunction() {
-    var dbServerName =
+  private void assertNamespaceDeleted(String namespace) {
+    var clusterResource =
         landingZoneApiDispatch
-            .getSharedDatabase(
+            .getSharedKubernetesCluster(
                 new BearerToken(samService.getWsmServiceAccountToken()), landingZoneId)
-            .map(
-                r -> {
-                  var parts = r.getResourceId().split("/");
-                  return parts[parts.length - 1];
-                })
             .orElseThrow();
-    BiFunction<String, String, Database> getDatabaseFunction =
-        (resourceGroup, resourceName) ->
-            azureTestUtils
-                .getPostgreSqlManager()
-                .databases()
-                .get(resourceGroup, dbServerName, resourceName);
-    return getDatabaseFunction;
+    var apiClient =
+        kubernetesClientProvider.createCoreApiClient(
+            azureTestUtils.getContainerServiceManager(),
+            azureTestUtils.getAzureCloudContext(),
+            clusterResource);
+
+    var notFound =
+        assertThrows(
+            ApiException.class,
+            () -> {
+              apiClient.readNamespace(namespace, null);
+            });
+    assertEquals(404, notFound.getCode());
+  }
+
+  @NotNull
+  private BiFunction<String, String, Database> getDatabaseFunction() {
+    String dbServerName = getDbServerName();
+    return (resourceGroup, resourceName) ->
+        azureTestUtils
+            .getPostgreSqlManager()
+            .databases()
+            .get(resourceGroup, dbServerName, resourceName);
+  }
+
+  @NotNull
+  private String getDbServerName() {
+    return landingZoneApiDispatch
+        .getSharedDatabase(new BearerToken(samService.getWsmServiceAccountToken()), landingZoneId)
+        .map(
+            r -> {
+              var parts = r.getResourceId().split("/");
+              return parts[parts.length - 1];
+            })
+        .orElseThrow();
   }
 
   private void deleteManagedIdentity(
@@ -149,12 +249,38 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
     return azureTestUtils.getMsiManager().identities()::getByResourceGroup;
   }
 
+  private ControlledAzureKubernetesNamespaceResource createKubernetesNamespace(
+      AuthenticatedUserRequest userRequest,
+      ControlledAzureManagedIdentityResource uamiResource,
+      List<ControlledAzureDatabaseResource> databases)
+      throws InterruptedException {
+    var k8sNamespaceCreationParameters =
+        ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
+            uamiResource.getResourceId(),
+            databases.stream().map(ControlledAzureDatabaseResource::getResourceId).toList());
+
+    var k8sNamespaceResource =
+        ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
+                k8sNamespaceCreationParameters, workspaceUuid)
+            .build();
+
+    azureUtils.createResource(
+        workspaceUuid,
+        userRequest,
+        k8sNamespaceResource,
+        WsmResourceType.CONTROLLED_AZURE_KUBERNETES_NAMESPACE,
+        k8sNamespaceCreationParameters);
+    return k8sNamespaceResource;
+  }
+
   private ControlledAzureDatabaseResource createDatabase(
-      AuthenticatedUserRequest userRequest, ControlledAzureManagedIdentityResource uamiResource)
+      AuthenticatedUserRequest userRequest,
+      ControlledAzureManagedIdentityResource uamiResource,
+      String k8sNamespace)
       throws InterruptedException {
     var dbCreationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            uamiResource.getResourceId());
+            uamiResource.getResourceId(), k8sNamespace);
 
     var dbResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(

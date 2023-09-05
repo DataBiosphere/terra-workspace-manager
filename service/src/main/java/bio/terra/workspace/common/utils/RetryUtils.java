@@ -130,7 +130,7 @@ public class RetryUtils {
       } else {
         // If we are out of time
         if (Instant.now().isAfter(endTime)) {
-          throw new Exception();
+          throw new Exception("retry timed out");
         }
         TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
         long increaseMillis = (long) (factorIncrease * sleepDuration.toMillis());

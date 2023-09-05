@@ -29,6 +29,7 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.resourcemanager.compute.ComputeManager;
+import com.azure.resourcemanager.containerservice.ContainerServiceManager;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
 import com.azure.resourcemanager.storage.StorageManager;
@@ -71,6 +72,10 @@ public class AzureTestUtils {
 
   public PostgreSqlManager getPostgreSqlManager() {
     return crlService.getPostgreSqlManager(getAzureCloudContext(), this.azureConfiguration);
+  }
+
+  public ContainerServiceManager getContainerServiceManager() {
+    return crlService.getContainerServiceManager(getAzureCloudContext(), this.azureConfiguration);
   }
 
   public StorageManager getStorageManager() {
