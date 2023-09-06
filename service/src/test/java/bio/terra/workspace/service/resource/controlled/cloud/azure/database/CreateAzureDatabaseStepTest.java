@@ -72,7 +72,7 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         .createDatabase(
             mockAzureCloudContext,
             workspaceId,
-            "create-" + databaseResource.getDatabaseName(),
+            "create-" + databaseResource.getResourceId(),
             uamiName,
             uamiPrincipalId,
             databaseResource.getDatabaseName());
@@ -86,7 +86,7 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         .createDatabaseWithDbRole(
             mockAzureCloudContext,
             workspaceId,
-            "create-" + databaseResource.getDatabaseName(),
+            "create-" + databaseResource.getResourceId(),
             databaseResource.getDatabaseName());
   }
 

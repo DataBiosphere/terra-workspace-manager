@@ -40,11 +40,11 @@ public class CreateNamespaceRoleStep implements Step {
   }
 
   private String getCreatePodName() {
-    return "create-namespace-role-" + this.resource.getKubernetesServiceAccount();
+    return "create-namespace-role-" + this.resource.getResourceId();
   }
 
   private String getUndoPodName() {
-    return "undo-create-namespace-role-" + this.resource.getKubernetesServiceAccount();
+    return "undo-create-namespace-role-" + this.resource.getResourceId();
   }
 
   @Override

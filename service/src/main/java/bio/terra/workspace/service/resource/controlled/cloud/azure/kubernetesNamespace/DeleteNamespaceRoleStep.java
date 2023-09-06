@@ -26,7 +26,7 @@ public class DeleteNamespaceRoleStep implements Step {
   }
 
   private String getDeletePodName() {
-    return "delete-namespace-role-" + this.resource.getKubernetesServiceAccount();
+    return "delete-namespace-role-" + this.resource.getResourceId();
   }
 
   @Override

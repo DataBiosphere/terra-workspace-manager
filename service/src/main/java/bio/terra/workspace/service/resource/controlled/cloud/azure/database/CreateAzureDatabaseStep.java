@@ -54,7 +54,7 @@ public class CreateAzureDatabaseStep implements Step {
   }
 
   private String getPodName() {
-    return "create-" + this.resource.getDatabaseName();
+    return "create-" + this.resource.getResourceId();
   }
 
   @Override
