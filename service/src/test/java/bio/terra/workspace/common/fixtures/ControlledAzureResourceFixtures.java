@@ -431,7 +431,7 @@ public class ControlledAzureResourceFixtures {
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                 .region(DEFAULT_AZURE_RESOURCE_REGION)
                 .build())
-        .kubernetesServiceAccount(creationParameters.getNamespacePrefix() + "-ksa")
+        .kubernetesServiceAccount(namespace + "-ksa")
         .kubernetesNamespace(namespace)
         .managedIdentity(creationParameters.getManagedIdentity())
         .databases(new HashSet<>(creationParameters.getDatabases()));

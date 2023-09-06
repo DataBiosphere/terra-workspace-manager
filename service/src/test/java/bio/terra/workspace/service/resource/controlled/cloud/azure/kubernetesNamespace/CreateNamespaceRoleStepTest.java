@@ -74,7 +74,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
         .createNamespaceRole(
             mockAzureCloudContext,
             workspaceId,
-            "create-namespace-role-" + resource.getKubernetesServiceAccount(),
+            "create-namespace-role-" + resource.getResourceId(),
             resource.getKubernetesServiceAccount(),
             principalId,
             dbResources.stream()
@@ -113,7 +113,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
         .deleteNamespaceRole(
             mockAzureCloudContext,
             workspaceId,
-            "undo-create-namespace-role-" + resource.getKubernetesServiceAccount(),
+            "undo-create-namespace-role-" + resource.getResourceId(),
             resource.getKubernetesServiceAccount());
   }
 
