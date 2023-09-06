@@ -883,7 +883,7 @@ fi
 # setting up its optional components.
 #
 # Post Dataproc setup tasks:
-# 1. Wait for the Dataproc jupyterjupyter  optional component to finish setting up.
+# 1. Wait for the Dataproc jupyter optional component to finish setting up.
 # 2. Install Hail if it has been enabled.
 # 3. Configure jupyter service config
 #    a. Remove Dataproc's GCSContentsManager as we support bucket mounts in local file system.
