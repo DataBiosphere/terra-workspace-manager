@@ -123,7 +123,6 @@ readonly TERRA_SSH_AGENT_SERVICE_NAME="terra-ssh-agent.service"
 readonly TERRA_SSH_AGENT_SERVICE="/etc/systemd/system/${TERRA_SSH_AGENT_SERVICE_NAME}"
 
 # Variables for optional software frameworks
-readonly GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME="google-dataproc-component-gateway.service"
 readonly HAIL_SCRIPT_PATH="${USER_TERRA_CONFIG_DIR}/install-hail.py"
 
 # Location of gitignore configuration file for users
@@ -884,7 +883,7 @@ fi
 # setting up its optional components.
 #
 # Post Dataproc setup tasks:
-# 1. Wait for the Dataproc component gateway service to start.
+# 1. Wait for the Dataproc jupyter optional component to finish setting up.
 # 2. Install Hail if it has been enabled.
 # 3. Configure jupyter service config
 #    a. Remove Dataproc's GCSContentsManager as we support bucket mounts in local file system.
@@ -892,9 +891,9 @@ fi
 # 4. Restart jupyter service
 #
 "$(
-  while ! systemctl is-active --quiet ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME}; do
+  while ! systemctl is-active --quiet ${JUPYTER_SERVICE_NAME}; do
     sleep 5
-    emit "Waiting for ${GOOGLE_DATAPROC_COMPONENT_GATEWAY_SERVICE_NAME} to start..."
+    emit "Waiting for ${JUPYTER_SERVICE_NAME} to start..."
   done
 
   # Execute software specific post startup customizations
