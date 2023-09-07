@@ -731,8 +731,10 @@ if [[ "${SOFTWARE_FRAMEWORK}" == "HAIL" ]]; then
   emit "Installing Hail..."
 
   # Create the Hail install script. The script is based off of Hail's init_notebook.py
-  # script that is executed by 'hailctl dataproc start'. This modified script excludes
-  # the step of starting a jupyter service.
+  # script that is executed by 'hailctl dataproc start'. This modified script omits
+  # the following steps:
+  # - Configuring and enabling hail's spark monitor nbextension
+  # - Configuring and starting a custom jupyter systemd service
   cat << EOF >"${HAIL_SCRIPT_PATH}"
 #!${RUN_PYTHON}
 # This modified Hail installation script installs the necessary Hail packages and jupyter extensions,
