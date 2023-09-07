@@ -92,8 +92,11 @@ public class WorkspaceV2Api {
     if (apiCloudPlatform != null) {
       ControllerValidationUtils.validateCloudPlatform(apiCloudPlatform);
       cloudPlatform = CloudPlatform.fromApiCloudPlatform(apiCloudPlatform);
+
       if (cloudPlatform == CloudPlatform.AWS) {
-        featureService.featureEnabledCheck(FeatureService.AWS_ENABLED, userRequest.getEmail());
+        featureService.featureEnabledCheck(
+            FeatureService.AWS_ENABLED,
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
       }
 
       spendProfile =

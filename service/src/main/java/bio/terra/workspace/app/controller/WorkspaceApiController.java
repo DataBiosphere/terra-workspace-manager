@@ -67,6 +67,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.exceptions.MissingSpendProfileException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -107,6 +108,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final SpendProfileService spendProfileService;
   private final WorkspaceV2Api workspaceV2Api;
   private final WorkspaceApiUtils workspaceApiUtils;
+  private final AwsCloudContextService awsCloudContextService;
 
   @Autowired
   public WorkspaceApiController(
@@ -124,7 +126,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       ResourceDao resourceDao,
       SpendProfileService spendProfileService,
       WorkspaceV2Api workspaceV2Api,
-      WorkspaceApiUtils workspaceApiUtils) {
+      WorkspaceApiUtils workspaceApiUtils,
+      AwsCloudContextService awsCloudContextService) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -141,6 +144,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.spendProfileService = spendProfileService;
     this.workspaceV2Api = workspaceV2Api;
     this.workspaceApiUtils = workspaceApiUtils;
+    this.awsCloudContextService = awsCloudContextService;
   }
 
   // For the WorkspaceV2 interfaces, dispatch to a separate module for the implementation
@@ -485,7 +489,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     CloudPlatform cloudPlatform = CloudPlatform.fromApiCloudPlatform(apiCloudPlatform);
     if (cloudPlatform == CloudPlatform.AWS) {
-      featureService.featureEnabledCheck(FeatureService.AWS_ENABLED, userRequest.getEmail());
+      featureService.featureEnabledCheck(
+          FeatureService.AWS_ENABLED,
+          samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
     }
 
     String jobId = body.getJobControl().getId();
@@ -609,15 +615,21 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> cloneWorkspace(
       UUID workspaceUuid, @Valid ApiCloneWorkspaceRequest body) {
-    final AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceUuid);
+    AuthenticatedUserRequest petRequest = getCloningCredentials(workspaceUuid);
 
     // Clone is creating the destination workspace so unlike other clone operations there's no
     // additional authz check for the destination. As long as the user is enabled in Sam, they can
     // create a new workspace.
-    final Workspace sourceWorkspace =
+    Workspace sourceWorkspace =
         workspaceService.validateWorkspaceAndAction(
             petRequest, workspaceUuid, SamWorkspaceAction.READ);
     workspaceService.validateWorkspaceState(sourceWorkspace);
+
+    if (awsCloudContextService.getAwsCloudContext(workspaceUuid).isPresent()) {
+      featureService.featureEnabledCheck(
+          FeatureService.AWS_ENABLED,
+          samService.getUserEmailFromSamAndRethrowOnInterrupt(getAuthenticatedInfo()));
+    }
 
     // TODO: PF-2694 REST API part
     //  When we make the REST API changes, the spend profile will come with the source cloud context
@@ -657,7 +669,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
-    final Workspace destinationWorkspace =
+    Workspace destinationWorkspace =
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)
             .userFacingId(destinationUserFacingId)
@@ -669,7 +681,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .createdByEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
             .build();
 
-    final String jobId =
+    String jobId =
         workspaceService.cloneWorkspace(
             sourceWorkspace,
             petRequest,
@@ -679,13 +691,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             spendProfile,
             body.getProjectOwnerGroupId());
 
-    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
-    final ApiClonedWorkspace clonedWorkspaceStub =
+    ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
+    result.setWorkspace(
         new ApiClonedWorkspace()
             .destinationWorkspaceId(destinationWorkspaceId)
             .destinationUserFacingId(destinationUserFacingId)
-            .sourceWorkspaceId(workspaceUuid);
-    result.setWorkspace(clonedWorkspaceStub);
+            .sourceWorkspaceId(workspaceUuid));
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
@@ -700,9 +711,9 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   @Override
   public ResponseEntity<ApiCloneWorkspaceResult> getCloneWorkspaceResult(
       UUID workspaceUuid, String jobId) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
-    final ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
+    ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
@@ -816,7 +827,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
    * @return user or pet request
    */
   private AuthenticatedUserRequest getCloningCredentials(UUID workspaceUuid) {
-    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     return petSaService.getWorkspacePetCredentials(workspaceUuid, userRequest).orElse(userRequest);
   }
 }
