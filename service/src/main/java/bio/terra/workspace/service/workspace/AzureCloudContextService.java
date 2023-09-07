@@ -111,11 +111,16 @@ public class AzureCloudContextService implements CloudContextService {
   public List<ControlledResource> makeOrderedResourceList(UUID workspaceUuid) {
     List<ControlledResource> unorderedList =
         resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
-    // Delete VMs first because they use other resources like disks, networks, etc.
+    // Delete VMs and k8s namespaces first because they use other resources like disks, identities,
+    // databases, etc.
     List<ControlledResource> orderedList =
         new ArrayList<>(
             unorderedList.stream()
-                .filter(r -> r.getResourceType() == WsmResourceType.CONTROLLED_AZURE_VM)
+                .filter(
+                    r ->
+                        r.getResourceType() == WsmResourceType.CONTROLLED_AZURE_VM
+                            || r.getResourceType()
+                                == WsmResourceType.CONTROLLED_AZURE_KUBERNETES_NAMESPACE)
                 .toList());
 
     // Delete storage containers so that Sam resources are properly deleted (before storage accounts
