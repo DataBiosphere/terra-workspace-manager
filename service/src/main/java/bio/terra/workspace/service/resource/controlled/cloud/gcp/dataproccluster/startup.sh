@@ -851,8 +851,7 @@ kernel = {
     'language': 'python',
     'env': {
         **env_to_set,
-        'HAIL_SPARK_MONITOR': '1',
-        'SPARK_MONITOR_UI': 'http://localhost:8088/proxy/%APP_ID%',
+# REMOVED SPARK MONITOR ENVS
     }
 }
 
@@ -861,18 +860,10 @@ mkdir_if_not_exists('/opt/conda/default/share/jupyter/kernels/hail/')
 with open('/opt/conda/default/share/jupyter/kernels/hail/kernel.json', 'w') as f:
     json.dump(kernel, f)
 
-print('copying spark monitor')
-spark_monitor_gs = 'gs://hail-common/sparkmonitor-3b2bc8c22921f5c920fc7370f3a160d820db1f51/sparkmonitor-0.0.11-py3-none-any.whl'
-spark_monitor_wheel = '/home/hail/' + spark_monitor_gs.split('/')[-1]
-safe_call('gsutil', 'cp', spark_monitor_gs, spark_monitor_wheel)
-safe_call('${RUN_PIP}', 'install', spark_monitor_wheel)
+# REMOVED SPARK MONITOR INSTALLATION
 
 # setup jupyter-spark extension
-safe_call('${RUN_JUPYTER}', 'serverextension', 'enable', '--user', '--py', 'sparkmonitor')
-safe_call('${RUN_JUPYTER}', 'nbextension', 'install', '--user', '--py', 'sparkmonitor')
-safe_call('${RUN_JUPYTER}', 'nbextension', 'enable', '--user', '--py', 'sparkmonitor')
 safe_call('${RUN_JUPYTER}', 'nbextension', 'enable', '--user', '--py', 'widgetsnbextension')
-safe_call("""${RUN_IPYTHON} profile create && echo "c.InteractiveShellApp.extensions.append('sparkmonitor.kernelextension')" >> $(${RUN_IPYTHON} profile locate default)/ipython_kernel_config.py""", shell=True)
 
 print("hail installed successfully.")
 
