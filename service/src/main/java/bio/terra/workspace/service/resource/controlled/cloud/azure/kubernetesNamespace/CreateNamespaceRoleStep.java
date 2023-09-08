@@ -114,27 +114,27 @@ public class CreateNamespaceRoleStep implements Step {
   }
 
   @VisibleForTesting
-  DatabaseResolution getDatabaseResource(UUID databaseResourceId) {
+  DatabaseResolution getDatabaseResource(String databaseResourceName) {
     try {
-      var wsmResource = resourceDao.getResource(resource.getWorkspaceId(), databaseResourceId);
+      var wsmResource = resourceDao.getResourceByName(resource.getWorkspaceId(), databaseResourceName);
       if (wsmResource.getResourceType() == WsmResourceType.CONTROLLED_AZURE_DATABASE) {
         ControlledAzureDatabaseResource databaseResource =
             wsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE);
         return new DatabaseResolution(
-            databaseResourceId, Optional.of(databaseResource), Optional.empty());
+            databaseResourceName, Optional.of(databaseResource), Optional.empty());
       } else {
-        logger.info("Resource {} is not a CONTROLLED_AZURE_DATABASE", databaseResourceId);
+        logger.info("Resource {} is not a CONTROLLED_AZURE_DATABASE", databaseResourceName);
         return new DatabaseResolution(
-            databaseResourceId,
+            databaseResourceName,
             Optional.empty(),
             Optional.of(
-                "Resource %s is not a CONTROLLED_AZURE_DATABASE".formatted(databaseResourceId)));
+                "Resource %s is not a CONTROLLED_AZURE_DATABASE".formatted(databaseResourceName)));
       }
     } catch (ResourceNotFoundException e) {
       return new DatabaseResolution(
-          databaseResourceId,
+          databaseResourceName,
           Optional.empty(),
-          Optional.of("Resource %s does not exist".formatted(databaseResourceId)));
+          Optional.of("Resource %s does not exist".formatted(databaseResourceName)));
     }
   }
 
@@ -156,11 +156,11 @@ public class CreateNamespaceRoleStep implements Step {
       return resolution;
     } else {
       return new DatabaseResolution(
-          resolution.resourceId(),
+          resolution.resourceName(),
           resolution.resource(),
           Optional.of(
               "Connection to private database %s is only permitted to assigned user"
-                  .formatted(resolution.resourceId())));
+                  .formatted(resolution.resourceName())));
     }
   }
 
@@ -171,16 +171,16 @@ public class CreateNamespaceRoleStep implements Step {
       return resolution;
     } else {
       return new DatabaseResolution(
-          resolution.resourceId(),
+          resolution.resourceName(),
           resolution.resource(),
           Optional.of(
               "Connection to database %s is only permitted to owner identity"
-                  .formatted(resolution.resourceId())));
+                  .formatted(resolution.resourceName())));
     }
   }
 }
 
 record DatabaseResolution(
-    UUID resourceId,
+    String resourceName,
     Optional<ControlledAzureDatabaseResource> resource,
     Optional<String> errorMessage) {}

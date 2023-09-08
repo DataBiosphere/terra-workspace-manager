@@ -410,7 +410,7 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ApiAzureKubernetesNamespaceCreationParameters
-      getAzureKubernetesNamespaceCreationParameters(UUID owner, List<UUID> databases) {
+      getAzureKubernetesNamespaceCreationParameters(String owner, List<String> databases) {
     return new ApiAzureKubernetesNamespaceCreationParameters()
         .managedIdentity(owner)
         .databases(databases)
@@ -461,7 +461,7 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(
-      UUID owner, String k8sNamespace) {
+      String owner, String k8sNamespace) {
     return new ApiAzureDatabaseCreationParameters()
         .name(uniqueAzureName(AZURE_DATABASE_NAME_PREFIX))
         .k8sNamespace(k8sNamespace)

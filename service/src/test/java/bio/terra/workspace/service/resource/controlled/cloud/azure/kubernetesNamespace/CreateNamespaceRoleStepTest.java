@@ -40,14 +40,14 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
   @Test
   void testDoStepSuccess() throws InterruptedException {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
     var dbCount = 3;
     var dbResources = createSharedDbResources(owner, workspaceId, false, dbCount);
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
             owner,
-            dbResources.stream().map(ControlledAzureDatabaseResource::getResourceId).toList());
+            dbResources.stream().map(ControlledAzureDatabaseResource::getName).toList());
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -59,7 +59,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
         .thenReturn(principalId);
     dbResources.forEach(
         dbResource ->
-            when(mockResourceDao.getResource(workspaceId, dbResource.getResourceId()))
+            when(mockResourceDao.getResourceByName(workspaceId, dbResource.getName()))
                 .thenReturn(dbResource));
 
     var step =
@@ -85,13 +85,13 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
         dbResource ->
             verify(step)
                 .validateDatabaseAccess(
-                    argThat(r -> r.resourceId().equals(dbResource.getResourceId()))));
+                    argThat(r -> r.resourceName().equals(dbResource.getName()))));
   }
 
   @Test
   void testUndoStepSuccess() throws InterruptedException {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
@@ -120,26 +120,26 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
   @Test
   void testGetDatabaseResourceSuccess() {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
     var dbResource = createSharedDbResources(owner, workspaceId, false, 1).get(0);
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            owner, List.of(dbResource.getResourceId()));
+            owner, List.of(dbResource.getName()));
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, workspaceId)
             .build();
-    when(mockResourceDao.getResource(workspaceId, dbResource.getResourceId()))
+    when(mockResourceDao.getResourceByName(workspaceId, dbResource.getName()))
         .thenReturn(dbResource);
 
     var step =
         new CreateNamespaceRoleStep(
             workspaceId, mockAzureDatabaseUtilsRunner, resource, mockResourceDao);
 
-    var result = step.getDatabaseResource(dbResource.getResourceId());
-    assertThat(result.resourceId(), equalTo(dbResource.getResourceId()));
+    var result = step.getDatabaseResource(dbResource.getName());
+    assertThat(result.resourceName(), equalTo(dbResource.getName()));
     assertThat(result.resource(), equalTo(Optional.of(dbResource)));
     assertThat(result.errorMessage(), equalTo(Optional.empty()));
   }
@@ -147,13 +147,13 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
   @Test
   void testGetDatabaseResourceDoesNotExist() {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
     var dbResources = createSharedDbResources(owner, workspaceId, false, 1);
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
             owner,
-            dbResources.stream().map(ControlledAzureDatabaseResource::getResourceId).toList());
+            dbResources.stream().map(ControlledAzureDatabaseResource::getName).toList());
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -161,7 +161,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
             .build();
     dbResources.forEach(
         dbResource ->
-            when(mockResourceDao.getResource(workspaceId, dbResource.getResourceId()))
+            when(mockResourceDao.getResourceByName(workspaceId, dbResource.getName()))
                 .thenThrow(new ResourceNotFoundException("not found")));
 
     var step =
@@ -169,8 +169,8 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
             workspaceId, mockAzureDatabaseUtilsRunner, resource, mockResourceDao);
 
     var databaseResource = dbResources.get(0);
-    var result = step.getDatabaseResource(databaseResource.getResourceId());
-    assertThat(result.resourceId(), equalTo(databaseResource.getResourceId()));
+    var result = step.getDatabaseResource(databaseResource.getName());
+    assertThat(result.resourceName(), equalTo(databaseResource.getName()));
     assertThat(result.resource(), equalTo(Optional.empty()));
     assertThat(result.errorMessage().isPresent(), equalTo(true));
   }
@@ -178,26 +178,26 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
   @Test
   void testGetDatabaseResourceNotADatabase() {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
     var notADatabase = ControlledAzureResourceFixtures.getAzureDisk("notadatabase", "us", 0);
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            owner, List.of(notADatabase.getResourceId()));
+            owner, List.of(notADatabase.getName()));
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, workspaceId)
             .build();
-    when(mockResourceDao.getResource(workspaceId, notADatabase.getResourceId()))
+    when(mockResourceDao.getResourceByName(workspaceId, notADatabase.getName()))
         .thenReturn(notADatabase);
 
     var step =
         new CreateNamespaceRoleStep(
             workspaceId, mockAzureDatabaseUtilsRunner, resource, mockResourceDao);
 
-    var result = step.getDatabaseResource(notADatabase.getResourceId());
-    assertThat(result.resourceId(), equalTo(notADatabase.getResourceId()));
+    var result = step.getDatabaseResource(notADatabase.getName());
+    assertThat(result.resourceName(), equalTo(notADatabase.getName()));
     assertThat(result.resource(), equalTo(Optional.empty()));
     assertThat(result.errorMessage().isPresent(), equalTo(true));
   }
@@ -205,12 +205,12 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
   @Test
   void testValidateDatabaseAccessShared() {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
     var dbResource = createSharedDbResources(owner, workspaceId, false, 1).get(0);
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            owner, List.of(dbResource.getResourceId()));
+            owner, List.of(dbResource.getName()));
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -223,7 +223,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
     var resolution =
         new DatabaseResolution(
-            dbResource.getResourceId(), Optional.of(dbResource), Optional.empty());
+            dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result, equalTo(resolution));
   }
@@ -231,13 +231,13 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
   @Test
   void testValidateDatabaseAccessSharedButDifferentOwner() {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
-    var differentOwner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
+    var differentOwner = UUID.randomUUID().toString();
     var dbResource = createSharedDbResources(owner, workspaceId, false, 1).get(0);
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            differentOwner, List.of(dbResource.getResourceId()));
+            differentOwner, List.of(dbResource.getName()));
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -250,7 +250,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
     var resolution =
         new DatabaseResolution(
-            dbResource.getResourceId(), Optional.of(dbResource), Optional.empty());
+            dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result.errorMessage().isPresent(), equalTo(true));
   }
@@ -258,13 +258,13 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
   @Test
   void testValidateDatabaseAccessSharedDifferentOwnerAllowed() {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
-    var differentOwner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
+    var differentOwner = UUID.randomUUID().toString();
     var dbResource = createSharedDbResources(owner, workspaceId, true, 1).get(0);
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            differentOwner, List.of(dbResource.getResourceId()));
+            differentOwner, List.of(dbResource.getName()));
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -277,7 +277,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
     var resolution =
         new DatabaseResolution(
-            dbResource.getResourceId(), Optional.of(dbResource), Optional.empty());
+            dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result, equalTo(resolution));
   }
@@ -290,7 +290,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            null, List.of(dbResource.getResourceId()));
+            null, List.of(dbResource.getName()));
 
     var resource =
         ControlledAzureResourceFixtures
@@ -304,7 +304,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
     var resolution =
         new DatabaseResolution(
-            dbResource.getResourceId(), Optional.of(dbResource), Optional.empty());
+            dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result, equalTo(resolution));
   }
@@ -318,7 +318,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            null, List.of(dbResource.getResourceId()));
+            null, List.of(dbResource.getName()));
 
     var resource =
         ControlledAzureResourceFixtures
@@ -332,14 +332,14 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
     var resolution =
         new DatabaseResolution(
-            dbResource.getResourceId(), Optional.of(dbResource), Optional.empty());
+            dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result.errorMessage().isPresent(), equalTo(true));
   }
 
   @NotNull
   private List<ControlledAzureDatabaseResource> createSharedDbResources(
-      UUID owner, UUID workspaceId, boolean allowAllWorkspaceUsers, int count) {
+      String owner, UUID workspaceId, boolean allowAllWorkspaceUsers, int count) {
     return Stream.generate(
             () -> {
               var dbCreationParameters =

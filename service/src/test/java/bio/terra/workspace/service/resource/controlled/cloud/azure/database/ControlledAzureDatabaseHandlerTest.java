@@ -21,7 +21,7 @@ public class ControlledAzureDatabaseHandlerTest {
   void testMakeResourceFromDbForOldRecord() {
     var handler = new ControlledAzureDatabaseHandler();
     final String databaseName = "databaseName";
-    final UUID ownerId = UUID.randomUUID();
+    final String ownerName = UUID.randomUUID().toString();
     final String namespace = "default";
     var res =
         handler.makeResourceFromDb(
@@ -30,13 +30,13 @@ public class ControlledAzureDatabaseHandlerTest {
                     .attributes(
                         """
                             {"databaseName":"%s","databaseOwner":"%s","k8sNamespace":"%s","region":"us-central1"}"""
-                            .formatted(databaseName, ownerId, namespace))));
+                            .formatted(databaseName, ownerName, namespace))));
 
     ControlledAzureDatabaseResource actual =
         res.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE);
 
     assertThat(actual.getDatabaseName(), equalTo(databaseName));
-    assertThat(actual.getDatabaseOwner(), equalTo(ownerId));
+    assertThat(actual.getDatabaseOwner(), equalTo(ownerName));
     assertThat(actual.getK8sNamespace(), equalTo(namespace));
     assertThat(actual.getAllowAccessForAllWorkspaceUsers(), equalTo(false));
   }
@@ -45,7 +45,7 @@ public class ControlledAzureDatabaseHandlerTest {
   void testMakeResourceFromDb() {
     var handler = new ControlledAzureDatabaseHandler();
     final String databaseName = "databaseName";
-    final UUID ownerId = UUID.randomUUID();
+    final String ownerName = UUID.randomUUID().toString();
     final String namespace = "default";
     var res =
         handler.makeResourceFromDb(
@@ -54,13 +54,13 @@ public class ControlledAzureDatabaseHandlerTest {
                     .attributes(
                         """
                             {"databaseName":"%s","databaseOwner":"%s","k8sNamespace":"%s","allowAccessForAllWorkspaceUsers":true}"""
-                            .formatted(databaseName, ownerId, namespace))));
+                            .formatted(databaseName, ownerName, namespace))));
 
     ControlledAzureDatabaseResource actual =
         res.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE);
 
     assertThat(actual.getDatabaseName(), equalTo(databaseName));
-    assertThat(actual.getDatabaseOwner(), equalTo(ownerId));
+    assertThat(actual.getDatabaseOwner(), equalTo(ownerName));
     assertThat(actual.getK8sNamespace(), equalTo(namespace));
     assertThat(actual.getAllowAccessForAllWorkspaceUsers(), equalTo(true));
   }

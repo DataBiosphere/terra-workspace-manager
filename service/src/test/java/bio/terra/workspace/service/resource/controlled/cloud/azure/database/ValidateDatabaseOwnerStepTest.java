@@ -25,7 +25,7 @@ public class ValidateDatabaseOwnerStepTest extends BaseMockitoStrictStubbingTest
   @Mock private ResourceDao mockResourceDao;
   @Mock private WsmResource mockWsmResource;
 
-  private final UUID owner = UUID.randomUUID();
+  private final String owner = UUID.randomUUID().toString();
   private final ApiAzureDatabaseCreationParameters creationParameters =
       ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, "default");
   private final ControlledAzureDatabaseResource databaseResource =
@@ -35,7 +35,7 @@ public class ValidateDatabaseOwnerStepTest extends BaseMockitoStrictStubbingTest
 
   @Test
   void testExists() throws InterruptedException {
-    when(mockResourceDao.getResource(databaseResource.getWorkspaceId(), owner))
+    when(mockResourceDao.getResourceByName(databaseResource.getWorkspaceId(), owner))
         .thenReturn(mockWsmResource);
     when(mockWsmResource.getResourceType())
         .thenReturn(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
@@ -61,7 +61,7 @@ public class ValidateDatabaseOwnerStepTest extends BaseMockitoStrictStubbingTest
 
   @Test
   void testDoesNotExists() throws InterruptedException {
-    when(mockResourceDao.getResource(databaseResource.getWorkspaceId(), owner))
+    when(mockResourceDao.getResourceByName(databaseResource.getWorkspaceId(), owner))
         .thenThrow(new ResourceNotFoundException("not found"));
 
     var result =
@@ -71,7 +71,7 @@ public class ValidateDatabaseOwnerStepTest extends BaseMockitoStrictStubbingTest
 
   @Test
   void testWrongType() throws InterruptedException {
-    when(mockResourceDao.getResource(databaseResource.getWorkspaceId(), owner))
+    when(mockResourceDao.getResourceByName(databaseResource.getWorkspaceId(), owner))
         .thenReturn(mockWsmResource);
     when(mockWsmResource.getResourceType()).thenReturn(WsmResourceType.CONTROLLED_AZURE_DATABASE);
 
