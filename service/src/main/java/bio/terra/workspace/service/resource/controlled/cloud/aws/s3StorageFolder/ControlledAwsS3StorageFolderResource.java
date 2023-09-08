@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
 import bio.terra.common.exception.InconsistentFieldsException;
-import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -118,28 +117,23 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
-    SamUser samUser = flightBeanBag.getSamService().getSamUser(userRequest);
 
     flight.addStep(
         new ValidateAwsS3StorageFolderCreateStep(
-            this, flightBeanBag.getAwsCloudContextService(), samUser),
+            this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService()),
         cloudRetry);
     flight.addStep(
-        new CreateAwsS3StorageFolderStep(this, flightBeanBag.getAwsCloudContextService(), samUser),
+        new CreateAwsS3StorageFolderStep(
+            this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService()),
         cloudRetry);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void addDeleteSteps(
-      DeleteControlledResourcesFlight flight,
-      AuthenticatedUserRequest userRequest,
-      FlightBeanBag flightBeanBag) {
+  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAwsS3StorageFolderStep(
-            this,
-            flightBeanBag.getAwsCloudContextService(),
-            flightBeanBag.getSamService().getSamUser(userRequest)),
+            this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService()),
         RetryRules.cloud());
   }
 

@@ -134,13 +134,10 @@ public abstract class ControlledResource extends WsmResource {
    * to delete the specific cloud resource.
    *
    * @param flight the delete flight
-   * @param userRequest authenticated user
    * @param flightBeanBag bean bag for finding Spring singletons
    */
   public abstract void addDeleteSteps(
-      DeleteControlledResourcesFlight flight,
-      AuthenticatedUserRequest userRequest,
-      FlightBeanBag flightBeanBag);
+      DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag);
 
   public <T extends ControlledResource> T getResourceFromFlightInputParameters(
       Flight flight, WsmResourceType resourceType) {

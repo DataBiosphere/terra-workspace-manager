@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNoteb
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.API_EXCEPTION;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.NOT_FOUND_EXCEPTION;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.UNAUTHORIZED_EXCEPTION;
 import static bio.terra.workspace.common.utils.TestUtils.assertStepResultFatal;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -177,7 +176,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
     // not part of resource deletion
     StopAwsSageMakerNotebookStep stopNotebookStep =
         new StopAwsSageMakerNotebookStep(
-            notebookResource, mockAwsCloudContextService, SAM_USER, false);
+            notebookResource, mockAwsCloudContextService, mockSamService(), false);
 
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
@@ -201,7 +200,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
     // part of resource deletion
     StopAwsSageMakerNotebookStep stopNotebookStep =
         new StopAwsSageMakerNotebookStep(
-            notebookResource, mockAwsCloudContextService, SAM_USER, true);
+            notebookResource, mockAwsCloudContextService, mockSamService(), true);
 
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
@@ -328,7 +327,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
         List.of(/*  part of resource deletion */ true, /* not part of resource deletion */ false)) {
       StopAwsSageMakerNotebookStep stopNotebookStep =
           new StopAwsSageMakerNotebookStep(
-              notebookResource, mockAwsCloudContextService, SAM_USER, resourceDeletion);
+              notebookResource, mockAwsCloudContextService, mockSamService(), resourceDeletion);
 
       String message = "resourceDeletion: " + resourceDeletion;
       stopAwsSageMakerNotebook_StoppedFailed_undoTest(stopNotebookStep, message);

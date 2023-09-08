@@ -230,10 +230,7 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   }
 
   @Override
-  public void addDeleteSteps(
-      DeleteControlledResourcesFlight flight,
-      AuthenticatedUserRequest userRequest,
-      FlightBeanBag flightBeanBag) {
+  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
 
     getDeleteSteps(flightBeanBag).forEach(step -> flight.addStep(step, cloudRetry));

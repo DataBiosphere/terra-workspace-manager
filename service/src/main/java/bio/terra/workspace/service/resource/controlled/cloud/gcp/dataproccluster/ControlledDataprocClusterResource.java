@@ -168,10 +168,7 @@ public class ControlledDataprocClusterResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public void addDeleteSteps(
-      DeleteControlledResourcesFlight flight,
-      AuthenticatedUserRequest userRequest,
-      FlightBeanBag flightBeanBag) {
+  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteDataprocClusterStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }

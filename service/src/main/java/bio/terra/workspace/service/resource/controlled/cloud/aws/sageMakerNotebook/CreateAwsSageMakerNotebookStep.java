@@ -14,6 +14,9 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -32,17 +35,17 @@ public class CreateAwsSageMakerNotebookStep implements Step {
 
   private final ControlledAwsSageMakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
-  private final SamUser samUser;
+  private final SamService samService;
   private final CliConfiguration cliConfiguration;
 
   public CreateAwsSageMakerNotebookStep(
       ControlledAwsSageMakerNotebookResource resource,
       AwsCloudContextService awsCloudContextService,
-      SamUser samUser,
+      SamService samService,
       CliConfiguration cliConfiguration) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
-    this.samUser = samUser;
+    this.samService = samService;
     this.cliConfiguration = cliConfiguration;
   }
 
@@ -50,14 +53,16 @@ public class CreateAwsSageMakerNotebookStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputParameters = flightContext.getInputParameters();
-    FlightUtils.validateRequiredEntries(
-        inputParameters,
-        ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN,
-        ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
-        ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
 
     AwsCloudContext cloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(resource.getWorkspaceId());
+
+    AuthenticatedUserRequest userRequest =
+        FlightUtils.getRequired(
+            inputParameters,
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
+    SamUser samUser = samService.getSamUser(userRequest);
 
     Collection<Tag> tags = new HashSet<>();
     AwsUtils.appendUserTags(tags, samUser);
@@ -74,13 +79,18 @@ public class CreateAwsSageMakerNotebookStep implements Step {
           credentialsProvider,
           resource,
           Arn.fromString(
-              inputParameters.get(
-                  ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN, String.class)),
+              FlightUtils.getRequired(
+                  inputParameters,
+                  ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN,
+                  String.class)),
           Arn.fromString(
-              inputParameters.get(
-                  ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN, String.class)),
+              FlightUtils.getRequired(
+                  inputParameters,
+                  ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN,
+                  String.class)),
           Arn.fromString(
-              inputParameters.get(
+              FlightUtils.getRequired(
+                  inputParameters,
                   ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN,
                   String.class)),
           tags);
@@ -96,11 +106,19 @@ public class CreateAwsSageMakerNotebookStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
+    FlightMap inputParameters = flightContext.getInputParameters();
+    AuthenticatedUserRequest userRequest =
+        FlightUtils.getRequired(
+            inputParameters,
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
+    String userEmail = samService.getUserEmailFromSam(userRequest);
+
     try {
       AwsCredentialsProvider credentialsProvider =
           AwsUtils.createWsmCredentialProvider(
               awsCloudContextService.getRequiredAuthentication(),
-              awsCloudContextService.discoverEnvironment(samUser.getEmail()));
+              awsCloudContextService.discoverEnvironment(userEmail));
 
       StepResult result =
           StopAwsSageMakerNotebookStep.executeStopAwsSageMakerNotebook(

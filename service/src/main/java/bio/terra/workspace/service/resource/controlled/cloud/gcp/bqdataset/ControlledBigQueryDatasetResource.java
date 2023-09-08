@@ -148,10 +148,7 @@ public class ControlledBigQueryDatasetResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public void addDeleteSteps(
-      DeleteControlledResourcesFlight flight,
-      AuthenticatedUserRequest userRequest,
-      FlightBeanBag flightBeanBag) {
+  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteBigQueryDatasetStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }

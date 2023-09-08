@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNoteb
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_1;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.API_EXCEPTION;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.NOT_FOUND_EXCEPTION;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.UNAUTHORIZED_EXCEPTION;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_LANDING_ZONE_KMS_KEY_ARN;
@@ -56,7 +55,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   void createNotebook_doTest() throws InterruptedException {
     CreateAwsSageMakerNotebookStep createNotebookStep =
         new CreateAwsSageMakerNotebookStep(
-            notebookResource, mockAwsCloudContextService, SAM_USER, mockCliConfiguration);
+            notebookResource, mockAwsCloudContextService, mockSamService(), mockCliConfiguration);
 
     doReturn(setupFlightMapForCreateNotebookStep()).when(mockFlightContext).getInputParameters();
 
@@ -85,7 +84,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   void createNotebook_undoTest() throws InterruptedException {
     CreateAwsSageMakerNotebookStep createNotebookStep =
         new CreateAwsSageMakerNotebookStep(
-            notebookResource, mockAwsCloudContextService, SAM_USER, mockCliConfiguration);
+            notebookResource, mockAwsCloudContextService, mockSamService(), mockCliConfiguration);
 
     // undo: same as tests for StopAwsSageMakerNotebookStep & DeleteAwsSageMakerNotebookStep,
     // verify that internal functions executeStopAwsSageMakerNotebook &
@@ -143,7 +142,8 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   @Test
   void deleteNotebook_doTest() throws InterruptedException {
     DeleteAwsSageMakerNotebookStep deleteNotebookStep =
-        new DeleteAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, SAM_USER);
+        new DeleteAwsSageMakerNotebookStep(
+            notebookResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils
         .when(() -> AwsUtils.deleteSageMakerNotebook(any(), any()))
@@ -181,7 +181,8 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   @Test
   void deleteNotebook_undoTest() throws InterruptedException {
     DeleteAwsSageMakerNotebookStep deleteNotebookStep =
-        new DeleteAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, SAM_USER);
+        new DeleteAwsSageMakerNotebookStep(
+            notebookResource, mockAwsCloudContextService, mockSamService());
 
     // always error
     assertStepResultFatal(
@@ -192,7 +193,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   void validateNotebookDelete_doTest() throws InterruptedException {
     ValidateAwsSageMakerNotebookDeleteStep validateNotebookDeleteStep =
         new ValidateAwsSageMakerNotebookDeleteStep(
-            notebookResource, mockAwsCloudContextService, SAM_USER);
+            notebookResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
@@ -224,7 +225,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   void validateNotebookDelete_undoTest() throws InterruptedException {
     ValidateAwsSageMakerNotebookDeleteStep validateNotebookDeleteStep =
         new ValidateAwsSageMakerNotebookDeleteStep(
-            notebookResource, mockAwsCloudContextService, SAM_USER);
+            notebookResource, mockAwsCloudContextService, mockSamService());
 
     // always success
     assertThat(
@@ -238,7 +239,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   void createNotebook_doTestFull() throws InterruptedException {
     CreateAwsSageMakerNotebookStep createNotebookStep =
         new CreateAwsSageMakerNotebookStep(
-            notebookResource, mockAwsCloudContextService, SAM_USER, mockCliConfiguration);
+            notebookResource, mockAwsCloudContextService, mockSamService(), mockCliConfiguration);
 
     doReturn(setupFlightMapForCreateNotebookStep()).when(mockFlightContext).getInputParameters();
 
@@ -280,7 +281,8 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   @Test
   void deleteNotebook_doTestFull() throws InterruptedException {
     DeleteAwsSageMakerNotebookStep deleteNotebookStep =
-        new DeleteAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, SAM_USER);
+        new DeleteAwsSageMakerNotebookStep(
+            notebookResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils.when(() -> AwsUtils.deleteSageMakerNotebook(any(), any())).thenCallRealMethod();
     mockAwsUtils
@@ -325,7 +327,7 @@ public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNo
   void validateNotebookDelete_undoTestFull() throws InterruptedException {
     ValidateAwsSageMakerNotebookDeleteStep validateNotebookDeleteStep =
         new ValidateAwsSageMakerNotebookDeleteStep(
-            notebookResource, mockAwsCloudContextService, SAM_USER);
+            notebookResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils.when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any())).thenCallRealMethod();
 

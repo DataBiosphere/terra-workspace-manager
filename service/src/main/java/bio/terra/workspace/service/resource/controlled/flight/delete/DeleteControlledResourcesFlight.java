@@ -7,8 +7,6 @@ import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetAwsCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetGcpCloudContextStep;
@@ -35,24 +33,18 @@ public class DeleteControlledResourcesFlight extends Flight {
     super(inputParameters, beanBag);
     FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
-    FlightUtils.validateRequiredEntries(
-        inputParameters,
-        WorkspaceFlightMapKeys.WORKSPACE_ID,
-        ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE,
-        JobMapKeys.AUTH_USER_INFO.getKeyName());
-
     UUID workspaceUuid =
         UUID.fromString(
             FlightUtils.getRequired(
                 inputParameters, WorkspaceFlightMapKeys.WORKSPACE_ID, String.class));
     List<ControlledResource> controlledResources =
-        inputParameters.get(
-            ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE, new TypeReference<>() {});
-    AuthenticatedUserRequest userRequest =
-        inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+        FlightUtils.getRequired(
+            inputParameters,
+            ControlledResourceKeys.CONTROLLED_RESOURCES_TO_DELETE,
+            new TypeReference<>() {});
 
     for (ControlledResource controlledResource : controlledResources) {
-      addResourceDeleteSteps(flightBeanBag, controlledResource, workspaceUuid, userRequest);
+      addResourceDeleteSteps(flightBeanBag, controlledResource, workspaceUuid);
     }
   }
 
@@ -64,10 +56,7 @@ public class DeleteControlledResourcesFlight extends Flight {
    * @param workspaceUuid workspaceUuid
    */
   private void addResourceDeleteSteps(
-      FlightBeanBag flightBeanBag,
-      ControlledResource resource,
-      UUID workspaceUuid,
-      AuthenticatedUserRequest userRequest) {
+      FlightBeanBag flightBeanBag, ControlledResource resource, UUID workspaceUuid) {
     RetryRule cloudRetry = RetryRules.cloud();
     RetryRule dbRetry = RetryRules.shortDatabase();
 
@@ -91,7 +80,7 @@ public class DeleteControlledResourcesFlight extends Flight {
 
     // Delete the cloud resource. This has unique logic for each resource type. Depending on the
     // specifics of the resource type, this step may require the flight to run asynchronously.
-    resource.addDeleteSteps(this, userRequest, flightBeanBag);
+    resource.addDeleteSteps(this, flightBeanBag);
 
     // Delete the Sam resource. That will make the object inaccessible.
     addStep(
