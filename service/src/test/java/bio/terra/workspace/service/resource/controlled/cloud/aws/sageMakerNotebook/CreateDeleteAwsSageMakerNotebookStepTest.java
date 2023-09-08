@@ -4,6 +4,7 @@ import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.API_EXCEPTION;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.NOT_FOUND_EXCEPTION;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.UNAUTHORIZED_EXCEPTION;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_LANDING_ZONE_KMS_KEY_ARN;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN;
@@ -27,6 +28,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -38,17 +40,18 @@ import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 public class CreateDeleteAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookStepTest {
 
   protected FlightMap setupFlightMapForCreateNotebookStep() {
-    FlightMap inputFlightMap = new FlightMap();
-    inputFlightMap.put(
+    FlightMap flightMapForCreate = new FlightMap();
+    flightMapForCreate.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), USER_REQUEST);
+    flightMapForCreate.put(
         ControlledResourceKeys.AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN,
         AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN);
-    inputFlightMap.put(
+    flightMapForCreate.put(
         ControlledResourceKeys.AWS_LANDING_ZONE_KMS_KEY_ARN, AWS_LANDING_ZONE_KMS_KEY_ARN);
-    inputFlightMap.put(
+    flightMapForCreate.put(
         ControlledResourceKeys.AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN,
         AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN);
-    inputFlightMap.makeImmutable();
-    return inputFlightMap;
+    flightMapForCreate.makeImmutable();
+    return flightMapForCreate;
   }
 
   @Test

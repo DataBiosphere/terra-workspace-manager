@@ -5,6 +5,7 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.API_EXCEPTIO
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.NOT_FOUND_EXCEPTION;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.TestUtils.assertStepResultFatal;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAwsUnitTest;
@@ -27,6 +29,7 @@ import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -69,6 +72,10 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
 
   @BeforeEach
   public void setup() {
+    FlightMap flightMap = new FlightMap();
+    flightMap.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), USER_REQUEST);
+
+    when(mockFlightContext.getInputParameters()).thenReturn(flightMap);
     when(mockFlightContext.getResult())
         .thenReturn(new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL));
 
