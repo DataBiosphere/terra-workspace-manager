@@ -365,6 +365,8 @@ public class ResourceDao {
       params.addValue("cloud_platform", cloudPlatform.toSql());
     }
 
+    // sort desc because this is called to list resources for deletion, and we want to delete
+    // resources in the reverse order they were created
     sql += " ORDER BY created_date desc";
 
     List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
