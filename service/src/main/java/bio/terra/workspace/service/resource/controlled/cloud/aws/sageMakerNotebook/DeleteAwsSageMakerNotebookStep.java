@@ -4,6 +4,7 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -25,12 +26,15 @@ public class DeleteAwsSageMakerNotebookStep implements Step {
 
   private final ControlledAwsSageMakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
+  private final SamUser samUser;
 
   public DeleteAwsSageMakerNotebookStep(
       ControlledAwsSageMakerNotebookResource resource,
-      AwsCloudContextService awsCloudContextService) {
+      AwsCloudContextService awsCloudContextService,
+      SamUser samUser) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
+    this.samUser = samUser;
   }
 
   @VisibleForTesting
@@ -57,7 +61,7 @@ public class DeleteAwsSageMakerNotebookStep implements Step {
     return executeDeleteAwsSageMakerNotebook(
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment()),
+            awsCloudContextService.discoverEnvironment(samUser.getEmail())),
         resource);
   }
 

@@ -121,7 +121,10 @@ public class ControlledFlexibleResource extends ControlledResource {
 
   // There is no associated cloud resource. Thus, no steps are required.
   @Override
-  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {}
+  public void addDeleteSteps(
+      DeleteControlledResourcesFlight flight,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {}
 
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {

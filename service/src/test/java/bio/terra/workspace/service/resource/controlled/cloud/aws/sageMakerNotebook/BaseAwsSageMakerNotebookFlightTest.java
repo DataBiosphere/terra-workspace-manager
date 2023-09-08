@@ -46,11 +46,11 @@ public abstract class BaseAwsSageMakerNotebookFlightTest extends BaseAwsConnecte
     userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
     workspaceUuid =
         mockWorkspaceV2Api.createWorkspaceAndWait(userRequest, apiCloudPlatform).getWorkspaceId();
-    environment = awsCloudContextService.discoverEnvironment();
+    environment = awsCloudContextService.discoverEnvironment(userRequest.getEmail());
     awsCredentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
+            awsCloudContextService.discoverEnvironment(userRequest.getEmail()));
     cliConfiguration.setServerName("verily-devel");
   }
 

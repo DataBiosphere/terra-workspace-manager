@@ -18,7 +18,7 @@ public interface CloudContextService {
   /** Add cloud-specific steps to the create cloud context flight */
   void addCreateCloudContextSteps(
       CreateCloudContextFlight flight,
-      FlightBeanBag appContext,
+      FlightBeanBag flightBeanBag,
       UUID workspaceUuid,
       SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest);

@@ -749,7 +749,6 @@ public class WorkspaceService {
       String jobId,
       AuthenticatedUserRequest userRequest,
       @Nullable String resultPath) {
-
     jobService
         .newJob()
         .description(

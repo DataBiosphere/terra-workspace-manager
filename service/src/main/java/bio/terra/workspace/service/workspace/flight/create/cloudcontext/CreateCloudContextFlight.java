@@ -31,7 +31,7 @@ public class CreateCloudContextFlight extends Flight {
 
   public CreateCloudContextFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
-    FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);
+    FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
 
     UUID workspaceUuid =
         UUID.fromString(
@@ -48,8 +48,9 @@ public class CreateCloudContextFlight extends Flight {
     CloudPlatform cloudPlatform =
         FlightUtils.getRequired(
             inputParameters, WorkspaceFlightMapKeys.CLOUD_PLATFORM, CloudPlatform.class);
-    WsmResourceStateRule wsmResourceStateRule = appContext.getFeatureConfiguration().getStateRule();
-    WorkspaceDao workspaceDao = appContext.getWorkspaceDao();
+    WsmResourceStateRule wsmResourceStateRule =
+        flightBeanBag.getFeatureConfiguration().getStateRule();
+    WorkspaceDao workspaceDao = flightBeanBag.getWorkspaceDao();
     RetryRule cloudRetry = RetryRules.cloud();
 
     addStep(
@@ -60,7 +61,7 @@ public class CreateCloudContextFlight extends Flight {
     // Add the create steps for the appropriate cloud type
     CloudContextService cloudContextService = cloudPlatform.getCloudContextService();
     cloudContextService.addCreateCloudContextSteps(
-        this, appContext, workspaceUuid, spendProfile, userRequest);
+        this, flightBeanBag, workspaceUuid, spendProfile, userRequest);
 
     addStep(
         new CreateCloudContextFinishStep(
@@ -68,7 +69,7 @@ public class CreateCloudContextFlight extends Flight {
             workspaceUuid,
             workspaceDao,
             cloudPlatform,
-            appContext.getWorkspaceActivityLogService()),
+            flightBeanBag.getWorkspaceActivityLogService()),
         cloudRetry);
   }
 }

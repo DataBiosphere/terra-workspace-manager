@@ -23,8 +23,6 @@ import java.util.UUID;
  */
 public class CreateControlledResourceFlight extends Flight {
 
-  private final RetryRule dbRetryRule = RetryRules.shortDatabase();
-
   // addStep is protected in Flight, so make an override that is public
   @Override
   public void addStep(Step step, RetryRule retryRule) {
@@ -33,7 +31,8 @@ public class CreateControlledResourceFlight extends Flight {
 
   public CreateControlledResourceFlight(FlightMap inputParameters, Object beanBag) {
     super(inputParameters, beanBag);
-    final FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
+    RetryRule dbRetryRule = RetryRules.shortDatabase();
+    FlightBeanBag flightBeanBag = FlightBeanBag.getFromObject(beanBag);
 
     FlightUtils.validateRequiredEntries(
         inputParameters,
@@ -42,19 +41,19 @@ public class CreateControlledResourceFlight extends Flight {
         JobMapKeys.AUTH_USER_INFO.getKeyName());
 
     ControlledResource resource =
-        FlightUtils.getRequired(inputParameters, ResourceKeys.RESOURCE, ControlledResource.class);
-    var userRequest =
+        inputParameters.get(ResourceKeys.RESOURCE, ControlledResource.class);
+    WsmResourceStateRule resourceStateRule =
+        inputParameters.get(ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);
+    AuthenticatedUserRequest userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+
     // Role is optionally populated for private resources
-    var privateResourceIamRole =
+    ControlledResourceIamRole privateResourceIamRole =
         inputParameters.get(
             ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, ControlledResourceIamRole.class);
     // PetSA is optional for some resources
-    var petSaEmail =
+    String petSaEmail =
         inputParameters.get(ControlledResourceKeys.CLOUD_PET_SERVICE_ACCOUNT, String.class);
-    var resourceStateRule =
-        FlightUtils.getRequired(
-            inputParameters, ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.class);
 
     // Store the resource metadata in the WSM database. Doing this first means concurrent
     // conflicting resources with the same name or resource attributes can be prevented.

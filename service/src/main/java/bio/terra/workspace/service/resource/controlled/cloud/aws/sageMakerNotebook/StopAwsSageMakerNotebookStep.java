@@ -4,6 +4,7 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -18,19 +19,21 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
 public class StopAwsSageMakerNotebookStep implements Step {
-
   private static final Logger logger = LoggerFactory.getLogger(StopAwsSageMakerNotebookStep.class);
 
   private final ControlledAwsSageMakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
+  private final SamUser samUser;
   private final boolean resourceDeletion;
 
   public StopAwsSageMakerNotebookStep(
       ControlledAwsSageMakerNotebookResource resource,
       AwsCloudContextService awsCloudContextService,
+      SamUser samUser,
       boolean resourceDeletion) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
+    this.samUser = samUser;
     this.resourceDeletion = resourceDeletion;
   }
 
@@ -76,7 +79,7 @@ public class StopAwsSageMakerNotebookStep implements Step {
       return executeStopAwsSageMakerNotebook(
           AwsUtils.createWsmCredentialProvider(
               awsCloudContextService.getRequiredAuthentication(),
-              awsCloudContextService.discoverEnvironment()),
+              awsCloudContextService.discoverEnvironment(samUser.getEmail())),
           resource);
     } catch (NotFoundException e) {
       if (!resourceDeletion) {
@@ -93,7 +96,7 @@ public class StopAwsSageMakerNotebookStep implements Step {
     AwsCredentialsProvider credentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
+            awsCloudContextService.discoverEnvironment(samUser.getEmail()));
 
     try {
       NotebookInstanceStatus notebookStatus =

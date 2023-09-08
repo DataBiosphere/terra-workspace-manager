@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNoteb
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -125,16 +126,19 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         new CreateAwsSageMakerNotebookStep(
             this,
             flightBeanBag.getAwsCloudContextService(),
-            userRequest,
-            flightBeanBag.getSamService(),
+            flightBeanBag.getSamService().getSamUser(userRequest),
             flightBeanBag.getCliConfiguration()),
         cloudRetry);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
+  public void addDeleteSteps(
+      DeleteControlledResourcesFlight flight,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {
     RetryRule cloudRetry = RetryRules.cloud();
+    SamUser samUser = flightBeanBag.getSamService().getSamUser(userRequest);
     boolean forceDelete =
         Boolean.TRUE.equals(
             flight.getInputParameters().get(ControlledResourceKeys.FORCE_DELETE, Boolean.class));
@@ -142,17 +146,19 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     // Notebooks must be stopped before deletion. If requested, stop instance before delete attempt
     if (forceDelete) {
       flight.addStep(
-          new StopAwsSageMakerNotebookStep(this, flightBeanBag.getAwsCloudContextService(), true),
+          new StopAwsSageMakerNotebookStep(
+              this, flightBeanBag.getAwsCloudContextService(), samUser, true),
           cloudRetry);
     } else {
       flight.addStep(
           new ValidateAwsSageMakerNotebookDeleteStep(
-              this, flightBeanBag.getAwsCloudContextService()),
+              this, flightBeanBag.getAwsCloudContextService(), samUser),
           cloudRetry);
     }
 
     flight.addStep(
-        new DeleteAwsSageMakerNotebookStep(this, flightBeanBag.getAwsCloudContextService()),
+        new DeleteAwsSageMakerNotebookStep(
+            this, flightBeanBag.getAwsCloudContextService(), samUser),
         cloudRetry);
   }
 

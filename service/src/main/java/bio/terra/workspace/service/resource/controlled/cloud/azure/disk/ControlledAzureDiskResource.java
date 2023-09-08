@@ -122,7 +122,10 @@ public class ControlledAzureDiskResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
+  public void addDeleteSteps(
+      DeleteControlledResourcesFlight flight,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAzureDiskStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),

@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.AwsTestUtils.ACCOUNT_ID;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_ENVIRONMENT;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_LANDING_ZONE;
@@ -118,17 +119,18 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
       Exception ex =
           assertThrows(
               InvalidApplicationConfigException.class,
-              () -> awsCloudContextService.discoverEnvironment());
+              () -> awsCloudContextService.discoverEnvironment(DEFAULT_USER_EMAIL));
       assertTrue(ex.getMessage().contains("AWS environmentDiscovery not initialized"));
 
       // success
-      Environment fetchedEnvironment = awsCloudContextService.discoverEnvironment();
+      Environment fetchedEnvironment =
+          awsCloudContextService.discoverEnvironment(DEFAULT_USER_EMAIL);
       assertNotNull(fetchedEnvironment);
 
       mockAwsUtils.verify(() -> AwsUtils.createEnvironmentDiscovery(any()), times(2));
 
       // AwsUtils.createEnvironmentDiscovery is not called another time if already initialized
-      awsCloudContextService.discoverEnvironment();
+      awsCloudContextService.discoverEnvironment(DEFAULT_USER_EMAIL);
       mockAwsUtils.verify(() -> AwsUtils.createEnvironmentDiscovery(any()), times(2));
     }
   }

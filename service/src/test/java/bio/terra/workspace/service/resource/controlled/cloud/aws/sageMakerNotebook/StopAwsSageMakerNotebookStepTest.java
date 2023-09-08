@@ -1,6 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook;
 
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.API_EXCEPTION;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.NOT_FOUND_EXCEPTION;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.UNAUTHORIZED_EXCEPTION;
 import static bio.terra.workspace.common.utils.TestUtils.assertStepResultFatal;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -11,7 +15,6 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AwsUtils;
 import io.vavr.collection.List;
 import org.junit.jupiter.api.Test;
@@ -29,13 +32,13 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
         .thenAnswer(invocation -> null) /* success */
         .thenAnswer(invocation -> null) /* success */
         .thenAnswer(invocation -> null) /* success */
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.API_EXCEPTION);
+        .thenThrow(NOT_FOUND_EXCEPTION)
+        .thenThrow(API_EXCEPTION);
     mockAwsUtils
         .when(() -> AwsUtils.waitForSageMakerNotebookStatus(any(), any(), any()))
         .thenAnswer(invocation -> null) /* success */
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.UNAUTHORIZED_EXCEPTION);
+        .thenThrow(NOT_FOUND_EXCEPTION)
+        .thenThrow(UNAUTHORIZED_EXCEPTION);
 
     // stop success, wait success
     assertThat(
@@ -78,8 +81,8 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
     mockAwsUtils
         .when(() -> AwsUtils.waitForSageMakerNotebookStatus(any(), any(), any()))
         .thenAnswer(invocation -> null) /* success */
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.UNAUTHORIZED_EXCEPTION);
+        .thenThrow(NOT_FOUND_EXCEPTION)
+        .thenThrow(UNAUTHORIZED_EXCEPTION);
 
     // wait success
     assertThat(
@@ -152,8 +155,8 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   void executeStopAwsSageMakerNotebook_GetStatusError_Test() {
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.UNAUTHORIZED_EXCEPTION);
+        .thenThrow(NOT_FOUND_EXCEPTION)
+        .thenThrow(UNAUTHORIZED_EXCEPTION);
 
     // error (not found)
     assertThrows(
@@ -173,7 +176,8 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   void stopAwsSageMakerNotebook_NotResourceDeletion_doTest() throws InterruptedException {
     // not part of resource deletion
     StopAwsSageMakerNotebookStep stopNotebookStep =
-        new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, false);
+        new StopAwsSageMakerNotebookStep(
+            notebookResource, mockAwsCloudContextService, SAM_USER, false);
 
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
@@ -196,7 +200,8 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
   void stopAwsSageMakerNotebook_ResourceDeletion_doTest() throws InterruptedException {
     // part of resource deletion
     StopAwsSageMakerNotebookStep stopNotebookStep =
-        new StopAwsSageMakerNotebookStep(notebookResource, mockAwsCloudContextService, true);
+        new StopAwsSageMakerNotebookStep(
+            notebookResource, mockAwsCloudContextService, SAM_USER, true);
 
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
@@ -217,11 +222,11 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
           .when(() -> AwsUtils.startSageMakerNotebook(any(), any()))
           .thenAnswer(invocation -> null) /* success */
           .thenAnswer(invocation -> null) /* success */
-          .thenThrow(WorkspaceFixtures.API_EXCEPTION);
+          .thenThrow(API_EXCEPTION);
       mockAwsUtils
           .when(() -> AwsUtils.waitForSageMakerNotebookStatus(any(), any(), any()))
           .thenAnswer(invocation -> null) /* success */
-          .thenThrow(WorkspaceFixtures.UNAUTHORIZED_EXCEPTION);
+          .thenThrow(UNAUTHORIZED_EXCEPTION);
 
       // start success, wait success
       assertThat(
@@ -255,7 +260,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
       mockAwsUtils
           .when(() -> AwsUtils.waitForSageMakerNotebookStatus(any(), any(), any()))
           .thenAnswer(invocation -> null) /* success */
-          .thenThrow(WorkspaceFixtures.UNAUTHORIZED_EXCEPTION);
+          .thenThrow(UNAUTHORIZED_EXCEPTION);
 
       // wait success
       assertThat(
@@ -308,7 +313,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
       StopAwsSageMakerNotebookStep stopNotebookStep, String message) throws InterruptedException {
     mockAwsUtils
         .when(() -> AwsUtils.getSageMakerNotebookStatus(any(), any()))
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION);
+        .thenThrow(NOT_FOUND_EXCEPTION);
 
     // error
     assertStepResultFatal(
@@ -323,7 +328,7 @@ public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookSt
         List.of(/*  part of resource deletion */ true, /* not part of resource deletion */ false)) {
       StopAwsSageMakerNotebookStep stopNotebookStep =
           new StopAwsSageMakerNotebookStep(
-              notebookResource, mockAwsCloudContextService, resourceDeletion);
+              notebookResource, mockAwsCloudContextService, SAM_USER, resourceDeletion);
 
       String message = "resourceDeletion: " + resourceDeletion;
       stopAwsSageMakerNotebook_StoppedFailed_undoTest(stopNotebookStep, message);

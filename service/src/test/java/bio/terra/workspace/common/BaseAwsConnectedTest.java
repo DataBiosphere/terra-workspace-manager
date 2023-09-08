@@ -1,5 +1,11 @@
 package bio.terra.workspace.common;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
+import static bio.terra.workspace.common.utils.AwsTestUtils.SAM_USER_AWS_DISABLED;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.when;
+
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.common.utils.AwsConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
@@ -8,7 +14,6 @@ import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
@@ -26,6 +31,14 @@ public class BaseAwsConnectedTest extends BaseTest {
 
   @BeforeAll
   public void init() throws Exception {
-    Mockito.when(mockFeatureService.isFeatureEnabled(FeatureService.AWS_ENABLED)).thenReturn(true);
+    when(mockFeatureService.isFeatureEnabled(FeatureService.AWS_ENABLED, SAM_USER.getEmail()))
+        .thenReturn(true);
+    when(mockFeatureService.isFeatureEnabled(
+            FeatureService.AWS_ENABLED, SAM_USER_AWS_DISABLED.getEmail()))
+        .thenReturn(false);
+    when(mockFeatureService.isFeatureEnabled(FeatureService.AWS_ENABLED)).thenReturn(false);
+
+    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(any());
+    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(any(), any());
   }
 }

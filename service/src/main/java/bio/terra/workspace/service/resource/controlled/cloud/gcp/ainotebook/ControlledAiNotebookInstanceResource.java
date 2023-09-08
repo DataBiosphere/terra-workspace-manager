@@ -199,7 +199,10 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
+  public void addDeleteSteps(
+      DeleteControlledResourcesFlight flight,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteAiNotebookInstanceStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }

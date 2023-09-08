@@ -73,16 +73,16 @@ public class AzureCloudContextService implements CloudContextService {
   @Override
   public void addCreateCloudContextSteps(
       CreateCloudContextFlight flight,
-      FlightBeanBag appContext,
+      FlightBeanBag flightBeanBag,
       UUID workspaceUuid,
       SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
     if (featureConfiguration.isTpsEnabled()) {
       flight.addStep(
           new ValidateLandingZoneAgainstPolicyStep(
-              appContext.getLandingZoneApiDispatch(),
+              flightBeanBag.getLandingZoneApiDispatch(),
               userRequest,
-              appContext.getTpsApiDispatch(),
+              flightBeanBag.getTpsApiDispatch(),
               workspaceUuid,
               workspaceService,
               policyValidator));
@@ -90,7 +90,8 @@ public class AzureCloudContextService implements CloudContextService {
 
     // validate the MRG
     flight.addStep(
-        new ValidateMRGStep(appContext.getCrlService(), appContext.getAzureConfig(), spendProfile));
+        new ValidateMRGStep(
+            flightBeanBag.getCrlService(), flightBeanBag.getAzureConfig(), spendProfile));
   }
 
   @Override

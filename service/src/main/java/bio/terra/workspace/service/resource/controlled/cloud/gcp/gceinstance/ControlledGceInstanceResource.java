@@ -187,7 +187,10 @@ public class ControlledGceInstanceResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
+  public void addDeleteSteps(
+      DeleteControlledResourcesFlight flight,
+      AuthenticatedUserRequest userRequest,
+      FlightBeanBag flightBeanBag) {
     flight.addStep(
         new DeleteGceInstanceStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
   }

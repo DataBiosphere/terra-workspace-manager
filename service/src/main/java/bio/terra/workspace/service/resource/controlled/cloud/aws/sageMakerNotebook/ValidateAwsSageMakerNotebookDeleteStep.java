@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNoteb
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -16,18 +17,20 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
 public class ValidateAwsSageMakerNotebookDeleteStep implements Step {
-
   private static final Logger logger =
       LoggerFactory.getLogger(ValidateAwsSageMakerNotebookDeleteStep.class);
 
   private final ControlledAwsSageMakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
+  private final SamUser samUser;
 
   public ValidateAwsSageMakerNotebookDeleteStep(
       ControlledAwsSageMakerNotebookResource resource,
-      AwsCloudContextService awsCloudContextService) {
+      AwsCloudContextService awsCloudContextService,
+      SamUser samUser) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
+    this.samUser = samUser;
   }
 
   @Override
@@ -36,7 +39,7 @@ public class ValidateAwsSageMakerNotebookDeleteStep implements Step {
     AwsCredentialsProvider credentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
+            awsCloudContextService.discoverEnvironment(samUser.getEmail()));
 
     try {
       NotebookInstanceStatus notebookStatus =

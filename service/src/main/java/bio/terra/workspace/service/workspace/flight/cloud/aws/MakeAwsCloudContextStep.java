@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace.flight.cloud.aws;
 
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -10,11 +11,15 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 
 public class MakeAwsCloudContextStep implements Step {
   private final AwsCloudContextService awsCloudContextService;
+  private final SamUser samUser;
   private final SpendProfileId spendProfileId;
 
   public MakeAwsCloudContextStep(
-      AwsCloudContextService awsCloudContextService, SpendProfileId spendProfileId) {
+      AwsCloudContextService awsCloudContextService,
+      SamUser samUser,
+      SpendProfileId spendProfileId) {
     this.awsCloudContextService = awsCloudContextService;
+    this.samUser = samUser;
     this.spendProfileId = spendProfileId;
   }
 
@@ -24,7 +29,8 @@ public class MakeAwsCloudContextStep implements Step {
     // information and store the created cloud context in the map. The shared finish
     // step will perform the database update.
     AwsCloudContext awsCloudContext =
-        awsCloudContextService.createCloudContext(flightContext.getFlightId(), spendProfileId);
+        awsCloudContextService.createCloudContext(
+            flightContext.getFlightId(), spendProfileId, samUser.getEmail());
     flightContext.getWorkingMap().put(WorkspaceFlightMapKeys.CLOUD_CONTEXT, awsCloudContext);
     return StepResult.getStepResultSuccess();
   }
