@@ -14,9 +14,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -53,16 +51,9 @@ public class CreateAwsSageMakerNotebookStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     FlightMap inputParameters = flightContext.getInputParameters();
-
+    SamUser samUser = FlightUtils.getRequiredSamUser(inputParameters, samService);
     AwsCloudContext cloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(resource.getWorkspaceId());
-
-    AuthenticatedUserRequest userRequest =
-        FlightUtils.getRequired(
-            inputParameters,
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
-    SamUser samUser = samService.getSamUser(userRequest);
 
     Collection<Tag> tags = new HashSet<>();
     AwsUtils.appendUserTags(tags, samUser);

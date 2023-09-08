@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -280,13 +281,16 @@ public final class FlightUtils {
         || flightState.getFlightStatus() == FlightStatus.SUCCESS);
   }
 
-  public static String getRequiredUserEmail(FlightMap inputParameters, SamService samService)
-      throws InterruptedException {
+  public static SamUser getRequiredSamUser(FlightMap inputParameters, SamService samService) {
     AuthenticatedUserRequest userRequest =
         FlightUtils.getRequired(
             inputParameters,
             JobMapKeys.AUTH_USER_INFO.getKeyName(),
             AuthenticatedUserRequest.class);
-    return samService.getUserEmailFromSam(userRequest);
+    return samService.getSamUser(userRequest);
+  }
+
+  public static String getRequiredUserEmail(FlightMap inputParameters, SamService samService) {
+    return getRequiredSamUser(inputParameters, samService).getEmail();
   }
 }
