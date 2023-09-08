@@ -76,7 +76,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -114,7 +113,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       WorkspaceService workspaceService,
       AzureConfiguration azureConfiguration,
       AzureStorageAccessService azureControlledStorageResourceService,
-      LandingZoneApiDispatch landingZoneApiDispatch, WsmResourceService wsmResourceService) {
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      WsmResourceService wsmResourceService) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -779,9 +779,13 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .common(commonFields)
             .kubernetesNamespace(kubernetesNamespace)
             .kubernetesServiceAccount(kubernetesNamespace + "-ksa")
-            .managedIdentity(maybeLookupName(workspaceId, body.getAzureKubernetesNamespace().getManagedIdentity()))
-            .databases(body.getAzureKubernetesNamespace().getDatabases().stream().map(n -> maybeLookupName(workspaceId, n)).collect(
-                Collectors.toSet()))
+            .managedIdentity(
+                maybeLookupName(
+                    workspaceId, body.getAzureKubernetesNamespace().getManagedIdentity()))
+            .databases(
+                body.getAzureKubernetesNamespace().getDatabases().stream()
+                    .map(n -> maybeLookupName(workspaceId, n))
+                    .collect(Collectors.toSet()))
             .build();
 
     var jobId =
@@ -798,13 +802,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   /**
-   * Initial implementations of createAzureKubernetesNamespace and createAzureDatabase required
-   * ids of the resources to be passed in. But names are easier to use and port nicely during
-   * clone operations. So currently the api supports both names and ids. But we convert to names
-   * before storing the resource.
+   * Initial implementations of createAzureKubernetesNamespace and createAzureDatabase required ids
+   * of the resources to be passed in. But names are easier to use and port nicely during clone
+   * operations. So currently the api supports both names and ids. But we convert to names before
+   * storing the resource.
+   *
    * @param workspaceId
    * @param maybeUuid a uuid or a name
-   * @return if maybeUuid is a uuid and exists in the workspace, return the name of the resource with that uuid. Otherwise, return maybeUuid.
+   * @return if maybeUuid is a uuid and exists in the workspace, return the name of the resource
+   *     with that uuid. Otherwise, return maybeUuid.
    */
   private String maybeLookupName(UUID workspaceId, String maybeUuid) {
     if (maybeUuid == null) {

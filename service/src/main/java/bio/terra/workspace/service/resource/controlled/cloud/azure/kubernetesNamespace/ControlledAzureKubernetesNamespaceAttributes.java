@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNa
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Set;
-import java.util.UUID;
 
 public class ControlledAzureKubernetesNamespaceAttributes {
   private final String kubernetesNamespace;

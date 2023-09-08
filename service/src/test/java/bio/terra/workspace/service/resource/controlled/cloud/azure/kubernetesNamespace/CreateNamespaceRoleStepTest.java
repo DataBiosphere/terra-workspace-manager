@@ -46,8 +46,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            owner,
-            dbResources.stream().map(ControlledAzureDatabaseResource::getName).toList());
+            owner, dbResources.stream().map(ControlledAzureDatabaseResource::getName).toList());
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -152,8 +151,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            owner,
-            dbResources.stream().map(ControlledAzureDatabaseResource::getName).toList());
+            owner, dbResources.stream().map(ControlledAzureDatabaseResource::getName).toList());
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -222,8 +220,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
             workspaceId, mockAzureDatabaseUtilsRunner, resource, mockResourceDao);
 
     var resolution =
-        new DatabaseResolution(
-            dbResource.getName(), Optional.of(dbResource), Optional.empty());
+        new DatabaseResolution(dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result, equalTo(resolution));
   }
@@ -249,8 +246,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
             workspaceId, mockAzureDatabaseUtilsRunner, resource, mockResourceDao);
 
     var resolution =
-        new DatabaseResolution(
-            dbResource.getName(), Optional.of(dbResource), Optional.empty());
+        new DatabaseResolution(dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result.errorMessage().isPresent(), equalTo(true));
   }
@@ -276,8 +272,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
             workspaceId, mockAzureDatabaseUtilsRunner, resource, mockResourceDao);
 
     var resolution =
-        new DatabaseResolution(
-            dbResource.getName(), Optional.of(dbResource), Optional.empty());
+        new DatabaseResolution(dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result, equalTo(resolution));
   }
@@ -303,8 +298,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
             workspaceId, mockAzureDatabaseUtilsRunner, resource, mockResourceDao);
 
     var resolution =
-        new DatabaseResolution(
-            dbResource.getName(), Optional.of(dbResource), Optional.empty());
+        new DatabaseResolution(dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result, equalTo(resolution));
   }
@@ -331,8 +325,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
             workspaceId, mockAzureDatabaseUtilsRunner, resource, mockResourceDao);
 
     var resolution =
-        new DatabaseResolution(
-            dbResource.getName(), Optional.of(dbResource), Optional.empty());
+        new DatabaseResolution(dbResource.getName(), Optional.of(dbResource), Optional.empty());
     var result = step.validateDatabaseAccess(resolution);
     assertThat(result.errorMessage().isPresent(), equalTo(true));
   }

@@ -116,7 +116,8 @@ public class CreateNamespaceRoleStep implements Step {
   @VisibleForTesting
   DatabaseResolution getDatabaseResource(String databaseResourceName) {
     try {
-      var wsmResource = resourceDao.getResourceByName(resource.getWorkspaceId(), databaseResourceName);
+      var wsmResource =
+          resourceDao.getResourceByName(resource.getWorkspaceId(), databaseResourceName);
       if (wsmResource.getResourceType() == WsmResourceType.CONTROLLED_AZURE_DATABASE) {
         ControlledAzureDatabaseResource databaseResource =
             wsmResource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE);

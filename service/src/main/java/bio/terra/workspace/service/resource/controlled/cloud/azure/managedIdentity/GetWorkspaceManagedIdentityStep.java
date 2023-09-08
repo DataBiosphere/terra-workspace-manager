@@ -45,7 +45,8 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
     ControlledAzureManagedIdentityResource managedIdentityResource =
-        resourceDao.getResourceByName(workspaceId, managedIdentityName)
+        resourceDao
+            .getResourceByName(workspaceId, managedIdentityName)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     if (managedIdentityResource == null) {
       return new StepResult(
