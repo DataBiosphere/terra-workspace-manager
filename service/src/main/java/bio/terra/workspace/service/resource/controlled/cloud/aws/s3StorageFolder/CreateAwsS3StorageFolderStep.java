@@ -70,18 +70,11 @@ public class CreateAwsS3StorageFolderStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    FlightMap inputParameters = flightContext.getInputParameters();
-    AuthenticatedUserRequest userRequest =
-        FlightUtils.getRequired(
-            inputParameters,
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
-    String userEmail = samService.getUserEmailFromSam(userRequest);
-
     return DeleteAwsS3StorageFolderStep.executeDeleteAwsS3StorageFolder(
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment(userEmail)),
+            awsCloudContextService.discoverEnvironment(
+                FlightUtils.getRequiredUserEmail(flightContext.getInputParameters(), samService))),
         resource);
   }
 }

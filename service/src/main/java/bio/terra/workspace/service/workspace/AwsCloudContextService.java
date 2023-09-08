@@ -89,7 +89,7 @@ public class AwsCloudContextService implements CloudContextService {
     flight.addStep(
         new MakeAwsCloudContextStep(
             flightBeanBag.getAwsCloudContextService(),
-            flightBeanBag.getSamService().getSamUser(userRequest),
+            flightBeanBag.getSamService(),
             spendProfile.id()));
   }
 

@@ -106,20 +106,13 @@ public class CreateAwsSageMakerNotebookStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
-    FlightMap inputParameters = flightContext.getInputParameters();
-    AuthenticatedUserRequest userRequest =
-        FlightUtils.getRequired(
-            inputParameters,
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
-    String userEmail = samService.getUserEmailFromSam(userRequest);
+    AwsCredentialsProvider credentialsProvider =
+        AwsUtils.createWsmCredentialProvider(
+            awsCloudContextService.getRequiredAuthentication(),
+            awsCloudContextService.discoverEnvironment(
+                FlightUtils.getRequiredUserEmail(flightContext.getInputParameters(), samService)));
 
     try {
-      AwsCredentialsProvider credentialsProvider =
-          AwsUtils.createWsmCredentialProvider(
-              awsCloudContextService.getRequiredAuthentication(),
-              awsCloudContextService.discoverEnvironment(userEmail));
-
       StepResult result =
           StopAwsSageMakerNotebookStep.executeStopAwsSageMakerNotebook(
               credentialsProvider, resource);

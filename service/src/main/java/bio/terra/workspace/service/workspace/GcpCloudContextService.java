@@ -80,13 +80,13 @@ public class GcpCloudContextService implements CloudContextService {
   @Override
   public void addCreateCloudContextSteps(
       CreateCloudContextFlight flight,
-      FlightBeanBag flightBeanBag,
+      FlightBeanBag appContext,
       UUID workspaceUuid,
       SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
 
-    GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping = flightBeanBag.getCloudSyncRoleMapping();
-    CrlService crl = flightBeanBag.getCrlService();
+    GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping = appContext.getCloudSyncRoleMapping();
+    CrlService crl = appContext.getCrlService();
     RetryRule shortRetry = RetryRules.shortExponential();
     RetryRule cloudRetry = RetryRules.cloud();
     RetryRule bufferRetry = RetryRules.buffer();
@@ -95,7 +95,7 @@ public class GcpCloudContextService implements CloudContextService {
     flight.addStep(new GenerateRbsRequestIdStep());
     flight.addStep(
         new PullProjectFromPoolStep(
-            flightBeanBag.getBufferService(), crl.getCloudResourceManagerCow()),
+            appContext.getBufferService(), crl.getCloudResourceManagerCow()),
         bufferRetry);
 
     // Configure the project for WSM
@@ -106,19 +106,18 @@ public class GcpCloudContextService implements CloudContextService {
     // Create the pet before sync'ing, so the proxy group is configured before we
     // do the Sam sync and create the role-based Google groups. That eliminates
     // one propagation case
-    flight.addStep(new CreatePetSaStep(flightBeanBag.getSamService(), userRequest), shortRetry);
+    flight.addStep(new CreatePetSaStep(appContext.getSamService(), userRequest), shortRetry);
     flight.addStep(
-        new SyncSamGroupsStep(
-            flightBeanBag.getSamService(), workspaceUuid, spendProfile, userRequest),
+        new SyncSamGroupsStep(appContext.getSamService(), workspaceUuid, spendProfile, userRequest),
         shortRetry);
 
     flight.addStep(
         new GcpCloudSyncStep(
             crl.getCloudResourceManagerCow(),
             gcpCloudSyncRoleMapping,
-            flightBeanBag.getFeatureConfiguration(),
-            flightBeanBag.getSamService(),
-            flightBeanBag.getGrantService(),
+            appContext.getFeatureConfiguration(),
+            appContext.getSamService(),
+            appContext.getGrantService(),
             userRequest,
             workspaceUuid),
         bufferRetry);
