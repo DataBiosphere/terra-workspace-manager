@@ -345,7 +345,7 @@ public class ResourceDao {
 
   /**
    * Returns a list of all controlled resources in a workspace, optionally filtering by cloud
-   * platform.
+   * platform, ordered by created date newest to oldest.
    *
    * @param workspaceUuid ID of the workspace to return resources from.
    * @param cloudPlatform Optional. If present, this will only return resources from the specified
@@ -364,6 +364,8 @@ public class ResourceDao {
       sql += " AND cloud_platform = :cloud_platform";
       params.addValue("cloud_platform", cloudPlatform.toSql());
     }
+
+    sql += " ORDER BY created_date desc";
 
     List<DbResource> dbResources = jdbcTemplate.query(sql, params, DB_RESOURCE_ROW_MAPPER);
     return dbResources.stream()

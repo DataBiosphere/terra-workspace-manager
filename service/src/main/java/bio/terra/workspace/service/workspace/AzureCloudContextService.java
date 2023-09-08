@@ -9,7 +9,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.policy.PolicyValidator;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.cloud.azure.ValidateLandingZoneAgainstPolicyStep;
@@ -21,7 +20,6 @@ import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -109,37 +107,7 @@ public class AzureCloudContextService implements CloudContextService {
 
   @Override
   public List<ControlledResource> makeOrderedResourceList(UUID workspaceUuid) {
-    List<ControlledResource> unorderedList =
-        resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
-    // Delete VMs and k8s namespaces first because they use other resources like disks, identities,
-    // databases, etc.
-    List<ControlledResource> orderedList =
-        new ArrayList<>(
-            unorderedList.stream()
-                .filter(
-                    r ->
-                        r.getResourceType() == WsmResourceType.CONTROLLED_AZURE_VM
-                            || r.getResourceType()
-                                == WsmResourceType.CONTROLLED_AZURE_KUBERNETES_NAMESPACE)
-                .toList());
-
-    // Delete storage containers so that Sam resources are properly deleted (before storage accounts
-    // are deleted).
-    orderedList.addAll(
-        unorderedList.stream()
-            .filter(r -> r.getResourceType() == WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER)
-            .toList());
-
-    // Delete all remaining resources
-    orderedList.addAll(
-        unorderedList.stream()
-            .filter(
-                r ->
-                    r.getResourceType() != WsmResourceType.CONTROLLED_AZURE_VM
-                        && r.getResourceType()
-                            != WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER)
-            .toList());
-    return orderedList;
+    return resourceDao.listControlledResources(workspaceUuid, CloudPlatform.AZURE);
   }
 
   @Override

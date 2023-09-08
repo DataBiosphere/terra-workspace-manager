@@ -260,8 +260,13 @@ public class ResourceDaoTest extends BaseUnitTest {
         resourceDao.listControlledResources(workspaceUuid, null);
 
     assertTrue(azureList.isEmpty());
-    assertPartialEqualList(gcpList, List.of(bucket, dataset));
-    assertPartialEqualList(allCloudList, List.of(bucket, dataset));
+    // note that list ordering is important in this test, reverse create date order
+    assertEquals(
+        gcpList.stream().map(ControlledResource::getResourceId).toList(),
+        List.of(dataset.getResourceId(), bucket.getResourceId()));
+    assertEquals(
+        allCloudList.stream().map(ControlledResource::getResourceId).toList(),
+        List.of(dataset.getResourceId(), bucket.getResourceId()));
 
     assertTrue(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.GCP));
     assertFalse(resourceDao.deleteAllControlledResources(workspaceUuid, CloudPlatform.AZURE));
@@ -270,18 +275,6 @@ public class ResourceDaoTest extends BaseUnitTest {
     assertTrue(listAfterDeletion.isEmpty());
     WorkspaceUnitTestUtils.deleteCloudContextInDatabase(
         workspaceDao, workspaceUuid, CloudPlatform.GCP);
-  }
-
-  private void assertPartialEqualList(
-      List<ControlledResource> actual, List<ControlledResource> expected) {
-    for (WsmResource resource : expected) {
-      assertTrue(
-          actual.stream()
-              .anyMatch(
-                  r ->
-                      r.getResourceId().equals(resource.getResourceId())
-                          && r.partialEqual(resource)));
-    }
   }
 
   @Test
