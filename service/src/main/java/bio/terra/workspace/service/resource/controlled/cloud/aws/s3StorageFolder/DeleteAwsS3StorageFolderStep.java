@@ -10,6 +10,8 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -21,12 +23,15 @@ public class DeleteAwsS3StorageFolderStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(DeleteAwsS3StorageFolderStep.class);
   private final ControlledAwsS3StorageFolderResource resource;
   private final AwsCloudContextService awsCloudContextService;
+  private final SamService samService;
 
   public DeleteAwsS3StorageFolderStep(
       ControlledAwsS3StorageFolderResource resource,
-      AwsCloudContextService awsCloudContextService) {
+      AwsCloudContextService awsCloudContextService,
+      SamService samService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
+    this.samService = samService;
   }
 
   @VisibleForTesting
@@ -49,7 +54,8 @@ public class DeleteAwsS3StorageFolderStep implements Step {
     return executeDeleteAwsS3StorageFolder(
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment()),
+            awsCloudContextService.discoverEnvironment(
+                FlightUtils.getRequiredUserEmail(flightContext.getInputParameters(), samService))),
         resource);
   }
 

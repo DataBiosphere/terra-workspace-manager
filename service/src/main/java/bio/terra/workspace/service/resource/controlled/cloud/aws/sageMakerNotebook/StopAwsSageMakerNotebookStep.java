@@ -10,6 +10,8 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -18,19 +20,21 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
 public class StopAwsSageMakerNotebookStep implements Step {
-
   private static final Logger logger = LoggerFactory.getLogger(StopAwsSageMakerNotebookStep.class);
 
   private final ControlledAwsSageMakerNotebookResource resource;
   private final AwsCloudContextService awsCloudContextService;
+  private final SamService samService;
   private final boolean resourceDeletion;
 
   public StopAwsSageMakerNotebookStep(
       ControlledAwsSageMakerNotebookResource resource,
       AwsCloudContextService awsCloudContextService,
+      SamService samService,
       boolean resourceDeletion) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
+    this.samService = samService;
     this.resourceDeletion = resourceDeletion;
   }
 
@@ -76,7 +80,9 @@ public class StopAwsSageMakerNotebookStep implements Step {
       return executeStopAwsSageMakerNotebook(
           AwsUtils.createWsmCredentialProvider(
               awsCloudContextService.getRequiredAuthentication(),
-              awsCloudContextService.discoverEnvironment()),
+              awsCloudContextService.discoverEnvironment(
+                  FlightUtils.getRequiredUserEmail(
+                      flightContext.getInputParameters(), samService))),
           resource);
     } catch (NotFoundException e) {
       if (!resourceDeletion) {
@@ -93,7 +99,8 @@ public class StopAwsSageMakerNotebookStep implements Step {
     AwsCredentialsProvider credentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
+            awsCloudContextService.discoverEnvironment(
+                FlightUtils.getRequiredUserEmail(flightContext.getInputParameters(), samService)));
 
     try {
       NotebookInstanceStatus notebookStatus =

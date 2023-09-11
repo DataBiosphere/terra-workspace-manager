@@ -125,7 +125,6 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
         new CreateAwsSageMakerNotebookStep(
             this,
             flightBeanBag.getAwsCloudContextService(),
-            userRequest,
             flightBeanBag.getSamService(),
             flightBeanBag.getCliConfiguration()),
         cloudRetry);
@@ -142,17 +141,19 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
     // Notebooks must be stopped before deletion. If requested, stop instance before delete attempt
     if (forceDelete) {
       flight.addStep(
-          new StopAwsSageMakerNotebookStep(this, flightBeanBag.getAwsCloudContextService(), true),
+          new StopAwsSageMakerNotebookStep(
+              this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService(), true),
           cloudRetry);
     } else {
       flight.addStep(
           new ValidateAwsSageMakerNotebookDeleteStep(
-              this, flightBeanBag.getAwsCloudContextService()),
+              this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService()),
           cloudRetry);
     }
 
     flight.addStep(
-        new DeleteAwsSageMakerNotebookStep(this, flightBeanBag.getAwsCloudContextService()),
+        new DeleteAwsSageMakerNotebookStep(
+            this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService()),
         cloudRetry);
   }
 

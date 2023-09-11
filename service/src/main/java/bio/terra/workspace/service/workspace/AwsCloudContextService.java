@@ -82,12 +82,15 @@ public class AwsCloudContextService implements CloudContextService {
   @Override
   public void addCreateCloudContextSteps(
       CreateCloudContextFlight flight,
-      FlightBeanBag appContext,
+      FlightBeanBag flightBeanBag,
       UUID workspaceUuid,
       SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
     flight.addStep(
-        new MakeAwsCloudContextStep(appContext.getAwsCloudContextService(), spendProfile.id()));
+        new MakeAwsCloudContextStep(
+            flightBeanBag.getAwsCloudContextService(),
+            flightBeanBag.getSamService(),
+            spendProfile.id()));
   }
 
   @Override
@@ -165,8 +168,9 @@ public class AwsCloudContextService implements CloudContextService {
    *
    * @return AWS cloud context {@link AwsCloudContext}
    */
-  public AwsCloudContext createCloudContext(String flightId, SpendProfileId spendProfileId) {
-    return createCloudContext(flightId, spendProfileId, discoverEnvironment());
+  public AwsCloudContext createCloudContext(
+      String flightId, SpendProfileId spendProfileId, String userEmail) {
+    return createCloudContext(flightId, spendProfileId, discoverEnvironment(userEmail));
   }
 
   /**
@@ -192,11 +196,13 @@ public class AwsCloudContextService implements CloudContextService {
   /**
    * Discover environment & return a verified environment
    *
+   * @param userEmail user email address
    * @return AWS environment
    */
-  public Environment discoverEnvironment() throws IllegalArgumentException, InternalLogicException {
+  public Environment discoverEnvironment(String userEmail)
+      throws IllegalArgumentException, InternalLogicException {
     try {
-      featureService.featureEnabledCheck(FeatureService.AWS_ENABLED);
+      featureService.featureEnabledCheck(FeatureService.AWS_ENABLED, userEmail);
       initializeEnvironmentDiscovery();
 
       if (this.environmentDiscovery == null) {
@@ -206,18 +212,6 @@ public class AwsCloudContextService implements CloudContextService {
     } catch (IOException e) {
       throw new InternalLogicException("AWS discover environment error", e);
     }
-  }
-
-  /**
-   * Return the landing zone to for the given cloud context's region
-   *
-   * @param awsCloudContext {@link AwsCloudContext}
-   * @param region {@link Region}
-   * @return AWS landing zone, if supported for the Cloud context region
-   * @throws StaleConfigurationException StaleConfigurationException
-   */
-  public Optional<LandingZone> getLandingZone(AwsCloudContext awsCloudContext, Region region) {
-    return getLandingZone(discoverEnvironment(), awsCloudContext, region);
   }
 
   /**
