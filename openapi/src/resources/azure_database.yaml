@@ -11,7 +11,6 @@ components:
         databaseOwner:
           description: Identity of database owner.
           type: string
-          format: uuid
         allowAccessForAllWorkspaceUsers:
           description: Whether all workspace users have access to the database.
           type: boolean

@@ -74,8 +74,8 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.time.OffsetDateTime;
-import java.util.HashSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.jetbrains.annotations.NotNull;
@@ -612,7 +612,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var resource =
         ControlledAzureDatabaseResource.builder()
             .common(commonFields)
-            .databaseOwner(body.getAzureDatabase().getOwner())
+            .databaseOwner(toUUID(body.getAzureDatabase().getOwner()))
             .databaseName(body.getAzureDatabase().getName())
             .k8sNamespace(body.getAzureDatabase().getK8sNamespace())
             .allowAccessForAllWorkspaceUsers(
@@ -774,8 +774,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .common(commonFields)
             .kubernetesNamespace(kubernetesNamespace)
             .kubernetesServiceAccount(kubernetesNamespace + "-ksa")
-            .managedIdentity(body.getAzureKubernetesNamespace().getManagedIdentity())
-            .databases(new HashSet<>(body.getAzureKubernetesNamespace().getDatabases()))
+            .managedIdentity(toUUID(body.getAzureKubernetesNamespace().getManagedIdentity()))
+            .databases(
+                body.getAzureKubernetesNamespace().getDatabases().stream()
+                    .map(this::toUUID)
+                    .collect(Collectors.toSet()))
             .build();
 
     var jobId =
@@ -789,6 +792,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     return new ResponseEntity<>(
         fetchCreateControlledKubernetesNamespaceResult(jobId), HttpStatus.OK);
+  }
+
+  private UUID toUUID(String s) {
+    try {
+      return s == null ? null : UUID.fromString(s);
+    } catch (IllegalArgumentException e) {
+      throw new ValidationException("Invalid UUID: " + s);
+    }
   }
 
   private ApiCreatedControlledAzureKubernetesNamespaceResult
