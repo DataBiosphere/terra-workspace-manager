@@ -176,6 +176,9 @@ public class ControlledDataprocClusterResource extends ControlledResource {
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
     flight.addStep(
+        new ValidateDataprocClusterCreateStep(this, flightBeanBag.getCrlService()),
+        RetryRules.cloud());
+    flight.addStep(
         new RetrieveDataprocClusterResourceAttributesStep(this, flightBeanBag.getCrlService()),
         RetryRules.cloud());
     flight.addStep(

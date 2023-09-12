@@ -1,8 +1,6 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.cloudres.google.dataproc.ClusterName;
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
@@ -66,7 +64,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceActions;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
@@ -93,11 +90,8 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.dataproc.model.Cluster;
 import com.google.common.base.Strings;
 import io.opencensus.contrib.spring.aop.Traced;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -1033,26 +1027,6 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
           throw new BadRequestException("Provide more than 1 primary worker, or none.");
         }
       }
-    }
-
-    // Ensure that the cluster is in a "RUNNING" state
-    try {
-      ClusterName clusterName =
-          ClusterName.builder()
-              .projectId(resource.getProjectId())
-              .region(resource.getRegion())
-              .name(resource.getClusterId())
-              .build();
-      Cluster cluster = crlService.getDataprocCow().clusters().get(clusterName).execute();
-      if (cluster.getStatus().getState() != null
-          && !cluster.getStatus().getState().equals("RUNNING")) {
-        throw new BadRequestException("Cluster must be in a RUNNING state to be updated.");
-      }
-    } catch (GoogleJsonResponseException e) {
-      // Throw bad request exception for malformed parameters
-      GcpFlightExceptionUtils.handleGcpBadRequestException(e);
-    } catch (IOException e) {
-      throw new InternalServerErrorException("Failed to retrieve cluster", e);
     }
 
     logger.info(
