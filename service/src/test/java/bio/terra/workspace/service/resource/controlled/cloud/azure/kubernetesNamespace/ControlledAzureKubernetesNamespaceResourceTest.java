@@ -13,6 +13,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -50,8 +51,8 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
             new ApiAzureKubernetesNamespaceAttributes()
                 .kubernetesNamespace(resource.getKubernetesNamespace())
                 .kubernetesServiceAccount(resource.getKubernetesServiceAccount())
-                .managedIdentity(owner)
-                .databases(List.of(dbResource.getResourceId()))));
+                .managedIdentity(Objects.toString(owner, null))
+                .databases(List.of(dbResource.getResourceId().toString()))));
   }
 
   @Test
