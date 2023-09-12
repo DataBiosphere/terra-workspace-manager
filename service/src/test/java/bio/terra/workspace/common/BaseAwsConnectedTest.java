@@ -1,13 +1,16 @@
 package bio.terra.workspace.common;
 
 import static bio.terra.workspace.common.utils.AwsTestUtils.SAM_USER_AWS_DISABLED;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
+import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.utils.AwsConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.service.features.FeatureService;
@@ -32,14 +35,16 @@ public class BaseAwsConnectedTest extends BaseTest {
 
   @BeforeAll
   public void init() throws Exception {
-    when(mockFeatureService.isFeatureEnabled(eq(FeatureService.AWS_ENABLED), anyString()))
+    when(mockFeatureService.isFeatureEnabled(
+            eq(FeatureService.AWS_ENABLED), not(eq(SAM_USER_AWS_DISABLED.getEmail()))))
         .thenReturn(true);
     when(mockFeatureService.isFeatureEnabled(
-            FeatureService.AWS_ENABLED, SAM_USER_AWS_DISABLED.getEmail()))
+            eq(FeatureService.AWS_ENABLED), eq(SAM_USER_AWS_DISABLED.getEmail())))
         .thenReturn(false);
-    when(mockFeatureService.isFeatureEnabled(FeatureService.AWS_ENABLED)).thenReturn(false);
 
-    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(any(), any());
-    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(any());
+    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(anyString(), notNull());
+    doThrow(new FeatureNotSupportedException("exception"))
+        .when(mockFeatureService)
+        .featureEnabledCheck(anyString());
   }
 }
