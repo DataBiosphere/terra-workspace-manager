@@ -9,11 +9,11 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.generated.model.ApiControlledDataprocClusterUpdateParameters;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.model.Cluster;
 import java.io.IOException;
-import org.springframework.http.HttpStatus;
 
 public class RetrieveDataprocClusterResourceAttributesStep implements Step {
 
@@ -55,10 +55,8 @@ public class RetrieveDataprocClusterResourceAttributesStep implements Step {
 
       workingMap.put(ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS, existingUpdateParameters);
     } catch (GoogleJsonResponseException e) {
-      if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()
-          || HttpStatus.NOT_FOUND.value() == e.getStatusCode()) {
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-      }
+      // Throw bad request exception for malformed parameters
+      GcpFlightExceptionUtils.handleGcpBadRequestException(e);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (IOException e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
