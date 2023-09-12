@@ -18,7 +18,7 @@ public class DatabaseDaoTest extends BaseUnitTest {
   @Autowired private JdbcTemplate jdbcTemplate;
 
   private final String testDatabaseName = "testCreateDatabase";
-  private final String testRoleName = "testCreateRole";
+  private final String testRoleName = "test-Create-Role";
 
   @BeforeEach
   @AfterEach
@@ -92,6 +92,24 @@ public class DatabaseDaoTest extends BaseUnitTest {
     databaseDao.revokeAllPublicPrivileges(testDatabaseName);
   }
 
+  @Test
+  void testRestoreAndRevokeLoginPrivileges() {
+    createTestRole(testRoleName);
+    assertThat(roleCanLogin(testRoleName), equalTo(false));
+
+    databaseDao.restoreLoginPrivileges(testRoleName);
+    assertThat(roleCanLogin(testRoleName), equalTo(true));
+
+    databaseDao.revokeLoginPrivileges(testRoleName);
+    assertThat(roleCanLogin(testRoleName), equalTo(false));
+  }
+
+  @Test
+  void testTerminateSessionsForRole() {
+    createTestRole(testRoleName);
+    assertThat(databaseDao.terminateSessionsForRole(testRoleName), equalTo(0));
+  }
+
   private void createTestRole(String testRoleName) {
     jdbcTemplate.execute("CREATE ROLE \"%s\"".formatted(testRoleName));
   }
@@ -115,5 +133,15 @@ public class DatabaseDaoTest extends BaseUnitTest {
             end;
             $$;""";
     jdbcTemplate.execute(function);
+  }
+
+  private boolean roleCanLogin(String roleName) {
+    return jdbcTemplate
+        .query(
+            "select rolcanlogin from pg_roles where rolname = ?",
+            new Object[] {roleName},
+            new int[] {Types.VARCHAR},
+            (rs, rowNum) -> rs.getBoolean(1))
+        .get(0);
   }
 }

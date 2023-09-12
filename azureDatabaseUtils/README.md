@@ -26,6 +26,12 @@ Which command is run is determined by the spring profile that is active. The com
 * `DeleteNamespaceRole` - deletes a namespace role with a given name. Environment variables:
   * `spring_profiles_active` - must be set to `DeleteNamespaceRole`
   * `NAMESPACE_ROLE` - the name of the role to delete
+* `RevokeNamespaceRoleAccess` - revokes login access and terminates all sessions for namespace role. Environment variables:
+  * `spring_profiles_active` - must be set to `RevokeNamespaceRoleAccess`
+  * `NAMESPACE_ROLE` - the name of the role to delete
+* `RestoreNamespaceRoleAccess` - restores login access for namespace role. Environment variables:
+  * `spring_profiles_active` - must be set to `RestoreNamespaceRoleAccess`
+  * `NAMESPACE_ROLE` - the name of the role to delete
 * `TestDatabaseConnect` - A command to be used in connected tests to verify database permissions. Environment variables:
   * `spring_profiles_active` - must be set to `TestDatabaseConnect`
   * `CONNECT_TO_DATABASE` - the name of the database to connect to

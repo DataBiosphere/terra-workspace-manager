@@ -69,4 +69,22 @@ public class DatabaseService {
 
     databaseDao.deleteRole(namespaceRole);
   }
+
+  public void revokeNamespaceRoleAccess(String namespaceRole) {
+    validator.validateRoleNameFormat(namespaceRole);
+
+    logger.info("Revoking namespace role access {}", namespaceRole);
+
+    // revoke first ensures no new connections are made so we can be sure we terminate all sessions
+    databaseDao.revokeLoginPrivileges(namespaceRole);
+    databaseDao.terminateSessionsForRole(namespaceRole);
+  }
+
+  public void restoreNamespaceRoleAccess(String namespaceRole) {
+    validator.validateRoleNameFormat(namespaceRole);
+
+    logger.info("Restoring namespace role access {}", namespaceRole);
+
+    databaseDao.restoreLoginPrivileges(namespaceRole);
+  }
 }

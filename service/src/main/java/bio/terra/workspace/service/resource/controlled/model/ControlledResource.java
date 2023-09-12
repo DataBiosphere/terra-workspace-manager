@@ -11,6 +11,7 @@ import bio.terra.workspace.generated.model.ApiControlledResourceMetadata;
 import bio.terra.workspace.generated.model.ApiPrivateResourceUser;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -276,4 +277,10 @@ public abstract class ControlledResource extends WsmResource {
     cloneResourceCommonFields.description(description == null ? getDescription() : description);
     return cloneResourceCommonFields.build();
   }
+
+  public String getRequiredSamActionForPrivateResource() {
+    return SamWorkspaceAction.READ;
+  }
+
+
 }

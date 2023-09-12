@@ -31,8 +31,15 @@ public class CheckUserStillInWorkspaceStep implements Step {
             workspaceUuid.toString(),
             SamConstants.SamWorkspaceAction.READ,
             removedUserEmail);
+    boolean userCanWriteWorkspace =
+        samService.checkAuthAsWsmSa(
+            SamConstants.SamResource.WORKSPACE,
+            workspaceUuid.toString(),
+            SamConstants.SamWorkspaceAction.WRITE,
+            removedUserEmail);
     FlightMap workingMap = context.getWorkingMap();
     workingMap.put(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, userCanReadWorkspace);
+    workingMap.put(ControlledResourceKeys.REMOVED_USER_CAN_WRITE, userCanWriteWorkspace);
     return StepResult.getStepResultSuccess();
   }
 

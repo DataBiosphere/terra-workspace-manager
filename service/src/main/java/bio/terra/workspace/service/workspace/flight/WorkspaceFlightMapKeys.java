@@ -41,6 +41,7 @@ public final class WorkspaceFlightMapKeys {
 
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
+    public static final String REMOVED_USER_CAN_WRITE = "removedUserCanWrite";
 
     public static final String CLOUD_PET_SERVICE_ACCOUNT = "cloudPetServiceAccount";
 

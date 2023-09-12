@@ -75,6 +75,8 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
         new ClaimUserPrivateResourcesStep(
             workspaceUuid, userToRemove, appContext.getResourceDao(), samService, wsmSaRequest),
         samRetry);
+    // generate job ids
+    // remove write access to private resources
     addStep(new RemovePrivateResourceAccessStep(userToRemove, samService), samRetry);
     addStep(
         new MarkPrivateResourcesAbandonedStep(
