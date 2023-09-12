@@ -315,8 +315,8 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     return new ApiAzureKubernetesNamespaceAttributes()
         .kubernetesNamespace(getKubernetesNamespace())
         .kubernetesServiceAccount(getKubernetesServiceAccount())
-        .managedIdentity(getManagedIdentity().toString())
-        .databases(getDatabases().stream().map(UUID::toString).toList());
+        .managedIdentity(getManagedIdentity())
+        .databases(getDatabases().stream().toList());
   }
 
   @Override

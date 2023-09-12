@@ -246,7 +246,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   private ApiAzureDatabaseAttributes toApiAttributes() {
     return new ApiAzureDatabaseAttributes()
         .databaseName(getDatabaseName())
-        .databaseOwner(getDatabaseOwner().toString())
+        .databaseOwner(getDatabaseOwner())
         .allowAccessForAllWorkspaceUsers(getAllowAccessForAllWorkspaceUsers());
   }
 

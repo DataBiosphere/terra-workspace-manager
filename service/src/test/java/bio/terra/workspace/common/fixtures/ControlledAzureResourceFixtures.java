@@ -44,6 +44,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -414,7 +415,7 @@ public class ControlledAzureResourceFixtures {
       getAzureKubernetesNamespaceCreationParameters(String owner, List<String> databases) {
     return new ApiAzureKubernetesNamespaceCreationParameters()
         .managedIdentity(Objects.toString(owner, null))
-        .databases(databases.stream().map(UUID::toString).toList())
+        .databases(databases.stream().toList())
         .namespacePrefix(uniqueAzureName(AZURE_KUBERNETES_NAMESPACE_PREFIX).substring(0, 24));
   }
 
@@ -434,14 +435,9 @@ public class ControlledAzureResourceFixtures {
                 .build())
         .kubernetesServiceAccount(namespace + "-ksa")
         .kubernetesNamespace(namespace)
-        .managedIdentity(
-            creationParameters.getManagedIdentity() == null
-                ? null
-                : UUID.fromString(creationParameters.getManagedIdentity()))
+        .managedIdentity(creationParameters.getManagedIdentity())
         .databases(
-            creationParameters.getDatabases().stream()
-                .map(UUID::fromString)
-                .collect(Collectors.toSet()));
+            new HashSet<>(creationParameters.getDatabases()));
   }
 
   public static ControlledAzureKubernetesNamespaceResource.Builder
@@ -465,9 +461,7 @@ public class ControlledAzureResourceFixtures {
         .kubernetesServiceAccount(creationParameters.getNamespacePrefix() + "-ksa")
         .kubernetesNamespace(namespace)
         .databases(
-            creationParameters.getDatabases().stream()
-                .map(UUID::fromString)
-                .collect(Collectors.toSet()));
+            new HashSet<>(creationParameters.getDatabases()));
   }
 
   public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(
@@ -492,7 +486,7 @@ public class ControlledAzureResourceFixtures {
                 .region(DEFAULT_AZURE_RESOURCE_REGION)
                 .build())
         .databaseName(creationParameters.getName())
-        .databaseOwner(UUID.fromString(creationParameters.getOwner()))
+        .databaseOwner(creationParameters.getOwner())
         .k8sNamespace(creationParameters.getK8sNamespace())
         .allowAccessForAllWorkspaceUsers(creationParameters.isAllowAccessForAllWorkspaceUsers());
   }
