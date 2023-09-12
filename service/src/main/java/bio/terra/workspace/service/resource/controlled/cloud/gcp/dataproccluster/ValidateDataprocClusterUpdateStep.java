@@ -12,13 +12,13 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.model.Cluster;
 import java.io.IOException;
 
-public class ValidateDataprocClusterCreateStep implements Step {
+public class ValidateDataprocClusterUpdateStep implements Step {
   private final ControlledDataprocClusterResource resource;
   private final CrlService crlService;
 
   private static final String CLUSTER_RUNNING_STATE = "RUNNING";
 
-  public ValidateDataprocClusterCreateStep(
+  public ValidateDataprocClusterUpdateStep(
       ControlledDataprocClusterResource resource, CrlService crlService) {
     this.resource = resource;
     this.crlService = crlService;
