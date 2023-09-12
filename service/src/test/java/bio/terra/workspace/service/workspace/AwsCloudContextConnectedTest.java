@@ -36,7 +36,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 
-@Tag("aws-connected-1")
+@Tag("aws-connected")
 @TestInstance(Lifecycle.PER_CLASS)
 public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
   private static final Logger logger = LoggerFactory.getLogger(AwsCloudContextConnectedTest.class);
@@ -115,7 +115,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
     }
   }
 
-  // @Test
+  @Test
   void createCloudContextTest() {
     AwsCloudContext createdCloudContext =
         awsCloudContextService.createCloudContext(
@@ -135,7 +135,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
         "flightId");
   }
 
-  // @Test
+  @Test
   void getLandingZoneTest() throws IOException {
     AwsCloudContext cloudContext = awsConnectedTestUtils.getAwsCloudContext();
     Environment environment =

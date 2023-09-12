@@ -29,7 +29,7 @@ runnerThreads = singleThread ? 1 : runnerThreads
 
 test {
   useJUnitPlatform {
-    includeTags "unit-1"
+    includeTags "unit"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -58,7 +58,7 @@ test {
 
 task unitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "unit-1"
+    includeTags "unit"
   }
   outputs.upToDateWhen { false }
   maxParallelForks = runnerThreads
@@ -68,7 +68,7 @@ task unitTest(type: Test) {
 task connectedPlusTest(type: Test) {
   environment.put('TEST_ENV', System.getenv("TEST_ENV"))
   useJUnitPlatform {
-    includeTags "connectedPlus-1"
+    includeTags "connectedPlus"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -98,7 +98,7 @@ task connectedPlusTest(type: Test) {
 task connectedTest(type: Test) {
   environment.put('TEST_ENV', System.getenv("TEST_ENV"))
   useJUnitPlatform {
-    includeTags "connected-1"
+    includeTags "connected"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -109,7 +109,7 @@ task connectedTest(type: Test) {
 
 task azureUnitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "azure-unit-1"
+    includeTags "azure-unit"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -120,7 +120,7 @@ task azureUnitTest(type: Test) {
 // No retries; devs can manually rerun
 task azureConnectedTest(type: Test) {
   useJUnitPlatform {
-    includeTags "azureConnected-1"
+    includeTags "azureConnected"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -159,7 +159,7 @@ task azureConnectedPlusTest(type: Test) {
 
 task awsUnitTest(type: Test) {
   useJUnitPlatform {
-    includeTags "aws-unit-1"
+    includeTags "aws-unit"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -168,7 +168,7 @@ task awsUnitTest(type: Test) {
 
 task awsConnectedTest(type: Test) {
   useJUnitPlatform {
-    includeTags "aws-connected-1"
+    includeTags "aws-connected"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -177,7 +177,7 @@ task awsConnectedTest(type: Test) {
 
 task awsConnectedPlusTest(type: Test) {
   useJUnitPlatform {
-    includeTags "aws-connected-plus-1"
+    includeTags "aws-connected-plus"
   }
   outputs.upToDateWhen { false }
   finalizedBy tasks.combinedJaCoCoReport
@@ -206,7 +206,7 @@ task awsConnectedPlusTest(type: Test) {
 
 task pactTests(type: Test) {
   useJUnitPlatform {
-    includeTags "pact-test-1"
+    includeTags "pact-test"
   }
   environment.put('pact.rootDir', "$buildDir/pacts")
   environment.put('pact.provider.version', "$project.version")
