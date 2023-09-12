@@ -13,7 +13,6 @@ import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.common.BaseAwsConnectedTest;
-import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AwsTestUtils;
@@ -53,17 +52,10 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
   }
 
   @Test
-  void awsFeatureEnabledCheckTest() {
+  void discoverEnvironmentTest() throws IOException {
     Assertions.assertDoesNotThrow(
         () -> mockFeatureService.featureEnabledCheck(AWS_ENABLED, SAM_USER.getEmail()));
 
-    Assertions.assertThrows(
-        FeatureNotSupportedException.class,
-        () -> mockFeatureService.featureEnabledCheck(AWS_ENABLED));
-  }
-
-  @Test
-  void discoverEnvironmentTest() throws IOException {
     // Log the AWS config
     logger.info("AWS Configuration: {}", awsConfiguration.toString());
 

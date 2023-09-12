@@ -1,13 +1,14 @@
 package bio.terra.workspace.common;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
+import static bio.terra.workspace.service.features.FeatureService.AWS_ENABLED;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.when;
 
-import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -23,9 +24,12 @@ public class BaseAwsUnitTest extends BaseUnitTestMocks {
 
   @BeforeAll
   public void init() throws Exception {
-    when(mockFeatureService().isFeatureEnabled(eq(FeatureService.AWS_ENABLED), anyString()))
-        .thenReturn(true);
-    doCallRealMethod().when(mockFeatureService()).featureEnabledCheck(any(), any());
+    when(mockFeatureService().isFeatureEnabled(eq(AWS_ENABLED), isNotNull())).thenReturn(true);
+    when(mockFeatureService().isFeatureEnabled(eq(AWS_ENABLED), isNull())).thenReturn(false);
+    when(mockFeatureService().isFeatureEnabled(AWS_ENABLED)).thenReturn(false);
+
+    doCallRealMethod().when(mockFeatureService()).featureEnabledCheck(eq(AWS_ENABLED), any());
+    doCallRealMethod().when(mockFeatureService()).featureEnabledCheck(AWS_ENABLED);
 
     when(mockSamService().getSamUser((AuthenticatedUserRequest) any())).thenReturn(SAM_USER);
   }
