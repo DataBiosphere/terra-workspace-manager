@@ -1,16 +1,14 @@
 package bio.terra.workspace.common;
 
-import static bio.terra.workspace.common.utils.AwsTestUtils.SAM_USER_AWS_DISABLED;
-import static org.mockito.AdditionalMatchers.not;
-import static org.mockito.ArgumentMatchers.anyString;
+import static bio.terra.workspace.service.features.FeatureService.AWS_ENABLED;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
-import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.common.utils.AwsConnectedTestUtils;
 import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.service.features.FeatureService;
@@ -35,16 +33,11 @@ public class BaseAwsConnectedTest extends BaseTest {
 
   @BeforeAll
   public void init() throws Exception {
-    when(mockFeatureService.isFeatureEnabled(
-            eq(FeatureService.AWS_ENABLED), not(eq(SAM_USER_AWS_DISABLED.getEmail()))))
-        .thenReturn(true);
-    when(mockFeatureService.isFeatureEnabled(
-            eq(FeatureService.AWS_ENABLED), eq(SAM_USER_AWS_DISABLED.getEmail())))
-        .thenReturn(false);
+    when(mockFeatureService.isFeatureEnabled(eq(AWS_ENABLED), isNotNull())).thenReturn(true);
+    when(mockFeatureService.isFeatureEnabled(eq(AWS_ENABLED), isNull())).thenReturn(false);
+    when(mockFeatureService.isFeatureEnabled(AWS_ENABLED)).thenReturn(false);
 
-    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(anyString(), notNull());
-    doThrow(new FeatureNotSupportedException("exception"))
-        .when(mockFeatureService)
-        .featureEnabledCheck(anyString());
+    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(eq(AWS_ENABLED), any());
+    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(AWS_ENABLED);
   }
 }

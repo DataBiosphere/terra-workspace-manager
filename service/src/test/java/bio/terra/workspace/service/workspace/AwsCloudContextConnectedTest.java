@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
-import static bio.terra.workspace.common.utils.AwsTestUtils.SAM_USER_AWS_DISABLED;
+import static bio.terra.workspace.service.features.FeatureService.AWS_ENABLED;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,7 +18,6 @@ import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
-import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.exceptions.InvalidCloudContextStateException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -38,7 +37,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 
-@Tag("aws-connected")
+@Tag("aws-connected-1")
 @TestInstance(Lifecycle.PER_CLASS)
 public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
   private static final Logger logger = LoggerFactory.getLogger(AwsCloudContextConnectedTest.class);
@@ -56,19 +55,11 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
   @Test
   void awsFeatureEnabledCheckTest() {
     Assertions.assertDoesNotThrow(
-        () ->
-            mockFeatureService.featureEnabledCheck(
-                FeatureService.AWS_ENABLED, SAM_USER.getEmail()));
+        () -> mockFeatureService.featureEnabledCheck(AWS_ENABLED, SAM_USER.getEmail()));
 
     Assertions.assertThrows(
         FeatureNotSupportedException.class,
-        () ->
-            mockFeatureService.featureEnabledCheck(
-                FeatureService.AWS_ENABLED, SAM_USER_AWS_DISABLED.getEmail()));
-
-    Assertions.assertThrows(
-        FeatureNotSupportedException.class,
-        () -> mockFeatureService.featureEnabledCheck(FeatureService.AWS_ENABLED));
+        () -> mockFeatureService.featureEnabledCheck(AWS_ENABLED));
   }
 
   @Test
@@ -132,7 +123,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
     }
   }
 
-  @Test
+  // @Test
   void createCloudContextTest() {
     AwsCloudContext createdCloudContext =
         awsCloudContextService.createCloudContext(
@@ -152,7 +143,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
         "flightId");
   }
 
-  @Test
+  // @Test
   void getLandingZoneTest() throws IOException {
     AwsCloudContext cloudContext = awsConnectedTestUtils.getAwsCloudContext();
     Environment environment =

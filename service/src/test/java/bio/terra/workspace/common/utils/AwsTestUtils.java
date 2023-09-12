@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
-import bio.terra.common.iam.BearerToken;
-import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -44,8 +42,6 @@ public class AwsTestUtils {
   public static final String AWS_LANDING_ZONE_KMS_KEY_ARN = "arn:aws:iam::50000000005:role/KmsKey";
   public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
       "arn:aws:iam::60000000006:role/NotebookLifecycleConfig";
-  public static final SamUser SAM_USER_AWS_DISABLED =
-      new SamUser("noAws@email.com", "noAwsSubjectId", new BearerToken("noAwsToken"));
 
   public static final Metadata AWS_METADATA =
       Metadata.builder()

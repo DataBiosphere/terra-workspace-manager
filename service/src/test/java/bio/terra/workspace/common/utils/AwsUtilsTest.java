@@ -5,7 +5,6 @@ import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_SERVICE_EXCEPTION_2;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_REGION;
-import static bio.terra.workspace.common.utils.AwsTestUtils.SAM_USER_AWS_DISABLED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -23,6 +22,8 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
+import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -114,9 +115,12 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
     assertContainsTagByKey(tags, AwsUtils.TAG_KEY_USER_ID);
 
     // should replace existing tag, not add duplicate
-    AwsUtils.appendUserTags(tags, SAM_USER_AWS_DISABLED);
+    String newSubjectId = "appendTagsTest-subjectId";
+    AwsUtils.appendUserTags(
+        tags,
+        new SamUser("appendTagsTest@email.com", newSubjectId, new BearerToken("appendTagsTest")));
     assertEquals(/* prevSize+0 */ 1, tags.size());
-    assertEquals(SAM_USER_AWS_DISABLED.getSubjectId(), tags.iterator().next().value());
+    assertEquals(newSubjectId, tags.iterator().next().value());
 
     AwsUtils.appendRoleTags(tags, ApiAwsCredentialAccessScope.WRITE_READ);
     assertEquals(/* prevSize+1 */ 2, tags.size());
