@@ -48,7 +48,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /** A series of static objects useful for testing controlled resources. */
 public class ControlledAzureResourceFixtures {
@@ -436,8 +435,7 @@ public class ControlledAzureResourceFixtures {
         .kubernetesServiceAccount(namespace + "-ksa")
         .kubernetesNamespace(namespace)
         .managedIdentity(creationParameters.getManagedIdentity())
-        .databases(
-            new HashSet<>(creationParameters.getDatabases()));
+        .databases(new HashSet<>(creationParameters.getDatabases()));
   }
 
   public static ControlledAzureKubernetesNamespaceResource.Builder
@@ -460,8 +458,7 @@ public class ControlledAzureResourceFixtures {
                 .build())
         .kubernetesServiceAccount(creationParameters.getNamespacePrefix() + "-ksa")
         .kubernetesNamespace(namespace)
-        .databases(
-            new HashSet<>(creationParameters.getDatabases()));
+        .databases(new HashSet<>(creationParameters.getDatabases()));
   }
 
   public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(

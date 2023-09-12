@@ -13,7 +13,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
