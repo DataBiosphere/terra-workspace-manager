@@ -115,14 +115,12 @@ public class AwsUtilsTest extends BaseAwsUnitTest {
     assertContainsTagByKey(tags, AwsUtils.TAG_KEY_USER_ID);
 
     // should replace existing tag, not add duplicate
+    String newSubjectId = "appendTagsTest-subjectId";
     AwsUtils.appendUserTags(
         tags,
-        new SamUser(
-            "appendTagsTest@email.com",
-            "appendTagsTest-subjectId",
-            new BearerToken("appendTagsTest")));
+        new SamUser("appendTagsTest@email.com", newSubjectId, new BearerToken("appendTagsTest")));
     assertEquals(/* prevSize+0 */ 1, tags.size());
-    assertEquals("appendTagsTest-subjectId", tags.iterator().next().value());
+    assertEquals(newSubjectId, tags.iterator().next().value());
 
     AwsUtils.appendRoleTags(tags, ApiAwsCredentialAccessScope.WRITE_READ);
     assertEquals(/* prevSize+1 */ 2, tags.size());

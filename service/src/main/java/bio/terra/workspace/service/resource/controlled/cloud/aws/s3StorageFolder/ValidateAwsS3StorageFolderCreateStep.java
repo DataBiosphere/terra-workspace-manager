@@ -9,18 +9,23 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
 public class ValidateAwsS3StorageFolderCreateStep implements Step {
   private final ControlledAwsS3StorageFolderResource resource;
   private final AwsCloudContextService awsCloudContextService;
+  private final SamService samService;
 
   public ValidateAwsS3StorageFolderCreateStep(
       ControlledAwsS3StorageFolderResource resource,
-      AwsCloudContextService awsCloudContextService) {
+      AwsCloudContextService awsCloudContextService,
+      SamService samService) {
     this.resource = resource;
     this.awsCloudContextService = awsCloudContextService;
+    this.samService = samService;
   }
 
   @Override
@@ -29,7 +34,8 @@ public class ValidateAwsS3StorageFolderCreateStep implements Step {
     AwsCredentialsProvider credentialsProvider =
         AwsUtils.createWsmCredentialProvider(
             awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
+            awsCloudContextService.discoverEnvironment(
+                FlightUtils.getRequiredUserEmail(flightContext.getInputParameters(), samService)));
 
     try {
       if (AwsUtils.checkFolderExists(credentialsProvider, resource)) {
