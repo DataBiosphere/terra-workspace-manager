@@ -29,6 +29,7 @@ import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.UpdateControlledGcpDataprocClusterRequestBody;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.Dataproc;
+import com.google.api.services.dataproc.model.StartClusterRequest;
 import com.google.api.services.dataproc.model.StopClusterRequest;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
@@ -152,19 +153,15 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     Dataproc dataproc = ClientTestUtils.getDataprocClient(resourceUser);
 
     DataprocUtils.assertClusterHasProxyUrl(dataproc, projectId, region, clusterId);
-    assertTrue(
-        DataprocUtils.userHasProxyAccess(creationResult, resourceUser, projectId),
-        "Private resource user has access to their cluster");
+    boolean userHasProxyAccess =
+        RetryUtils.getWithRetry(
+            (hasProxyAccess) -> hasProxyAccess,
+            () -> DataprocUtils.userHasProxyAccess(creationResult, resourceUser, projectId),
+            "Timed out waiting for resource user to have access to the cluster");
+    assertTrue(userHasProxyAccess, "Private resource user has access to their cluster");
     assertFalse(
         DataprocUtils.userHasProxyAccess(creationResult, otherWorkspaceUser, projectId),
         "Other workspace user does not have access to a private cluster");
-
-    // The user should be able to stop their cluster.
-    dataproc
-        .projects()
-        .regions()
-        .clusters()
-        .stop(projectId, region, clusterId, new StopClusterRequest());
 
     // The user should not be able to directly delete their cluster.
     GoogleJsonResponseException directDeleteForbidden =
@@ -249,6 +246,32 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
         "WSM throws a bad request exception",
         badClusterUpdateParameter.getCode(),
         equalTo(HttpStatus.SC_BAD_REQUEST));
+
+    // The user should be able to stop their cluster.
+    dataproc
+        .projects()
+        .regions()
+        .clusters()
+        .stop(projectId, region, clusterId, new StopClusterRequest());
+
+    // Assert cluster is stopped
+    RetryUtils.getWithRetry(
+        cluster -> cluster.getStatus().getState().equals("STOPPED"),
+        () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
+        "Timed out waiting for cluster to be stopped");
+
+    // The user should be able to start their cluster.
+    dataproc
+        .projects()
+        .regions()
+        .clusters()
+        .start(projectId, region, clusterId, new StartClusterRequest());
+
+    // Assert cluster is running
+    RetryUtils.getWithRetry(
+        cluster -> cluster.getStatus().getState().equals("RUNNING"),
+        () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
+        "Timed out waiting for cluster to start");
 
     // Delete the Dataproc cluster through WSM.
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);
