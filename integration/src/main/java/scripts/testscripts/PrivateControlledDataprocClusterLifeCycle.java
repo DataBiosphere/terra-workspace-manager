@@ -29,6 +29,7 @@ import bio.terra.workspace.model.StewardshipType;
 import bio.terra.workspace.model.UpdateControlledGcpDataprocClusterRequestBody;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.Dataproc;
+import com.google.api.services.dataproc.model.Cluster;
 import com.google.api.services.dataproc.model.StartClusterRequest;
 import com.google.api.services.dataproc.model.StopClusterRequest;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -163,6 +164,18 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
         DataprocUtils.userHasProxyAccess(creationResult, otherWorkspaceUser, projectId),
         "Other workspace user does not have access to a private cluster");
 
+    // Assert that user has access to the cluster through the Dataproc API.
+    Cluster getCluster =
+        RetryUtils.getWithRetryOnException(
+            () ->
+                dataproc
+                    .projects()
+                    .regions()
+                    .clusters()
+                    .get(projectId, region, clusterId)
+                    .execute());
+    assertNotNull(getCluster);
+
     // The user should not be able to directly delete their cluster.
     GoogleJsonResponseException directDeleteForbidden =
         assertThrows(
@@ -183,7 +196,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     var newName = "new-cluster-name";
     var newDescription = "new description for the cluster";
     int newNumPrimaryWorkers = 3;
-    int newNumSecondaryWorkers = 3;
+    int newNumSecondaryWorkers = 0; // Scale secondary workers to 0 so that we can stop the cluster
     GcpDataprocClusterResource updatedResource =
         resourceUserApi.updateDataprocCluster(
             new UpdateControlledGcpDataprocClusterRequestBody()
@@ -202,8 +215,8 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     RetryUtils.getWithRetry(
         cluster ->
             newNumPrimaryWorkers == cluster.getConfig().getWorkerConfig().getNumInstances()
-                && newNumSecondaryWorkers
-                    == cluster.getConfig().getSecondaryWorkerConfig().getNumInstances(),
+                && cluster.getConfig().getSecondaryWorkerConfig() == null
+                && cluster.getStatus().getState().equals("RUNNING"),
         () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
         "Timed out waiting for cluster to update");
 
@@ -222,7 +235,8 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     // Directly fetch the cluster to verify updated lifecycle rules
     RetryUtils.getWithRetry(
         cluster ->
-            newIdleDeleteTtl.equals(cluster.getConfig().getLifecycleConfig().getIdleDeleteTtl()),
+            newIdleDeleteTtl.equals(cluster.getConfig().getLifecycleConfig().getIdleDeleteTtl())
+                && cluster.getStatus().getState().equals("RUNNING"),
         () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
         "Timed out waiting for cluster to update");
 
@@ -252,7 +266,8 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
         .projects()
         .regions()
         .clusters()
-        .stop(projectId, region, clusterId, new StopClusterRequest());
+        .stop(projectId, region, clusterId, new StopClusterRequest())
+        .execute();
 
     // Assert cluster is stopped
     RetryUtils.getWithRetry(
@@ -265,7 +280,8 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
         .projects()
         .regions()
         .clusters()
-        .start(projectId, region, clusterId, new StartClusterRequest());
+        .start(projectId, region, clusterId, new StartClusterRequest())
+        .execute();
 
     // Assert cluster is running
     RetryUtils.getWithRetry(

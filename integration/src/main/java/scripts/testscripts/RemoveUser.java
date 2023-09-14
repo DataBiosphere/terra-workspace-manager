@@ -34,6 +34,7 @@ import scripts.utils.CloudContextMaker;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
 import scripts.utils.NotebookUtils;
+import scripts.utils.RetryUtils;
 import scripts.utils.SamClientUtils;
 import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
@@ -138,11 +139,11 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     String sharedBucketName = sharedBucket.getGcpBucket().getAttributes().getBucketName();
     String privateBucketName = privateBucket.getGcpBucket().getAttributes().getBucketName();
     // Validate that setup ran correctly and users have appropriate resource access.
-    ClientTestUtils.getWithRetryOnException(
+    RetryUtils.getWithRetryOnException(
         () ->
             GcsBucketObjectUtils.retrieveBucketFile(
                 sharedBucketName, projectId, sharedResourceUser));
-    ClientTestUtils.getWithRetryOnException(
+    RetryUtils.getWithRetryOnException(
         () ->
             GcsBucketObjectUtils.retrieveBucketFile(
                 privateBucketName, projectId, privateResourceUser));
@@ -160,7 +161,7 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
 
     // Validate that sharedResourceUser can no longer read resources in the workspace.
     // This requires syncing google groups, so there is often a delay that we need to wait for.
-    ClientTestUtils.runWithRetryOnException(
+    RetryUtils.runWithRetryOnException(
         () -> assertUserCannotReadBucket(sharedBucketName, sharedResourceUser));
 
     // privateResource user can still read the shared bucket.
@@ -189,13 +190,13 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
     assertTrue(revokeReaderSucceeded);
 
     // Validate privateResourceWriter no longer has access to any private resources.
-    ClientTestUtils.runWithRetryOnException(
+    RetryUtils.runWithRetryOnException(
         () -> assertUserCannotReadBucket(sharedBucketName, privateResourceUser));
-    ClientTestUtils.runWithRetryOnException(
+    RetryUtils.runWithRetryOnException(
         () -> assertUserCannotReadBucket(privateBucketName, privateResourceUser));
-    ClientTestUtils.runWithRetryOnException(
+    RetryUtils.runWithRetryOnException(
         () -> assertUserCannotReadDataset(privateDataset, privateResourceUser));
-    ClientTestUtils.runWithRetryOnException(
+    RetryUtils.runWithRetryOnException(
         () -> assertUserCannotAccessNotebook(privateNotebook, privateResourceUser));
   }
 
