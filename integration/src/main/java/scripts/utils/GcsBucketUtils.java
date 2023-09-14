@@ -245,7 +245,7 @@ public class GcsBucketUtils {
             .bucket(bucket);
 
     GcpGcsBucketResource result =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () -> resourceApi.createBucketReference(body, workspaceUuid));
     logger.info(
         "Created reference to GCS bucket {} resourceID {} workspaceID {}",
@@ -354,7 +354,7 @@ public class GcsBucketUtils {
 
     // There can be IAM propagation delays, so be a patient with the creation
     Blob result =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () ->
                 sourceOwnerStorageClient.create(
                     blobInfo, GCS_BLOB_CONTENT.getBytes(StandardCharsets.UTF_8)));
