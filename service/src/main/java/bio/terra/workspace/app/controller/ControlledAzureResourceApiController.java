@@ -51,6 +51,7 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamControlledResourceA
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
+import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
@@ -65,6 +66,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -95,6 +97,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final AzureConfiguration azureConfiguration;
   private final AzureStorageAccessService azureControlledStorageResourceService;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
+  private final WsmResourceService wsmResourceService;
 
   @Autowired
   public ControlledAzureResourceApiController(
@@ -110,7 +113,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       WorkspaceService workspaceService,
       AzureConfiguration azureConfiguration,
       AzureStorageAccessService azureControlledStorageResourceService,
-      LandingZoneApiDispatch landingZoneApiDispatch) {
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      WsmResourceService wsmResourceService) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -125,6 +129,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.azureConfiguration = azureConfiguration;
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
+    this.wsmResourceService = wsmResourceService;
   }
 
   @Traced
@@ -612,7 +617,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var resource =
         ControlledAzureDatabaseResource.builder()
             .common(commonFields)
-            .databaseOwner(toUUID(body.getAzureDatabase().getOwner()))
+            .databaseOwner(maybeLookupName(workspaceUuid, body.getAzureDatabase().getOwner()))
             .databaseName(body.getAzureDatabase().getName())
             .k8sNamespace(body.getAzureDatabase().getK8sNamespace())
             .allowAccessForAllWorkspaceUsers(
@@ -774,10 +779,12 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .common(commonFields)
             .kubernetesNamespace(kubernetesNamespace)
             .kubernetesServiceAccount(kubernetesNamespace + "-ksa")
-            .managedIdentity(toUUID(body.getAzureKubernetesNamespace().getManagedIdentity()))
+            .managedIdentity(
+                maybeLookupName(
+                    workspaceId, body.getAzureKubernetesNamespace().getManagedIdentity()))
             .databases(
                 body.getAzureKubernetesNamespace().getDatabases().stream()
-                    .map(this::toUUID)
+                    .map(n -> maybeLookupName(workspaceId, n))
                     .collect(Collectors.toSet()))
             .build();
 
@@ -794,11 +801,25 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         fetchCreateControlledKubernetesNamespaceResult(jobId), HttpStatus.OK);
   }
 
-  private UUID toUUID(String s) {
+  /**
+   * Initial implementations of createAzureKubernetesNamespace and createAzureDatabase required ids
+   * of the resources to be passed in. But names are easier to use and port nicely during clone
+   * operations. So currently the api supports both names and ids. But we convert to names before
+   * storing the resource.
+   *
+   * @param workspaceId
+   * @param maybeUuid a uuid or a name
+   * @return if maybeUuid is a uuid and exists in the workspace, return the name of the resource
+   *     with that uuid. Otherwise, return maybeUuid.
+   */
+  private String maybeLookupName(UUID workspaceId, String maybeUuid) {
+    if (maybeUuid == null) {
+      return null;
+    }
     try {
-      return s == null ? null : UUID.fromString(s);
-    } catch (IllegalArgumentException e) {
-      throw new ValidationException("Invalid UUID: " + s);
+      return wsmResourceService.getResource(workspaceId, UUID.fromString(maybeUuid)).getName();
+    } catch (IllegalArgumentException | ResourceNotFoundException e) {
+      return maybeUuid;
     }
   }
 

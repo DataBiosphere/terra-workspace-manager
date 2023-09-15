@@ -3,20 +3,19 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.UUID;
 
 @JsonIgnoreProperties(
     ignoreUnknown = true) // time was region was unnecessarily included in the json
 public class ControlledAzureDatabaseAttributes {
   private final String databaseName;
-  private final UUID databaseOwner;
+  private final String databaseOwner;
   private final String k8sNamespace;
   private final boolean allowAccessForAllWorkspaceUsers;
 
   @JsonCreator
   public ControlledAzureDatabaseAttributes(
       @JsonProperty("databaseName") String databaseName,
-      @JsonProperty("databaseOwner") UUID databaseOwner,
+      @JsonProperty("databaseOwner") String databaseOwner,
       @JsonProperty("k8sNamespace") String k8sNamespace,
       @JsonProperty("allowAccessForAllWorkspaceUsers") boolean allowAccessForAllWorkspaceUsers) {
     this.databaseName = databaseName;
@@ -29,7 +28,7 @@ public class ControlledAzureDatabaseAttributes {
     return databaseName;
   }
 
-  public UUID getDatabaseOwner() {
+  public String getDatabaseOwner() {
     return databaseOwner;
   }
 

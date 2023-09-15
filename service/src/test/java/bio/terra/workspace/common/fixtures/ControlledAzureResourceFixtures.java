@@ -44,10 +44,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /** A series of static objects useful for testing controlled resources. */
 public class ControlledAzureResourceFixtures {
@@ -411,10 +411,10 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ApiAzureKubernetesNamespaceCreationParameters
-      getAzureKubernetesNamespaceCreationParameters(UUID owner, List<UUID> databases) {
+      getAzureKubernetesNamespaceCreationParameters(String owner, List<String> databases) {
     return new ApiAzureKubernetesNamespaceCreationParameters()
         .managedIdentity(Objects.toString(owner, null))
-        .databases(databases.stream().map(UUID::toString).toList())
+        .databases(databases.stream().toList())
         .namespacePrefix(uniqueAzureName(AZURE_KUBERNETES_NAMESPACE_PREFIX).substring(0, 24));
   }
 
@@ -434,14 +434,8 @@ public class ControlledAzureResourceFixtures {
                 .build())
         .kubernetesServiceAccount(namespace + "-ksa")
         .kubernetesNamespace(namespace)
-        .managedIdentity(
-            creationParameters.getManagedIdentity() == null
-                ? null
-                : UUID.fromString(creationParameters.getManagedIdentity()))
-        .databases(
-            creationParameters.getDatabases().stream()
-                .map(UUID::fromString)
-                .collect(Collectors.toSet()));
+        .managedIdentity(creationParameters.getManagedIdentity())
+        .databases(new HashSet<>(creationParameters.getDatabases()));
   }
 
   public static ControlledAzureKubernetesNamespaceResource.Builder
@@ -464,14 +458,11 @@ public class ControlledAzureResourceFixtures {
                 .build())
         .kubernetesServiceAccount(creationParameters.getNamespacePrefix() + "-ksa")
         .kubernetesNamespace(namespace)
-        .databases(
-            creationParameters.getDatabases().stream()
-                .map(UUID::fromString)
-                .collect(Collectors.toSet()));
+        .databases(new HashSet<>(creationParameters.getDatabases()));
   }
 
   public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(
-      UUID owner, String k8sNamespace) {
+      String owner, String k8sNamespace) {
     return new ApiAzureDatabaseCreationParameters()
         .name(uniqueAzureName(AZURE_DATABASE_NAME_PREFIX))
         .k8sNamespace(k8sNamespace)
@@ -492,7 +483,7 @@ public class ControlledAzureResourceFixtures {
                 .region(DEFAULT_AZURE_RESOURCE_REGION)
                 .build())
         .databaseName(creationParameters.getName())
-        .databaseOwner(UUID.fromString(creationParameters.getOwner()))
+        .databaseOwner(creationParameters.getOwner())
         .k8sNamespace(creationParameters.getK8sNamespace())
         .allowAccessForAllWorkspaceUsers(creationParameters.isAllowAccessForAllWorkspaceUsers());
   }
