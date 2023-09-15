@@ -6,6 +6,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -100,12 +101,11 @@ public class RevokePetUsagePermissionStep implements Step {
    * @return The email of the user's pet SA if the above conditions are met, empty otherwise.
    */
   private Optional<String> getAndValidatePet(FlightMap workingMap) {
-    boolean userStillInWorkspace =
-        workingMap.get(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class);
+    boolean userCanReadWorkspace = FlightUtils.getRequired(workingMap, ControlledResourceKeys.REMOVED_USER_CAN_READ_WORKSPACE, Boolean.class);
     // This flight is triggered whenever a user loses any role on a workspace. If they are still
     // a member of the workspace via a group or another role, we do not need to remove their access
     // to their pet SA.
-    if (userStillInWorkspace) {
+    if (userCanReadWorkspace) {
       return Optional.empty();
     }
     // Pet service accounts only live in a GCP context. If this workspace does not have a GCP

@@ -489,6 +489,34 @@ public class ResourceDao {
   }
 
   /**
+   * Release a single claim to clean up a user's private resource (indicated by the
+   * cleanup_flight_id column of the resource table) in a workspace for the provided flight.
+   */
+  @WriteTransaction
+  public void releasePrivateResourceCleanupClaim(
+      UUID workspaceUuid, UUID resourceId, String userEmail, String flightId) {
+    String writeSql =
+        """
+          UPDATE resource SET cleanup_flight_id = NULL
+          WHERE workspace_id = :workspace_id
+          AND resource_id = :resource_id
+          AND stewardship_type = :controlled_resource
+          AND access_scope = :access_scope
+          AND assigned_user = :user_email
+          AND cleanup_flight_id = :flight_id
+        """;
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("workspace_id", workspaceUuid.toString())
+            .addValue("resource_id", resourceId.toString())
+            .addValue("controlled_resource", CONTROLLED.toSql())
+            .addValue("access_scope", AccessScopeType.ACCESS_SCOPE_PRIVATE.toSql())
+            .addValue("user_email", userEmail)
+            .addValue("flight_id", flightId);
+    jdbcTemplate.update(writeSql, params);
+  }
+
+  /**
    * Deletes all controlled resources on a specified cloud platform in a workspace.
    *
    * @param workspaceUuid ID of the workspace to return resources from.
@@ -909,7 +937,7 @@ public class ResourceDao {
   /**
    * Set the private_resource_state of a single private controlled resource. To set the state for
    * all a user's private resources in a workspace, use {@link
-   * #setPrivateResourcesStateForWorkspaceUser(UUID, String, PrivateResourceState)}
+   * #setPrivateResourcesStateForWorkspaceUser(UUID, String, PrivateResourceState, Optional)}
    */
   @WriteTransaction
   public void setPrivateResourceState(
@@ -937,17 +965,24 @@ public class ResourceDao {
    */
   @WriteTransaction
   public void setPrivateResourcesStateForWorkspaceUser(
-      UUID workspaceUuid, String userEmail, PrivateResourceState state) {
-    final String sql =
+      UUID workspaceUuid,
+      String userEmail,
+      PrivateResourceState state,
+      Optional<String> maybeFlightId) {
+    String sql =
         """
           UPDATE resource SET private_resource_state = :private_resource_state
           WHERE workspace_id = :workspace_id AND assigned_user = :user_email
          """;
+    if (maybeFlightId.isPresent()) {
+      sql += " AND cleanup_flight_id = :flight_id";
+    }
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("private_resource_state", state.toSql())
             .addValue("workspace_id", workspaceUuid.toString())
             .addValue("user_email", userEmail);
+    maybeFlightId.ifPresent(flightId -> params.addValue("flight_id", flightId));
     jdbcTemplate.update(sql, params);
   }
 

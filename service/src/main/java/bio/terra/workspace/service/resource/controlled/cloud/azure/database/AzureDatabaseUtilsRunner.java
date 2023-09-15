@@ -258,9 +258,7 @@ public class AzureDatabaseUtilsRunner {
         COMMAND_RESTORE_NAMESPACE_ROLE_ACCESS);
   }
 
-  /**
-   * Runs a command that takes a namespace role name as a parameter.
-   */
+  /** Runs a command that takes a namespace role name as a parameter. */
   private void namespaceRoleCommand(
       AzureCloudContext azureCloudContext,
       UUID workspaceId,

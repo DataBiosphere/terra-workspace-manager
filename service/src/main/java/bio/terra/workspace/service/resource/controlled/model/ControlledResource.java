@@ -22,6 +22,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -139,6 +140,20 @@ public abstract class ControlledResource extends WsmResource {
    */
   public abstract void addDeleteSteps(
       DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag);
+
+  /**
+   * The RemoveNativeAccessToPrivateResourcesFlight calls this method to populate the
+   * resource-specific step(s) to remove native access to the specific cloud resource. This is only
+   * required for private resources when resource specific access control methods are in use. It is
+   * not usually required to override this method.
+   *
+   * @param flight the remove native access flight
+   * @param flightBeanBag bean bag for finding Spring singletons
+   */
+  public List<StepRetryRulePair> getRemoveNativeAccessSteps(FlightBeanBag flightBeanBag) {
+    return List.of();
+  }
+  ;
 
   public <T extends ControlledResource> T getResourceFromFlightInputParameters(
       Flight flight, WsmResourceType resourceType) {
@@ -278,9 +293,14 @@ public abstract class ControlledResource extends WsmResource {
     return cloneResourceCommonFields.build();
   }
 
+  /**
+   * Get the Sam action required on a workspace for a user to maintain access to a private resource
+   * of this type. If a user loses this action on a workspace, they will lose access to all private
+   * resources of this type in the workspace.
+   *
+   * @return
+   */
   public String getRequiredSamActionForPrivateResource() {
     return SamWorkspaceAction.READ;
   }
-
-
 }

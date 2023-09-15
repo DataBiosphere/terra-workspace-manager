@@ -109,7 +109,7 @@ public class PrivateResourceCleanupService {
     // For each pair, validate that the user is still in the workspace (i.e. can read the workspace)
     for (WorkspaceUserPair workspaceUserPair : resourcesToValidate) {
       try {
-        boolean userHasWritePermission =
+        boolean userHasPermission =
             Rethrow.onInterrupted(
                 () ->
                     samService.checkAuthAsWsmSa(
@@ -117,25 +117,11 @@ public class PrivateResourceCleanupService {
                         workspaceUserPair.getWorkspaceId().toString(),
                         SamWorkspaceAction.WRITE,
                         workspaceUserPair.getUserEmail()),
-                "cleanupWritableResources");
-        if (!userHasWritePermission) {
-          logger.info(
-              "Cleaning up writable resources for user {} from workspace {}",
-              workspaceUserPair.getUserEmail(),
-              workspaceUserPair.getWorkspaceId());
-          runCleanupWritableResourcesFlight(workspaceUserPair);
-        }
-
-        boolean userHasReadPermission =
-            Rethrow.onInterrupted(
-                () ->
-                    samService.checkAuthAsWsmSa(
-                        SamResource.WORKSPACE,
-                        workspaceUserPair.getWorkspaceId().toString(),
-                        SamWorkspaceAction.READ,
-                        workspaceUserPair.getUserEmail()),
                 "cleanupResources");
-        if (!userHasReadPermission) {
+        if (!userHasPermission) {
+          // if we got here, the user does not have write access to the workspace,
+          // the cleanup flight will remove write access to applicable private resources and
+          // revoke access to all private resources if the user does not have read access either
           logger.info(
               "Cleaning up resources for user {} from workspace {}",
               workspaceUserPair.getUserEmail(),
@@ -151,7 +137,8 @@ public class PrivateResourceCleanupService {
         resourceDao.setPrivateResourcesStateForWorkspaceUser(
             workspaceUserPair.getWorkspaceId(),
             workspaceUserPair.getUserEmail(),
-            PrivateResourceState.NOT_APPLICABLE);
+            PrivateResourceState.NOT_APPLICABLE,
+            Optional.empty());
       }
     }
   }
@@ -179,38 +166,6 @@ public class PrivateResourceCleanupService {
             // Explicitly indicate there is no role to remove, as the user is already out of the
             // workspace.
             .addParameter(WorkspaceFlightMapKeys.ROLE_TO_REMOVE, null);
-    try {
-      userCleanupJob.submitAndWait();
-    } catch (RuntimeException e) {
-      // Log the error, but don't kill this thread as it still needs to clean up other users.
-      logger.error(
-          "Flight cleaning up user {} in workspace {} failed: ",
-          workspaceUserPair.getUserEmail(),
-          workspaceUserPair.getWorkspaceId(),
-          e);
-    }
-  }
-
-  private void runCleanupWritableResourcesFlight(WorkspaceUserPair workspaceUserPair) {
-    String description =
-        "Clean up writable resources after user "
-            + workspaceUserPair.getUserEmail()
-            + " in workspace "
-            + workspaceUserPair.getWorkspaceId().toString();
-    String wsmSaToken = samService.getWsmServiceAccountToken();
-    AuthenticatedUserRequest wsmSaRequest =
-        new AuthenticatedUserRequest().token(Optional.of(wsmSaToken));
-    JobBuilder userCleanupJob =
-        jobService
-            .newJob()
-            .description(description)
-            .flightClass(RemoveUserFromWorkspaceFlight.class)
-            .userRequest(wsmSaRequest)
-            .workspaceId(workspaceUserPair.getWorkspaceId().toString())
-            .operationType(OperationType.SYSTEM_CLEANUP)
-            .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUserPair.getWorkspaceId().toString())
-            .addParameter(WorkspaceFlightMapKeys.USER_TO_REMOVE, workspaceUserPair.getUserEmail());
     try {
       userCleanupJob.submitAndWait();
     } catch (RuntimeException e) {
