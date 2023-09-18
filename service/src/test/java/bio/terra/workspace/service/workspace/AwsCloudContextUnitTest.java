@@ -6,6 +6,9 @@ import static bio.terra.workspace.common.utils.AwsTestUtils.ACCOUNT_ID;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_ENVIRONMENT;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_LANDING_ZONE;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_METADATA;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_REGION;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_WORKSPACE_SECURITY_GROUPS;
+import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_WORKSPACE_SECURITY_GROUP_ID;
 import static bio.terra.workspace.common.utils.AwsTestUtils.ENVIRONMENT_ALIAS;
 import static bio.terra.workspace.common.utils.AwsTestUtils.MAJOR_VERSION;
 import static bio.terra.workspace.common.utils.AwsTestUtils.ORGANIZATION_ID;
@@ -16,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,12 +56,34 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
 
   private final AwsCloudContext awsCloudContext =
       AwsCloudContextService.createCloudContext(
-          "flightId", DEFAULT_SPEND_PROFILE_ID, AWS_ENVIRONMENT);
+          "flightId", DEFAULT_SPEND_PROFILE_ID, AWS_ENVIRONMENT, AWS_WORKSPACE_SECURITY_GROUPS);
 
   @Test
   void serdesTest() {
     // Case 1: successful V2 deserialization
     String v1Json =
+        String.format(
+            "{\"version\": %d, \"majorVersion\": \"%s\", \"organizationId\": \"%s\", \"accountId\": \"%s\", \"tenantAlias\": \"%s\", \"environmentAlias\": \"%s\", \"applicationSecurityGroups\": {\"%s\": \"%s\"} }",
+            V1_VERSION,
+            MAJOR_VERSION,
+            ORGANIZATION_ID,
+            ACCOUNT_ID,
+            TENANT_ALIAS,
+            ENVIRONMENT_ALIAS,
+            AWS_REGION,
+            AWS_WORKSPACE_SECURITY_GROUP_ID);
+
+    DbCloudContext dbCloudContext = makeDbCloudContext(CloudPlatform.AWS, v1Json);
+    AwsCloudContext goodV1 = AwsCloudContext.deserialize(dbCloudContext);
+    assertEquals(goodV1.getMajorVersion(), MAJOR_VERSION);
+    assertEquals(goodV1.getOrganizationId(), ORGANIZATION_ID);
+    assertEquals(goodV1.getAccountId(), ACCOUNT_ID);
+    assertEquals(goodV1.getTenantAlias(), TENANT_ALIAS);
+    assertEquals(goodV1.getEnvironmentAlias(), ENVIRONMENT_ALIAS);
+    assertEquals(goodV1.getApplicationSecurityGroups(), AWS_WORKSPACE_SECURITY_GROUPS);
+
+    // Case 1.5: successful V2 deserialization with no security groups
+    v1Json =
         String.format(
             "{\"version\": %d, \"majorVersion\": \"%s\", \"organizationId\": \"%s\", \"accountId\": \"%s\", \"tenantAlias\": \"%s\", \"environmentAlias\": \"%s\" }",
             V1_VERSION,
@@ -67,13 +93,14 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
             TENANT_ALIAS,
             ENVIRONMENT_ALIAS);
 
-    DbCloudContext dbCloudContext = makeDbCloudContext(CloudPlatform.AWS, v1Json);
-    AwsCloudContext goodV1 = AwsCloudContext.deserialize(dbCloudContext);
+    dbCloudContext = makeDbCloudContext(CloudPlatform.AWS, v1Json);
+    goodV1 = AwsCloudContext.deserialize(dbCloudContext);
     assertEquals(goodV1.getMajorVersion(), MAJOR_VERSION);
     assertEquals(goodV1.getOrganizationId(), ORGANIZATION_ID);
     assertEquals(goodV1.getAccountId(), ACCOUNT_ID);
     assertEquals(goodV1.getTenantAlias(), TENANT_ALIAS);
     assertEquals(goodV1.getEnvironmentAlias(), ENVIRONMENT_ALIAS);
+    assertNull(goodV1.getApplicationSecurityGroups());
 
     // Case 2: bad V2 format
     String badV1Json =
@@ -139,7 +166,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
   void createCloudContextTest() {
     AwsCloudContext createdCloudContext =
         AwsCloudContextService.createCloudContext(
-            "flightId", DEFAULT_SPEND_PROFILE_ID, AWS_ENVIRONMENT);
+            "flightId", DEFAULT_SPEND_PROFILE_ID, AWS_ENVIRONMENT, AWS_WORKSPACE_SECURITY_GROUPS);
     assertNotNull(createdCloudContext);
     AwsTestUtils.assertAwsCloudContextFields(AWS_METADATA, createdCloudContext.getContextFields());
     AwsTestUtils.assertCloudContextCommonFields(
@@ -184,7 +211,7 @@ public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
     assertThrows(
         StaleConfigurationException.class,
         () ->
-            (new AwsCloudContextFields("a", "b", "c", "d", "e"))
+            (new AwsCloudContextFields("a", "b", "c", "d", "e", null))
                 .verifyCloudContextFields(AWS_ENVIRONMENT));
   }
 }

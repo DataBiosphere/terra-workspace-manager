@@ -27,9 +27,10 @@ dependencies {
   implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-postgresqlflexibleserver', version: '1.0.0-beta.6'
 
   // AWS dependencies
-  implementation platform('software.amazon.awssdk:bom:2.20.22')
+  implementation platform('software.amazon.awssdk:bom:2.20.115')
   implementation 'software.amazon.awssdk:arns'
   implementation 'software.amazon.awssdk:auth'
+  implementation 'software.amazon.awssdk:ec2'
   implementation 'software.amazon.awssdk:regions'
   implementation 'software.amazon.awssdk:s3'
   implementation 'software.amazon.awssdk:sagemaker'
@@ -54,7 +55,7 @@ dependencies {
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.21-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.25-SNAPSHOT"
 
   // Terra Landing Zone Service
   implementation ('bio.terra:terra-landing-zone-service:0.0.192-SNAPSHOT')

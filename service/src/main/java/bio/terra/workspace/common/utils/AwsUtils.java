@@ -74,14 +74,14 @@ public class AwsUtils {
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
   private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
   static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
-  static final String TAG_KEY_USER_ID = "UserID";
-  static final String TAG_KEY_VERSION = "Version";
-  static final String TAG_KEY_TENANT = "Tenant";
-  static final String TAG_KEY_ENVIRONMENT = "Environment";
-  static final String TAG_KEY_WORKSPACE_ID = "WorkspaceId";
-  static final String TAG_KEY_S3_BUCKET_ID = "S3BucketID";
-  static final String TAG_KEY_TERRA_BUCKET_ID = "TerraBucketID";
-  static final String TAG_KEY_WORKSPACE_ROLE = "WorkspaceRole";
+  public static final String TAG_KEY_USER_ID = "UserID";
+  public static final String TAG_KEY_VERSION = "Version";
+  public static final String TAG_KEY_TENANT = "Tenant";
+  public static final String TAG_KEY_ENVIRONMENT = "Environment";
+  public static final String TAG_KEY_WORKSPACE_ID = "WorkspaceId";
+  public static final String TAG_KEY_S3_BUCKET_ID = "S3BucketID";
+  public static final String TAG_KEY_TERRA_BUCKET_ID = "TerraBucketID";
+  public static final String TAG_KEY_WORKSPACE_ROLE = "WorkspaceRole";
 
   /**
    * Truncate a passed string for use as an STS session name
