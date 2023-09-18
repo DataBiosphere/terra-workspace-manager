@@ -147,10 +147,25 @@ public abstract class ControlledResource extends WsmResource {
    * required for private resources when resource specific access control methods are in use. It is
    * not usually required to override this method.
    *
-   * @param flight the remove native access flight
+   * When overriding this method, also override getRestoreNativeAccessSteps.
+   *
    * @param flightBeanBag bean bag for finding Spring singletons
    */
   public List<StepRetryRulePair> getRemoveNativeAccessSteps(FlightBeanBag flightBeanBag) {
+    return List.of();
+  }
+
+  /**
+   * The RestoreNativeAccessToPrivateResourcesFlight calls this method to populate the
+   * resource-specific step(s) to restore native access to the specific cloud resource. This is only
+   * required for private resources when resource specific access control methods are in use. It is
+   * not usually required to override this method.
+   *
+   * When overriding this method, also override getRemoveNativeAccessSteps.
+   *
+   * @param flightBeanBag bean bag for finding Spring singletons
+   */
+  public List<StepRetryRulePair> getRestoreNativeAccessSteps(FlightBeanBag flightBeanBag) {
     return List.of();
   }
 

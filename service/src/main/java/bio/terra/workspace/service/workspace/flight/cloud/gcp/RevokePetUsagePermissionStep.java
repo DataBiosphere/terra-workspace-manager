@@ -101,7 +101,9 @@ public class RevokePetUsagePermissionStep implements Step {
    * @return The email of the user's pet SA if the above conditions are met, empty otherwise.
    */
   private Optional<String> getAndValidatePet(FlightMap workingMap) {
-    boolean userCanReadWorkspace = FlightUtils.getRequired(workingMap, ControlledResourceKeys.REMOVED_USER_CAN_READ_WORKSPACE, Boolean.class);
+    boolean userCanReadWorkspace =
+        FlightUtils.getRequired(
+            workingMap, ControlledResourceKeys.REMOVED_USER_CAN_READ_WORKSPACE, Boolean.class);
     // This flight is triggered whenever a user loses any role on a workspace. If they are still
     // a member of the workspace via a group or another role, we do not need to remove their access
     // to their pet SA.

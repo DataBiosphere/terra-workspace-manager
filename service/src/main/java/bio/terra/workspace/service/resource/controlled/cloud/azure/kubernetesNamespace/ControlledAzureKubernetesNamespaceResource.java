@@ -297,7 +297,28 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
 
   @Override
   public List<StepRetryRulePair> getRemoveNativeAccessSteps(FlightBeanBag flightBeanBag) {
-    // TODO
+    return List.of(
+        new StepRetryRulePair(
+            new UpdateNamespaceRoleDatabaseAccessStep(
+                getWorkspaceId(),
+                flightBeanBag.getAzureDatabaseUtilsRunner(),
+                this,
+                flightBeanBag.getResourceDao(),
+                UpdateNamespaceRoleDatabaseAccessStepMode.REVOKE),
+            RetryRules.cloud()));
+  }
+
+  @Override
+  public List<StepRetryRulePair> getRestoreNativeAccessSteps(FlightBeanBag flightBeanBag) {
+    return List.of(
+        new StepRetryRulePair(
+            new UpdateNamespaceRoleDatabaseAccessStep(
+                getWorkspaceId(),
+                flightBeanBag.getAzureDatabaseUtilsRunner(),
+                this,
+                flightBeanBag.getResourceDao(),
+                UpdateNamespaceRoleDatabaseAccessStepMode.RESTORE),
+            RetryRules.cloud()));
   }
 
   @Override

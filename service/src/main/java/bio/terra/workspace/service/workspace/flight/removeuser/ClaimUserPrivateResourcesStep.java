@@ -41,8 +41,12 @@ public class ClaimUserPrivateResourcesStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightMap workingMap = context.getWorkingMap();
-    boolean userCanReadWorkspace = FlightUtils.getRequired(workingMap, ControlledResourceKeys.REMOVED_USER_CAN_READ_WORKSPACE, Boolean.class);
-    boolean userCanWriteWorkspace = FlightUtils.getRequired(workingMap, ControlledResourceKeys.REMOVED_USER_CAN_WRITE_WORKSPACE, Boolean.class);
+    boolean userCanReadWorkspace =
+        FlightUtils.getRequired(
+            workingMap, ControlledResourceKeys.REMOVED_USER_CAN_READ_WORKSPACE, Boolean.class);
+    boolean userCanWriteWorkspace =
+        FlightUtils.getRequired(
+            workingMap, ControlledResourceKeys.REMOVED_USER_CAN_WRITE_WORKSPACE, Boolean.class);
 
     // Read the list of resources this user owns from WSM's DB which are not being cleaned up by
     // other flights and indicate this flight is cleaning them up.

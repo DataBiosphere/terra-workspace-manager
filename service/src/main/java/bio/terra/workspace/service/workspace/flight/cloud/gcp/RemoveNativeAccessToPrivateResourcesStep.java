@@ -5,6 +5,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
+import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
@@ -76,6 +77,28 @@ public class RemoveNativeAccessToPrivateResourcesStep implements Step {
   }
 
   /**
+   * @return a stream containing the resource role pair if the subflight to remove native access completed successfully, empty otherwise
+   */
+  private static Stream<ResourceRolePair> getSuccessfullyRevoked(
+      String flightId, ResourceRolePair resourceRolePair, FlightContext context) {
+    try {
+      var result = FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId);
+      if (result.isSuccess()) {
+        return Stream.of(resourceRolePair);
+      } else {
+        return Stream.empty();
+      }
+    } catch (InterruptedException e) {
+      // this method is called in a lambda, which doesn't allow checked exceptions. So we wrap
+      // InterruptedException in a RuntimeException and unwrap later.
+      throw new RuntimeException(e);
+    } catch (FlightNotFoundException e) {
+      // there was no subflight, so return an empty stream
+      return Stream.empty();
+    }
+  }
+
+  /**
    * Launch a subflight to remove native access to a private resource. This method is called in a
    * lambda, which doesn't allow checked exceptions. So we wrap InterruptedException in a
    * RuntimeException and unwrap later. This will only launch a subflight if the resource has steps
@@ -119,9 +142,71 @@ public class RemoveNativeAccessToPrivateResourcesStep implements Step {
     }
   }
 
+  /**
+   * For each successful subflight that removed native access to a private resource, launch another
+   * subflight to restore native access.
+   */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // nested flights must clean themselves up.
-    return StepResult.getStepResultSuccess();
+    FlightMap workingMap = context.getWorkingMap();
+    List<ResourceRolePair> resourceRolesPairs =
+        FlightUtils.getRequired(
+            workingMap, ControlledResourceKeys.RESOURCE_ROLES_TO_REMOVE, new TypeReference<>() {});
+
+    Map<UUID, String> flightIds =
+        FlightUtils.getRequired(
+            context.getWorkingMap(), WorkspaceFlightMapKeys.FLIGHT_IDS, new TypeReference<>() {});
+
+    try {
+      var maybeFailure =
+          resourceRolesPairs.stream()
+              .flatMap(
+                  resourceRolePair ->
+                      getSuccessfullyRevoked(
+                          flightIds.get(resourceRolePair.getResource().getResourceId()),
+                          resourceRolePair,
+                          context))
+              .map(
+                  successfulRevoke ->
+                      launchRestoreNativeAccessFlight(context, successfulRevoke, flightIds))
+              .map(flightId -> waitForSubFlight(flightId, context))
+              .filter(result -> !result.isSuccess())
+              .findAny();
+
+      return maybeFailure.orElseGet(StepResult::getStepResultSuccess);
+    } catch (RuntimeException e) {
+      // unwrap InterruptedException wrapped in RuntimeException by the lambdas
+      if (e.getCause() != null && e.getCause() instanceof InterruptedException) {
+        throw (InterruptedException) e.getCause();
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  private String launchRestoreNativeAccessFlight(
+      FlightContext context, ResourceRolePair resourceRolePair, Map<UUID, String> flightIds) {
+    FlightMap inputs = new FlightMap();
+    inputs.put(ControlledResourceKeys.RESOURCE, resourceRolePair.getResource());
+
+    String flightId =
+        Objects.requireNonNull(flightIds.get(resourceRolePair.getResource().getResourceId()))
+            + "-undo";
+    try {
+      context
+          .getStairway()
+          .submit(flightId, RestoreNativeAccessToPrivateResourcesFlight.class, inputs);
+      logger.info(
+          "Restoring native access to private resource {} in flight {}",
+          resourceRolePair.getResource().getResourceId(),
+          flightId);
+    } catch (DuplicateFlightIdException e) {
+      // We will see duplicate id on a retry. Quietly continue as if we just launched it.
+    } catch (InterruptedException e) {
+      // this method is called in a lambda, which doesn't allow checked exceptions. So we wrap
+      // InterruptedException in a RuntimeException and unwrap later.
+      throw new RuntimeException(e);
+    }
+    return flightId;
   }
 }
