@@ -108,11 +108,7 @@ public class CreateWorkspaceV2Flight extends Flight {
               List.of(EnableApplicationsStep.FLIGHT_ID_KEY), WorkspaceFlightMapKeys.FLIGHT_IDS));
       addStep(
           new EnableApplicationsStep(
-              applicationIds,
-              appContext.getApplicationService(),
-              userRequest,
-              workspace,
-              appContext.getJobService()),
+              applicationIds, appContext.getApplicationService(), userRequest, workspace),
           dbRetryRule);
     }
   }

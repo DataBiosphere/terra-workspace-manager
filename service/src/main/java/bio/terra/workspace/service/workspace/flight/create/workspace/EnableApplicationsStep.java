@@ -7,7 +7,6 @@ import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.application.AbleEnum;
@@ -22,19 +21,16 @@ public class EnableApplicationsStep implements Step {
   private final WsmApplicationService applicationService;
   private final AuthenticatedUserRequest userRequest;
   private final Workspace workspace;
-  private final JobService jobService;
 
   public EnableApplicationsStep(
       List<String> applicationIds,
       WsmApplicationService applicationService,
       AuthenticatedUserRequest userRequest,
-      Workspace workspace,
-      JobService jobService) {
+      Workspace workspace) {
     this.applicationIds = applicationIds;
     this.applicationService = applicationService;
     this.userRequest = userRequest;
     this.workspace = workspace;
-    this.jobService = jobService;
   }
 
   @Override
@@ -44,11 +40,11 @@ public class EnableApplicationsStep implements Step {
             context.getWorkingMap(), WorkspaceFlightMapKeys.FLIGHT_IDS, new TypeReference<>() {});
     var flightId = flightIds.get(FLIGHT_ID_KEY);
     try {
-      applicationService.launchApplicationAbleJob(
+      applicationService.launchApplicationAbleJobAndWait(
           userRequest, workspace, applicationIds, AbleEnum.ENABLE, flightId);
     } catch (DuplicateFlightIdException e) {
       // this happens on retry, just wait for the job
-      jobService.waitForJob(flightId);
+      FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId);
     }
     return StepResult.getStepResultSuccess();
   }

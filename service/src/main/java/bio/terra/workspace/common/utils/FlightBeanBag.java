@@ -17,7 +17,6 @@ import bio.terra.workspace.service.datarepo.DataRepoService;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.grant.GrantService;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
@@ -86,7 +85,6 @@ public class FlightBeanBag {
   private final KubernetesClientProvider kubernetesClientProvider;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
   private final WsmApplicationService applicationService;
-  private final JobService jobService;
 
   @Lazy
   @Autowired
@@ -126,8 +124,7 @@ public class FlightBeanBag {
       LandingZoneBatchAccountFinder landingZoneBatchAccountFinder,
       KubernetesClientProvider kubernetesClientProvider,
       AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
-      WsmApplicationService applicationService,
-      JobService jobService) {
+      WsmApplicationService applicationService) {
     this.applicationDao = applicationDao;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
@@ -164,7 +161,6 @@ public class FlightBeanBag {
     this.kubernetesClientProvider = kubernetesClientProvider;
     this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
     this.applicationService = applicationService;
-    this.jobService = jobService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -313,9 +309,5 @@ public class FlightBeanBag {
 
   public WsmApplicationService getApplicationService() {
     return applicationService;
-  }
-
-  public JobService getJobService() {
-    return jobService;
   }
 }

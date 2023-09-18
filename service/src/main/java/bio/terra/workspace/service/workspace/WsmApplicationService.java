@@ -70,28 +70,19 @@ public class WsmApplicationService {
 
   public WsmWorkspaceApplication disableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
-    return launchApplicationAbleJob(
+    return launchApplicationAbleJobAndWait(
         // Wrap in arraylist for JSON serialization
         userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.DISABLE, null);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
-    return launchApplicationAbleJob(
+    return launchApplicationAbleJobAndWait(
         userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.ENABLE, null);
   }
 
-  /**
-   * Launch and wait for enable and disable flights.
-   *
-   * @param userRequest
-   * @param workspace
-   * @param applicationIds
-   * @param ableEnum
-   * @param jobId
-   * @return
-   */
-  public WsmWorkspaceApplication launchApplicationAbleJob(
+  /** Launch and wait for enable and disable flights. */
+  public WsmWorkspaceApplication launchApplicationAbleJobAndWait(
       AuthenticatedUserRequest userRequest,
       Workspace workspace,
       List<String> applicationIds,
