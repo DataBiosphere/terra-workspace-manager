@@ -7,6 +7,7 @@ import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.MakeFlightIdsStep;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -51,8 +52,7 @@ public class WorkspaceCreateFlight extends Flight {
     RetryRule dbRetryRule = RetryRules.shortDatabase();
 
     addStep(
-        new CreateWorkspaceStartStep(
-            workspace, appContext.getWorkspaceDao(), wsmResourceStateRule, applicationIds),
+        new CreateWorkspaceStartStep(workspace, appContext.getWorkspaceDao(), wsmResourceStateRule),
         dbRetryRule);
 
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
@@ -97,5 +97,19 @@ public class WorkspaceCreateFlight extends Flight {
     addStep(
         new CreateWorkspaceFinishStep(workspace.workspaceId(), appContext.getWorkspaceDao()),
         dbRetryRule);
+
+    if (applicationIds != null) {
+      addStep(
+          new MakeFlightIdsStep(
+              List.of(EnableApplicationsStep.FLIGHT_ID_KEY), WorkspaceFlightMapKeys.FLIGHT_IDS));
+      addStep(
+          new EnableApplicationsStep(
+              applicationIds,
+              appContext.getApplicationService(),
+              userRequest,
+              workspace,
+              appContext.getJobService()),
+          dbRetryRule);
+    }
   }
 }

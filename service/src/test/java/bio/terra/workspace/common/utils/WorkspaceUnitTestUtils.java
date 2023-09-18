@@ -32,7 +32,7 @@ public class WorkspaceUnitTestUtils {
   public static UUID createWorkspaceWithoutCloudContext(WorkspaceDao workspaceDao) {
     String flightId = UUID.randomUUID().toString();
     Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
-    workspaceDao.createWorkspaceStart(workspace, /* applicationIds= */ null, flightId);
+    workspaceDao.createWorkspaceStart(workspace, /* applicationIds= */ flightId);
     workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId);
     return workspace.getWorkspaceId();
   }

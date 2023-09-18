@@ -193,19 +193,6 @@ public class ApplicationDao {
   }
 
   /**
-   * Enable a list of applications. Used as part of create workspace
-   *
-   * @param workspaceUuid workspace to enable applications in
-   * @param applicationIds list of application ids
-   */
-  @WriteTransaction
-  public void enableWorkspaceApplications(UUID workspaceUuid, List<String> applicationIds) {
-    for (String applicationId : applicationIds) {
-      enableWorkspaceApplication(workspaceUuid, applicationId);
-    }
-  }
-
-  /**
    * Enable an application in a workspace - do not perform the application state check. This is only
    * used in testing.
    *

@@ -70,23 +70,33 @@ public class WsmApplicationService {
 
   public WsmWorkspaceApplication disableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
-    return commonAbleJob(
+    return launchApplicationAbleJob(
         // Wrap in arraylist for JSON serialization
-        userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.DISABLE);
+        userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.DISABLE, null);
   }
 
   public WsmWorkspaceApplication enableWorkspaceApplication(
       AuthenticatedUserRequest userRequest, Workspace workspace, String applicationId) {
-    return commonAbleJob(
-        userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.ENABLE);
+    return launchApplicationAbleJob(
+        userRequest, workspace, new ArrayList<>(List.of(applicationId)), AbleEnum.ENABLE, null);
   }
 
-  // Common method to launch and wait for enable and disable flights.
-  private WsmWorkspaceApplication commonAbleJob(
+  /**
+   * Launch and wait for enable and disable flights.
+   *
+   * @param userRequest
+   * @param workspace
+   * @param applicationIds
+   * @param ableEnum
+   * @param jobId
+   * @return
+   */
+  public WsmWorkspaceApplication launchApplicationAbleJob(
       AuthenticatedUserRequest userRequest,
       Workspace workspace,
       List<String> applicationIds,
-      AbleEnum ableEnum) {
+      AbleEnum ableEnum,
+      String jobId) {
 
     String description =
         String.format(
@@ -98,6 +108,7 @@ public class WsmApplicationService {
     JobBuilder job =
         jobService
             .newJob()
+            .jobId(jobId)
             .description(description)
             .flightClass(ApplicationAbleFlight.class)
             .userRequest(userRequest)
