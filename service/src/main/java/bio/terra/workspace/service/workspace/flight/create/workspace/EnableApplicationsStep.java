@@ -42,11 +42,11 @@ public class EnableApplicationsStep implements Step {
     try {
       applicationService.launchApplicationAbleJobAndWait(
           userRequest, workspace, applicationIds, AbleEnum.ENABLE, flightId);
+      return StepResult.getStepResultSuccess();
     } catch (DuplicateFlightIdException e) {
       // this happens on retry, just wait for the job
-      FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId);
+      return FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId);
     }
-    return StepResult.getStepResultSuccess();
   }
 
   @Override
