@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,8 +58,8 @@ import org.jetbrains.annotations.NotNull;
 public class ControlledAzureKubernetesNamespaceResource extends ControlledResource {
   private final String kubernetesNamespace;
   private final String kubernetesServiceAccount;
-  private final UUID managedIdentity;
-  private final Set<UUID> databases;
+  private final String managedIdentity;
+  private final Set<String> databases;
 
   @JsonCreator
   public ControlledAzureKubernetesNamespaceResource(
@@ -69,8 +68,8 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
           WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("kubernetesNamespace") String kubernetesNamespace,
       @JsonProperty("kubernetesServiceAccount") String kubernetesServiceAccount,
-      @JsonProperty("managedIdentity") UUID managedIdentity,
-      @JsonProperty("databases") Set<UUID> databases) {
+      @JsonProperty("managedIdentity") String managedIdentity,
+      @JsonProperty("databases") Set<String> databases) {
     super(resourceFields, controlledResourceFields);
     this.kubernetesNamespace = kubernetesNamespace;
     this.kubernetesServiceAccount = kubernetesServiceAccount;
@@ -84,8 +83,8 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
       ControlledResourceFields common,
       String kubernetesNamespace,
       String kubernetesServiceAccount,
-      UUID managedIdentity,
-      Set<UUID> databases) {
+      String managedIdentity,
+      Set<String> databases) {
     super(common);
     this.kubernetesNamespace = kubernetesNamespace;
     this.kubernetesServiceAccount = kubernetesServiceAccount;
@@ -112,11 +111,11 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     return kubernetesServiceAccount;
   }
 
-  public UUID getManagedIdentity() {
+  public String getManagedIdentity() {
     return managedIdentity;
   }
 
-  public Set<UUID> getDatabases() {
+  public Set<String> getDatabases() {
     return databases;
   }
 
@@ -421,8 +420,8 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     private ControlledResourceFields common;
     private String kubernetesNamespace;
     private String kubernetesServiceAccount;
-    private UUID managedIdentity;
-    private Set<UUID> databases;
+    private String managedIdentity;
+    private Set<String> databases;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -439,12 +438,12 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
       return this;
     }
 
-    public Builder managedIdentity(UUID managedIdentity) {
+    public Builder managedIdentity(String managedIdentity) {
       this.managedIdentity = managedIdentity;
       return this;
     }
 
-    public Builder databases(Set<UUID> databases) {
+    public Builder databases(Set<String> databases) {
       this.databases = databases;
       return this;
     }

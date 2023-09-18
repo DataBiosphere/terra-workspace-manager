@@ -25,7 +25,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
   @Test
   void testToApiResource() {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
     var dbCreationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, null);
 
@@ -36,7 +36,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            owner, List.of(dbResource.getResourceId()));
+            owner, List.of(dbResource.getName()));
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -51,13 +51,13 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
                 .kubernetesNamespace(resource.getKubernetesNamespace())
                 .kubernetesServiceAccount(resource.getKubernetesServiceAccount())
                 .managedIdentity(owner)
-                .databases(List.of(dbResource.getResourceId()))));
+                .databases(List.of(dbResource.getName()))));
   }
 
   @Test
   void testAttributesToJson() {
     var workspaceId = UUID.randomUUID();
-    var owner = UUID.randomUUID();
+    var owner = UUID.randomUUID().toString();
     var dbCreationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, null);
 
@@ -68,7 +68,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            owner, List.of(dbResource.getResourceId()));
+            owner, List.of(dbResource.getName()));
 
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -85,7 +85,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
                     resource.getKubernetesNamespace(),
                     resource.getKubernetesServiceAccount(),
                     resource.getManagedIdentity(),
-                    dbResource.getResourceId())));
+                    dbResource.getName())));
   }
 
   @Test
@@ -131,7 +131,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
   void testGetCreateStepsWithWorkspaceIdentity() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            UUID.randomUUID(), List.of());
+            UUID.randomUUID().toString(), List.of());
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, UUID.randomUUID())
@@ -153,7 +153,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
   void testGetCreateStepsWithDatabaseAccess() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            UUID.randomUUID(), List.of(UUID.randomUUID()));
+            UUID.randomUUID().toString(), List.of(UUID.randomUUID().toString()));
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, UUID.randomUUID())
@@ -214,7 +214,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
   void testGetDeleteStepsWithWorkspaceIdentity() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            UUID.randomUUID(), List.of());
+            UUID.randomUUID().toString(), List.of());
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, UUID.randomUUID())
@@ -235,7 +235,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
   void testGetDeleteStepsWithDatabaseAccess() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            UUID.randomUUID(), List.of(UUID.randomUUID()));
+            UUID.randomUUID().toString(), List.of(UUID.randomUUID().toString()));
     var resource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, UUID.randomUUID())

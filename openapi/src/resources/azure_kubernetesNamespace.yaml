@@ -12,15 +12,13 @@ components:
           description: Name of the kubernetesServiceAccount created for the kubernetesNamespace. This value doubles as database user name. Null if no service account was created.
           type: string
         managedIdentity:
-          description: The resource id of a managed identity to use for the kubernetesNamespace. Null for private namespaces.
+          description: The resource name of a managed identity to use for the kubernetesNamespace. Null for private namespaces.
           type: string
-          format: uuid
         databases:
-          description: The resource IDs of databases within the workspace to be used by the kubernetesNamespace.
+          description: The resource names of databases within the workspace to be used by the kubernetesNamespace.
           type: array
           items:
             type: string
-            format: uuid
 
     AzureKubernetesNamespaceResource:
       type: object

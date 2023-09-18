@@ -46,6 +46,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /** A series of static objects useful for testing controlled resources. */
@@ -410,10 +411,10 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ApiAzureKubernetesNamespaceCreationParameters
-      getAzureKubernetesNamespaceCreationParameters(UUID owner, List<UUID> databases) {
+      getAzureKubernetesNamespaceCreationParameters(String owner, List<String> databases) {
     return new ApiAzureKubernetesNamespaceCreationParameters()
-        .managedIdentity(owner)
-        .databases(databases)
+        .managedIdentity(Objects.toString(owner, null))
+        .databases(databases.stream().toList())
         .namespacePrefix(uniqueAzureName(AZURE_KUBERNETES_NAMESPACE_PREFIX).substring(0, 24));
   }
 
@@ -461,11 +462,11 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(
-      UUID owner, String k8sNamespace) {
+      String owner, String k8sNamespace) {
     return new ApiAzureDatabaseCreationParameters()
         .name(uniqueAzureName(AZURE_DATABASE_NAME_PREFIX))
         .k8sNamespace(k8sNamespace)
-        .owner(owner);
+        .owner(Objects.toString(owner, null));
   }
 
   public static ControlledAzureDatabaseResource.Builder

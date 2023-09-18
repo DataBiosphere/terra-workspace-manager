@@ -256,8 +256,8 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
       throws InterruptedException {
     var k8sNamespaceCreationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
-            uamiResource.getResourceId(),
-            databases.stream().map(ControlledAzureDatabaseResource::getResourceId).toList());
+            uamiResource.getName(),
+            databases.stream().map(ControlledAzureDatabaseResource::getName).toList());
 
     var k8sNamespaceResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
@@ -280,7 +280,7 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
       throws InterruptedException {
     var dbCreationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            uamiResource.getResourceId(), k8sNamespace);
+            uamiResource.getName(), k8sNamespace);
 
     var dbResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(

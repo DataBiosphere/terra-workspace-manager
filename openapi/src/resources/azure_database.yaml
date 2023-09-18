@@ -9,9 +9,8 @@ components:
           description: Name of created database (not the resource name).
           type: string
         databaseOwner:
-          description: Identity of database owner.
+          description: Resource name of database owner.
           type: string
-          format: uuid
         allowAccessForAllWorkspaceUsers:
           description: Whether all workspace users have access to the database.
           type: boolean

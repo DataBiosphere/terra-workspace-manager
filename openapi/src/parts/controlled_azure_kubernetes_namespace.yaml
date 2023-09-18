@@ -118,15 +118,13 @@ components:
           type: string
           pattern: ^[a-z][a-z0-9-]{0,24}$
         managedIdentity:
-          description: The resource id of a managed identity to use for the kubernetesNamespace. Omit for private namespaces.
+          description: The resource id or name of a managed identity to use for the kubernetesNamespace. Omit for private namespaces.
           type: string
-          format: uuid
         databases:
-          description: The resource IDs of databases within the workspace to be used by the kubernetesNamespace. Some form of identity (managed identity or private namespace) must be used to access databases.
+          description: The resource IDs or names of databases within the workspace to be used by the kubernetesNamespace. Some form of identity (managed identity or private namespace) must be used to access databases.
           type: array
           items:
             type: string
-            format: uuid
 
     CreatedControlledAzureKubernetesNamespaceResult:
       description: Response payload for requesting a new Azure kubernetesNamespace

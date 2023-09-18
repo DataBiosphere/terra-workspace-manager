@@ -1,7 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder;
 
 import static bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures.AWS_CREDENTIALS_PROVIDER;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.API_EXCEPTION;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.NOT_FOUND_EXCEPTION;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_ID;
+import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.TestUtils.assertStepResultFatal;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -16,16 +20,16 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ConflictException;
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAwsUnitTest;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
-import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -68,11 +72,14 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
 
   @BeforeEach
   public void setup() {
+    FlightMap flightMap = new FlightMap();
+    flightMap.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), USER_REQUEST);
+
+    when(mockFlightContext.getInputParameters()).thenReturn(flightMap);
     when(mockFlightContext.getResult())
         .thenReturn(new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL));
 
-    when(mockSamService().getSamUser((AuthenticatedUserRequest) any()))
-        .thenReturn(WorkspaceFixtures.SAM_USER);
+    when(mockSamService().getSamUser((AuthenticatedUserRequest) any())).thenReturn(SAM_USER);
 
     when(mockAwsCloudContextService.getRequiredAwsCloudContext(any()))
         .thenReturn(AwsTestUtils.makeAwsCloudContext());
@@ -87,15 +94,12 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   void createS3Folder_doTest() throws InterruptedException {
     CreateAwsS3StorageFolderStep createS3FolderStep =
         new CreateAwsS3StorageFolderStep(
-            folderResource,
-            mockAwsCloudContextService,
-            MockMvcUtils.USER_REQUEST,
-            mockSamService());
+            folderResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils
         .when(() -> AwsUtils.createStorageFolder(any(), any(), any()))
         .thenAnswer(invocation -> null) /* success */
-        .thenThrow(WorkspaceFixtures.API_EXCEPTION);
+        .thenThrow(API_EXCEPTION);
 
     // success
     assertThat(
@@ -109,10 +113,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   void createS3Folder_undoTest() throws InterruptedException {
     CreateAwsS3StorageFolderStep createS3FolderStep =
         new CreateAwsS3StorageFolderStep(
-            folderResource,
-            mockAwsCloudContextService,
-            MockMvcUtils.USER_REQUEST,
-            mockSamService());
+            folderResource, mockAwsCloudContextService, mockSamService());
 
     // same as tests for DeleteAwsS3StorageFolderStep, verify that internal function
     // executeDeleteAwsS3StorageFolder is called
@@ -133,13 +134,14 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @Test
   void deleteS3Folder_doTest() throws InterruptedException {
     DeleteAwsS3StorageFolderStep delete3FolderStep =
-        new DeleteAwsS3StorageFolderStep(folderResource, mockAwsCloudContextService);
+        new DeleteAwsS3StorageFolderStep(
+            folderResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils
         .when(() -> AwsUtils.deleteStorageFolder(any(), any()))
         .thenAnswer(invocation -> null) /* success */
-        .thenThrow(WorkspaceFixtures.NOT_FOUND_EXCEPTION)
-        .thenThrow(WorkspaceFixtures.API_EXCEPTION);
+        .thenThrow(NOT_FOUND_EXCEPTION)
+        .thenThrow(API_EXCEPTION);
 
     // success
     assertThat(
@@ -156,7 +158,8 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @Test
   void deleteS3Folder_undoTest() throws InterruptedException {
     DeleteAwsS3StorageFolderStep delete3FolderStep =
-        new DeleteAwsS3StorageFolderStep(folderResource, mockAwsCloudContextService);
+        new DeleteAwsS3StorageFolderStep(
+            folderResource, mockAwsCloudContextService, mockSamService());
 
     // always error
     assertEquals(
@@ -171,13 +174,14 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @Test
   void validateS3FolderCreate_doTest() throws InterruptedException {
     ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
-        new ValidateAwsS3StorageFolderCreateStep(folderResource, mockAwsCloudContextService);
+        new ValidateAwsS3StorageFolderCreateStep(
+            folderResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils
         .when(() -> AwsUtils.checkFolderExists(any(), any()))
         .thenReturn(false) /* success */
         .thenReturn(true) /* failure */
-        .thenThrow(WorkspaceFixtures.API_EXCEPTION);
+        .thenThrow(API_EXCEPTION);
 
     // success (not exists)
     assertThat(
@@ -195,7 +199,8 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @Test
   void validateS3FolderCreate_undoTest() throws InterruptedException {
     ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
-        new ValidateAwsS3StorageFolderCreateStep(folderResource, mockAwsCloudContextService);
+        new ValidateAwsS3StorageFolderCreateStep(
+            folderResource, mockAwsCloudContextService, mockSamService());
 
     // always success
     assertThat(
@@ -209,10 +214,7 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   void createS3Folder_doTestFull() throws InterruptedException {
     CreateAwsS3StorageFolderStep createS3FolderStep =
         new CreateAwsS3StorageFolderStep(
-            folderResource,
-            mockAwsCloudContextService,
-            MockMvcUtils.USER_REQUEST,
-            mockSamService());
+            folderResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils.when(() -> AwsUtils.createStorageFolder(any(), any(), any())).thenCallRealMethod();
     mockAwsUtils
@@ -236,7 +238,8 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @Test
   void deleteS3Folder_doTestFull() throws InterruptedException {
     DeleteAwsS3StorageFolderStep delete3FolderStep =
-        new DeleteAwsS3StorageFolderStep(folderResource, mockAwsCloudContextService);
+        new DeleteAwsS3StorageFolderStep(
+            folderResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils.when(() -> AwsUtils.deleteStorageFolder(any(), any())).thenCallRealMethod();
     mockAwsUtils
@@ -267,7 +270,8 @@ public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
   @Test
   void validateS3FolderCreate_doTestFull() throws InterruptedException {
     ValidateAwsS3StorageFolderCreateStep validateS3FolderCreateStep =
-        new ValidateAwsS3StorageFolderCreateStep(folderResource, mockAwsCloudContextService);
+        new ValidateAwsS3StorageFolderCreateStep(
+            folderResource, mockAwsCloudContextService, mockSamService());
 
     mockAwsUtils.when(() -> AwsUtils.checkFolderExists(any(), any())).thenCallRealMethod();
     mockAwsUtils

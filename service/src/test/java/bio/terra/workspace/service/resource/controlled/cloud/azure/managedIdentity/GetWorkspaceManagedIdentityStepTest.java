@@ -59,7 +59,7 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
             mockAzureCloudContext.getAzureResourceGroupId(),
             identityResource.getManagedIdentityName()))
         .thenReturn(mockIdentity);
-    when(mockResourceDao.getResource(workspaceId, identityResource.getResourceId()))
+    when(mockResourceDao.getResourceByName(workspaceId, identityResource.getName()))
         .thenReturn(identityResource);
     when(mockIdentity.name()).thenReturn(UUID.randomUUID().toString());
     when(mockIdentity.principalId()).thenReturn(UUID.randomUUID().toString());
@@ -71,7 +71,7 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
             mockCrlService,
             workspaceId,
             mockResourceDao,
-            identityResource.getResourceId());
+            identityResource.getName());
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
     verify(mockWorkingMap).put(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, mockIdentity.name());
@@ -111,7 +111,7 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
             identityResource.getManagedIdentityName()))
         .thenThrow(new ManagementException(httpStatus.name(), mockHttpResponse));
     when(mockHttpResponse.getStatusCode()).thenReturn(httpStatus.value());
-    when(mockResourceDao.getResource(workspaceId, identityResource.getResourceId()))
+    when(mockResourceDao.getResourceByName(workspaceId, identityResource.getName()))
         .thenReturn(identityResource);
 
     var step =
@@ -120,7 +120,7 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
             mockCrlService,
             workspaceId,
             mockResourceDao,
-            identityResource.getResourceId());
+            identityResource.getName());
     return step.doStep(mockFlightContext);
   }
 

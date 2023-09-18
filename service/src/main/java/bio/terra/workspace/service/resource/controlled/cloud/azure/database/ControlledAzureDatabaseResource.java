@@ -37,11 +37,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 public class ControlledAzureDatabaseResource extends ControlledResource {
   private final String databaseName;
-  private final UUID databaseOwner;
+  private final String databaseOwner;
   private final String k8sNamespace;
   private final boolean allowAccessForAllWorkspaceUsers;
 
@@ -51,7 +50,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("databaseName") String databaseName,
-      @JsonProperty("databaseOwner") UUID databaseOwner,
+      @JsonProperty("databaseOwner") String databaseOwner,
       @JsonProperty("k8sNamespace") String k8sNamespace,
       @JsonProperty("allowAccessForAllWorkspaceUsers") boolean allowAccessForAllWorkspaceUsers) {
     super(resourceFields, controlledResourceFields);
@@ -66,7 +65,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   private ControlledAzureDatabaseResource(
       ControlledResourceFields common,
       String databaseName,
-      UUID databaseOwner,
+      String databaseOwner,
       String k8sNamespace,
       boolean allowAccessForAllWorkspaceUsers) {
     super(common);
@@ -97,7 +96,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
     return databaseName;
   }
 
-  public UUID getDatabaseOwner() {
+  public String getDatabaseOwner() {
     return databaseOwner;
   }
 
@@ -324,7 +323,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String databaseName;
-    private UUID databaseOwner;
+    private String databaseOwner;
     private String k8sNamespace;
     private boolean allowAccessForAllWorkspaceUsers;
 
@@ -338,7 +337,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       return this;
     }
 
-    public Builder databaseOwner(UUID databaseOwner) {
+    public Builder databaseOwner(String databaseOwner) {
       this.databaseOwner = databaseOwner;
       return this;
     }

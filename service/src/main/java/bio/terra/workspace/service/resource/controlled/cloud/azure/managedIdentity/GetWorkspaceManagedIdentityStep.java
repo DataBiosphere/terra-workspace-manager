@@ -22,19 +22,19 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
   private final CrlService crlService;
   private final UUID workspaceId;
   private final ResourceDao resourceDao;
-  private final UUID managedIdentityId;
+  private final String managedIdentityName;
 
   public GetWorkspaceManagedIdentityStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       UUID workspaceId,
       ResourceDao resourceDao,
-      UUID managedIdentityId) {
+      String managedIdentityName) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.workspaceId = workspaceId;
     this.resourceDao = resourceDao;
-    this.managedIdentityId = managedIdentityId;
+    this.managedIdentityName = managedIdentityName;
   }
 
   @Override
@@ -46,7 +46,7 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
     ControlledAzureManagedIdentityResource managedIdentityResource =
         resourceDao
-            .getResource(workspaceId, managedIdentityId)
+            .getResourceByName(workspaceId, managedIdentityName)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     if (managedIdentityResource == null) {
       return new StepResult(
@@ -54,7 +54,7 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
           new BadRequestException(
               String.format(
                   "An Azure Managed Identity with id %s does not exist in workspace %s",
-                  managedIdentityId, workspaceId)));
+                  managedIdentityName, workspaceId)));
     }
     var uamiName = managedIdentityResource.getManagedIdentityName();
 

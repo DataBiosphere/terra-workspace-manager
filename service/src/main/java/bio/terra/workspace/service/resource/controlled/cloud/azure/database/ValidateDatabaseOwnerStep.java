@@ -39,7 +39,7 @@ public class ValidateDatabaseOwnerStep implements Step {
   private Optional<WsmResource> getOwnerManagedIdentity() {
     try {
       var ownerResource =
-          resourceDao.getResource(resource.getWorkspaceId(), resource.getDatabaseOwner());
+          resourceDao.getResourceByName(resource.getWorkspaceId(), resource.getDatabaseOwner());
       if (ownerResource.getResourceType() == WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY) {
         return Optional.of(ownerResource);
       } else {

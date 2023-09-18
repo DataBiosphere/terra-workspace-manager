@@ -53,7 +53,8 @@ public class AwsWorkspaceV2UnitTest extends BaseAwsUnitTest {
           .when(() -> AwsUtils.createEnvironmentDiscovery(any()))
           .thenReturn(mockEnvironmentDiscovery);
 
-      when(awsCloudContextService.discoverEnvironment()).thenReturn(AWS_ENVIRONMENT);
+      when(awsCloudContextService.discoverEnvironment(SAM_USER.getEmail()))
+          .thenReturn(AWS_ENVIRONMENT);
 
       // create workspace (with cloud context)
       Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
