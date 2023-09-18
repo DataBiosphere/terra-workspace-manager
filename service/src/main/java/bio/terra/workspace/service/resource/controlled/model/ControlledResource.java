@@ -153,7 +153,6 @@ public abstract class ControlledResource extends WsmResource {
   public List<StepRetryRulePair> getRemoveNativeAccessSteps(FlightBeanBag flightBeanBag) {
     return List.of();
   }
-  ;
 
   public <T extends ControlledResource> T getResourceFromFlightInputParameters(
       Flight flight, WsmResourceType resourceType) {
