@@ -34,6 +34,7 @@ import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.WsmApplicationService;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -83,6 +84,7 @@ public class FlightBeanBag {
   private final LandingZoneBatchAccountFinder landingZoneBatchAccountFinder;
   private final KubernetesClientProvider kubernetesClientProvider;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
+  private final WsmApplicationService applicationService;
 
   @Lazy
   @Autowired
@@ -121,7 +123,8 @@ public class FlightBeanBag {
       WorkspaceActivityLogService workspaceActivityLogService,
       LandingZoneBatchAccountFinder landingZoneBatchAccountFinder,
       KubernetesClientProvider kubernetesClientProvider,
-      AzureDatabaseUtilsRunner azureDatabaseUtilsRunner) {
+      AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
+      WsmApplicationService applicationService) {
     this.applicationDao = applicationDao;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
@@ -157,6 +160,7 @@ public class FlightBeanBag {
     this.landingZoneBatchAccountFinder = landingZoneBatchAccountFinder;
     this.kubernetesClientProvider = kubernetesClientProvider;
     this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
+    this.applicationService = applicationService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -301,5 +305,9 @@ public class FlightBeanBag {
 
   public AzureDatabaseUtilsRunner getAzureDatabaseUtilsRunner() {
     return azureDatabaseUtilsRunner;
+  }
+
+  public WsmApplicationService getApplicationService() {
+    return applicationService;
   }
 }

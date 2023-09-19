@@ -90,7 +90,7 @@ public class AnyResourceStateFailureTest extends BaseUnitTest {
     // Fake up a CREATING workspace
     Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace();
     var flightId = UUID.randomUUID().toString();
-    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ null, flightId);
+    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ flightId);
 
     // ANY-Controlled Flexible
     ApiCreateControlledFlexibleResourceRequestBody flexRequest =

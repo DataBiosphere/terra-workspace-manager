@@ -308,7 +308,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
             .spendProfileId(spendProfileId)
             .build();
     var flightId = UUID.randomUUID().toString();
-    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ null, flightId);
+    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ flightId);
     var exception = new FieldSizeExceededException("This is a random ErrorReportException");
     workspaceDao.createWorkspaceFailure(
         workspaceUuid, flightId, exception, WsmResourceStateRule.BROKEN_ON_FAILURE);
