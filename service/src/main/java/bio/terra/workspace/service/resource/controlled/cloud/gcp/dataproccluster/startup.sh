@@ -374,11 +374,12 @@ ${RUN_AS_LOGIN_USER} "terra generate-completion > '${USER_BASH_COMPLETION_DIR}/t
 # Shell and notebook environment
 ####################################
 
-# Set the CLI terra workspace id using the VM metadata, if set.
-readonly TERRA_WORKSPACE="$(get_metadata_value "instance/attributes/terra-workspace-id")"
-if [[ -n "${TERRA_WORKSPACE}" ]]; then
-  ${RUN_AS_LOGIN_USER} "terra workspace set --id='${TERRA_WORKSPACE}'"
-fi
+# Fetch the Terra CLI server environment from the metadata server to install appropriate CLI version
+readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
+
+${RUN_AS_LOGIN_USER} "\
+  curl -L https://storage.googleapis.com/devcontainerpkg/workbench-cli/download-install.sh | TERRA_CLI_SERVER=${TERRA_SERVER} bash && \
+  cp terra '${TERRA_INSTALL_PATH}'"
 
 # Set variables into the ~/.bashrc such that they are available
 # to terminals, notebooks, and other tools
