@@ -29,10 +29,14 @@ import com.azure.storage.common.sas.SasProtocol;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import liquibase.repackaged.org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +61,7 @@ public class AzureStorageAccessService {
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfiguration;
   private final WorkspaceService workspaceService;
+  private final Map<StorageAccountCoordinates, StorageData> storageAccountCache;
 
   @Autowired
   public AzureStorageAccessService(
@@ -78,6 +83,8 @@ public class AzureStorageAccessService {
     this.storageAccountKeyProvider = storageAccountKeyProvider;
     this.azureConfiguration = azureConfiguration;
     this.workspaceService = workspaceService;
+    this.storageAccountCache =
+        Collections.synchronizedMap(new PassiveExpiringMap<>(1, TimeUnit.HOURS));
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
@@ -318,6 +325,13 @@ public class AzureStorageAccessService {
     // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
     // storage container and storage account resource
     // TODO: PF-2823 Access control checks should be done in the controller layer
+    // TODO this is redundant with what we're doing for storage account keys, they should be unified
+    StorageData maybeStorageData =
+        storageAccountCache.get(new StorageAccountCoordinates(workspaceUuid, storageContainerUuid));
+    if (maybeStorageData != null) {
+      return maybeStorageData;
+    }
+
     final ControlledAzureStorageContainerResource storageContainerResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
@@ -349,9 +363,14 @@ public class AzureStorageAccessService {
         storageManager
             .storageAccounts()
             .getById(existingSharedStorageAccount.get().getResourceId());
-    return new StorageData(
-        storageAccount.name(),
-        storageAccount.endPoints().primary().blob().toLowerCase(Locale.ROOT),
-        storageContainerResource);
+    var result =
+        new StorageData(
+            storageAccount.name(),
+            storageAccount.endPoints().primary().blob().toLowerCase(Locale.ROOT),
+            storageContainerResource);
+
+    storageAccountCache.put(
+        new StorageAccountCoordinates(workspaceUuid, storageContainerUuid), result);
+    return result;
   }
 }
