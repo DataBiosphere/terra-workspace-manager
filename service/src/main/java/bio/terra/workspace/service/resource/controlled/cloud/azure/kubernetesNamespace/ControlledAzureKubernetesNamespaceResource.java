@@ -4,7 +4,6 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
-import bio.terra.stairway.RetryRuleNone;
 import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
