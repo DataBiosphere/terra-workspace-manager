@@ -49,8 +49,8 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     // 2. Remove role from user, if one is specified. This flight also runs periodically to clean up
     // abandoned private resources, in which case the user is already out of the workspace.
     // 3. Check with Sam whether the user can still read or write the workspace.
-    // 4. Build a list of their private resources that should have access removed based on their
-    // current access.
+    // 4. Build and claim a list of their private resources that should have access removed based on
+    // their current access.
     // 5. In subflights, remove native access to those resources.
     // 6. Remove the user from all roles in sam on those private resources.
     // 7. Revoke the user's permission to use their pet SA in this workspace.

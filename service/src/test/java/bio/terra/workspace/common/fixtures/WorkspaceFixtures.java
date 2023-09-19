@@ -98,7 +98,7 @@ public class WorkspaceFixtures {
 
   public static void createWorkspaceInDb(Workspace workspace, WorkspaceDao workspaceDao) {
     var flightId = UUID.randomUUID().toString();
-    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ flightId);
+    workspaceDao.createWorkspaceStart(workspace, flightId);
     workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId);
   }
 

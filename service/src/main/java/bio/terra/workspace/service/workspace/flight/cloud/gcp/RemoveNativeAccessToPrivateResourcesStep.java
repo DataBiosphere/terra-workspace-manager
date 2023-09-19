@@ -77,7 +77,8 @@ public class RemoveNativeAccessToPrivateResourcesStep implements Step {
   }
 
   /**
-   * @return a stream containing the resource role pair if the subflight to remove native access completed successfully, empty otherwise
+   * @return a stream containing the resource role pair if the subflight to remove native access
+   *     completed successfully, empty otherwise
    */
   private static Stream<ResourceRolePair> getSuccessfullyRevoked(
       String flightId, ResourceRolePair resourceRolePair, FlightContext context) {

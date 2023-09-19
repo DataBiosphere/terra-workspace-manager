@@ -19,7 +19,7 @@ public class WorkspaceStateUnitTest extends BaseUnitTest {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     String flightId1 = UUID.randomUUID().toString();
     final String flightId2 = UUID.randomUUID().toString();
-    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ flightId1);
+    workspaceDao.createWorkspaceStart(workspace, flightId1);
     assertThrows(
         ResourceStateConflictException.class,
         () -> workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId2));
@@ -31,7 +31,7 @@ public class WorkspaceStateUnitTest extends BaseUnitTest {
   void delete_modifyStateWithDifferentFlightId_throwResourceStateConflict() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     String flightId1 = UUID.randomUUID().toString();
-    workspaceDao.createWorkspaceStart(workspace, /* applicationIds */ flightId1);
+    workspaceDao.createWorkspaceStart(workspace, flightId1);
     workspaceDao.createWorkspaceSuccess(workspace.workspaceId(), flightId1);
 
     String deleteFlightId1 = UUID.randomUUID().toString();

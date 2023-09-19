@@ -147,7 +147,7 @@ public abstract class ControlledResource extends WsmResource {
    * required for private resources when resource specific access control methods are in use. It is
    * not usually required to override this method.
    *
-   * When overriding this method, also override getRestoreNativeAccessSteps.
+   * <p>When overriding this method, also override getRestoreNativeAccessSteps.
    *
    * @param flightBeanBag bean bag for finding Spring singletons
    */
@@ -161,7 +161,7 @@ public abstract class ControlledResource extends WsmResource {
    * required for private resources when resource specific access control methods are in use. It is
    * not usually required to override this method.
    *
-   * When overriding this method, also override getRemoveNativeAccessSteps.
+   * <p>When overriding this method, also override getRemoveNativeAccessSteps.
    *
    * @param flightBeanBag bean bag for finding Spring singletons
    */
