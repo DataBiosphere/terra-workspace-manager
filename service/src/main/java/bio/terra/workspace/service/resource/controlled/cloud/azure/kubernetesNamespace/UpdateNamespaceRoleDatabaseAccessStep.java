@@ -8,6 +8,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.database.Azur
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,8 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
   private final ControlledAzureKubernetesNamespaceResource resource;
   private final ResourceDao resourceDao;
-  private final UpdateNamespaceRoleDatabaseAccessStepMode mode;
+  @VisibleForTesting
+  final UpdateNamespaceRoleDatabaseAccessStepMode mode;
 
   public UpdateNamespaceRoleDatabaseAccessStep(
       UUID workspaceId,

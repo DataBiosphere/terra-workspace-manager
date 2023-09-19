@@ -1,7 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
@@ -12,6 +14,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
+import bio.terra.workspace.service.resource.controlled.model.StepRetryRulePair;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
@@ -251,5 +254,41 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
                 GetFederatedIdentityStep.class,
                 DeleteFederatedCredentialStep.class,
                 DeleteNamespaceRoleStep.class)));
+  }
+
+  @Test
+  void testGetRestoreNativeAccessSteps() {
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
+            UUID.randomUUID().toString(), List.of(UUID.randomUUID().toString()));
+    var resource =
+        ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
+                creationParameters, UUID.randomUUID())
+            .build();
+
+    var steps = resource.getRestoreNativeAccessSteps(mockFlightBeanBag).stream().map(
+        StepRetryRulePair::step).toList();
+    assertThat(steps.size(), equalTo(1));
+    assertThat(steps.get(0), instanceOf(UpdateNamespaceRoleDatabaseAccessStep.class));
+    assertThat(((UpdateNamespaceRoleDatabaseAccessStep) steps.get(0)).mode, equalTo(
+        UpdateNamespaceRoleDatabaseAccessStepMode.RESTORE));
+  }
+
+  @Test
+  void testGetRemoveNativeAccessSteps() {
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
+            UUID.randomUUID().toString(), List.of(UUID.randomUUID().toString()));
+    var resource =
+        ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
+                creationParameters, UUID.randomUUID())
+            .build();
+
+    var steps = resource.getRemoveNativeAccessSteps(mockFlightBeanBag).stream().map(
+        StepRetryRulePair::step).toList();
+    assertThat(steps.size(), equalTo(1));
+    assertThat(steps.get(0), instanceOf(UpdateNamespaceRoleDatabaseAccessStep.class));
+    assertThat(((UpdateNamespaceRoleDatabaseAccessStep) steps.get(0)).mode, equalTo(
+        UpdateNamespaceRoleDatabaseAccessStepMode.REVOKE));
   }
 }
