@@ -352,15 +352,17 @@ ${RUN_AS_LOGIN_USER} "\
 # Install & configure the Terra CLI
 emit "Installing the Terra CLI ..."
 
+# Fetch the Terra CLI server environment from the metadata server to install appropriate CLI version
+readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
+
 ${RUN_AS_LOGIN_USER} "\
-  curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash && \
+  curl -L https://storage.googleapis.com/devcontainerpkg/workbench-cli/download-install.sh | TERRA_CLI_SERVER=${TERRA_SERVER} bash && \
   cp terra '${TERRA_INSTALL_PATH}'"
 
 # Set browser manual login since that's the only login supported from a Vertex AI Notebook VM
 ${RUN_AS_LOGIN_USER} "terra config set browser MANUAL"
 
 # Set the CLI terra server based on the terra server that created the VM.
-readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
 if [[ -n "${TERRA_SERVER}" ]]; then
   ${RUN_AS_LOGIN_USER} "terra server set --name=${TERRA_SERVER}"
 fi
@@ -374,12 +376,11 @@ ${RUN_AS_LOGIN_USER} "terra generate-completion > '${USER_BASH_COMPLETION_DIR}/t
 # Shell and notebook environment
 ####################################
 
-# Fetch the Terra CLI server environment from the metadata server to install appropriate CLI version
-readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
-
-${RUN_AS_LOGIN_USER} "\
-  curl -L https://storage.googleapis.com/devcontainerpkg/workbench-cli/download-install.sh | TERRA_CLI_SERVER=${TERRA_SERVER} bash && \
-  cp terra '${TERRA_INSTALL_PATH}'"
+# Set the CLI terra workspace id using the VM metadata, if set.
+readonly TERRA_WORKSPACE="$(get_metadata_value "instance/attributes/terra-workspace-id")"
+if [[ -n "${TERRA_WORKSPACE}" ]]; then
+  ${RUN_AS_LOGIN_USER} "terra workspace set --id='${TERRA_WORKSPACE}'"
+fi
 
 # Set variables into the ~/.bashrc such that they are available
 # to terminals, notebooks, and other tools
