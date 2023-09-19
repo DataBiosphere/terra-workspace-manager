@@ -6,29 +6,23 @@ import bio.terra.stairway.StepResult;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import java.util.List;
 
 /** Step to create the workspace metadata in the CREATING state */
 public class CreateWorkspaceStartStep implements Step {
   private final Workspace workspace;
   private final WorkspaceDao workspaceDao;
   private final WsmResourceStateRule wsmResourceStateRule;
-  private final List<String> applicationIds;
 
   public CreateWorkspaceStartStep(
-      Workspace workspace,
-      WorkspaceDao workspaceDao,
-      WsmResourceStateRule wsmResourceStateRule,
-      List<String> applicationIds) {
+      Workspace workspace, WorkspaceDao workspaceDao, WsmResourceStateRule wsmResourceStateRule) {
     this.workspace = workspace;
     this.workspaceDao = workspaceDao;
     this.wsmResourceStateRule = wsmResourceStateRule;
-    this.applicationIds = applicationIds;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext) throws InterruptedException {
-    workspaceDao.createWorkspaceStart(workspace, applicationIds, flightContext.getFlightId());
+    workspaceDao.createWorkspaceStart(workspace, flightContext.getFlightId());
     return StepResult.getStepResultSuccess();
   }
 

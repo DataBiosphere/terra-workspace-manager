@@ -14,6 +14,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -31,6 +32,7 @@ import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
+import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
@@ -92,6 +94,7 @@ class WorkspaceServiceTest extends BaseUnitTestMockDataRepoService {
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
+  @Autowired private ApplicationDao applicationDao;
 
   @BeforeEach
   void setup() throws Exception {
@@ -708,5 +711,25 @@ class WorkspaceServiceTest extends BaseUnitTestMockDataRepoService {
                         post(String.format(CLOUD_CONTEXTS_V1_CREATE, workspaceId)), USER_REQUEST))
                 .content(objectMapper.writeValueAsString(contextRequest)))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
+
+  @Test
+  void createWorkspaceWithApplicationEnabled() throws InterruptedException {
+    Workspace request = WorkspaceFixtures.buildMcWorkspace();
+    workspaceService.createWorkspace(
+        request, null, new ArrayList<>(List.of("TestWsmApp")), null, USER_REQUEST);
+    verify(mockSamService())
+        .grantWorkspaceRole(
+            eq(request.getWorkspaceId()),
+            any(),
+            eq(WsmIamRole.APPLICATION),
+            eq("elizabeth.shadowmoon@test.firecloud.org"));
+    var enabledApp =
+        applicationDao.listWorkspaceApplications(request.getWorkspaceId(), 0, 10).stream()
+            .filter(a -> a.getApplication().getApplicationId().equals("TestWsmApp"))
+            .findFirst()
+            .orElseThrow();
+    assertEquals("TestWsmApp", enabledApp.getApplication().getApplicationId());
+    assertTrue(enabledApp.isEnabled());
   }
 }
