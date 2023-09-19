@@ -132,7 +132,7 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
       String petSaEmail,
       AuthenticatedUserRequest userRequest,
       FlightBeanBag flightBeanBag) {
-    RetryRule cloudRetry = new RetryRuleNone();
+    RetryRule cloudRetry = RetryRules.cloud();
 
     getCreateSteps(flightBeanBag).forEach(step -> flight.addStep(step, cloudRetry));
   }
