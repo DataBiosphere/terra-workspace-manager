@@ -7,7 +7,11 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 
-/** Flight to remove native access to private resources. Runs the steps returned by ControlledResource.getRemoveNativeAccessSteps. A check should be run ahead of time to ensure getRemoveNativeAccessSteps does not return an empty list to avoid empty flights. */
+/**
+ * Flight to remove native access to private resources. Runs the steps returned by
+ * ControlledResource.getRemoveNativeAccessSteps. A check should be run ahead of time to ensure
+ * getRemoveNativeAccessSteps does not return an empty list to avoid empty flights.
+ */
 public class RemoveNativeAccessToPrivateResourcesFlight extends Flight {
 
   public RemoveNativeAccessToPrivateResourcesFlight(FlightMap inputParameters, Object beanBag) {

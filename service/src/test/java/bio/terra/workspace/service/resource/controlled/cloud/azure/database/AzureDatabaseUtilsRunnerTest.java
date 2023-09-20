@@ -136,6 +136,36 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
   }
 
   @Test
+  void testRevokeNamespaceRoleAccess() throws ApiException, InterruptedException {
+    final UUID workspaceId = UUID.randomUUID();
+    var userName = "test-user";
+    var podName = "test-pod-name";
+
+    setupMocks(podName, AzureDatabaseUtilsRunner.POD_SUCCEEDED);
+
+    azureDatabaseUtilsRunner.revokeNamespaceRoleAccess(
+        mockAzureCloudContext, workspaceId, podName, userName);
+
+    assertResults(
+        Map.of("spring_profiles_active", "RevokeNamespaceRoleAccess", "NAMESPACE_ROLE", userName));
+  }
+
+  @Test
+  void testRestoreNamespaceRoleAccess() throws ApiException, InterruptedException {
+    final UUID workspaceId = UUID.randomUUID();
+    var userName = "test-user";
+    var podName = "test-pod-name";
+
+    setupMocks(podName, AzureDatabaseUtilsRunner.POD_SUCCEEDED);
+
+    azureDatabaseUtilsRunner.restoreNamespaceRoleAccess(
+        mockAzureCloudContext, workspaceId, podName, userName);
+
+    assertResults(
+        Map.of("spring_profiles_active", "RestoreNamespaceRoleAccess", "NAMESPACE_ROLE", userName));
+  }
+
+  @Test
   void testRetry() throws ApiException {
     final UUID workspaceId = UUID.randomUUID();
     var userName = "test-user";

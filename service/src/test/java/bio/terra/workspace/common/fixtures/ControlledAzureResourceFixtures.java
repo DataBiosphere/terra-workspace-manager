@@ -34,6 +34,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.Controlled
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
+import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import com.azure.core.management.Region;
 import com.azure.resourcemanager.batch.models.DeploymentConfiguration;
@@ -442,7 +443,7 @@ public class ControlledAzureResourceFixtures {
       makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
           ApiAzureKubernetesNamespaceCreationParameters creationParameters,
           UUID workspaceId,
-          String assignedUser) {
+          String assignedUser, PrivateResourceState privateResourceState) {
     var namespace = creationParameters.getNamespacePrefix() + "-" + workspaceId.toString();
     return ControlledAzureKubernetesNamespaceResource.builder()
         .common(
@@ -455,6 +456,7 @@ public class ControlledAzureResourceFixtures {
                 .assignedUser(assignedUser)
                 .iamRole(ControlledResourceIamRole.EDITOR)
                 .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .privateResourceState(privateResourceState)
                 .build())
         .kubernetesServiceAccount(creationParameters.getNamespacePrefix() + "-ksa")
         .kubernetesNamespace(namespace)

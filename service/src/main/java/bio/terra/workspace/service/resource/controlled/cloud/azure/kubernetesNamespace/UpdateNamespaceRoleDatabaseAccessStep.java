@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNa
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
@@ -20,8 +21,7 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
   private final ControlledAzureKubernetesNamespaceResource resource;
   private final ResourceDao resourceDao;
-  @VisibleForTesting
-  final UpdateNamespaceRoleDatabaseAccessStepMode mode;
+  @VisibleForTesting final UpdateNamespaceRoleDatabaseAccessStepMode mode;
 
   public UpdateNamespaceRoleDatabaseAccessStep(
       UUID workspaceId,
@@ -36,12 +36,10 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
     this.mode = mode;
   }
 
-  private String getPodName() {
-    return mode.name() + "-namespace-role-" + this.resource.getResourceId();
-  }
-
-  private String getUndoPodName() {
-    return "undo-" + getPodName();
+  @VisibleForTesting
+  String getPodName(FlightContext context) {
+    return String.format(
+        "%s-%s-role-%s", context.getDirection().name(), mode.name(), resource.getResourceId());
   }
 
   @Override
@@ -68,7 +66,7 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
         workspaceId,
-        getPodName(),
+        getPodName(context),
         resource.getKubernetesServiceAccount());
     return StepResult.getStepResultSuccess();
   }
@@ -83,14 +81,17 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
               .getWorkingMap()
               .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
           workspaceId,
-          getUndoPodName(),
+          getPodName(context),
           resource.getKubernetesServiceAccount());
+      return StepResult.getStepResultSuccess();
     } else {
-      logger.info(
-          "Skipping restore of database access for namespace {} because the resource is not active",
-          resource.getKubernetesNamespace());
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new IllegalStateException(
+              "Cannot restore database access for namespace "
+                  + resource.getKubernetesNamespace()
+                  + " because the resource is not active"));
     }
-    return StepResult.getStepResultSuccess();
   }
 
   private boolean isPrivateResourceActive() {
