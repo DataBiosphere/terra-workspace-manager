@@ -115,7 +115,9 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
     var resource =
         ControlledAzureResourceFixtures
             .makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
-                creationParameters, UUID.randomUUID(), UUID.randomUUID().toString(),
+                creationParameters,
+                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
                 PrivateResourceState.ACTIVE)
             .build();
 
@@ -200,7 +202,9 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
     var resource =
         ControlledAzureResourceFixtures
             .makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
-                creationParameters, UUID.randomUUID(), UUID.randomUUID().toString(),
+                creationParameters,
+                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
                 PrivateResourceState.ACTIVE)
             .build();
 

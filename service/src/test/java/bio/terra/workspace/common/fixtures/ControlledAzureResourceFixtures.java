@@ -443,7 +443,8 @@ public class ControlledAzureResourceFixtures {
       makePrivateControlledAzureKubernetesNamespaceResourceBuilder(
           ApiAzureKubernetesNamespaceCreationParameters creationParameters,
           UUID workspaceId,
-          String assignedUser, PrivateResourceState privateResourceState) {
+          String assignedUser,
+          PrivateResourceState privateResourceState) {
     var namespace = creationParameters.getNamespacePrefix() + "-" + workspaceId.toString();
     return ControlledAzureKubernetesNamespaceResource.builder()
         .common(

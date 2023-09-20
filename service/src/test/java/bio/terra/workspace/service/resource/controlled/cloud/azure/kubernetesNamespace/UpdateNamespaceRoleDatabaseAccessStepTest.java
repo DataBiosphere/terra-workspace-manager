@@ -146,7 +146,8 @@ public class UpdateNamespaceRoleDatabaseAccessStepTest extends BaseMockitoStrict
             ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
                 null, List.of("db")),
             UUID.randomUUID(),
-            UUID.randomUUID().toString(), privateResourceState)
+            UUID.randomUUID().toString(),
+            privateResourceState)
         .build();
   }
 
