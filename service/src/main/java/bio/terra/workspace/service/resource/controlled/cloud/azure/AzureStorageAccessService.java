@@ -83,7 +83,7 @@ public class AzureStorageAccessService {
     this.storageAccountKeyProvider = storageAccountKeyProvider;
     this.azureConfiguration = azureConfiguration;
     this.workspaceService = workspaceService;
-    this.storageAccountCache = new ConcurrentHashMap<>(new PassiveExpiringMap<>(1, TimeUnit.HOURS));
+    this.storageAccountCache = new ConcurrentHashMap<>();
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
