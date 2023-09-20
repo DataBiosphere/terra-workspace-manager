@@ -35,6 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import liquibase.repackaged.org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.slf4j.Logger;
@@ -84,7 +85,7 @@ public class AzureStorageAccessService {
     this.azureConfiguration = azureConfiguration;
     this.workspaceService = workspaceService;
     this.storageAccountCache =
-        Collections.synchronizedMap(new PassiveExpiringMap<>(1, TimeUnit.HOURS));
+        new ConcurrentHashMap<>(new PassiveExpiringMap<>(1, TimeUnit.HOURS));
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
@@ -326,12 +327,6 @@ public class AzureStorageAccessService {
     // storage container and storage account resource
     // TODO: PF-2823 Access control checks should be done in the controller layer
     // TODO this is redundant with what we're doing for storage account keys, they should be unified
-    StorageData maybeStorageData =
-        storageAccountCache.get(new StorageAccountCoordinates(workspaceUuid, storageContainerUuid));
-    if (maybeStorageData != null) {
-      return maybeStorageData;
-    }
-
     final ControlledAzureStorageContainerResource storageContainerResource =
         controlledResourceMetadataManager
             .validateControlledResourceAndAction(
@@ -340,6 +335,13 @@ public class AzureStorageAccessService {
                 storageContainerUuid,
                 SamConstants.SamControlledResourceActions.READ_ACTION)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+
+    StorageData maybeStorageData =
+            storageAccountCache.get(new StorageAccountCoordinates(workspaceUuid, storageContainerUuid));
+    if (maybeStorageData != null) {
+      return maybeStorageData;
+    }
+
     // get details from LZ shared storage account
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     UUID landingZoneId =
