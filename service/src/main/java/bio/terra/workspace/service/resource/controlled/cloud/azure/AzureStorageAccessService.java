@@ -29,7 +29,6 @@ import com.azure.storage.common.sas.SasProtocol;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -84,8 +83,7 @@ public class AzureStorageAccessService {
     this.storageAccountKeyProvider = storageAccountKeyProvider;
     this.azureConfiguration = azureConfiguration;
     this.workspaceService = workspaceService;
-    this.storageAccountCache =
-        new ConcurrentHashMap<>(new PassiveExpiringMap<>(1, TimeUnit.HOURS));
+    this.storageAccountCache = new ConcurrentHashMap<>(new PassiveExpiringMap<>(1, TimeUnit.HOURS));
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
@@ -337,7 +335,7 @@ public class AzureStorageAccessService {
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
 
     StorageData maybeStorageData =
-            storageAccountCache.get(new StorageAccountCoordinates(workspaceUuid, storageContainerUuid));
+        storageAccountCache.get(new StorageAccountCoordinates(workspaceUuid, storageContainerUuid));
     if (maybeStorageData != null) {
       return maybeStorageData;
     }
