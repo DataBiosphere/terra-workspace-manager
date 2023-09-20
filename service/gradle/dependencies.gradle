@@ -10,7 +10,6 @@ dependencies {
   // Google dependencies
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
-    spotbugs 'org.apache.bcel:bcel:6.6.1'
   }
   implementation platform('com.google.cloud:libraries-bom:26.23.0')
 
