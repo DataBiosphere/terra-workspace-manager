@@ -36,8 +36,9 @@
 readonly ROLE=$(/usr/share/google/get_metadata_value attributes/dataproc-role)
 if [[ "${ROLE}" != 'Master' ]]; then exit 0; fi
 
-# Only run on first startup
-if [[ -f /etc/startup_was_launched ]]; then exit 0; fi
+# Only run on first startup. A file is created in the exit handler in the case of successful startup execution.
+readonly STARTUP_SCRIPT_COMPLETE="/etc/startup_script_complete"
+if [[ -f "${STARTUP_SCRIPT_COMPLETE}" ]]; then exit 0; fi
 
 set -o errexit
 set -o nounset
@@ -184,6 +185,8 @@ function exit_handler {
   # Success! Set the guest attributes and exit cleanly
   if [[ "${exit_code}" -eq 0 ]]; then
     set_guest_attributes "${STATUS_ATTRIBUTE}" "COMPLETE"
+    # Create a root permissioned file to indicate that the script has completed successfully in case of a reboot.
+    touch "${STARTUP_SCRIPT_COMPLETE}"
     exit 0
   fi
   # Write error status and message to guest attributes
