@@ -28,6 +28,7 @@ import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration;
 import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -94,6 +95,7 @@ class WorkspaceServiceTest extends BaseUnitTestMockDataRepoService {
   @Autowired private ResourceDao resourceDao;
   @Autowired private WorkspaceService workspaceService;
   @Autowired private WorkspaceActivityLogDao workspaceActivityLogDao;
+  @Autowired private WsmApplicationConfiguration wsmApplicationConfiguration;
   @Autowired private ApplicationDao applicationDao;
 
   @BeforeEach
@@ -716,20 +718,22 @@ class WorkspaceServiceTest extends BaseUnitTestMockDataRepoService {
   @Test
   void createWorkspaceWithApplicationEnabled() throws InterruptedException {
     Workspace request = WorkspaceFixtures.buildMcWorkspace();
+    var config = wsmApplicationConfiguration.getConfigurations();
+    String testAppName = "TestWsmApp";
     workspaceService.createWorkspace(
-        request, null, new ArrayList<>(List.of("TestWsmApp")), null, USER_REQUEST);
+        request, null, new ArrayList<>(List.of(testAppName)), null, USER_REQUEST);
     verify(mockSamService())
         .grantWorkspaceRole(
             eq(request.getWorkspaceId()),
             any(),
             eq(WsmIamRole.APPLICATION),
-            eq("elizabeth.shadowmoon@test.firecloud.org"));
+            eq(config.get(testAppName).getServiceAccount().toLowerCase()));
     var enabledApp =
         applicationDao.listWorkspaceApplications(request.getWorkspaceId(), 0, 10).stream()
-            .filter(a -> a.getApplication().getApplicationId().equals("TestWsmApp"))
+            .filter(a -> a.getApplication().getApplicationId().equals(testAppName))
             .findFirst()
             .orElseThrow();
-    assertEquals("TestWsmApp", enabledApp.getApplication().getApplicationId());
+    assertEquals(testAppName, enabledApp.getApplication().getApplicationId());
     assertTrue(enabledApp.isEnabled());
   }
 }
