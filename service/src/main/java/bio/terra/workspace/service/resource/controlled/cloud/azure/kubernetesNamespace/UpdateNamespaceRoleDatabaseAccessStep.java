@@ -4,6 +4,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
@@ -11,6 +12,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +41,8 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
   @VisibleForTesting
   String getPodName(FlightContext context) {
     return String.format(
-        "%s-%s-role-%s", context.getDirection().name(), mode.name(), resource.getResourceId());
+            "%s-%s-role-%s", context.getDirection().name(), mode.name(), resource.getResourceId())
+        .toLowerCase();
   }
 
   @Override
@@ -62,9 +65,7 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
   private StepResult revokeAccess(FlightContext context) throws InterruptedException {
     logger.info("Revoking database access for namespace {}", resource.getKubernetesNamespace());
     azureDatabaseUtilsRunner.revokeNamespaceRoleAccess(
-        context
-            .getWorkingMap()
-            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
+        getAzureCloudContext(context),
         workspaceId,
         getPodName(context),
         resource.getKubernetesServiceAccount());
@@ -77,9 +78,7 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
     if (isPrivateResourceActive()) {
       logger.info("Restoring database access for namespace {}", resource.getKubernetesNamespace());
       azureDatabaseUtilsRunner.restoreNamespaceRoleAccess(
-          context
-              .getWorkingMap()
-              .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
+          getAzureCloudContext(context),
           workspaceId,
           getPodName(context),
           resource.getKubernetesServiceAccount());
@@ -92,6 +91,14 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
                   + resource.getKubernetesNamespace()
                   + " because the resource is not active"));
     }
+  }
+
+  @Nullable
+  private static AzureCloudContext getAzureCloudContext(FlightContext context) {
+    return FlightUtils.getRequired(
+        context.getWorkingMap(),
+        ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+        AzureCloudContext.class);
   }
 
   private boolean isPrivateResourceActive() {

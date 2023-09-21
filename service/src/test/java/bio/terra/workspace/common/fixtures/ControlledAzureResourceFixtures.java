@@ -465,11 +465,12 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(
-      String owner, String k8sNamespace) {
+      String owner, String k8sNamespace, boolean allowAccessForAllWorkspaceUsers) {
     return new ApiAzureDatabaseCreationParameters()
         .name(uniqueAzureName(AZURE_DATABASE_NAME_PREFIX))
         .k8sNamespace(k8sNamespace)
-        .owner(Objects.toString(owner, null));
+        .owner(Objects.toString(owner, null))
+        .allowAccessForAllWorkspaceUsers(allowAccessForAllWorkspaceUsers);
   }
 
   public static ControlledAzureDatabaseResource.Builder

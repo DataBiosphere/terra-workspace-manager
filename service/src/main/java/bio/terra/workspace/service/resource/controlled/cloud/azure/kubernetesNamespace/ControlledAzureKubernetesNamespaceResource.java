@@ -23,6 +23,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -300,6 +301,10 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     if (requiresDatabases()) {
       return List.of(
           new StepRetryRulePair(
+              new GetAzureCloudContextStep(
+                  getWorkspaceId(), flightBeanBag.getAzureCloudContextService()),
+              RetryRules.shortDatabase()),
+          new StepRetryRulePair(
               new UpdateNamespaceRoleDatabaseAccessStep(
                   getWorkspaceId(),
                   flightBeanBag.getAzureDatabaseUtilsRunner(),
@@ -316,6 +321,10 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   public List<StepRetryRulePair> getRestoreNativeAccessSteps(FlightBeanBag flightBeanBag) {
     if (requiresDatabases()) {
       return List.of(
+          new StepRetryRulePair(
+              new GetAzureCloudContextStep(
+                  getWorkspaceId(), flightBeanBag.getAzureCloudContextService()),
+              RetryRules.shortDatabase()),
           new StepRetryRulePair(
               new UpdateNamespaceRoleDatabaseAccessStep(
                   getWorkspaceId(),
