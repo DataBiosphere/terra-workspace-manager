@@ -438,7 +438,7 @@ public class AzureDatabaseUtilsRunner {
   }
 
   private V1Pod createPodDefinition(UUID workspaceId, String podName, List<V1EnvVar> envVars) {
-    var safePodName = podName.replace('_', '-');
+    var safePodName = podName.replace('_', '-').toLowerCase();
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     var landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(

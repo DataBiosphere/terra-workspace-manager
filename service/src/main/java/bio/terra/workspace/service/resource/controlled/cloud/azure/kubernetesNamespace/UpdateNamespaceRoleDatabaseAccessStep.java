@@ -41,8 +41,7 @@ public class UpdateNamespaceRoleDatabaseAccessStep implements Step {
   @VisibleForTesting
   String getPodName(FlightContext context) {
     return String.format(
-            "%s-%s-role-%s", context.getDirection().name(), mode.name(), resource.getResourceId())
-        .toLowerCase();
+        "%s-%s-role-%s", context.getDirection().name(), mode.name(), resource.getResourceId());
   }
 
   @Override
