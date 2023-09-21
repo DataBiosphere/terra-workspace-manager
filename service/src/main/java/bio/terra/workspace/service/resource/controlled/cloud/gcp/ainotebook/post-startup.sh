@@ -379,9 +379,17 @@ emit "Installing the Terra CLI ..."
 # Fetch the Terra CLI server environment from the metadata server to install appropriate CLI version
 readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
 
-${RUN_AS_LOGIN_USER} "\
-  curl -L https://storage.googleapis.com/devcontainerpkg/workbench-cli/download-install.sh | TERRA_CLI_SERVER=${TERRA_SERVER} bash && \
-  cp terra '${TERRA_INSTALL_PATH}'"
+# If the server environment is a verily server, use the verily download script.
+# Otherwise, install the latest DataBiosphere CLI release.
+if [[ $TERRA_SERVER == *"verily"* ]]; then
+  ${RUN_AS_LOGIN_USER} "\
+    curl -L https://storage.googleapis.com/devcontainerpkg/workbench-cli/download-install.sh | TERRA_CLI_SERVER=${TERRA_SERVER} bash && \
+    cp terra '${TERRA_INSTALL_PATH}'"
+else
+  ${RUN_AS_LOGIN_USER} "\
+    curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash && \
+    cp terra '${TERRA_INSTALL_PATH}'"
+fi
 
 # Set browser manual login since that's the only login supported from a Vertex AI Notebook VM
 ${RUN_AS_LOGIN_USER} "terra config set browser MANUAL"
