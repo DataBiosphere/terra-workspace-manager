@@ -31,6 +31,8 @@ public class AwsTestUtils {
   public static final String TENANT_ALIAS = "tenant-saas";
   public static final String ENVIRONMENT_ALIAS = "unit-test-env";
   public static final String AWS_REGION = "us-east-1";
+  public static final String AWS_APPLICATION_VPC_ID = "fake-application-vpc-id";
+  public static final String AWS_APPLICATION_VPC_PRIVATE_SUBNET_ID = "fake-subnet-id";
   public static final String AWS_ENVIRONMENT_WSM_ROLE_ARN =
       "arn:aws:iam::10000000001:role/WorkspaceManagerRole";
   public static final String AWS_ENVIRONMENT_USER_ROLE_ARN =
@@ -55,6 +57,8 @@ public class AwsTestUtils {
           .build();
   public static final LandingZone AWS_LANDING_ZONE =
       LandingZone.builder()
+          .applicationVpcId(AWS_APPLICATION_VPC_ID)
+          .applicationVpcPrivateSubnetId(AWS_APPLICATION_VPC_PRIVATE_SUBNET_ID)
           .metadata(AWS_METADATA)
           .storageBucket(Arn.fromString(AWS_LANDING_ZONE_STORAGE_BUCKET_ARN), "bucket")
           .kmsKey(Arn.fromString(AWS_LANDING_ZONE_KMS_KEY_ARN), UUID.randomUUID())
