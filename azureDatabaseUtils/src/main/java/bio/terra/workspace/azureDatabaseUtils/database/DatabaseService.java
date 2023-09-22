@@ -5,6 +5,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,6 +13,9 @@ public class DatabaseService {
   private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
   private final DatabaseDao databaseDao;
   private final Validator validator;
+
+  @Value("${spring.datasource.username}")
+  private String datasourceUserName;
 
   @Autowired
   public DatabaseService(DatabaseDao databaseDao, Validator validator) {
@@ -68,5 +72,28 @@ public class DatabaseService {
     logger.info("Deleting namespace role {}", namespaceRole);
 
     databaseDao.deleteRole(namespaceRole);
+  }
+
+  public void revokeNamespaceRoleAccess(String namespaceRole) {
+    validator.validateRoleNameFormat(namespaceRole);
+
+    logger.info("Revoking namespace role access {}", namespaceRole);
+
+    // grant pg_signal_backend to the datasource user, so we can terminate sessions
+    // this only needs to be done once per database server,
+    // but it's idempotent, so we do it every time
+    databaseDao.grantRole(datasourceUserName, "pg_signal_backend");
+
+    // revoke first ensures no new connections are made, so we can be sure we terminate all sessions
+    databaseDao.revokeLoginPrivileges(namespaceRole);
+    databaseDao.terminateSessionsForRole(namespaceRole);
+  }
+
+  public void restoreNamespaceRoleAccess(String namespaceRole) {
+    validator.validateRoleNameFormat(namespaceRole);
+
+    logger.info("Restoring namespace role access {}", namespaceRole);
+
+    databaseDao.restoreLoginPrivileges(namespaceRole);
   }
 }

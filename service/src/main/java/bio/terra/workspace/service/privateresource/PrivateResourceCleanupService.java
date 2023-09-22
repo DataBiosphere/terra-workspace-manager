@@ -115,10 +115,13 @@ public class PrivateResourceCleanupService {
                     samService.checkAuthAsWsmSa(
                         SamResource.WORKSPACE,
                         workspaceUserPair.getWorkspaceId().toString(),
-                        SamWorkspaceAction.READ,
+                        SamWorkspaceAction.WRITE,
                         workspaceUserPair.getUserEmail()),
                 "cleanupResources");
         if (!userHasPermission) {
+          // if we got here, the user does not have write access to the workspace,
+          // the cleanup flight will remove write access to applicable private resources and
+          // revoke access to all private resources if the user does not have read access either
           logger.info(
               "Cleaning up resources for user {} from workspace {}",
               workspaceUserPair.getUserEmail(),
@@ -134,7 +137,8 @@ public class PrivateResourceCleanupService {
         resourceDao.setPrivateResourcesStateForWorkspaceUser(
             workspaceUserPair.getWorkspaceId(),
             workspaceUserPair.getUserEmail(),
-            PrivateResourceState.NOT_APPLICABLE);
+            PrivateResourceState.NOT_APPLICABLE,
+            Optional.empty());
       }
     }
   }

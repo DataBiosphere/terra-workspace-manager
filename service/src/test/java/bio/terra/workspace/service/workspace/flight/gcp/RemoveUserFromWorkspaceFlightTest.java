@@ -44,7 +44,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RevokePetUsagePermissionStep;
-import bio.terra.workspace.service.workspace.flight.removeuser.CheckUserStillInWorkspaceStep;
+import bio.terra.workspace.service.workspace.flight.removeuser.CheckWorkspaceUserActionsStep;
 import bio.terra.workspace.service.workspace.flight.removeuser.ClaimUserPrivateResourcesStep;
 import bio.terra.workspace.service.workspace.flight.removeuser.MarkPrivateResourcesAbandonedStep;
 import bio.terra.workspace.service.workspace.flight.removeuser.ReleasePrivateResourceCleanupClaimsStep;
@@ -162,7 +162,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     retrySteps.put(ValidateUserRoleStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(RemoveUserFromSamStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
-        CheckUserStillInWorkspaceStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
+        CheckWorkspaceUserActionsStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(
         ClaimUserPrivateResourcesStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
     retrySteps.put(

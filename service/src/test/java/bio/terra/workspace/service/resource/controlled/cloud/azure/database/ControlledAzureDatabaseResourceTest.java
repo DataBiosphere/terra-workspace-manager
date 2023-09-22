@@ -25,7 +25,7 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
   @Test
   void testCorrectPrivateDatabaseSteps() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default");
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default", false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
@@ -48,7 +48,7 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
   void testCorrectSharedDatabaseSteps() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            UUID.randomUUID().toString(), "default");
+            UUID.randomUUID().toString(), "default", false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
@@ -71,7 +71,7 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
   void testToApiResource() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            UUID.randomUUID().toString(), "default");
+            UUID.randomUUID().toString(), "default", false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
@@ -93,7 +93,7 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
   void testAttributesToJson() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            UUID.randomUUID().toString(), "default");
+            UUID.randomUUID().toString(), "default", false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(

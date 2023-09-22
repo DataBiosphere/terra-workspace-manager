@@ -57,6 +57,8 @@ public class AzureDatabaseUtilsRunner {
   public static final String COMMAND_CREATE_NAMESPACE_ROLE = "CreateNamespaceRole";
   public static final String COMMAND_CREATE_DATABASE_WITH_DB_ROLE = "CreateDatabaseWithDbRole";
   public static final String COMMAND_DELETE_NAMESPACE_ROLE = "DeleteNamespaceRole";
+  public static final String COMMAND_REVOKE_NAMESPACE_ROLE_ACCESS = "RevokeNamespaceRoleAccess";
+  public static final String COMMAND_RESTORE_NAMESPACE_ROLE_ACCESS = "RestoreNamespaceRoleAccess";
   public static final String COMMAND_TEST_DATABASE_CONNECT = "TestDatabaseConnect";
   public static final String COMMAND_CREATE_DATABASE = "CreateDatabase";
 
@@ -189,7 +191,7 @@ public class AzureDatabaseUtilsRunner {
   }
 
   /**
-   * Deletes a user from the landing zone postgres server thus revoking its access to any databases.
+   * Deletes a namespace role from the landing zone postgres server.
    *
    * @param azureCloudContext
    * @param workspaceId
@@ -204,9 +206,69 @@ public class AzureDatabaseUtilsRunner {
       String podName,
       String namespaceRoleName)
       throws InterruptedException {
+    namespaceRoleCommand(
+        azureCloudContext, workspaceId, podName, namespaceRoleName, COMMAND_DELETE_NAMESPACE_ROLE);
+  }
+
+  /**
+   * Revokes a namespace role's ability to login.
+   *
+   * @param azureCloudContext
+   * @param workspaceId
+   * @param podName name of the pod created to run the command, should be unique within the LZ and
+   *     stable across stairway retries
+   * @param namespaceRoleName to revoke
+   * @throws InterruptedException
+   */
+  public void revokeNamespaceRoleAccess(
+      AzureCloudContext azureCloudContext,
+      UUID workspaceId,
+      String podName,
+      String namespaceRoleName)
+      throws InterruptedException {
+    namespaceRoleCommand(
+        azureCloudContext,
+        workspaceId,
+        podName,
+        namespaceRoleName,
+        COMMAND_REVOKE_NAMESPACE_ROLE_ACCESS);
+  }
+
+  /**
+   * Restores a namespace role's ability to login.
+   *
+   * @param azureCloudContext
+   * @param workspaceId
+   * @param podName name of the pod created to run the command, should be unique within the LZ and
+   *     stable across stairway retries
+   * @param namespaceRoleName to restore
+   * @throws InterruptedException
+   */
+  public void restoreNamespaceRoleAccess(
+      AzureCloudContext azureCloudContext,
+      UUID workspaceId,
+      String podName,
+      String namespaceRoleName)
+      throws InterruptedException {
+    namespaceRoleCommand(
+        azureCloudContext,
+        workspaceId,
+        podName,
+        namespaceRoleName,
+        COMMAND_RESTORE_NAMESPACE_ROLE_ACCESS);
+  }
+
+  /** Runs a command that takes a namespace role name as a parameter. */
+  private void namespaceRoleCommand(
+      AzureCloudContext azureCloudContext,
+      UUID workspaceId,
+      String podName,
+      String namespaceRoleName,
+      String command)
+      throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
-            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_DELETE_NAMESPACE_ROLE),
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(command),
             new V1EnvVar().name(PARAM_NAMESPACE_ROLE).value(namespaceRoleName));
     runAzureDatabaseUtils(
         azureCloudContext,
@@ -376,7 +438,7 @@ public class AzureDatabaseUtilsRunner {
   }
 
   private V1Pod createPodDefinition(UUID workspaceId, String podName, List<V1EnvVar> envVars) {
-    var safePodName = podName.replace('_', '-');
+    var safePodName = podName.replace('_', '-').toLowerCase();
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     var landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(

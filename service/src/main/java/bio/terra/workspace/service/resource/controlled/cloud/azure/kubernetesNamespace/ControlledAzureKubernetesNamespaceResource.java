@@ -14,6 +14,7 @@ import bio.terra.workspace.generated.model.ApiAzureKubernetesNamespaceAttributes
 import bio.terra.workspace.generated.model.ApiAzureKubernetesNamespaceResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.DeleteFederatedCredentialStep;
@@ -21,10 +22,12 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.StepRetryRulePair;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -293,6 +296,48 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   }
 
   @Override
+  public List<StepRetryRulePair> getRemoveNativeAccessSteps(FlightBeanBag flightBeanBag) {
+    if (requiresDatabases()) {
+      return List.of(
+          new StepRetryRulePair(
+              new GetAzureCloudContextStep(
+                  getWorkspaceId(), flightBeanBag.getAzureCloudContextService()),
+              RetryRules.shortDatabase()),
+          new StepRetryRulePair(
+              new UpdateNamespaceRoleDatabaseAccessStep(
+                  getWorkspaceId(),
+                  flightBeanBag.getAzureDatabaseUtilsRunner(),
+                  this,
+                  flightBeanBag.getResourceDao(),
+                  UpdateNamespaceRoleDatabaseAccessStepMode.REVOKE),
+              RetryRules.cloud()));
+    } else {
+      return List.of();
+    }
+  }
+
+  @Override
+  public List<StepRetryRulePair> getRestoreNativeAccessSteps(FlightBeanBag flightBeanBag) {
+    if (requiresDatabases()) {
+      return List.of(
+          new StepRetryRulePair(
+              new GetAzureCloudContextStep(
+                  getWorkspaceId(), flightBeanBag.getAzureCloudContextService()),
+              RetryRules.shortDatabase()),
+          new StepRetryRulePair(
+              new UpdateNamespaceRoleDatabaseAccessStep(
+                  getWorkspaceId(),
+                  flightBeanBag.getAzureDatabaseUtilsRunner(),
+                  this,
+                  flightBeanBag.getResourceDao(),
+                  UpdateNamespaceRoleDatabaseAccessStepMode.RESTORE),
+              RetryRules.cloud()));
+    } else {
+      return List.of();
+    }
+  }
+
+  @Override
   @JsonIgnore
   public WsmResourceType getResourceType() {
     return WsmResourceType.CONTROLLED_AZURE_KUBERNETES_NAMESPACE;
@@ -397,6 +442,11 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
         this.kubernetesServiceAccount,
         this.managedIdentity,
         this.databases);
+  }
+
+  @Override
+  public String getRequiredSamActionForPrivateResource() {
+    return SamWorkspaceAction.WRITE;
   }
 
   public static Builder builder() {

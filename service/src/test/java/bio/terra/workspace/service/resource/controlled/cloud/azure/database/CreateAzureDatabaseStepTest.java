@@ -57,7 +57,7 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   private final String uamiName = UUID.randomUUID().toString();
   private final String uamiPrincipalId = UUID.randomUUID().toString();
   private final ApiAzureDatabaseCreationParameters creationParameters =
-      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default");
+      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default", false);
   private final ControlledAzureDatabaseResource databaseResource =
       ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
               creationParameters, workspaceId, null)

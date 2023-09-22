@@ -27,7 +27,7 @@ public class ValidateDatabaseOwnerStepTest extends BaseMockitoStrictStubbingTest
 
   private final String owner = UUID.randomUUID().toString();
   private final ApiAzureDatabaseCreationParameters creationParameters =
-      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, "default");
+      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, "default", false);
   private final ControlledAzureDatabaseResource databaseResource =
       ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
               creationParameters, UUID.randomUUID())
@@ -48,7 +48,7 @@ public class ValidateDatabaseOwnerStepTest extends BaseMockitoStrictStubbingTest
   @Test
   void testNoOwner() throws InterruptedException {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default");
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default", false);
     var databaseResource =
         ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
                 creationParameters, UUID.randomUUID(), null)

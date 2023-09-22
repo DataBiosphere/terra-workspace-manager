@@ -10,13 +10,13 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.UUID;
 
-public class CheckUserStillInWorkspaceStep implements Step {
+public class CheckWorkspaceUserActionsStep implements Step {
 
   private final UUID workspaceUuid;
   private final SamService samService;
   private final String removedUserEmail;
 
-  public CheckUserStillInWorkspaceStep(
+  public CheckWorkspaceUserActionsStep(
       UUID workspaceUuid, String removedUserEmail, SamService samService) {
     this.workspaceUuid = workspaceUuid;
     this.samService = samService;
@@ -31,8 +31,15 @@ public class CheckUserStillInWorkspaceStep implements Step {
             workspaceUuid.toString(),
             SamConstants.SamWorkspaceAction.READ,
             removedUserEmail);
+    boolean userCanWriteWorkspace =
+        samService.checkAuthAsWsmSa(
+            SamConstants.SamResource.WORKSPACE,
+            workspaceUuid.toString(),
+            SamConstants.SamWorkspaceAction.WRITE,
+            removedUserEmail);
     FlightMap workingMap = context.getWorkingMap();
-    workingMap.put(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, userCanReadWorkspace);
+    workingMap.put(ControlledResourceKeys.REMOVED_USER_CAN_READ_WORKSPACE, userCanReadWorkspace);
+    workingMap.put(ControlledResourceKeys.REMOVED_USER_CAN_WRITE_WORKSPACE, userCanWriteWorkspace);
     return StepResult.getStepResultSuccess();
   }
 

@@ -136,6 +136,44 @@ public class DatabaseDao {
         "REVOKE ALL PRIVILEGES ON DATABASE %s FROM PUBLIC".formatted(databaseName), Map.of());
   }
 
+  public void revokeLoginPrivileges(String roleName) {
+    // roleName should already be validated by the service layer
+    // REVOKE does not like bind parameters
+    jdbcTemplate.update(
+        """
+        ALTER ROLE "%s" NOLOGIN
+        """.formatted(roleName), Map.of());
+  }
+
+  public void restoreLoginPrivileges(String roleName) {
+    // roleName should already be validated by the service layer
+    // REVOKE does not like bind parameters
+    jdbcTemplate.update(
+        """
+        ALTER ROLE "%s" LOGIN
+        """.formatted(roleName), Map.of());
+  }
+
+  /**
+   * Terminate all sessions for the given role.
+   *
+   * @param roleName
+   * @return the number of sessions terminated
+   */
+  public int terminateSessionsForRole(String roleName) {
+    // roleName should already be validated by the service layer
+    return jdbcTemplate
+        .query(
+            """
+        SELECT count(pg_terminate_backend(pg_stat_activity.pid))
+        FROM pg_stat_activity
+        WHERE pg_stat_activity.usename = :roleName;
+        """,
+            Map.of("roleName", roleName),
+            (rs, rowNum) -> rs.getInt(1))
+        .get(0);
+  }
+
   public String getCurrentDatabaseName() {
     return jdbcTemplate
         .query("SELECT current_database()", Map.of(), (rs, rowNum) -> rs.getString(1))

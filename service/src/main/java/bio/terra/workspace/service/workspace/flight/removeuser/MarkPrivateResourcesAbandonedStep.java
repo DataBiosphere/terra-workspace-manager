@@ -12,6 +12,7 @@ import bio.terra.workspace.service.resource.controlled.model.PrivateResourceStat
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -34,34 +35,18 @@ public class MarkPrivateResourcesAbandonedStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    FlightMap workingMap = context.getWorkingMap();
-    boolean userStillInWorkspace =
-        workingMap.get(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class);
-    // This flight is triggered whenever a user loses any role on a workspace. If they are still
-    // a member of the workspace via a group or another role, we do not need to remove their access
-    // to private resources.
-    if (userStillInWorkspace) {
-      return StepResult.getStepResultSuccess();
-    }
-    // If the user has been fully removed from the workspace, mark all their private resources as
-    // abandoned.
+    // mark claimed private resources as abandoned.
     resourceDao.setPrivateResourcesStateForWorkspaceUser(
-        workspaceUuid, userEmailToRemove, PrivateResourceState.ABANDONED);
+        workspaceUuid,
+        userEmailToRemove,
+        PrivateResourceState.ABANDONED,
+        Optional.of(context.getFlightId()));
     return StepResult.getStepResultSuccess();
   }
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     FlightMap workingMap = context.getWorkingMap();
-    boolean userStillInWorkspace =
-        workingMap.get(ControlledResourceKeys.REMOVED_USER_IS_WORKSPACE_MEMBER, Boolean.class);
-    // This flight is triggered whenever a user loses any role on a workspace. If they are still
-    // a member of the workspace via a group or another role, we do not need to remove their access
-    // to private resources.
-    if (userStillInWorkspace) {
-      return StepResult.getStepResultSuccess();
-    }
-
     List<ResourceRolePair> resourceRolePairs =
         workingMap.get(ControlledResourceKeys.RESOURCE_ROLES_TO_REMOVE, new TypeReference<>() {});
     List<ControlledResource> uniqueControlledResources =

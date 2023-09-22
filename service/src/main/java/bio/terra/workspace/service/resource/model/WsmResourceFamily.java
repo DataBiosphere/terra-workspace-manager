@@ -7,6 +7,13 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * Resource Family groups together controlled and referenced resource types of resources manged by
+ * WSM. For example, CONTROLLED_GCS_BUCKET and REFERENCED_GCS_BUCKET are the controlled and
+ * referenced resource types of the GCS_BUCKET resource family. Some resource families have only a
+ * controlled type (e.g. AI_NOTEBOOK_INSTANCE) or only a referenced type (e.g. GIT_REPO) in which
+ * case the other is null.
+ */
 public enum WsmResourceFamily {
   // ANY
   GIT_REPO("GIT_REPO", ApiResourceType.GIT_REPO, WsmResourceType.REFERENCED_ANY_GIT_REPO, null),
