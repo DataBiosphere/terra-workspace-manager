@@ -68,7 +68,7 @@ public class DeleteAzureDatabaseStep implements Step {
     try {
       logger.info(
           "Attempting to delete database {} in server {} of resource group {}",
-          getResourceName(databaseResource),
+          resource.getDatabaseName(),
           getResourceName(databaseResource),
           azureCloudContext.getAzureResourceGroupId());
 
@@ -83,7 +83,7 @@ public class DeleteAzureDatabaseStep implements Step {
       logger.info(
           "Attempt to delete database %s in server %s of resource group %s on this try"
               .formatted(
-                  getResourceName(databaseResource),
+                  resource.getDatabaseName(),
                   getResourceName(databaseResource),
                   azureCloudContext.getAzureResourceGroupId()),
           ex);
