@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.NotebookUtils;
+import scripts.utils.RetryUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledAiNotebookInstancePostStartup
@@ -66,7 +67,7 @@ public class PrivateControlledAiNotebookInstancePostStartup
     assertEquals(
         resource.getMetadata().getName(), metadata.get("terra-gcp-notebook-resource-name"));
     var testResultValue =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () -> {
               String result =
                   userNotebooks

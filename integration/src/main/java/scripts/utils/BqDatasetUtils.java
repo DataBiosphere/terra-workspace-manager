@@ -85,7 +85,7 @@ public class BqDatasetUtils {
             .dataset(dataset);
 
     GcpBigQueryDatasetResource result =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () -> resourceApi.createBigQueryDatasetReference(body, workspaceUuid));
     logger.info(
         "Created BigQuery Dataset Reference {} project {} resource ID {} workspace {}",
@@ -155,7 +155,7 @@ public class BqDatasetUtils {
             .metadata(makeReferencedResourceCommonFields(name, cloningInstructions))
             .dataTable(dataTable);
 
-    return ClientTestUtils.getWithRetryOnException(
+    return RetryUtils.getWithRetryOnException(
         () -> resourceApi.createBigQueryDataTableReference(body, workspaceUuid));
   }
 
@@ -275,11 +275,11 @@ public class BqDatasetUtils {
 
     // Wrap operations in a wait to allow the IAM permissions to propagate
     final Table createdEmployeeTable =
-        ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(employeeTableInfo));
+        RetryUtils.getWithRetryOnException(() -> bigQueryClient.create(employeeTableInfo));
     logger.info("Created Employee Table: {}", createdEmployeeTable);
 
     final Table createdDepartmentTable =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () ->
                 bigQueryClient.create(
                     TableInfo.newBuilder(
@@ -303,7 +303,7 @@ public class BqDatasetUtils {
 
     // Stream insert one row to check the error handling/warning. This row may not be copied. (If
     // the stream happens after the DDL insert, sometimes it gets copied).
-    ClientTestUtils.getWithRetryOnException(
+    RetryUtils.getWithRetryOnException(
         () ->
             bigQueryClient.insertAll(
                 InsertAllRequest.newBuilder(employeeTableInfo)
@@ -314,7 +314,7 @@ public class BqDatasetUtils {
     // be in the streaming buffer where it's un-copyable for up to 90 minutes.
     // Retry because if project was created recently, it may take time for bigquery.jobs.create to
     // propagate
-    ClientTestUtils.getWithRetryOnException(
+    RetryUtils.getWithRetryOnException(
         () ->
             bigQueryClient.query(
                 QueryJobConfiguration.newBuilder(
@@ -328,7 +328,7 @@ public class BqDatasetUtils {
                             + "101, 'Aquaman'), (102, 'Superman');")
                     .build()));
 
-    ClientTestUtils.getWithRetryOnException(
+    RetryUtils.getWithRetryOnException(
         () ->
             bigQueryClient.query(
                 QueryJobConfiguration.newBuilder(
@@ -342,7 +342,7 @@ public class BqDatasetUtils {
 
     // double-check the rows are there
     TableResult employeeTableResult =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () ->
                 bigQueryClient.query(
                     QueryJobConfiguration.newBuilder(

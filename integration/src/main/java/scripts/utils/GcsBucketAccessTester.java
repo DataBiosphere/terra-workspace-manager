@@ -255,7 +255,7 @@ public class GcsBucketAccessTester implements AutoCloseable {
 
   private boolean doWait(TestFunction function) throws Exception {
     try {
-      ClientTestUtils.getWithRetryOnException(function::apply);
+      RetryUtils.getWithRetryOnException(function::apply);
       return true;
     } catch (StorageException e) {
       if (e.getCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {

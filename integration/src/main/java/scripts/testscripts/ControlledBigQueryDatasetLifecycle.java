@@ -50,6 +50,7 @@ import scripts.utils.BqDatasetUtils;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.GcpWorkspaceCloneTestScriptBase;
 import scripts.utils.MultiResourcesUtils;
+import scripts.utils.RetryUtils;
 import scripts.utils.SamClientUtils;
 
 // TODO: This test no longer clones. Extend WorkspaceAllocateTestScriptBase instead of
@@ -136,7 +137,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     // This is the reader's first use of cloud APIs after being added to the workspace, so we
     // retry this operation until cloud IAM has properly synced.
     var readTable =
-        ClientTestUtils.getWithRetryOnException(() -> readerBqClient.getTable(table.getTableId()));
+        RetryUtils.getWithRetryOnException(() -> readerBqClient.getTable(table.getTableId()));
     assertEquals(table, readTable);
     logger.info("Read table {} as workspace reader", tableName);
 
@@ -159,14 +160,13 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     // This is the writer's first use of cloud APIs after being added to the workspace, so we
     // retry this operation until cloud IAM has properly synced.
     var writerReadTable =
-        ClientTestUtils.getWithRetryOnException(() -> writerBqClient.getTable(table.getTableId()));
+        RetryUtils.getWithRetryOnException(() -> writerBqClient.getTable(table.getTableId()));
     assertEquals(table, writerReadTable);
     logger.info("Read table {} as workspace writer", tableName);
 
     // In contrast, a workspace writer can write data to tables
     String columnValue = "this value lives in a table";
-    ClientTestUtils.getWithRetryOnException(
-        () -> insertValueIntoTable(writerBqClient, columnValue));
+    RetryUtils.getWithRetryOnException(() -> insertValueIntoTable(writerBqClient, columnValue));
     logger.info("Workspace writer wrote a row to table {}", tableName);
 
     // Create a dataset to hold query results in the destination project.
@@ -190,7 +190,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     String newDescription = "Another new table description";
     Table writerUpdatedTable = table.toBuilder().setDescription(newDescription).build();
     Table updatedTable =
-        ClientTestUtils.getWithRetryOnException(() -> writerBqClient.update(writerUpdatedTable));
+        RetryUtils.getWithRetryOnException(() -> writerBqClient.update(writerUpdatedTable));
     assertEquals(newDescription, updatedTable.getDescription());
     logger.info("Workspace writer modified table {} metadata", tableName);
 
@@ -299,7 +299,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     var tableInfo = TableInfo.of(tableId, tableDefinition);
 
     logger.info("Creating table {} in dataset {}", TABLE_NAME, DATASET_RESOURCE_NAME);
-    return ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.create(tableInfo));
+    return RetryUtils.getWithRetryOnException(() -> bigQueryClient.create(tableInfo));
   }
 
   /** Insert a single String value into the column/table/dataset specified by constant values. */
@@ -335,7 +335,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
     JobId jobId = JobId.of(UUID.randomUUID().toString());
     // Retry because bigquery.jobs.create can take time to propagate
     Job queryJob =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () -> bigQueryClient.create(JobInfo.newBuilder(jobConfig).setJobId(jobId).build()));
     Job completedJob = queryJob.waitFor();
 

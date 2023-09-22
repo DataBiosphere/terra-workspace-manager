@@ -40,6 +40,7 @@ import scripts.utils.CommonResourceFieldsUtil;
 import scripts.utils.GcsBucketAccessTester;
 import scripts.utils.GcsBucketUtils;
 import scripts.utils.MultiResourcesUtils;
+import scripts.utils.RetryUtils;
 import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
@@ -90,7 +91,7 @@ public class PrivateControlledGcsBucketLifecycle extends WorkspaceAllocateTestSc
     // Cloud IAM permissions may take several minutes to sync, so we retry this operation until
     // it succeeds.
     CreatedControlledGcpGcsBucket bucket =
-        ClientTestUtils.getWithRetryOnException(() -> createPrivateBucket(privateUserResourceApi));
+        RetryUtils.getWithRetryOnException(() -> createPrivateBucket(privateUserResourceApi));
     UUID resourceId = bucket.getResourceId();
     assertEquals(
         CommonResourceFieldsUtil.getResourceDefaultProperties(),

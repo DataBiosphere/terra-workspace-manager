@@ -17,6 +17,7 @@ import java.util.List;
 import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
+import scripts.utils.RetryUtils;
 import scripts.utils.SamClientUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
@@ -85,7 +86,7 @@ public class EnablePet extends WorkspaceAllocateTestScriptBase {
     // pet.
     userWorkspaceApi.removeRole(getWorkspaceId(), IamRole.READER, secondUser.userEmail);
     assertTrue(
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () -> assertCannotImpersonateSa(secondUserIamClient, secondUserPetSaEmail)));
   }
 

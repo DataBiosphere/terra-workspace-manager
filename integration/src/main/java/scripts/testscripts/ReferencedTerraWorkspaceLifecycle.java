@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.GcpWorkspaceCloneTestScriptBase;
+import scripts.utils.RetryUtils;
 import scripts.utils.TestUtils;
 
 // Subclass GcpWorkspaceCloneTestScriptBase because that creates 2 workspaces. In this test, we
@@ -57,7 +58,7 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
             .referencedWorkspace(
                 new TerraWorkspaceAttributes().referencedWorkspaceId(getReferencedWorkspaceId()));
     TerraWorkspaceResource createdResource =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () -> referencedGcpResourceApi.createTerraWorkspaceReference(body, getWorkspaceId()));
     logger.info(
         "In workspace {}, created reference to workspace {}",
@@ -66,7 +67,7 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
 
     // Get resource by resource id
     TerraWorkspaceResource gotResource =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () ->
                 referencedGcpResourceApi.getTerraWorkspaceReference(
                     getWorkspaceId(), createdResource.getMetadata().getResourceId()));
@@ -74,7 +75,7 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
 
     // Get resource by resource name
     gotResource =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () ->
                 referencedGcpResourceApi.getTerraWorkspaceReferenceByName(
                     getWorkspaceId(), createdResource.getMetadata().getName()));
@@ -106,7 +107,7 @@ public class ReferencedTerraWorkspaceLifecycle extends GcpWorkspaceCloneTestScri
   private void testDelete(ReferencedGcpResourceApi referencedGcpResourceApi, UUID createdResourceId)
       throws Exception {
     // Delete resource
-    ClientTestUtils.runWithRetryOnException(
+    RetryUtils.runWithRetryOnException(
         () -> {
           try {
             referencedGcpResourceApi.deleteTerraWorkspaceReference(

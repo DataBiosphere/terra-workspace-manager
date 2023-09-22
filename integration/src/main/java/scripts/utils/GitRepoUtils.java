@@ -60,7 +60,7 @@ public class GitRepoUtils {
             .metadata(makeReferencedResourceCommonFields(name, CloningInstructionsEnum.REFERENCE))
             .gitrepo(new GitRepoAttributes().gitRepoUrl(attributes.getGitRepoUrl()));
     logger.info("Making git repo reference of {} with name {}", attributes.getGitRepoUrl(), name);
-    return ClientTestUtils.getWithRetryOnException(
+    return RetryUtils.getWithRetryOnException(
         () -> resourceApi.createGitRepoReference(body, workspaceUuid));
   }
 }

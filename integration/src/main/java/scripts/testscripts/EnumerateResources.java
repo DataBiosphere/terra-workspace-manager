@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.MultiResourcesUtils;
+import scripts.utils.RetryUtils;
 import scripts.utils.TestUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
@@ -107,7 +108,7 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
     // As this is the first operation after modifying workspace IAM groups, retry here to compensate
     // for the delay in GCP IAM propagation.
     ResourceList readerEnumList =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () ->
                 readerResourceApi.enumerateResources(
                     getWorkspaceId(), 0, RESOURCE_COUNT, null, null));
