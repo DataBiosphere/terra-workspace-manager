@@ -17,7 +17,7 @@ import java.util.UUID;
 
 /**
  * Generate flight ids and store them in the working map. The ids need to be stable across runs of
- * the RemoveWriteAccessStep.
+ * the RemoveNativeAccessToPrivateResourcesStep.
  */
 public class MakeFlightIdsStep implements Step {
   @Override

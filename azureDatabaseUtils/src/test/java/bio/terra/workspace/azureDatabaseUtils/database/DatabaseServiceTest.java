@@ -57,9 +57,23 @@ public class DatabaseServiceTest extends BaseUnitTest {
 
     var inOrder = inOrder(databaseDao);
     // order is important, reversing it can lead to connections sneaking in
+    inOrder.verify(databaseDao).grantRole("postgres", "pg_signal_backend");
     inOrder.verify(databaseDao).revokeLoginPrivileges(namespaceRole);
     inOrder.verify(databaseDao).terminateSessionsForRole(namespaceRole);
 
+    verify(validator).validateRoleNameFormat(namespaceRole);
+
+    // make sure calling it again does not cause an error
+    databaseService.revokeNamespaceRoleAccess(namespaceRole);
+  }
+
+  @Test
+  void testRestoreNamespaceRoleAccess() {
+    final String namespaceRole = "testRestoreNamespaceRoleAccess";
+
+    databaseService.restoreNamespaceRoleAccess(namespaceRole);
+
+    verify(databaseDao).restoreLoginPrivileges(namespaceRole);
     verify(validator).validateRoleNameFormat(namespaceRole);
   }
 }
