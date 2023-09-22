@@ -105,7 +105,7 @@ public class CreateAzureDatabaseStep implements Step {
     try {
       logger.info(
           "Attempting to delete database {} in server {} of resource group {}",
-          getResourceName(databaseResource),
+          resource.getDatabaseName(),
           getResourceName(databaseResource),
           azureCloudContext.getAzureResourceGroupId());
 
@@ -120,7 +120,7 @@ public class CreateAzureDatabaseStep implements Step {
       if (e.getResponse().getStatusCode() == 404) {
         logger.info(
             "Database {} in server {} of resource group {} not found",
-            getResourceName(databaseResource),
+            resource.getDatabaseName(),
             getResourceName(databaseResource),
             azureCloudContext.getAzureResourceGroupId());
         return StepResult.getStepResultSuccess();
