@@ -376,15 +376,51 @@ ${RUN_AS_LOGIN_USER} "\
 # Install & configure the Terra CLI
 emit "Installing the Terra CLI ..."
 
-${RUN_AS_LOGIN_USER} "\
-  curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash && \
-  cp terra '${TERRA_INSTALL_PATH}'"
+# Fetch the Terra CLI server environment from the metadata server to install appropriate CLI version
+readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
+
+# If the server environment is a verily server, use the verily download script.
+# Otherwise, install the latest DataBiosphere CLI release.
+if [[ $TERRA_SERVER == *"verily"* ]]; then
+  # Map the CLI server to the appropriate AFS service environment
+  case $TERRA_SERVER in
+    verily-devel)
+      afsservice=terra-devel-axon.api.verily.com
+      ;;
+    verily-autopush)
+      afsservice=terra-autopush-axon.api.verily.com
+      ;;
+    verily-staging)
+      afsservice=terra-staging-axon.api.verily.com
+      ;;
+    verily-preprod)
+      afsservice=terra-preprod-axon.api.verily.com
+      ;;
+    verily)
+      afsservice=terra-axon.api.verily.com
+      ;;
+    *)
+      >&2 echo "ERROR: $TERRA_SERVER is not a known verily server."
+      exit 1
+      ;;
+  esac
+  # Build AFS service path and fetch the CLI distribution path
+  versionJson="$(curl -s "https://$afsservice/version")"
+  cliDistributionPath=$(echo "$versionJson" | jq -r '.cliDistributionPath')
+
+  ${RUN_AS_LOGIN_USER} "\
+    curl -L https://storage.googleapis.com/${cliDistributionPath#gs://}/download-install.sh | TERRA_CLI_SERVER=${TERRA_SERVER} bash && \
+    cp terra '${TERRA_INSTALL_PATH}'"
+else
+  ${RUN_AS_LOGIN_USER} "\
+    curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash && \
+    cp terra '${TERRA_INSTALL_PATH}'"
+fi
 
 # Set browser manual login since that's the only login supported from a Vertex AI Notebook VM
 ${RUN_AS_LOGIN_USER} "terra config set browser MANUAL"
 
 # Set the CLI terra server based on the terra server that created the VM.
-readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
 if [[ -n "${TERRA_SERVER}" ]]; then
   ${RUN_AS_LOGIN_USER} "terra server set --name=${TERRA_SERVER}"
 fi
