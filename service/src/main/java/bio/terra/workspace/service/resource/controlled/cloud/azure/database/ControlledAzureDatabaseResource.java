@@ -200,6 +200,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       steps.add(
           new GetFederatedIdentityStep(
               getK8sNamespace(),
+              getK8sNamespace(),
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
               flightBeanBag.getKubernetesClientProvider(),
