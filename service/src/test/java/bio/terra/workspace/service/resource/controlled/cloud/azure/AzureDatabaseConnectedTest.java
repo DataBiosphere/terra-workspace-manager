@@ -14,6 +14,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -33,10 +34,12 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.model.Workspace;
+import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.msi.models.Identity;
 import com.azure.resourcemanager.postgresqlflexibleserver.models.Database;
 import io.kubernetes.client.openapi.ApiException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -48,6 +51,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 
 @Tag("azureConnected")
@@ -240,7 +244,7 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
         azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
         k8sResource.getKubernetesNamespace(),
         null);
-    assertNamespaceDeleted(k8sResource.getKubernetesNamespace());
+    assertNamespaceDeleted(k8sResource);
   }
 
   private void deleteDatabase(
@@ -255,8 +259,7 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
         getDatabaseFunction());
   }
 
-  @NotNull
-  private void assertNamespaceDeleted(String namespace) {
+  private void assertNamespaceDeleted(ControlledAzureKubernetesNamespaceResource namespace) {
     var clusterResource =
         landingZoneApiDispatch
             .getSharedKubernetesCluster(
@@ -272,9 +275,44 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
         assertThrows(
             ApiException.class,
             () -> {
-              apiClient.readNamespace(namespace, null);
+              apiClient.readNamespace(namespace.getKubernetesNamespace(), null);
             });
     assertEquals(404, notFound.getCode());
+
+    var managedIdentity =
+        namespace
+            .getAssignedUser()
+            .map(
+                email -> {
+                  try {
+                    return samService.getOrCreateUserManagedIdentityForUser(
+                        email,
+                        azureTestUtils.getAzureCloudContext().getAzureSubscriptionId(),
+                        azureTestUtils.getAzureCloudContext().getAzureTenantId(),
+                        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId());
+                  } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                  }
+                })
+            .orElse(namespace.getManagedIdentity());
+
+    var fedCredsNotFound =
+        assertThrows(
+            ManagementException.class,
+            () ->
+                azureTestUtils
+                    .getMsiManager()
+                    .identities()
+                    .manager()
+                    .serviceClient()
+                    .getFederatedIdentityCredentials()
+                    .get(
+                        azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                        managedIdentity,
+                        namespace.getKubernetesNamespace()));
+    assertEquals(
+        Optional.of(HttpStatus.NOT_FOUND),
+        AzureManagementExceptionUtils.getHttpStatus(fedCredsNotFound));
   }
 
   @NotNull
