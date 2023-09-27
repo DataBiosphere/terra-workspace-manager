@@ -199,8 +199,9 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       steps.add(getManagedIdentityStep);
       steps.add(
           new GetFederatedIdentityStep(
-              getK8sNamespace(),
-              getK8sNamespace(),
+              // use the same namespace for both federated credential and KSA
+              getK8sNamespace(), // federatedCredentialName
+              getK8sNamespace(), // KSA name
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
               flightBeanBag.getKubernetesClientProvider(),
