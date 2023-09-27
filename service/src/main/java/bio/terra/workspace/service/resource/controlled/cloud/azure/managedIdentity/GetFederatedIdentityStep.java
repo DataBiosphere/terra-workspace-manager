@@ -21,7 +21,8 @@ import org.springframework.http.HttpStatus;
 public class GetFederatedIdentityStep implements Step {
   public static final String FEDERATED_IDENTITY_EXISTS = "FEDERATED_IDENTITY_EXISTS";
   private static final Logger logger = LoggerFactory.getLogger(GetFederatedIdentityStep.class);
-  public final String federatedCredentialName;
+  private final String federatedCredentialName;
+  private final String k8sServiceAccountName;
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final KubernetesClientProvider kubernetesClientProvider;
@@ -29,11 +30,13 @@ public class GetFederatedIdentityStep implements Step {
 
   public GetFederatedIdentityStep(
       String federatedCredentialName,
+      String k8sServiceAccountName,
       AzureConfiguration azureConfig,
       CrlService crlService,
       KubernetesClientProvider kubernetesClientProvider,
       UUID workspaceId) {
     this.federatedCredentialName = federatedCredentialName;
+    this.k8sServiceAccountName = k8sServiceAccountName;
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.kubernetesClientProvider = kubernetesClientProvider;
@@ -88,7 +91,7 @@ public class GetFederatedIdentityStep implements Step {
 
   private boolean k8sServiceAccountExists(String uamiName, CoreV1Api aksApi) {
     try {
-      return aksApi.readNamespacedServiceAccount(uamiName, federatedCredentialName, null) != null;
+      return aksApi.readNamespacedServiceAccount(uamiName, k8sServiceAccountName, null) != null;
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.NOT_FOUND.value()) {
         return false;

@@ -189,6 +189,7 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
           getGetManagedIdentityStep(flightBeanBag),
           new GetFederatedIdentityStep(
               getKubernetesNamespace(),
+              getKubernetesServiceAccount(),
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
               flightBeanBag.getKubernetesClientProvider(),
@@ -280,12 +281,6 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     if (requiresFederatedCredentials()) {
       return List.of(
           getGetManagedIdentityStep(flightBeanBag),
-          new GetFederatedIdentityStep(
-              getKubernetesNamespace(),
-              flightBeanBag.getAzureConfig(),
-              flightBeanBag.getCrlService(),
-              flightBeanBag.getKubernetesClientProvider(),
-              getWorkspaceId()),
           new DeleteFederatedCredentialStep(
               getKubernetesNamespace(),
               flightBeanBag.getAzureConfig(),
