@@ -134,6 +134,7 @@ public class WorkspaceV2Api {
         body.getApplicationIds(),
         cloudPlatform,
         spendProfile,
+        body.getProjectOwnerGroupId(),
         jobId,
         userRequest);
 

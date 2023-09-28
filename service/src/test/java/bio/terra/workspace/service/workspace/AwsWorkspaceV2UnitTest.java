@@ -61,7 +61,14 @@ public class AwsWorkspaceV2UnitTest extends BaseAwsUnitTest {
       UUID workspaceUuid = workspace.workspaceId();
       String jobId = UUID.randomUUID().toString();
       workspaceService.createWorkspaceV2(
-          workspace, null, null, CloudPlatform.AWS, DEFAULT_SPEND_PROFILE, jobId, USER_REQUEST);
+          workspace,
+          null,
+          null,
+          CloudPlatform.AWS,
+          DEFAULT_SPEND_PROFILE,
+          null,
+          jobId,
+          USER_REQUEST);
       jobService.waitForJob(jobId);
 
       // cloud context should have been created

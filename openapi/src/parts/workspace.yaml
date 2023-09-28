@@ -702,6 +702,9 @@ components:
           type: string
         jobControl:
           $ref: '#/components/schemas/JobControl'
+        projectOwnerGroupId:
+          description: Optional Sam resource group ID which allows the group to be added as project owner on the workspace
+          type: string
 
     CreateWorkspaceV2Result:
       description: Result of an asynchronous workspace create
