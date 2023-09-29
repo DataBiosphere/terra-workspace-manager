@@ -216,7 +216,7 @@ ${RUN_AS_LOGIN_USER} "touch '${USER_BASHRC}'"
 emit "Resynchronizing apt package index..."
 
 # The apt package index may not be clean when we run; resynchronize
-apt-get update
+apt-get update --allow-releaseinfo-change
 
 # Create the target directories for installing into the HOME directory
 ${RUN_AS_LOGIN_USER} "mkdir -p '${USER_BASH_COMPLETION_DIR}'"
