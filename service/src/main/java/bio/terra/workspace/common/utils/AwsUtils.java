@@ -191,7 +191,7 @@ public class AwsUtils {
    *     refresh time
    * @return {@link AwsCredentialsProvider}
    */
-  public static AwsCredentialsProvider createAssumeRoleWithGcpCredentialsProvider(
+  private static AwsCredentialsProvider createAssumeRoleWithGcpCredentialsProvider(
       Arn roleArn, Duration duration, Duration staleTime, String jwtAudience) {
     return StsAssumeRoleWithWebIdentityCredentialsProvider.builder()
         .stsClient(getStsClient())

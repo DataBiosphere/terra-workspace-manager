@@ -132,7 +132,7 @@ public class AwsConfiguration {
   }
 
   public static class Authentication {
-    public static final long DEFAULT_CREDENTIAL_LIFETIME_SECONDS = 900;
+    public static final long DEFAULT_CREDENTIAL_LIFETIME_SECONDS = 1800;
     public static final long DEFAULT_CREDENTIAL_STALE_TIME_SECONDS = 300;
 
     private String googleJwtAudience;
