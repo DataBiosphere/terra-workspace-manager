@@ -46,14 +46,6 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
     var managedIdentityResource = getManagedIdentityResource();
-    if (managedIdentityResource == null) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new BadRequestException(
-              String.format(
-                  "An Azure Managed Identity with id %s does not exist in workspace %s",
-                  managedIdentityName, workspaceId)));
-    }
     var uamiName = managedIdentityResource.getManagedIdentityName();
 
     try {
