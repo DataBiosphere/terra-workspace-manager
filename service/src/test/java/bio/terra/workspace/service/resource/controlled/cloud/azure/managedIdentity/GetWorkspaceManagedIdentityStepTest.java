@@ -97,10 +97,11 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
     when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
     when(mockMsiManager.identities()).thenReturn(mockIdentities);
     when(mockIdentities.getByResourceGroup(
-        mockAzureCloudContext.getAzureResourceGroupId(),
-        identityResource.getManagedIdentityName()))
+            mockAzureCloudContext.getAzureResourceGroupId(),
+            identityResource.getManagedIdentityName()))
         .thenReturn(mockIdentity);
-    when(mockResourceDao.getResourceByName(workspaceId, identityResource.getResourceId().toString()))
+    when(mockResourceDao.getResourceByName(
+            workspaceId, identityResource.getResourceId().toString()))
         .thenThrow(new ResourceNotFoundException("not found"));
     when(mockResourceDao.getResource(workspaceId, identityResource.getResourceId()))
         .thenReturn(identityResource);
