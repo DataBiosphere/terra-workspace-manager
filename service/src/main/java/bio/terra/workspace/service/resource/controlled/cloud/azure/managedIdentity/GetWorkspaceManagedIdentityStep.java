@@ -10,6 +10,7 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -44,10 +45,7 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
-    ControlledAzureManagedIdentityResource managedIdentityResource =
-        resourceDao
-            .getResourceByName(workspaceId, managedIdentityName)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
+    var managedIdentityResource = getManagedIdentityResource();
     if (managedIdentityResource == null) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
@@ -69,6 +67,25 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
       return StepResult.getStepResultSuccess();
     } catch (ManagementException e) {
       return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(e), e);
+    }
+  }
+
+  private ControlledAzureManagedIdentityResource getManagedIdentityResource() {
+    try {
+      return resourceDao
+          .getResourceByName(workspaceId, managedIdentityName)
+          .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
+    } catch (ResourceNotFoundException e) {
+      // There are some older resources where the resource id was stored before we decided
+      // storing the resource name would be better. This is a fallback to support those
+      // resources. If the resource is not found by name and the name is an uuid, try by id.
+      try {
+        return resourceDao
+            .getResource(workspaceId, UUID.fromString(managedIdentityName))
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
+      } catch (ResourceNotFoundException | IllegalArgumentException ex) {
+        throw e;
+      }
     }
   }
 
