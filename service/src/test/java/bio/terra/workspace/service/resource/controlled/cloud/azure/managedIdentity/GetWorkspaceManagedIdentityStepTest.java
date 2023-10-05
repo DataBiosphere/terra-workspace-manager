@@ -15,6 +15,7 @@ import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.http.HttpResponse;
@@ -72,6 +73,49 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
             workspaceId,
             mockResourceDao,
             identityResource.getName());
+    assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
+
+    verify(mockWorkingMap).put(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, mockIdentity.name());
+    verify(mockWorkingMap)
+        .put(GetManagedIdentityStep.MANAGED_IDENTITY_PRINCIPAL_ID, mockIdentity.principalId());
+    verify(mockWorkingMap)
+        .put(GetManagedIdentityStep.MANAGED_IDENTITY_CLIENT_ID, mockIdentity.clientId());
+  }
+
+  @Test
+  void testSuccessWithIdentityIdInsteadOfName() throws InterruptedException {
+    var workspaceId = UUID.randomUUID();
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
+    var identityResource =
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
+                creationParameters, workspaceId)
+            .build();
+
+    createMockFlightContext();
+
+    when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
+    when(mockMsiManager.identities()).thenReturn(mockIdentities);
+    when(mockIdentities.getByResourceGroup(
+            mockAzureCloudContext.getAzureResourceGroupId(),
+            identityResource.getManagedIdentityName()))
+        .thenReturn(mockIdentity);
+    when(mockResourceDao.getResourceByName(
+            workspaceId, identityResource.getResourceId().toString()))
+        .thenThrow(new ResourceNotFoundException("not found"));
+    when(mockResourceDao.getResource(workspaceId, identityResource.getResourceId()))
+        .thenReturn(identityResource);
+    when(mockIdentity.name()).thenReturn(UUID.randomUUID().toString());
+    when(mockIdentity.principalId()).thenReturn(UUID.randomUUID().toString());
+    when(mockIdentity.clientId()).thenReturn(UUID.randomUUID().toString());
+
+    var step =
+        new GetWorkspaceManagedIdentityStep(
+            mockAzureConfig,
+            mockCrlService,
+            workspaceId,
+            mockResourceDao,
+            identityResource.getResourceId().toString());
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
     verify(mockWorkingMap).put(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, mockIdentity.name());
