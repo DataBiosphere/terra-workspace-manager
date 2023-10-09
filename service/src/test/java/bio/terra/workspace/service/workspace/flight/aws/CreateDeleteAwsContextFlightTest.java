@@ -137,16 +137,16 @@ public class CreateDeleteAwsContextFlightTest extends BaseAwsConnectedTest {
     assertTrue(awsCloudContextService.getAwsCloudContext(workspaceUuid).isEmpty());
 
     FlightMap createInputs =
-            WorkspaceFixtures.createCloudContextInputs(
-                    workspaceUuid, userRequest, CloudPlatform.AWS, spendUtils.defaultGcpSpendProfile());
+        WorkspaceFixtures.createCloudContextInputs(
+            workspaceUuid, userRequest, CloudPlatform.AWS, spendUtils.defaultGcpSpendProfile());
 
     FlightState flightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    CreateCloudContextFlight.class,
-                    createInputs,
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    /*debugInfo*/ null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateCloudContextFlight.class,
+            createInputs,
+            STAIRWAY_FLIGHT_TIMEOUT,
+            /*debugInfo*/ null);
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
 
@@ -154,15 +154,15 @@ public class CreateDeleteAwsContextFlightTest extends BaseAwsConnectedTest {
     assertNull(cloudContext.getContextFields().getApplicationSecurityGroups());
 
     FlightMap deleteInputs =
-            WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AWS);
+        WorkspaceFixtures.deleteCloudContextInputs(workspaceUuid, userRequest, CloudPlatform.AWS);
 
     flightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    DeleteCloudContextFlight.class,
-                    deleteInputs,
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    /*debugInfo*/ null);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            DeleteCloudContextFlight.class,
+            deleteInputs,
+            STAIRWAY_FLIGHT_TIMEOUT,
+            /*debugInfo*/ null);
 
     assertEquals(FlightStatus.SUCCESS, flightState.getFlightStatus());
     assertTrue(awsCloudContextService.getAwsCloudContext(workspaceUuid).isEmpty());
@@ -176,24 +176,23 @@ public class CreateDeleteAwsContextFlightTest extends BaseAwsConnectedTest {
 
     // Cause a failure on the set egress/ingress step, as undo for this step is a no-op
     Map<String, StepStatus> doErrorStep =
-            Map.of(SetWorkspaceApplicationEgressIngressStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
+        Map.of(
+            SetWorkspaceApplicationEgressIngressStep.class.getName(),
+            StepStatus.STEP_RESULT_FAILURE_FATAL);
 
-    FlightDebugInfo debugInfo =
-            FlightDebugInfo.newBuilder()
-                    .doStepFailures(doErrorStep)
-                    .build();
+    FlightDebugInfo debugInfo = FlightDebugInfo.newBuilder().doStepFailures(doErrorStep).build();
 
     FlightMap createInputs =
-            WorkspaceFixtures.createCloudContextInputs(
-                    workspaceUuid, userRequest, CloudPlatform.AWS, spendUtils.defaultGcpSpendProfile());
+        WorkspaceFixtures.createCloudContextInputs(
+            workspaceUuid, userRequest, CloudPlatform.AWS, spendUtils.defaultGcpSpendProfile());
 
     FlightState flightState =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                    jobService.getStairway(),
-                    CreateCloudContextFlight.class,
-                    createInputs,
-                    STAIRWAY_FLIGHT_TIMEOUT,
-                    debugInfo);
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CreateCloudContextFlight.class,
+            createInputs,
+            STAIRWAY_FLIGHT_TIMEOUT,
+            debugInfo);
 
     assertEquals(FlightStatus.ERROR, flightState.getFlightStatus());
     assertTrue(awsCloudContextService.getAwsCloudContext(workspaceUuid).isEmpty());
