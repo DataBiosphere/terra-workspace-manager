@@ -975,7 +975,7 @@ public class AwsUtils {
     } catch (Ec2Exception e) {
       if (e.awsErrorDetails().errorCode().equals("InvalidGroup.NotFound")) {
         throw new NoSuchElementException(
-            String.format("Security Group ID %d not found.", securityGroupId));
+            String.format("Security Group ID %s not found.", securityGroupId));
       } else {
         throw e;
       }
