@@ -238,7 +238,6 @@ public class CreateGceInstanceStep implements Step {
                 metadata.entrySet().stream()
                     .map(i -> new Items().setKey(i.getKey()).setValue(i.getValue()))
                     .collect(Collectors.toList())));
-    instance.setTags(new Tags().setItems(List.of("ssh-through-iap-allowed")));
     return instance;
   }
 
@@ -271,6 +270,7 @@ public class CreateGceInstanceStep implements Step {
                 .setAccessConfigs(
                     List.of(
                         new AccessConfig().setType(EXTERNAL_IP_TYPE).setName(EXTERNAL_IP_NAME)))));
+    instance.setTags(new Tags().setItems(List.of("ssh-through-iap-allowed", "workbench")));
   }
 
   @Override
