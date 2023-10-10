@@ -65,6 +65,16 @@ public class CustomGcpIamRoleMapping {
           .add("bigquery.tables.delete")
           .add("bigquery.tables.update")
           .build();
+
+  static final ImmutableList<String> IAP_TCP_FORWARDING_PERMISSIONS =
+      ImmutableList.of(
+          "iap.tunnelInstances.accessViaIAP",
+          "compute.instances.get",
+          "compute.instances.list",
+          "compute.projects.get",
+          "compute.instances.setMetadata",
+          "compute.projects.setCommonInstanceMetadata",
+          "compute.globalOperations.get");
   static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS =
       ImmutableList.of(
           "notebooks.instances.get",
@@ -97,9 +107,11 @@ public class CustomGcpIamRoleMapping {
           .build();
   static final ImmutableList<String> GCE_INSTANCE_READER_PERMISSIONS =
       ImmutableList.of("compute.instances.get", "compute.instances.list");
+
   static final ImmutableList<String> GCE_INSTANCE_WRITER_PERMISSIONS =
       new ImmutableList.Builder<String>()
           .addAll(GCE_INSTANCE_READER_PERMISSIONS)
+          .addAll(IAP_TCP_FORWARDING_PERMISSIONS)
           .add(
               "compute.instances.start",
               "compute.instances.stop",

@@ -39,6 +39,7 @@ import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.Operation;
 import com.google.api.services.compute.model.Scheduling;
 import com.google.api.services.compute.model.ServiceAccount;
+import com.google.api.services.compute.model.Tags;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.time.Duration;
@@ -237,6 +238,7 @@ public class CreateGceInstanceStep implements Step {
                 metadata.entrySet().stream()
                     .map(i -> new Items().setKey(i.getKey()).setValue(i.getValue()))
                     .collect(Collectors.toList())));
+    instance.setTags(new Tags().setItems(List.of("ssh-through-iap-allowed")));
     return instance;
   }
 
