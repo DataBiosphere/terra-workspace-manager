@@ -218,7 +218,7 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
 
   @Test
   void createSASTokenBlobPermissionsSuccess() throws Exception {
-    String permissions = "rwcd";
+    String permissions = "rwcdt";
     mockMvc
         .perform(
             addAuth(
@@ -241,7 +241,7 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
 
   @Test
   void createSASTokenBlobPermissionsInvalidPerms() throws Exception {
-    String permissions = "tfi";
+    String permissions = "fi";
     mockMvc
         .perform(
             addAuth(
