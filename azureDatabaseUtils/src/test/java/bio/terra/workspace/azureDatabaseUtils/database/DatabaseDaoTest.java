@@ -1,4 +1,4 @@
-package bio.terra.workspace.azureDatabaseUtils.create;
+package bio.terra.workspace.azureDatabaseUtils.database;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -11,14 +11,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class CreateDatabaseDaoTest extends BaseUnitTest {
+public class DatabaseDaoTest extends BaseUnitTest {
 
-  @Autowired private CreateDatabaseDao createDatabaseDao;
+  @Autowired private DatabaseDao databaseDao;
 
   @Autowired private JdbcTemplate jdbcTemplate;
 
   private final String testDatabaseName = "testCreateDatabase";
-  private final String testRoleName = "testCreateRole";
+  private final String testRoleName = "test-Create-Role";
 
   @BeforeEach
   @AfterEach
@@ -29,7 +29,7 @@ public class CreateDatabaseDaoTest extends BaseUnitTest {
 
   @Test
   void testCreateDatabase() {
-    assertThat(createDatabaseDao.createDatabase(testDatabaseName), equalTo(true));
+    assertThat(databaseDao.createDatabase(testDatabaseName), equalTo(true));
 
     jdbcTemplate
         .query(
@@ -40,7 +40,7 @@ public class CreateDatabaseDaoTest extends BaseUnitTest {
         .forEach(count -> assertThat(count, equalTo(1)));
 
     // verify that we can call it again without error
-    assertThat(createDatabaseDao.createDatabase(testDatabaseName), equalTo(false));
+    assertThat(databaseDao.createDatabase(testDatabaseName), equalTo(false));
   }
 
   @Test
@@ -48,30 +48,66 @@ public class CreateDatabaseDaoTest extends BaseUnitTest {
     final String testUserOID = "test";
     createRoleFunction();
     assertThat(
-        createDatabaseDao.createRoleForManagedIdentity(testRoleName, testUserOID),
-        equalTo("created"));
+        databaseDao.createRoleForManagedIdentity(testRoleName, testUserOID), equalTo("created"));
     assertThat(
-        createDatabaseDao.createRoleForManagedIdentity(testRoleName, testUserOID),
-        equalTo("exists"));
+        databaseDao.createRoleForManagedIdentity(testRoleName, testUserOID), equalTo("exists"));
   }
 
   @Test
   void testCreateRole() {
-    assertThat(createDatabaseDao.createRole(testRoleName), equalTo(true));
-    assertThat(createDatabaseDao.createRole(testRoleName), equalTo(false));
+    assertThat(databaseDao.createRole(testRoleName), equalTo(true));
+    assertThat(databaseDao.createRole(testRoleName), equalTo(false));
+  }
+
+  @Test
+  void testDeleteRole() {
+    assertThat(databaseDao.createRole(testRoleName), equalTo(true));
+
+    assertThat(databaseDao.deleteRole(testRoleName), equalTo(true));
+    assertThat(databaseDao.deleteRole(testRoleName), equalTo(false));
+  }
+
+  void testGrantRole() {
+    assertThat(databaseDao.createRole(testRoleName), equalTo(true));
+    final String otherRole = testRoleName + "2";
+    try {
+      assertThat(databaseDao.createRole(otherRole), equalTo(true));
+
+      databaseDao.grantRole(testRoleName, otherRole);
+    } finally {
+      databaseDao.deleteRole(otherRole);
+    }
   }
 
   @Test
   void testGrantAllPrivileges() {
     jdbcTemplate.execute("CREATE DATABASE " + testDatabaseName);
     createTestRole(testRoleName);
-    createDatabaseDao.grantAllPrivileges(testRoleName, testDatabaseName);
+    databaseDao.grantAllPrivileges(testRoleName, testDatabaseName);
   }
 
   @Test
   void testRevokeAllPublicPrivileges() {
     jdbcTemplate.execute("CREATE DATABASE " + testDatabaseName);
-    createDatabaseDao.revokeAllPublicPrivileges(testDatabaseName);
+    databaseDao.revokeAllPublicPrivileges(testDatabaseName);
+  }
+
+  @Test
+  void testRestoreAndRevokeLoginPrivileges() {
+    createTestRole(testRoleName);
+    assertThat(roleCanLogin(testRoleName), equalTo(false));
+
+    databaseDao.restoreLoginPrivileges(testRoleName);
+    assertThat(roleCanLogin(testRoleName), equalTo(true));
+
+    databaseDao.revokeLoginPrivileges(testRoleName);
+    assertThat(roleCanLogin(testRoleName), equalTo(false));
+  }
+
+  @Test
+  void testTerminateSessionsForRole() {
+    createTestRole(testRoleName);
+    assertThat(databaseDao.terminateSessionsForRole(testRoleName), equalTo(0));
   }
 
   private void createTestRole(String testRoleName) {
@@ -97,5 +133,15 @@ public class CreateDatabaseDaoTest extends BaseUnitTest {
             end;
             $$;""";
     jdbcTemplate.execute(function);
+  }
+
+  private boolean roleCanLogin(String roleName) {
+    return jdbcTemplate
+        .query(
+            "select rolcanlogin from pg_roles where rolname = ?",
+            new Object[] {roleName},
+            new int[] {Types.VARCHAR},
+            (rs, rowNum) -> rs.getBoolean(1))
+        .get(0);
   }
 }

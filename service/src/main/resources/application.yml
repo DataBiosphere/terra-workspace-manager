@@ -46,6 +46,7 @@ spring.config.import: optional:file:../config/local-properties.yml
 logging.pattern.level: '%X{requestId} %5p'
 
 server:
+  max-http-header-size: 32KB
   compression:
     enabled: true
     mime-types: text/css,application/javascript
@@ -98,6 +99,9 @@ workspace:
     password: ${env.db.stairway.pass}
     uri: ${env.db.host}/${env.db.stairway.name}
     username: ${env.db.stairway.user}
+
+  startup:
+    exit-after-initialization: false
 
   status-check:
     enabled: true

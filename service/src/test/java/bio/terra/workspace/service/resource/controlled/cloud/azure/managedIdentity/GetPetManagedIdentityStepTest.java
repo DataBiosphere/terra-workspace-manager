@@ -11,6 +11,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -21,19 +22,13 @@ import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.models.Identities;
 import com.azure.resourcemanager.msi.models.Identity;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoSession;
-import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
 
 @Tag("azure-unit")
-public class GetPetManagedIdentityStepTest {
-  private MockitoSession mockito;
+public class GetPetManagedIdentityStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private FlightContext mockFlightContext;
   @Mock private FlightMap mockWorkingMap;
   @Mock private AzureCloudContext mockAzureCloudContext;
@@ -45,18 +40,6 @@ public class GetPetManagedIdentityStepTest {
   @Mock private SamService mockSamService;
   private final String testEmail = UUID.randomUUID() + "@example.com";
   @Mock private Identity mockIdentity;
-
-  @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
-  }
 
   @Test
   void testSuccess() throws InterruptedException {

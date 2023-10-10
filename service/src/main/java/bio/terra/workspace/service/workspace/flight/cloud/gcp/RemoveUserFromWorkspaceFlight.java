@@ -10,7 +10,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.flight.removeuser.CheckUserStillInWorkspaceStep;
+import bio.terra.workspace.service.workspace.flight.removeuser.CheckWorkspaceUserActionsStep;
 import bio.terra.workspace.service.workspace.flight.removeuser.ClaimUserPrivateResourcesStep;
 import bio.terra.workspace.service.workspace.flight.removeuser.MarkPrivateResourcesAbandonedStep;
 import bio.terra.workspace.service.workspace.flight.removeuser.ReleasePrivateResourceCleanupClaimsStep;
@@ -48,13 +48,12 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     //  removing themselves as the sole owner of a workspace.
     // 2. Remove role from user, if one is specified. This flight also runs periodically to clean up
     // abandoned private resources, in which case the user is already out of the workspace.
-    // 3. Check with Sam whether the user is still in the workspace (i.e. can still read in the
-    //  workspace) via other roles or groups. If so, we do not need to clean up their private
-    //  resources, and can skip the rest of the flight.
-    // 4. If the user is fully removed from the workspace, build a list of their private resources
-    //  by reading WSM's DB.
-    // 5. Remove the user from all roles on those private resources.
-    // 6. Revoke the user's permission to use their pet SA in this workspace.
+    // 3. Check with Sam whether the user can still read or write the workspace.
+    // 4. Build and claim a list of their private resources that should have access removed based on
+    // their current access.
+    // 5. In subflights, remove native access to those resources.
+    // 6. Remove the user from all roles in sam on those private resources.
+    // 7. Revoke the user's permission to use their pet SA in this workspace.
     RetryRule samRetry = RetryRules.shortExponential();
     RetryRule dbRetry = RetryRules.shortDatabase();
     if (roleToRemove != null) {
@@ -70,11 +69,13 @@ public class RemoveUserFromWorkspaceFlight extends Flight {
     // From this point on, if the user is removing themselves from the workspace, their userRequest
     // may no longer have permissions in Sam. To handle this, all later steps use WSM's credentials
     // instead.
-    addStep(new CheckUserStillInWorkspaceStep(workspaceUuid, userToRemove, samService), samRetry);
+    addStep(new CheckWorkspaceUserActionsStep(workspaceUuid, userToRemove, samService), samRetry);
     addStep(
         new ClaimUserPrivateResourcesStep(
             workspaceUuid, userToRemove, appContext.getResourceDao(), samService, wsmSaRequest),
         samRetry);
+    addStep(new MakeFlightIdsStep(), dbRetry);
+    addStep(new RemoveNativeAccessToPrivateResourcesStep(), dbRetry);
     addStep(new RemovePrivateResourceAccessStep(userToRemove, samService), samRetry);
     addStep(
         new MarkPrivateResourcesAbandonedStep(

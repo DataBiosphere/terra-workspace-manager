@@ -1,6 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.RetryRule;
@@ -15,7 +14,6 @@ import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProviderImpl;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
@@ -39,11 +37,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 public class ControlledAzureDatabaseResource extends ControlledResource {
   private final String databaseName;
-  private final UUID databaseOwner;
+  private final String databaseOwner;
   private final String k8sNamespace;
   private final boolean allowAccessForAllWorkspaceUsers;
 
@@ -53,7 +50,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       @JsonProperty("wsmControlledResourceFields")
           WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("databaseName") String databaseName,
-      @JsonProperty("databaseOwner") UUID databaseOwner,
+      @JsonProperty("databaseOwner") String databaseOwner,
       @JsonProperty("k8sNamespace") String k8sNamespace,
       @JsonProperty("allowAccessForAllWorkspaceUsers") boolean allowAccessForAllWorkspaceUsers) {
     super(resourceFields, controlledResourceFields);
@@ -68,7 +65,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   private ControlledAzureDatabaseResource(
       ControlledResourceFields common,
       String databaseName,
-      UUID databaseOwner,
+      String databaseOwner,
       String k8sNamespace,
       boolean allowAccessForAllWorkspaceUsers) {
     super(common);
@@ -81,16 +78,6 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
 
   public static Builder builder() {
     return new Builder();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
   }
 
   // -- getters used in serialization --
@@ -109,7 +96,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
     return databaseName;
   }
 
-  public UUID getDatabaseOwner() {
+  public String getDatabaseOwner() {
     return databaseOwner;
   }
 
@@ -158,7 +145,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
 
   @VisibleForTesting
   List<Step> getAddSteps(FlightBeanBag flightBeanBag) {
-    var steps = new ArrayList<Step>();
+    ArrayList<Step> steps = new ArrayList<>();
     steps.add(new ValidateDatabaseOwnerStep(this, flightBeanBag.getResourceDao()));
     steps.add(
         new AzureDatabaseGuardStep(
@@ -179,7 +166,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId(),
-            new KubernetesClientProviderImpl()));
+            flightBeanBag.getAzureDatabaseUtilsRunner()));
     return steps;
   }
 
@@ -188,13 +175,13 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
    * database. The absence of k8sNamespace indicates that this is a subsequent iteration where a
    * KubernetesNamespace controlled resource takes care of that.
    *
-   * @param flightBeanBag
-   * @param steps
+   * @param flightBeanBag flightBeanBag
+   * @param steps steps
    */
   private void maybeSetupFederatedIdentity(FlightBeanBag flightBeanBag, ArrayList<Step> steps) {
     // TODO: remove as part of https://broadworkbench.atlassian.net/browse/WOR-1165
     if (k8sNamespace != null) {
-      var getManagedIdentityStep =
+      Step getManagedIdentityStep =
           switch (getAccessScope()) {
             case ACCESS_SCOPE_SHARED -> new GetWorkspaceManagedIdentityStep(
                 flightBeanBag.getAzureConfig(),
@@ -212,26 +199,24 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       steps.add(getManagedIdentityStep);
       steps.add(
           new GetFederatedIdentityStep(
-              getK8sNamespace(),
+              // use the same namespace for both federated credential and KSA
+              getK8sNamespace(), // federatedCredentialName
+              getK8sNamespace(), // KSA name
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
-              getDatabaseOwner(),
-              new KubernetesClientProviderImpl(),
-              flightBeanBag.getLandingZoneApiDispatch(),
-              flightBeanBag.getSamService(),
-              flightBeanBag.getWorkspaceService(),
-              getWorkspaceId(),
-              flightBeanBag.getResourceDao()));
+              flightBeanBag.getKubernetesClientProvider(),
+              getWorkspaceId()));
       steps.add(
           new CreateFederatedIdentityStep(
               getK8sNamespace(),
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
-              new KubernetesClientProviderImpl(),
+              flightBeanBag.getKubernetesClientProvider(),
               flightBeanBag.getLandingZoneApiDispatch(),
               flightBeanBag.getSamService(),
               flightBeanBag.getWorkspaceService(),
-              getWorkspaceId()));
+              getWorkspaceId(),
+              null));
     }
   }
 
@@ -340,7 +325,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   public static class Builder {
     private ControlledResourceFields common;
     private String databaseName;
-    private UUID databaseOwner;
+    private String databaseOwner;
     private String k8sNamespace;
     private boolean allowAccessForAllWorkspaceUsers;
 
@@ -354,7 +339,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       return this;
     }
 
-    public Builder databaseOwner(UUID databaseOwner) {
+    public Builder databaseOwner(String databaseOwner) {
       this.databaseOwner = databaseOwner;
       return this;
     }

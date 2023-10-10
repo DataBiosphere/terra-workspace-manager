@@ -1,8 +1,7 @@
 package bio.terra.workspace.service.policy.flight;
 
-import bio.terra.policy.model.TpsComponent;
-import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoGetResult;
+import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -42,24 +41,28 @@ public class MergeGroupsStep implements Step {
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
+
+    // These are put in place by the MergePolicyAttributeStep, which should be run right before this
+    // step.
     TpsPaoGetResult mergedPao =
         flightContext
             .getWorkingMap()
             .get(WorkspaceFlightMapKeys.EFFECTIVE_POLICIES, TpsPaoGetResult.class);
 
+    TpsPolicyInputs originalPolicyInputs =
+        flightContext.getWorkingMap().get(WorkspaceFlightMapKeys.POLICIES, TpsPolicyInputs.class);
+
     HashSet<String> mergedGroups =
         new HashSet<>(
             TpsUtilities.getGroupConstraintsFromInputs(mergedPao.getEffectiveAttributes()));
 
-    HashSet<String> currentGroups =
-        new HashSet<>(
-            TpsUtilities.getGroupConstraintsFromInputs(
-                tpsApiDispatch
-                    .getOrCreatePao(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE)
-                    .getEffectiveAttributes()));
+    HashSet<String> originalGroups =
+        new HashSet<>(TpsUtilities.getGroupConstraintsFromInputs(originalPolicyInputs));
 
     try {
-      if (!currentGroups.equals(mergedGroups)) {
+      if (!originalGroups.equals(mergedGroups)) {
+        mergedGroups.remove(originalGroups);
+        logger.info("Calling Sam to add additional groups to auth domain");
         samService.addGroupsToAuthDomain(
             userRequest,
             SamConstants.SamResource.WORKSPACE,

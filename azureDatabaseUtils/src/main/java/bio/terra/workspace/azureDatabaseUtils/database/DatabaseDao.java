@@ -1,4 +1,4 @@
-package bio.terra.workspace.azureDatabaseUtils.create;
+package bio.terra.workspace.azureDatabaseUtils.database;
 
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,11 +8,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class CreateDatabaseDao {
+public class DatabaseDao {
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   @Autowired
-  public CreateDatabaseDao(NamedParameterJdbcTemplate jdbcTemplate) {
+  public DatabaseDao(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
@@ -85,6 +85,38 @@ public class CreateDatabaseDao {
     }
   }
 
+  /**
+   * Delete a role in the database with the given name.
+   *
+   * @param roleName
+   * @return true if the role was deleted, false if the role did not exist
+   */
+  public boolean deleteRole(String roleName) {
+    // roleName should already be validated by the service layer
+    try {
+      jdbcTemplate.update(
+          """
+              DROP ROLE "%s"
+              """.formatted(roleName), Map.of());
+      return true;
+    } catch (BadSqlGrammarException e) {
+      // ignore if the role already deleted
+      if (!e.getSQLException().getMessage().contains("does not exist")) {
+        throw e;
+      }
+      return false;
+    }
+  }
+
+  public void grantRole(String roleName, String targetRoleName) {
+    // roleNames should already be validated by the service layer
+    // GRANT does not like bind parameters
+    jdbcTemplate.update(
+        """
+        GRANT "%s" TO "%s"
+        """.formatted(targetRoleName, roleName), Map.of());
+  }
+
   public void grantAllPrivileges(String roleName, String databaseName) {
     // databaseName should already be validated by the service layer
     // roleName should already be validated by the service layer
@@ -102,5 +134,49 @@ public class CreateDatabaseDao {
     // REVOKE does not like bind parameters
     jdbcTemplate.update(
         "REVOKE ALL PRIVILEGES ON DATABASE %s FROM PUBLIC".formatted(databaseName), Map.of());
+  }
+
+  public void revokeLoginPrivileges(String roleName) {
+    // roleName should already be validated by the service layer
+    // REVOKE does not like bind parameters
+    jdbcTemplate.update(
+        """
+        ALTER ROLE "%s" NOLOGIN
+        """.formatted(roleName), Map.of());
+  }
+
+  public void restoreLoginPrivileges(String roleName) {
+    // roleName should already be validated by the service layer
+    // REVOKE does not like bind parameters
+    jdbcTemplate.update(
+        """
+        ALTER ROLE "%s" LOGIN
+        """.formatted(roleName), Map.of());
+  }
+
+  /**
+   * Terminate all sessions for the given role.
+   *
+   * @param roleName
+   * @return the number of sessions terminated
+   */
+  public int terminateSessionsForRole(String roleName) {
+    // roleName should already be validated by the service layer
+    return jdbcTemplate
+        .query(
+            """
+        SELECT count(pg_terminate_backend(pg_stat_activity.pid))
+        FROM pg_stat_activity
+        WHERE pg_stat_activity.usename = :roleName;
+        """,
+            Map.of("roleName", roleName),
+            (rs, rowNum) -> rs.getInt(1))
+        .get(0);
+  }
+
+  public String getCurrentDatabaseName() {
+    return jdbcTemplate
+        .query("SELECT current_database()", Map.of(), (rs, rowNum) -> rs.getString(1))
+        .get(0);
   }
 }

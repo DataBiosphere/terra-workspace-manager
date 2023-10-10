@@ -3,4 +3,4 @@ jsonschema==4.4.0
 openapi-schema-validator==0.2.3
 openapi-spec-validator==0.4.0
 pyrsistent==0.18.1
-PyYAML==6.0
+PyYAML==6.0.1

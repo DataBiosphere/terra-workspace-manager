@@ -43,23 +43,15 @@ import com.google.common.base.Strings;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ClientTestUtils {
-  // Retry default parameters
-  // The total allowed duration is a guess. It may be too long, but we have no guidance.
-  // The sleep duration is based on guidance for the fastest we should consider polling.
-  public static final Duration DEFAULT_RETRY_TOTAL_DURATION = Duration.ofMinutes(20);
-  public static final Duration DEFAULT_SLEEP_DURATION = Duration.ofSeconds(30);
-
   public static final String RESOURCE_NAME_PREFIX = "terratest";
   // We may want this to be a test parameter. It has to match what is in the config or in the helm
   public static final String TEST_WSM_APP = "TestWsmApp";
@@ -280,89 +272,6 @@ public class ClientTestUtils {
   }
 
   /**
-   * Get a result from a call that might throw an exception. Treat the exception as retry-able. This
-   * structure is useful for situations where we are waiting on a cloud IAM permission change to
-   * take effect.
-   *
-   * @param supplier - code returning the result or throwing an exception
-   * @param <T> - type of result
-   * @return - result from supplier, the first time it doesn't throw, or null if all tries have been
-   *     exhausted
-   * @throws InterruptedException if the sleep is interrupted
-   */
-  public static @Nullable <T> T getWithRetryOnException(SupplierWithException<T> supplier)
-      throws Exception {
-    return getWithRetryOnException(
-        supplier, DEFAULT_RETRY_TOTAL_DURATION, DEFAULT_SLEEP_DURATION, null);
-  }
-
-  public static void runWithRetryOnException(Runnable fn) throws Exception {
-    getWithRetryOnException(
-        () -> {
-          fn.run();
-          return null;
-        });
-  }
-
-  /**
-   * Get a result from a call that might throw an exception. If the supplier finishes, the result is
-   * returned. If the supplier continues to throw, when totalDuration has elapsed, this method will
-   * throw that exception.
-   *
-   * @param supplier - code returning the result or throwing an exception
-   * @param totalDuration - total amount of time to retry
-   * @param sleepDuration - amount of time to sleep between retries
-   * @param retryExceptionList - nullable; a list of exception classes. If null, any exception is
-   *     retried
-   * @param <T> - type of result
-   * @return - result from supplier, if no exception
-   * @throws InterruptedException if the sleep is interrupted
-   */
-  public static <T> T getWithRetryOnException(
-      SupplierWithException<T> supplier,
-      Duration totalDuration,
-      Duration sleepDuration,
-      @Nullable List<Class<? extends Exception>> retryExceptionList)
-      throws Exception {
-
-    T result;
-    Instant endTime = Instant.now().plus(totalDuration);
-
-    while (true) {
-      try {
-        result = supplier.get();
-        break;
-      } catch (Exception e) {
-        // If we are out of time or the exception is not retryable
-        if (Instant.now().isAfter(endTime) || !isRetryable(e, retryExceptionList)) {
-          throw e;
-        }
-        logger.info(
-            "Exception \"{}\". Waiting {} seconds. End time is {}",
-            e.getMessage(),
-            sleepDuration.toSeconds(),
-            endTime);
-        TimeUnit.MILLISECONDS.sleep(sleepDuration.toMillis());
-      }
-    }
-    return result;
-  }
-
-  private static boolean isRetryable(
-      Exception e, @Nullable List<Class<? extends Exception>> retryExceptionList) {
-    // If we didn't get a list, then all exceptions are considered retryable
-    if (retryExceptionList == null) {
-      return true;
-    }
-    for (Class<? extends Exception> clazz : retryExceptionList) {
-      if (clazz.isInstance(e)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Polls a workspace API operation as long as the job is running.
    *
    * @param <T> the result type of the async operation.
@@ -479,7 +388,7 @@ public class ClientTestUtils {
 
     // Wait for the grantee to have storage.bucket.list permission,
     // indicating that the grant has been propagated to the project.
-    getWithRetryOnException(granteeStorage::list);
+    RetryUtils.getWithRetryOnException(granteeStorage::list);
   }
 
   /**
@@ -509,7 +418,7 @@ public class ClientTestUtils {
 
     // Wait for the testUser to lose storage.bucket.list permission,
     // indicating that the revoke has been propagated to the project.
-    return getWithRetryOnException(() -> testForbiddenStorageList(storage, testUser));
+    return RetryUtils.getWithRetryOnException(() -> testForbiddenStorageList(storage, testUser));
   }
 
   private static boolean testForbiddenStorageList(Storage storage, TestUserSpecification testUser)

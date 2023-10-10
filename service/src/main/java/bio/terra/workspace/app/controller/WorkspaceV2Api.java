@@ -15,6 +15,7 @@ import bio.terra.workspace.generated.model.ApiDeleteCloudContextV2Request;
 import bio.terra.workspace.generated.model.ApiDeleteWorkspaceV2Request;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiJobResult;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
@@ -43,6 +44,7 @@ import org.springframework.stereotype.Component;
 public class WorkspaceV2Api {
   private static final Logger logger = LoggerFactory.getLogger(WorkspaceV2Api.class);
   private final AuthenticatedUserRequestFactory authenticatedUserRequestFactory;
+  private final FeatureService featureService;
   private final JobApiUtils jobApiUtils;
   private final JobService jobService;
   private final HttpServletRequest request;
@@ -52,6 +54,7 @@ public class WorkspaceV2Api {
 
   public WorkspaceV2Api(
       AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+      FeatureService featureService,
       JobApiUtils jobApiUtils,
       JobService jobService,
       HttpServletRequest request,
@@ -59,6 +62,7 @@ public class WorkspaceV2Api {
       WorkspaceApiUtils workspaceApiUtils,
       WorkspaceService workspaceService) {
     this.authenticatedUserRequestFactory = authenticatedUserRequestFactory;
+    this.featureService = featureService;
     this.jobApiUtils = jobApiUtils;
     this.jobService = jobService;
     this.request = request;
@@ -88,6 +92,13 @@ public class WorkspaceV2Api {
     if (apiCloudPlatform != null) {
       ControllerValidationUtils.validateCloudPlatform(apiCloudPlatform);
       cloudPlatform = CloudPlatform.fromApiCloudPlatform(apiCloudPlatform);
+
+      if (cloudPlatform == CloudPlatform.AWS) {
+        featureService.featureEnabledCheck(
+            FeatureService.AWS_ENABLED,
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
+      }
+
       spendProfile =
           workspaceApiUtils.validateSpendProfilePermission(userRequest, body.getSpendProfile());
       if (spendProfile == null) {

@@ -30,6 +30,7 @@ import bio.terra.workspace.model.UpdateControlledGcpDataprocClusterRequestBody;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.dataproc.Dataproc;
 import com.google.api.services.dataproc.model.Cluster;
+import com.google.api.services.dataproc.model.StartClusterRequest;
 import com.google.api.services.dataproc.model.StopClusterRequest;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
@@ -42,6 +43,7 @@ import scripts.utils.ClientTestUtils;
 import scripts.utils.CloudContextMaker;
 import scripts.utils.DataprocUtils;
 import scripts.utils.MultiResourcesUtils;
+import scripts.utils.RetryUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocateTestScriptBase {
@@ -86,7 +88,11 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
     CreatedControlledGcpDataprocClusterResult creationResult =
         DataprocUtils.createPrivateDataprocCluster(
-            getWorkspaceId(), clusterId, /* region= */ null, resourceUserApi);
+            getWorkspaceId(),
+            clusterId,
+            /* region= */ null,
+            /*startupScriptUrl=*/ null,
+            resourceUserApi);
 
     UUID resourceId = creationResult.getDataprocCluster().getMetadata().getResourceId();
     GcpDataprocClusterResource resource =
@@ -148,19 +154,27 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     Dataproc dataproc = ClientTestUtils.getDataprocClient(resourceUser);
 
     DataprocUtils.assertClusterHasProxyUrl(dataproc, projectId, region, clusterId);
-    assertTrue(
-        DataprocUtils.userHasProxyAccess(creationResult, resourceUser, projectId),
-        "Private resource user has access to their cluster");
+    boolean userHasProxyAccess =
+        RetryUtils.getWithRetry(
+            (hasProxyAccess) -> hasProxyAccess,
+            () -> DataprocUtils.userHasProxyAccess(creationResult, resourceUser, projectId),
+            "Timed out waiting for resource user to have access to the cluster");
+    assertTrue(userHasProxyAccess, "Private resource user has access to their cluster");
     assertFalse(
         DataprocUtils.userHasProxyAccess(creationResult, otherWorkspaceUser, projectId),
         "Other workspace user does not have access to a private cluster");
 
-    // The user should be able to stop their cluster.
-    dataproc
-        .projects()
-        .regions()
-        .clusters()
-        .stop(projectId, region, clusterId, new StopClusterRequest());
+    // Assert that user has access to the cluster through the Dataproc API.
+    Cluster getCluster =
+        RetryUtils.getWithRetryOnException(
+            () ->
+                dataproc
+                    .projects()
+                    .regions()
+                    .clusters()
+                    .get(projectId, region, clusterId)
+                    .execute());
+    assertNotNull(getCluster);
 
     // The user should not be able to directly delete their cluster.
     GoogleJsonResponseException directDeleteForbidden =
@@ -182,6 +196,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     var newName = "new-cluster-name";
     var newDescription = "new description for the cluster";
     int newNumPrimaryWorkers = 3;
+    int newNumSecondaryWorkers = 0; // Scale secondary workers to 0 so that we can stop the cluster
     GcpDataprocClusterResource updatedResource =
         resourceUserApi.updateDataprocCluster(
             new UpdateControlledGcpDataprocClusterRequestBody()
@@ -189,42 +204,90 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
                 .name(newName)
                 .updateParameters(
                     new ControlledDataprocClusterUpdateParameters()
-                        .numPrimaryWorkers(newNumPrimaryWorkers)),
+                        .numPrimaryWorkers(newNumPrimaryWorkers)
+                        .numSecondaryWorkers(newNumSecondaryWorkers)),
             getWorkspaceId(),
             resourceId);
 
-    // Directly fetch the cluster to verify that non wsm managed fields are updated.
-    Cluster retrievedCluster =
-        dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute();
-
     assertEquals(newName, updatedResource.getMetadata().getName());
     assertEquals(newDescription, updatedResource.getMetadata().getDescription());
-    assertEquals(
-        newNumPrimaryWorkers, retrievedCluster.getConfig().getWorkerConfig().getNumInstances());
+    // Directly fetch the cluster to verify that non wsm managed fields are updated.
+    RetryUtils.getWithRetry(
+        cluster ->
+            newNumPrimaryWorkers == cluster.getConfig().getWorkerConfig().getNumInstances()
+                && cluster.getConfig().getSecondaryWorkerConfig() == null
+                && cluster.getStatus().getState().equals("RUNNING"),
+        () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
+        "Timed out waiting for cluster to update");
 
     // Update the cluster lifecycle rule through WSM. Cluster lifecycle rules cannot be updated in
     // tandem with other parameters, so we update it separately.
     String newIdleDeleteTtl = "1800s";
-    String newAutoDeleteTtl = "3600s";
     resourceUserApi.updateDataprocCluster(
         new UpdateControlledGcpDataprocClusterRequestBody()
             .updateParameters(
                 new ControlledDataprocClusterUpdateParameters()
                     .lifecycleConfig(
-                        new GcpDataprocClusterLifecycleConfig()
-                            .idleDeleteTtl(newIdleDeleteTtl)
-                            .autoDeleteTtl(newAutoDeleteTtl))),
+                        new GcpDataprocClusterLifecycleConfig().idleDeleteTtl(newIdleDeleteTtl))),
         getWorkspaceId(),
         resourceId);
 
     // Directly fetch the cluster to verify updated lifecycle rules
-    retrievedCluster =
-        dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute();
+    RetryUtils.getWithRetry(
+        cluster ->
+            newIdleDeleteTtl.equals(cluster.getConfig().getLifecycleConfig().getIdleDeleteTtl())
+                && cluster.getStatus().getState().equals("RUNNING"),
+        () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
+        "Timed out waiting for cluster to update");
 
-    assertEquals(
-        newIdleDeleteTtl, retrievedCluster.getConfig().getLifecycleConfig().getIdleDeleteTtl());
-    assertEquals(
-        newAutoDeleteTtl, retrievedCluster.getConfig().getLifecycleConfig().getAutoDeleteTtl());
+    // Update the cluster with a bad parameter format
+    String badAutoscalingPolicy = "bad-policy";
+    ApiException badClusterUpdateParameter =
+        assertThrows(
+            ApiException.class,
+            () ->
+                resourceUserApi.updateDataprocCluster(
+                    new UpdateControlledGcpDataprocClusterRequestBody()
+                        .updateParameters(
+                            new ControlledDataprocClusterUpdateParameters()
+                                .autoscalingPolicy(badAutoscalingPolicy)),
+                    getWorkspaceId(),
+                    resourceId),
+            "Cluster update with bad parameter format");
+
+    // Verify that WSM throws a bad request exception
+    assertThat(
+        "WSM throws a bad request exception",
+        badClusterUpdateParameter.getCode(),
+        equalTo(HttpStatus.SC_BAD_REQUEST));
+
+    // The user should be able to stop their cluster.
+    dataproc
+        .projects()
+        .regions()
+        .clusters()
+        .stop(projectId, region, clusterId, new StopClusterRequest())
+        .execute();
+
+    // Assert cluster is stopped
+    RetryUtils.getWithRetry(
+        cluster -> cluster.getStatus().getState().equals("STOPPED"),
+        () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
+        "Timed out waiting for cluster to be stopped");
+
+    // The user should be able to start their cluster.
+    dataproc
+        .projects()
+        .regions()
+        .clusters()
+        .start(projectId, region, clusterId, new StartClusterRequest())
+        .execute();
+
+    // Assert cluster is running
+    RetryUtils.getWithRetry(
+        cluster -> cluster.getStatus().getState().equals("RUNNING"),
+        () -> dataproc.projects().regions().clusters().get(projectId, region, clusterId).execute(),
+        "Timed out waiting for cluster to start");
 
     // Delete the Dataproc cluster through WSM.
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);
@@ -260,7 +323,11 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
       ControlledGcpResourceApi resourceUserApi) throws Exception {
     CreatedControlledGcpDataprocClusterResult resourceWithoutClusterId =
         DataprocUtils.createPrivateDataprocCluster(
-            getWorkspaceId(), /*clusterId=*/ null, /*location=*/ null, resourceUserApi);
+            getWorkspaceId(),
+            /*clusterId=*/ null,
+            /*location=*/ null,
+            /*startupScriptUrl=*/ null,
+            resourceUserApi);
     assertNotNull(resourceWithoutClusterId.getDataprocCluster().getAttributes().getClusterId());
     UUID resourceId = resourceWithoutClusterId.getDataprocCluster().getMetadata().getResourceId();
     DataprocUtils.deleteControlledDataprocCluster(getWorkspaceId(), resourceId, resourceUserApi);

@@ -1,0 +1,161 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/kubernetesNamespaces:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure KubernetesNamespace
+      operationId: createAzureKubernetesNamespace
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureKubernetesNamespaceRequestBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureKubernetesNamespaceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/kubernetesNamespaces/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure KubernetesNamespace create job.
+      operationId: getCreateAzureKubernetesNamespaceResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureKubernetesNamespaceResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureKubernetesNamespaceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/kubernetesNamespaces/{resourceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      summary: Get a controlled Azure KubernetesNamespace resource
+      operationId: getAzureKubernetesNamespace
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          description: Response to get kubernetesNamespace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureKubernetesNamespaceResource'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: |
+        Delete a controlled Azure KubernetesNamespace resource. This is async, because the 
+        operation can take a few minutes. OpenAPI does not support request body 
+        in DELETE, but async state requires it. Hence this is a POST.
+      operationId: deleteAzureKubernetesNamespace
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteControlledAzureResourceRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/kubernetesNamespaces/delete-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an azure KubernetesNamespace deletion job.
+      operationId: getDeleteAzureKubernetesNamespaceResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/DeleteControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  schemas:
+    AzureKubernetesNamespaceCreationParameters:
+      description: >-
+        KubernetesNamespace-specific properties to be set on creation. These are a subset of the values
+        accepted by the azure resource API
+      type: object
+      required: [ namespacePrefix ]
+      properties:
+        namespacePrefix:
+          description: The full namespace name will be {namespacePrefix}-{workspaceId}
+          type: string
+          pattern: ^[a-z][a-z0-9-]{0,24}$
+        managedIdentity:
+          description: The resource id or name of a managed identity to use for the kubernetesNamespace. Omit for private namespaces.
+          type: string
+        databases:
+          description: The resource IDs or names of databases within the workspace to be used by the kubernetesNamespace. Some form of identity (managed identity or private namespace) must be used to access databases.
+          type: array
+          items:
+            type: string
+
+    CreatedControlledAzureKubernetesNamespaceResult:
+      description: Response payload for requesting a new Azure kubernetesNamespace
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureKubernetesNamespace:
+          $ref: '#/components/schemas/AzureKubernetesNamespaceResource'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+    CreateControlledAzureKubernetesNamespaceRequestBody:
+      description: Payload for requesting a new controlled Azure KubernetesNamespace resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureKubernetesNamespace:
+          $ref: '#/components/schemas/AzureKubernetesNamespaceCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'
+
+  responses:
+    CreateControlledAzureKubernetesNamespaceResponse:
+      description: Response to create controlled Azure KubernetesNamespace
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureKubernetesNamespaceResult'

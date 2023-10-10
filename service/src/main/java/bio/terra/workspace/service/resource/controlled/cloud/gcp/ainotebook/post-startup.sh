@@ -2,9 +2,20 @@
 #
 # Name: post-startup.sh
 #
+# NOTE FOR CONTRIBUTORS:
+#   This startup script shares logic with the dataproc cluster here: service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/dataproccluster/startup.sh.
+#   Please ensure that changes to shared logic are reflected in both scripts.
+#
 # Description
 #   Default post startup script for Google Cloud Vertex AI Workbench VM
 #   running JupyterLab.
+#
+# Metadata and guest attributes:
+#   This script uses the following GCE metadata and guest attributes for startup orchestration:
+#   - instance/guest-attributes/startup_script/status: Set by this script, storing the status of this script's execution. Possible values are "RUNNING", "COMPLETE", or "ERROR".
+#   - instance/guest-attributes/startup_script/message: Set by this script, storing the message of this script's execution. If the status is "ERROR", this message will contain an error message, otherwise it will be empty.
+#   - instance/attributes/terra-cli-server: Read by this script to configure the Terra CLI server.
+#   - instance/attributes/terra-workspace-id: Read by this script to configure the Terra CLI workspace.
 #
 # Execution details
 #   The post-startup script runs on Vertex AI notebook VMs during *instance creation*;
@@ -17,9 +28,8 @@
 #     1- Get the GCS path from VM metadata (instance/attributes/post-startup-script)
 #     2- Download it to /opt/c2d/post_start.sh
 #     3- Execute /opt/c2d/post_start.sh
-#     4- Set the VM guest attribute "notebooks/handle_post_startup_script" to "DONE"
-#
-#   Note that the guest attribute is set to DONE whether the script runs successfully or not.
+#     4- Set the VM guest attribute "notebooks/handle_post_startup_script" to "DONE".
+#        Note that this attribute is set to DONE whether the script runs successfully or not.
 #
 # How to test changes to this file:
 #   Copy this file to a GCS bucket:
@@ -49,10 +59,9 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
-# The linux user that JupyterLab will be running as. It's important to do some parts of setup in the
+# The non-root linux user that JupyterLab will be running as. It's important to do some parts of setup in the
 # user space, such as setting Terra CLI settings which are persisted in the user's $HOME.
-# This post startup script is not run by the same user.
-readonly JUPYTER_USER="jupyter"
+readonly LOGIN_USER="jupyter"
 
 # Create an alias for cases when we need to run a shell command as the jupyter user.
 # Note that we deliberately use "bash -l" instead of "sh" in order to get bash (instead of dash)
@@ -60,7 +69,7 @@ readonly JUPYTER_USER="jupyter"
 #
 # This is intentionally not a Bash function, as that can suppress error propagation.
 # This is intentionally not a Bash alias as they are not supported in shell scripts.
-readonly RUN_AS_JUPYTER_USER="sudo -u ${JUPYTER_USER} bash -l -c"
+readonly RUN_AS_LOGIN_USER="sudo -u ${LOGIN_USER} bash -l -c"
 
 # Startup script status is propagated out to VM guest attributes
 readonly STATUS_ATTRIBUTE="startup_script/status"
@@ -72,7 +81,7 @@ readonly MESSAGE_ATTRIBUTE="startup_script/message"
 # In the case of the Docker service, /home/jupyter is mounted into the container
 # as /home/jupyter.
 
-readonly USER_HOME_DIR="/home/${JUPYTER_USER}"
+readonly USER_HOME_DIR="/home/${LOGIN_USER}"
 readonly USER_BASH_COMPLETION_DIR="${USER_HOME_DIR}/.bash_completion.d"
 readonly USER_HOME_LOCAL_BIN="${USER_HOME_DIR}/.local/bin"
 readonly USER_HOME_LOCAL_SHARE="${USER_HOME_DIR}/.local/share"
@@ -136,7 +145,7 @@ cd /tmp || exit
 
 # Send stdout and stderr from this script to a file for debugging.
 # Make the .terra directory as the user so that they own it and have correct linux permissions.
-${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_TERRA_CONFIG_DIR}'"
+${RUN_AS_LOGIN_USER} "mkdir -p '${USER_TERRA_CONFIG_DIR}'"
 exec >> "${POST_STARTUP_OUTPUT_FILE}"
 exec 2>&1
 
@@ -216,12 +225,17 @@ fi
 emit "Resynchronizing apt package index..."
 
 # The apt package index may not be clean when we run; resynchronize
-apt-get update
+apt-get update --allow-releaseinfo-change
 
 # Create the target directories for installing into the HOME directory
-${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_BASH_COMPLETION_DIR}'"
-${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_HOME_LOCAL_BIN}'"
-${RUN_AS_JUPYTER_USER} "mkdir -p '${USER_HOME_LOCAL_SHARE}'"
+${RUN_AS_LOGIN_USER} "mkdir -p '${USER_BASH_COMPLETION_DIR}'"
+${RUN_AS_LOGIN_USER} "mkdir -p '${USER_HOME_LOCAL_BIN}'"
+${RUN_AS_LOGIN_USER} "mkdir -p '${USER_HOME_LOCAL_SHARE}'"
+
+# Remove the Vertex AI-installed "tutorials" directory.
+# End users think that they are VWB tutorials which is just confusing.
+emit "Removing the pre-installed Vertex AI tutorials directory"
+rm -rf "${USER_HOME_DIR}/tutorials"
 
 # As described above, have the ~/.bash_profile source the ~/.bashrc
 cat << EOF >> "${USER_BASH_PROFILE}"
@@ -262,7 +276,7 @@ fi
 emit "Installing common packages via pip..."
 
 # Install common packages. Use pip instead of conda because conda is slow.
-${RUN_AS_JUPYTER_USER} "pip install --user \
+${RUN_AS_LOGIN_USER} "pip install --user \
   dsub \
   nbdime \
   nbstripout \
@@ -272,8 +286,8 @@ ${RUN_AS_JUPYTER_USER} "pip install --user \
   pylint \
   pytest"
 
-# Install nbstripout for the jupyter user in all git repositories.
-${RUN_AS_JUPYTER_USER} "nbstripout --install --global"
+# Install nbstripout for the login user in all git repositories.
+${RUN_AS_LOGIN_USER} "nbstripout --install --global"
 
 ###########################################################
 # The Terra CLI requires Java 17 or higher
@@ -291,11 +305,11 @@ ${RUN_AS_JUPYTER_USER} "nbstripout --install --global"
 emit "Installing Java JDK ..."
 
 # Set up a known clean directory for downloading the TAR and unzipping it.
-${RUN_AS_JUPYTER_USER} "mkdir -p '${JAVA_INSTALL_TMP}'"
+${RUN_AS_LOGIN_USER} "mkdir -p '${JAVA_INSTALL_TMP}'"
 pushd "${JAVA_INSTALL_TMP}"
 
 # Download the latest Java 17, untar it, and remove the TAR file
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_LOGIN_USER} "\
   curl -Os https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz && \
   tar xfz jdk-17_linux-x64_bin.tar.gz && \
   rm jdk-17_linux-x64_bin.tar.gz"
@@ -304,11 +318,11 @@ ${RUN_AS_JUPYTER_USER} "\
 JAVA_DIRNAME="$(ls)"
 
 # Move it to ~/.local
-${RUN_AS_JUPYTER_USER} "mv '${JAVA_DIRNAME}' '${USER_HOME_LOCAL_SHARE}'"
+${RUN_AS_LOGIN_USER} "mv '${JAVA_DIRNAME}' '${USER_HOME_LOCAL_SHARE}'"
 
 # Create a soft link in ~/.local/bin to the java runtime
 ln -s "${USER_HOME_LOCAL_SHARE}/${JAVA_DIRNAME}/bin/java" "${USER_HOME_LOCAL_BIN}"
-chown --no-dereference ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/java"
+chown --no-dereference ${LOGIN_USER}:${LOGIN_USER} "${USER_HOME_LOCAL_BIN}/java"
 
 # Clean up
 popd
@@ -319,26 +333,26 @@ if [[ -n "${INSTANCE_CONTAINER}" ]]; then
   emit "Copying SSH client tools to ${USER_HOME_LOCAL_BIN}"
   cp "$(which ssh)" "${USER_HOME_LOCAL_BIN}"
   cp "$(which ssh-add)" "${USER_HOME_LOCAL_BIN}"
-  chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/ssh"
-  chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/ssh-add"
+  chown ${LOGIN_USER}:${LOGIN_USER} "${USER_HOME_LOCAL_BIN}/ssh"
+  chown ${LOGIN_USER}:${LOGIN_USER} "${USER_HOME_LOCAL_BIN}/ssh-add"
 
   # The DeepLearning Docker images don't have less installed by default
   emit "Copying 'less' to ${USER_HOME_LOCAL_BIN}"
   cp "$(which less)" "${USER_HOME_LOCAL_BIN}"
-  chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_HOME_LOCAL_BIN}/less"
+  chown ${LOGIN_USER}:${LOGIN_USER} "${USER_HOME_LOCAL_BIN}/less"
 fi
 
 # Download Nextflow and install it
 emit "Installing Nextflow ..."
 
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_LOGIN_USER} "\
   curl -s https://get.nextflow.io | bash && \
   mv nextflow '${NEXTFLOW_INSTALL_PATH}'"
 
 # Download Cromwell and install it
 emit "Installing Cromwell ..."
 
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_LOGIN_USER} "\
   curl -LO 'https://github.com/broadinstitute/cromwell/releases/download/${CROMWELL_LATEST_VERSION}/cromwell-${CROMWELL_LATEST_VERSION}.jar' && \
   mkdir -p '${CROMWELL_INSTALL_DIR}' && \
   mv 'cromwell-${CROMWELL_LATEST_VERSION}.jar' '${CROMWELL_INSTALL_DIR}'"
@@ -354,7 +368,7 @@ EOF
 emit "Installing Cromshell ..."
 
 apt-get -y install mailutils
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_LOGIN_USER} "\
   curl -Os https://raw.githubusercontent.com/broadinstitute/cromshell/master/cromshell && \
   chmod +x cromshell && \
   mv cromshell '${CROMSHELL_INSTALL_PATH}'"
@@ -362,23 +376,59 @@ ${RUN_AS_JUPYTER_USER} "\
 # Install & configure the Terra CLI
 emit "Installing the Terra CLI ..."
 
-${RUN_AS_JUPYTER_USER} "\
-  curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash && \
-  cp terra '${TERRA_INSTALL_PATH}'"
+# Fetch the Terra CLI server environment from the metadata server to install appropriate CLI version
+readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
+
+# If the server environment is a verily server, use the verily download script.
+# Otherwise, install the latest DataBiosphere CLI release.
+if [[ $TERRA_SERVER == *"verily"* ]]; then
+  # Map the CLI server to the appropriate AFS service environment
+  case $TERRA_SERVER in
+    verily-devel)
+      afsservice=terra-devel-axon.api.verily.com
+      ;;
+    verily-autopush)
+      afsservice=terra-autopush-axon.api.verily.com
+      ;;
+    verily-staging)
+      afsservice=terra-staging-axon.api.verily.com
+      ;;
+    verily-preprod)
+      afsservice=terra-preprod-axon.api.verily.com
+      ;;
+    verily)
+      afsservice=terra-axon.api.verily.com
+      ;;
+    *)
+      >&2 echo "ERROR: $TERRA_SERVER is not a known verily server."
+      exit 1
+      ;;
+  esac
+  # Build AFS service path and fetch the CLI distribution path
+  versionJson="$(curl -s "https://$afsservice/version")"
+  cliDistributionPath=$(echo "$versionJson" | jq -r '.cliDistributionPath')
+
+  ${RUN_AS_LOGIN_USER} "\
+    curl -L https://storage.googleapis.com/${cliDistributionPath#gs://}/download-install.sh | TERRA_CLI_SERVER=${TERRA_SERVER} bash && \
+    cp terra '${TERRA_INSTALL_PATH}'"
+else
+  ${RUN_AS_LOGIN_USER} "\
+    curl -L https://github.com/DataBiosphere/terra-cli/releases/latest/download/download-install.sh | bash && \
+    cp terra '${TERRA_INSTALL_PATH}'"
+fi
 
 # Set browser manual login since that's the only login supported from a Vertex AI Notebook VM
-${RUN_AS_JUPYTER_USER} "terra config set browser MANUAL"
+${RUN_AS_LOGIN_USER} "terra config set browser MANUAL"
 
 # Set the CLI terra server based on the terra server that created the VM.
-readonly TERRA_SERVER="$(get_metadata_value "instance/attributes/terra-cli-server")"
 if [[ -n "${TERRA_SERVER}" ]]; then
-  ${RUN_AS_JUPYTER_USER} "terra server set --name=${TERRA_SERVER}"
+  ${RUN_AS_LOGIN_USER} "terra server set --name=${TERRA_SERVER}"
 fi
 
 # Log in with app-default-credentials
-${RUN_AS_JUPYTER_USER} "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
+${RUN_AS_LOGIN_USER} "terra auth login --mode=APP_DEFAULT_CREDENTIALS"
 # Generate the bash completion script
-${RUN_AS_JUPYTER_USER} "terra generate-completion > '${USER_BASH_COMPLETION_DIR}/terra'"
+${RUN_AS_LOGIN_USER} "terra generate-completion > '${USER_BASH_COMPLETION_DIR}/terra'"
 
 ####################################
 # Shell and notebook environment
@@ -387,7 +437,7 @@ ${RUN_AS_JUPYTER_USER} "terra generate-completion > '${USER_BASH_COMPLETION_DIR}
 # Set the CLI terra workspace id using the VM metadata, if set.
 readonly TERRA_WORKSPACE="$(get_metadata_value "instance/attributes/terra-workspace-id")"
 if [[ -n "${TERRA_WORKSPACE}" ]]; then
-  ${RUN_AS_JUPYTER_USER} "terra workspace set --id='${TERRA_WORKSPACE}'"
+  ${RUN_AS_LOGIN_USER} "terra workspace set --id='${TERRA_WORKSPACE}'"
 fi
 
 # Set variables into the ~/.bashrc such that they are available
@@ -407,18 +457,18 @@ fi
 
 # OWNER_EMAIL is really the Terra user account email address
 readonly OWNER_EMAIL="$(
-  ${RUN_AS_JUPYTER_USER} "terra workspace describe --format=json" | \
+  ${RUN_AS_LOGIN_USER} "terra workspace describe --format=json" | \
   jq --raw-output ".userEmail")"
 
 # GOOGLE_PROJECT is the project id for the GCP project backing the workspace
 readonly GOOGLE_PROJECT="$(
-  ${RUN_AS_JUPYTER_USER} "terra workspace describe --format=json" | \
+  ${RUN_AS_LOGIN_USER} "terra workspace describe --format=json" | \
   jq --raw-output ".googleProjectId")"
 
 # PET_SA_EMAIL is the pet service account for the Terra user and
 # is specific to the GCP project backing the workspace
 readonly PET_SA_EMAIL="$(
-  ${RUN_AS_JUPYTER_USER} "terra auth status --format=json" | \
+  ${RUN_AS_LOGIN_USER} "terra auth status --format=json" | \
   jq --raw-output ".serviceAccountEmail")"
 
 # These are equivalent environment variables which are set for a
@@ -474,7 +524,7 @@ fi
 # bash_completion is installed on Vertex AI notebooks, but the installed
 # completion scripts are *not* sourced from /etc/profile.
 # If we need it system-wide, we can install it there, but otherwise, let's
-# keep changes localized to the JUPYTER_USER.
+# keep changes localized to the LOGIN_USER.
 #
 emit "Configuring bash completion for the VM..."
 
@@ -502,35 +552,35 @@ EOF
 emit "Setting up git integration..."
 
 # Create the user SSH directory 
-${RUN_AS_JUPYTER_USER} "mkdir -p ${USER_SSH_DIR} --mode 0700"
+${RUN_AS_LOGIN_USER} "mkdir -p ${USER_SSH_DIR} --mode 0700"
 
 # Get the user's SSH key from Terra, and if set, write it to the user's .ssh directory
-${RUN_AS_JUPYTER_USER} "\
+${RUN_AS_LOGIN_USER} "\
   install --mode 0600 /dev/null '${USER_SSH_DIR}/id_rsa.tmp' && \
   terra user ssh-key get --include-private-key --format=JSON >> '${USER_SSH_DIR}/id_rsa.tmp' || true"
 if [[ -s "${USER_SSH_DIR}/id_rsa.tmp" ]]; then
-  ${RUN_AS_JUPYTER_USER} "\
+  ${RUN_AS_LOGIN_USER} "\
     install --mode 0600 /dev/null '${USER_SSH_DIR}/id_rsa' && \
     jq -r '.privateSshKey' '${USER_SSH_DIR}/id_rsa.tmp' > '${USER_SSH_DIR}/id_rsa'"
 fi
 rm -f "${USER_SSH_DIR}/id_rsa.tmp"
 
 # Set the github known_hosts
-${RUN_AS_JUPYTER_USER} "ssh-keyscan -H github.com >> '${USER_SSH_DIR}/known_hosts'"
+${RUN_AS_LOGIN_USER} "ssh-keyscan -H github.com >> '${USER_SSH_DIR}/known_hosts'"
 
 # Create git repos directory
-${RUN_AS_JUPYTER_USER} "mkdir -p '${TERRA_GIT_REPOS_DIR}'"
+${RUN_AS_LOGIN_USER} "mkdir -p '${TERRA_GIT_REPOS_DIR}'"
 
 # Attempt to clone all the git repo references in the workspace. If the user's ssh key does not exist or doesn't have access
 # to the git references, the corresponding git repo cloning will be skipped.
 # Keep this as last thing in script. There will be integration test for git cloning (PF-1660). If this is last thing, then
 # integration test will ensure that everything in script worked.
-${RUN_AS_JUPYTER_USER} "cd '${TERRA_GIT_REPOS_DIR}' && terra git clone --all"
+${RUN_AS_LOGIN_USER} "cd '${TERRA_GIT_REPOS_DIR}' && terra git clone --all"
 
 # Create a script for starting the ssh-agent, which will be run as a daemon
 # process on boot.
 #
-# The ssh-agent information is deposited into the jupyter user's HOME directory
+# The ssh-agent information is deposited into the login user's HOME directory
 # (under ~/.ssh-agent), including the socket file and the environment variables
 # that clients need.
 #
@@ -584,7 +634,7 @@ done
 echo "SSH agent ${SSH_AGENT_PID} has exited."
 EOF
 chmod +x "${TERRA_SSH_AGENT_SCRIPT}"
-chown ${JUPYTER_USER}:${JUPYTER_USER} "${TERRA_SSH_AGENT_SCRIPT}"
+chown ${LOGIN_USER}:${LOGIN_USER} "${TERRA_SSH_AGENT_SCRIPT}"
 
 # Create a systemd service to run the boot script on system boot
 cat << EOF >"${TERRA_SSH_AGENT_SERVICE}"
@@ -593,7 +643,7 @@ Description=Run an SSH agent for the Jupyter user
 
 [Service]
 ExecStart=${TERRA_SSH_AGENT_SCRIPT}
-User=${JUPYTER_USER}
+User=${LOGIN_USER}
 Restart=always
 
 [Install]
@@ -643,7 +693,7 @@ source "${USER_BASHRC}"
 exit 0
 EOF
 chmod +x "${TERRA_BOOT_SCRIPT}"
-chown ${JUPYTER_USER}:${JUPYTER_USER} "${TERRA_BOOT_SCRIPT}"
+chown ${LOGIN_USER}:${LOGIN_USER} "${TERRA_BOOT_SCRIPT}"
 
 # Create a systemd service to run the boot script on system boot
 cat << EOF >"${TERRA_BOOT_SERVICE}"
@@ -653,7 +703,7 @@ After=jupyter.service
 
 [Service]
 ExecStart=${TERRA_BOOT_SCRIPT}
-User=${JUPYTER_USER}
+User=${LOGIN_USER}
 RemainAfterExit=yes
 
 [Install]
@@ -667,7 +717,7 @@ systemctl start "${TERRA_BOOT_SERVICE_NAME}"
 
 # Setup gitignore to avoid accidental checkin of data.
 
-cat << EOF | sudo --preserve-env -u "${JUPYTER_USER}" tee "${GIT_IGNORE}"
+cat << EOF | sudo --preserve-env -u "${LOGIN_USER}" tee "${GIT_IGNORE}"
 # By default, all files should be ignored by git.
 # We want to be sure to exclude files containing data such as CSVs and images such as PNGs.
 *.*
@@ -684,7 +734,7 @@ cat << EOF | sudo --preserve-env -u "${JUPYTER_USER}" tee "${GIT_IGNORE}"
 !LICENSE*
 EOF
 
-${RUN_AS_JUPYTER_USER} "git config --global core.excludesfile '${GIT_IGNORE}'"
+${RUN_AS_LOGIN_USER} "git config --global core.excludesfile '${GIT_IGNORE}'"
 
 # Indicate the end of Terra customizations of the ~/.bashrc
 cat << EOF >> "${USER_BASHRC}"
@@ -702,9 +752,9 @@ EOF
 
 fi
 
-# Make sure the ~/.bashrc and ~/.bash_profile are owned by the jupyter user
-chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASHRC}"
-chown ${JUPYTER_USER}:${JUPYTER_USER} "${USER_BASH_PROFILE}"
+# Make sure the ~/.bashrc and ~/.bash_profile are owned by the login user
+chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASHRC}"
+chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASH_PROFILE}"
 
 ####################################
 # Restart JupyterLab or Docker so environment variables are picked up in Jupyter environment. See PF-2178.
@@ -726,7 +776,7 @@ fi
 emit "--  Checking if installed Java version is ${REQ_JAVA_VERSION} or higher"
 
 # Get the current major version of Java: "11.0.12" => "11"
-readonly INSTALLED_JAVA_VERSION="$(${RUN_AS_JUPYTER_USER} "${JAVA_INSTALL_PATH} -version" 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')"
+readonly INSTALLED_JAVA_VERSION="$(${RUN_AS_LOGIN_USER} "${JAVA_INSTALL_PATH} -version" 2>&1 | awk -F\" '{ split($2,a,"."); print a[1]}')"
 if [[ "${INSTALLED_JAVA_VERSION}" -lt ${REQ_JAVA_VERSION} ]]; then
   >&2 emit "ERROR: Java version detected (${INSTALLED_JAVA_VERSION}) is less than required (${REQ_JAVA_VERSION})"
   exit 1
@@ -737,14 +787,14 @@ emit "SUCCESS: Java installed and version detected as ${INSTALLED_JAVA_VERSION}"
 # Test nextflow
 emit "--  Checking if Nextflow is properly installed"
 
-readonly INSTALLED_NEXTFLOW_VERSION="$(${RUN_AS_JUPYTER_USER} "${NEXTFLOW_INSTALL_PATH} -v" | sed -e 's#nextflow version \(.*\)#\1#')"
+readonly INSTALLED_NEXTFLOW_VERSION="$(${RUN_AS_LOGIN_USER} "${NEXTFLOW_INSTALL_PATH} -v" | sed -e 's#nextflow version \(.*\)#\1#')"
 
 emit "SUCCESS: Nextflow installed and version detected as ${INSTALLED_NEXTFLOW_VERSION}"
 
 # Test Cromwell
 emit "--  Checking if installed Cromwell version is ${CROMWELL_LATEST_VERSION}"
 
-readonly INSTALLED_CROMWELL_VERSION="$(${RUN_AS_JUPYTER_USER} "java -jar ${CROMWELL_INSTALL_JAR} --version" | sed -e 's#cromwell \(.*\)#\1#')"
+readonly INSTALLED_CROMWELL_VERSION="$(${RUN_AS_LOGIN_USER} "java -jar ${CROMWELL_INSTALL_JAR} --version" | sed -e 's#cromwell \(.*\)#\1#')"
 if [[ "${INSTALLED_CROMWELL_VERSION}" -ne ${CROMWELL_LATEST_VERSION} ]]; then
   >&2 emit "ERROR: Cromwell version detected (${INSTALLED_CROMWELL_VERSION}) is not equal to expected (${CROMWELL_LATEST_VERSION})"
   exit 1
@@ -774,7 +824,7 @@ if [[ ! -e "${TERRA_INSTALL_PATH}" ]]; then
   exit 1
 fi
 
-readonly INSTALLED_TERRA_VERSION="$(${RUN_AS_JUPYTER_USER} "${TERRA_INSTALL_PATH} version")"
+readonly INSTALLED_TERRA_VERSION="$(${RUN_AS_LOGIN_USER} "${TERRA_INSTALL_PATH} version")"
 
 if [[ -z "${INSTALLED_TERRA_VERSION}" ]]; then
   >&2 emit "ERROR: Terra CLI did not execute or did not return a version number"
@@ -810,7 +860,7 @@ fi
 # GIT_IGNORE
 emit "--  Checking if gitignore is properly installed"
 
-readonly INSTALLED_GITIGNORE="$(${RUN_AS_JUPYTER_USER} "git config --global core.excludesfile")"
+readonly INSTALLED_GITIGNORE="$(${RUN_AS_LOGIN_USER} "git config --global core.excludesfile")"
 
 if [[ "${INSTALLED_GITIGNORE}" != "${GIT_IGNORE}" ]]; then
   >&2 emit "ERROR: gitignore not set up at ${GIT_IGNORE}"
@@ -824,7 +874,7 @@ emit "SUCCESS: Gitignore installed at ${INSTALLED_GITIGNORE}"
 readonly TERRA_TEST_VALUE="$(get_metadata_value "instance/attributes/terra-test-value")"
 readonly TERRA_GCP_NOTEBOOK_RESOURCE_NAME="$(get_metadata_value "instance/attributes/terra-gcp-notebook-resource-name")"
 if [[ -n "${TERRA_TEST_VALUE}" ]]; then
-  ${RUN_AS_JUPYTER_USER} "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
+  ${RUN_AS_LOGIN_USER} "terra resource update gcp-notebook --name=${TERRA_GCP_NOTEBOOK_RESOURCE_NAME} --new-metadata=terra-test-result=${TERRA_TEST_VALUE}"
 fi
 
 # Let the UI know the script completed

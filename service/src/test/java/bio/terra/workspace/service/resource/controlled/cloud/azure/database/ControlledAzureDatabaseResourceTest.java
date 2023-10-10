@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseAttributes;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
@@ -12,38 +13,19 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoSession;
-import org.mockito.quality.Strictness;
 
 @Tag("azure-unit")
-public class ControlledAzureDatabaseResourceTest {
-  private MockitoSession mockito;
-
+public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbingTest {
   private final UUID workspaceId = UUID.randomUUID();
   @Mock private FlightBeanBag mockFlightBeanBag;
-
-  @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
-  }
 
   @Test
   void testCorrectPrivateDatabaseSteps() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null);
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default", false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
@@ -65,7 +47,8 @@ public class ControlledAzureDatabaseResourceTest {
   @Test
   void testCorrectSharedDatabaseSteps() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID().toString(), "default", false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
@@ -87,7 +70,8 @@ public class ControlledAzureDatabaseResourceTest {
   @Test
   void testToApiResource() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID().toString(), "default", false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
@@ -108,7 +92,8 @@ public class ControlledAzureDatabaseResourceTest {
   @Test
   void testAttributesToJson() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(UUID.randomUUID());
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID().toString(), "default", false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(

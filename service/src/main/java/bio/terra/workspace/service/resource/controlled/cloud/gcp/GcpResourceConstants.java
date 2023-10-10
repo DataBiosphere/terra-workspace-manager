@@ -20,4 +20,16 @@ public class GcpResourceConstants {
    * at the correct WSM and SAM instances.
    */
   public static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
+
+  /**
+   * The main git branch for the workspace manager repo used to point used for sourcing the latest
+   * startup script
+   */
+  public static final String MAIN_BRANCH = "main";
+  /** The GCE instance enable guest attributes metadata key */
+  public static final String ENABLE_GUEST_ATTRIBUTES_METADATA_KEY = "enable-guest-attributes";
+  /**
+   * The GCE instance startup script url metadata key for providing a startup script to the instance
+   */
+  public static final String STARTUP_SCRIPT_URL_METADATA_KEY = "startup-script-url";
 }

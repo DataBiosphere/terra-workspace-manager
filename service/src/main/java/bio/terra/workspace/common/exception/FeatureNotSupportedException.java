@@ -3,6 +3,8 @@ package bio.terra.workspace.common.exception;
 import bio.terra.common.exception.NotImplementedException;
 import java.util.List;
 
+// TODO(BENCH-1050) move exception to TCL
+
 public class FeatureNotSupportedException extends NotImplementedException {
 
   public FeatureNotSupportedException(String message) {

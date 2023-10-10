@@ -26,6 +26,7 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
           "https://www.googleapis.com/auth/userinfo.profile");
   private static final String WORKSPACE_ID = "my-workspace-ufid";
   private static final String SERVER_ID = "test-server";
+  private static final String GIT_BRANCH = "fun-branch";
   private static final ApiGcpDataprocClusterCreationParameters creationParameters =
       new ApiGcpDataprocClusterCreationParameters()
           .clusterId("my-cluster")
@@ -54,10 +55,13 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
             SERVICE_ACCOUNT,
             WORKSPACE_ID,
             SERVER_ID,
-            new Cluster());
+            new Cluster(),
+            GIT_BRANCH);
 
     Map<String, String> metadata = cluster.getConfig().getGceClusterConfig().getMetadata();
-    assertThat(metadata, Matchers.aMapWithSize(3));
+    // Metadata includes: workspaceId, serverId, startup-script-url, enable-guest-attributes, and
+    // metadata-key
+    assertThat(metadata, Matchers.aMapWithSize(5));
     assertThat(metadata, Matchers.hasEntry("metadata-key", "metadata-value"));
     assertDefaultMetadata(cluster);
 
@@ -96,7 +100,8 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
                 SERVICE_ACCOUNT,
                 WORKSPACE_ID,
                 SERVER_ID,
-                new Cluster()));
+                new Cluster(),
+                GIT_BRANCH));
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
@@ -110,6 +115,7 @@ public class CreateDataprocClusterStepTest extends BaseUnitTest {
                 SERVICE_ACCOUNT,
                 WORKSPACE_ID,
                 SERVER_ID,
-                new Cluster()));
+                new Cluster(),
+                GIT_BRANCH));
   }
 }

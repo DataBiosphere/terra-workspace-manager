@@ -1000,6 +1000,14 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     ApiControlledDataprocClusterUpdateParameters updateParameters =
         requestBody.getUpdateParameters();
     if (updateParameters != null) {
+      if (updateParameters.getAutoscalingPolicy() != null
+          && (updateParameters.getNumPrimaryWorkers() != null
+              || updateParameters.getNumSecondaryWorkers() != null
+              || updateParameters.getLifecycleConfig() != null
+              || updateParameters.getGracefulDecommissionTimeout() != null)) {
+        throw new BadRequestException(
+            "Cluster autoscaling policy cannot be updated in tandem with other attribute updates.");
+      }
       if (updateParameters.getLifecycleConfig() != null) {
         // Cluster scheduled deletion configurations cannot be updated in tandem with other
         // attributes.

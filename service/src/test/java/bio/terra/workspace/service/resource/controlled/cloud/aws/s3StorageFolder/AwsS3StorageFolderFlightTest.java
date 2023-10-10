@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.FlightDebugInfo;
@@ -63,16 +64,16 @@ public class AwsS3StorageFolderFlightTest extends BaseAwsConnectedTest {
     userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
     workspaceUuid =
         mockWorkspaceV2Api.createWorkspaceAndWait(userRequest, apiCloudPlatform).getWorkspaceId();
+    Environment environment = awsCloudContextService.discoverEnvironment(userRequest.getEmail());
     landingZone =
-        awsCloudContextService
-            .getLandingZone(
+        AwsCloudContextService.getLandingZone(
+                environment,
                 awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid),
                 Region.of(AWS_REGION))
             .orElseThrow();
     awsCredentialsProvider =
         AwsUtils.createWsmCredentialProvider(
-            awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment());
+            awsCloudContextService.getRequiredAuthentication(), environment);
   }
 
   @AfterAll

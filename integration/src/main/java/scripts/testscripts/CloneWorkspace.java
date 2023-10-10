@@ -71,6 +71,7 @@ import scripts.utils.CloudContextMaker;
 import scripts.utils.FlexResourceUtils;
 import scripts.utils.GcsBucketObjectUtils;
 import scripts.utils.GcsBucketUtils;
+import scripts.utils.RetryUtils;
 import scripts.utils.WorkspaceAllocateTestScriptBase;
 
 public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
@@ -125,7 +126,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     // Retry because in rare cases, it can take a while for bigquery.jobs.create to propagate
     // TODO(PF-2335): Delete retry after PF-2335 is fixed
     final TableResult listTablesResult =
-        ClientTestUtils.getWithRetryOnException(() -> bigQueryClient.query(listTablesQuery));
+        RetryUtils.getWithRetryOnException(() -> bigQueryClient.query(listTablesQuery));
     final long numRows =
         StreamSupport.stream(listTablesResult.getValues().spliterator(), false).count();
     assertEquals(0, numRows, "Expected zero tables for COPY_DEFINITION dataset");
@@ -394,7 +395,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         cloneResult.getWorkspace().getSourceWorkspaceId(),
         "Source workspace ID reported accurately.");
     Properties sourceProperties =
-        ClientTestUtils.getWithRetryOnException(
+        RetryUtils.getWithRetryOnException(
             () ->
                 sourceOwnerWorkspaceApi
                     .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
@@ -464,7 +465,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         cloningUserResourceApi.getBucket(
             destinationWorkspaceId, sharedBucketCloneDetails.getDestinationResourceId());
     logger.info("Cloned Shared Bucket: {}", clonedSharedBucket);
-    ClientTestUtils.getWithRetryOnException(
+    RetryUtils.getWithRetryOnException(
         () ->
             GcsBucketObjectUtils.retrieveBucketFile(
                 clonedSharedBucket.getAttributes().getBucketName(),
@@ -966,7 +967,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     super.doCleanup(testUsers, workspaceApi);
     // Delete the cloned workspace (will delete context and resources)
     if (null != destinationWorkspaceId) {
-      WorkspaceAllocateTestScriptBase.deleteWorkspaceAsync(
+      WorkspaceAllocateTestScriptBase.deleteWorkspaceAsyncAssertSuccess(
           cloningUserWorkspaceApi, destinationWorkspaceId);
     }
   }

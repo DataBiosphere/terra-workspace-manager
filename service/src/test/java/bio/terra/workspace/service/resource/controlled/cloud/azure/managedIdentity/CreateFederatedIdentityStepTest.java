@@ -14,6 +14,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
@@ -30,21 +31,15 @@ import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoSession;
-import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
 
 @Tag("azure-unit")
-public class CreateFederatedIdentityStepTest {
-  private MockitoSession mockito;
+public class CreateFederatedIdentityStepTest extends BaseMockitoStrictStubbingTest {
   private final String k8sNamespace = UUID.randomUUID().toString();
   @Mock private AzureConfiguration mockAzureConfig;
   @Mock private CrlService mockCrlService;
@@ -72,18 +67,6 @@ public class CreateFederatedIdentityStepTest {
   @Mock private FlightContext mockFlightContext;
   @Mock private FlightMap mockWorkingMap;
 
-  @BeforeEach
-  public void setup() {
-    // initialize session to start mocking
-    mockito =
-        Mockito.mockitoSession().initMocks(this).strictness(Strictness.STRICT_STUBS).startMocking();
-  }
-
-  @AfterEach
-  public void tearDown() {
-    mockito.finishMocking();
-  }
-
   @Test
   void testSuccess() throws ApiException {
     setupMocks();
@@ -101,7 +84,8 @@ public class CreateFederatedIdentityStepTest {
             mockLandingZoneApiDispatch,
             mockSamService,
             mockWorkspaceService,
-            workspaceId);
+            workspaceId,
+            null);
     var result =
         step.createFederatedIdentityAndK8sServiceAccount(
             identityResource.getManagedIdentityName(),
@@ -163,7 +147,8 @@ public class CreateFederatedIdentityStepTest {
             mockLandingZoneApiDispatch,
             mockSamService,
             mockWorkspaceService,
-            workspaceId);
+            workspaceId,
+            null);
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
   }
 
@@ -183,7 +168,8 @@ public class CreateFederatedIdentityStepTest {
             mockLandingZoneApiDispatch,
             mockSamService,
             mockWorkspaceService,
-            workspaceId);
+            workspaceId,
+            null);
     return step.createFederatedIdentityAndK8sServiceAccount(
         identityResource.getManagedIdentityName(),
         mockAzureCloudContext,

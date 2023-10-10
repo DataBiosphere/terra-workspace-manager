@@ -60,7 +60,7 @@ public class GcsBucketObjectUtils {
             .file(file);
 
     logger.info("Making reference to a gcs bucket file");
-    return ClientTestUtils.getWithRetryOnException(
+    return RetryUtils.getWithRetryOnException(
         () -> resourceApi.createGcsObjectReference(body, workspaceUuid));
   }
 

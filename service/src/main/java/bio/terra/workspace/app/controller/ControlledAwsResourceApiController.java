@@ -82,7 +82,6 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   private final Logger logger = LoggerFactory.getLogger(ControlledAwsResourceApiController.class);
 
   private final WsmResourceService wsmResourceService;
-
   private final AwsCloudContextService awsCloudContextService;
 
   @Autowired
@@ -189,7 +188,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
       UUID workspaceUuid,
       ApiAwsCredentialAccessScope accessScope,
       Integer durationSeconds,
-      T awsResource) {
+      T awsResource,
+      String userEmail) {
     AwsResourceValidationUtils.validateAwsCredentialDurationSecond(durationSeconds);
 
     AwsCloudContext cloudContext = awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
@@ -201,7 +201,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     Credentials awsCredentials =
         AwsUtils.getAssumeUserRoleCredentials(
             awsCloudContextService.getRequiredAuthentication(),
-            awsCloudContextService.discoverEnvironment(),
+            awsCloudContextService.discoverEnvironment(userEmail),
             user,
             Duration.ofSeconds(durationSeconds),
             tags);
@@ -238,9 +238,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreatedControlledAwsS3StorageFolder> createAwsS3StorageFolder(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsS3StorageFolderRequestBody body) {
-    featureService.awsEnabledCheck();
-
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest,
@@ -271,10 +270,11 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     AwsCloudContext awsCloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
-
+    Environment environment =
+        awsCloudContextService.discoverEnvironment(
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
     LandingZone landingZone =
-        awsCloudContextService
-            .getLandingZone(awsCloudContext, Region.of(region))
+        AwsCloudContextService.getLandingZone(environment, awsCloudContext, Region.of(region))
             .orElseThrow(
                 () -> {
                   throw new ValidationException(
@@ -387,7 +387,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, getSamAction(accessScope))
             .castByEnum(WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER);
-    return getAwsResourceCredential(workspaceUuid, accessScope, durationSeconds, resource);
+    return getAwsResourceCredential(
+        workspaceUuid,
+        accessScope,
+        durationSeconds,
+        resource,
+        samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
   }
 
   @Traced
@@ -426,9 +431,8 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @Override
   public ResponseEntity<ApiCreateControlledAwsSageMakerNotebookResult> createAwsSageMakerNotebook(
       UUID workspaceUuid, @Valid ApiCreateControlledAwsSageMakerNotebookRequestBody body) {
-    featureService.awsEnabledCheck();
-
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest,
@@ -465,20 +469,14 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
 
     AwsCloudContext awsCloudContext =
         awsCloudContextService.getRequiredAwsCloudContext(workspaceUuid);
-
-    Environment environment = awsCloudContextService.discoverEnvironment();
+    Environment environment =
+        awsCloudContextService.discoverEnvironment(
+            samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
     AwsCloudContextService.getLandingZone(environment, awsCloudContext, Region.of(region))
         .orElseThrow(
             () -> {
               throw new ValidationException(String.format("Unsupported AWS region: %s.", region));
             });
-
-    ControlledAwsSageMakerNotebookResource resource =
-        ControlledAwsSageMakerNotebookResource.builder()
-            .common(commonFields)
-            .instanceName(instanceName)
-            .instanceType(body.getAwsSageMakerNotebook().getInstanceType())
-            .build();
 
     logger.info(
         "createAwsSageMakerNotebook workspace: {}, region: {}, instanceName: {}, instanceType {}, cloudName {}",
@@ -487,6 +485,13 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         commonFields.getName(),
         instanceType,
         instanceName);
+
+    ControlledAwsSageMakerNotebookResource resource =
+        ControlledAwsSageMakerNotebookResource.builder()
+            .common(commonFields)
+            .instanceName(instanceName)
+            .instanceType(body.getAwsSageMakerNotebook().getInstanceType())
+            .build();
 
     String jobId =
         controlledResourceService.createAwsSageMakerNotebookInstance(
@@ -592,6 +597,11 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
             .validateControlledResourceAndAction(
                 userRequest, workspaceUuid, resourceUuid, getSamAction(accessScope))
             .castByEnum(WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK);
-    return getAwsResourceCredential(workspaceUuid, accessScope, durationSeconds, resource);
+    return getAwsResourceCredential(
+        workspaceUuid,
+        accessScope,
+        durationSeconds,
+        resource,
+        samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
   }
 }

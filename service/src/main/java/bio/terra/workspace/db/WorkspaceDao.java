@@ -208,17 +208,14 @@ public class WorkspaceDao {
       };
 
   private final NamedParameterJdbcTemplate jdbcTemplate;
-  private final ApplicationDao applicationDao;
   private final StateDao stateDao;
   private final WorkspaceActivityLogDao workspaceActivityLogDao;
 
   @Autowired
   public WorkspaceDao(
-      ApplicationDao applicationDao,
       NamedParameterJdbcTemplate jdbcTemplate,
       StateDao stateDao,
       WorkspaceActivityLogDao workspaceActivityLogDao) {
-    this.applicationDao = applicationDao;
     this.jdbcTemplate = jdbcTemplate;
     this.stateDao = stateDao;
     this.workspaceActivityLogDao = workspaceActivityLogDao;
@@ -229,8 +226,7 @@ public class WorkspaceDao {
    * and inserts the workspace row.
    */
   @WriteTransaction
-  public UUID createWorkspaceStart(
-      Workspace workspace, @Nullable List<String> applicationIds, String flightId) {
+  public UUID createWorkspaceStart(Workspace workspace, String flightId) {
     UUID workspaceUuid = workspace.getWorkspaceId();
     DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
     if (stateDao.isResourceInState(dbWorkspace, WsmResourceState.CREATING, flightId)) {
@@ -295,11 +291,6 @@ public class WorkspaceDao {
       } else {
         throw e;
       }
-    }
-
-    // If we have applicationIds to create, do that now.
-    if (applicationIds != null) {
-      applicationDao.enableWorkspaceApplications(workspaceUuid, applicationIds);
     }
 
     return workspaceUuid;

@@ -22,6 +22,7 @@ import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceGuestAccelerator;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -68,6 +69,7 @@ public class CreateGceInstanceStep implements Step {
   private static final String EXTERNAL_IP_TYPE = "ONE_TO_ONE_NAT";
   private static final String EXTERNAL_IP_NAME = "External IP";
   private static final String HOST_MAINTENANCE_BEHAVIOUR = "TERMINATE";
+  private static final String DATA_DISK_NAME = "data-disk";
 
   public CreateGceInstanceStep(
       ControlledGceInstanceResource resource,
@@ -129,10 +131,9 @@ public class CreateGceInstanceStep implements Step {
               zone,
               resource.getInstanceId());
           return StepResult.getStepResultSuccess();
-        } else if (HttpStatus.BAD_REQUEST.value() == e.getStatusCode()) {
-          // Don't retry bad requests, which won't change. Instead fail faster.
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
         }
+        // Throw bad request exception for malformed parameters
+        GcpFlightExceptionUtils.handleGcpNonRetryableException(e);
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
 
@@ -154,9 +155,10 @@ public class CreateGceInstanceStep implements Step {
       String gitHash) {
     Instance instance = new Instance();
     ApiGcpGceInstanceCreationParameters creationParameters =
-        flightContext
-            .getInputParameters()
-            .get(CREATE_GCE_INSTANCE_PARAMETERS, ApiGcpGceInstanceCreationParameters.class);
+        FlightUtils.getRequired(
+            flightContext.getInputParameters(),
+            CREATE_GCE_INSTANCE_PARAMETERS,
+            ApiGcpGceInstanceCreationParameters.class);
     setFields(
         creationParameters,
         instanceId,
@@ -193,7 +195,15 @@ public class CreateGceInstanceStep implements Step {
                 .setInitializeParams(
                     new AttachedDiskInitializeParams()
                         .setSourceImage(creationParameters.getVmImage())
-                        .setDiskSizeGb(Long.valueOf(100)))));
+                        .setDiskSizeGb(100L)),
+            new AttachedDisk()
+                .setBoot(false)
+                .setDeviceName(DATA_DISK_NAME)
+                .setAutoDelete(true)
+                .setInitializeParams(
+                    new AttachedDiskInitializeParams()
+                        .setDiskType(creationParameters.getDataDiskType())
+                        .setDiskSizeGb(creationParameters.getDataDiskSizeGb()))));
 
     instance.setServiceAccounts(
         List.of(
@@ -264,9 +274,10 @@ public class CreateGceInstanceStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     GcpCloudContext gcpCloudContext =
-        flightContext
-            .getWorkingMap()
-            .get(ControlledResourceKeys.GCP_CLOUD_CONTEXT, GcpCloudContext.class);
+        FlightUtils.getRequired(
+            flightContext.getWorkingMap(),
+            ControlledResourceKeys.GCP_CLOUD_CONTEXT,
+            GcpCloudContext.class);
     String projectId = gcpCloudContext.getGcpProjectId();
     String zone =
         FlightUtils.getRequired(
@@ -296,6 +307,7 @@ public class CreateGceInstanceStep implements Step {
               resource.getInstanceId());
           return StepResult.getStepResultSuccess();
         }
+        GcpFlightExceptionUtils.handleGcpNonRetryableException(e);
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
       }
       GcpUtils.pollAndRetry(deletionOperation, Duration.ofSeconds(20), Duration.ofMinutes(12));

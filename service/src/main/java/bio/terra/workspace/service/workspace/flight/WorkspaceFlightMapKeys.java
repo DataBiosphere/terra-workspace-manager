@@ -39,8 +39,11 @@ public final class WorkspaceFlightMapKeys {
     public static final String PREVIOUS_UPDATE_PARAMETERS = "previousUpdateParameters";
     public static final String CREATE_RESOURCE_REGION = "createResourceRegion";
 
+    public static final String WORKSPACE_ID = "workspaceId";
+    public static final String RESOURCE = "resource";
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
-    public static final String REMOVED_USER_IS_WORKSPACE_MEMBER = "removedUserIsWorkspaceMember";
+    public static final String REMOVED_USER_CAN_READ_WORKSPACE = "removedUserIsWorkspaceMember";
+    public static final String REMOVED_USER_CAN_WRITE_WORKSPACE = "removedUserCanWrite";
 
     public static final String CLOUD_PET_SERVICE_ACCOUNT = "cloudPetServiceAccount";
 

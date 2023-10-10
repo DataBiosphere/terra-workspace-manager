@@ -71,16 +71,6 @@ public class ControlledDataprocClusterResource extends ControlledResource {
     return new Builder();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   // -- getters used in serialization --
   @Override
   @JsonProperty("wsmResourceFields")
@@ -164,7 +154,8 @@ public class ControlledDataprocClusterResource extends ControlledResource {
             petSaEmail,
             workspaceUserFacingId,
             flightBeanBag.getCrlService(),
-            flightBeanBag.getCliConfiguration()),
+            flightBeanBag.getCliConfiguration(),
+            flightBeanBag.getVersionConfiguration()),
         gcpRetryRule);
     flight.addStep(
         new DataprocClusterCloudSyncStep(
@@ -184,6 +175,9 @@ public class ControlledDataprocClusterResource extends ControlledResource {
 
   @Override
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {
+    flight.addStep(
+        new ValidateDataprocClusterUpdateStep(this, flightBeanBag.getCrlService()),
+        RetryRules.cloud());
     flight.addStep(
         new RetrieveDataprocClusterResourceAttributesStep(this, flightBeanBag.getCrlService()),
         RetryRules.cloud());
@@ -246,9 +240,8 @@ public class ControlledDataprocClusterResource extends ControlledResource {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ControlledDataprocClusterResource)) return false;
+    if (!(o instanceof ControlledDataprocClusterResource resource)) return false;
     if (!super.equals(o)) return false;
-    ControlledDataprocClusterResource resource = (ControlledDataprocClusterResource) o;
     return Objects.equal(clusterId, resource.clusterId)
         && Objects.equal(region, resource.region)
         && Objects.equal(projectId, resource.projectId);

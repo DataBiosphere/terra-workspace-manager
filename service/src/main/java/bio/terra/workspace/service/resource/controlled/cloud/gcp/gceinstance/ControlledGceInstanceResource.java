@@ -84,16 +84,6 @@ public class ControlledGceInstanceResource extends ControlledResource {
     return new Builder();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @SuppressWarnings("unchecked")
-  public <T> T castByEnum(WsmResourceType expectedType) {
-    if (getResourceType() != expectedType) {
-      throw new BadRequestException(String.format("Resource is not a %s", expectedType));
-    }
-    return (T) this;
-  }
-
   // -- getters used in serialization --
   @Override
   @JsonProperty("wsmResourceFields")
@@ -263,9 +253,8 @@ public class ControlledGceInstanceResource extends ControlledResource {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ControlledGceInstanceResource)) return false;
+    if (!(o instanceof ControlledGceInstanceResource resource)) return false;
     if (!super.equals(o)) return false;
-    ControlledGceInstanceResource resource = (ControlledGceInstanceResource) o;
     return Objects.equal(instanceId, resource.instanceId)
         && Objects.equal(zone, resource.zone)
         && Objects.equal(projectId, resource.projectId);

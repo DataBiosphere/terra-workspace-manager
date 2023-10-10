@@ -1,0 +1,81 @@
+# Sometimes the server fails to start in the GHA environment.
+# This test can be manually launched to just start the server and
+# immediately exit. The immediate exist is accomplished by setting
+# specific configuration flags.
+name: Server Startup Test
+on:
+  workflow_dispatch: {}
+
+jobs:
+  server-startup-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Initialize Postgres DB for local server test run
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Get Vault token
+        id: vault-token-step
+        env:
+          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+        run: |
+          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+            -e "VAULT_ADDR=${VAULT_ADDR}" \
+            vault:1.1.0 \
+            vault write -field token \
+              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+          echo ::add-mask::$VAULT_TOKEN    
+          echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
+
+      - name: Write config
+        id: config
+        uses: ./.github/actions/write-config
+        with:
+          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+          target: local
+
+      # Configure up so the cronjobs do not start
+      - name: Start the server with immediate exit
+        env:
+          spring_profiles_active: human-readable-logging
+          workspace_startup_exitafterinitialization: true
+          workspace_danglingresourcecleanup_enabled: false
+          workspace_temporarygrantrevoke_revokeenabled: false
+          workspace_privateresourcecleanup_enabled: false
+        run: ./gradlew service:bootRun

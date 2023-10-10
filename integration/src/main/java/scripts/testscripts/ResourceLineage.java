@@ -107,7 +107,7 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
       throws Exception {
     super.doCleanup(testUsers, workspaceApi);
 
-    WorkspaceAllocateTestScriptBase.deleteWorkspaceAsync(workspaceApi, workspaceId2);
+    WorkspaceAllocateTestScriptBase.deleteWorkspaceAsyncAssertSuccess(workspaceApi, workspaceId2);
   }
 
   @Override

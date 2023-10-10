@@ -1,5 +1,6 @@
 package bio.terra.workspace.common.utils;
 
+import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
@@ -8,6 +9,8 @@ import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -276,5 +279,18 @@ public final class FlightUtils {
     return (flightState.getFlightStatus() == FlightStatus.ERROR
         || flightState.getFlightStatus() == FlightStatus.FATAL
         || flightState.getFlightStatus() == FlightStatus.SUCCESS);
+  }
+
+  public static SamUser getRequiredSamUser(FlightMap inputParameters, SamService samService) {
+    AuthenticatedUserRequest userRequest =
+        FlightUtils.getRequired(
+            inputParameters,
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
+    return samService.getSamUser(userRequest);
+  }
+
+  public static String getRequiredUserEmail(FlightMap inputParameters, SamService samService) {
+    return getRequiredSamUser(inputParameters, samService).getEmail();
   }
 }

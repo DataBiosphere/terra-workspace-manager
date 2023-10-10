@@ -239,6 +239,7 @@ public class LandingZoneApiDispatch {
       return new ApiAzureLandingZoneDeployedResource()
           .resourceId(resource.resourceId())
           .resourceType(resource.resourceType())
+          .tags(resource.tags())
           .region(resource.region());
     }
     if (purpose.getClass().equals(SubnetResourcePurpose.class)) {
@@ -246,6 +247,8 @@ public class LandingZoneApiDispatch {
           .resourceParentId(resource.resourceParentId().orElse(null)) // Only available for subnets
           .resourceName(resource.resourceName().orElse(null)) // Only available for subnets
           .resourceType(resource.resourceType())
+          .resourceId(resource.resourceId())
+          .tags(resource.tags())
           .region(resource.region());
     }
     throw new LandingZoneUnsupportedPurposeException(

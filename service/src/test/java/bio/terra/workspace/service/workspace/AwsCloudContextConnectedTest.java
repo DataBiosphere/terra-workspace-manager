@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
+import static bio.terra.workspace.service.features.FeatureService.AWS_ENABLED;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,7 +53,8 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
 
   @Test
   void discoverEnvironmentTest() throws IOException {
-    Assertions.assertDoesNotThrow(() -> mockFeatureService.awsEnabledCheck());
+    Assertions.assertDoesNotThrow(
+        () -> mockFeatureService.featureEnabledCheck(AWS_ENABLED, SAM_USER.getEmail()));
 
     // Log the AWS config
     logger.info("AWS Configuration: {}", awsConfiguration.toString());
@@ -116,10 +119,14 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
   void createCloudContextTest() {
     AwsCloudContext createdCloudContext =
         awsCloudContextService.createCloudContext(
-            "flightId", WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID);
+            "flightId",
+            WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+            WorkspaceFixtures.DEFAULT_USER_EMAIL);
     assertNotNull(createdCloudContext);
     AwsTestUtils.assertAwsCloudContextFields(
-        awsCloudContextService.discoverEnvironment().getMetadata(),
+        awsCloudContextService
+            .discoverEnvironment(WorkspaceFixtures.DEFAULT_USER_EMAIL)
+            .getMetadata(),
         createdCloudContext.getContextFields());
     AwsTestUtils.assertCloudContextCommonFields(
         createdCloudContext.getCommonFields(),
@@ -131,16 +138,18 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
   @Test
   void getLandingZoneTest() throws IOException {
     AwsCloudContext cloudContext = awsConnectedTestUtils.getAwsCloudContext();
+    Environment environment =
+        awsCloudContextService.discoverEnvironment(WorkspaceFixtures.DEFAULT_USER_EMAIL);
 
     // success
     Optional<LandingZone> landingZone =
-        awsCloudContextService.getLandingZone(
-            cloudContext,
-            awsCloudContextService.discoverEnvironment().getSupportedRegions().iterator().next());
+        AwsCloudContextService.getLandingZone(
+            environment, cloudContext, environment.getSupportedRegions().iterator().next());
     assertTrue(landingZone.isPresent(), "landing zone expected for valid region");
 
     // failure - no landing zone for region
-    landingZone = awsCloudContextService.getLandingZone(cloudContext, Region.of("cloud"));
+    landingZone =
+        AwsCloudContextService.getLandingZone(environment, cloudContext, Region.of("cloud"));
     assertFalse(landingZone.isPresent(), "landing zone not expected for invalid region");
 
     CloudContextCommonFields commonFields =
@@ -151,14 +160,15 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
     assertThrows(
         InvalidCloudContextStateException.class,
         () ->
-            awsCloudContextService.getLandingZone(
-                new AwsCloudContext(null, commonFields), Region.of("cloud")));
+            AwsCloudContextService.getLandingZone(
+                environment, new AwsCloudContext(null, commonFields), Region.of("cloud")));
 
     // error - cloud context mismatch
     assertThrows(
         StaleConfigurationException.class,
         () ->
-            awsCloudContextService.getLandingZone(
+            AwsCloudContextService.getLandingZone(
+                environment,
                 new AwsCloudContext(
                     new AwsCloudContextFields("a", "b", "c", "d", "e"), commonFields),
                 Region.of("cloud")));
