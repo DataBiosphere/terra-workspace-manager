@@ -65,7 +65,7 @@ public class CustomGcpIamRoleMapping {
           .add("bigquery.tables.delete")
           .add("bigquery.tables.update")
           .build();
-
+  // see https://cloud.google.com/iap/docs/using-tcp-forwarding#grant-access-vm
   static final ImmutableList<String> IAP_TCP_FORWARDING_PERMISSIONS =
       ImmutableList.of(
           "iap.tunnelInstances.accessViaIAP",
