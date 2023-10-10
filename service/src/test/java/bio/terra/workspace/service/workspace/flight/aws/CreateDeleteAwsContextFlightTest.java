@@ -37,11 +37,10 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,22 +62,24 @@ public class CreateDeleteAwsContextFlightTest extends BaseAwsConnectedTest {
   @Autowired private SpendConnectedTestUtils spendUtils;
   @MockBean private SamService mockSamService;
 
-  @BeforeAll
-  public void init() throws Exception {
-    super.init();
+  private SamUser mockSamUser = mock(SamUser.class);
+  private UserStatusInfo mockUserStatusInfo = mock(UserStatusInfo.class);
+
+  @BeforeEach
+  public void beforeEach() throws Exception {
 
     // Set up mock Sam to return user info
-
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
-    SamUser mockSamUser = mock(SamUser.class);
     when(mockSamUser.getEmail()).thenReturn(userRequest.getEmail());
     when(mockSamService.getSamUser((AuthenticatedUserRequest) any())).thenReturn(mockSamUser);
 
-    UserStatusInfo mockUserStatusInfo = mock(UserStatusInfo.class);
     when(mockUserStatusInfo.getUserEmail()).thenReturn(userRequest.getEmail());
     when(mockUserStatusInfo.getUserSubjectId()).thenReturn("1234");
     when(mockSamService.getUserStatusInfo(any())).thenReturn(mockUserStatusInfo);
+
+    // Some tests explicitly disable the app feature, all others assume it's enabled
+    enableFeature(AWS_APPLICATIONS_ENABLED);
   }
 
   @Test
@@ -169,7 +170,7 @@ public class CreateDeleteAwsContextFlightTest extends BaseAwsConnectedTest {
   }
 
   @Test
-  public void undoCreateDeleteContextWithSecurityGroups() throws Exception {
+  public void undoCreateContextWithSecurityGroups() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID workspaceUuid = createWorkspace();
     assertTrue(awsCloudContextService.getAwsCloudContext(workspaceUuid).isEmpty());
@@ -211,27 +212,22 @@ public class CreateDeleteAwsContextFlightTest extends BaseAwsConnectedTest {
         request, null, null, null, userAccessUtils.defaultUserAuthRequest());
   }
 
-  private Map<String, StepStatus> getCreateStepNameToStepStatusMap() {
+  private static Map<String, StepStatus> getCreateStepNameToStepStatusMap() {
     // Retry steps once to validate idempotency.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
+    return Map.of(
         CreateWorkspaceApplicationSecurityGroupsStep.class.getName(),
-        StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
+        StepStatus.STEP_RESULT_FAILURE_RETRY,
         SetWorkspaceApplicationEgressIngressStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY,
+        MakeAwsCloudContextStep.class.getName(),
+        StepStatus.STEP_RESULT_FAILURE_RETRY,
+        CreateCloudContextFinishStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(MakeAwsCloudContextStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        CreateCloudContextFinishStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    return retrySteps;
   }
 
-  private Map<String, StepStatus> getDeleteStepNameToStepStatusMap() {
-    // Retry steps once to validate idempotency.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(
+  private static Map<String, StepStatus> getDeleteStepNameToStepStatusMap() {
+    return Map.of(
         DeleteWorkspaceApplicationSecurityGroupsStep.class.getName(),
         StepStatus.STEP_RESULT_FAILURE_RETRY);
-    return retrySteps;
   }
 }

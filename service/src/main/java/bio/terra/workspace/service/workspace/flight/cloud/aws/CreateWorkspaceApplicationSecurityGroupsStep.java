@@ -199,19 +199,12 @@ public class CreateWorkspaceApplicationSecurityGroupsStep implements Step {
             new TypeReference<Map<String, String>>() {});
 
     for (Map.Entry<String, String> entry : regionSecurityGroups.entrySet()) {
-      try (EC2SecurityGroupCow regionCow =
-          EC2SecurityGroupCow.instanceOf(
-              crlService.getClientConfig(),
-              awsCloudContextService.getFlightCredentialsProvider(flightContext, samService),
-              Region.of(entry.getKey()))) {
-        String groupId = entry.getValue();
-        regionCow.delete(groupId);
-        logger.info(
-            "Deleted Security Group ID '{}' for Workspace {} (Landing Zone {})",
-            groupId,
-            workspaceUuid.toString(),
-            entry.getKey().toString());
-      }
+      AwsUtils.deleteWorkspaceSecurityGroup(
+          crlService.getClientConfig(),
+          awsCloudContextService.getFlightCredentialsProvider(flightContext, samService),
+          workspaceUuid,
+          Region.of(entry.getKey()),
+          entry.getValue());
     }
 
     return StepResult.getStepResultSuccess();

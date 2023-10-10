@@ -1,20 +1,20 @@
 package bio.terra.workspace.service.workspace.flight.cloud.aws;
 
-import bio.terra.cloudres.aws.ec2.EC2SecurityGroupCow;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.ec2.model.Ec2Exception;
 
 public class DeleteWorkspaceApplicationSecurityGroupsStep implements Step {
 
@@ -38,28 +38,19 @@ public class DeleteWorkspaceApplicationSecurityGroupsStep implements Step {
 
   private void deleteSecurityGroup(
       FlightContext flightContext, Region region, String securityGroupId) {
-    try (EC2SecurityGroupCow regionCow =
-        EC2SecurityGroupCow.instanceOf(
-            crlService.getClientConfig(),
-            awsCloudContextService.getFlightCredentialsProvider(flightContext, samService),
-            region)) {
-      regionCow.delete(securityGroupId);
-
+    try {
+      AwsUtils.deleteWorkspaceSecurityGroup(
+          crlService.getClientConfig(),
+          awsCloudContextService.getFlightCredentialsProvider(flightContext, samService),
+          workspaceUuid,
+          region,
+          securityGroupId);
+    } catch (NoSuchElementException e) {
       logger.info(
-          "Deleted security group {} in region {} for workspace {}",
+          "Security group {} in region {} for workspace {} already deleted",
           securityGroupId,
           region.toString(),
           workspaceUuid.toString());
-    } catch (Ec2Exception e) {
-      if (e.awsErrorDetails().errorCode().equals("InvalidGroup.NotFound")) {
-        logger.info(
-            "Security group {} in region {} for workspace {} already deleted",
-            securityGroupId,
-            region.toString(),
-            workspaceUuid.toString());
-      } else {
-        throw e;
-      }
     }
   }
 
