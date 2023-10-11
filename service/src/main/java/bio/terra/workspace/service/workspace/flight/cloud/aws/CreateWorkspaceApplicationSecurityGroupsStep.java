@@ -15,7 +15,6 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -194,19 +193,29 @@ public class CreateWorkspaceApplicationSecurityGroupsStep implements Step {
   @Override
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
 
-    Map<String, String> regionSecurityGroups =
-        FlightUtils.getRequired(
-            flightContext.getWorkingMap(),
-            WorkspaceFlightMapKeys.AWS_APPLICATION_SECURITY_GROUP_ID,
-            new TypeReference<Map<String, String>>() {});
+    Environment awsEnvironment =
+        awsCloudContextService.discoverEnvironment(
+            FlightUtils.getRequiredUserEmail(flightContext.getInputParameters(), samService));
 
-    for (Map.Entry<String, String> entry : regionSecurityGroups.entrySet()) {
-      AwsUtils.deleteWorkspaceSecurityGroup(
-          crlService.getClientConfig(),
-          awsCloudContextService.getFlightCredentialsProvider(flightContext, samService),
-          workspaceUuid,
-          Region.of(entry.getKey()),
-          entry.getValue());
+    AwsCredentialsProvider credentialsProvider =
+        AwsUtils.createWsmCredentialProvider(
+            awsCloudContextService.getRequiredAuthentication(), awsEnvironment);
+
+    for (Region region : awsEnvironment.getSupportedRegions()) {
+      try (EC2SecurityGroupCow regionCow =
+          EC2SecurityGroupCow.instanceOf(
+              crlService.getClientConfig(), credentialsProvider, region)) {
+        findSecurityGroupInRegion(regionCow, workspaceUuid)
+            .ifPresent(
+                securityGroupId -> {
+                  AwsUtils.deleteWorkspaceSecurityGroup(
+                      crlService.getClientConfig(),
+                      credentialsProvider,
+                      workspaceUuid,
+                      region,
+                      securityGroupId);
+                });
+      }
     }
 
     return StepResult.getStepResultSuccess();
