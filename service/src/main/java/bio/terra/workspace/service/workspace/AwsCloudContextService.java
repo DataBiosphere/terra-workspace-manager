@@ -97,8 +97,7 @@ public class AwsCloudContextService implements CloudContextService {
       SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
     if (featureService.isFeatureEnabled(
-        FeatureService.AWS_APPLICATIONS_ENABLED,
-        flightBeanBag.getSamService().getSamUser(userRequest).getEmail())) {
+        FeatureService.AWS_APPLICATIONS_ENABLED)) {
       flight.addStep(
           new CreateWorkspaceApplicationSecurityGroupsStep(
               flightBeanBag.getCrlService(),

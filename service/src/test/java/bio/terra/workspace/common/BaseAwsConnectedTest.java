@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
@@ -32,26 +33,17 @@ public class BaseAwsConnectedTest extends BaseTest {
   @Autowired protected AwsConnectedTestUtils awsConnectedTestUtils;
   @MockBean protected FeatureService mockFeatureService;
 
-  protected void enableFeature(String featureName, boolean enable) {
-    when(mockFeatureService.isFeatureEnabled(eq(featureName), isNotNull())).thenReturn(enable);
-    when(mockFeatureService.isFeatureEnabled(eq(featureName), isNull())).thenReturn(false);
-    when(mockFeatureService.isFeatureEnabled(featureName)).thenReturn(false);
-
-    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(eq(featureName), any());
-    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(featureName);
-  }
-
-  protected void enableFeature(String featureName) {
-    enableFeature(featureName, true);
-  }
-
-  protected void disableFeature(String featureName) {
-    enableFeature(featureName, false);
+  private void setFeatureEnabled(String featureName, boolean featureEnabled, boolean emailRequired) {
+    when(mockFeatureService.isFeatureEnabled(eq(featureName), isNotNull())).thenReturn(featureEnabled);
+    when(mockFeatureService.isFeatureEnabled(eq(featureName), isNull())).thenReturn(!emailRequired && featureEnabled);
+    when(mockFeatureService.isFeatureEnabled(featureName)).thenReturn(!emailRequired && featureEnabled);
   }
 
   @BeforeAll
   public void init() throws Exception {
-    enableFeature(AWS_ENABLED);
-    enableFeature(AWS_APPLICATIONS_ENABLED);
+    setFeatureEnabled(AWS_ENABLED, true, true);
+    setFeatureEnabled(AWS_APPLICATIONS_ENABLED, true, false);
+    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(any(), any());
+    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(any());
   }
 }

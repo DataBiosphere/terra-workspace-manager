@@ -2,6 +2,7 @@ package bio.terra.workspace.service.workspace.flight.aws;
 
 import static bio.terra.workspace.service.features.FeatureService.AWS_APPLICATIONS_ENABLED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -79,7 +80,7 @@ public class CreateDeleteAwsContextFlightTest extends BaseAwsConnectedTest {
     when(mockSamService.getUserStatusInfo(any())).thenReturn(mockUserStatusInfo);
 
     // Some tests explicitly disable the app feature, all others assume it's enabled
-    enableFeature(AWS_APPLICATIONS_ENABLED);
+    when(mockFeatureService.isFeatureEnabled(AWS_APPLICATIONS_ENABLED)).thenReturn(true);
   }
 
   @Test
@@ -131,7 +132,7 @@ public class CreateDeleteAwsContextFlightTest extends BaseAwsConnectedTest {
   @Test
   public void successCreatesDeleteContextWithoutSecurityGroups() throws Exception {
     // Disable apps for this test to suppress security group creation
-    disableFeature(AWS_APPLICATIONS_ENABLED);
+    when(mockFeatureService.isFeatureEnabled(AWS_APPLICATIONS_ENABLED)).thenReturn(false);
 
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     UUID workspaceUuid = createWorkspace();
