@@ -2,7 +2,6 @@ package bio.terra.workspace.service.workspace.flight.aws;
 
 import static bio.terra.workspace.service.features.FeatureService.AWS_APPLICATIONS_ENABLED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;

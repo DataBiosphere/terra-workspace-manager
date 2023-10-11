@@ -107,7 +107,7 @@ public class CreateWorkspaceApplicationSecurityGroupsStep implements Step {
    * @return The ID of the newly created security group.
    */
   private String createSecurityGroupInRegion(
-      EC2SecurityGroupCow regionCow, UUID workspaceUuid, LandingZone landingZone) {
+      EC2SecurityGroupCow regionCow, Region region, UUID workspaceUuid, LandingZone landingZone) {
 
     CreateSecurityGroupResponse response =
         regionCow.create(
@@ -116,7 +116,8 @@ public class CreateWorkspaceApplicationSecurityGroupsStep implements Step {
                 .description(
                     String.format(
                         "Application Security Group for Workspace %s", workspaceUuid.toString()))
-                .groupName(String.format("ws-app-%s", workspaceUuid.toString()))
+                .groupName(
+                    String.format("ws-app-%s-%s", workspaceUuid.toString(), region.toString()))
                 .tagSpecifications(generateTagSpecification(landingZone, workspaceUuid))
                 .build());
 
@@ -142,7 +143,8 @@ public class CreateWorkspaceApplicationSecurityGroupsStep implements Step {
     try (EC2SecurityGroupCow regionCow =
         EC2SecurityGroupCow.instanceOf(crlService.getClientConfig(), credentialsProvider, region)) {
       return findSecurityGroupInRegion(regionCow, workspaceUuid)
-          .orElseGet(() -> createSecurityGroupInRegion(regionCow, workspaceUuid, landingZone));
+          .orElseGet(
+              () -> createSecurityGroupInRegion(regionCow, region, workspaceUuid, landingZone));
     }
   }
 

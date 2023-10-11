@@ -58,8 +58,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
         () -> mockFeatureService.featureEnabledCheck(AWS_ENABLED, SAM_USER.getEmail()));
 
     Assertions.assertDoesNotThrow(
-        () ->
-            mockFeatureService.featureEnabledCheck(AWS_APPLICATIONS_ENABLED));
+        () -> mockFeatureService.featureEnabledCheck(AWS_APPLICATIONS_ENABLED));
 
     // Log the AWS config
     logger.info("AWS Configuration: {}", awsConfiguration.toString());
