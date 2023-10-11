@@ -177,7 +177,7 @@ components:
             type: string
           description: |
             Map of AWS Regions to Security Groups allowing connectivity between Workspace Application
-            with VM Instances within the Landing Zone in the region.
+            VM Instances within the Landing Zone in the region.
         operationState:
           $ref: '#/components/schemas/OperationState'
 

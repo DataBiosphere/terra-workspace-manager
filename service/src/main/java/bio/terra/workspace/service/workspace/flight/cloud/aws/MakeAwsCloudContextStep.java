@@ -34,11 +34,9 @@ public class MakeAwsCloudContextStep implements Step {
 
     // If security groups were created, add them to the cloud context.
     Map<String, String> regionSecurityGroups =
-        flightContext
-            .getWorkingMap()
-            .get(
-                WorkspaceFlightMapKeys.AWS_APPLICATION_SECURITY_GROUP_ID,
-                new TypeReference<Map<String, String>>() {});
+        workingMap.get(
+            WorkspaceFlightMapKeys.AWS_APPLICATION_SECURITY_GROUP_ID,
+            new TypeReference<Map<String, String>>() {});
 
     // AWS cloud context derives from the landing zone, so all we do it ask for the
     // information and store the created cloud context in the map. The shared finish

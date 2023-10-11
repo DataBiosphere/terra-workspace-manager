@@ -43,6 +43,10 @@ public class SetWorkspaceApplicationEgressIngressStep implements Step {
           AuthorizeSecurityGroupEgressRequest.builder()
               .groupId(securityGroupId)
               .ipPermissions(
+                  // The combination of toPort(0), fromPort(0), and ipProtocol("-1") is used to
+                  // indicate that outbound traffic to all ports and protocols are allowed to the IP
+                  // ranges specified in ipRanges (in this case, egress is allowed to all
+                  // destinations.
                   IpPermission.builder()
                       .fromPort(0)
                       .toPort(0)
@@ -66,6 +70,10 @@ public class SetWorkspaceApplicationEgressIngressStep implements Step {
           AuthorizeSecurityGroupIngressRequest.builder()
               .groupId(securityGroupId)
               .ipPermissions(
+                  // The combination of toPort(0), fromPort(0), and ipProtocol("-1") is used to
+                  // indicate that inbound traffic from all ports and protocols are allowed from
+                  // hosts in the security group specified in userIdGroupPairs (in this case,
+                  // ingress is allowed only from other hosts in this same security group).
                   IpPermission.builder()
                       .fromPort(0)
                       .toPort(0)
@@ -74,9 +82,7 @@ public class SetWorkspaceApplicationEgressIngressStep implements Step {
                       .build())
               .build());
       logger.info(
-          "Allowed ingress only from other hosts within Security Group {} on Security Group {}",
-          securityGroupId,
-          securityGroupId);
+          "Allowed ingress only from other hosts internally on Security Group {}", securityGroupId);
     } catch (CrlEC2DuplicateSecurityRuleException e) {
       // This is expected when re-playing the step on failure; this is OK as the end result is the
       // same.

@@ -78,7 +78,7 @@ public class AwsUtils {
 
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
   private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
-  static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
+  private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
   public static final String TAG_KEY_USER_ID = "UserID";
   public static final String TAG_KEY_VERSION = "Version";
   public static final String TAG_KEY_TENANT = "Tenant";
