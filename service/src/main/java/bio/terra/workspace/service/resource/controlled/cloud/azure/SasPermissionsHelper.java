@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 public class SasPermissionsHelper {
   private static final Set<Character> ALLOWED_SAS_PERMISSIONS =
-      Set.of('r', 'l', 'a', 'c', 'w', 'd');
+      Set.of('r', 'l', 'a', 'c', 'w', 'd', 't');
 
   public static Set<Character> permissionStringToCharSet(String permissions) {
     return permissions.chars().mapToObj(c -> (char) c).collect(Collectors.toSet());
