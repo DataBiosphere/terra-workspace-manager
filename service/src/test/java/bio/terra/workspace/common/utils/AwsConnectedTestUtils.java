@@ -43,7 +43,8 @@ public class AwsConnectedTestUtils {
             environment.getMetadata().getOrganizationId(),
             environment.getMetadata().getAccountId(),
             environment.getMetadata().getTenantAlias(),
-            environment.getMetadata().getEnvironmentAlias()),
+            environment.getMetadata().getEnvironmentAlias(),
+            /*workspaceSecurityGroups*/ null),
         new CloudContextCommonFields(
             WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
             WsmResourceState.READY,
