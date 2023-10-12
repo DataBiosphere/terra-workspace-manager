@@ -39,6 +39,7 @@ import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.Operation;
 import com.google.api.services.compute.model.Scheduling;
 import com.google.api.services.compute.model.ServiceAccount;
+import com.google.api.services.compute.model.Tags;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.time.Duration;
@@ -269,6 +270,7 @@ public class CreateGceInstanceStep implements Step {
                 .setAccessConfigs(
                     List.of(
                         new AccessConfig().setType(EXTERNAL_IP_TYPE).setName(EXTERNAL_IP_NAME)))));
+    instance.setTags(new Tags().setItems(List.of("ssh-through-iap-allowed", "workbench")));
   }
 
   @Override
