@@ -2,6 +2,7 @@ package bio.terra.workspace.service.features;
 
 import bio.terra.common.flagsmith.FlagsmithService;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,4 +38,10 @@ public class FeatureService {
           String.format("Feature %s not supported for user %s", featureName, userEmail));
     }
   }
+
+  public <T> Optional<T> getFeatureValueJson(
+      String feature, Class<T> clazz) {
+    return flagsmithService.getFeatureValueJson(feature, clazz);
+  }
+
 }

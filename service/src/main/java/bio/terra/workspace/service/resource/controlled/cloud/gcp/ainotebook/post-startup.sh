@@ -16,6 +16,8 @@
 #   - instance/guest-attributes/startup_script/message: Set by this script, storing the message of this script's execution. If the status is "ERROR", this message will contain an error message, otherwise it will be empty.
 #   - instance/attributes/terra-cli-server: Read by this script to configure the Terra CLI server.
 #   - instance/attributes/terra-workspace-id: Read by this script to configure the Terra CLI workspace.
+#   - instance/attributes/terra-app-proxy: app proxy url to configure proxy.
+#   - instance/attributes/terra-resource-id: read by this script to retrieve the sam resource id of this VM instance.
 #
 # Execution details
 #   The post-startup script runs on Vertex AI notebook VMs during *instance creation*;
@@ -105,12 +107,6 @@ readonly USER_BASH_PROFILE="${USER_HOME_DIR}/.bash_profile"
 readonly POST_STARTUP_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/post-startup-output.txt"
 readonly TERRA_BOOT_SERVICE_OUTPUT_FILE="${USER_TERRA_CONFIG_DIR}/boot-output.txt"
 
-# When JupyterLab is provided by a Docker container, the default Deep Learning images
-# pick up jupyter_notebook_config.py provided by the host VM.
-# See https://jupyter-notebook.readthedocs.io/en/stable/config.html for details of
-# the notebook server options supported.
-readonly CONTAINER_NOTEBOOK_CONFIG="/opt/deeplearning/jupyter/jupyter_notebook_config.py"
-
 # Variables relevant for 3rd party software that gets installed
 readonly REQ_JAVA_VERSION=17
 readonly JAVA_INSTALL_PATH="${USER_HOME_LOCAL_BIN}/java"
@@ -166,10 +162,9 @@ readonly -f emit
 #   The metadata value if found, or else an empty string
 #######################################
 function get_metadata_value() {
-  local metadata_path="${1}"
   curl --retry 5 -s -f \
     -H "Metadata-Flavor: Google" \
-    "http://metadata/computeMetadata/v1/${metadata_path}"
+    "http://metadata/computeMetadata/v1/$1"
 }
 
 #######################################
@@ -214,12 +209,18 @@ set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 
 emit "Determining JupyterLab environment (jupyter.service or docker)"
 
-readonly INSTANCE_CONTAINER="$(get_metadata_value instance/attributes/container)"
-
+readonly INSTANCE_CONTAINER="$(get_metadata_value "instance/attributes/container")"
+readonly NOTEBOOK_CONFIG
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
   emit "Custom container for JupyterLab detected: ${INSTANCE_CONTAINER}."
+  # When JupyterLab is provided by a Docker container, the default Deep Learning images
+  # pick up jupyter_notebook_config.py provided by the host VM.
+  # See https://jupyter-notebook.readthedocs.io/en/stable/config.html for details of
+  # the notebook server options supported.
+  NOTEBOOK_CONFIG="/opt/deeplearning/jupyter/jupyter_notebook_config.py"
 else
   emit "Non-containerized JupyterLab detected."
+  NOTEBOOK_CONFIG="${USER_HOME_DIR}/.jupyter/jupyter_notebook_config.py"
 fi
 
 emit "Resynchronizing apt package index..."
@@ -262,7 +263,7 @@ EOF
 # Update the PATH for container JupyterLab
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
 
-cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
+cat << EOF >> "${NOTEBOOK_CONFIG}"
 
 ### BEGIN: Terra-specific customizations ###
 
@@ -500,7 +501,7 @@ if [[ -n "${INSTANCE_CONTAINER}" ]]; then
 
 emit "Adding Terra environment variables to jupyter_notebook_config.py ..."
 
-cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
+cat << EOF >> "${NOTEBOOK_CONFIG}"
 
 import os
 
@@ -745,7 +746,7 @@ EOF
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
 
 # Indicate the end of Terra customizations of the jupyter_notebook_config.py
-cat << EOF >> "${CONTAINER_NOTEBOOK_CONFIG}"
+cat << EOF >> "${NOTEBOOK_CONFIG}"
 
 ### END: Terra-specific customizations ###
 EOF
@@ -755,6 +756,31 @@ fi
 # Make sure the ~/.bashrc and ~/.bash_profile are owned by the login user
 chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASHRC}"
 chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASH_PROFILE}"
+
+#######################################
+# Restart proxy to pick up the new env
+######################################
+INSTANCE_NAME=$(get_metadata_value "instance/name")
+INSTANCE_ZONE="/"$(get_metadata_value "instance/zone")
+INSTANCE_ZONE="${INSTANCE_ZONE##/*/}"
+custom_proxy=$(get_metadata_value "instance/attributes/terra-app-proxy")
+if [[ -n "$custom_proxy" ]]; then
+    echo "Using custom Proxy Agent"
+    env_file="/opt/deeplearning/proxy.env"
+    resource_id=$(get_metadata_value "instance/attributes/terra-resource-id")
+    new_proxy="https://$custom_proxy"
+    escaped_new_proxy=$(sed 's/[\/&]/\\&/g' <<< "$new_proxy")
+    new_proxy_url="$resource_id.$custom_proxy"
+    escaped_new_proxy_url=$(sed 's/[\/&]/\\&/g' <<< "$new_proxy_url")
+    sed -i "s/^PROXY_REGISTRATION_URL=.*/PROXY_REGISTRATION_URL=$escaped_new_proxy/" "$env_file"
+    sed -i "s/^PROXY_URL=.*/PROXY_URL=$escaped_new_proxy_url/" "$env_file"
+    sed -i "s/^BACKEND_ID=.*/BACKEND_ID=$resource_id/" "$env_file"
+    systemctl restart notebooks-proxy-agent.service
+    echo "Proxy Agent service restarted"
+    timeout 30 gcloud compute instances add-metadata "${INSTANCE_NAME}" \
+                  --metadata proxy-url="$new_proxy_url" --zone "${INSTANCE_ZONE}"
+    echo "c.ServerApp.allow_origin_pat += \"|(^https://${escaped_new_proxy_url}$)\"" >> ${NOTEBOOK_CONFIG}
+fi
 
 ####################################
 # Restart JupyterLab or Docker so environment variables are picked up in Jupyter environment. See PF-2178.
@@ -766,7 +792,6 @@ else
   emit "Restarting Jupyter service..."
   systemctl restart jupyter.service
 fi
-
 ####################################################################################
 # Run a set of tests that should be invariant to the workspace or user configuration
 ####################################################################################

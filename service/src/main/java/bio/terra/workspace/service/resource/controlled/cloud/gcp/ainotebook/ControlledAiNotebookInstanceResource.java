@@ -180,7 +180,8 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
             workspaceUserFacingId,
             flightBeanBag.getCrlService(),
             flightBeanBag.getCliConfiguration(),
-            flightBeanBag.getVersionConfiguration()),
+            flightBeanBag.getVersionConfiguration(),
+            flightBeanBag.getFeatureService()),
         gcpRetryRule);
     flight.addStep(
         new NotebookCloudSyncStep(

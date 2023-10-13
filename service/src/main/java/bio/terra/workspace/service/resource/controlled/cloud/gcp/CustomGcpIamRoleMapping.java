@@ -88,6 +88,7 @@ public class CustomGcpIamRoleMapping {
       new ImmutableList.Builder<String>()
           .addAll(AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS)
           .add(
+              "compute.instances.setMetadata",
               "notebooks.instances.reset",
               "notebooks.instances.setAccelerator",
               "notebooks.instances.setMachineType",

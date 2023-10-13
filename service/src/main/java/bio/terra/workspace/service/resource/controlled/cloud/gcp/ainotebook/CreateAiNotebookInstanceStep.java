@@ -2,6 +2,8 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 
 import static bio.terra.workspace.common.utils.GcpUtils.INSTANCE_SERVICE_ACCOUNT_SCOPES;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.MAIN_BRANCH;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.PROXY_METADATA_KEY;
+import static bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants.RESOURCE_ID_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.NOTEBOOK_DISABLE_ROOT_METADATA_KEY;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookInstanceResource.PROXY_MODE_METADATA_KEY;
 import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.CREATE_GCE_INSTANCE_LOCATION;
@@ -28,6 +30,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.resource.GcpFlightExceptionUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GcpResourceConstants;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
@@ -73,19 +76,23 @@ public class CreateAiNotebookInstanceStep implements Step {
   private final CliConfiguration cliConfiguration;
   private final VersionConfiguration versionConfiguration;
 
+  private final FeatureService featureService;
+
   public CreateAiNotebookInstanceStep(
       ControlledAiNotebookInstanceResource resource,
       String petEmail,
       String workspaceUserFacingId,
       CrlService crlService,
       CliConfiguration cliConfiguration,
-      VersionConfiguration versionConfiguration) {
+      VersionConfiguration versionConfiguration,
+      FeatureService featureService) {
     this.petEmail = petEmail;
     this.resource = resource;
     this.workspaceUserFacingId = workspaceUserFacingId;
     this.crlService = crlService;
     this.cliConfiguration = cliConfiguration;
     this.versionConfiguration = versionConfiguration;
+    this.featureService = featureService;
   }
 
   @Override
@@ -101,14 +108,22 @@ public class CreateAiNotebookInstanceStep implements Step {
             flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
     InstanceName instanceName = resource.toInstanceName(requestedLocation);
 
+    if (featureService.isFeatureEnabled("vwb__wsm_app_proxy_enabled")) {
+
+    }
+    Optional<String> proxyUrl = featureService.getFeatureValueJson("vwb__wsm_app_proxy_enabled", AppProxyValue.class).map(
+        v -> v.proxyUrl);
     Instance instance =
         createInstanceModel(
             flightContext,
             projectId,
+            resource.getResourceId().toString(),
             petEmail,
             workspaceUserFacingId,
             cliConfiguration.getServerName(),
-            versionConfiguration.getGitHash());
+            versionConfiguration.getGitHash(),
+            proxyUrl
+            );
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
@@ -142,8 +157,10 @@ public class CreateAiNotebookInstanceStep implements Step {
       String projectId,
       String serviceAccountEmail,
       String workspaceUserFacingId,
+      String resourceId,
       String cliServer,
-      String gitHash) {
+      String gitHash,
+      Optional<String> appProxyUrl) {
     Instance instance = new Instance();
     ApiGcpAiNotebookInstanceCreationParameters creationParameters =
         flightContext
@@ -153,9 +170,11 @@ public class CreateAiNotebookInstanceStep implements Step {
         creationParameters,
         serviceAccountEmail,
         workspaceUserFacingId,
+        resourceId,
         cliServer,
         instance,
-        gitHash);
+        gitHash,
+        appProxyUrl);
     setNetworks(instance, projectId, flightContext.getWorkingMap());
     return instance;
   }
@@ -165,9 +184,11 @@ public class CreateAiNotebookInstanceStep implements Step {
       ApiGcpAiNotebookInstanceCreationParameters creationParameters,
       String serviceAccountEmail,
       String workspaceUserFacingId,
+      String resourceId,
       String cliServer,
       Instance instance,
-      String gitHash) {
+      String gitHash,
+      Optional<String> appProxyUrl) {
     var gitHashOrDefault = StringUtils.isEmpty(gitHash) ? MAIN_BRANCH : gitHash;
     instance
         .setPostStartupScript(
@@ -217,23 +238,29 @@ public class CreateAiNotebookInstanceStep implements Step {
       metadata.put(NOTEBOOK_DISABLE_ROOT_METADATA_KEY, "true");
     }
     Optional.ofNullable(creationParameters.getMetadata()).ifPresent(metadata::putAll);
-    addDefaultMetadata(metadata, workspaceUserFacingId, cliServer);
+    addDefaultMetadata(metadata, workspaceUserFacingId, cliServer, resourceId, appProxyUrl);
     instance.setMetadata(metadata);
     return instance;
   }
 
   private static void addDefaultMetadata(
-      Map<String, String> metadata, String workspaceUserFacingId, String cliServer) {
+      Map<String, String> metadata, String workspaceUserFacingId, String cliServer, String resourceId, Optional<String> proxyUrl) {
     if (metadata.containsKey(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY)
         || metadata.containsKey(GcpResourceConstants.SERVER_ID_METADATA_KEY)
-        || metadata.containsKey(PROXY_MODE_METADATA_KEY)) {
+        || metadata.containsKey(PROXY_MODE_METADATA_KEY)
+        || metadata.containsKey(RESOURCE_ID_METADATA_KEY)
+        || metadata.containsKey(PROXY_METADATA_KEY)) {
       throw new ReservedMetadataKeyException(
           "The metadata keys "
               + GcpResourceConstants.WORKSPACE_ID_METADATA_KEY
               + ", "
               + GcpResourceConstants.SERVER_ID_METADATA_KEY
-              + ", and "
+              + ", "
               + PROXY_MODE_METADATA_KEY
+              + ", "
+              + RESOURCE_ID_METADATA_KEY
+              + ", and"
+              + PROXY_METADATA_KEY
               + " are reserved for Terra.");
     }
     metadata.put(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY, workspaceUserFacingId);
@@ -244,6 +271,8 @@ public class CreateAiNotebookInstanceStep implements Step {
     // means of IAM permissions on the service account.
     // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
     metadata.put(PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE);
+    metadata.put(GcpResourceConstants.RESOURCE_ID_METADATA_KEY, resourceId);
+    proxyUrl.ifPresent(s -> metadata.put(GcpResourceConstants.PROXY_METADATA_KEY, s));
   }
 
   private static void setNetworks(Instance instance, String projectId, FlightMap workingMap) {
@@ -283,4 +312,6 @@ public class CreateAiNotebookInstanceStep implements Step {
     }
     return StepResult.getStepResultSuccess();
   }
+
+  private record AppProxyValue(String proxyUrl) {}
 }
