@@ -48,6 +48,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,22 +109,18 @@ public class CreateAiNotebookInstanceStep implements Step {
             flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
     InstanceName instanceName = resource.toInstanceName(requestedLocation);
 
-    if (featureService.isFeatureEnabled("vwb__wsm_app_proxy_enabled")) {
-
-    }
     Optional<String> proxyUrl = featureService.getFeatureValueJson("vwb__wsm_app_proxy_enabled", AppProxyValue.class).map(
         v -> v.proxyUrl);
     Instance instance =
         createInstanceModel(
             flightContext,
             projectId,
-            resource.getResourceId().toString(),
             petEmail,
             workspaceUserFacingId,
+            resource.getResourceId(),
             cliConfiguration.getServerName(),
             versionConfiguration.getGitHash(),
-            proxyUrl
-            );
+            proxyUrl);
 
     AIPlatformNotebooksCow notebooks = crlService.getAIPlatformNotebooksCow();
     try {
@@ -157,7 +154,7 @@ public class CreateAiNotebookInstanceStep implements Step {
       String projectId,
       String serviceAccountEmail,
       String workspaceUserFacingId,
-      String resourceId,
+      UUID resourceId,
       String cliServer,
       String gitHash,
       Optional<String> appProxyUrl) {
@@ -184,7 +181,7 @@ public class CreateAiNotebookInstanceStep implements Step {
       ApiGcpAiNotebookInstanceCreationParameters creationParameters,
       String serviceAccountEmail,
       String workspaceUserFacingId,
-      String resourceId,
+      UUID resourceId,
       String cliServer,
       Instance instance,
       String gitHash,
@@ -244,7 +241,7 @@ public class CreateAiNotebookInstanceStep implements Step {
   }
 
   private static void addDefaultMetadata(
-      Map<String, String> metadata, String workspaceUserFacingId, String cliServer, String resourceId, Optional<String> proxyUrl) {
+      Map<String, String> metadata, String workspaceUserFacingId, String cliServer, UUID resourceId, Optional<String> proxyUrl) {
     if (metadata.containsKey(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY)
         || metadata.containsKey(GcpResourceConstants.SERVER_ID_METADATA_KEY)
         || metadata.containsKey(PROXY_MODE_METADATA_KEY)
@@ -271,7 +268,7 @@ public class CreateAiNotebookInstanceStep implements Step {
     // means of IAM permissions on the service account.
     // https://cloud.google.com/ai-platform/notebooks/docs/troubleshooting#opening_a_notebook_results_in_a_403_forbidden_error
     metadata.put(PROXY_MODE_METADATA_KEY, PROXY_MODE_SA_VALUE);
-    metadata.put(GcpResourceConstants.RESOURCE_ID_METADATA_KEY, resourceId);
+    metadata.put(GcpResourceConstants.RESOURCE_ID_METADATA_KEY, resourceId.toString());
     proxyUrl.ifPresent(s -> metadata.put(GcpResourceConstants.PROXY_METADATA_KEY, s));
   }
 

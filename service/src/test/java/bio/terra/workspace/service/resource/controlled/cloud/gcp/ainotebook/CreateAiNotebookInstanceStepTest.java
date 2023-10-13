@@ -31,7 +31,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
           "https://www.googleapis.com/auth/userinfo.profile");
   private static final String WORKSPACE_ID = "my-workspce-ufid";
 
-  private static final String RESOURCE_ID = UUID.randomUUID().toString();
+  private static final UUID RESOURCE_ID = UUID.randomUUID();
 
   private static final String APP_PROXY = "app-proxy.com";
   private static final String SERVER_ID = "test-server";
@@ -72,7 +72,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertEquals(111L, instance.getBootDiskSizeGb());
     assertEquals("data-disk-type", instance.getDataDiskType());
     assertEquals(222L, instance.getDataDiskSizeGb());
-    assertThat(instance.getMetadata(), Matchers.aMapWithSize(5));
+    assertThat(instance.getMetadata(), Matchers.aMapWithSize(7));
     assertThat(instance.getMetadata(), Matchers.hasEntry("metadata-key", "metadata-value"));
     assertThat(instance.getMetadata(), Matchers.hasEntry(NOTEBOOK_DISABLE_ROOT_KEY, "true"));
     assertDefaultMetadata(instance);
@@ -100,7 +100,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
             new Instance(),
             localBranch,
             Optional.of(APP_PROXY));
-    assertThat(instance.getMetadata(), Matchers.aMapWithSize(3));
+    assertThat(instance.getMetadata(), Matchers.aMapWithSize(5));
     assertDefaultMetadata(instance);
     assertEquals("foo@bar.com", instance.getServiceAccount());
     assertEquals(SA_SCOPES, instance.getServiceAccountScopes());
@@ -114,7 +114,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", WORKSPACE_ID));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", SERVER_ID));
-    assertThat(instance.getMetadata(), Matchers.hasEntry("terra-resource-id", RESOURCE_ID));
+    assertThat(instance.getMetadata(), Matchers.hasEntry("terra-resource-id", RESOURCE_ID.toString()));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-app-proxy", APP_PROXY));
   }
 
