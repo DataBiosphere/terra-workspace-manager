@@ -760,26 +760,27 @@ chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASH_PROFILE}"
 #######################################
 # Restart proxy to pick up the new env
 ######################################
-INSTANCE_NAME=$(get_metadata_value "instance/name")
-INSTANCE_ZONE="/"$(get_metadata_value "instance/zone")
-INSTANCE_ZONE="${INSTANCE_ZONE##/*/}"
-custom_proxy=$(get_metadata_value "instance/attributes/terra-app-proxy")
-if [[ -n "$custom_proxy" ]]; then
+APP_PROXY=$(get_metadata_value "instance/attributes/terra-app-proxy")
+readonly PROXY_ENV="/opt/deeplearning/proxy.env"
+if [[ -n "${APP_PROXY}" ]]; then
     echo "Using custom Proxy Agent"
-    env_file="/opt/deeplearning/proxy.env"
-    resource_id=$(get_metadata_value "instance/attributes/terra-resource-id")
-    new_proxy="https://$custom_proxy"
-    escaped_new_proxy=$(sed 's/[\/&]/\\&/g' <<< "$new_proxy")
-    new_proxy_url="$resource_id.$custom_proxy"
-    escaped_new_proxy_url=$(sed 's/[\/&]/\\&/g' <<< "$new_proxy_url")
-    sed -i "s/^PROXY_REGISTRATION_URL=.*/PROXY_REGISTRATION_URL=$escaped_new_proxy/" "$env_file"
-    sed -i "s/^PROXY_URL=.*/PROXY_URL=$escaped_new_proxy_url/" "$env_file"
-    sed -i "s/^BACKEND_ID=.*/BACKEND_ID=$resource_id/" "$env_file"
+    RESOURCE_ID=$(get_metadata_value "instance/attributes/terra-resource-id")
+    NEW_PROXY="https://${APP_PROXY}"
+    ESCAPED_NEW_PROXY=$(sed 's/[\/&]/\\&/g' <<< "${NEW_PROXY}")
+    NEW_PROXY_URL="${RESOURCE_ID}.${APP_PROXY}"
+    ESCAPED_NEW_PROXY_URL=$(sed 's/[\/&]/\\&/g' <<< "${NEW_PROXY_URL}")
+    sed -i "s/^PROXY_REGISTRATION_URL=.*/PROXY_REGISTRATION_URL=${ESCAPED_NEW_PROXY}/" "${PROXY_ENV}"
+    sed -i "s/^PROXY_URL=.*/PROXY_URL=${ESCAPED_NEW_PROXY_URL}/" "${PROXY_ENV}"
+    sed -i "s/^BACKEND_ID=.*/BACKEND_ID=${RESOURCE_ID}/" "${PROXY_ENV}"
     systemctl restart notebooks-proxy-agent.service
     echo "Proxy Agent service restarted"
+    INSTANCE_NAME=$(get_metadata_value "instance/name")
+    INSTANCE_ZONE="/"$(get_metadata_value "instance/zone")
+    INSTANCE_ZONE="${INSTANCE_ZONE##/*/}"
     timeout 30 gcloud compute instances add-metadata "${INSTANCE_NAME}" \
-                  --metadata proxy-url="$new_proxy_url" --zone "${INSTANCE_ZONE}"
-    echo "c.ServerApp.allow_origin_pat += \"|(^https://${escaped_new_proxy_url}$)\"" >> ${NOTEBOOK_CONFIG}
+                  --metadata proxy-url="${NEW_PROXY_URL}" --zone "${INSTANCE_ZONE}"
+    echo "Overwrote proxy-url metadata"
+    echo "c.ServerApp.allow_origin_pat += \"|(^https://${ESCAPED_NEW_PROXY_URL}$)\"" >> ${NOTEBOOK_CONFIG}
 fi
 
 ####################################
