@@ -16,6 +16,7 @@
 #   - instance/guest-attributes/startup_script/message: Set by this script, storing the message of this script's execution. If the status is "ERROR", this message will contain an error message, otherwise it will be empty.
 #   - instance/attributes/terra-cli-server: Read by this script to configure the Terra CLI server.
 #   - instance/attributes/terra-workspace-id: Read by this script to configure the Terra CLI workspace.
+#   - instance/attributes/terra-user-startup-script: Read by this script to optionally run a user-provided startup script.
 #
 # Execution details
 #   The post-startup script runs on Vertex AI notebook VMs during *instance creation*;
@@ -755,6 +756,26 @@ fi
 # Make sure the ~/.bashrc and ~/.bash_profile are owned by the login user
 chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASHRC}"
 chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASH_PROFILE}"
+
+####################################
+# Run a user provided startup script
+####################################
+
+# If the user has provided a startup script, run it after workbench setup,
+# but before restarting Jupyter and running tests.
+
+readonly USER_STARTUP_SCRIPT="$(get_metadata_value "instance/attributes/terra-user-startup-script")"
+if [[ -n "${USER_STARTUP_SCRIPT}" ]]; then
+  emit "Running user provided startup script..."
+  readonly USER_STARTUP_SCRIPT_FILE="${USER_TERRA_CONFIG_DIR}/user-startup-script.sh"
+
+  # Copy the user's startup script to the user's .terra directory
+  curl -L "${USER_STARTUP_SCRIPT}" > "${USER_STARTUP_SCRIPT_FILE}"
+
+  # Run the user's startup script as the login user
+  chmod +x "${USER_STARTUP_SCRIPT_FILE}"
+  source "${USER_STARTUP_SCRIPT_FILE}"
+fi
 
 ####################################
 # Restart JupyterLab or Docker so environment variables are picked up in Jupyter environment. See PF-2178.
