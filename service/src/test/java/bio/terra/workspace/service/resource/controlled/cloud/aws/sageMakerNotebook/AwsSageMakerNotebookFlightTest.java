@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
 // Basic connected tests
-@Tag("aws-connected")
+@Tag("aws-connected-plus")
 public class AwsSageMakerNotebookFlightTest extends BaseAwsSageMakerNotebookFlightTest {
 
   @Test

@@ -39,11 +39,16 @@ public class AwsTestUtils {
       "arn:aws:iam::20000000002:role/UserRole";
   public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN =
       "arn:aws:iam::30000000003:role/NotebookRole";
+  public static final String AWS_ENVIRONMENT_APPLICATION_INSTANCE_PROFILE_NAME =
+      "AppInstanceInstanceProfile";
   public static final String AWS_LANDING_ZONE_STORAGE_BUCKET_ARN =
       "arn:aws:iam::40000000004:role/StorageBucket";
   public static final String AWS_LANDING_ZONE_KMS_KEY_ARN = "arn:aws:iam::50000000005:role/KmsKey";
   public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
       "arn:aws:iam::60000000006:role/NotebookLifecycleConfig";
+  public static final String AWS_LANDING_ZONE_APPLICATION_VPC_ID = "vpc-22222222222222222";
+  public static final String AWS_LANDING_ZONE_APPLICATION_PRIVATE_SUBNET =
+      "subnet-11111111111111111";
 
   public static final Metadata AWS_METADATA =
       Metadata.builder()
@@ -64,6 +69,8 @@ public class AwsTestUtils {
           .kmsKey(Arn.fromString(AWS_LANDING_ZONE_KMS_KEY_ARN), UUID.randomUUID())
           .addNotebookLifecycleConfiguration(
               Arn.fromString(AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN), "lifecycleConfig")
+          .applicationVpcId(AWS_LANDING_ZONE_APPLICATION_VPC_ID)
+          .applicationVpcPrivateSubnetId(AWS_LANDING_ZONE_APPLICATION_PRIVATE_SUBNET)
           .build();
   public static final Environment AWS_ENVIRONMENT =
       Environment.builder()
@@ -71,13 +78,23 @@ public class AwsTestUtils {
           .workspaceManagerRoleArn(Arn.fromString(AWS_ENVIRONMENT_WSM_ROLE_ARN))
           .userRoleArn(Arn.fromString(AWS_ENVIRONMENT_USER_ROLE_ARN))
           .notebookRoleArn(Arn.fromString(AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN))
+          .applicationInstanceProfileName(AWS_ENVIRONMENT_APPLICATION_INSTANCE_PROFILE_NAME)
           .addLandingZone(AWS_LANDING_ZONE.getMetadata().getRegion(), AWS_LANDING_ZONE)
           .build();
+
+  public static final String AWS_WORKSPACE_SECURITY_GROUP_ID = "sg-44444444444444444";
+  public static final Map<String, String> AWS_WORKSPACE_SECURITY_GROUPS =
+      Map.of(AWS_REGION, AWS_WORKSPACE_SECURITY_GROUP_ID);
 
   public static AwsCloudContext makeAwsCloudContext() {
     return new AwsCloudContext(
         new AwsCloudContextFields(
-            MAJOR_VERSION, ORGANIZATION_ID, ACCOUNT_ID, TENANT_ALIAS, ENVIRONMENT_ALIAS),
+            MAJOR_VERSION,
+            ORGANIZATION_ID,
+            ACCOUNT_ID,
+            TENANT_ALIAS,
+            ENVIRONMENT_ALIAS,
+            AWS_WORKSPACE_SECURITY_GROUPS),
         new CloudContextCommonFields(
             DEFAULT_SPEND_PROFILE_ID, WsmResourceState.READY, /*flightId=*/ null, /*error=*/ null));
   }

@@ -191,7 +191,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             userRequest,
             new SasTokenOptions(null, startTime, expiryTime, null, null));
 
-    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), false);
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdlt"), false);
     verify(mockSamService())
         .listResourceActions(
             ArgumentMatchers.eq(userRequest),
@@ -256,7 +256,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             userRequest,
             new SasTokenOptions(null, startTime, expiryTime, null, null));
 
-    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), false);
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdlt"), false);
 
     verify(mockSamService())
         .listResourceActions(
@@ -290,7 +290,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             userRequest,
             new SasTokenOptions(null, startTime, expiryTime, "testing/blob-path", null));
 
-    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), true);
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdlt"), true);
   }
 
   @Test
@@ -402,7 +402,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             userRequest,
             new SasTokenOptions(null, startTime, expiryTime, blobName, null));
 
-    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), true);
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdlt"), true);
     assertTrue(
         result
             .sasUrl()
@@ -437,7 +437,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
             userRequest,
             new SasTokenOptions(ipRange, startTime, expiryTime, null, null));
 
-    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdl"), false);
+    assertValidToken(result.sasToken(), BlobContainerSasPermission.parse("racwdlt"), false);
     assertTrue(
         result.sasToken().contains("sip=" + ipRange),
         "the SignedIP was added to the query parameters");
@@ -489,7 +489,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
                 null));
 
     assertEquals(
-        "AA2137EFE8AC6FE96478DDAA844D917A4472005E3DE3984BF0C6FF641D293AB3", result.sha256());
+        "CFB533C099640123124FA52E02EF82C97CD28CE7AD7ACF94532982569F98F920", result.sha256());
   }
 
   @Test

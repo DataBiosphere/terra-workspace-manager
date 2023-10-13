@@ -1,5 +1,6 @@
 package bio.terra.workspace.common;
 
+import static bio.terra.workspace.service.features.FeatureService.AWS_APPLICATIONS_ENABLED;
 import static bio.terra.workspace.service.features.FeatureService.AWS_ENABLED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,13 +32,21 @@ public class BaseAwsConnectedTest extends BaseTest {
   @Autowired protected AwsConnectedTestUtils awsConnectedTestUtils;
   @MockBean protected FeatureService mockFeatureService;
 
+  private void setFeatureEnabled(
+      String featureName, boolean featureEnabled, boolean emailRequired) {
+    when(mockFeatureService.isFeatureEnabled(eq(featureName), isNotNull()))
+        .thenReturn(featureEnabled);
+    when(mockFeatureService.isFeatureEnabled(eq(featureName), isNull()))
+        .thenReturn(!emailRequired && featureEnabled);
+    when(mockFeatureService.isFeatureEnabled(featureName))
+        .thenReturn(!emailRequired && featureEnabled);
+  }
+
   @BeforeAll
   public void init() throws Exception {
-    when(mockFeatureService.isFeatureEnabled(eq(AWS_ENABLED), isNotNull())).thenReturn(true);
-    when(mockFeatureService.isFeatureEnabled(eq(AWS_ENABLED), isNull())).thenReturn(false);
-    when(mockFeatureService.isFeatureEnabled(AWS_ENABLED)).thenReturn(false);
-
-    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(eq(AWS_ENABLED), any());
-    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(AWS_ENABLED);
+    setFeatureEnabled(AWS_ENABLED, true, true);
+    setFeatureEnabled(AWS_APPLICATIONS_ENABLED, true, false);
+    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(any(), any());
+    doCallRealMethod().when(mockFeatureService).featureEnabledCheck(any());
   }
 }

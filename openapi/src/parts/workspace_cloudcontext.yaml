@@ -171,6 +171,13 @@ components:
         environmentAlias:
           description: The name of the Terra environment associated with the workspace.
           type: string
+        applicationSecurityGroups:
+          type: object
+          additionalProperties:
+            type: string
+          description: |
+            Map of AWS Regions to Security Groups allowing connectivity between Workspace Application
+            VM Instances within the Landing Zone in the region.
         operationState:
           $ref: '#/components/schemas/OperationState'
 
