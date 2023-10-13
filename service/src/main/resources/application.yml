@@ -63,6 +63,16 @@ spring:
         use-last-modified: false
       static-locations: classpath:/api/
 
+management:
+  server:
+    port: 9098
+  endpoints:
+    prometheus:
+      enabled: true
+    web:
+      exposure:
+        include: "prometheus"
+
 workspace:
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
