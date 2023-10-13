@@ -89,6 +89,8 @@ dependencies {
 
   implementation group: "io.kubernetes", name: "client-java", version: "18.0.0"
 
+  implementation group: "io.micrometer", name: "micrometer-registry-prometheus"
+
   // OpenAPI (swagger) deps
   implementation gradle.librarySwaggerAnnotations
   swaggerCodegen gradle.librarySwaggerCli
