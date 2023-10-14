@@ -21,14 +21,10 @@ public class GcpResourceConstants {
    */
   public static final String SERVER_ID_METADATA_KEY = "terra-cli-server";
 
-  /**
-   * The resourceId metadata key for gcp compute resources.
-   */
+  /** The resourceId metadata key for gcp compute resources. */
   public static final String RESOURCE_ID_METADATA_KEY = "terra-resource-id";
 
-  /**
-   * The app proxy metadata key.
-   */
+  /** The app proxy metadata key. */
   public static final String PROXY_METADATA_KEY = "terra-app-proxy";
 
   /**

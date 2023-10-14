@@ -109,8 +109,10 @@ public class CreateAiNotebookInstanceStep implements Step {
             flightContext.getWorkingMap(), CREATE_GCE_INSTANCE_LOCATION, String.class);
     InstanceName instanceName = resource.toInstanceName(requestedLocation);
 
-    Optional<String> proxyUrl = featureService.getFeatureValueJson("vwb__wsm_app_proxy_enabled", AppProxyValue.class).map(
-        v -> v.proxyUrl);
+    Optional<String> proxyUrl =
+        featureService
+            .getFeatureValueJson("vwb__wsm_app_proxy_enabled", AppProxyValue.class)
+            .map(v -> v.proxyUrl);
     Instance instance =
         createInstanceModel(
             flightContext,
@@ -241,7 +243,11 @@ public class CreateAiNotebookInstanceStep implements Step {
   }
 
   private static void addDefaultMetadata(
-      Map<String, String> metadata, String workspaceUserFacingId, String cliServer, UUID resourceId, Optional<String> proxyUrl) {
+      Map<String, String> metadata,
+      String workspaceUserFacingId,
+      String cliServer,
+      UUID resourceId,
+      Optional<String> proxyUrl) {
     if (metadata.containsKey(GcpResourceConstants.WORKSPACE_ID_METADATA_KEY)
         || metadata.containsKey(GcpResourceConstants.SERVER_ID_METADATA_KEY)
         || metadata.containsKey(PROXY_MODE_METADATA_KEY)

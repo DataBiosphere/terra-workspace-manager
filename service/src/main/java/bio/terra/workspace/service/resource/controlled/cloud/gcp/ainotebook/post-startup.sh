@@ -210,7 +210,6 @@ set_guest_attributes "${STATUS_ATTRIBUTE}" "STARTED"
 emit "Determining JupyterLab environment (jupyter.service or docker)"
 
 readonly INSTANCE_CONTAINER="$(get_metadata_value "instance/attributes/container")"
-readonly NOTEBOOK_CONFIG
 if [[ -n "${INSTANCE_CONTAINER}" ]]; then
   emit "Custom container for JupyterLab detected: ${INSTANCE_CONTAINER}."
   # When JupyterLab is provided by a Docker container, the default Deep Learning images

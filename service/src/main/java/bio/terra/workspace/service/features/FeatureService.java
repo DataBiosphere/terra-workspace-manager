@@ -40,9 +40,7 @@ public class FeatureService {
     }
   }
 
-  public <T> Optional<T> getFeatureValueJson(
-      String feature, Class<T> clazz) {
+  public <T> Optional<T> getFeatureValueJson(String feature, Class<T> clazz) {
     return flagsmithService.getFeatureValueJson(feature, clazz);
   }
-
 }

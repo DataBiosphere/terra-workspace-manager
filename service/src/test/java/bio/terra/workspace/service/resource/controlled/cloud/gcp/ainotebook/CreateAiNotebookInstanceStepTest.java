@@ -63,7 +63,13 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 new ApiGcpAiNotebookInstanceContainerImage().repository("repository").tag("tag"));
     Instance instance =
         CreateAiNotebookInstanceStep.setFields(
-            creationParameters, "foo@bar.com", WORKSPACE_ID, RESOURCE_ID, SERVER_ID, new Instance(), "main",
+            creationParameters,
+            "foo@bar.com",
+            WORKSPACE_ID,
+            RESOURCE_ID,
+            SERVER_ID,
+            new Instance(),
+            "main",
             Optional.of(APP_PROXY));
     assertEquals("script.sh", instance.getPostStartupScript());
     assertTrue(instance.getInstallGpuDriver());
@@ -114,7 +120,8 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
     assertThat(instance.getMetadata(), Matchers.hasEntry("proxy-mode", "service_" + "account"));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-workspace-id", WORKSPACE_ID));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-cli-server", SERVER_ID));
-    assertThat(instance.getMetadata(), Matchers.hasEntry("terra-resource-id", RESOURCE_ID.toString()));
+    assertThat(
+        instance.getMetadata(), Matchers.hasEntry("terra-resource-id", RESOURCE_ID.toString()));
     assertThat(instance.getMetadata(), Matchers.hasEntry("terra-app-proxy", APP_PROXY));
   }
 
@@ -128,7 +135,14 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
 
     Instance instance =
         CreateAiNotebookInstanceStep.setFields(
-            creationParameters, "foo@bar.com", WORKSPACE_ID, RESOURCE_ID, SERVER_ID, new Instance(), "main", /*appProxyUrl=*/Optional.empty());
+            creationParameters,
+            "foo@bar.com",
+            WORKSPACE_ID,
+            RESOURCE_ID,
+            SERVER_ID,
+            new Instance(),
+            "main",
+            /*appProxyUrl=*/ Optional.empty());
     assertThat(instance.getMetadata(), Matchers.hasEntry(NOTEBOOK_DISABLE_ROOT_KEY, "false"));
   }
 
@@ -147,7 +161,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "server-id",
                 new Instance(),
                 "main",
-                /*appProxyUrl=*/Optional.empty()));
+                /*appProxyUrl=*/ Optional.empty()));
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
@@ -161,7 +175,7 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "server-id",
                 new Instance(),
                 "main",
-                /*appProxyUrl=*/Optional.empty()));
+                /*appProxyUrl=*/ Optional.empty()));
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
@@ -175,21 +189,21 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "server-id",
                 new Instance(),
                 "main",
-                /*appProxyUrl=*/Optional.empty()));
+                /*appProxyUrl=*/ Optional.empty()));
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
             CreateAiNotebookInstanceStep.setFields(
                 new ApiGcpAiNotebookInstanceCreationParameters()
                     // "terra-workspace-id" is a reserved metadata key.
-                    .metadata(Map.of( "terra-app-proxy", "random-proxy")),
+                    .metadata(Map.of("terra-app-proxy", "random-proxy")),
                 "foo@bar.com",
                 "workspaceId",
                 RESOURCE_ID,
                 "server-id",
                 new Instance(),
                 "main",
-                /*appProxyUrl=*/Optional.empty()));
+                /*appProxyUrl=*/ Optional.empty()));
     assertThrows(
         ReservedMetadataKeyException.class,
         () ->
@@ -203,6 +217,6 @@ public class CreateAiNotebookInstanceStepTest extends BaseUnitTest {
                 "server-id",
                 new Instance(),
                 "main",
-                /*appProxyUrl=*/Optional.empty()));
+                /*appProxyUrl=*/ Optional.empty()));
   }
 }
