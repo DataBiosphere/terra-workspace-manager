@@ -212,10 +212,6 @@ components:
           additionalProperties:
             type: string
           description: Map of additional properties to set on the cluster. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/cluster-properties.
-        softwareFramework:
-          type: string
-          enum: ["HAIL"]
-          description: Software framework to setup the cluster with. Currently supported values are ['hail'].
         configBucket:
           type: string
           format: uuid
