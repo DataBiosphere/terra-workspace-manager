@@ -1,0 +1,32 @@
+{
+  "groups": [
+    {
+      "name": "workspace.azure-test",
+      "type": "bio.terra.workspace.app.configuration.external.AzureTestConfiguration",
+      "sourceType": "bio.terra.workspace.app.configuration.external.AzureTestConfiguration"
+    }
+  ],
+  "properties": [
+    {
+      "name": "workspace.azure-test.managed-resource-group-id",
+      "type": "java.lang.String",
+      "sourceType": "bio.terra.workspace.app.configuration.external.AzureTestConfiguration"
+    },
+    {
+      "name": "workspace.azure-test.spend-profile-id",
+      "type": "java.lang.String",
+      "sourceType": "bio.terra.workspace.app.configuration.external.AzureTestConfiguration"
+    },
+    {
+      "name": "workspace.azure-test.subscription-id",
+      "type": "java.lang.String",
+      "sourceType": "bio.terra.workspace.app.configuration.external.AzureTestConfiguration"
+    },
+    {
+      "name": "workspace.azure-test.tenant-id",
+      "type": "java.lang.String",
+      "sourceType": "bio.terra.workspace.app.configuration.external.AzureTestConfiguration"
+    }
+  ],
+  "hints": []
+}

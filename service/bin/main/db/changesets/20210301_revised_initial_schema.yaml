@@ -1,0 +1,257 @@
+# "Rebasing" the schema to a single changeset prior to production
+databaseChangeLog:
+- changeSet:
+    id: schema revision 2021
+    author: dd
+    changes:
+    - createTable:
+        tableName: workspace
+        remarks: |
+          There is one row in the workspace table for each workspace.
+        columns:
+          - column:
+              name: workspace_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: display_name
+              type: text
+              remarks: |
+                A user-friendly name for the workspace. There is no guarantee of uniqueness across workspaces.
+                Can be null. Omitted for Rawls workspaces, since Rawls maintains its own name
+          - column:
+              name: description
+              type: text
+              remarks: |
+                Free-form text describing the workspace. Can be null. Omitted for Rawls workspaces, since Rawls
+                maintains its own description.
+          - column:
+              name: spend_profile
+              type: text
+              constraints:
+                nullable: true
+                unique: false
+          - column:
+              name: properties
+              type: jsonb
+              remarks: |
+                Key-value map to allow applications to store their data about the workspace
+          - column:
+              name: workspace_stage
+              type: text
+              remarks: |
+                The workspace_stage column is used to hide/expose different features of
+                WSM for different clients. The valid values as of this writing are
+                RAWLS_WORKSPACE and MC_WORKSPACE
+
+    - createTable:
+        tableName: cloud_context
+        columns:
+          - column:
+              name: workspace_id
+              type: text
+              constraints:
+                nullable: false
+                references: workspace(workspace_id)
+                foreignKeyName: fk_cloud_context_wid
+                deleteCascade: true
+              remarks: |
+                Foreign key will cause cloud_context to be deleted when its associated
+                workspace is deleted.
+          - column:
+              name: cloud_platform
+              type: text
+              constraints:
+                nullable: false
+              remarks: |
+                Enum of the cloud: GCP and AZURE are the current types
+          - column:
+              name: context
+              type: jsonb
+              remarks: |
+                JSON form of the information for the specific cloud context
+                
+    - addPrimaryKey:
+        columnNames: workspace_id, cloud_platform
+        tableName: cloud_context
+        constraintName: pk_cloud_context
+        remarks: |
+          Define the PK separately so that we control the order of the columns
+
+    - createTable:
+        tableName: application
+        remarks: |
+          The application table lists all integrated applications configured in the
+          current Terra deployment.
+        columns:
+          - column:
+              name: application_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: display_name
+              type: text
+              remarks: |
+                A user-friendly name for the application. Not used by WSM. Not necessarily unique. Optional.
+          - column:
+              name: description
+              type: text
+              remarks: |
+                Free-form description of the application. Optional.
+          - column:
+              name: service_account
+              type: text
+              constraints:
+                nullable: false
+                unique: true
+              remarks: |
+                Each application must have a unique service account. That SA is used to
+                grant the application access to a specific workspace.
+
+    - createTable:
+        tableName: enabled_application
+        remarks: |
+          Workspaces may enable a subset of the available applications. This table maps
+          a workspace to an application it has enabled.
+        columns:
+          - column:
+              name: workspace_id
+              type: text
+              constraints:
+                references: workspace(workspace_id)
+                foreignKeyName: fk_enabled_application_workspace_id
+                nullable: false
+                deleteCascade: true
+              remarks: |
+                Deletion of a workspace will cascade to delete the mapping to the
+                workspace's enabled applications.
+          - column:
+              name: application_id
+              type: text
+              constraints:
+                references: application(application_id)
+                foreignKeyName: fk_enabled_application_application_id
+                nullable: false
+
+    - createTable:
+        tableName: resource
+        remarks: |
+          Each WSM resource has an entry in this table, regardless of what kind of
+          resource it is
+        columns:
+          - column:
+              name: workspace_id
+              type: text
+              constraints:
+                references: workspace(workspace_id)
+                foreignKeyName: fk_resource_workspace_id
+                nullable: false
+                deleteCascade: true
+              remarks: |
+                First part of the foreign key to cloud_context. Foreign key will cause
+                resource to be deleted when its associated cloud_context is deleted.
+          - column:
+              name: cloud_platform
+              type: text
+              constraints:
+                nullable: false
+              remarks: |
+                Enum of the cloud: GCP and AZURE are the current types
+                Second part of the foreign key to cloud_context
+          - column:
+              name: resource_id
+              type: text
+              constraints:
+                primaryKey: true
+                nullable: false
+          - column:
+              name: name
+              type: text
+              constraints:
+                nullable: false
+          - column:
+              name: description
+              type: text
+          - column:
+              name: stewardship_type
+              type: text
+              constraints:
+                nullable: false
+              remarks: |
+                Enumeration of how the WSM stewards the resource. Current types are
+                REFERENCE - the resource is a reference to a cloud object not managed by WSM
+                CONTROLLED - the resource is controlled by WSM for lifecycle, IAM, and policy
+          - column:
+              name: resource_type
+              type: text
+              constraints:
+                nullable: false
+              remarks: |
+                Enumeration of the resource type. Resource types are specific to the cloud
+                and resource; e.g., GCS_BUCKET, BIG_QUERY_DATASET
+          - column:
+              name: cloning_instructions
+              type: text
+              constraints:
+                nullable: false
+              remarks: |
+                Enumeration of the cloning instructions. Details TBD
+          - column:
+              name: attributes
+              type: jsonb
+              constraints:
+                nullable: true
+              remarks: |
+                Attributes are used by both referenced resources and controlled
+                resources to store resource-specific metadata. This bit of overloading
+                between referenced and controlled resource data allows us to avoid a
+                separate referenced_resource table that would have a single column for its
+                metadata.
+          - column:
+              name: access_scope
+              type: text
+              remarks: |
+                Must be valid, non-null for controlled resources. Must be null for reference resources.
+                Enum of the possible access scopes of the controlled resource. Values are
+                ACCESS_SHARED, ACCESS_PRIVATE
+          - column:
+              name: managed_by
+              type: text
+              remarks: |
+                Must be valid, non-null for controlled resources. Must be null for reference resources.
+                Enum of the possible managers of the controlled resource. Values are
+                USER, APPLICATION
+          - column:
+              name: associated_app
+              type: text
+              constraints:
+                references: application(application_id)
+                foreignKeyName: fk_associated_app
+              remarks: |
+                Only valid for controlled resources. Must be null for reference resources.
+                The associated app will be null for USER_SHARED and USER_PRIVATE
+                access. It must be filled in for APP_SHARED and APP_PRIVATE access.
+          - column:
+              name: assigned_user
+              type: text
+              remarks: |
+                Only valid for controlled resources. Must be null for reference resources.
+                The assigned_user will be null for USER_SHARED and APP_SHARED access.
+                It MAY be filled in, if a user is currently assigned, for USER_PRIVATE
+                and APP_PRIVATE access.
+
+    - addUniqueConstraint:
+        constraintName: unique_resource_name
+        tableName: resource
+        columnNames: workspace_id, name
+        deferrable: true
+        remarks: |
+          Resource names must be unique within a workspace
+
+
+
+

@@ -759,26 +759,29 @@ chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASH_PROFILE}"
 #######################################
 # Restart proxy to pick up the new env
 ######################################
-APP_PROXY=$(get_metadata_value "instance/attributes/terra-app-proxy")
+readonly APP_PROXY=$(get_metadata_value "instance/attributes/terra-app-proxy")
 readonly PROXY_ENV="/opt/deeplearning/proxy.env"
 if [[ -n "${APP_PROXY}" ]]; then
-    echo "Using custom Proxy Agent"
+    emit "Using custom Proxy Agent"
     RESOURCE_ID=$(get_metadata_value "instance/attributes/terra-resource-id")
     NEW_PROXY="https://${APP_PROXY}"
-    ESCAPED_NEW_PROXY=$(sed 's/[\/&]/\\&/g' <<< "${NEW_PROXY}")
     NEW_PROXY_URL="${RESOURCE_ID}.${APP_PROXY}"
+    # escape all the orrurences of forward slash
+    ESCAPED_NEW_PROXY=$(sed 's/[\/&]/\\&/g' <<< "${NEW_PROXY}")
     ESCAPED_NEW_PROXY_URL=$(sed 's/[\/&]/\\&/g' <<< "${NEW_PROXY_URL}")
     sed -i "s/^PROXY_REGISTRATION_URL=.*/PROXY_REGISTRATION_URL=${ESCAPED_NEW_PROXY}/" "${PROXY_ENV}"
     sed -i "s/^PROXY_URL=.*/PROXY_URL=${ESCAPED_NEW_PROXY_URL}/" "${PROXY_ENV}"
     sed -i "s/^BACKEND_ID=.*/BACKEND_ID=${RESOURCE_ID}/" "${PROXY_ENV}"
     systemctl restart notebooks-proxy-agent.service
-    echo "Proxy Agent service restarted"
+    emit "Proxy Agent service restarted"
     INSTANCE_NAME=$(get_metadata_value "instance/name")
     INSTANCE_ZONE="/"$(get_metadata_value "instance/zone")
     INSTANCE_ZONE="${INSTANCE_ZONE##/*/}"
     timeout 30 gcloud compute instances add-metadata "${INSTANCE_NAME}" \
                   --metadata proxy-url="${NEW_PROXY_URL}" --zone "${INSTANCE_ZONE}"
-    echo "Overwrote proxy-url metadata"
+    emit "Overwrote proxy-url metadata"
+    # escape all the occurence of dot
+    ESCAPED_NEW_PROXY_URL=$(echo "${NEW_PROXY_URL}" | sed -r "s/\./\\\./g")
     echo "c.ServerApp.allow_origin_pat += \"|(^https://${ESCAPED_NEW_PROXY_URL}$)\"" >> ${NOTEBOOK_CONFIG}
 fi
 
