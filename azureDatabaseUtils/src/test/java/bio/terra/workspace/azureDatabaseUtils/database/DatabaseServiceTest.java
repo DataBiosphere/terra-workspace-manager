@@ -1,10 +1,14 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
 import bio.terra.workspace.azureDatabaseUtils.BaseUnitTest;
+import bio.terra.workspace.azureDatabaseUtils.storage.BlobStorage;
 import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -14,6 +18,7 @@ public class DatabaseServiceTest extends BaseUnitTest {
 
   @MockBean private DatabaseDao databaseDao;
   @MockBean private Validator validator;
+  @MockBean private BlobStorage storage;
 
   @Test
   void testCreateDatabaseWithDbRole() {
@@ -55,5 +60,16 @@ public class DatabaseServiceTest extends BaseUnitTest {
 
     verify(databaseDao).restoreLoginPrivileges(namespaceRole);
     verify(validator).validateRoleNameFormat(namespaceRole);
+  }
+
+  @Test
+  void testGenerateCommandList() {
+    List<String> commandList =
+        databaseService.generateCommandList(
+            "/test/pg_dump", "testdb", "http://host.org", "5432", "testuser");
+    String command = String.join(" ", commandList);
+    assertThat(
+        command,
+        equalTo("/test/pg_dump -b -h http://host.org -p 5432 -U testuser -d testdb -v -w"));
   }
 }

@@ -56,6 +56,7 @@ public class AzureDatabaseUtilsRunner {
 
   public static final String COMMAND_CREATE_NAMESPACE_ROLE = "CreateNamespaceRole";
   public static final String COMMAND_CREATE_DATABASE_WITH_DB_ROLE = "CreateDatabaseWithDbRole";
+  public static final String COMMAND_PGDUMP_DATABASE = "PgDumpDatabase";
   public static final String COMMAND_DELETE_NAMESPACE_ROLE = "DeleteNamespaceRole";
   public static final String COMMAND_REVOKE_NAMESPACE_ROLE_ACCESS = "RevokeNamespaceRoleAccess";
   public static final String COMMAND_RESTORE_NAMESPACE_ROLE_ACCESS = "RestoreNamespaceRoleAccess";
@@ -72,6 +73,11 @@ public class AzureDatabaseUtilsRunner {
   public static final String PARAM_CONNECT_TO_DATABASE = "CONNECT_TO_DATABASE";
   public static final String PARAM_NEW_DB_USER_NAME = "NEW_DB_USER_NAME";
   public static final String PARAM_NEW_DB_USER_OID = "NEW_DB_USER_OID";
+
+  // Workflow cloning - TODO: which params can be reused?
+  public static final String PARAM_DUMPFILE_NAME = "DUMPFILE_NAME";
+  public static final String PARAM_DEST_WORKSPACE_ID = "DEST_WORKSPACE_ID";
+  public static final String PARAM_BLOBSTORAGE_DETAILS = "BLOBSTORAGE_DETAILS";
 
   private final AzureConfiguration azureConfig;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
@@ -117,6 +123,33 @@ public class AzureDatabaseUtilsRunner {
         azureCloudContext,
         workspaceId,
         createPodDefinition(workspaceId, podName, envVars),
+        aksNamespace);
+  }
+
+  public void pgDumpDatabase(
+      AzureCloudContext azureCloudContext,
+      UUID sourceWorkspaceId,
+      String podName,
+      String sourceDbName,
+      String dbServerName,
+      String dbUserName,
+      String dumpfileName,
+      String destinationWorkspaceId,
+      String blobstorageDetails)
+      throws InterruptedException {
+    final List<V1EnvVar> envVars =
+        List.of(
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_PGDUMP_DATABASE),
+            new V1EnvVar().name(PARAM_CONNECT_TO_DATABASE).value(sourceDbName),
+            new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
+            new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
+            new V1EnvVar().name(PARAM_DUMPFILE_NAME).value(dumpfileName),
+            new V1EnvVar().name(PARAM_DEST_WORKSPACE_ID).value(destinationWorkspaceId),
+            new V1EnvVar().name(PARAM_BLOBSTORAGE_DETAILS).value(blobstorageDetails));
+    runAzureDatabaseUtils(
+        azureCloudContext,
+        sourceWorkspaceId,
+        createPodDefinition(sourceWorkspaceId, podName, envVars),
         aksNamespace);
   }
 
