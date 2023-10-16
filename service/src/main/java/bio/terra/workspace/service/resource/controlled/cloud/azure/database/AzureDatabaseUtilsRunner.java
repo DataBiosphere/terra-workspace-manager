@@ -56,6 +56,7 @@ public class AzureDatabaseUtilsRunner {
 
   public static final String COMMAND_CREATE_NAMESPACE_ROLE = "CreateNamespaceRole";
   public static final String COMMAND_CREATE_DATABASE_WITH_DB_ROLE = "CreateDatabaseWithDbRole";
+  public static final String COMMAND_PGDUMP_DATABASE = "PgDumpDatabase";
   public static final String COMMAND_DELETE_NAMESPACE_ROLE = "DeleteNamespaceRole";
   public static final String COMMAND_REVOKE_NAMESPACE_ROLE_ACCESS = "RevokeNamespaceRoleAccess";
   public static final String COMMAND_RESTORE_NAMESPACE_ROLE_ACCESS = "RestoreNamespaceRoleAccess";
@@ -112,6 +113,22 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar()
                 .name(PARAM_SPRING_PROFILES_ACTIVE)
                 .value(COMMAND_CREATE_DATABASE_WITH_DB_ROLE),
+            new V1EnvVar().name(PARAM_NEW_DB_NAME).value(databaseName));
+    runAzureDatabaseUtils(
+        azureCloudContext,
+        workspaceId,
+        createPodDefinition(workspaceId, podName, envVars),
+        aksNamespace);
+  }
+
+  public void pgDumpDatabase(
+      AzureCloudContext azureCloudContext, UUID workspaceId, String podName, String databaseName)
+      throws InterruptedException {
+    final List<V1EnvVar> envVars =
+        List.of(
+            new V1EnvVar()
+                .name(PARAM_SPRING_PROFILES_ACTIVE)
+                .value(COMMAND_PGDUMP_DATABASE), // <- note the different command
             new V1EnvVar().name(PARAM_NEW_DB_NAME).value(databaseName));
     runAzureDatabaseUtils(
         azureCloudContext,
