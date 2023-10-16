@@ -85,6 +85,13 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
   }
 
   @Test
+  public void cloneDatabaseDummyTest() throws InterruptedException {
+    // should I use `createDatabase` (without db role) instead?
+    azureDatabaseUtilsRunner.pgDumpDatabase(
+        azureTestUtils.getAzureCloudContext(), workspaceUuid, "workflow-cloning-test-pod", "workflowcloningtestdbthesecond");
+  }
+
+  @Test
   public void createAndDeleteAzureManagedIdAndDatabase() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 

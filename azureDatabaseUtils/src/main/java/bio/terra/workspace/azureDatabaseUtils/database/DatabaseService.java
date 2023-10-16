@@ -50,6 +50,11 @@ public class DatabaseService {
     databaseDao.revokeAllPublicPrivileges(newDbName);
   }
 
+  public void pgDump(String newDbName) {
+    logger.info("DatabaseService.pgDump has been called. For now, it calls createDatabaseWithDbRole. TODO: Implement this function.");
+    createDatabaseWithDbRole(newDbName);
+  }
+
   public void createNamespaceRole(
       String namespaceRole, String managedIdentityOid, Set<String> databaseNames) {
     validator.validateRoleNameFormat(namespaceRole);
