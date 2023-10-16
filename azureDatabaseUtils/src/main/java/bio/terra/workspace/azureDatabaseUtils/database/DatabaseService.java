@@ -1,7 +1,14 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
+import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
+import bio.terra.workspace.azureDatabaseUtils.storage.BlobStorage;
 import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
-import java.util.Set;
+import com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import org.postgresql.plugin.AuthenticationRequestType;
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,14 +20,16 @@ public class DatabaseService {
   private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
   private final DatabaseDao databaseDao;
   private final Validator validator;
+  private final BlobStorage storage;
 
   @Value("${spring.datasource.username}")
   private String datasourceUserName;
 
   @Autowired
-  public DatabaseService(DatabaseDao databaseDao, Validator validator) {
+  public DatabaseService(DatabaseDao databaseDao, Validator validator, BlobStorage blobStorage) {
     this.databaseDao = databaseDao;
     this.validator = validator;
+    this.storage = blobStorage;
   }
 
   public void createDatabaseWithDbRole(String newDbName) {
@@ -79,5 +88,98 @@ public class DatabaseService {
     logger.info("Restoring namespace role access {}", namespaceRole);
 
     databaseDao.restoreLoginPrivileges(namespaceRole);
+  }
+
+  public void pgDump(
+      String sourceDbName,
+      String sourceDbHost,
+      String sourceDbPort,
+      String sourceDbUser,
+      String pgDumpFilename,
+      String destinationWorkspaceId,
+      String blobstorageDetails) {
+    logger.info("running DatabaseService.pgDump against {}", sourceDbName);
+    logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
+    try {
+      // Grant the database role (sourceDbName) to the workspace identity (sourceDbUser).
+      // In theory, we should be revoking this role after the operation is complete.
+      // We are choosing to *not* revoke this role for now, because:
+      // (1) we could run into concurrency issues if multiple users attempt to clone the same
+      // workspace at once;
+      // (2) the workspace identity can grant itself access at any time, so revoking the role
+      // doesn't protect us.
+      databaseDao.grantRole(sourceDbUser, sourceDbName);
+
+      List<String> commandList =
+          generateCommandList("pg_dump", sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser);
+      Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
+      LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
+      localProcessLauncher.launchProcess(commandList, envVars);
+
+      storage.streamOutputToBlobStorage(
+          localProcessLauncher.getInputStream(),
+          pgDumpFilename,
+          destinationWorkspaceId,
+          blobstorageDetails);
+
+      String output = checkForError(localProcessLauncher);
+      logger.info("pg_dump output: {}", output);
+
+    } catch (PSQLException ex) {
+      logger.error("process error: {}", ex.getMessage());
+    }
+  }
+
+  public List<String> generateCommandList(
+      String pgDumpPath, String sourceDbName, String dbHost, String dbPort, String dbUser) {
+    Map<String, String> command = new LinkedHashMap<>();
+
+    command.put(pgDumpPath, null);
+    command.put("-b", null);
+    command.put("-h", dbHost);
+    command.put("-p", dbPort);
+    command.put("-U", dbUser);
+    command.put("-d", sourceDbName);
+
+    List<String> commandList = new ArrayList<>();
+    for (Map.Entry<String, String> entry : command.entrySet()) {
+      commandList.add(entry.getKey());
+      if (entry.getValue() != null) {
+        commandList.add(entry.getValue());
+      }
+    }
+    commandList.add("-v");
+    commandList.add("-w");
+
+    return commandList;
+  }
+
+  private String checkForError(LocalProcessLauncher localProcessLauncher) {
+    // materialize only the first 1024 bytes of the error stream to ensure we don't DoS ourselves
+    int errorLimit = 1024;
+
+    int exitCode = localProcessLauncher.waitForTerminate();
+    if (exitCode != 0) {
+      InputStream errorStream =
+          localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
+      try {
+        String error = new String(errorStream.readNBytes(errorLimit)).trim();
+        logger.error("process error: {}", error);
+        return error;
+      } catch (IOException e) {
+        logger.warn(
+            "process failed with exit code {}, but encountered an exception reading the error output: {}",
+            exitCode,
+            e.getMessage());
+        return "Unknown error";
+      }
+    }
+    return "";
+  }
+
+  private String determinePassword() throws PSQLException {
+    return new String(
+        new AzurePostgresqlAuthenticationPlugin(new Properties())
+            .getPassword(AuthenticationRequestType.CLEARTEXT_PASSWORD));
   }
 }
