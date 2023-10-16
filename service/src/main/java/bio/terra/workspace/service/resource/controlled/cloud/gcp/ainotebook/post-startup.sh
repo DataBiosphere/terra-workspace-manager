@@ -768,9 +768,8 @@ if [[ -n "${APP_PROXY}" ]]; then
     NEW_PROXY_URL="${RESOURCE_ID}.${APP_PROXY}"
     # escape all the orrurences of forward slash
     ESCAPED_NEW_PROXY=$(sed 's/[\/&]/\\&/g' <<< "${NEW_PROXY}")
-    ESCAPED_NEW_PROXY_URL=$(sed 's/[\/&]/\\&/g' <<< "${NEW_PROXY_URL}")
     sed -i "s/^PROXY_REGISTRATION_URL=.*/PROXY_REGISTRATION_URL=${ESCAPED_NEW_PROXY}/" "${PROXY_ENV}"
-    sed -i "s/^PROXY_URL=.*/PROXY_URL=${ESCAPED_NEW_PROXY_URL}/" "${PROXY_ENV}"
+    sed -i "s/^PROXY_URL=.*/PROXY_URL=${NEW_PROXY_URL}/" "${PROXY_ENV}"
     sed -i "s/^BACKEND_ID=.*/BACKEND_ID=${RESOURCE_ID}/" "${PROXY_ENV}"
     systemctl restart notebooks-proxy-agent.service
     emit "Proxy Agent service restarted"
@@ -780,7 +779,7 @@ if [[ -n "${APP_PROXY}" ]]; then
     timeout 30 gcloud compute instances add-metadata "${INSTANCE_NAME}" \
                   --metadata proxy-url="${NEW_PROXY_URL}" --zone "${INSTANCE_ZONE}"
     emit "Overwrote proxy-url metadata"
-    # escape all the occurence of dot
+    # escape all the occurence of '.'
     ESCAPED_NEW_PROXY_URL=$(echo "${NEW_PROXY_URL}" | sed -r "s/\./\\\./g")
     echo "c.ServerApp.allow_origin_pat += \"|(^https://${ESCAPED_NEW_PROXY_URL}$)\"" >> ${NOTEBOOK_CONFIG}
 fi
