@@ -772,7 +772,7 @@ if [[ -n "${USER_STARTUP_SCRIPT}" ]]; then
   # Copy the user's startup script to the user's .terra directory
   curl -L "${USER_STARTUP_SCRIPT}" > "${USER_STARTUP_SCRIPT_FILE}"
 
-  # Run the user's startup script as the login user
+  # Run the user's startup script as the root user so that they made install packages
   chmod +x "${USER_STARTUP_SCRIPT_FILE}"
   source "${USER_STARTUP_SCRIPT_FILE}"
 fi
