@@ -3,6 +3,7 @@ import java.time.ZonedDateTime
 // Deploy config
 jib {
   from {
+    // docker:// specifies a local image
     image = "docker://azure-database-utils-base:latest"
   }
   extraDirectories {
