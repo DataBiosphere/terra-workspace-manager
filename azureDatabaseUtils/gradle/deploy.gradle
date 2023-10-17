@@ -3,10 +3,16 @@ import java.time.ZonedDateTime
 // Deploy config
 jib {
   from {
-    // see https://github.com/broadinstitute/dsp-appsec-blessed-images/tree/main/jre
-    image = "us.gcr.io/broad-dsp-gcr-public/base/jre:17-distroless"
+    image = "docker://azure-database-utils-base:latest"
   }
   extraDirectories {
     paths = [file(jibExtraDirectory)]
   }
 }
+
+tasks.register('buildBaseImage', Exec) {
+  workingDir "$projectDir"
+  commandLine "docker", "build", "-t", "azure-database-utils-base:latest", "."
+}
+
+jibDockerBuild.dependsOn('buildBaseImage')
