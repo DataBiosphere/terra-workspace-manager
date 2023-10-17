@@ -771,11 +771,13 @@ if [[ -n "${APP_PROXY}" ]]; then
   # With the proxy.env updated, restart the notebooks-proxy-agent
   systemctl restart notebooks-proxy-agent.service
   emit "Proxy Agent service restarted"
-
+  
   INSTANCE_NAME=$(get_metadata_value "instance/name")
   INSTANCE_ZONE="/"$(get_metadata_value "instance/zone")
   INSTANCE_ZONE="${INSTANCE_ZONE##/*/}"
-  timeout 30 gcloud compute instances add-metadata "${INSTANCE_NAME}" \
+  
+  # Update vertex AI metadata 'proxy-url' which UI exposes to users to access the VM.
+  gcloud compute instances add-metadata "${INSTANCE_NAME}" \
                 --metadata proxy-url="${NEW_PROXY_URL}" --zone "${INSTANCE_ZONE}"
   emit "Overwrote proxy-url metadata"
 
