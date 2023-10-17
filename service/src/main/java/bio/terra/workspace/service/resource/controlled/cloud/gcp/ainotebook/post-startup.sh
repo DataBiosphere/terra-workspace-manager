@@ -222,6 +222,7 @@ else
   NOTEBOOK_CONFIG="${USER_HOME_DIR}/.jupyter/jupyter_notebook_config.py"
 fi
 
+readonly NOTEBOOK_CONFIG
 emit "Resynchronizing apt package index..."
 
 # The apt package index may not be clean when we run; resynchronize
@@ -259,12 +260,17 @@ if [[ ":\${PATH}:" != *":${USER_HOME_LOCAL_BIN}:"* ]]; then
 fi
 EOF
 
-# Update the PATH for container JupyterLab
-if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-
+# Add a marker for the Terra-specific customizations
 cat << EOF >> "${NOTEBOOK_CONFIG}"
 
 ### BEGIN: Terra-specific customizations ###
+
+EOF
+
+# Update the PATH for container JupyterLab
+if [[ -n "${INSTANCE_CONTAINER}" ]]; then
+
+  cat << EOF >> "${NOTEBOOK_CONFIG}"
 
 import os
 
@@ -742,16 +748,6 @@ cat << EOF >> "${USER_BASHRC}"
 ### END: Terra-specific customizations ###
 EOF
 
-if [[ -n "${INSTANCE_CONTAINER}" ]]; then
-
-# Indicate the end of Terra customizations of the jupyter_notebook_config.py
-cat << EOF >> "${NOTEBOOK_CONFIG}"
-
-### END: Terra-specific customizations ###
-EOF
-
-fi
-
 # Make sure the ~/.bashrc and ~/.bash_profile are owned by the login user
 chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASHRC}"
 chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASH_PROFILE}"
@@ -762,28 +758,43 @@ chown ${LOGIN_USER}:${LOGIN_USER} "${USER_BASH_PROFILE}"
 readonly APP_PROXY=$(get_metadata_value "instance/attributes/terra-app-proxy")
 readonly PROXY_ENV="/opt/deeplearning/proxy.env"
 if [[ -n "${APP_PROXY}" ]]; then
-    emit "Using custom Proxy Agent"
-    RESOURCE_ID=$(get_metadata_value "instance/attributes/terra-resource-id")
-    NEW_PROXY="https://${APP_PROXY}"
-    NEW_PROXY_URL="${RESOURCE_ID}.${APP_PROXY}"
-    # escape all the orrurences of forward slash
-    ESCAPED_NEW_PROXY=$(sed 's/[\/&]/\\&/g' <<< "${NEW_PROXY}")
-    ESCAPED_NEW_PROXY_URL=$(sed 's/[\/&]/\\&/g' <<< "${NEW_PROXY_URL}")
-    sed -i "s/^PROXY_REGISTRATION_URL=.*/PROXY_REGISTRATION_URL=${ESCAPED_NEW_PROXY}/" "${PROXY_ENV}"
-    sed -i "s/^PROXY_URL=.*/PROXY_URL=${ESCAPED_NEW_PROXY_URL}/" "${PROXY_ENV}"
-    sed -i "s/^BACKEND_ID=.*/BACKEND_ID=${RESOURCE_ID}/" "${PROXY_ENV}"
-    systemctl restart notebooks-proxy-agent.service
-    emit "Proxy Agent service restarted"
-    INSTANCE_NAME=$(get_metadata_value "instance/name")
-    INSTANCE_ZONE="/"$(get_metadata_value "instance/zone")
-    INSTANCE_ZONE="${INSTANCE_ZONE##/*/}"
-    timeout 30 gcloud compute instances add-metadata "${INSTANCE_NAME}" \
-                  --metadata proxy-url="${NEW_PROXY_URL}" --zone "${INSTANCE_ZONE}"
-    emit "Overwrote proxy-url metadata"
-    # escape all the occurence of dot
-    ESCAPED_NEW_PROXY_URL=$(echo "${NEW_PROXY_URL}" | sed -r "s/\./\\\./g")
-    echo "c.ServerApp.allow_origin_pat += \"|(^https://${ESCAPED_NEW_PROXY_URL}$)\"" >> ${NOTEBOOK_CONFIG}
+  emit "Using custom Proxy Agent"
+  RESOURCE_ID=$(get_metadata_value "instance/attributes/terra-resource-id")
+  NEW_PROXY="https://${APP_PROXY}"
+  NEW_PROXY_URL="${RESOURCE_ID}.${APP_PROXY}"
+
+  # Update the proxy.env file with new URLs and backend ID
+  sed -i "s#^PROXY_REGISTRATION_URL=.*#PROXY_REGISTRATION_URL=${ESCAPED_NEW_PROXY}#" "${PROXY_ENV}"
+  sed -i "s#^PROXY_URL=.*#PROXY_URL=${NEW_PROXY_URL}#" "${PROXY_ENV}"
+  sed -i "s#^BACKEND_ID=.*#BACKEND_ID=${RESOURCE_ID}#" "${PROXY_ENV}"
+
+  # With the proxy.env updated, restart the notebooks-proxy-agent
+  systemctl restart notebooks-proxy-agent.service
+  emit "Proxy Agent service restarted"
+
+  INSTANCE_NAME=$(get_metadata_value "instance/name")
+  INSTANCE_ZONE="/"$(get_metadata_value "instance/zone")
+  INSTANCE_ZONE="${INSTANCE_ZONE##/*/}"
+  timeout 30 gcloud compute instances add-metadata "${INSTANCE_NAME}" \
+                --metadata proxy-url="${NEW_PROXY_URL}" --zone "${INSTANCE_ZONE}"
+  emit "Overwrote proxy-url metadata"
+
+  # Since the field we are writing is the NOTEBOOK_CONFIG is a regular expression pattern,
+  # we need to be sure to escape regex characters, notably the periods.
+  ESCAPED_NEW_PROXY_URL=$(echo "${NEW_PROXY_URL}" | sed -r "s/\./\\\./g")
+
+  cat << EOF >> "${NOTEBOOK_CONFIG}"
+
+  c.ServerApp.allow_origin_pat += "|(^https://${ESCAPED_NEW_PROXY_URL}$)"
+
+EOF
 fi
+
+# Indicate the end of Terra customizations of the jupyter_notebook_config.py
+cat << EOF >> "${NOTEBOOK_CONFIG}"
+
+### END: Terra-specific customizations ###
+EOF
 
 ####################################
 # Restart JupyterLab or Docker so environment variables are picked up in Jupyter environment. See PF-2178.
