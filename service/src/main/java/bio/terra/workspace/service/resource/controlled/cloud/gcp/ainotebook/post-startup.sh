@@ -764,7 +764,7 @@ if [[ -n "${APP_PROXY}" ]]; then
   NEW_PROXY_URL="${RESOURCE_ID}.${APP_PROXY}"
 
   # Update the proxy.env file with new URLs and backend ID
-  sed -i "s#^PROXY_REGISTRATION_URL=.*#PROXY_REGISTRATION_URL=${ESCAPED_NEW_PROXY}#" "${PROXY_ENV}"
+  sed -i "s#^PROXY_REGISTRATION_URL=.*#PROXY_REGISTRATION_URL=${NEW_PROXY}#" "${PROXY_ENV}"
   sed -i "s#^PROXY_URL=.*#PROXY_URL=${NEW_PROXY_URL}#" "${PROXY_ENV}"
   sed -i "s#^BACKEND_ID=.*#BACKEND_ID=${RESOURCE_ID}#" "${PROXY_ENV}"
 
