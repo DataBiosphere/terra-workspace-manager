@@ -68,7 +68,7 @@ public class AzureDatabaseGuardStepTest extends BaseMockitoStrictStubbingTest {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            UUID.randomUUID().toString(), "default", false);
+            UUID.randomUUID().toString(), false);
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)
@@ -101,7 +101,7 @@ public class AzureDatabaseGuardStepTest extends BaseMockitoStrictStubbingTest {
     var workspaceId = UUID.randomUUID();
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            UUID.randomUUID().toString(), "default", false);
+            UUID.randomUUID().toString(), false);
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
                 creationParameters, workspaceId)

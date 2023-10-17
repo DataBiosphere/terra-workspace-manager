@@ -9,18 +9,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ControlledAzureDatabaseAttributes {
   private final String databaseName;
   private final String databaseOwner;
-  private final String k8sNamespace;
   private final boolean allowAccessForAllWorkspaceUsers;
 
   @JsonCreator
   public ControlledAzureDatabaseAttributes(
       @JsonProperty("databaseName") String databaseName,
       @JsonProperty("databaseOwner") String databaseOwner,
-      @JsonProperty("k8sNamespace") String k8sNamespace,
       @JsonProperty("allowAccessForAllWorkspaceUsers") boolean allowAccessForAllWorkspaceUsers) {
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
-    this.k8sNamespace = k8sNamespace;
     this.allowAccessForAllWorkspaceUsers = allowAccessForAllWorkspaceUsers;
   }
 
@@ -30,10 +27,6 @@ public class ControlledAzureDatabaseAttributes {
 
   public String getDatabaseOwner() {
     return databaseOwner;
-  }
-
-  public String getK8sNamespace() {
-    return k8sNamespace;
   }
 
   public boolean getAllowAccessForAllWorkspaceUsers() {

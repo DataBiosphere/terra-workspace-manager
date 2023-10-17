@@ -28,7 +28,6 @@ public class ControlledAzureDatabaseHandler implements WsmResourceHandler {
     return ControlledAzureDatabaseResource.builder()
         .databaseName(attributes.getDatabaseName())
         .databaseOwner(attributes.getDatabaseOwner())
-        .k8sNamespace(attributes.getK8sNamespace())
         .allowAccessForAllWorkspaceUsers(attributes.getAllowAccessForAllWorkspaceUsers())
         .common(new ControlledResourceFields(dbResource))
         .build();

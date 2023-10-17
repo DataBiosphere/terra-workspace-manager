@@ -31,7 +31,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
     var workspaceId = UUID.randomUUID();
     var owner = UUID.randomUUID().toString();
     var dbCreationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, null, false);
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, false);
 
     var dbResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
@@ -63,7 +63,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
     var workspaceId = UUID.randomUUID();
     var owner = UUID.randomUUID().toString();
     var dbCreationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, null, false);
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, false);
 
     var dbResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(

@@ -23,22 +23,6 @@ public class DatabaseService {
     this.validator = validator;
   }
 
-  // TODO: remove with https://broadworkbench.atlassian.net/browse/WOR-1165
-  public void createDatabaseWithManagedIdentity(
-      String newDbName, String newDbUserName, String newDbUserOid) {
-    validator.validateDatabaseNameFormat(newDbName);
-    validator.validateRoleNameFormat(newDbUserName);
-    validator.validateOidFormat(newDbUserOid);
-
-    logger.info(
-        "Creating database {} with user {} and OID {}", newDbName, newDbUserName, newDbUserOid);
-
-    databaseDao.createDatabase(newDbName);
-    databaseDao.createRoleForManagedIdentity(newDbUserName, newDbUserOid);
-    databaseDao.grantAllPrivileges(newDbUserName, newDbName);
-    databaseDao.revokeAllPublicPrivileges(newDbName);
-  }
-
   public void createDatabaseWithDbRole(String newDbName) {
     validator.validateDatabaseNameFormat(newDbName);
 
