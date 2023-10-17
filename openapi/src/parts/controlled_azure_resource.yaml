@@ -1,0 +1,18 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/azure/resource-quota:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/AzureResourceId'
+    get:
+      summary: Get the quota information of a resource in an Azure workspace.
+      operationId: getWorkspaceAzureResourceQuota
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceQuotaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'

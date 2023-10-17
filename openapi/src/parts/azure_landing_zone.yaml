@@ -161,6 +161,7 @@ paths:
       - $ref: '#/components/parameters/LandingZoneId'
       - $ref: '#/components/parameters/AzureResourceId'
     get:
+      deprecated: true
       summary: Get the quota information of a resource an Azure Landing Zone
       operationId: getResourceQuotaResult
       tags: [ LandingZones ]

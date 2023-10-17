@@ -7,6 +7,7 @@ import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapLi
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -42,6 +43,7 @@ import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceReque
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiResourceQuota;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -875,5 +877,26 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceId);
     return getJobDeleteResult(jobId);
+  }
+
+  @Override
+  public ResponseEntity<ApiResourceQuota> getWorkspaceAzureResourceQuota(
+      UUID workspaceId, String azureResourceId) {
+    features.azureEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
+    var userToken = new BearerToken(userRequest.getRequiredToken());
+    var landingZoneId = landingZoneApiDispatch.getLandingZoneId(userToken, workspace);
+
+    var result =
+        landingZoneApiDispatch.getResourceQuota(
+            new BearerToken(samService.getWsmServiceAccountToken()),
+            landingZoneId,
+            azureResourceId);
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }
