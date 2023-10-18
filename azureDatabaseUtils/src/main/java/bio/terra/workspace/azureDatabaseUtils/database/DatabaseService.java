@@ -152,33 +152,20 @@ public class DatabaseService {
     int exitCode = localProcessLauncher.waitForTerminate();
     if (exitCode != 0) {
       InputStream errorStream =
-          localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
+              localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
       try {
         String error = new String(errorStream.readNBytes(errorLimit)).trim();
         logger.error("process error: {}", error);
         return error;
       } catch (IOException e) {
         logger.warn(
-            "process failed with exit code {}, but encountered an exception reading the error output: {}",
-            exitCode,
-            e.getMessage());
-        return "Unknown error";
-      }
-    } else {
-      InputStream outStream =
-          localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.OUT);
-      try {
-        String out = new String(outStream.readNBytes(errorLimit)).trim();
-        logger.info("process succeeded: {}", out);
-        return out;
-      } catch (IOException e) {
-        logger.warn(
-            "process succeeded with exit code {}, but encountered an exception reading the error output: {}",
-            exitCode,
-            e.getMessage());
+                "process failed with exit code {}, but encountered an exception reading the error output: {}",
+                exitCode,
+                e.getMessage());
         return "Unknown error";
       }
     }
+    return "";
   }
 
   private String determinePassword() throws PSQLException {
