@@ -1,6 +1,7 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
 import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
+import bio.terra.workspace.azureDatabaseUtils.storage.BackUpFileStorage;
 import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 
 import java.io.IOException;
@@ -21,14 +22,28 @@ public class DatabaseService {
   private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
   private final DatabaseDao databaseDao;
   private final Validator validator;
+  private final BackUpFileStorage storage;
+
+  // TODO: wire these values through, somehow
+  private String pgDumpPath = "pg_dump";
+  private String dbHost =
+          "lze5cb725a80cba7dc8336d698eed6791b6b36110f66881b960e53a7af1e7aa.postgres.database.azure.com";
+  private String dbPort = "5432";
+  private String dbUser = "lzb67a2eb8ba1ad83449";
+  private String dbName = "workflowcloningtest";
+
+  private String blobName = "mypgdumpfile";
+  private String requesterWorkspaceId = "8bdd1c45-3cb1-45b8-b2b5-39d3e081f66f";
 
   @Value("${spring.datasource.username}")
   private String datasourceUserName;
 
   @Autowired
-  public DatabaseService(DatabaseDao databaseDao, Validator validator) {
+  public DatabaseService(
+      DatabaseDao databaseDao, Validator validator, BackUpFileStorage backUpFileStorage) {
     this.databaseDao = databaseDao;
     this.validator = validator;
+    this.storage = backUpFileStorage;
   }
 
   public void createDatabaseWithDbRole(String newDbName) {
@@ -96,25 +111,18 @@ public class DatabaseService {
       LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
       localProcessLauncher.launchProcess(commandList, envVars);
 
-      // TODO: stream to storage container
-      // <stream to storage container here>
+      storage.streamOutputToBlobStorage(
+              localProcessLauncher.getInputStream(), blobName, requesterWorkspaceId);
 
       String output = checkForError(localProcessLauncher);
       logger.info("pg_dump output: {}", output);
+
     } catch (PSQLException ex) {
       logger.error("process error: {}", ex.getMessage());
     }
-
   }
 
   public List<String> generateCommandList() {
-    // TODO: wire these values through, somehow
-    String pgDumpPath = "pg_dump";
-    String dbHost = "lze5cb725a80cba7dc8336d698eed6791b6b36110f66881b960e53a7af1e7aa.postgres.database.azure.com";
-    String dbPort = "5432";
-    String dbUser = "lzb67a2eb8ba1ad83449";
-    String dbName = "workflowcloningtest";
-
     Map<String, String> command = new LinkedHashMap<>();
 
     command.put(pgDumpPath, null);
@@ -144,30 +152,30 @@ public class DatabaseService {
     int exitCode = localProcessLauncher.waitForTerminate();
     if (exitCode != 0) {
       InputStream errorStream =
-              localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
+          localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
       try {
         String error = new String(errorStream.readNBytes(errorLimit)).trim();
         logger.error("process error: {}", error);
         return error;
       } catch (IOException e) {
         logger.warn(
-                "process failed with exit code {}, but encountered an exception reading the error output: {}",
-                exitCode,
-                e.getMessage());
+            "process failed with exit code {}, but encountered an exception reading the error output: {}",
+            exitCode,
+            e.getMessage());
         return "Unknown error";
       }
     } else {
       InputStream outStream =
-              localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.OUT);
+          localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.OUT);
       try {
         String out = new String(outStream.readNBytes(errorLimit)).trim();
         logger.info("process succeeded: {}", out);
         return out;
       } catch (IOException e) {
         logger.warn(
-                "process succeeded with exit code {}, but encountered an exception reading the error output: {}",
-                exitCode,
-                e.getMessage());
+            "process succeeded with exit code {}, but encountered an exception reading the error output: {}",
+            exitCode,
+            e.getMessage());
         return "Unknown error";
       }
     }
@@ -175,7 +183,7 @@ public class DatabaseService {
 
   private String determinePassword() throws PSQLException {
     return new String(
-            new AzurePostgresqlAuthenticationPlugin(new Properties())
-                    .getPassword(AuthenticationRequestType.CLEARTEXT_PASSWORD));
+        new AzurePostgresqlAuthenticationPlugin(new Properties())
+            .getPassword(AuthenticationRequestType.CLEARTEXT_PASSWORD));
   }
 }
