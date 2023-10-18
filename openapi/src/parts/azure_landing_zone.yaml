@@ -143,7 +143,10 @@ paths:
     parameters:
       - $ref: '#/components/parameters/LandingZoneId'
     get:
-      summary: List all Azure landing zones resources
+      deprecated: true
+      summary: |
+        List all Azure landing zones resources.
+        Deprecated in favor of the workspace-level landing zone resource endpoint.
       operationId: listAzureLandingZoneResources
       tags: [ LandingZones ]
       responses:
@@ -162,7 +165,9 @@ paths:
       - $ref: '#/components/parameters/AzureResourceId'
     get:
       deprecated: true
-      summary: Get the quota information of a resource an Azure Landing Zone
+      summary: |
+        Get the quota information of a resource an Azure Landing Zone.
+        Deprecated in favor of the workspace-level landing zone resource endpoint.
       operationId: getResourceQuotaResult
       tags: [ LandingZones ]
       responses:

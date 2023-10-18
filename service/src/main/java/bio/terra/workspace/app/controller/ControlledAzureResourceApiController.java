@@ -18,6 +18,7 @@ import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureKubernetesNamespaceResource;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureManagedIdentityResource;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
@@ -880,23 +881,35 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 
   @Override
-  public ResponseEntity<ApiResourceQuota> getWorkspaceAzureResourceQuota(
+  public ResponseEntity<ApiResourceQuota> getWorkspaceAzureLandingZoneResourceQuota(
       UUID workspaceId, String azureResourceId) {
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     var workspace =
         workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SamWorkspaceAction.READ);
-    var userToken = new BearerToken(userRequest.getRequiredToken());
-    var landingZoneId = landingZoneApiDispatch.getLandingZoneId(userToken, workspace);
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+    var wsmToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var landingZoneId = landingZoneApiDispatch.getLandingZoneId(wsmToken, workspace);
 
-    var result =
-        landingZoneApiDispatch.getResourceQuota(
-            new BearerToken(samService.getWsmServiceAccountToken()),
-            landingZoneId,
-            azureResourceId);
+    var result = landingZoneApiDispatch.getResourceQuota(wsmToken, landingZoneId, azureResourceId);
 
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureLandingZoneResourcesList> listWorkspaceAzureLandingZoneResources(
+      UUID workspaceId) {
+    features.azureEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+    var wsmToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var landingZoneId = landingZoneApiDispatch.getLandingZoneId(wsmToken, workspace);
+
+    var result = landingZoneApiDispatch.listAzureLandingZoneResources(wsmToken, landingZoneId);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }
