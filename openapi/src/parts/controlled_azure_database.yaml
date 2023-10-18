@@ -90,10 +90,6 @@ components:
         owner:
           description: Resource id or name of an azure managed identity in this workspace to be the owner of the database, required for shared databases. For private databases, the owner will be determined from privateResourceUser.
           type: string
-        k8sNamespace:
-          description: The kubernetes namespace from which the database will be accessed. A database created with this specified will not be usable with a KubernetesNamespace controlled resource. Will be removed once Leonardo switches to use KubernetesNamespace controlled resources.
-          type: string
-          deprecated: true
         allowAccessForAllWorkspaceUsers:
           description: Whether to allow users in the workspace to create kubernetes namespaces that can connect to this database.
           type: boolean

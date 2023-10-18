@@ -85,7 +85,7 @@ public class CreateFederatedIdentityStepTest extends BaseMockitoStrictStubbingTe
             mockSamService,
             mockWorkspaceService,
             workspaceId,
-            null);
+            identityResource.getManagedIdentityName());
     var result =
         step.createFederatedIdentityAndK8sServiceAccount(
             identityResource.getManagedIdentityName(),
@@ -148,7 +148,7 @@ public class CreateFederatedIdentityStepTest extends BaseMockitoStrictStubbingTe
             mockSamService,
             mockWorkspaceService,
             workspaceId,
-            null);
+            "ksaName");
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
   }
 
@@ -169,7 +169,7 @@ public class CreateFederatedIdentityStepTest extends BaseMockitoStrictStubbingTe
             mockSamService,
             mockWorkspaceService,
             workspaceId,
-            null);
+            "ksaName");
     return step.createFederatedIdentityAndK8sServiceAccount(
         identityResource.getManagedIdentityName(),
         mockAzureCloudContext,

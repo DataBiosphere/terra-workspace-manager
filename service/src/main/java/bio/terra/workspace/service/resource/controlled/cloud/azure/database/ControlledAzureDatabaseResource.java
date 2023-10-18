@@ -14,10 +14,6 @@ import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -41,7 +37,6 @@ import java.util.Optional;
 public class ControlledAzureDatabaseResource extends ControlledResource {
   private final String databaseName;
   private final String databaseOwner;
-  private final String k8sNamespace;
   private final boolean allowAccessForAllWorkspaceUsers;
 
   @JsonCreator
@@ -51,12 +46,10 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
           WsmControlledResourceFields controlledResourceFields,
       @JsonProperty("databaseName") String databaseName,
       @JsonProperty("databaseOwner") String databaseOwner,
-      @JsonProperty("k8sNamespace") String k8sNamespace,
       @JsonProperty("allowAccessForAllWorkspaceUsers") boolean allowAccessForAllWorkspaceUsers) {
     super(resourceFields, controlledResourceFields);
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
-    this.k8sNamespace = k8sNamespace;
     this.allowAccessForAllWorkspaceUsers = allowAccessForAllWorkspaceUsers;
     validate();
   }
@@ -66,12 +59,10 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       ControlledResourceFields common,
       String databaseName,
       String databaseOwner,
-      String k8sNamespace,
       boolean allowAccessForAllWorkspaceUsers) {
     super(common);
     this.databaseName = databaseName;
     this.databaseOwner = databaseOwner;
-    this.k8sNamespace = k8sNamespace;
     this.allowAccessForAllWorkspaceUsers = allowAccessForAllWorkspaceUsers;
     validate();
   }
@@ -98,10 +89,6 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
 
   public String getDatabaseOwner() {
     return databaseOwner;
-  }
-
-  public String getK8sNamespace() {
-    return k8sNamespace;
   }
 
   public boolean getAllowAccessForAllWorkspaceUsers() {
@@ -156,7 +143,6 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             flightBeanBag.getLandingZoneApiDispatch(),
             flightBeanBag.getWorkspaceService(),
             getWorkspaceId()));
-    maybeSetupFederatedIdentity(flightBeanBag, steps);
     steps.add(
         new CreateAzureDatabaseStep(
             flightBeanBag.getAzureConfig(),
@@ -168,56 +154,6 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
             getWorkspaceId(),
             flightBeanBag.getAzureDatabaseUtilsRunner()));
     return steps;
-  }
-
-  /**
-   * The first iteration of creating azure databases setup federated identities when setting up the
-   * database. The absence of k8sNamespace indicates that this is a subsequent iteration where a
-   * KubernetesNamespace controlled resource takes care of that.
-   *
-   * @param flightBeanBag flightBeanBag
-   * @param steps steps
-   */
-  private void maybeSetupFederatedIdentity(FlightBeanBag flightBeanBag, ArrayList<Step> steps) {
-    // TODO: remove as part of https://broadworkbench.atlassian.net/browse/WOR-1165
-    if (k8sNamespace != null) {
-      Step getManagedIdentityStep =
-          switch (getAccessScope()) {
-            case ACCESS_SCOPE_SHARED -> new GetWorkspaceManagedIdentityStep(
-                flightBeanBag.getAzureConfig(),
-                flightBeanBag.getCrlService(),
-                getWorkspaceId(),
-                flightBeanBag.getResourceDao(),
-                getDatabaseOwner());
-
-            case ACCESS_SCOPE_PRIVATE -> new GetPetManagedIdentityStep(
-                flightBeanBag.getAzureConfig(),
-                flightBeanBag.getCrlService(),
-                flightBeanBag.getSamService(),
-                getAssignedUser().orElseThrow());
-          };
-      steps.add(getManagedIdentityStep);
-      steps.add(
-          new GetFederatedIdentityStep(
-              // use the same namespace for both federated credential and KSA
-              getK8sNamespace(), // federatedCredentialName
-              getK8sNamespace(), // KSA name
-              flightBeanBag.getAzureConfig(),
-              flightBeanBag.getCrlService(),
-              flightBeanBag.getKubernetesClientProvider(),
-              getWorkspaceId()));
-      steps.add(
-          new CreateFederatedIdentityStep(
-              getK8sNamespace(),
-              flightBeanBag.getAzureConfig(),
-              flightBeanBag.getCrlService(),
-              flightBeanBag.getKubernetesClientProvider(),
-              flightBeanBag.getLandingZoneApiDispatch(),
-              flightBeanBag.getSamService(),
-              flightBeanBag.getWorkspaceService(),
-              getWorkspaceId(),
-              null));
-    }
   }
 
   /** {@inheritDoc} */
@@ -256,10 +192,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   public String attributesToJson() {
     return DbSerDes.toJson(
         new ControlledAzureDatabaseAttributes(
-            getDatabaseName(),
-            getDatabaseOwner(),
-            getK8sNamespace(),
-            getAllowAccessForAllWorkspaceUsers()));
+            getDatabaseName(), getDatabaseOwner(), getAllowAccessForAllWorkspaceUsers()));
   }
 
   @Override
@@ -313,20 +246,18 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
     ControlledAzureDatabaseResource that = (ControlledAzureDatabaseResource) o;
     return Objects.equals(databaseName, that.databaseName)
         && Objects.equals(databaseOwner, that.databaseOwner)
-        && Objects.equals(k8sNamespace, that.k8sNamespace)
         && allowAccessForAllWorkspaceUsers == that.allowAccessForAllWorkspaceUsers;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), databaseName, databaseOwner, k8sNamespace);
+    return Objects.hash(super.hashCode(), databaseName, databaseOwner);
   }
 
   public static class Builder {
     private ControlledResourceFields common;
     private String databaseName;
     private String databaseOwner;
-    private String k8sNamespace;
     private boolean allowAccessForAllWorkspaceUsers;
 
     public Builder common(ControlledResourceFields common) {
@@ -344,11 +275,6 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
       return this;
     }
 
-    public Builder k8sNamespace(String k8sNamespace) {
-      this.k8sNamespace = k8sNamespace;
-      return this;
-    }
-
     public Builder allowAccessForAllWorkspaceUsers(boolean allowAccessForAllWorkspaceUsers) {
       this.allowAccessForAllWorkspaceUsers = allowAccessForAllWorkspaceUsers;
       return this;
@@ -356,7 +282,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
 
     public ControlledAzureDatabaseResource build() {
       return new ControlledAzureDatabaseResource(
-          common, databaseName, databaseOwner, k8sNamespace, allowAccessForAllWorkspaceUsers);
+          common, databaseName, databaseOwner, allowAccessForAllWorkspaceUsers);
     }
   }
 }

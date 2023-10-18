@@ -60,27 +60,6 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
   }
 
   @Test
-  void testCreateDatabase() throws ApiException, InterruptedException {
-    final UUID workspaceId = UUID.randomUUID();
-    var userName = "test-user";
-    var userOid = UUID.randomUUID().toString();
-    var databaseName = "test-database";
-    var podName = "test-pod-name";
-
-    setupMocks(podName, AzureDatabaseUtilsRunner.POD_SUCCEEDED);
-
-    azureDatabaseUtilsRunner.createDatabase(
-        mockAzureCloudContext, workspaceId, podName, userName, userOid, databaseName);
-
-    assertResults(
-        Map.of(
-            "spring_profiles_active", "CreateDatabase",
-            "NEW_DB_USER_NAME", userName,
-            "NEW_DB_USER_OID", userOid,
-            "NEW_DB_NAME", databaseName));
-  }
-
-  @Test
   void testCreateDatabaseWithDbRole() throws ApiException, InterruptedException {
     final UUID workspaceId = UUID.randomUUID();
     var databaseName = "test-database";

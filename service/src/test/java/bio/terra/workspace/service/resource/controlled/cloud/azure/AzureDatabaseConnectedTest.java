@@ -85,57 +85,11 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
   }
 
   @Test
-  public void createAndDeleteAzureManagedIdAndDatabase() throws InterruptedException {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-
-    var uamiResource = createManagedIdentity(userRequest);
-    var dbResource = createDatabase(userRequest, uamiResource, "default");
-
-    // Verify that the resources we created
-    var resourceList = wsmResourceService.enumerateResources(workspaceUuid, null, null, 0, 100);
-    checkForResource(resourceList, uamiResource);
-    checkForResource(resourceList, dbResource);
-
-    // wait for azure to sync then make sure the resources actually exist
-    Awaitility.await()
-        .atMost(1, TimeUnit.MINUTES)
-        .pollInterval(5, TimeUnit.SECONDS)
-        .untilAsserted(
-            () -> {
-              var actualUami =
-                  getManagedIdentityFunction()
-                      .apply(
-                          azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-                          uamiResource.getManagedIdentityName());
-              assertNotNull(actualUami);
-
-              var actualDatabase =
-                  getDatabaseFunction()
-                      .apply(
-                          azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-                          dbResource.getDatabaseName());
-              assertNotNull(actualDatabase);
-            });
-
-    azureDatabaseUtilsRunner.testDatabaseConnect(
-        azureTestUtils.getAzureCloudContext(),
-        workspaceUuid,
-        "default",
-        "test-connect",
-        getDbServerName(),
-        dbResource.getDatabaseName(),
-        uamiResource.getManagedIdentityName());
-
-    deleteDatabase(userRequest, dbResource);
-    deleteManagedIdentity(userRequest, uamiResource);
-  }
-
-  @Test
   public void createAndDeleteK8sNamespaceWithDatabase() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     var uamiResource = createManagedIdentity(userRequest);
-    var dbResource = createDatabase(userRequest, uamiResource, null);
+    var dbResource = createDatabase(userRequest, uamiResource);
     var k8sResource = createKubernetesNamespace(userRequest, uamiResource, List.of(dbResource));
 
     samService.grantWorkspaceRole(
@@ -401,13 +355,11 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
   }
 
   private ControlledAzureDatabaseResource createDatabase(
-      AuthenticatedUserRequest userRequest,
-      ControlledAzureManagedIdentityResource uamiResource,
-      String k8sNamespace)
+      AuthenticatedUserRequest userRequest, ControlledAzureManagedIdentityResource uamiResource)
       throws InterruptedException {
     var dbCreationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            uamiResource.getName(), k8sNamespace, true);
+            uamiResource.getName(), true);
 
     var dbResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(

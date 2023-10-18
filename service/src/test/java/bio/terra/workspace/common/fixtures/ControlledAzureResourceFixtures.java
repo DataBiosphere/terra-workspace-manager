@@ -465,10 +465,9 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ApiAzureDatabaseCreationParameters getAzureDatabaseCreationParameters(
-      String owner, String k8sNamespace, boolean allowAccessForAllWorkspaceUsers) {
+      String owner, boolean allowAccessForAllWorkspaceUsers) {
     return new ApiAzureDatabaseCreationParameters()
         .name(uniqueAzureName(AZURE_DATABASE_NAME_PREFIX))
-        .k8sNamespace(k8sNamespace)
         .owner(Objects.toString(owner, null))
         .allowAccessForAllWorkspaceUsers(allowAccessForAllWorkspaceUsers);
   }
@@ -488,7 +487,6 @@ public class ControlledAzureResourceFixtures {
                 .build())
         .databaseName(creationParameters.getName())
         .databaseOwner(creationParameters.getOwner())
-        .k8sNamespace(creationParameters.getK8sNamespace())
         .allowAccessForAllWorkspaceUsers(creationParameters.isAllowAccessForAllWorkspaceUsers());
   }
 
@@ -509,7 +507,6 @@ public class ControlledAzureResourceFixtures {
                 .iamRole(ControlledResourceIamRole.EDITOR)
                 .region(DEFAULT_AZURE_RESOURCE_REGION)
                 .build())
-        .databaseName(creationParameters.getName())
-        .k8sNamespace(creationParameters.getK8sNamespace());
+        .databaseName(creationParameters.getName());
   }
 }

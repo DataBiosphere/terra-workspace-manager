@@ -337,8 +337,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
     return Stream.generate(
             () -> {
               var dbCreationParameters =
-                  ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-                          owner, null, false)
+                  ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, false)
                       .allowAccessForAllWorkspaceUsers(allowAllWorkspaceUsers);
 
               return ControlledAzureResourceFixtures
@@ -356,8 +355,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
     return Stream.generate(
             () -> {
               var dbCreationParameters =
-                  ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-                      null, null, false);
+                  ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, false);
 
               return ControlledAzureResourceFixtures
                   .makePrivateControlledAzureDatabaseResourceBuilder(

@@ -93,40 +93,6 @@ public class AzureDatabaseUtilsRunner {
   }
 
   /**
-   * Creates a database in the landing zone postgres server and grants the user access to it. TODO:
-   * remove as part of https://broadworkbench.atlassian.net/browse/WOR-1165
-   *
-   * @param azureCloudContext
-   * @param workspaceId
-   * @param podName name of the pod created to run the command, should be unique within the LZ and
-   *     stable across stairway retries
-   * @param userName
-   * @param userOid
-   * @param databaseName
-   * @throws InterruptedException
-   */
-  public void createDatabase(
-      AzureCloudContext azureCloudContext,
-      UUID workspaceId,
-      String podName,
-      String userName,
-      String userOid,
-      String databaseName)
-      throws InterruptedException {
-    final List<V1EnvVar> envVars =
-        List.of(
-            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_CREATE_DATABASE),
-            new V1EnvVar().name(PARAM_NEW_DB_USER_NAME).value(userName),
-            new V1EnvVar().name(PARAM_NEW_DB_USER_OID).value(userOid),
-            new V1EnvVar().name(PARAM_NEW_DB_NAME).value(databaseName));
-    runAzureDatabaseUtils(
-        azureCloudContext,
-        workspaceId,
-        createPodDefinition(workspaceId, podName, envVars),
-        aksNamespace);
-  }
-
-  /**
    * Creates a database in the landing zone postgres server and creates a role with access to it.
    * The database role cannot be used to login to the database.
    *
