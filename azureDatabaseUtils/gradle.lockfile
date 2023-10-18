@@ -107,6 +107,7 @@ org.ow2.asm:asm:9.0=spotbugs
 org.ow2.asm:asm:9.2=jacocoAnt
 org.ow2.asm:asm:9.3=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.postgresql:postgresql:42.3.3=productionRuntimeClasspath,runtimeClasspath,testRuntimeClasspath
+org.postgresql:postgresql:42.6.0=compileClasspath,testCompileClasspath
 org.reactivestreams:reactive-streams:1.0.4=compileClasspath,productionRuntimeClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.rnorth.duct-tape:duct-tape:1.0.8=testCompileClasspath,testRuntimeClasspath
 org.skyscreamer:jsonassert:1.5.1=testCompileClasspath,testRuntimeClasspath

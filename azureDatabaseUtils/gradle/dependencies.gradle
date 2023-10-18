@@ -3,6 +3,7 @@ dependencies {
   // Azure dependencies
   implementation 'com.azure:azure-identity:1.9.1'
   implementation 'com.azure:azure-identity-extensions:1.1.4'
+  implementation 'org.postgresql:postgresql'
 
   runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.3"
 
