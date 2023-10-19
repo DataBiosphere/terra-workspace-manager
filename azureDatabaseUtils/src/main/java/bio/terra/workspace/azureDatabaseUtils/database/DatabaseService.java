@@ -24,16 +24,7 @@ public class DatabaseService {
   private final Validator validator;
   private final BackUpFileStorage storage;
 
-  // TODO: wire these values through, somehow
-  private String pgDumpPath = "pg_dump";
-  private String dbHost =
-          "lze5cb725a80cba7dc8336d698eed6791b6b36110f66881b960e53a7af1e7aa.postgres.database.azure.com";
-  private String dbPort = "5432";
-  private String dbUser = "lzb67a2eb8ba1ad83449";
-  private String dbName = "workflowcloningtest";
-
-  private String blobName = "mypgdumpfile";
-  private String requesterWorkspaceId = "8bdd1c45-3cb1-45b8-b2b5-39d3e081f66f";
+  private final String pgDumpPath = "pg_dump";
 
   @Value("${spring.datasource.username}")
   private String datasourceUserName;
@@ -103,16 +94,25 @@ public class DatabaseService {
     databaseDao.restoreLoginPrivileges(namespaceRole);
   }
 
-  public void pgDump(String newDbName) {
-    logger.info("running DatabaseService.pgDump against {}", newDbName);
+  public void pgDump(
+      String sourceDbName,
+      String sourceDbHost,
+      String sourceDbPort,
+      String sourceDbUser,
+      String pgDumpFilename,
+      String destinationWorkspaceId,
+      String blobstorageDetails) {
+    logger.info("running DatabaseService.pgDump against {}", sourceDbName);
+    logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
     try {
-      List<String> commandList = generateCommandList();
+      List<String> commandList =
+          generateCommandList(pgDumpPath, sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser);
       Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
       LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
       localProcessLauncher.launchProcess(commandList, envVars);
 
       storage.streamOutputToBlobStorage(
-              localProcessLauncher.getInputStream(), blobName, requesterWorkspaceId);
+          localProcessLauncher.getInputStream(), pgDumpFilename, destinationWorkspaceId, blobstorageDetails);
 
       String output = checkForError(localProcessLauncher);
       logger.info("pg_dump output: {}", output);
@@ -122,7 +122,8 @@ public class DatabaseService {
     }
   }
 
-  public List<String> generateCommandList() {
+  public List<String> generateCommandList(
+      String pgDumpPath, String sourceDbName, String dbHost, String dbPort, String dbUser) {
     Map<String, String> command = new LinkedHashMap<>();
 
     command.put(pgDumpPath, null);
@@ -130,7 +131,7 @@ public class DatabaseService {
     command.put("-h", dbHost);
     command.put("-p", dbPort);
     command.put("-U", dbUser);
-    command.put("-d", dbName);
+    command.put("-d", sourceDbName);
 
     List<String> commandList = new ArrayList<>();
     for (Map.Entry<String, String> entry : command.entrySet()) {
@@ -152,16 +153,16 @@ public class DatabaseService {
     int exitCode = localProcessLauncher.waitForTerminate();
     if (exitCode != 0) {
       InputStream errorStream =
-              localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
+          localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
       try {
         String error = new String(errorStream.readNBytes(errorLimit)).trim();
         logger.error("process error: {}", error);
         return error;
       } catch (IOException e) {
         logger.warn(
-                "process failed with exit code {}, but encountered an exception reading the error output: {}",
-                exitCode,
-                e.getMessage());
+            "process failed with exit code {}, but encountered an exception reading the error output: {}",
+            exitCode,
+            e.getMessage());
         return "Unknown error";
       }
     }

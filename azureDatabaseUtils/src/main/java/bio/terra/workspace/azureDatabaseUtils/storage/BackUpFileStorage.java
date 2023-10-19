@@ -6,7 +6,7 @@ import java.io.OutputStream;
 /* Allow for blob storage mocking. */
 public interface BackUpFileStorage {
     default void streamOutputToBlobStorage(
-            InputStream fromStream, String blobName, String workspaceId) {}
+            InputStream fromStream, String blobName, String workspaceId, String blobstorageDetails) {}
 
     default void streamInputFromBlobStorage(
             OutputStream toStream, String blobName, String workspaceId, String authToken) {}

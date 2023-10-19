@@ -10,8 +10,27 @@ import org.springframework.stereotype.Component;
 @Profile("PgDumpDatabase")
 @Component
 public class PgDumpDatabaseRunner implements ApplicationRunner {
-    @Value("${env.params.newDbName}")  // comes from resources/application.yml
-    private String newDbName;
+
+    @Value("${env.workflowCloning.sourceDbName}")
+    private String sourceDbName;
+
+    @Value("${env.workflowCloning.sourceDbHost}")
+    private String sourceDbHost;
+
+    @Value("${env.workflowCloning.sourceDbPort}")
+    private String sourceDbPort;
+
+    @Value("${env.workflowCloning.sourceDbUser}")
+    private String sourceDbUser;
+
+    @Value("${env.workflowCloning.pgDumpFilename}")
+    private String pgDumpFilename;
+
+    @Value("${env.workflowCloning.destinationWorkspaceId}")
+    private String destinationWorkspaceId;
+
+    @Value("${env.workflowCloning.blobstorageDetails}")
+    private String blobstorageDetails;
 
     private final DatabaseService databaseService;
 
@@ -21,6 +40,9 @@ public class PgDumpDatabaseRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        databaseService.pgDump(newDbName);  // TODO: implement databaseService.pgDump
+        // should I reuse `newDbName`, or create a new param `cloneDbName`?
+        databaseService.pgDump(
+            sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser, pgDumpFilename, destinationWorkspaceId, blobstorageDetails
+        );
     }
 }

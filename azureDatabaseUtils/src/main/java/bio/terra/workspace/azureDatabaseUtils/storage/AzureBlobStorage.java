@@ -18,11 +18,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AzureBlobStorage implements BackUpFileStorage {
-
-    private final String blobstorageDetails;
-    public AzureBlobStorage() {
-        this.blobstorageDetails = "https://lz813a3d637adefec2c6e88f.blob.core.windows.net?sv=2021-12-02&spr=https&st=2023-10-18T16%3A23%3A16Z&se=2023-10-19T00%3A38%3A16Z&sr=c&sp=racwdlt&sig=SfNyF8rsM3UdOfjNc45tpWaoGigg%2FCozO77hJBqzBjA%3D&rscd=2654885223328825f67e1";
-    }
+    public AzureBlobStorage() {}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AzureBlobStorage.class);
 
@@ -39,9 +35,9 @@ public class AzureBlobStorage implements BackUpFileStorage {
      */
     @Override
     public void streamOutputToBlobStorage(
-            InputStream fromStream, String blobName, String workspaceId) {
+            InputStream fromStream, String blobName, String workspaceId, String blobstorageDetails) {
         LOGGER.info("Creating blob storage client. ");
-        BlobContainerClient blobContainerClient = constructBlockBlobClient(workspaceId, null);
+        BlobContainerClient blobContainerClient = constructBlockBlobClient(workspaceId, blobstorageDetails);
         LOGGER.info("About to write to blob storage. ");
         // https://learn.microsoft.com/en-us/java/api/overview/azure/storage-blob-readme?view=azure-java-stable#upload-a-blob-via-an-outputstream
         try (BufferedOutputStream blobOS =
@@ -64,8 +60,8 @@ public class AzureBlobStorage implements BackUpFileStorage {
 
     @Override
     public void streamInputFromBlobStorage(
-            OutputStream toStream, String blobName, String workspaceId, String authToken) {
-        BlobContainerClient blobContainerClient = constructBlockBlobClient(workspaceId, authToken);
+            OutputStream toStream, String blobName, String workspaceId, String blobstorageDetails) {
+        BlobContainerClient blobContainerClient = constructBlockBlobClient(workspaceId, blobstorageDetails);
         try (toStream) {
             blobContainerClient.getBlobClient(blobName).downloadStream(toStream);
         } catch (IOException ioEx) {
@@ -73,7 +69,7 @@ public class AzureBlobStorage implements BackUpFileStorage {
         }
     }
 
-    private BlobContainerClient constructBlockBlobClient(String workspaceId, String authToken) {
+    private BlobContainerClient constructBlockBlobClient(String workspaceId, String blobstorageDetails) {
         // get workspace blob storage endpoint and token
         // (the line below was copied directly from WDS)
         // var blobstorageDetails = workspaceManagerDao.getBlobStorageUrl(workspaceId, authToken);
