@@ -1,0 +1,42 @@
+databaseChangeLog:
+- changeSet:
+    id: add folder table
+    author: yuhuyoyo
+    changes:
+    - createTable:
+        tableName: folder
+        remarks: |
+          A table for folders in a workspace.
+        columns:
+        - column:
+              name: id
+              type: text
+              constraints:
+                  nullable: false
+                  primaryKey: true
+        - column:
+            name: workspace_id
+            type: text
+            constraints:
+                nullable: false
+                references: workspace(workspace_id)
+                foreignKeyName: fk_folder_wid
+                deleteCascade: true
+            remarks: The UUID of the workspace
+        - column:
+            name: display_name
+            type: text
+        - column:
+            name: description
+            type: text
+        - column:
+            name: parent_folder_id
+            type: text
+            constraints:
+                # parent folder id must be non-null even for top-level folder to
+                # guarantee display_name uniqueness at the same folder level.
+                nullable: false
+    - addUniqueConstraint:
+        tableName: folder
+        # display name must be unique at the same folder level.
+        columnNames: display_name, parent_folder_id, workspace_id

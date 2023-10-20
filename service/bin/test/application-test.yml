@@ -1,0 +1,66 @@
+env:
+  db:
+    # If not specified, default to using TestContainers to support parallel testing
+    local-db: ${TEST_LOCAL_DB:tc:postgresql:13://127.0.0.1:5432}
+
+workspace:
+  crl:
+    janitor-client-credential-file-path: ../config/janitor-client-sa.json
+    janitor-track-resource-project-id: terra-kernel-k8s
+    janitor-track-resource-topic-id: crljanitor-tools-pubsub-topic
+
+  datarepo.instances:
+    fake-valid-test: https://fake-valid-data-repo-url.broadinstitute.org
+
+  private-resource-cleanup:
+    enabled: false
+
+  # Don't clean up temporary grants on junit tests
+  temporary-grant-revoke:
+    revokeEnabled: false
+
+  sam.base-path: https://sam.dsde-dev.broadinstitute.org
+
+  stairway-database:
+    migrate-upgrade: true
+    password: stairwaypwd
+    uri: jdbc:${env.db.local-db}/wsm_stairway
+    username: stairwayuser
+    poolMaxIdle: 1
+  status-check:
+    # Disable the periodic status check. We mock the Sam service, which is periodically called by
+    # this status check. Mockito does not like it's mocks being modified and called concurrently.
+    cron: "-"
+
+  workspace-database:
+    initialize-on-start: true
+    password: dbpwd
+    uri: jdbc:${env.db.local-db}/wsm_db
+    username: dbuser
+    poolMaxIdle: 1
+
+terra.common:
+  kubernetes:
+    in-kubernetes: false
+  tracing:
+    stackdriverExportEnabled: false
+  stairway:
+    force-clean-start: true
+    migrate-upgrade: false
+
+reference:
+  gitrepos:
+    allow-listed-git-repo-host-names:
+    - github.com
+feature:
+  tps-enabled: true
+  temporary-grant-enabled: true
+
+#Terra Landing Zone Service configuration
+landingzone:
+  landingzone-database:
+    poolMaxIdle: 1
+    uri: jdbc:${env.db.local-db}/landingzone_db
+  landingzone-stairway-database:
+    poolMaxIdle: 1
+    uri: jdbc:${env.db.local-db}/landingzone_stairway_db

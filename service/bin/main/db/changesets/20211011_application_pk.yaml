@@ -1,0 +1,9 @@
+databaseChangeLog:
+- changeSet:
+    id: add primary key to enable_application; protect against duplicate enables
+    author: dd
+    changes:
+    - addPrimaryKey:
+        tableName: enabled_application
+        columnNames: workspace_id, application_id
+        constraintName: pk_enabled_application

@@ -1,0 +1,10 @@
+workspace:
+  crl:
+    # Unit tests should not be communicating with clouds, so they should not use CRL or Janitor
+    use-crl: false
+    use-janitor: false
+
+  status-check:
+    # Don't run the status checker for unit tests
+    enabled: false
+

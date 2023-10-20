@@ -1,0 +1,3 @@
+feature:
+  # Enable azure support when running azure tests
+  azure-enabled: true

@@ -1,0 +1,77 @@
+databaseChangeLog:
+- changeSet:
+    id: Add created_date and created_by_email columns
+    author: yuhuyoyo
+    changes:
+    - addColumn:
+        tableName: workspace
+        columns:
+        - column:
+            name: created_date
+            type: timestamptz
+            constraints:
+               nullable: false
+            remarks: |
+               Timestamp when this workspace is created. This will be slightly
+               ahead of the change_date in the workspace_activity_log table
+               because this is computed when the workspace is written to the
+               database and the latter is logged at the end of the
+               WorkspaceCreateFlight.
+            defaultValueComputed: now()
+        - column:
+            name: created_by_email
+            type: text
+            constraints:
+                nullable: false
+            defaultValue: "unknown"
+    - addColumn:
+          tableName: resource
+          columns:
+          - column:
+                name: created_date
+                type: timestamptz
+                constraints:
+                    nullable: false
+                remarks: |
+                    Timestamp when this resource is created. This will be slightly
+                    ahead of the change_date in the workspace_activity_log table
+                    because this is computed when the workspace is written to the
+                    database and the latter is logged at the end of the
+                    the resource creation flight.
+                defaultValueComputed: now()
+          - column:
+                name: created_by_email
+                type: text
+                constraints:
+                    nullable: false
+                defaultValue: "unknown"
+    - addColumn:
+          tableName: folder
+          columns:
+          - column:
+                name: created_date
+                type: timestamptz
+                constraints:
+                    nullable: false
+                remarks: |
+                    Timestamp when this folder is created. This will be slightly
+                    ahead of the change_date in the workspace_activity_log table
+                    because they are two separate database writes.
+                defaultValueComputed: now()
+          - column:
+                name: created_by_email
+                type: text
+                constraints:
+                    nullable: false
+                defaultValue: "unknown"
+    - sql:
+          sql: >
+            UPDATE workspace
+            SET created_by_email=s.actor_email, 
+            created_date=s.min
+            FROM (SELECT m.workspace_id, m.actor_email, t.min
+                FROM (SELECT workspace_id, MIN(change_date) AS min FROM workspace_activity_log GROUP BY workspace_id) t 
+                JOIN workspace_activity_log m ON m.workspace_id = t.workspace_id AND t.min = m.change_date) s
+            WHERE workspace.workspace_id=s.workspace_id;
+
+              

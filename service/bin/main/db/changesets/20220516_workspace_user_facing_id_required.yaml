@@ -1,0 +1,10 @@
+databaseChangeLog:
+- changeSet:
+    id: make workspace user_facing_id required
+    author: melchang
+    changes:
+    - addNotNullConstraint:
+        tableName: workspace
+        columnName: user_facing_id
+        constraintName: user_facing_id_notnull
+        validate: true
