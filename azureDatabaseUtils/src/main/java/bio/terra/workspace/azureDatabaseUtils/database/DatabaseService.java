@@ -1,7 +1,7 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
 import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
-import bio.terra.workspace.azureDatabaseUtils.storage.BackUpFileStorage;
+import bio.terra.workspace.azureDatabaseUtils.storage.BlobStorage;
 import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 
 import java.io.IOException;
@@ -22,7 +22,7 @@ public class DatabaseService {
   private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
   private final DatabaseDao databaseDao;
   private final Validator validator;
-  private final BackUpFileStorage storage;
+  private final BlobStorage storage;
 
   private final String pgDumpPath = "pg_dump";
 
@@ -31,10 +31,10 @@ public class DatabaseService {
 
   @Autowired
   public DatabaseService(
-      DatabaseDao databaseDao, Validator validator, BackUpFileStorage backUpFileStorage) {
+      DatabaseDao databaseDao, Validator validator, BlobStorage blobStorage) {
     this.databaseDao = databaseDao;
     this.validator = validator;
-    this.storage = backUpFileStorage;
+    this.storage = blobStorage;
   }
 
   public void createDatabaseWithDbRole(String newDbName) {
