@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 public class AzureBlobStorage implements BackUpFileStorage {
     public AzureBlobStorage() {}
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AzureBlobStorage.class);
+    private static final Logger logger = LoggerFactory.getLogger(AzureBlobStorage.class);
 
     /*
     6/28/2023 - Terra's storage inside a billing project is organized as follows:
@@ -36,9 +36,9 @@ public class AzureBlobStorage implements BackUpFileStorage {
     @Override
     public void streamOutputToBlobStorage(
             InputStream fromStream, String blobName, String workspaceId, String blobstorageDetails) {
-        LOGGER.info("Creating blob storage client. ");
+        logger.info("Creating blob storage client. ");
         BlobContainerClient blobContainerClient = constructBlockBlobClient(workspaceId, blobstorageDetails);
-        LOGGER.info("About to write to blob storage. ");
+        logger.info("About to write to blob storage. ");
         // https://learn.microsoft.com/en-us/java/api/overview/azure/storage-blob-readme?view=azure-java-stable#upload-a-blob-via-an-outputstream
         try (BufferedOutputStream blobOS =
                      new BufferedOutputStream(
@@ -77,10 +77,10 @@ public class AzureBlobStorage implements BackUpFileStorage {
         // the url we get from WSM already contains the token in it, so no need to specify sasToken
         // separately
 
-        LOGGER.info("Constructing block blob client with blobstorageDetails: {}", blobstorageDetails);
+        logger.info("Constructing block blob client with blobstorageDetails: {}", blobstorageDetails);
         BlobServiceClient blobServiceClient =
                 new BlobServiceClientBuilder().endpoint(blobstorageDetails).buildClient();
-        LOGGER.info("Constructed BlobServiceClient", blobstorageDetails);
+        logger.info("Constructed BlobServiceClient", blobstorageDetails);
         try {
             // the way storage containers are set up in a workspace are as follows:
             // billing project gets a single azure storage account
@@ -88,7 +88,7 @@ public class AzureBlobStorage implements BackUpFileStorage {
             return blobServiceClient.getBlobContainerClient("sc-" + workspaceId);
         } catch (BlobStorageException e) {
             // if the default workspace container doesn't exist, something went horribly wrong
-            LOGGER.error("Default storage container missing for workspace id {}", workspaceId);
+            logger.error("Default storage container missing for workspace id {}", workspaceId);
             throw (e);
         }
     }
@@ -100,7 +100,7 @@ public class AzureBlobStorage implements BackUpFileStorage {
             var blobClient = blobContainerClient.getBlobClient(blobFile);
             blobClient.delete();
         } catch (BlobStorageException e) {
-            LOGGER.error("Failed to delete file with name {}. ", blobFile);
+            logger.error("Failed to delete file with name {}. ", blobFile);
             throw (e);
         }
     }
