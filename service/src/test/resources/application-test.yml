@@ -65,9 +65,4 @@ landingzone:
     poolMaxIdle: 1
     uri: jdbc:${env.db.local-db}/landingzone_stairway_db
 pactbroker:
-  url: https://pact-broker.dsp-eng-tools.broadinstitute.org:9292
-logging:
-  level:
-    au.com.dius.pact.core: debug
-    au.com.dius.pact.core.pactbroker: debug
-    au.com.dius.pact.core.pactbroker.HalClient: debug
+  url: https://pact-broker.dsp-eng-tools.broadinstitute.org

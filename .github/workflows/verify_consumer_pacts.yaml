@@ -17,7 +17,7 @@ name: Verify consumer pacts
 # They are managed by Atlantis and were added to Terraform here:
 # https://github.com/broadinstitute/terraform-ap-deployments/pull/1086
 env:
-  PACT_BROKER_URL: pact-broker.dsp-eng-tools.broadinstitute.org
+  PACT_BROKER_URL: https://pact-broker.dsp-eng-tools.broadinstitute.org
   spring_profiles_active: human-readable-logging
 on:
   pull_request:
