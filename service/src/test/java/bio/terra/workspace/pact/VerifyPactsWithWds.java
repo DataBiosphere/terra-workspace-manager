@@ -1,6 +1,7 @@
 package bio.terra.workspace.pact;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -13,36 +14,35 @@ import au.com.dius.pact.provider.spring.junit5.PactVerificationSpringProvider;
 import bio.terra.landingzone.db.LandingZoneDao;
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.policy.model.TpsPaoConflict;
-import bio.terra.policy.model.TpsPaoDescription;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsUpdateMode;
-import bio.terra.workspace.common.BaseAzureUnitTest;
-import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
+import bio.terra.workspace.common.BaseAzureConnectedTest;
+import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmResourceFields;
-import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
-import bio.terra.workspace.service.resource.referenced.cloud.any.datareposnapshot.ReferencedDataRepoSnapshotResource;
-import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.Map;
 import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.env.Environment;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.TransactionManager;
 
 @Provider("wsm-provider")
 @PactBroker()
-public class VerifyPactsWithWds extends BaseAzureUnitTest {
+public class VerifyPactsWithWds extends BaseAzureConnectedTest {
 
   @Autowired private MockMvc mockMvc;
+  @Autowired private WorkspaceDao workspaceDao;
 
   // this block of @MockBeans sprouted up as a result of playing whackamole with failed dependency
   // injection errors
@@ -54,9 +54,11 @@ public class VerifyPactsWithWds extends BaseAzureUnitTest {
   @MockBean private JobService mockJobService;
   @MockBean private LandingZoneJobService mockLandingZoneJobService;
 
-  // This @MockBean is needed to avoid having FK errors; maybe can be avoided by _not_ mocking out
-  // workspaceService
-  @MockBean private ReferencedResourceService mockReferencedResourceService;
+  // this block of @MockBeans were required to stub out layers underneath the
+  // ReferencedGcpResourceController under test
+  @MockBean private AuthenticatedUserRequestFactory mockAuthenticatedUserRequestFactory;
+  @MockBean private SamService mockSamService;
+  @MockBean private TpsApiDispatch mockTpsApiDispatch;
 
   @TestTemplate
   @ExtendWith(PactVerificationSpringProvider.class)
@@ -70,75 +72,63 @@ public class VerifyPactsWithWds extends BaseAzureUnitTest {
   }
 
   @State({"authenticated with the given email"})
-  public void authenticatedAsAccount(Map parameters) {
-    var email = parameters.get("email").toString();
+  public void authenticatedAsAccount(Map parameters) throws InterruptedException {
+    var authenticatedEmail = parameters.get("email").toString();
+    var stubbedAuthenticatedRequest = new AuthenticatedUserRequest().email(authenticatedEmail);
+    when(mockAuthenticatedUserRequestFactory.from(any(HttpServletRequest.class)))
+        .thenReturn(stubbedAuthenticatedRequest);
+    when(mockSamService.isAuthorized(
+            eq(stubbedAuthenticatedRequest),
+            /* iamResourceType= */ anyString(),
+            /* resourceId= */ anyString(),
+            /* action= */ anyString()))
+        .thenReturn(true);
 
-    when(mockSamService()
-            .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
-        .thenReturn(email);
+    // for recording the creator of the snapshot reference...
+    when(mockSamService.getUserEmailFromSamAndRethrowOnInterrupt(eq(stubbedAuthenticatedRequest)))
+        .thenReturn(authenticatedEmail);
+
+    // for activity logging...
+    when(mockSamService.getUserStatusInfo(eq(stubbedAuthenticatedRequest)))
+        .thenReturn(new UserStatusInfo().userEmail(authenticatedEmail).userSubjectId("subjectid"));
   }
 
   @State({"a workspace with the given id exists"})
   public void workspaceIdExists(Map parameters) {
     var workspaceUuid = UUID.fromString(parameters.get("id").toString());
+    var workspace =
+        Workspace.builder()
+            .workspaceId(workspaceUuid)
+            .workspaceStage(WorkspaceStage.RAWLS_WORKSPACE)
+            .userFacingId("workspaceid")
+            .createdByEmail("workspace.creator@e.mail");
 
-    var mockWorkspace =
-        WorkspaceFixtures.buildWorkspace(workspaceUuid, WorkspaceStage.RAWLS_WORKSPACE);
-
-    when(mockWorkspaceService()
-            .validateWorkspaceAndAction(
-                any(AuthenticatedUserRequest.class),
-                eq(workspaceUuid),
-                eq(SamWorkspaceAction.CREATE_REFERENCE)))
-        .thenReturn(mockWorkspace);
+    if (workspaceDao.getDbWorkspace(workspaceUuid) == null) {
+      workspaceDao.createWorkspaceStart(workspace.build(), "hardcoded.flight.id");
+      workspaceDao.createWorkspaceSuccess(workspaceUuid, "hardcoded.flight.id");
+    }
   }
 
   @State({"policies allowing snapshot reference creation"})
-  public void allowSnapshotReferenceCreation() {
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(true);
+  public void allowSnapshotReferenceCreation() throws InterruptedException {
     var policyUpdateSuccessful = new TpsPaoUpdateResult().updateApplied(true);
-    when(mockWorkspaceService()
-            .linkPolicies(
-                any(UUID.class),
-                any(TpsPaoDescription.class),
-                any(TpsUpdateMode.class),
-                any(AuthenticatedUserRequest.class)))
+    when(mockTpsApiDispatch.linkPao(
+            /* workspaceUuid= */ any(UUID.class),
+            /* sourceObjectId= */ any(UUID.class),
+            any(TpsUpdateMode.class)))
         .thenReturn(policyUpdateSuccessful);
-    // TODO: seems like some brittle mocking that is completely divorced from the actual request
-    //   received, maybe a more stateful/connected test would serve to provide more realistic
-    //   coverage, or possibly this mock is happening in the wrong place
-    when(mockReferencedResourceService.createReferenceResource(
-            any(ReferencedResource.class), any(AuthenticatedUserRequest.class)))
-        .thenReturn(
-            new ReferencedDataRepoSnapshotResource(
-                WsmResourceFields.builder()
-                    .workspaceUuid(UUID.randomUUID())
-                    .resourceId(UUID.randomUUID())
-                    .name("snapshotName")
-                    .cloningInstructions(
-                        CloningInstructions
-                            .COPY_REFERENCE) // TODO: is this actually the right enum?
-                    .createdByEmail("TODO@e.mail")
-                    .build(),
-                "snapshotInstanceName",
-                "snapshotId"));
   }
 
   @State({"policies preventing snapshot reference creation"})
-  public void preventSnapshotReferenceCreation() {
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(true);
+  public void preventSnapshotReferenceCreation() throws InterruptedException {
     var policiesConflicting =
         new TpsPaoUpdateResult()
             .updateApplied(false)
-            .addConflictsItem(new TpsPaoConflict().name("something something"));
-    when(mockWorkspaceService()
-            .linkPolicies(
-                any(UUID.class),
-                any(TpsPaoDescription.class),
-                any(TpsUpdateMode.class),
-                any(AuthenticatedUserRequest.class)))
+            .addConflictsItem(new TpsPaoConflict().name("some conflict"));
+    when(mockTpsApiDispatch.linkPao(
+            /* workspaceUuid= */ any(UUID.class),
+            /* sourceObjectId= */ any(UUID.class),
+            any(TpsUpdateMode.class)))
         .thenReturn(policiesConflicting);
   }
-
-  @Autowired private Environment environment;
 }
