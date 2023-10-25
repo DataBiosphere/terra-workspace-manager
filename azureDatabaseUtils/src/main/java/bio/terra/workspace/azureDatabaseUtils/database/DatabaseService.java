@@ -105,6 +105,8 @@ public class DatabaseService {
     logger.info("running DatabaseService.pgDump against {}", sourceDbName);
     logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
     try {
+      databaseDao.grantRole(sourceDbUser, sourceDbName);
+      
       List<String> commandList =
           generateCommandList(pgDumpPath, sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser);
       Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
