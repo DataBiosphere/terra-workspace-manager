@@ -36,10 +36,8 @@ public class AzureBlobStorage implements BlobStorage {
   @Override
   public void streamOutputToBlobStorage(
       InputStream fromStream, String blobName, String workspaceId, String blobstorageDetails) {
-    logger.info("Creating blob storage client. ");
     BlobContainerClient blobContainerClient =
         constructBlockBlobClient(workspaceId, blobstorageDetails);
-    logger.info("About to write to blob storage. ");
     // https://learn.microsoft.com/en-us/java/api/overview/azure/storage-blob-readme?view=azure-java-stable#upload-a-blob-via-an-outputstream
     try (BufferedOutputStream blobOS =
         new BufferedOutputStream(
@@ -80,10 +78,9 @@ public class AzureBlobStorage implements BlobStorage {
     // the url we get from WSM already contains the token in it, so no need to specify sasToken
     // separately
 
-    logger.info("Constructing block blob client with blobstorageDetails: {}", blobstorageDetails);
     BlobServiceClient blobServiceClient =
         new BlobServiceClientBuilder().endpoint(blobstorageDetails).buildClient();
-    logger.info("Constructed BlobServiceClient", blobstorageDetails);
+
     try {
       // the way storage containers are set up in a workspace are as follows:
       // billing project gets a single azure storage account
