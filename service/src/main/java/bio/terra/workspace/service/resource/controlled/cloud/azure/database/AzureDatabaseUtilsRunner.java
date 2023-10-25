@@ -75,13 +75,9 @@ public class AzureDatabaseUtilsRunner {
   public static final String PARAM_NEW_DB_USER_OID = "NEW_DB_USER_OID";
 
   // Workflow cloning - TODO: which params can be reused?
-  public static final String PARAM_SOURCE_DB_NAME = "SOURCE_DB_NAME";
-  public static final String PARAM_SOURCE_DB_HOST = "SOURCE_DB_HOST";
-  public static final String PARAM_SOURCE_DB_PORT = "SOURCE_DB_PORT" ;
-  public static final String PARAM_SOURCE_DB_USER = "SOURCE_DB_USER";
-  public static final String PARAM_PGDUMP_FILENAME = "PGDUMP_FILENAME";
+  public static final String PARAM_DUMPFILE_NAME = "DUMPFILE_NAME";
   public static final String PARAM_DEST_WORKSPACE_ID = "DEST_WORKSPACE_ID";
-  public static final String PARAM_DEST_BLOBSTORAGE_DETAILS = "DEST_BLOBSTORAGE_DETAILS";
+  public static final String PARAM_BLOBSTORAGE_DETAILS = "BLOBSTORAGE_DETAILS";
 
   private final AzureConfiguration azureConfig;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
@@ -135,10 +131,9 @@ public class AzureDatabaseUtilsRunner {
       UUID sourceWorkspaceId,
       String podName,
       String sourceDbName,
-      String sourceDbHost,
-      String sourceDbPort,
-      String sourceDbUser,
-      String pgDumpFilename,
+      String dbServerName,
+      String dbUserName,
+      String dumpfileName,
       String destinationWorkspaceId,
       String blobstorageDetails
   )
@@ -146,13 +141,12 @@ public class AzureDatabaseUtilsRunner {
     final List<V1EnvVar> envVars =
         List.of(
             new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_PGDUMP_DATABASE),
-            new V1EnvVar().name(PARAM_SOURCE_DB_NAME).value(sourceDbName),
-            new V1EnvVar().name(PARAM_SOURCE_DB_HOST).value(sourceDbHost),
-            new V1EnvVar().name(PARAM_SOURCE_DB_PORT).value(sourceDbPort),
-            new V1EnvVar().name(PARAM_SOURCE_DB_USER).value(sourceDbUser),
-            new V1EnvVar().name(PARAM_PGDUMP_FILENAME).value(pgDumpFilename),
+            new V1EnvVar().name(PARAM_CONNECT_TO_DATABASE).value(sourceDbName),
+            new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
+            new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
+            new V1EnvVar().name(PARAM_DUMPFILE_NAME).value(dumpfileName),
             new V1EnvVar().name(PARAM_DEST_WORKSPACE_ID).value(destinationWorkspaceId),
-            new V1EnvVar().name(PARAM_DEST_BLOBSTORAGE_DETAILS).value(blobstorageDetails)
+            new V1EnvVar().name(PARAM_BLOBSTORAGE_DETAILS).value(blobstorageDetails)
         );
     runAzureDatabaseUtils(
         azureCloudContext,

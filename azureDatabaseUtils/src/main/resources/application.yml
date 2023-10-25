@@ -1,6 +1,8 @@
 env:
   db:
     host: ${DB_SERVER_NAME}.postgres.database.azure.com:5432
+    url: ${DB_SERVER_NAME}.postgres.database.azure.com
+    port: 5432
     user: ${ADMIN_DB_USER_NAME}
     connectToDatabase: ${CONNECT_TO_DATABASE:postgres}
   params:
@@ -10,14 +12,9 @@ env:
     databaseNames: ${DATABASE_NAMES:db1,db2,db3}
     namespaceRole: ${NAMESPACE_ROLE}
     managedIdentityOid: ${MANAGED_IDENTITY_OID}
-  workflowCloning:
-    sourceDbName: ${SOURCE_DB_NAME}
-    sourceDbHost: ${SOURCE_DB_HOST}
-    sourceDbPort: ${SOURCE_DB_PORT}
-    sourceDbUser: ${SOURCE_DB_USER}
-    pgDumpFilename: ${PGDUMP_FILENAME}
+    dumpfileName: ${DUMPFILE_NAME}
     destinationWorkspaceId: ${DEST_WORKSPACE_ID}
-    blobstorageDetails: ${DEST_BLOBSTORAGE_DETAILS}
+    blobstorageDetails: ${BLOBSTORAGE_DETAILS}
 
 
 spring:

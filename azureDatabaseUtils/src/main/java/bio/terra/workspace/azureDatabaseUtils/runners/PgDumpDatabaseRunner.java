@@ -11,25 +11,25 @@ import org.springframework.stereotype.Component;
 @Component
 public class PgDumpDatabaseRunner implements ApplicationRunner {
 
-    @Value("${env.workflowCloning.sourceDbName}")
+    @Value("${env.db.connectToDatabase}")
     private String sourceDbName;
 
-    @Value("${env.workflowCloning.sourceDbHost}")
+    @Value("${env.db.url}")
     private String sourceDbHost;
 
-    @Value("${env.workflowCloning.sourceDbPort}")
+    @Value("${env.db.port}")
     private String sourceDbPort;
 
-    @Value("${env.workflowCloning.sourceDbUser}")
+    @Value("${env.db.user}")
     private String sourceDbUser;
 
-    @Value("${env.workflowCloning.pgDumpFilename}")
-    private String pgDumpFilename;
+    @Value("${env.params.dumpfileName}")
+    private String dumpfileName;
 
-    @Value("${env.workflowCloning.destinationWorkspaceId}")
+    @Value("${env.params.destinationWorkspaceId}")
     private String destinationWorkspaceId;
 
-    @Value("${env.workflowCloning.blobstorageDetails}")
+    @Value("${env.params.blobstorageDetails}")
     private String blobstorageDetails;
 
     private final DatabaseService databaseService;
@@ -42,7 +42,7 @@ public class PgDumpDatabaseRunner implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         // should I reuse `newDbName`, or create a new param `cloneDbName`?
         databaseService.pgDump(
-            sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser, pgDumpFilename, destinationWorkspaceId, blobstorageDetails
+            sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser, dumpfileName, destinationWorkspaceId, blobstorageDetails
         );
     }
 }
