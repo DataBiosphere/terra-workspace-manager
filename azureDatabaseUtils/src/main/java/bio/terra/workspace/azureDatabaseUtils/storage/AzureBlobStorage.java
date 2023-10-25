@@ -71,12 +71,11 @@ public class AzureBlobStorage implements BlobStorage {
 
   private BlobContainerClient constructBlockBlobClient(
       String workspaceId, String blobstorageDetails) {
-    // get workspace blob storage endpoint and token
-    // (the line below was copied directly from WDS)
-    // var blobstorageDetails = workspaceManagerDao.getBlobStorageUrl(workspaceId, authToken);
-
-    // the url we get from WSM already contains the token in it, so no need to specify sasToken
-    // separately
+    // TODO: determine where blobstorageDetails should come from.
+    // This implementation is 95% copied from WDS's, in which they call WSM's APIs to retrieve a url
+    // with an included SAS token.
+    // The implementation here assumes that this url+token will be passed in by WSM itself when it
+    // ultimately calls the pgDump function.
 
     BlobServiceClient blobServiceClient =
         new BlobServiceClientBuilder().endpoint(blobstorageDetails).buildClient();
