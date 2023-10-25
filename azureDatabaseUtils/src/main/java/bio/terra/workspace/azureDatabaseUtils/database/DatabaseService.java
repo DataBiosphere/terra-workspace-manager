@@ -24,8 +24,6 @@ public class DatabaseService {
   private final Validator validator;
   private final BlobStorage storage;
 
-  private final String pgDumpPath = "pg_dump";
-
   @Value("${spring.datasource.username}")
   private String datasourceUserName;
 
@@ -41,6 +39,7 @@ public class DatabaseService {
     validator.validateDatabaseNameFormat(newDbName);
 
     logger.info("Creating database {} with db role of same name", newDbName);
+    
     databaseDao.createDatabase(newDbName);
     databaseDao.createRole(newDbName); // create a role with the same name as the database
     databaseDao.grantAllPrivileges(newDbName, newDbName); // db name and role name are the same
@@ -108,7 +107,7 @@ public class DatabaseService {
       databaseDao.grantRole(sourceDbUser, sourceDbName);
       
       List<String> commandList =
-          generateCommandList(pgDumpPath, sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser);
+          generateCommandList("pg_dump", sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser);
       Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
       LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
       localProcessLauncher.launchProcess(commandList, envVars);
