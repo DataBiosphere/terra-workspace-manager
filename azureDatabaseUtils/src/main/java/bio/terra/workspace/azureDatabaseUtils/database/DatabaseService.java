@@ -39,7 +39,7 @@ public class DatabaseService {
     validator.validateDatabaseNameFormat(newDbName);
 
     logger.info("Creating database {} with db role of same name", newDbName);
-    
+
     databaseDao.createDatabase(newDbName);
     databaseDao.createRole(newDbName); // create a role with the same name as the database
     databaseDao.grantAllPrivileges(newDbName, newDbName); // db name and role name are the same
@@ -104,6 +104,10 @@ public class DatabaseService {
     logger.info("running DatabaseService.pgDump against {}", sourceDbName);
     logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
     try {
+      // Grant the database role (sourceDbName) to the workspace identity (sourceDbUser).
+      // We are choosing to *not* revoke this role for now, because:
+      // (1) we could run into concurrency issues if multiple users attempt to clone the same workspace at once;
+      // (2) the workspace identity can grant itself access at any time, so revoking the role doesn't protect us.
       databaseDao.grantRole(sourceDbUser, sourceDbName);
       
       List<String> commandList =
