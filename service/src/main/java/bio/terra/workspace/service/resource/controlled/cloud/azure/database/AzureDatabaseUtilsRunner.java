@@ -135,8 +135,7 @@ public class AzureDatabaseUtilsRunner {
       String dbUserName,
       String dumpfileName,
       String destinationWorkspaceId,
-      String blobstorageDetails
-  )
+      String blobstorageDetails)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
@@ -146,8 +145,7 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
             new V1EnvVar().name(PARAM_DUMPFILE_NAME).value(dumpfileName),
             new V1EnvVar().name(PARAM_DEST_WORKSPACE_ID).value(destinationWorkspaceId),
-            new V1EnvVar().name(PARAM_BLOBSTORAGE_DETAILS).value(blobstorageDetails)
-        );
+            new V1EnvVar().name(PARAM_BLOBSTORAGE_DETAILS).value(blobstorageDetails));
     runAzureDatabaseUtils(
         azureCloudContext,
         sourceWorkspaceId,
