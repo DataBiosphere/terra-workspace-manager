@@ -5,11 +5,11 @@ import java.io.OutputStream;
 
 /* Allow for blob storage mocking. */
 public interface BlobStorage {
-    default void streamOutputToBlobStorage(
-            InputStream fromStream, String blobName, String workspaceId, String blobstorageDetails) {}
+  default void streamOutputToBlobStorage(
+      InputStream fromStream, String blobName, String workspaceId, String blobstorageDetails) {}
 
-    default void streamInputFromBlobStorage(
-            OutputStream toStream, String blobName, String workspaceId, String authToken) {}
+  default void streamInputFromBlobStorage(
+      OutputStream toStream, String blobName, String workspaceId, String authToken) {}
 
-    default void deleteBlob(String blobFile, String workspaceId, String authToken) {}
+  default void deleteBlob(String blobFile, String workspaceId, String authToken) {}
 }

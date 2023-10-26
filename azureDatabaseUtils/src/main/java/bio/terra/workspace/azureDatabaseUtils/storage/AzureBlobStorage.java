@@ -1,5 +1,6 @@
 package bio.terra.workspace.azureDatabaseUtils.storage;
 
+import bio.terra.workspace.azureDatabaseUtils.process.LaunchProcessException;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
@@ -11,7 +12,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import bio.terra.workspace.azureDatabaseUtils.process.LaunchProcessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;

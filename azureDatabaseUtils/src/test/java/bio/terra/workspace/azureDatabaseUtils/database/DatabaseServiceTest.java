@@ -1,16 +1,14 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.verify;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 
 import bio.terra.workspace.azureDatabaseUtils.BaseUnitTest;
 import bio.terra.workspace.azureDatabaseUtils.storage.BlobStorage;
 import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 import java.util.List;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;

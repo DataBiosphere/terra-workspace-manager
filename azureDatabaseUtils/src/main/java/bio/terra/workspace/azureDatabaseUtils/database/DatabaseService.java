@@ -3,12 +3,10 @@ package bio.terra.workspace.azureDatabaseUtils.database;
 import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
 import bio.terra.workspace.azureDatabaseUtils.storage.BlobStorage;
 import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
-
+import com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-
-import com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin;
 import org.postgresql.plugin.AuthenticationRequestType;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
@@ -28,8 +26,7 @@ public class DatabaseService {
   private String datasourceUserName;
 
   @Autowired
-  public DatabaseService(
-      DatabaseDao databaseDao, Validator validator, BlobStorage blobStorage) {
+  public DatabaseService(DatabaseDao databaseDao, Validator validator, BlobStorage blobStorage) {
     this.databaseDao = databaseDao;
     this.validator = validator;
     this.storage = blobStorage;
@@ -106,10 +103,12 @@ public class DatabaseService {
     try {
       // Grant the database role (sourceDbName) to the workspace identity (sourceDbUser).
       // We are choosing to *not* revoke this role for now, because:
-      // (1) we could run into concurrency issues if multiple users attempt to clone the same workspace at once;
-      // (2) the workspace identity can grant itself access at any time, so revoking the role doesn't protect us.
+      // (1) we could run into concurrency issues if multiple users attempt to clone the same
+      // workspace at once;
+      // (2) the workspace identity can grant itself access at any time, so revoking the role
+      // doesn't protect us.
       databaseDao.grantRole(sourceDbUser, sourceDbName);
-      
+
       List<String> commandList =
           generateCommandList("pg_dump", sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser);
       Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
@@ -117,7 +116,10 @@ public class DatabaseService {
       localProcessLauncher.launchProcess(commandList, envVars);
 
       storage.streamOutputToBlobStorage(
-          localProcessLauncher.getInputStream(), pgDumpFilename, destinationWorkspaceId, blobstorageDetails);
+          localProcessLauncher.getInputStream(),
+          pgDumpFilename,
+          destinationWorkspaceId,
+          blobstorageDetails);
 
       String output = checkForError(localProcessLauncher);
       logger.info("pg_dump output: {}", output);

@@ -11,38 +11,43 @@ import org.springframework.stereotype.Component;
 @Component
 public class PgDumpDatabaseRunner implements ApplicationRunner {
 
-    @Value("${env.db.connectToDatabase}")
-    private String sourceDbName;
+  @Value("${env.db.connectToDatabase}")
+  private String sourceDbName;
 
-    @Value("${env.db.url}")
-    private String sourceDbHost;
+  @Value("${env.db.url}")
+  private String sourceDbHost;
 
-    @Value("${env.db.port}")
-    private String sourceDbPort;
+  @Value("${env.db.port}")
+  private String sourceDbPort;
 
-    @Value("${env.db.user}")
-    private String sourceDbUser;
+  @Value("${env.db.user}")
+  private String sourceDbUser;
 
-    @Value("${env.params.dumpfileName}")
-    private String dumpfileName;
+  @Value("${env.params.dumpfileName}")
+  private String dumpfileName;
 
-    @Value("${env.params.destinationWorkspaceId}")
-    private String destinationWorkspaceId;
+  @Value("${env.params.destinationWorkspaceId}")
+  private String destinationWorkspaceId;
 
-    @Value("${env.params.blobstorageDetails}")
-    private String blobstorageDetails;
+  @Value("${env.params.blobstorageDetails}")
+  private String blobstorageDetails;
 
-    private final DatabaseService databaseService;
+  private final DatabaseService databaseService;
 
-    public PgDumpDatabaseRunner(DatabaseService databaseService) {
-        this.databaseService = databaseService;
-    }
+  public PgDumpDatabaseRunner(DatabaseService databaseService) {
+    this.databaseService = databaseService;
+  }
 
-    @Override
-    public void run(ApplicationArguments args) {
-        // should I reuse `newDbName`, or create a new param `cloneDbName`?
-        databaseService.pgDump(
-            sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser, dumpfileName, destinationWorkspaceId, blobstorageDetails
-        );
-    }
+  @Override
+  public void run(ApplicationArguments args) {
+    // should I reuse `newDbName`, or create a new param `cloneDbName`?
+    databaseService.pgDump(
+        sourceDbName,
+        sourceDbHost,
+        sourceDbPort,
+        sourceDbUser,
+        dumpfileName,
+        destinationWorkspaceId,
+        blobstorageDetails);
+  }
 }
