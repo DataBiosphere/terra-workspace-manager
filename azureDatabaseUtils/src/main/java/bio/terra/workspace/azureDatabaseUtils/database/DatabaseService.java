@@ -102,6 +102,7 @@ public class DatabaseService {
     logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
     try {
       // Grant the database role (sourceDbName) to the workspace identity (sourceDbUser).
+      // In theory, we should be revoking this role after the operation is complete.
       // We are choosing to *not* revoke this role for now, because:
       // (1) we could run into concurrency issues if multiple users attempt to clone the same
       // workspace at once;
