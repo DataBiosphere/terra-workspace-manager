@@ -133,16 +133,70 @@ public class DatabaseService {
     checkForError(localProcessLauncher);
   }
 
+  public void pgRestore(
+      String targetDbName,
+      String sourceDbHost,
+      String sourceDbPort,
+      String sourceDbUser,
+      String pgDumpFilename,
+      String destinationWorkspaceId,
+      String blobContainerName,
+      String blobstorageDetails) {
+
+
+      // Grant the database role (sourceDbName) to the workspace identity (sourceDbUser).
+      // In theory, we should be revoking this role after the operation is complete.
+      // We are choosing to *not* revoke this role for now, because:
+      // (1) we could run into concurrency issues if multiple users attempt to clone the same
+      // workspace at once;
+      // (2) the workspace identity can grant itself access at any time, so revoking the role
+      // doesn't protect us.
+      databaseDao.grantRole(sourceDbUser, targetDbName);
+
+      List<String> commandList =
+          generateCommandList("pg_restore", targetDbName, sourceDbHost, sourceDbPort, sourceDbUser);
+    Map<String, String> envVars = null;
+    try {
+      envVars = Map.of("PGPASSWORD", determinePassword());
+    } catch (PSQLException e) {
+      logger.error(e.getMessage());
+    }
+    LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
+      localProcessLauncher.launchProcess(commandList, envVars);
+
+      logger.info("running DatabaseService.pgRestore: {}", String.join(" ", commandList));
+      logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
+
+      storage.streamInputFromBlobStorage(
+          localProcessLauncher.getOutputStream(),
+          pgDumpFilename,
+          destinationWorkspaceId,
+          blobContainerName,
+          blobstorageDetails);
+
+      checkForError(localProcessLauncher);
+
+  }
+
   public List<String> generateCommandList(
-      String pgDumpPath, String sourceDbName, String dbHost, String dbPort, String dbUser) {
+      String pgCommandPath, String dbName, String dbHost, String dbPort, String dbUser) {
     Map<String, String> command = new LinkedHashMap<>();
 
-    command.put(pgDumpPath, null);
-    command.put("-b", null);
+    command.put(pgCommandPath, null);
+    if (pgCommandPath.contains("pg_dump")) {
+      command.put("-b", null);
+      command.put("--no-privileges", null);
+      command.put("--no-owner", null);
+    }
+    if (pgCommandPath.contains("pg_restore")) {
+      command.put("--no-owner", null);
+      command.put("--role", dbName);
+    }
+    command.put("-Ft", null);
     command.put("-h", dbHost);
     command.put("-p", dbPort);
     command.put("-U", dbUser);
-    command.put("-d", sourceDbName);
+    command.put("-d", dbName);
 
     List<String> commandList = new ArrayList<>();
     for (Map.Entry<String, String> entry : command.entrySet()) {
