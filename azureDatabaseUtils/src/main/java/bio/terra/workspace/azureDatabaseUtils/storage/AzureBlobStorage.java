@@ -91,16 +91,4 @@ public class AzureBlobStorage implements BlobStorage {
       throw (e);
     }
   }
-
-  @Override
-  public void deleteBlob(String blobFile, String workspaceId, String authToken) {
-    BlobContainerClient blobContainerClient = constructBlockBlobClient(workspaceId, authToken);
-    try {
-      var blobClient = blobContainerClient.getBlobClient(blobFile);
-      blobClient.delete();
-    } catch (BlobStorageException e) {
-      logger.error("Failed to delete file with name {}. ", blobFile);
-      throw (e);
-    }
-  }
 }
