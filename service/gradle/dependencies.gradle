@@ -10,7 +10,7 @@ dependencies {
   // Google dependencies
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
-    implementation 'org.json:json:20230227'
+    implementation 'org.json:json:20231013' // security vulnerability
   }
   implementation platform('com.google.cloud:libraries-bom:26.0.0')
 
