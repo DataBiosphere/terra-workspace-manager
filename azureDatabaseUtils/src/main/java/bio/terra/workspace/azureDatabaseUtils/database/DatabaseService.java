@@ -143,25 +143,27 @@ public class DatabaseService {
       String blobContainerName,
       String blobstorageDetails) {
 
+    boolean doCleanup = false;
 
-      // Grant the database role (sourceDbName) to the workspace identity (sourceDbUser).
-      // In theory, we should be revoking this role after the operation is complete.
-      // We are choosing to *not* revoke this role for now, because:
-      // (1) we could run into concurrency issues if multiple users attempt to clone the same
-      // workspace at once;
-      // (2) the workspace identity can grant itself access at any time, so revoking the role
-      // doesn't protect us.
+    // Grant the database role (sourceDbName) to the workspace identity (sourceDbUser).
+    // In theory, we should be revoking this role after the operation is complete.
+    // We are choosing to *not* revoke this role for now, because:
+    // (1) we could run into concurrency issues if multiple users attempt to clone the same
+    // workspace at once;
+    // (2) the workspace identity can grant itself access at any time, so revoking the role
+    // doesn't protect us.
+    try {
       databaseDao.grantRole(sourceDbUser, targetDbName);
 
       List<String> commandList =
           generateCommandList("pg_restore", targetDbName, sourceDbHost, sourceDbPort, sourceDbUser);
-    Map<String, String> envVars = null;
-    try {
-      envVars = Map.of("PGPASSWORD", determinePassword());
-    } catch (PSQLException e) {
-      logger.error(e.getMessage());
-    }
-    LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
+      Map<String, String> envVars = null;
+      try {
+        envVars = Map.of("PGPASSWORD", determinePassword());
+      } catch (PSQLException e) {
+        logger.error(e.getMessage());
+      }
+      LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
       localProcessLauncher.launchProcess(commandList, envVars);
 
       logger.info("running DatabaseService.pgRestore: {}", String.join(" ", commandList));
@@ -174,8 +176,15 @@ public class DatabaseService {
           blobContainerName,
           blobstorageDetails);
 
+      // doCleanup isn't set to true until checkForError completes without throwing an exception
       checkForError(localProcessLauncher);
-
+      doCleanup = true;
+    } finally {
+      if (doCleanup) {
+        storage.deleteBlob(
+            pgDumpFilename, destinationWorkspaceId, blobContainerName, blobstorageDetails);
+      }
+    }
   }
 
   public List<String> generateCommandList(
