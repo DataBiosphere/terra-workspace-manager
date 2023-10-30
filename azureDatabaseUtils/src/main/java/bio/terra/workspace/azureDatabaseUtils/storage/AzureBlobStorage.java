@@ -35,7 +35,11 @@ public class AzureBlobStorage implements BlobStorage {
    */
   @Override
   public void streamOutputToBlobStorage(
-      InputStream fromStream, String blobName, String workspaceId, String blobContainerName, String blobstorageDetails) {
+      InputStream fromStream,
+      String blobName,
+      String workspaceId,
+      String blobContainerName,
+      String blobstorageDetails) {
     BlobContainerClient blobContainerClient =
         constructBlockBlobClient(workspaceId, blobContainerName, blobstorageDetails);
     // https://learn.microsoft.com/en-us/java/api/overview/azure/storage-blob-readme?view=azure-java-stable#upload-a-blob-via-an-outputstream
@@ -59,7 +63,11 @@ public class AzureBlobStorage implements BlobStorage {
 
   @Override
   public void streamInputFromBlobStorage(
-      OutputStream toStream, String blobName, String workspaceId, String blobContainerName, String blobstorageDetails) {
+      OutputStream toStream,
+      String blobName,
+      String workspaceId,
+      String blobContainerName,
+      String blobstorageDetails) {
     BlobContainerClient blobContainerClient =
         constructBlockBlobClient(workspaceId, blobContainerName, blobstorageDetails);
     try (toStream) {
