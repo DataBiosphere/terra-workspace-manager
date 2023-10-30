@@ -40,7 +40,6 @@ public class PgDumpDatabaseRunner implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) {
-    // should I reuse `newDbName`, or create a new param `cloneDbName`?
     databaseService.pgDump(
         sourceDbName,
         sourceDbHost,

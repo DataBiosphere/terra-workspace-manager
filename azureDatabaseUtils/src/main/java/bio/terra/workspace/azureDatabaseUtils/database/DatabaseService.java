@@ -1,5 +1,6 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
+import bio.terra.workspace.azureDatabaseUtils.process.LaunchProcessException;
 import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
 import bio.terra.workspace.azureDatabaseUtils.storage.BlobStorage;
 import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
@@ -100,34 +101,34 @@ public class DatabaseService {
       String blobstorageDetails) {
     logger.info("running DatabaseService.pgDump against {}", sourceDbName);
     logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
+
+    // Grant the database role (sourceDbName) to the landing zone identity (sourceDbUser).
+    // In theory, we should be revoking this role after the operation is complete.
+    // We are choosing to *not* revoke this role for now, because:
+    // (1) we could run into concurrency issues if multiple users attempt to clone the same
+    // workspace at once;
+    // (2) the workspace identity can grant itself access at any time, so revoking the role
+    // doesn't protect us.
+    databaseDao.grantRole(sourceDbUser, sourceDbName);
+
+    List<String> commandList =
+        generateCommandList("pg_dump", sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser);
+    Map<String, String> envVars = null;
     try {
-      // Grant the database role (sourceDbName) to the landing zone identity (sourceDbUser).
-      // In theory, we should be revoking this role after the operation is complete.
-      // We are choosing to *not* revoke this role for now, because:
-      // (1) we could run into concurrency issues if multiple users attempt to clone the same
-      // workspace at once;
-      // (2) the workspace identity can grant itself access at any time, so revoking the role
-      // doesn't protect us.
-      databaseDao.grantRole(sourceDbUser, sourceDbName);
-
-      List<String> commandList =
-          generateCommandList("pg_dump", sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser);
-      Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
-      LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
-      localProcessLauncher.launchProcess(commandList, envVars);
-
-      storage.streamOutputToBlobStorage(
-          localProcessLauncher.getInputStream(),
-          pgDumpFilename,
-          destinationWorkspaceId,
-          blobstorageDetails);
-
-      String output = checkForError(localProcessLauncher);
-      logger.info("pg_dump output: {}", output);
-
-    } catch (PSQLException ex) {
-      logger.error("process error: {}", ex.getMessage());
+      envVars = Map.of("PGPASSWORD", determinePassword());
+    } catch (PSQLException e) {
+      logger.error(e.getMessage());
     }
+    LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
+    localProcessLauncher.launchProcess(commandList, envVars);
+
+    storage.streamOutputToBlobStorage(
+        localProcessLauncher.getInputStream(),
+        pgDumpFilename,
+        destinationWorkspaceId,
+        blobstorageDetails);
+
+    checkForError(localProcessLauncher);
   }
 
   public List<String> generateCommandList(
@@ -154,7 +155,8 @@ public class DatabaseService {
     return commandList;
   }
 
-  private String checkForError(LocalProcessLauncher localProcessLauncher) {
+  private void checkForError(LocalProcessLauncher localProcessLauncher)
+      throws LaunchProcessException {
     // materialize only the first 1024 bytes of the error stream to ensure we don't DoS ourselves
     int errorLimit = 1024;
 
@@ -162,19 +164,20 @@ public class DatabaseService {
     if (exitCode != 0) {
       InputStream errorStream =
           localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
+
+      String errorMsg;
       try {
         String error = new String(errorStream.readNBytes(errorLimit)).trim();
-        logger.error("process error: {}", error);
-        return error;
+        errorMsg = "process error: " + error;
       } catch (IOException e) {
-        logger.warn(
-            "process failed with exit code {}, but encountered an exception reading the error output: {}",
-            exitCode,
-            e.getMessage());
-        return "Unknown error";
+        errorMsg =
+            "process failed with exit code "
+                + exitCode
+                + ", but encountered an exception reading the error output: "
+                + e.getMessage();
       }
+      throw new LaunchProcessException(errorMsg);
     }
-    return "";
   }
 
   private String determinePassword() throws PSQLException {
