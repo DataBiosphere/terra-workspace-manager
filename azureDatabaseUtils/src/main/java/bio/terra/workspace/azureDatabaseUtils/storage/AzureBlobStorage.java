@@ -35,9 +35,9 @@ public class AzureBlobStorage implements BlobStorage {
    */
   @Override
   public void streamOutputToBlobStorage(
-      InputStream fromStream, String blobName, String workspaceId, String blobstorageDetails) {
+      InputStream fromStream, String blobName, String workspaceId, String blobContainerName, String blobstorageDetails) {
     BlobContainerClient blobContainerClient =
-        constructBlockBlobClient(workspaceId, blobstorageDetails);
+        constructBlockBlobClient(workspaceId, blobContainerName, blobstorageDetails);
     // https://learn.microsoft.com/en-us/java/api/overview/azure/storage-blob-readme?view=azure-java-stable#upload-a-blob-via-an-outputstream
     try (BufferedOutputStream blobOS =
         new BufferedOutputStream(
@@ -59,9 +59,9 @@ public class AzureBlobStorage implements BlobStorage {
 
   @Override
   public void streamInputFromBlobStorage(
-      OutputStream toStream, String blobName, String workspaceId, String blobstorageDetails) {
+      OutputStream toStream, String blobName, String workspaceId, String blobContainerName, String blobstorageDetails) {
     BlobContainerClient blobContainerClient =
-        constructBlockBlobClient(workspaceId, blobstorageDetails);
+        constructBlockBlobClient(workspaceId, blobContainerName, blobstorageDetails);
     try (toStream) {
       blobContainerClient.getBlobClient(blobName).downloadStream(toStream);
     } catch (IOException ioEx) {
@@ -70,7 +70,7 @@ public class AzureBlobStorage implements BlobStorage {
   }
 
   private BlobContainerClient constructBlockBlobClient(
-      String workspaceId, String blobstorageDetails) {
+      String workspaceId, String blobContainerName, String blobstorageDetails) {
     // TODO: determine where blobstorageDetails should come from.
     // This implementation is 95% copied from WDS's, in which they call WSM's APIs to retrieve a url
     // with an included SAS token.
@@ -84,7 +84,7 @@ public class AzureBlobStorage implements BlobStorage {
       // the way storage containers are set up in a workspace are as follows:
       // billing project gets a single azure storage account
       // each workspace gets a container inside of that storage account to keep its data
-      return blobServiceClient.getBlobContainerClient("sc-" + workspaceId);
+      return blobServiceClient.getBlobContainerClient(blobContainerName);
     } catch (BlobStorageException e) {
       // if the default workspace container doesn't exist, something went horribly wrong
       logger.error("Default storage container missing for workspace id {}", workspaceId);

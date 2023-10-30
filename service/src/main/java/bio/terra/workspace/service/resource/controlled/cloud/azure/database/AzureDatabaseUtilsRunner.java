@@ -77,6 +77,7 @@ public class AzureDatabaseUtilsRunner {
   // Workflow cloning - TODO: which params can be reused?
   public static final String PARAM_DUMPFILE_NAME = "DUMPFILE_NAME";
   public static final String PARAM_DEST_WORKSPACE_ID = "DEST_WORKSPACE_ID";
+  public static final String PARAM_BLOB_CONTAINER_NAME = "BLOB_CONTAINER_NAME";
   public static final String PARAM_BLOBSTORAGE_DETAILS = "BLOBSTORAGE_DETAILS";
 
   private final AzureConfiguration azureConfig;
@@ -135,6 +136,7 @@ public class AzureDatabaseUtilsRunner {
       String dbUserName,
       String dumpfileName,
       String destinationWorkspaceId,
+      String blobContainerName,
       String blobstorageDetails)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
@@ -145,6 +147,7 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
             new V1EnvVar().name(PARAM_DUMPFILE_NAME).value(dumpfileName),
             new V1EnvVar().name(PARAM_DEST_WORKSPACE_ID).value(destinationWorkspaceId),
+            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName),
             new V1EnvVar().name(PARAM_BLOBSTORAGE_DETAILS).value(blobstorageDetails));
     runAzureDatabaseUtils(
         azureCloudContext,

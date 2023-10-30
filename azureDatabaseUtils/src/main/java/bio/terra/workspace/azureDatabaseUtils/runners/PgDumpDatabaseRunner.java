@@ -29,6 +29,9 @@ public class PgDumpDatabaseRunner implements ApplicationRunner {
   @Value("${env.params.destinationWorkspaceId}")
   private String destinationWorkspaceId;
 
+  @Value("${env.params.blobContainerName}")
+  private String blobContainerName;
+
   @Value("${env.params.blobstorageDetails}")
   private String blobstorageDetails;
 
@@ -47,6 +50,7 @@ public class PgDumpDatabaseRunner implements ApplicationRunner {
         sourceDbUser,
         dumpfileName,
         destinationWorkspaceId,
+        blobContainerName,
         blobstorageDetails);
   }
 }

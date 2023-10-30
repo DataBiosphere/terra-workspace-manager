@@ -98,6 +98,7 @@ public class DatabaseService {
       String sourceDbUser,
       String pgDumpFilename,
       String destinationWorkspaceId,
+      String blobContainerName,
       String blobstorageDetails) {
     logger.info("running DatabaseService.pgDump against {}", sourceDbName);
     logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
@@ -126,6 +127,7 @@ public class DatabaseService {
         localProcessLauncher.getInputStream(),
         pgDumpFilename,
         destinationWorkspaceId,
+        blobContainerName,
         blobstorageDetails);
 
     checkForError(localProcessLauncher);

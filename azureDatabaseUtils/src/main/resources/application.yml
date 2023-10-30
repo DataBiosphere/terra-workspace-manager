@@ -14,6 +14,7 @@ env:
     managedIdentityOid: ${MANAGED_IDENTITY_OID}
     dumpfileName: ${DUMPFILE_NAME}
     destinationWorkspaceId: ${DEST_WORKSPACE_ID}
+    blobContainerName: ${BLOB_CONTAINER_NAME}
     blobstorageDetails: ${BLOBSTORAGE_DETAILS}
 
 
