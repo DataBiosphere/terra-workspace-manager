@@ -64,12 +64,20 @@ public class DatabaseServiceTest extends BaseUnitTest {
 
   @Test
   void testGenerateCommandList() {
-    List<String> commandList =
+    List<String> pgDumpCommandList =
         databaseService.generateCommandList(
             "/test/pg_dump", "testdb", "http://host.org", "5432", "testuser");
-    String command = String.join(" ", commandList);
+    String pgDumpCommand = String.join(" ", pgDumpCommandList);
     assertThat(
-        command,
-        equalTo("/test/pg_dump -b -h http://host.org -p 5432 -U testuser -d testdb -v -w"));
+        pgDumpCommand,
+        equalTo("/test/pg_dump -b --no-privileges --no-owner -Ft -h http://host.org -p 5432 -U testuser -d testdb -v -w"));
+
+    List<String> pgRestoreCommandList =
+        databaseService.generateCommandList(
+            "/test/pg_restore", "testdb", "http://host.org", "5432", "testuser");
+    String pgRestoreCommand = String.join(" ", pgRestoreCommandList);
+    assertThat(
+        pgRestoreCommand,
+        equalTo("/test/pg_restore --role testdb --no-owner -Ft -h http://host.org -p 5432 -U testuser -d testdb -v -w"));
   }
 }
