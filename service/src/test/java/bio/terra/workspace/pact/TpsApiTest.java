@@ -1,17 +1,17 @@
 package bio.terra.workspace.pact;
 
-import static au.com.dius.pact.consumer.dsl.DslPart.UUID_REGEX;
+import static au.com.dius.pact.consumer.dsl.LambdaDsl.newJsonBody;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import au.com.dius.pact.consumer.MockServer;
+import au.com.dius.pact.consumer.dsl.PactBuilder;
 import au.com.dius.pact.consumer.dsl.PactDslJsonArray;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
-import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.V4Pact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import bio.terra.policy.model.*;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -35,6 +35,8 @@ import org.springframework.http.HttpStatus;
 @Tag("pact-test")
 @ExtendWith(PactConsumerTestExt.class)
 public class TpsApiTest {
+  private static final String UUID_REGEX =
+      "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
   // Note: the header must match exactly so pact doesn't add it's own
   // if "Content-type" is specified instead,
@@ -44,13 +46,10 @@ public class TpsApiTest {
   static Map<String, String> contentTypeJsonHeader = Map.of("Content-Type", "application/json");
 
   // The policy ids aren't significant - hardcoded instead of random to avoid changing the pact on
-  // every run
+  // every run; the provider must learn about (and stub for) these by inspecting the "id" arg passed
+  // in the state map alongside the given: "a policy with the given id exists"
   static UUID existingPolicyId = UUID.fromString("bea1edd0-a8e6-4d60-a613-e8e065f21616");
-  static String existingPolicyState = "an existing policy";
-  static String existingPolicyProviderStateValue = "${policyId}";
   static UUID secondPolicyId = UUID.fromString("a254714b-4519-4ce4-ad87-19a7143376f4");
-  static String secondPolicyState = "a second existing policy";
-  static String secondPolicyProviderStateValue = "${secondPolicyId}";
 
   // A regex that matches any value of CloudPlatform that has a tps string
   static String cloudPlatformTpsRegex =
@@ -108,8 +107,9 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact createPaoWithNoExistingPolicy(PactDslWithProvider builder) {
+  public V4Pact createPaoWithNoExistingPolicy(PactBuilder builder) {
     return builder
+        .usingLegacyDsl()
         .uponReceiving("A request to create a policy")
         .method("POST")
         .path("/api/policy/v1alpha1/pao")
@@ -117,7 +117,7 @@ public class TpsApiTest {
         .headers(contentTypeJsonHeader)
         .willRespondWith()
         .status(HttpStatus.OK.value())
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -132,9 +132,10 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact createPaoWithAPreexistingPolicy(PactDslWithProvider builder) {
+  public V4Pact createPaoWithAPreexistingPolicy(PactBuilder builder) {
     return builder
-        .given(existingPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
         .uponReceiving("A request to create a policy that already exists")
         .method("POST")
         .path("/api/policy/v1alpha1/pao")
@@ -142,7 +143,7 @@ public class TpsApiTest {
         .headers(contentTypeJsonHeader)
         .willRespondWith()
         .status(HttpStatus.CONFLICT.value())
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -162,17 +163,16 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact deletePaoThatExists(PactDslWithProvider builder) {
+  public V4Pact deletePaoThatExists(PactBuilder builder) {
     return builder
-        .given(existingPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
         .uponReceiving("A request to delete a policy")
         .method("DELETE")
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyProviderStateValue),
-            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
+        .path("/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -182,26 +182,25 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact getPaoWithAnExistingPolicy(PactDslWithProvider builder) {
+  public V4Pact getPaoWithAnExistingPolicy(PactBuilder builder) {
     var policyResponseShape =
         new PactDslJsonBody()
-            .valueFromProviderState("objectId", existingPolicyProviderStateValue, existingPolicyId)
+            .stringValue("objectId", existingPolicyId.toString())
             .stringMatcher("component", tpsComponentRegex)
             .stringMatcher("objectType", tpsObjectTypeRegex)
             .object("effectiveAttributes", tpsPolicyInputsObjectShape)
             .object("attributes", tpsPolicyInputsObjectShape);
 
     return builder
-        .given(existingPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
         .uponReceiving("A request to retrieve a policy")
         .method("GET")
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyProviderStateValue),
-            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
+        .path("/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(policyResponseShape)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -223,14 +222,15 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact getPaoThatDoesNotExist(PactDslWithProvider builder) {
+  public V4Pact getPaoThatDoesNotExist(PactBuilder builder) {
     return builder
+        .usingLegacyDsl()
         .uponReceiving("A request to retrieve a policy that doesn't exist")
         .method("GET")
         .matchPath("/api/policy/v1alpha1/pao/%s".formatted(UUID_REGEX))
         .willRespondWith()
         .status(HttpStatus.NOT_FOUND.value())
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -240,11 +240,10 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact linkPaoWhenBothExist(PactDslWithProvider builder) {
+  public V4Pact linkPaoWhenBothExist(PactBuilder builder) {
     var linkRequestShape =
         new PactDslJsonBody()
-            .valueFromProviderState(
-                "sourceObjectId", secondPolicyProviderStateValue, secondPolicyId)
+            .stringValue("sourceObjectId", secondPolicyId.toString())
             .stringMatcher("updateMode", updateModeRegex);
     var linkResponseShape =
         new PactDslJsonBody()
@@ -253,19 +252,18 @@ public class TpsApiTest {
             .object("resultingPao");
 
     return builder
-        .given(existingPolicyState)
-        .given(secondPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
+        .given("a policy with the given id exists", Map.of("id", secondPolicyId.toString()))
         .uponReceiving("A request to link the policies")
         .method("POST")
         .headers(contentTypeJsonHeader)
         .body(linkRequestShape)
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/$s/link".formatted(existingPolicyProviderStateValue),
-            "/api/policy/v1alpha1/pao/%s/link".formatted(existingPolicyId))
+        .path("/api/policy/v1alpha1/pao/%s/link".formatted(existingPolicyId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(linkResponseShape)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -276,12 +274,10 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact mergePaoWhenBothExist(PactDslWithProvider builder) {
+  public V4Pact mergePaoWhenBothExist(PactBuilder builder) {
     var linkRequestShape =
         new PactDslJsonBody()
-            .valueFromProviderState(
-                "sourceObjectId", secondPolicyProviderStateValue, secondPolicyId)
-            .stringMatcher("sourceObjectId", UUID_REGEX)
+            .stringValue("sourceObjectId", secondPolicyId.toString())
             .stringMatcher("updateMode", updateModeRegex);
     var linkResponseShape =
         new PactDslJsonBody()
@@ -290,19 +286,18 @@ public class TpsApiTest {
             .object("resultingPao");
 
     return builder
-        .given(existingPolicyState)
-        .given(secondPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
+        .given("a policy with the given id exists", Map.of("id", secondPolicyId.toString()))
         .uponReceiving("A request to link the policies")
         .method("POST")
         .headers(contentTypeJsonHeader)
         .body(linkRequestShape)
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/%s/merge".formatted(existingPolicyProviderStateValue),
-            "/api/policy/v1alpha1/pao/%s/merge".formatted(existingPolicyId))
+        .path("/api/policy/v1alpha1/pao/%s/merge".formatted(existingPolicyId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(linkResponseShape)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -314,7 +309,7 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact replacePaoThatExists(PactDslWithProvider builder) {
+  public V4Pact replacePaoThatExists(PactBuilder builder) {
     var updateRequestShape =
         new PactDslJsonBody()
             .object("newAttributes", tpsPolicyInputsObjectShape)
@@ -325,18 +320,17 @@ public class TpsApiTest {
             .object("conflicts", new PactDslJsonArray())
             .object("resultingPao"); // TpsPaoGetResult
     return builder
-        .given(existingPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
         .uponReceiving("A request to update a policy")
         .method("PUT")
         .body(updateRequestShape)
         .headers(contentTypeJsonHeader)
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyProviderStateValue),
-            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
+        .path("/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(updateResponseShape)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -350,7 +344,7 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact updatePaoPreexistingNoConflicts(PactDslWithProvider builder) {
+  public V4Pact updatePaoPreexistingNoConflicts(PactBuilder builder) {
     var updateRequestShape =
         new PactDslJsonBody()
             .object("addAttributes", tpsPolicyInputsObjectShape)
@@ -362,18 +356,17 @@ public class TpsApiTest {
             .object("conflicts", new PactDslJsonArray())
             .object("resultingPao"); // TpsPaoGetResult
     return builder
-        .given(existingPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
         .uponReceiving("A request to update a policy")
         .method("PATCH")
         .body(updateRequestShape)
         .headers(contentTypeJsonHeader)
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyProviderStateValue),
-            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
+        .path("/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(updateResponseShape)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -390,19 +383,18 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact listValidRegions(PactDslWithProvider builder) {
+  public V4Pact listValidRegions(PactBuilder builder) {
     return builder
-        .given(existingPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
         .uponReceiving("A request to list the valid regions for a policy using the id")
         .method("GET")
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/region/%s/list-valid".formatted(existingPolicyProviderStateValue),
-            "/api/policy/v1alpha1/region/%s/list-valid".formatted(existingPolicyId))
+        .path("/api/policy/v1alpha1/region/%s/list-valid".formatted(existingPolicyId))
         .matchQuery("platform", cloudPlatformTpsRegex)
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(new PactDslJsonArray().stringType())
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -413,9 +405,10 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact listValidByPolicyInput(PactDslWithProvider builder) {
+  public V4Pact listValidByPolicyInput(PactBuilder builder) {
     return builder
-        .given(existingPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
         .uponReceiving("A request to list the valid regions for a policy using policy input")
         .method("POST")
         .body(tpsPolicyInputsObjectShape)
@@ -425,7 +418,7 @@ public class TpsApiTest {
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(new PactDslJsonArray().stringType())
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -444,27 +437,30 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact explainingAWorkspacePolicy(PactDslWithProvider builder) {
+  public V4Pact explainingAWorkspacePolicy(PactBuilder builder) {
     var explainResponse =
         new PactDslJsonBody()
             .numberType("depth")
-            .valueFromProviderState(
-                "objectId", existingPolicyProviderStateValue, existingPolicyId.toString())
+            .stringValue("objectId", existingPolicyId.toString())
             .object(
                 "policyInput",
-                new PactDslJsonBody().stringType("namespace").stringType("name").closeObject());
+                newJsonBody(
+                        input -> {
+                          input.stringType("namespace");
+                          input.stringType("name");
+                        })
+                    .build());
     return builder
-        .given(existingPolicyState)
+        .usingLegacyDsl()
+        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
         .uponReceiving("A request to explain the policy")
         .method("GET")
-        .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/%s/explain".formatted(existingPolicyProviderStateValue),
-            "/api/policy/v1alpha1/pao/%s/explain".formatted(existingPolicyId))
+        .path("/api/policy/v1alpha1/pao/%s/explain".formatted(existingPolicyId))
         .matchQuery("depth", "\\d+")
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(explainResponse)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -485,7 +481,7 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact getLocationInfo(PactDslWithProvider builder) {
+  public V4Pact getLocationInfo(PactBuilder builder) {
     var locationArray =
         new PactDslJsonArray()
             .eachArrayLike()
@@ -501,6 +497,7 @@ public class TpsApiTest {
             .object("regions", new PactDslJsonArray().stringType())
             .object("locations", locationArray);
     return builder
+        .usingLegacyDsl()
         .uponReceiving("A request for information about a location")
         .method("GET")
         .path("/api/policy/v1alpha1/location")
@@ -509,7 +506,7 @@ public class TpsApiTest {
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(responseShape)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
@@ -520,7 +517,7 @@ public class TpsApiTest {
   }
 
   @Pact(consumer = "wsm", provider = "tps")
-  public RequestResponsePact getLocationInfoWithNullLocation(PactDslWithProvider builder) {
+  public V4Pact getLocationInfoWithNullLocation(PactBuilder builder) {
     var locationArray =
         new PactDslJsonArray()
             .eachArrayLike()
@@ -536,6 +533,7 @@ public class TpsApiTest {
             .object("regions", new PactDslJsonArray().stringType())
             .object("locations", locationArray);
     return builder
+        .usingLegacyDsl()
         .uponReceiving("A request for information about a null location")
         .method("GET")
         .path("/api/policy/v1alpha1/location")
@@ -543,7 +541,7 @@ public class TpsApiTest {
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(responseShape)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test

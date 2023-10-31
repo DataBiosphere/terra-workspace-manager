@@ -20,9 +20,9 @@ public class TpsRetry {
 
   // The retry function starts with INITIAL_WAIT between retries, and doubles that until it
   // reaches MAXIMUM_WAIT, after which all retries are MAXIMUM_WAIT apart.
-  private static final Duration MAXIMUM_WAIT = Duration.ofSeconds(30);
-  private static final Duration INITIAL_WAIT = Duration.ofSeconds(10);
-  private static final Duration OPERATION_TIMEOUT = Duration.ofSeconds(300);
+  private static final Duration MAXIMUM_WAIT = Duration.ofSeconds(1);
+  private static final Duration INITIAL_WAIT = Duration.ofSeconds(1);
+  private static final Duration OPERATION_TIMEOUT = Duration.ofSeconds(1);
 
   // Tps calls which timeout will throw ApiExceptions wrapping SocketTimeoutExceptions and will have
   // an errorCode 0. This isn't a real HTTP status code, but we can check for it anyway.

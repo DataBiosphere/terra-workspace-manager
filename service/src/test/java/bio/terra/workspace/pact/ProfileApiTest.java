@@ -3,11 +3,11 @@ package bio.terra.workspace.pact;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import au.com.dius.pact.consumer.MockServer;
+import au.com.dius.pact.consumer.dsl.PactBuilder;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
-import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.V4Pact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -32,7 +32,7 @@ public class ProfileApiTest {
   static final String dummyGCPProfileId = "37bfb7e0-8261-4160-9ae7-882800d6464f";
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
-  public RequestResponsePact existingAzureBillingProfile(PactDslWithProvider builder) {
+  public V4Pact existingAzureBillingProfile(PactBuilder builder) {
     var billingProfileResponseShape =
         new PactDslJsonBody()
             .stringValue("cloudPlatform", CloudPlatform.AZURE.toSql())
@@ -41,6 +41,7 @@ public class ProfileApiTest {
             .stringType("managedResourceGroupId")
             .uuid("id");
     return builder
+        .usingLegacyDsl()
         .given("an Azure billing profile")
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
@@ -53,17 +54,18 @@ public class ProfileApiTest {
         .willRespondWith()
         .status(200)
         .body(billingProfileResponseShape)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
-  public RequestResponsePact existingGCPBillingProfile(PactDslWithProvider builder) {
+  public V4Pact existingGCPBillingProfile(PactBuilder builder) {
     var billingProfileResponseShape =
         new PactDslJsonBody()
             .stringValue("cloudPlatform", CloudPlatform.GCP.toSql())
             .stringType("billingAccountId")
             .uuid("id");
     return builder
+        .usingLegacyDsl()
         .given("a GCP billing profile")
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
@@ -73,19 +75,20 @@ public class ProfileApiTest {
         .willRespondWith()
         .status(200)
         .body(billingProfileResponseShape)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
-  public RequestResponsePact billingProfileUnAvailable(PactDslWithProvider builder) {
+  public V4Pact billingProfileUnAvailable(PactBuilder builder) {
     return builder
+        .usingLegacyDsl()
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
         // there's no state set on this pact, so this id won't exist in bpm
         .path(String.format("/api/profiles/v1/%s", dummyAzureProfileId))
         .willRespondWith()
         .status(403)
-        .toPact();
+        .toPact(V4Pact.class);
   }
 
   @Test
