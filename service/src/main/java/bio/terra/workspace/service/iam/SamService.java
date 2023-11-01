@@ -10,6 +10,8 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
@@ -21,6 +23,9 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
+import com.azure.core.credential.AccessToken;
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.credential.TokenRequestContext;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -63,6 +68,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+import static bio.terra.workspace.common.utils.AzureUtils.getManagedAppCredentials;
+
 /**
  * SamService encapsulates logic for interacting with Sam. HTTP Statuses returned by Sam are
  * interpreted by the functions in this class.
@@ -82,12 +89,16 @@ public class SamService {
   private final SamConfiguration samConfig;
   private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
+  private final FeatureConfiguration features;
+  private final AzureConfiguration azureConfiguration;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, SamUserFactory samUserFactory) {
+  public SamService(SamConfiguration samConfig, FeatureConfiguration features, AzureConfiguration azureConfiguration, SamUserFactory samUserFactory) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
+    this.features = features;
+    this.azureConfiguration = azureConfiguration;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -149,10 +160,21 @@ public class SamService {
   @VisibleForTesting
   public String getWsmServiceAccountToken() {
     try {
-      GoogleCredentials creds =
-          GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
-      creds.refreshIfExpired();
-      return creds.getAccessToken().getTokenValue();
+      if (features.isAzureControlPlaneEnabled())
+      {
+        TokenCredential credential = getManagedAppCredentials(azureConfiguration);
+        AccessToken token = credential.getToken(new TokenRequestContext().addScopes((String[])SAM_OAUTH_SCOPES.toArray())).block();
+        String s = token.getToken();
+        System.out.println("TOKEN " + s);
+        return s;
+      }
+      else
+      {
+        GoogleCredentials creds =
+                GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
+        creds.refreshIfExpired();
+        return creds.getAccessToken().getTokenValue();
+      }
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
     }

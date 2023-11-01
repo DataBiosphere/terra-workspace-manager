@@ -24,6 +24,9 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.credential.TokenCredential;
+import com.azure.core.credential.TokenRequestContext;
+import com.azure.core.http.policy.HttpLogDetailLevel;
+import com.azure.core.http.policy.HttpLogOptions;
 import com.azure.core.http.policy.UserAgentPolicy;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
@@ -64,6 +67,9 @@ import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import static bio.terra.workspace.common.utils.AzureUtils.getAzureProfile;
+import static bio.terra.workspace.common.utils.AzureUtils.getManagedAppCredentials;
 
 @Component
 public class CrlService {
@@ -263,6 +269,7 @@ public class CrlService {
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
+
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
             bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
@@ -550,23 +557,6 @@ public class CrlService {
               .build());
     }
     return builder.build();
-  }
-
-  //  Azure Support
-
-  private TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
-    return new ClientSecretCredentialBuilder()
-        .clientId(azureConfig.getManagedAppClientId())
-        .clientSecret(azureConfig.getManagedAppClientSecret())
-        .tenantId(azureConfig.getManagedAppTenantId())
-        .build();
-  }
-
-  private AzureProfile getAzureProfile(AzureCloudContext azureCloudContext) {
-    return new AzureProfile(
-        azureCloudContext.getAzureTenantId(),
-        azureCloudContext.getAzureSubscriptionId(),
-        AzureEnvironment.AZURE);
   }
 
   @VisibleForTesting
