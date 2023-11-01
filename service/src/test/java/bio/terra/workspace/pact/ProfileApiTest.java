@@ -3,11 +3,12 @@ package bio.terra.workspace.pact;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import au.com.dius.pact.consumer.MockServer;
-import au.com.dius.pact.consumer.dsl.PactBuilder;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
+import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
-import au.com.dius.pact.core.model.V4Pact;
+import au.com.dius.pact.core.model.PactSpecVersion;
+import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -32,7 +33,7 @@ public class ProfileApiTest {
   static final String dummyGCPProfileId = "37bfb7e0-8261-4160-9ae7-882800d6464f";
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
-  public V4Pact existingAzureBillingProfile(PactBuilder builder) {
+  public RequestResponsePact existingAzureBillingProfile(PactDslWithProvider builder) {
     var billingProfileResponseShape =
         new PactDslJsonBody()
             .stringValue("cloudPlatform", CloudPlatform.AZURE.toSql())
@@ -41,7 +42,6 @@ public class ProfileApiTest {
             .stringType("managedResourceGroupId")
             .uuid("id");
     return builder
-        .usingLegacyDsl()
         .given("an Azure billing profile")
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
@@ -54,18 +54,17 @@ public class ProfileApiTest {
         .willRespondWith()
         .status(200)
         .body(billingProfileResponseShape)
-        .toPact(V4Pact.class);
+        .toPact();
   }
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
-  public V4Pact existingGCPBillingProfile(PactBuilder builder) {
+  public RequestResponsePact existingGCPBillingProfile(PactDslWithProvider builder) {
     var billingProfileResponseShape =
         new PactDslJsonBody()
             .stringValue("cloudPlatform", CloudPlatform.GCP.toSql())
             .stringType("billingAccountId")
             .uuid("id");
     return builder
-        .usingLegacyDsl()
         .given("a GCP billing profile")
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
@@ -75,24 +74,23 @@ public class ProfileApiTest {
         .willRespondWith()
         .status(200)
         .body(billingProfileResponseShape)
-        .toPact(V4Pact.class);
+        .toPact();
   }
 
   @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
-  public V4Pact billingProfileUnAvailable(PactBuilder builder) {
+  public RequestResponsePact billingProfileUnAvailable(PactDslWithProvider builder) {
     return builder
-        .usingLegacyDsl()
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
         // there's no state set on this pact, so this id won't exist in bpm
         .path(String.format("/api/profiles/v1/%s", dummyAzureProfileId))
         .willRespondWith()
         .status(403)
-        .toPact(V4Pact.class);
+        .toPact();
   }
 
   @Test
-  @PactTestFor(pactMethod = "existingAzureBillingProfile")
+  @PactTestFor(pactMethod = "existingAzureBillingProfile", pactVersion = PactSpecVersion.V3)
   public void testAuthorizingLinkingOfAnAzureProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 
@@ -109,7 +107,7 @@ public class ProfileApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "existingGCPBillingProfile")
+  @PactTestFor(pactMethod = "existingGCPBillingProfile", pactVersion = PactSpecVersion.V3)
   public void testAuthorizingLinkingOfGCPProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 
@@ -126,7 +124,7 @@ public class ProfileApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "billingProfileUnAvailable")
+  @PactTestFor(pactMethod = "billingProfileUnAvailable", pactVersion = PactSpecVersion.V3)
   public void testAuthorizingLinkingOfAnNonexistantProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 
