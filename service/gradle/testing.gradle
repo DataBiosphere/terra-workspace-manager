@@ -212,3 +212,19 @@ task pactTests(type: Test) {
   environment.put('pact.provider.version', "$project.version")
 }
 
+
+// verify the provider side of pacts WSM has with other services
+task verifyPacts(type: Test) {
+    useJUnitPlatform {
+        includeTags "pact-verification"
+    }
+
+    // to run a local pactbroker, see:
+    // https://broadworkbench.atlassian.net/wiki/spaces/IRT/pages/2829680649/Contract+Test+Local+Development
+    if (System.getenv().containsKey('PACT_BROKER_URL')) {
+        systemProperty 'pactbroker.url', System.getenv('PACT_BROKER_URL')
+    }
+    systemProperty 'pact.provider.version', System.getenv('PACT_PROVIDER_COMMIT')
+    systemProperty 'pact.provider.branch', System.getenv('PACT_PROVIDER_BRANCH')
+    systemProperty 'pact.verifier.publishResults', true
+}
