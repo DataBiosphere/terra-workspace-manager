@@ -7,6 +7,6 @@ FROM us.gcr.io/broad-dsp-gcr-public/base/jre:17-debian
 
 # Add postgres client for pg_dump command and clean up
 RUN apt-get update  \
-    && apt-get install postgresql-client -y --no-install-recommends \
+    && apt-get install postgresql-client-14 -y --no-install-recommends \
     && apt-get clean  \
     && rm -rf /var/lib/apt/lists/*
