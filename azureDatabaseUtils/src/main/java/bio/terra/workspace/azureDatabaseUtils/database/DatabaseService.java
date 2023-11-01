@@ -100,8 +100,6 @@ public class DatabaseService {
       String destinationWorkspaceId,
       String blobContainerName,
       String blobstorageDetails) {
-    logger.info("running DatabaseService.pgDump against {}", sourceDbName);
-    logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
 
     // Grant the database role (sourceDbName) to the landing zone identity (sourceDbUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -120,6 +118,10 @@ public class DatabaseService {
     } catch (PSQLException e) {
       logger.error(e.getMessage());
     }
+
+    logger.info("running DatabaseService.pgDump: {}", String.join(" ", commandList));
+    logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
+
     LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
     localProcessLauncher.launchProcess(commandList, envVars);
 
