@@ -243,6 +243,7 @@ public class DatabaseService {
       }
       throw new LaunchProcessException(errorMsg);
     }
+    logger.info("localProcessLauncher terminated with exit code {}", exitCode);
   }
 
   private String determinePassword() throws PSQLException {
