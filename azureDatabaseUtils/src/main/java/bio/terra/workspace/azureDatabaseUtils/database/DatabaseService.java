@@ -197,14 +197,12 @@ public class DatabaseService {
     if (pgCommandPath.contains("pg_dump")) {
       command.put("-b", null);
       command.put("--no-privileges", null);
-      command.put("-Fc", null);
-      command.put("-Z", "1");
     }
     if (pgCommandPath.contains("pg_restore")) {
-      command.put("-Fc", null);
       command.put("--role", dbName);
     }
     command.put("--no-owner", null);
+    command.put("-Ft", null);
     command.put("-h", dbHost);
     command.put("-p", dbPort);
     command.put("-U", dbUser);
