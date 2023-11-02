@@ -224,7 +224,7 @@ public class DatabaseService {
   private void checkForError(LocalProcessLauncher localProcessLauncher)
       throws LaunchProcessException {
     // materialize only the first 1024 bytes of the error stream to ensure we don't DoS ourselves
-    int errorLimit = 1024;
+    int errorLimit = 1024000;
 
     int exitCode = localProcessLauncher.waitForTerminate();
     if (exitCode != 0) {
