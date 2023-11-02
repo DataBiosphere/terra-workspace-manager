@@ -1,6 +1,7 @@
 package bio.terra.workspace.azureDatabaseUtils.runners;
 
 import bio.terra.workspace.azureDatabaseUtils.database.DatabaseService;
+import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -39,7 +40,7 @@ public class PgRestoreDatabaseRunner implements ApplicationRunner {
   }
 
   @Override
-  public void run(ApplicationArguments args) {
+  public void run(ApplicationArguments args) throws PSQLException {
     databaseService.pgRestore(
         dbName,
         dbHost,

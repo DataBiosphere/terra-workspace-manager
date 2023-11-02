@@ -139,7 +139,7 @@ public class DatabaseService {
       String adminUser,
       String blobFileName,
       String blobContainerName,
-      String blobContainerUrlAuthenticated) {
+      String blobContainerUrlAuthenticated) throws PSQLException {
 
     boolean doCleanup = false;
 
@@ -155,11 +155,7 @@ public class DatabaseService {
 
       List<String> commandList = generateCommandList("psql", dbName, dbHost, dbPort, adminUser);
       Map<String, String> envVars = null;
-      try {
-        envVars = Map.of("PGPASSWORD", determinePassword());
-      } catch (PSQLException e) {
-        logger.error(e.getMessage());
-      }
+      envVars = Map.of("PGPASSWORD", determinePassword());
       LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
       localProcessLauncher.launchProcess(commandList, envVars);
 
@@ -235,7 +231,6 @@ public class DatabaseService {
       }
       throw new LaunchProcessException(errorMsg);
     }
-    logger.info("localProcessLauncher terminated with exit code {}", exitCode);
   }
 
   private String determinePassword() throws PSQLException {
