@@ -32,7 +32,7 @@ public class ProfileApiTest {
   static final String dummyAzureProfileId = "4a5afeaa-b3b2-fa51-8e4e-9dbf294b7837";
   static final String dummyGCPProfileId = "37bfb7e0-8261-4160-9ae7-882800d6464f";
 
-  @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
+  @Pact(consumer = "workspacemanager", provider = "bpm")
   public RequestResponsePact existingAzureBillingProfile(PactDslWithProvider builder) {
     var billingProfileResponseShape =
         new PactDslJsonBody()
@@ -57,7 +57,7 @@ public class ProfileApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
+  @Pact(consumer = "workspacemanager", provider = "bpm")
   public RequestResponsePact existingGCPBillingProfile(PactDslWithProvider builder) {
     var billingProfileResponseShape =
         new PactDslJsonBody()
@@ -77,7 +77,7 @@ public class ProfileApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
+  @Pact(consumer = "workspacemanager", provider = "bpm")
   public RequestResponsePact billingProfileUnAvailable(PactDslWithProvider builder) {
     return builder
         .uponReceiving("A request to retrieve a billing profile")

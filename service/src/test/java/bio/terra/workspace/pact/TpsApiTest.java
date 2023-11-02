@@ -110,7 +110,7 @@ public class TpsApiTest {
     dispatch = new TpsApiDispatch(featureConfig, tpsConfig);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact createPaoWithNoExistingPolicy(PactDslWithProvider builder) {
     return builder
         .uponReceiving("A request to create a policy")
@@ -134,7 +134,7 @@ public class TpsApiTest {
         TpsObjectType.WORKSPACE);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact createPaoWithAPreexistingPolicy(PactDslWithProvider builder) {
     return builder
         .given(existingPolicyState)
@@ -164,7 +164,7 @@ public class TpsApiTest {
                 TpsObjectType.WORKSPACE));
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact deletePaoThatExists(PactDslWithProvider builder) {
     return builder
         .given(existingPolicyState)
@@ -184,7 +184,7 @@ public class TpsApiTest {
     dispatch.deletePao(existingPolicyId);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact getPaoWithAnExistingPolicy(PactDslWithProvider builder) {
     var policyResponseShape =
         new PactDslJsonBody()
@@ -226,7 +226,7 @@ public class TpsApiTest {
     assertFalse(policy.getNamespace().isEmpty());
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact getPaoThatDoesNotExist(PactDslWithProvider builder) {
     return builder
         .uponReceiving("A request to retrieve a policy that doesn't exist")
@@ -243,7 +243,7 @@ public class TpsApiTest {
     assertThrows(PolicyServiceNotFoundException.class, () -> dispatch.getPao(existingPolicyId));
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact linkPaoWhenBothExist(PactDslWithProvider builder) {
     var linkRequestShape =
         new PactDslJsonBody()
@@ -280,7 +280,7 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact mergePaoWhenBothExist(PactDslWithProvider builder) {
     var linkRequestShape =
         new PactDslJsonBody()
@@ -318,7 +318,7 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact replacePaoThatExists(PactDslWithProvider builder) {
     var updateRequestShape =
         new PactDslJsonBody()
@@ -354,7 +354,7 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact updatePaoPreexistingNoConflicts(PactDslWithProvider builder) {
     var updateRequestShape =
         new PactDslJsonBody()
@@ -394,7 +394,7 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact listValidRegions(PactDslWithProvider builder) {
     return builder
         .given(existingPolicyState)
@@ -417,7 +417,7 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact listValidByPolicyInput(PactDslWithProvider builder) {
     return builder
         .given(existingPolicyState)
@@ -448,7 +448,7 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact explainingAWorkspacePolicy(PactDslWithProvider builder) {
     var explainResponse =
         new PactDslJsonBody()
@@ -494,7 +494,7 @@ public class TpsApiTest {
     assertNotNull(result.toApi());
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact getLocationInfo(PactDslWithProvider builder) {
     var locationArray =
         new PactDslJsonArray()
@@ -529,7 +529,7 @@ public class TpsApiTest {
     assertNotNull(result);
   }
 
-  @Pact(consumer = "wsm", provider = "tps")
+  @Pact(consumer = "workspacemanager", provider = "tps")
   public RequestResponsePact getLocationInfoWithNullLocation(PactDslWithProvider builder) {
     var locationArray =
         new PactDslJsonArray()
