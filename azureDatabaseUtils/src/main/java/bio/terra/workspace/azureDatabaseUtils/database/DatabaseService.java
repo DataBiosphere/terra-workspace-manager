@@ -180,6 +180,7 @@ public class DatabaseService {
 
       // doCleanup isn't set to true until checkForError completes without throwing an exception
       checkForError(localProcessLauncher);
+      databaseDao.reassignOwner(sourceDbUser, targetDbName);
       doCleanup = true;
     } finally {
       if (doCleanup) {
