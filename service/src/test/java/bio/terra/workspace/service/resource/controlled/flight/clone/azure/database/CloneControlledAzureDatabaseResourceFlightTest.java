@@ -37,7 +37,7 @@ public class CloneControlledAzureDatabaseResourceFlightTest extends BaseAzureCon
         new AuthenticatedUserRequest().token(Optional.of("token"));
 
     @Test
-    void cloneControlledAzureStorageContainer_overridesExistingResourceCloningInstructions()
+    void cloneControlledAzureDatabase_dummy()
         throws InterruptedException {
 
         UUID workspaceId = UUID.randomUUID();
