@@ -79,7 +79,6 @@ public class DatabaseServiceTest extends BaseUnitTest {
     String pgRestoreCommand = String.join(" ", pgRestoreCommandList);
     assertThat(
         pgRestoreCommand,
-        equalTo(
-            "/test/psql -h http://host.org -p 5432 -U testuser -d testdb -v -w"));
+        equalTo("/test/psql -h http://host.org -p 5432 -U testuser -d testdb -v -w"));
   }
 }
