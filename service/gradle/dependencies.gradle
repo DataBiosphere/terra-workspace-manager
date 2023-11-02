@@ -115,7 +115,7 @@ dependencies {
   testImplementation "org.testcontainers:postgresql:1.17.5"
 
   // pact
-  testImplementation 'au.com.dius.pact.consumer:junit5:4.1.7'
+  testImplementation 'au.com.dius.pact.consumer:junit5:4.3.19'
 
   annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
   annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.6.6"

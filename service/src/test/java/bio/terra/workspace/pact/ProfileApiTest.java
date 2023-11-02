@@ -7,6 +7,7 @@ import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
+import au.com.dius.pact.core.model.PactSpecVersion;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
@@ -89,7 +90,7 @@ public class ProfileApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "existingAzureBillingProfile")
+  @PactTestFor(pactMethod = "existingAzureBillingProfile", pactVersion = PactSpecVersion.V3)
   public void testAuthorizingLinkingOfAnAzureProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 
@@ -106,7 +107,7 @@ public class ProfileApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "existingGCPBillingProfile")
+  @PactTestFor(pactMethod = "existingGCPBillingProfile", pactVersion = PactSpecVersion.V3)
   public void testAuthorizingLinkingOfGCPProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 
@@ -123,7 +124,7 @@ public class ProfileApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "billingProfileUnAvailable")
+  @PactTestFor(pactMethod = "billingProfileUnAvailable", pactVersion = PactSpecVersion.V3)
   public void testAuthorizingLinkingOfAnNonexistantProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 

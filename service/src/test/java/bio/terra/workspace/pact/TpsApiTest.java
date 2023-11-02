@@ -1,6 +1,6 @@
 package bio.terra.workspace.pact;
 
-import static au.com.dius.pact.consumer.dsl.DslPart.UUID_REGEX;
+import static au.com.dius.pact.consumer.dsl.LambdaDsl.newJsonBody;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -11,6 +11,7 @@ import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
+import au.com.dius.pact.core.model.PactSpecVersion;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import bio.terra.policy.model.*;
@@ -35,6 +36,8 @@ import org.springframework.http.HttpStatus;
 @Tag("pact-test")
 @ExtendWith(PactConsumerTestExt.class)
 public class TpsApiTest {
+  private static final String UUID_REGEX =
+      "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
   // Note: the header must match exactly so pact doesn't add it's own
   // if "Content-type" is specified instead,
@@ -121,7 +124,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "createPaoWithNoExistingPolicy")
+  @PactTestFor(pactMethod = "createPaoWithNoExistingPolicy", pactVersion = PactSpecVersion.V3)
   public void testCreatingAPolicyWithNoExistingPolicy() throws Exception {
     dispatch.createPao(
         UUID.randomUUID(),
@@ -146,7 +149,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "createPaoWithAPreexistingPolicy")
+  @PactTestFor(pactMethod = "createPaoWithAPreexistingPolicy", pactVersion = PactSpecVersion.V3)
   public void creatingAPolicyThatAlreadyExists() {
     assertThrows(
         PolicyConflictException.class,
@@ -176,7 +179,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "deletePaoThatExists")
+  @PactTestFor(pactMethod = "deletePaoThatExists", pactVersion = PactSpecVersion.V3)
   public void deletingAnExistingPolicy() throws Exception {
     dispatch.deletePao(existingPolicyId);
   }
@@ -185,7 +188,8 @@ public class TpsApiTest {
   public RequestResponsePact getPaoWithAnExistingPolicy(PactDslWithProvider builder) {
     var policyResponseShape =
         new PactDslJsonBody()
-            .valueFromProviderState("objectId", existingPolicyProviderStateValue, existingPolicyId)
+            .valueFromProviderState(
+                "objectId", existingPolicyProviderStateValue, existingPolicyId.toString())
             .stringMatcher("component", tpsComponentRegex)
             .stringMatcher("objectType", tpsObjectTypeRegex)
             .object("effectiveAttributes", tpsPolicyInputsObjectShape)
@@ -205,7 +209,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "getPaoWithAnExistingPolicy")
+  @PactTestFor(pactMethod = "getPaoWithAnExistingPolicy", pactVersion = PactSpecVersion.V3)
   public void retrievingAnExistingPolicy() throws Exception {
     var result = dispatch.getPao(existingPolicyId);
     assertNotNull(result);
@@ -234,7 +238,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "getPaoThatDoesNotExist")
+  @PactTestFor(pactMethod = "getPaoThatDoesNotExist", pactVersion = PactSpecVersion.V3)
   public void retrievingAPolicyThatDoesNotExist() {
     assertThrows(PolicyServiceNotFoundException.class, () -> dispatch.getPao(existingPolicyId));
   }
@@ -245,6 +249,7 @@ public class TpsApiTest {
         new PactDslJsonBody()
             .valueFromProviderState(
                 "sourceObjectId", secondPolicyProviderStateValue, secondPolicyId)
+            .stringMatcher("sourceObjectId", UUID_REGEX)
             .stringMatcher("updateMode", updateModeRegex);
     var linkResponseShape =
         new PactDslJsonBody()
@@ -260,7 +265,7 @@ public class TpsApiTest {
         .headers(contentTypeJsonHeader)
         .body(linkRequestShape)
         .pathFromProviderState(
-            "/api/policy/v1alpha1/pao/$s/link".formatted(existingPolicyProviderStateValue),
+            "/api/policy/v1alpha1/pao/%s/link".formatted(existingPolicyProviderStateValue),
             "/api/policy/v1alpha1/pao/%s/link".formatted(existingPolicyId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
@@ -269,7 +274,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "linkPaoWhenBothExist")
+  @PactTestFor(pactMethod = "linkPaoWhenBothExist", pactVersion = PactSpecVersion.V3)
   public void linkTwoExistingPaosWithNoConflicts() throws Exception {
     var result = dispatch.linkPao(existingPolicyId, secondPolicyId, TpsUpdateMode.FAIL_ON_CONFLICT);
     assertNotNull(result);
@@ -306,7 +311,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "mergePaoWhenBothExist")
+  @PactTestFor(pactMethod = "mergePaoWhenBothExist", pactVersion = PactSpecVersion.V3)
   public void mergingTwoExistingPaos() throws Exception {
     var result =
         dispatch.mergePao(existingPolicyId, secondPolicyId, TpsUpdateMode.FAIL_ON_CONFLICT);
@@ -340,7 +345,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "replacePaoThatExists")
+  @PactTestFor(pactMethod = "replacePaoThatExists", pactVersion = PactSpecVersion.V3)
   public void replacingAnExistingPaoWithNoConflicts() throws Exception {
     var newInputs =
         new TpsPolicyInputs()
@@ -377,7 +382,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "updatePaoPreexistingNoConflicts")
+  @PactTestFor(pactMethod = "updatePaoPreexistingNoConflicts", pactVersion = PactSpecVersion.V3)
   public void updatingAnExistingPaoWithNoConflicts() throws Exception {
     var remove =
         new TpsPolicyInputs()
@@ -406,7 +411,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "listValidRegions")
+  @PactTestFor(pactMethod = "listValidRegions", pactVersion = PactSpecVersion.V3)
   public void listingValidRegionsOnAWorkspace() throws Exception {
     var result = dispatch.listValidRegions(existingPolicyId, CloudPlatform.AZURE);
     assertNotNull(result);
@@ -429,7 +434,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "listValidByPolicyInput")
+  @PactTestFor(pactMethod = "listValidByPolicyInput", pactVersion = PactSpecVersion.V3)
   public void listingValidRegionsOnAPolicy() throws Exception {
     var inputs =
         new TpsPolicyInputs()
@@ -452,7 +457,12 @@ public class TpsApiTest {
                 "objectId", existingPolicyProviderStateValue, existingPolicyId.toString())
             .object(
                 "policyInput",
-                new PactDslJsonBody().stringType("namespace").stringType("name").closeObject());
+                newJsonBody(
+                        input -> {
+                          input.stringType("namespace");
+                          input.stringType("name");
+                        })
+                    .build());
     return builder
         .given(existingPolicyState)
         .uponReceiving("A request to explain the policy")
@@ -468,7 +478,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "explainingAWorkspacePolicy")
+  @PactTestFor(pactMethod = "explainingAWorkspacePolicy", pactVersion = PactSpecVersion.V3)
   public void explainingAPolicy() throws Exception {
     var workspace =
         Workspace.builder()
@@ -513,7 +523,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "getLocationInfo")
+  @PactTestFor(pactMethod = "getLocationInfo", pactVersion = PactSpecVersion.V3)
   public void retrievingInformationOnALocation() throws Exception {
     var result = dispatch.getLocationInfo(CloudPlatform.AZURE, "europe");
     assertNotNull(result);
@@ -547,7 +557,7 @@ public class TpsApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "getLocationInfoWithNullLocation")
+  @PactTestFor(pactMethod = "getLocationInfoWithNullLocation", pactVersion = PactSpecVersion.V3)
   public void retrievingInformationOnANullLocation() throws Exception {
     // when location is null, it defaults to "global" in TPS
     var result = dispatch.getLocationInfo(CloudPlatform.AZURE, null);
