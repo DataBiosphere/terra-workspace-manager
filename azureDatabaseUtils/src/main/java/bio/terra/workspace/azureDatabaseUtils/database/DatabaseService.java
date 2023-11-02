@@ -199,6 +199,7 @@ public class DatabaseService {
       command.put("-b", null);
       command.put("--no-privileges", null);
       command.put("--no-owner", null);
+      command.put("--clean", null);
     }
 
     command.put("-h", dbHost);
