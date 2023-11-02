@@ -139,7 +139,8 @@ public class DatabaseService {
       String adminUser,
       String blobFileName,
       String blobContainerName,
-      String blobContainerUrlAuthenticated) throws PSQLException {
+      String blobContainerUrlAuthenticated)
+      throws PSQLException {
 
     boolean doCleanup = false;
 
