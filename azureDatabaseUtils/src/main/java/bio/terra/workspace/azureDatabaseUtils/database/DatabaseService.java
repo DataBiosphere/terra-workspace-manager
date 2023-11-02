@@ -158,7 +158,7 @@ public class DatabaseService {
       databaseDao.grantRole(sourceDbUser, targetDbName);
 
       List<String> commandList =
-          generateCommandList("psql", targetDbName, sourceDbHost, sourceDbPort, sourceDbUser);
+          generateCommandList("pg_restore", targetDbName, sourceDbHost, sourceDbPort, sourceDbUser);
       Map<String, String> envVars = null;
       try {
         envVars = Map.of("PGPASSWORD", determinePassword());
@@ -197,9 +197,12 @@ public class DatabaseService {
     if (pgCommandPath.contains("pg_dump")) {
       command.put("-b", null);
       command.put("--no-privileges", null);
-      command.put("--no-owner", null);
     }
-
+    if (pgCommandPath.contains("pg_restore")) {
+      command.put("--role", dbName);
+    }
+    command.put("--no-owner", null);
+    command.put("-Ft", null);
     command.put("-h", dbHost);
     command.put("-p", dbPort);
     command.put("-U", dbUser);
