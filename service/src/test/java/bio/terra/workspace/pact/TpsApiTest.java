@@ -188,17 +188,20 @@ public class TpsApiTest {
   public RequestResponsePact getPaoWithAnExistingPolicy(PactDslWithProvider builder) {
     var policyResponseShape =
         new PactDslJsonBody()
-            .stringValue("objectId", existingPolicyId.toString())
+            .valueFromProviderState(
+                "objectId", existingPolicyProviderStateValue, existingPolicyId.toString())
             .stringMatcher("component", tpsComponentRegex)
             .stringMatcher("objectType", tpsObjectTypeRegex)
             .object("effectiveAttributes", tpsPolicyInputsObjectShape)
             .object("attributes", tpsPolicyInputsObjectShape);
 
     return builder
-        .given("a policy with the given id exists", Map.of("id", existingPolicyId.toString()))
+        .given(existingPolicyState)
         .uponReceiving("A request to retrieve a policy")
         .method("GET")
-        .path("/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
+        .pathFromProviderState(
+            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyProviderStateValue),
+            "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(policyResponseShape)
