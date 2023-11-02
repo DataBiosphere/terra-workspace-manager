@@ -195,8 +195,7 @@ public class DatabaseService {
 
     command.put(pgCommandPath, null);
     if (pgCommandPath.contains("pg_dump")) {
-      command.put("-b", null);
-      command.put("--no-privileges", null);
+       command.put("--no-privileges", null);
     }
     if (pgCommandPath.contains("pg_restore")) {
       command.put("--role", dbName);
