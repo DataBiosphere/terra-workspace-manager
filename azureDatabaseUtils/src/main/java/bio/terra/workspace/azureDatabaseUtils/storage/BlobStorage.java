@@ -8,17 +8,11 @@ public interface BlobStorage {
   default void streamOutputToBlobStorage(
       InputStream fromStream,
       String blobName,
-      String workspaceId,
       String blobContainerName,
-      String blobstorageDetails) {}
+      String blobContainerUrlAuthenticated) {}
 
   default void streamInputFromBlobStorage(
-      OutputStream toStream,
-      String blobName,
-      String workspaceId,
-      String blobContainerName,
-      String authToken) {}
+      OutputStream toStream, String blobName, String blobContainerName, String authToken) {}
 
-  default void deleteBlob(
-      String blobFile, String workspaceId, String blobContainerName, String authToken) {}
+  default void deleteBlob(String blobFile, String blobContainerName, String authToken) {}
 }

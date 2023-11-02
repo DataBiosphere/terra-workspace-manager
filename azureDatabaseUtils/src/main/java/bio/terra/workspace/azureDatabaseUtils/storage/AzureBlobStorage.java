@@ -37,11 +37,10 @@ public class AzureBlobStorage implements BlobStorage {
   public void streamOutputToBlobStorage(
       InputStream fromStream,
       String blobName,
-      String workspaceId,
       String blobContainerName,
-      String blobstorageDetails) {
+      String blobContainerUrlAuthenticated) {
     BlobContainerClient blobContainerClient =
-        constructBlockBlobClient(workspaceId, blobContainerName, blobstorageDetails);
+        constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
     // https://learn.microsoft.com/en-us/java/api/overview/azure/storage-blob-readme?view=azure-java-stable#upload-a-blob-via-an-outputstream
     try (BufferedOutputStream blobOS =
         new BufferedOutputStream(
@@ -65,11 +64,10 @@ public class AzureBlobStorage implements BlobStorage {
   public void streamInputFromBlobStorage(
       OutputStream toStream,
       String blobName,
-      String workspaceId,
       String blobContainerName,
-      String blobstorageDetails) {
+      String blobContainerUrlAuthenticated) {
     BlobContainerClient blobContainerClient =
-        constructBlockBlobClient(workspaceId, blobContainerName, blobstorageDetails);
+        constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
     try (toStream) {
       blobContainerClient.getBlobClient(blobName).downloadStream(toStream);
     } catch (IOException ioEx) {
@@ -78,15 +76,11 @@ public class AzureBlobStorage implements BlobStorage {
   }
 
   private BlobContainerClient constructBlockBlobClient(
-      String workspaceId, String blobContainerName, String blobstorageDetails) {
-    // TODO: determine where blobstorageDetails should come from.
-    // This implementation is 95% copied from WDS's, in which they call WSM's APIs to retrieve a url
-    // with an included SAS token.
-    // The implementation here assumes that this url+token will be passed in by WSM itself when it
-    // ultimately calls the pgDump function.
+      String blobContainerName, String blobContainerUrlAuthenticated) {
+    // blobContainerUrlAuthenticated is a URL with a query parameter containing a SAS token
 
     BlobServiceClient blobServiceClient =
-        new BlobServiceClientBuilder().endpoint(blobstorageDetails).buildClient();
+        new BlobServiceClientBuilder().endpoint(blobContainerUrlAuthenticated).buildClient();
 
     try {
       // the way storage containers are set up in a workspace are as follows:
@@ -95,16 +89,15 @@ public class AzureBlobStorage implements BlobStorage {
       return blobServiceClient.getBlobContainerClient(blobContainerName);
     } catch (BlobStorageException e) {
       // if the default workspace container doesn't exist, something went horribly wrong
-      logger.error("Default storage container missing for workspace id {}", workspaceId);
+      logger.error("Default storage container missing; could not find {}", blobContainerName);
       throw (e);
     }
   }
 
   @Override
-  public void deleteBlob(
-      String blobFile, String workspaceId, String blobContainerName, String authToken) {
+  public void deleteBlob(String blobFile, String blobContainerName, String authToken) {
     BlobContainerClient blobContainerClient =
-        constructBlockBlobClient(workspaceId, blobContainerName, authToken);
+        constructBlockBlobClient(blobContainerName, authToken);
     try {
       var blobClient = blobContainerClient.getBlobClient(blobFile);
       blobClient.delete();

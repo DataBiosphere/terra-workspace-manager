@@ -76,10 +76,11 @@ public class AzureDatabaseUtilsRunner {
   public static final String PARAM_NEW_DB_USER_OID = "NEW_DB_USER_OID";
 
   // Workflow cloning - TODO: which params can be reused?
-  public static final String PARAM_DUMPFILE_NAME = "DUMPFILE_NAME";
+  public static final String PARAM_BLOB_FILE_NAME = "BLOB_FILE_NAME";
   public static final String PARAM_DEST_WORKSPACE_ID = "DEST_WORKSPACE_ID";
   public static final String PARAM_BLOB_CONTAINER_NAME = "BLOB_CONTAINER_NAME";
-  public static final String PARAM_BLOBSTORAGE_DETAILS = "BLOBSTORAGE_DETAILS";
+  public static final String PARAM_BLOB_CONTAINER_URL_AUTHENTICATED =
+      "BLOB_CONTAINER_URL_AUTHENTICATED";
 
   private final AzureConfiguration azureConfig;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
@@ -135,10 +136,9 @@ public class AzureDatabaseUtilsRunner {
       String sourceDbName,
       String dbServerName,
       String dbUserName,
-      String dumpfileName,
-      String destinationWorkspaceId,
+      String blobFileName,
       String blobContainerName,
-      String blobstorageDetails)
+      String blobContainerUrlAuthenticated)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
@@ -146,10 +146,11 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_CONNECT_TO_DATABASE).value(sourceDbName),
             new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
             new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
-            new V1EnvVar().name(PARAM_DUMPFILE_NAME).value(dumpfileName),
-            new V1EnvVar().name(PARAM_DEST_WORKSPACE_ID).value(destinationWorkspaceId),
+            new V1EnvVar().name(PARAM_BLOB_FILE_NAME).value(blobFileName),
             new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName),
-            new V1EnvVar().name(PARAM_BLOBSTORAGE_DETAILS).value(blobstorageDetails));
+            new V1EnvVar()
+                .name(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED)
+                .value(blobContainerUrlAuthenticated));
     runAzureDatabaseUtils(
         azureCloudContext,
         sourceWorkspaceId,
@@ -164,10 +165,9 @@ public class AzureDatabaseUtilsRunner {
       String targetDbName,
       String dbServerName,
       String dbUserName,
-      String dumpfileName,
-      String destinationWorkspaceId,
+      String blobFileName,
       String blobContainerName,
-      String blobstorageDetails)
+      String blobContainerUrlAuthenticated)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
@@ -175,10 +175,11 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_CONNECT_TO_DATABASE).value(targetDbName),
             new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
             new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
-            new V1EnvVar().name(PARAM_DUMPFILE_NAME).value(dumpfileName),
-            new V1EnvVar().name(PARAM_DEST_WORKSPACE_ID).value(destinationWorkspaceId),
+            new V1EnvVar().name(PARAM_BLOB_FILE_NAME).value(blobFileName),
             new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName),
-            new V1EnvVar().name(PARAM_BLOBSTORAGE_DETAILS).value(blobstorageDetails));
+            new V1EnvVar()
+                .name(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED)
+                .value(blobContainerUrlAuthenticated));
     runAzureDatabaseUtils(
         azureCloudContext,
         sourceWorkspaceId,

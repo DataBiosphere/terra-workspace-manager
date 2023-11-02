@@ -92,26 +92,24 @@ public class DatabaseService {
   }
 
   public void pgDump(
-      String sourceDbName,
-      String sourceDbHost,
-      String sourceDbPort,
-      String sourceDbUser,
-      String pgDumpFilename,
-      String destinationWorkspaceId,
+      String dbName,
+      String dbHost,
+      String dbPort,
+      String adminUser,
+      String blobFileName,
       String blobContainerName,
-      String blobstorageDetails) {
+      String blobContainerUrlAuthenticated) {
 
-    // Grant the database role (sourceDbName) to the landing zone identity (sourceDbUser).
+    // Grant the database role (dbName) to the landing zone identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
     // We are choosing to *not* revoke this role for now, because:
     // (1) we could run into concurrency issues if multiple users attempt to clone the same
     // workspace at once;
     // (2) the workspace identity can grant itself access at any time, so revoking the role
     // doesn't protect us.
-    databaseDao.grantRole(sourceDbUser, sourceDbName);
+    databaseDao.grantRole(adminUser, dbName);
 
-    List<String> commandList =
-        generateCommandList("pg_dump", sourceDbName, sourceDbHost, sourceDbPort, sourceDbUser);
+    List<String> commandList = generateCommandList("pg_dump", dbName, dbHost, dbPort, adminUser);
     Map<String, String> envVars = null;
     try {
       envVars = Map.of("PGPASSWORD", determinePassword());
@@ -120,34 +118,32 @@ public class DatabaseService {
     }
 
     logger.info("running DatabaseService.pgDump: {}", String.join(" ", commandList));
-    logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
+    logger.info("blobContainerName: {}", blobContainerName);
 
     LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
     localProcessLauncher.launchProcess(commandList, envVars);
 
     storage.streamOutputToBlobStorage(
         localProcessLauncher.getInputStream(),
-        pgDumpFilename,
-        destinationWorkspaceId,
+        blobFileName,
         blobContainerName,
-        blobstorageDetails);
+        blobContainerUrlAuthenticated);
 
     checkForError(localProcessLauncher);
   }
 
   public void pgRestore(
-      String targetDbName,
-      String sourceDbHost,
-      String sourceDbPort,
-      String sourceDbUser,
-      String pgDumpFilename,
-      String destinationWorkspaceId,
+      String dbName,
+      String dbHost,
+      String dbPort,
+      String adminUser,
+      String blobFileName,
       String blobContainerName,
-      String blobstorageDetails) {
+      String blobContainerUrlAuthenticated) {
 
     boolean doCleanup = false;
 
-    // Grant the database role (sourceDbName) to the workspace identity (sourceDbUser).
+    // Grant the database role (dbName) to the workspace identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
     // We are choosing to *not* revoke this role for now, because:
     // (1) we could run into concurrency issues if multiple users attempt to clone the same
@@ -155,10 +151,9 @@ public class DatabaseService {
     // (2) the workspace identity can grant itself access at any time, so revoking the role
     // doesn't protect us.
     try {
-      databaseDao.grantRole(sourceDbUser, targetDbName);
+      databaseDao.grantRole(adminUser, dbName);
 
-      List<String> commandList =
-          generateCommandList("psql", targetDbName, sourceDbHost, sourceDbPort, sourceDbUser);
+      List<String> commandList = generateCommandList("psql", dbName, dbHost, dbPort, adminUser);
       Map<String, String> envVars = null;
       try {
         envVars = Map.of("PGPASSWORD", determinePassword());
@@ -169,23 +164,21 @@ public class DatabaseService {
       localProcessLauncher.launchProcess(commandList, envVars);
 
       logger.info("running DatabaseService.pgRestore: {}", String.join(" ", commandList));
-      logger.info("destinationWorkspaceId: {}", destinationWorkspaceId);
+      logger.info("blobContainerName: {}", blobContainerName);
 
       storage.streamInputFromBlobStorage(
           localProcessLauncher.getOutputStream(),
-          pgDumpFilename,
-          destinationWorkspaceId,
+          blobFileName,
           blobContainerName,
-          blobstorageDetails);
+          blobContainerUrlAuthenticated);
 
       // doCleanup isn't set to true until checkForError completes without throwing an exception
       checkForError(localProcessLauncher);
-      databaseDao.reassignOwner(sourceDbUser, targetDbName);
+      databaseDao.reassignOwner(adminUser, dbName);
       doCleanup = true;
     } finally {
       if (doCleanup) {
-        storage.deleteBlob(
-            pgDumpFilename, destinationWorkspaceId, blobContainerName, blobstorageDetails);
+        storage.deleteBlob(blobFileName, blobContainerName, blobContainerUrlAuthenticated);
       }
     }
   }

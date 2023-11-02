@@ -12,10 +12,9 @@ env:
     databaseNames: ${DATABASE_NAMES:db1,db2,db3}
     namespaceRole: ${NAMESPACE_ROLE}
     managedIdentityOid: ${MANAGED_IDENTITY_OID}
-    dumpfileName: ${DUMPFILE_NAME}
-    destinationWorkspaceId: ${DEST_WORKSPACE_ID}
+    blobFileName: ${BLOB_FILE_NAME}
     blobContainerName: ${BLOB_CONTAINER_NAME}
-    blobstorageDetails: ${BLOBSTORAGE_DETAILS}
+    blobContainerUrlAuthenticated: ${BLOB_CONTAINER_URL_AUTHENTICATED}
 
 
 spring:

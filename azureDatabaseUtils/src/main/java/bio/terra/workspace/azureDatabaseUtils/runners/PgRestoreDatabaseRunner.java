@@ -12,28 +12,25 @@ import org.springframework.stereotype.Component;
 public class PgRestoreDatabaseRunner implements ApplicationRunner {
 
   @Value("${env.db.connectToDatabase}")
-  private String sourceDbName;
+  private String dbName;
 
   @Value("${env.db.url}")
-  private String sourceDbHost;
+  private String dbHost;
 
   @Value("${env.db.port}")
-  private String sourceDbPort;
+  private String dbPort;
 
   @Value("${env.db.user}")
-  private String sourceDbUser;
+  private String dbUser;
 
-  @Value("${env.params.dumpfileName}")
-  private String dumpfileName;
-
-  @Value("${env.params.destinationWorkspaceId}")
-  private String destinationWorkspaceId;
+  @Value("${env.params.blobFileName}")
+  private String blobFileName;
 
   @Value("${env.params.blobContainerName}")
   private String blobContainerName;
 
-  @Value("${env.params.blobstorageDetails}")
-  private String blobstorageDetails;
+  @Value("${env.params.blobContainerUrlAuthenticated}")
+  private String blobContainerUrlAuthenticated;
 
   private final DatabaseService databaseService;
 
@@ -44,13 +41,12 @@ public class PgRestoreDatabaseRunner implements ApplicationRunner {
   @Override
   public void run(ApplicationArguments args) {
     databaseService.pgRestore(
-        sourceDbName,
-        sourceDbHost,
-        sourceDbPort,
-        sourceDbUser,
-        dumpfileName,
-        destinationWorkspaceId,
+        dbName,
+        dbHost,
+        dbPort,
+        dbUser,
+        blobFileName,
         blobContainerName,
-        blobstorageDetails);
+        blobContainerUrlAuthenticated);
   }
 }
