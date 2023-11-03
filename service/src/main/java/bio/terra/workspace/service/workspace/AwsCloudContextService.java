@@ -4,17 +4,21 @@ import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
+import bio.terra.stairway.FlightContext;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration;
 import bio.terra.workspace.app.configuration.external.AwsConfiguration.Authentication;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
@@ -22,7 +26,10 @@ import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfigException;
+import bio.terra.workspace.service.workspace.flight.cloud.aws.CreateWorkspaceApplicationSecurityGroupsStep;
+import bio.terra.workspace.service.workspace.flight.cloud.aws.DeleteWorkspaceApplicationSecurityGroupsStep;
 import bio.terra.workspace.service.workspace.flight.cloud.aws.MakeAwsCloudContextStep;
+import bio.terra.workspace.service.workspace.flight.cloud.aws.SetWorkspaceApplicationEgressIngressStep;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -34,11 +41,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opencensus.contrib.spring.aop.Traced;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 
 /**
@@ -86,20 +96,45 @@ public class AwsCloudContextService implements CloudContextService {
       UUID workspaceUuid,
       SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
+    if (featureService.isFeatureEnabled(FeatureService.AWS_APPLICATIONS_ENABLED)) {
+      flight.addStep(
+          new CreateWorkspaceApplicationSecurityGroupsStep(
+              flightBeanBag.getCrlService(),
+              flightBeanBag.getAwsCloudContextService(),
+              flightBeanBag.getSamService(),
+              workspaceUuid),
+          RetryRules.cloud());
+      flight.addStep(
+          new SetWorkspaceApplicationEgressIngressStep(
+              flightBeanBag.getCrlService(),
+              flightBeanBag.getAwsCloudContextService(),
+              flightBeanBag.getSamService()),
+          RetryRules.cloud());
+    } // End if AWS_APPLICATIONS_ENABLED
     flight.addStep(
         new MakeAwsCloudContextStep(
             flightBeanBag.getAwsCloudContextService(),
             flightBeanBag.getSamService(),
-            spendProfile.id()));
+            spendProfile.id()),
+        RetryRules.shortDatabase());
   }
 
   @Override
   public void addDeleteCloudContextSteps(
       DeleteCloudContextFlight flight,
-      FlightBeanBag appContext,
+      FlightBeanBag flightBeanBag,
       UUID workspaceUuid,
       AuthenticatedUserRequest userRequest) {
-    // No post-resource delete steps for AWS
+
+    // Always add the step to delete Workspace Security Groups; it has internal logic to handle the
+    // case where there are no Security Groups present.
+    flight.addStep(
+        new DeleteWorkspaceApplicationSecurityGroupsStep(
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getAwsCloudContextService(),
+            flightBeanBag.getSamService(),
+            workspaceUuid),
+        RetryRules.cloud());
   }
 
   @Override
@@ -169,8 +204,12 @@ public class AwsCloudContextService implements CloudContextService {
    * @return AWS cloud context {@link AwsCloudContext}
    */
   public AwsCloudContext createCloudContext(
-      String flightId, SpendProfileId spendProfileId, String userEmail) {
-    return createCloudContext(flightId, spendProfileId, discoverEnvironment(userEmail));
+      String flightId,
+      SpendProfileId spendProfileId,
+      String userEmail,
+      @Nullable Map<String, String> securityGroupId) {
+    return createCloudContext(
+        flightId, spendProfileId, discoverEnvironment(userEmail), securityGroupId);
   }
 
   /**
@@ -180,7 +219,10 @@ public class AwsCloudContextService implements CloudContextService {
    * @return {@link AwsCloudContext}
    */
   public static AwsCloudContext createCloudContext(
-      String flightId, SpendProfileId spendProfileId, Environment environment) {
+      String flightId,
+      SpendProfileId spendProfileId,
+      Environment environment,
+      @Nullable Map<String, String> securityGroupId) {
     Metadata metadata = environment.getMetadata();
     return new AwsCloudContext(
         new AwsCloudContextFields(
@@ -188,7 +230,8 @@ public class AwsCloudContextService implements CloudContextService {
             metadata.getOrganizationId(),
             metadata.getAccountId(),
             metadata.getTenantAlias(),
-            metadata.getEnvironmentAlias()),
+            metadata.getEnvironmentAlias(),
+            securityGroupId),
         new CloudContextCommonFields(
             spendProfileId, WsmResourceState.CREATING, flightId, /*error=*/ null));
   }
@@ -227,6 +270,21 @@ public class AwsCloudContextService implements CloudContextService {
       Environment environment, AwsCloudContext awsCloudContext, Region region) {
     awsCloudContext.verifyCloudContext(environment);
     return environment.getLandingZone(region);
+  }
+
+  /**
+   * Get an {@link AwsCredentialsProvider} instance for a given flight
+   *
+   * @param flightContext context for a given flight
+   * @param samService Sam service
+   * @return {@link AwsCredentialsProvider} for the user that the flight is running on behalf of
+   */
+  public AwsCredentialsProvider getFlightCredentialsProvider(
+      FlightContext flightContext, SamService samService) {
+    return AwsUtils.createWsmCredentialProvider(
+        getRequiredAuthentication(),
+        discoverEnvironment(
+            FlightUtils.getRequiredUserEmail(flightContext.getInputParameters(), samService)));
   }
 
   private synchronized void initializeEnvironmentDiscovery() {

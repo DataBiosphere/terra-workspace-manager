@@ -63,6 +63,16 @@ spring:
         use-last-modified: false
       static-locations: classpath:/api/
 
+management:
+  server:
+    port: 9098
+  endpoints:
+    prometheus:
+      enabled: true
+    web:
+      exposure:
+        include: "prometheus"
+
 workspace:
   datarepo.instances:
     terra: ${env.urls.terra-datarepo}
@@ -99,6 +109,9 @@ workspace:
     password: ${env.db.stairway.pass}
     uri: ${env.db.host}/${env.db.stairway.name}
     username: ${env.db.stairway.user}
+
+  startup:
+    exit-after-initialization: false
 
   status-check:
     enabled: true

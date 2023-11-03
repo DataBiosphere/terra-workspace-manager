@@ -7,6 +7,7 @@ import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
+import au.com.dius.pact.core.model.PactSpecVersion;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
@@ -31,7 +32,7 @@ public class ProfileApiTest {
   static final String dummyAzureProfileId = "4a5afeaa-b3b2-fa51-8e4e-9dbf294b7837";
   static final String dummyGCPProfileId = "37bfb7e0-8261-4160-9ae7-882800d6464f";
 
-  @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
+  @Pact(consumer = "workspacemanager", provider = "bpm")
   public RequestResponsePact existingAzureBillingProfile(PactDslWithProvider builder) {
     var billingProfileResponseShape =
         new PactDslJsonBody()
@@ -56,7 +57,7 @@ public class ProfileApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
+  @Pact(consumer = "workspacemanager", provider = "bpm")
   public RequestResponsePact existingGCPBillingProfile(PactDslWithProvider builder) {
     var billingProfileResponseShape =
         new PactDslJsonBody()
@@ -76,7 +77,7 @@ public class ProfileApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "wsm-consumer", provider = "bpm-provider")
+  @Pact(consumer = "workspacemanager", provider = "bpm")
   public RequestResponsePact billingProfileUnAvailable(PactDslWithProvider builder) {
     return builder
         .uponReceiving("A request to retrieve a billing profile")
@@ -89,7 +90,7 @@ public class ProfileApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "existingAzureBillingProfile")
+  @PactTestFor(pactMethod = "existingAzureBillingProfile", pactVersion = PactSpecVersion.V3)
   public void testAuthorizingLinkingOfAnAzureProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 
@@ -106,7 +107,7 @@ public class ProfileApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "existingGCPBillingProfile")
+  @PactTestFor(pactMethod = "existingGCPBillingProfile", pactVersion = PactSpecVersion.V3)
   public void testAuthorizingLinkingOfGCPProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 
@@ -123,7 +124,7 @@ public class ProfileApiTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "billingProfileUnAvailable")
+  @PactTestFor(pactMethod = "billingProfileUnAvailable", pactVersion = PactSpecVersion.V3)
   public void testAuthorizingLinkingOfAnNonexistantProfile(MockServer mockServer) {
     var config = new SpendProfileConfiguration();
 

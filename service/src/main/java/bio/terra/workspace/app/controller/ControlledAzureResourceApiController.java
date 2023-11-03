@@ -7,6 +7,7 @@ import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapLi
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.iam.BearerToken;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -17,6 +18,7 @@ import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
 import bio.terra.workspace.generated.model.ApiAzureDiskResource;
 import bio.terra.workspace.generated.model.ApiAzureKubernetesNamespaceResource;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureManagedIdentityResource;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
@@ -42,6 +44,7 @@ import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceReque
 import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
+import bio.terra.workspace.generated.model.ApiResourceQuota;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -619,7 +622,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .common(commonFields)
             .databaseOwner(maybeLookupName(workspaceUuid, body.getAzureDatabase().getOwner()))
             .databaseName(body.getAzureDatabase().getName())
-            .k8sNamespace(body.getAzureDatabase().getK8sNamespace())
             .allowAccessForAllWorkspaceUsers(
                 body.getAzureDatabase().isAllowAccessForAllWorkspaceUsers())
             .build();
@@ -875,5 +877,38 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceId);
     return getJobDeleteResult(jobId);
+  }
+
+  @Override
+  public ResponseEntity<ApiResourceQuota> getWorkspaceAzureLandingZoneResourceQuota(
+      UUID workspaceId, String azureResourceId) {
+    features.azureEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+    var wsmToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var landingZoneId = landingZoneApiDispatch.getLandingZoneId(wsmToken, workspace);
+
+    var result = landingZoneApiDispatch.getResourceQuota(wsmToken, landingZoneId, azureResourceId);
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAzureLandingZoneResourcesList> listWorkspaceAzureLandingZoneResources(
+      UUID workspaceId) {
+    features.azureEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        workspaceService.validateWorkspaceAndAction(
+            userRequest, workspaceId, SamConstants.SamWorkspaceAction.WRITE);
+    var wsmToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var landingZoneId = landingZoneApiDispatch.getLandingZoneId(wsmToken, workspace);
+
+    var result = landingZoneApiDispatch.listAzureLandingZoneResources(wsmToken, landingZoneId);
+    return new ResponseEntity<>(result, HttpStatus.OK);
   }
 }

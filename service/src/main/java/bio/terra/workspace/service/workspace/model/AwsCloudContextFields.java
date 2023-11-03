@@ -11,6 +11,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 public class AwsCloudContextFields {
   private final String majorVersion;
@@ -18,6 +20,7 @@ public class AwsCloudContextFields {
   private final String accountId;
   private final String tenantAlias;
   private final String environmentAlias;
+  private Map<String, String> applicationSecurityGroups;
 
   @JsonCreator
   public AwsCloudContextFields(
@@ -25,12 +28,15 @@ public class AwsCloudContextFields {
       @JsonProperty("organizationId") String organizationId,
       @JsonProperty("accountId") String accountId,
       @JsonProperty("tenantAlias") String tenantAlias,
-      @JsonProperty("environmentAlias") String environmentAlias) {
+      @JsonProperty("environmentAlias") String environmentAlias,
+      @JsonProperty("applicationSecurityGroups") @Nullable
+          Map<String, String> applicationSecurityGroups) {
     this.majorVersion = majorVersion;
     this.organizationId = organizationId;
     this.accountId = accountId;
     this.tenantAlias = tenantAlias;
     this.environmentAlias = environmentAlias;
+    this.applicationSecurityGroups = applicationSecurityGroups;
   }
 
   public String getMajorVersion() {
@@ -53,13 +59,18 @@ public class AwsCloudContextFields {
     return environmentAlias;
   }
 
+  public @Nullable Map<String, String> getApplicationSecurityGroups() {
+    return applicationSecurityGroups;
+  }
+
   public void toApi(ApiAwsContext awsContext) {
     awsContext
         .majorVersion(majorVersion)
         .organizationId(organizationId)
         .accountId(accountId)
         .tenantAlias(tenantAlias)
-        .environmentAlias(environmentAlias);
+        .environmentAlias(environmentAlias)
+        .applicationSecurityGroups(applicationSecurityGroups);
   }
 
   @Override
@@ -70,12 +81,19 @@ public class AwsCloudContextFields {
         && Objects.equal(organizationId, that.organizationId)
         && Objects.equal(accountId, that.accountId)
         && Objects.equal(tenantAlias, that.tenantAlias)
-        && Objects.equal(environmentAlias, that.environmentAlias);
+        && Objects.equal(environmentAlias, that.environmentAlias)
+        && Objects.equal(applicationSecurityGroups, that.applicationSecurityGroups);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(majorVersion, organizationId, accountId, tenantAlias, environmentAlias);
+    return Objects.hashCode(
+        majorVersion,
+        organizationId,
+        accountId,
+        tenantAlias,
+        environmentAlias,
+        applicationSecurityGroups);
   }
 
   /**
@@ -110,7 +128,8 @@ public class AwsCloudContextFields {
           dbContext.organizationId,
           dbContext.accountId,
           dbContext.tenantAlias,
-          dbContext.environmentAlias);
+          dbContext.environmentAlias,
+          dbContext.applicationSecurityGroups);
 
     } catch (SerializationException e) {
       throw new InvalidSerializedVersionException("Invalid serialized version", e);
@@ -130,6 +149,7 @@ public class AwsCloudContextFields {
     public String accountId;
     public String tenantAlias;
     public String environmentAlias;
+    public Map<String, String> applicationSecurityGroups;
 
     @JsonCreator
     public AwsCloudContextV1(
@@ -138,13 +158,15 @@ public class AwsCloudContextFields {
         @JsonProperty("organizationId") String organizationId,
         @JsonProperty("accountId") String accountId,
         @JsonProperty("tenantAlias") String tenantAlias,
-        @JsonProperty("environmentAlias") String environmentAlias) {
+        @JsonProperty("environmentAlias") String environmentAlias,
+        @JsonProperty("applicationSecurityGroups") Map<String, String> applicationSecurityGroups) {
       this.version = version;
       this.majorVersion = majorVersion;
       this.organizationId = organizationId;
       this.accountId = accountId;
       this.tenantAlias = tenantAlias;
       this.environmentAlias = environmentAlias;
+      this.applicationSecurityGroups = applicationSecurityGroups;
     }
 
     public AwsCloudContextV1(AwsCloudContextFields awsCloudContext) {
@@ -154,6 +176,7 @@ public class AwsCloudContextFields {
       this.accountId = awsCloudContext.accountId;
       this.tenantAlias = awsCloudContext.tenantAlias;
       this.environmentAlias = awsCloudContext.environmentAlias;
+      this.applicationSecurityGroups = awsCloudContext.applicationSecurityGroups;
     }
 
     public static long getVersion() {

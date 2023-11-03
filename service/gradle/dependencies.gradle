@@ -10,7 +10,7 @@ dependencies {
   // Google dependencies
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
-    implementation 'org.json:json:20230227'
+    implementation 'org.json:json:20231013' // security vulnerability
   }
   implementation platform('com.google.cloud:libraries-bom:26.0.0')
 
@@ -21,15 +21,16 @@ dependencies {
 
   // Azure dependencies
   implementation 'com.azure:azure-storage-blob:12.21.1'
-  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: '2.30.0'
-  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-containerservice', version: '2.30.0'
-  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-msi', version: '2.30.0'
+  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: '2.31.0'
+  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-containerservice', version: '2.31.0'
+  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-msi', version: '2.31.0'
   implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-postgresqlflexibleserver', version: '1.0.0-beta.6'
 
   // AWS dependencies
-  implementation platform('software.amazon.awssdk:bom:2.20.22')
+  implementation platform('software.amazon.awssdk:bom:2.20.115')
   implementation 'software.amazon.awssdk:arns'
   implementation 'software.amazon.awssdk:auth'
+  implementation 'software.amazon.awssdk:ec2'
   implementation 'software.amazon.awssdk:regions'
   implementation 'software.amazon.awssdk:s3'
   implementation 'software.amazon.awssdk:sagemaker'
@@ -39,7 +40,7 @@ dependencies {
   implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
   implementation group: "bio.terra", name:"billing-profile-manager-client", version: "0.1.29-SNAPSHOT"
   implementation group: "bio.terra", name:"terra-policy-client", version:"0.2.50-SNAPSHOT"
-  implementation group: "bio.terra", name:"terra-aws-resource-discovery", version:"v0.6.1-SNAPSHOT"
+  implementation group: "bio.terra", name:"terra-aws-resource-discovery", version:"v0.6.2-SNAPSHOT"
 
   // hk2 is required to use datarepo client, but not correctly exposed by the client
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
@@ -54,10 +55,10 @@ dependencies {
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.21-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.25-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.188-SNAPSHOT')
+  implementation ('bio.terra:terra-landing-zone-service:0.0.211-SNAPSHOT')
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'
@@ -82,10 +83,13 @@ dependencies {
   implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
   implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
   implementation group: "org.springframework.boot", name: "spring-boot-starter-validation"
+  implementation group: "org.springframework.boot", name: "spring-boot-starter-actuator"
   implementation group: "org.springframework.retry", name: "spring-retry"
   implementation group: "org.springframework.security", name: "spring-security-oauth2-jose"
 
   implementation group: "io.kubernetes", name: "client-java", version: "18.0.0"
+
+  implementation group: "io.micrometer", name: "micrometer-registry-prometheus"
 
   // OpenAPI (swagger) deps
   implementation gradle.librarySwaggerAnnotations
@@ -111,7 +115,7 @@ dependencies {
   testImplementation "org.testcontainers:postgresql:1.17.5"
 
   // pact
-  testImplementation 'au.com.dius.pact.consumer:junit5:4.1.7'
+  testImplementation 'au.com.dius.pact.consumer:junit5:4.3.19'
 
   annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
   annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.6.6"

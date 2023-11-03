@@ -8,10 +8,6 @@ import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseAttributes;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -23,9 +19,9 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
   @Mock private FlightBeanBag mockFlightBeanBag;
 
   @Test
-  void testCorrectPrivateDatabaseSteps() {
+  void testCorrectCreateDatabaseSteps() {
     var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default", false);
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
@@ -38,32 +34,6 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
         contains(
             ValidateDatabaseOwnerStep.class,
             AzureDatabaseGuardStep.class,
-            GetPetManagedIdentityStep.class,
-            GetFederatedIdentityStep.class,
-            CreateFederatedIdentityStep.class,
-            CreateAzureDatabaseStep.class));
-  }
-
-  @Test
-  void testCorrectSharedDatabaseSteps() {
-    var creationParameters =
-        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            UUID.randomUUID().toString(), "default", false);
-
-    var databaseResource =
-        ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                creationParameters, workspaceId)
-            .build();
-
-    var steps = databaseResource.getAddSteps(mockFlightBeanBag);
-    assertThat(
-        steps.stream().map(Object::getClass).toList(),
-        contains(
-            ValidateDatabaseOwnerStep.class,
-            AzureDatabaseGuardStep.class,
-            GetWorkspaceManagedIdentityStep.class,
-            GetFederatedIdentityStep.class,
-            CreateFederatedIdentityStep.class,
             CreateAzureDatabaseStep.class));
   }
 
@@ -71,7 +41,7 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
   void testToApiResource() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            UUID.randomUUID().toString(), "default", false);
+            UUID.randomUUID().toString(), false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
@@ -93,7 +63,7 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
   void testAttributesToJson() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-            UUID.randomUUID().toString(), "default", false);
+            UUID.randomUUID().toString(), false);
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
@@ -105,11 +75,10 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
         json,
         equalTo(
             """
-            {"databaseName":"%s","databaseOwner":"%s","k8sNamespace":"%s","allowAccessForAllWorkspaceUsers":%s}"""
+            {"databaseName":"%s","databaseOwner":"%s","allowAccessForAllWorkspaceUsers":%s}"""
                 .formatted(
                     creationParameters.getName(),
                     creationParameters.getOwner(),
-                    creationParameters.getK8sNamespace(),
                     creationParameters.isAllowAccessForAllWorkspaceUsers())));
   }
 }

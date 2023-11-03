@@ -4,6 +4,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 
@@ -25,12 +26,13 @@ public class CustomGcpIamRoleMapping {
   static final ImmutableList<String> GCS_BUCKET_READER_PERMISSIONS =
       ImmutableList.of("storage.buckets.get", "storage.objects.list", "storage.objects.get");
   static final ImmutableList<String> GCS_BUCKET_WRITER_PERMISSIONS =
-      new ImmutableList.Builder<String>()
+      new ImmutableSet.Builder<String>()
           .addAll(GCS_BUCKET_READER_PERMISSIONS)
           .add("storage.objects.create", "storage.objects.delete", "storage.objects.update")
-          .build();
+          .build()
+          .asList();
   static final ImmutableList<String> GCS_BUCKET_EDITOR_PERMISSIONS =
-      new ImmutableList.Builder<String>().addAll(GCS_BUCKET_WRITER_PERMISSIONS).build();
+      new ImmutableSet.Builder<String>().addAll(GCS_BUCKET_WRITER_PERMISSIONS).build().asList();
   static final ImmutableList<String> BIG_QUERY_DATASET_READER_PERMISSIONS =
       ImmutableList.of(
           "bigquery.datasets.get",
@@ -45,7 +47,7 @@ public class CustomGcpIamRoleMapping {
           "bigquery.tables.list",
           "bigquery.tables.get");
   static final ImmutableList<String> BIG_QUERY_DATASET_WRITER_PERMISSIONS =
-      new ImmutableList.Builder<String>()
+      new ImmutableSet.Builder<String>()
           .addAll(BIG_QUERY_DATASET_READER_PERMISSIONS)
           .add(
               "bigquery.models.create",
@@ -56,15 +58,27 @@ public class CustomGcpIamRoleMapping {
               "bigquery.routines.delete",
               "bigquery.routines.update",
               "bigquery.tables.updateData")
-          .build();
+          .build()
+          .asList();
   static final ImmutableList<String> BIG_QUERY_DATASET_EDITOR_PERMISSIONS =
-      new ImmutableList.Builder<String>()
+      new ImmutableSet.Builder<String>()
           .addAll(BIG_QUERY_DATASET_WRITER_PERMISSIONS)
           .add("bigquery.datasets.getIamPolicy")
           .add("bigquery.tables.create")
           .add("bigquery.tables.delete")
           .add("bigquery.tables.update")
-          .build();
+          .build()
+          .asList();
+  // see https://cloud.google.com/iap/docs/using-tcp-forwarding#grant-access-vm
+  static final ImmutableList<String> IAP_TCP_FORWARDING_PERMISSIONS =
+      ImmutableList.of(
+          "iap.tunnelInstances.accessViaIAP",
+          "compute.instances.get",
+          "compute.instances.list",
+          "compute.projects.get",
+          "compute.instances.setMetadata",
+          "compute.projects.setCommonInstanceMetadata",
+          "compute.globalOperations.get");
   static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS =
       ImmutableList.of(
           "notebooks.instances.get",
@@ -75,7 +89,7 @@ public class CustomGcpIamRoleMapping {
   // The 'iam.serviceAccounts.actAs' permission on the service account running the instance VM is
   // used to control write access to the notebook instance.
   static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_WRITER_PERMISSIONS =
-      new ImmutableList.Builder<String>()
+      new ImmutableSet.Builder<String>()
           .addAll(AI_NOTEBOOK_INSTANCE_READER_PERMISSIONS)
           .add(
               "notebooks.instances.reset",
@@ -84,9 +98,10 @@ public class CustomGcpIamRoleMapping {
               "notebooks.instances.start",
               "notebooks.instances.stop",
               "notebooks.instances.use")
-          .build();
+          .build()
+          .asList();
   static final ImmutableList<String> AI_NOTEBOOK_INSTANCE_EDITOR_PERMISSIONS =
-      new ImmutableList.Builder<String>()
+      new ImmutableSet.Builder<String>()
           .addAll(AI_NOTEBOOK_INSTANCE_WRITER_PERMISSIONS)
           .add(
               "notebooks.instances.getIamPolicy",
@@ -94,44 +109,51 @@ public class CustomGcpIamRoleMapping {
               "notebooks.operations.delete",
               "notebooks.operations.get",
               "notebooks.operations.list")
-          .build();
+          .build()
+          .asList();
   static final ImmutableList<String> GCE_INSTANCE_READER_PERMISSIONS =
       ImmutableList.of("compute.instances.get", "compute.instances.list");
+
   static final ImmutableList<String> GCE_INSTANCE_WRITER_PERMISSIONS =
-      new ImmutableList.Builder<String>()
+      new ImmutableSet.Builder<String>()
           .addAll(GCE_INSTANCE_READER_PERMISSIONS)
+          .addAll(IAP_TCP_FORWARDING_PERMISSIONS)
           .add(
               "compute.instances.start",
               "compute.instances.stop",
               "compute.instances.use",
               "compute.instances.reset",
               "compute.instances.setMachineType")
-          .build();
+          .build()
+          .asList();
   static final ImmutableList<String> GCE_INSTANCE_EDITOR_PERMISSIONS =
-      new ImmutableList.Builder<String>()
+      new ImmutableSet.Builder<String>()
           .addAll(GCE_INSTANCE_WRITER_PERMISSIONS)
           .add(
               "compute.instances.getIamPolicy",
               "compute.zoneOperations.get",
               "compute.zoneOperations.delete",
               "compute.zoneOperations.list")
-          .build();
+          .build()
+          .asList();
   static final ImmutableList<String> DATAPROC_CLUSTER_READER_PERMISSIONS =
       ImmutableList.of("compute.instances.get", "compute.instances.list", "dataproc.clusters.get");
   static final ImmutableList<String> DATAPROC_CLUSTER_WRITER_PERMISSIONS =
-      new ImmutableList.Builder<String>()
+      new ImmutableSet.Builder<String>()
           .addAll(DATAPROC_CLUSTER_READER_PERMISSIONS)
           .add(
               "dataproc.clusters.use",
               "dataproc.clusters.start",
               "dataproc.clusters.stop",
               "dataproc.clusters.update")
-          .build();
+          .build()
+          .asList();
   static final ImmutableList<String> DATAPROC_CLUSTER_EDITOR_PERMISSIONS =
-      new ImmutableList.Builder<String>()
+      new ImmutableSet.Builder<String>()
           .addAll(DATAPROC_CLUSTER_WRITER_PERMISSIONS)
           .add("dataproc.clusters.getIamPolicy")
-          .build();
+          .build()
+          .asList();
 
   public static final Table<WsmResourceType, ControlledResourceIamRole, CustomGcpIamRole>
       CUSTOM_GCP_RESOURCE_IAM_ROLES =

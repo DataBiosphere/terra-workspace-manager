@@ -21,7 +21,6 @@ import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -57,30 +56,15 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   private final String uamiName = UUID.randomUUID().toString();
   private final String uamiPrincipalId = UUID.randomUUID().toString();
   private final ApiAzureDatabaseCreationParameters creationParameters =
-      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, "default", false);
+      ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, false);
   private final ControlledAzureDatabaseResource databaseResource =
       ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
               creationParameters, workspaceId, null)
           .build();
 
   @Test
-  // TODO: remove with https://broadworkbench.atlassian.net/browse/WOR-1165
-  void testSuccessWithFederatedIdentity() throws InterruptedException {
-    var step = setupStepTest(true);
-    assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
-    verify(mockAzureDatabaseUtilsRunner)
-        .createDatabase(
-            mockAzureCloudContext,
-            workspaceId,
-            "create-" + databaseResource.getResourceId(),
-            uamiName,
-            uamiPrincipalId,
-            databaseResource.getDatabaseName());
-  }
-
-  @Test
   void testSuccess() throws InterruptedException {
-    var step = setupStepTest(false);
+    var step = setupStepTest();
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
     verify(mockAzureDatabaseUtilsRunner)
         .createDatabaseWithDbRole(
@@ -148,21 +132,8 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   }
 
   @NotNull
-  private CreateAzureDatabaseStep setupStepTest(boolean withFederatedIdentity) {
+  private CreateAzureDatabaseStep setupStepTest() {
     createMockFlightContext();
-
-    if (withFederatedIdentity) {
-      // TODO: remove with https://broadworkbench.atlassian.net/browse/WOR-1165
-      when(mockWorkingMap.containsKey(GetManagedIdentityStep.MANAGED_IDENTITY_NAME))
-          .thenReturn(true);
-      when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, String.class))
-          .thenReturn(uamiName);
-      when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_PRINCIPAL_ID, String.class))
-          .thenReturn(uamiPrincipalId);
-    } else {
-      when(mockWorkingMap.containsKey(GetManagedIdentityStep.MANAGED_IDENTITY_NAME))
-          .thenReturn(false);
-    }
 
     return new CreateAzureDatabaseStep(
         mockAzureConfig,

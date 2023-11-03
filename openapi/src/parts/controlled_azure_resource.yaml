@@ -1,0 +1,35 @@
+paths:
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/landingzone:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    get:
+      summary: List all Azure resources in an Azure workspace's backing landing zone.
+      operationId: listWorkspaceAzureLandingZoneResources
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AzureLandingZoneResourcesList'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/landingzone/quota:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/AzureResourceId'
+    get:
+      summary: Get the quota information of a resource in an Azure workspace's backing landing zone.
+      operationId: getWorkspaceAzureLandingZoneResourceQuota
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourceQuotaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'

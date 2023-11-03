@@ -10,11 +10,6 @@ without risk of command injection.
 This utility is designed to house multiple commands. 
 Each command must be idempotent to allow for stairway retries. 
 Which command is run is determined by the spring profile that is active. The commands are:
-* `CreateDatabase` - creates a database with a given name and grant access to a managed identity. Environment variables:
-  * `spring_profiles_active` - must be set to `CreateDatabase`
-  * `NEW_DB_NAME` - the name of the database to create
-  * `NEW_DB_USER_NAME` - the name of the user to create (good idea to make this the same as the managed identity)
-  * `NEW_DB_USER_OID` - the OID of the manged identity
 * `CreateDatabaseWithDbRole` - creates a database with a given name and grant access new role of the same name. Environment variables:
   * `spring_profiles_active` - must be set to `CreateDatabaseWithDbRole`
   * `NEW_DB_NAME` - the name of the database to create

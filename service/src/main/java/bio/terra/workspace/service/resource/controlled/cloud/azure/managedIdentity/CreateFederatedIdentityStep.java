@@ -4,7 +4,6 @@ import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureU
 import static bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep.FEDERATED_IDENTITY_EXISTS;
 
 import bio.terra.common.iam.BearerToken;
-import bio.terra.landingzone.stairway.flight.utils.FlightUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
@@ -12,6 +11,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
@@ -28,6 +28,7 @@ import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -64,7 +65,7 @@ public class CreateFederatedIdentityStep implements Step {
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.workspaceId = workspaceId;
-    this.ksaName = ksaName;
+    this.ksaName = Objects.requireNonNull(ksaName);
   }
 
   @Override
@@ -130,7 +131,7 @@ public class CreateFederatedIdentityStep implements Step {
       String uamiClientId) {
     createOrUpdateFederatedCredentials(msiManager, azureCloudContext, uamiName, oidcIssuer);
     try {
-      createK8sServiceAccount(aksApi, uamiName, uamiClientId);
+      createK8sServiceAccount(aksApi, uamiClientId);
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.CONFLICT.value()) {
         logger.info("K8s service account already exists");
@@ -147,36 +148,21 @@ public class CreateFederatedIdentityStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private void createK8sServiceAccount(CoreV1Api aksApi, String uamiName, String uamiClientId)
-      throws ApiException {
+  private void createK8sServiceAccount(CoreV1Api aksApi, String uamiClientId) throws ApiException {
     var k8sServiceAccount =
         new V1ServiceAccount()
             .metadata(
                 new V1ObjectMeta()
                     .annotations(Map.of("azure.workload.identity/client-id", uamiClientId))
-                    .name(resolveKsaName(uamiName))
+                    .name(ksaName)
                     .namespace(k8sNamespace));
 
     aksApi.createNamespacedServiceAccount(k8sNamespace, k8sServiceAccount, null, null, null, null);
   }
 
-  private String resolveKsaName(String uamiName) {
-    // TODO: remove special null handling as part of
-    // https://broadworkbench.atlassian.net/browse/WOR-1165
-    return ksaName == null ? uamiName : ksaName;
-  }
-
-  private void deleteK8sServiceAccount(CoreV1Api aksApi, String k8sNamespace, String uamiName)
-      throws ApiException {
+  private void deleteK8sServiceAccount(CoreV1Api aksApi, String k8sNamespace) throws ApiException {
     aksApi.deleteNamespacedServiceAccount(
-        resolveKsaName(uamiName),
-        k8sNamespace,
-        null,
-        null,
-        null,
-        null,
-        null,
-        new V1DeleteOptions());
+        ksaName, k8sNamespace, null, null, null, null, null, new V1DeleteOptions());
   }
 
   private void createOrUpdateFederatedCredentials(
@@ -193,9 +179,7 @@ public class CreateFederatedIdentityStep implements Step {
             new FederatedIdentityCredentialInner()
                 .withIssuer(oidcIssuer)
                 .withAudiences(List.of("api://AzureADTokenExchange"))
-                .withSubject(
-                    String.format(
-                        "system:serviceaccount:%s:%s", k8sNamespace, resolveKsaName(uamiName))));
+                .withSubject(String.format("system:serviceaccount:%s:%s", k8sNamespace, ksaName)));
   }
 
   private void deleteFederatedCredentials(MsiManager msiManager, String mrgName, String uamiName) {
@@ -236,8 +220,7 @@ public class CreateFederatedIdentityStep implements Step {
                 var aksApi =
                     kubernetesClientProvider.createCoreApiClient(
                         containerServiceManager, azureCloudContext, aksCluster);
-                deleteK8sServiceAccount(
-                    aksApi, k8sNamespace, GetManagedIdentityStep.getManagedIdentityName(context));
+                deleteK8sServiceAccount(aksApi, k8sNamespace);
               } catch (ApiException e) {
                 logger.info("Failed to delete k8s service account", e);
               }

@@ -123,7 +123,8 @@ public class WorkspaceUnitTestUtils {
                     AwsTestUtils.ORGANIZATION_ID,
                     AwsTestUtils.ACCOUNT_ID,
                     AwsTestUtils.TENANT_ALIAS,
-                    AwsTestUtils.ENVIRONMENT_ALIAS),
+                    AwsTestUtils.ENVIRONMENT_ALIAS,
+                    AwsTestUtils.AWS_WORKSPACE_SECURITY_GROUPS),
                 new CloudContextCommonFields(
                     billingProfileId, WsmResourceState.CREATING, flightId, null))
             .serialize(),

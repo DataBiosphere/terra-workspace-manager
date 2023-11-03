@@ -4,6 +4,8 @@ import bio.terra.aws.resource.discovery.CachedEnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
+import bio.terra.cloudres.aws.ec2.EC2SecurityGroupCow;
+import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
@@ -21,7 +23,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import liquibase.repackaged.org.apache.commons.collections4.ListUtils;
@@ -42,6 +46,7 @@ import software.amazon.awssdk.core.waiters.WaiterOverrideConfiguration;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ec2.model.Ec2Exception;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -73,15 +78,15 @@ public class AwsUtils {
 
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
   private static final Duration MIN_ROLE_SESSION_TOKEN_DURATION = Duration.ofSeconds(900);
-  static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
-  static final String TAG_KEY_USER_ID = "UserID";
-  static final String TAG_KEY_VERSION = "Version";
-  static final String TAG_KEY_TENANT = "Tenant";
-  static final String TAG_KEY_ENVIRONMENT = "Environment";
-  static final String TAG_KEY_WORKSPACE_ID = "WorkspaceId";
-  static final String TAG_KEY_S3_BUCKET_ID = "S3BucketID";
-  static final String TAG_KEY_TERRA_BUCKET_ID = "TerraBucketID";
-  static final String TAG_KEY_WORKSPACE_ROLE = "WorkspaceRole";
+  private static final int MAX_RESULTS_PER_REQUEST_S3 = 1000;
+  public static final String TAG_KEY_USER_ID = "UserID";
+  public static final String TAG_KEY_VERSION = "Version";
+  public static final String TAG_KEY_TENANT = "Tenant";
+  public static final String TAG_KEY_ENVIRONMENT = "Environment";
+  public static final String TAG_KEY_WORKSPACE_ID = "WorkspaceId";
+  public static final String TAG_KEY_S3_BUCKET_ID = "S3BucketID";
+  public static final String TAG_KEY_TERRA_BUCKET_ID = "TerraBucketID";
+  public static final String TAG_KEY_WORKSPACE_ROLE = "WorkspaceRole";
 
   /**
    * Truncate a passed string for use as an STS session name
@@ -938,5 +943,42 @@ public class AwsUtils {
     }
 
     throw new ApiException(altMessage, ex);
+  }
+
+  /**
+   * Delete the Security Group associated with a Workspace.
+   *
+   * @param crlClientConfig CRL client configuration
+   * @param credentialsProvider Credentials provider for the WSM IAM role
+   * @param workspaceUuid UUID of the Workspace associated with the Security Group
+   * @param awsRegion AWS Region the Security Group exists in
+   * @param securityGroupId ID of Security Group to delete
+   * @throws {@link NoSuchElementException} if a Security Group with the passed ID does not exist in
+   *     the passed region
+   */
+  public static void deleteWorkspaceSecurityGroup(
+      ClientConfig crlClientConfig,
+      AwsCredentialsProvider credentialsProvider,
+      UUID workspaceUuid,
+      Region awsRegion,
+      String securityGroupId) {
+    try (EC2SecurityGroupCow regionCow =
+        EC2SecurityGroupCow.instanceOf(crlClientConfig, credentialsProvider, awsRegion)) {
+      regionCow.delete(securityGroupId);
+
+      logger.info(
+          "Deleted Security Group ID '{}' for Workspace {} (Landing Zone {})",
+          securityGroupId,
+          workspaceUuid.toString(),
+          awsRegion.toString());
+
+    } catch (Ec2Exception e) {
+      if (e.awsErrorDetails().errorCode().equals("InvalidGroup.NotFound")) {
+        throw new NoSuchElementException(
+            String.format("Security Group ID %s not found.", securityGroupId));
+      } else {
+        throw e;
+      }
+    }
   }
 }

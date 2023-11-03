@@ -247,6 +247,7 @@ public class LandingZoneApiDispatch {
           .resourceParentId(resource.resourceParentId().orElse(null)) // Only available for subnets
           .resourceName(resource.resourceName().orElse(null)) // Only available for subnets
           .resourceType(resource.resourceType())
+          .resourceId(resource.resourceId())
           .tags(resource.tags())
           .region(resource.region());
     }

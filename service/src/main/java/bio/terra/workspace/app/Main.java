@@ -1,9 +1,11 @@
 package bio.terra.workspace.app;
 
 import bio.terra.common.logging.LoggingInitializer;
+import bio.terra.workspace.app.configuration.external.StartupConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.retry.annotation.EnableRetry;
@@ -52,6 +54,21 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 public class Main {
   public static void main(String[] args) {
-    new SpringApplicationBuilder(Main.class).initializers(new LoggingInitializer()).run(args);
+    ConfigurableApplicationContext ctx =
+        new SpringApplicationBuilder(Main.class).initializers(new LoggingInitializer()).run(args);
+
+    // Exit after initialization, if requested.
+    // This is used for debugging server startup issues within the github action context.
+    // Normally we do not get the log for the local server startup in a GHA. This lets us
+    // automate a test that will simply start the local server and exit.
+    StartupConfiguration startupConfiguration = ctx.getBean(StartupConfiguration.class);
+    System.out.printf(
+        "Exit after initialization is: %s%n", startupConfiguration.isExitAfterInitialization());
+    if (startupConfiguration.isExitAfterInitialization()) {
+      System.out.println("Exit after initialization requested - exiting");
+      ctx.close();
+      System.out.println("Application Context closed");
+      System.exit(0);
+    }
   }
 }

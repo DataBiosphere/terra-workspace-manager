@@ -26,6 +26,7 @@ public final class WorkspaceFlightMapKeys {
   public static final String CREATE_CLOUD_CONTEXT_FLIGHT_ID = "createCloudContextFlightId";
   public static final String RESOURCE_DELETE_FLIGHT_PAIR_LIST = "resourceDeleteFlightPairList";
   public static final String PROJECT_OWNER_GROUP_ID = "projectOwnerGroupId";
+  public static final String AWS_APPLICATION_SECURITY_GROUP_ID = "awsApplicationSecurityGroupId";
 
   private WorkspaceFlightMapKeys() {}
 
@@ -110,6 +111,7 @@ public final class WorkspaceFlightMapKeys {
 
     // AWS
     public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
+    public static final String AWS_APPLICATION_SECURITY_GROUP = "awsApplicationSecurityGroup";
     public static final String AWS_ENVIRONMENT_USER_ROLE_ARN = "awsEnvironmentUserRoleArn";
     public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN = "awsEnvironmentNotebookRoleArn";
     public static final String AWS_LANDING_ZONE_KMS_KEY_ARN = "awsLandingZoneKmsKeyArn";

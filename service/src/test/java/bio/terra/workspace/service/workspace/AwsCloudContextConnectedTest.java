@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.workspace;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
+import static bio.terra.workspace.service.features.FeatureService.AWS_APPLICATIONS_ENABLED;
 import static bio.terra.workspace.service.features.FeatureService.AWS_ENABLED;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -56,6 +57,9 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
     Assertions.assertDoesNotThrow(
         () -> mockFeatureService.featureEnabledCheck(AWS_ENABLED, SAM_USER.getEmail()));
 
+    Assertions.assertDoesNotThrow(
+        () -> mockFeatureService.featureEnabledCheck(AWS_APPLICATIONS_ENABLED));
+
     // Log the AWS config
     logger.info("AWS Configuration: {}", awsConfiguration.toString());
 
@@ -73,6 +77,10 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
     assertNotNull(environment.getUserRoleArn(), "environment.userRoleArn null");
     assertNotNull(environment.getNotebookRoleArn(), "environment.notebookRoleArn null");
     assertFalse(environment.getSupportedRegions().isEmpty(), "environment.supportedRegions empty");
+
+    assertFalse(
+        environment.getApplicationInstanceProfileName().isEmpty(),
+        "apps enabled, environment.applicationInstanceProfileName empty");
 
     // This lifetime should track that of the discovered environment where possible (stale
     // credentials will get refreshed under the hood).
@@ -94,6 +102,14 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
       assertFalse(
           landingZone.getNotebookLifecycleConfigurations().isEmpty(),
           region + ": landingZone.notebookLifecycleConfigurations empty");
+
+      assertFalse(
+          landingZone.getApplicationVpcId().isEmpty(),
+          "apps enabled, environment.applicationVpcId empty");
+
+      assertFalse(
+          landingZone.getApplicationVpcPrivateSubnetId().isEmpty(),
+          "apps enabled, environment.getApplicationVpcPrivateSubnetId empty");
 
       // Log details about the landing zone.
       logMetadata(landingZone.getMetadata(), "Landing zone region: " + region);
@@ -121,7 +137,8 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
         awsCloudContextService.createCloudContext(
             "flightId",
             WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
-            WorkspaceFixtures.DEFAULT_USER_EMAIL);
+            WorkspaceFixtures.DEFAULT_USER_EMAIL,
+            null);
     assertNotNull(createdCloudContext);
     AwsTestUtils.assertAwsCloudContextFields(
         awsCloudContextService
@@ -170,7 +187,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
             AwsCloudContextService.getLandingZone(
                 environment,
                 new AwsCloudContext(
-                    new AwsCloudContextFields("a", "b", "c", "d", "e"), commonFields),
+                    new AwsCloudContextFields("a", "b", "c", "d", "e", null), commonFields),
                 Region.of("cloud")));
   }
 }

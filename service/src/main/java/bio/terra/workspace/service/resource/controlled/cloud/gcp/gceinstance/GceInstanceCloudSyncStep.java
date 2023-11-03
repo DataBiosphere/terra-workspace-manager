@@ -4,7 +4,6 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 
 import bio.terra.cloudres.google.compute.CloudComputeCow;
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -23,12 +22,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Step to sync Sam policy groups for the resource to GCP permissions. */
 public class GceInstanceCloudSyncStep implements Step {
-  private final Logger logger = LoggerFactory.getLogger(GceInstanceCloudSyncStep.class);
   private final ControlledResourceService controlledResourceService;
   private final CrlService crlService;
   private final ControlledGceInstanceResource resource;
@@ -54,7 +50,7 @@ public class GceInstanceCloudSyncStep implements Step {
             ControlledResourceKeys.GCP_CLOUD_CONTEXT,
             GcpCloudContext.class);
     String projectId = cloudContext.getGcpProjectId();
-    List<Binding> newBindings = createBindings(cloudContext, flightContext.getWorkingMap());
+    List<Binding> newBindings = createBindings(cloudContext);
 
     CloudComputeCow cloudComputeCow = crlService.getCloudComputeCow();
     String zone =
@@ -91,8 +87,7 @@ public class GceInstanceCloudSyncStep implements Step {
    * works in com.google.cloud.Policy objects, but these are not used by the compute engine API.
    * Transform the com.google.cloud.Policy into a list of bindings to use for the GCP GCE API.
    */
-  private List<Binding> createBindings(GcpCloudContext cloudContext, FlightMap workingMap)
-      throws InterruptedException {
+  private List<Binding> createBindings(GcpCloudContext cloudContext) throws InterruptedException {
     com.google.cloud.Policy currentPolicy = com.google.cloud.Policy.newBuilder().build();
     com.google.cloud.Policy newPolicy =
         controlledResourceService.configureGcpPolicyForResource(

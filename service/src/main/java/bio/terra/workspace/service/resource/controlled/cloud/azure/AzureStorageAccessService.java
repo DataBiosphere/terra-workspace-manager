@@ -101,7 +101,7 @@ public class AzureStorageAccessService {
       if (action.equals(SamConstants.SamControlledResourceActions.READ_ACTION)) {
         possiblePermissions += "rl";
       } else if (action.equals(SamConstants.SamControlledResourceActions.WRITE_ACTION)) {
-        possiblePermissions += "acwd";
+        possiblePermissions += "acwdt";
       }
     }
 

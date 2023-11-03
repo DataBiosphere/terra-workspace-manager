@@ -4,15 +4,19 @@ import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.landingzone.library.LandingZoneMain;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.configuration.external.StartupConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.logging.StackdriverExporter;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 public final class StartupInitializer {
+  private static final Logger logger = LoggerFactory.getLogger(StartupInitializer.class);
   private static final String changelogPath = "db/changelog.xml";
 
   public static void initialize(ApplicationContext applicationContext) {
@@ -24,6 +28,8 @@ public final class StartupInitializer {
     WsmApplicationService appService = applicationContext.getBean(WsmApplicationService.class);
     FeatureConfiguration featureConfiguration =
         applicationContext.getBean(FeatureConfiguration.class);
+    StartupConfiguration startupConfiguration =
+        applicationContext.getBean(StartupConfiguration.class);
 
     // Log the state of the feature flags
     featureConfiguration.logFeatures();

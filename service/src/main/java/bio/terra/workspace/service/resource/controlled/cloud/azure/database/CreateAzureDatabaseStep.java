@@ -11,7 +11,6 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -59,30 +58,13 @@ public class CreateAzureDatabaseStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    if (GetManagedIdentityStep.managedIdentityExists(context)) {
-      // The first iteration of creating azure databases setup federated identities when setting
-      // up the database. The existence of a managed identity in the context indicates that this
-      // is a first iteration call.
-      // TODO: remove as part of https://broadworkbench.atlassian.net/browse/WOR-1165
-      azureDatabaseUtilsRunner.createDatabase(
-          context
-              .getWorkingMap()
-              .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
-          workspaceId,
-          getPodName(),
-          GetManagedIdentityStep.getManagedIdentityName(context),
-          GetManagedIdentityStep.getManagedIdentityPrincipalId(context),
-          resource.getDatabaseName());
-    } else {
-      azureDatabaseUtilsRunner.createDatabaseWithDbRole(
-          context
-              .getWorkingMap()
-              .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
-          workspaceId,
-          getPodName(),
-          resource.getDatabaseName());
-    }
-
+    azureDatabaseUtilsRunner.createDatabaseWithDbRole(
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
+        workspaceId,
+        getPodName(),
+        resource.getDatabaseName());
     return StepResult.getStepResultSuccess();
   }
 
