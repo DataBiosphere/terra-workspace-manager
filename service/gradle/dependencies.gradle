@@ -53,7 +53,7 @@ dependencies {
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.26-rt-test3-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.26-rt-test4-SNAPSHOT"
 
   // Terra Landing Zone Service
   implementation ('bio.terra:terra-landing-zone-service:0.0.217-SNAPSHOT')

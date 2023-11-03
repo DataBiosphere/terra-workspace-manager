@@ -56,18 +56,14 @@ public class KubernetesClientProvider {
 
   @NotNull
   public CoreV1Api createCoreApiClient(AzureCloudContext azureCloudContext, UUID workspaceId) {
+    return createCoreApiClient(azureCloudContext, getClusterResource(workspaceId));
+  }
+
+  @NotNull
+  public CoreV1Api createCoreApiClient(
+      AzureCloudContext azureCloudContext, ApiAzureLandingZoneDeployedResource clusterResource) {
     var containerServiceManager =
         crlService.getContainerServiceManager(azureCloudContext, azureConfig);
-
-    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-    UUID landingZoneId =
-        landingZoneApiDispatch.getLandingZoneId(
-            bearerToken, workspaceService.getWorkspace(workspaceId));
-    var clusterResource =
-        landingZoneApiDispatch
-            .getSharedKubernetesCluster(bearerToken, landingZoneId)
-            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
-
     return createCoreApiClient(containerServiceManager, azureCloudContext, clusterResource);
   }
 
@@ -147,5 +143,17 @@ public class KubernetesClientProvider {
               }
             })
         .orElseGet(StepResult::getStepResultSuccess);
+  }
+
+  public ApiAzureLandingZoneDeployedResource getClusterResource(UUID workspaceId) {
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    UUID landingZoneId =
+        landingZoneApiDispatch.getLandingZoneId(
+            bearerToken, workspaceService.getWorkspace(workspaceId));
+    var clusterResource =
+        landingZoneApiDispatch
+            .getSharedKubernetesCluster(bearerToken, landingZoneId)
+            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
+    return clusterResource;
   }
 }
