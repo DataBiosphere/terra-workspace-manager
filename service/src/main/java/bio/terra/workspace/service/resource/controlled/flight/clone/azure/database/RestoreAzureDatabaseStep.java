@@ -35,6 +35,7 @@ public class RestoreAzureDatabaseStep implements Step {
         String targetDbName,
         String dbServerName,
         String dbUserName,
+        String blobFileName,
         String blobContainerUrlAuthenticated
     ) {
         logger.info(
@@ -47,7 +48,7 @@ public class RestoreAzureDatabaseStep implements Step {
         this.targetDbName = targetDbName;
         this.dbServerName = dbServerName;
         this.dbUserName = dbUserName;
-        this.blobFileName = targetDbName + ".dump";
+        this.blobFileName = blobFileName;
         this.blobContainerName = "sc-" + destinationWorkspaceId.toString();
         this.blobContainerUrlAuthenticated = blobContainerUrlAuthenticated;
     }

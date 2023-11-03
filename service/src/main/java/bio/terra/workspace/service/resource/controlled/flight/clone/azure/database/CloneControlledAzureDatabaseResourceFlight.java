@@ -46,7 +46,10 @@ public class CloneControlledAzureDatabaseResourceFlight extends Flight {
     // Flight Plan
     // 1. TODO
     // 2. ...
-    
+
+    String targetDbName = sourceDbName + "clone";
+    String blobFileName = sourceDbName + ".dump";
+
     addStep(
         new DumpAzureDatabaseStep(
             inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
@@ -56,12 +59,11 @@ public class CloneControlledAzureDatabaseResourceFlight extends Flight {
             sourceDbName,
             dbServerName,
             dbUserName,
+            blobFileName,
             blobContainerUrlAuthenticated
         ),
         RetryRules.shortDatabase());  // TODO: what kind of retry rule should be used?
-
-    String targetDbName = sourceDbName + "clone";
-
+    
     addStep(new CreateAzureDatabaseStep(
         inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
         flightBeanBag.getAzureDatabaseUtilsRunner(),
@@ -78,6 +80,7 @@ public class CloneControlledAzureDatabaseResourceFlight extends Flight {
             targetDbName,
             dbServerName,
             dbUserName,
+            blobFileName,
             blobContainerUrlAuthenticated
         ),
         RetryRules.shortDatabase());  // TODO: what kind of retry rule should be used?

@@ -35,6 +35,7 @@ public class DumpAzureDatabaseStep implements Step {
         String sourceDbName,
         String dbServerName,
         String dbUserName,
+        String blobFileName,
         String blobContainerUrlAuthenticated
         ) {
         logger.info(
@@ -47,7 +48,7 @@ public class DumpAzureDatabaseStep implements Step {
         this.sourceDbName = sourceDbName;
         this.dbServerName = dbServerName;
         this.dbUserName = dbUserName;
-        this.blobFileName = sourceDbName + ".dump";
+        this.blobFileName = blobFileName;
         this.blobContainerName = "sc-" + destinationWorkspaceId.toString();
         this.blobContainerUrlAuthenticated = blobContainerUrlAuthenticated;
     }
