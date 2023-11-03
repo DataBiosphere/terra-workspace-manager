@@ -41,20 +41,18 @@ import org.springframework.transaction.TransactionManager;
 public class WdsContractVerificationTest extends BaseAzureUnitTest {
   @Autowired private MockMvc mockMvc;
 
-  // this block of @MockBeans sprouted up as a result of playing whackamole with failed dependency
-  // injection errors, mostly due to NPEs through by `DataSourceInitializer`
-  @MockBean
-  private LandingZoneDao
-      mockLandingZoneDao; // required for dependency chain up to azureConnectedTestUtils
+  // required for dependency chain via azureConnectedTestUtils
+  @MockBean private LandingZoneDao mockLandingZoneDao;
 
+  // datasource not configured in this test runtime, so mock out the transaction manager
   @MockBean(name = "tlzTransactionManager")
-  private TransactionManager
-      mockTlzTransactionManager; // this bean fails on missing datasource otherwise
+  private TransactionManager mockTlzTransactionManager;
 
-  @MockBean private JobService mockJobService; // for JobService.initialize call on startup
+  // for JobService.initialize call on startup
+  @MockBean private JobService mockJobService;
 
-  @MockBean
-  private LandingZoneJobService mockLandingZoneJobService; // for LandingZone.main call on startup
+  // for LandingZone.main call on startup
+  @MockBean private LandingZoneJobService mockLandingZoneJobService;
 
   @TestTemplate
   @ExtendWith(PactVerificationSpringProvider.class)
