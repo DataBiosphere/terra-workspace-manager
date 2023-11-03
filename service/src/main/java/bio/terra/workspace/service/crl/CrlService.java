@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.crl;
 
-import bio.terra.cloudres.azure.resourcemanager.common.AzureResourceCleanupRecorder;
-import bio.terra.cloudres.azure.resourcemanager.common.AzureResponseLogger;
+import bio.terra.cloudres.azure.resourcemanager.common.ResourceManagerRequestData;
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
 import bio.terra.cloudres.google.api.services.common.Defaults;
@@ -278,20 +277,10 @@ public class CrlService {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
-    // PostgreSqlManager.configure does not return the right type, so inline
-    // bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure
-    PostgreSqlManager.Configurable postgreSqlConfigurable =
-        configurePostgreSqlManager(
-            PostgreSqlManager.configure()
-                .withLogOptions(
-                    new HttpLogOptions()
-                        .setRequestLogger(new AzureResourceCleanupRecorder(clientConfig))
-                        .setResponseLogger(new AzureResponseLogger(clientConfig))
-                        // Since we are providing our own loggers this value isn't actually used;
-                        // however it
-                        // does need to be set to a value other than NONE for the loggers to fire.
-                        .setLogLevel(HttpLogDetailLevel.BASIC)));
-    return postgreSqlConfigurable.authenticate(azureCreds, azureProfile);
+    return configurePostgreSqlManager(
+            bio.terra.cloudres.azure.resourcemanager.postgresflex.Defaults.crlConfigure(
+                    clientConfig, PostgreSqlManager.configure()))
+            .authenticate(azureCreds, azureProfile);
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -586,6 +575,10 @@ public class CrlService {
   public ClientConfig getClientConfig() {
     assertCrlInUse();
     return clientConfig;
+  }
+
+  public void recordAzureCleanup(ResourceManagerRequestData requestData) {
+    bio.terra.cloudres.azure.resourcemanager.common.Defaults.recordCleanup(requestData, clientConfig);
   }
 
   private void assertCrlInUse() {
