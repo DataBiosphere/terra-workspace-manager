@@ -97,6 +97,13 @@ public final class WorkspaceFlightMapKeys {
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
     public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
 
+    public static final String CLONE_SOURCE_DATABASE_NAME = "cloneSourceDatabaseName";
+    public static final String CLONE_DESTINATION_DATABASE_NAME = "cloneDestinationDatabaseName";
+    public static final String CLONE_SOURCE_DATABASE_SERVER = "cloneSourceDatabaseServer";
+    public static final String CLONE_DB_USER = "cloneDbUser";
+    public static final String CLONE_BLOB_CONTAINER_URL_AUTHENTICATED = "cloneBlobContainerUrlAuthenticated";
+
+
     // Deletion keys
     public static final String FORCE_DELETE = "forceDelete";
 

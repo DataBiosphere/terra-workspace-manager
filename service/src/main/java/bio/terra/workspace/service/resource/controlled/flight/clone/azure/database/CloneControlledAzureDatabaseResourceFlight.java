@@ -2,8 +2,17 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.datab
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.workspace.common.utils.FlightBeanBag;
+import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 public class CloneControlledAzureDatabaseResourceFlight extends Flight {
   private static final Logger logger =
@@ -16,14 +25,41 @@ public class CloneControlledAzureDatabaseResourceFlight extends Flight {
     logger.info(
         "(sanity check) CloneControlledAzureDatabaseResourceFlight constructor has been called");
 
-    // Flight plan
-    // 1. Check user has read access to source database
-    // 2. Check user has write access to destination database server(?) (are we in the right
-    // abstraction layer to be checking the db server? or should I be checking the workspace?)
-    // 2. Gather controlled resource metadata for source object
-    // 3. Check if the database is already present
-    // 4. ...? Copy container definition to new container resource
-    // 5. ...? If referenced, bail out as unsupported.
-    // 6. pg_dump source database to destination workspace blob storage
+    logger.info(
+        "applicationContext {}", applicationContext);
+
+    FlightUtils.validateRequiredEntries(
+        inputParameters,
+        WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
+
+    UUID sourceWorkspaceId = inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, UUID.class);
+    UUID destinationWorkspaceId = inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
+    String sourceDbName = inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_SOURCE_DATABASE_NAME, String.class);
+    String dbServerName = inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_SOURCE_DATABASE_SERVER, String.class);
+    String dbUserName = inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_USER, String.class);
+    String blobContainerUrlAuthenticated = inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_BLOB_CONTAINER_URL_AUTHENTICATED, String.class);
+
+    var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
+
+    // Flight Plan
+    // 1. TODO
+    // 2. ...
+    
+    addStep(
+        new DumpAzureDatabaseStep(
+            inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
+            flightBeanBag.getAzureDatabaseUtilsRunner(),
+            sourceWorkspaceId,
+            destinationWorkspaceId,
+            sourceDbName,
+            dbServerName,
+            dbUserName,
+            blobContainerUrlAuthenticated
+        ),
+        RetryRules.shortDatabase());  // TODO: what kind of retry rule should be used?
+
   }
 }
