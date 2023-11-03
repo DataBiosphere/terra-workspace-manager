@@ -2,9 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
 
-import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.cloudres.azure.resourcemanager.postgresflex.data.CreateDatabaseRequestData;
-import bio.terra.cloudres.common.cleanup.CleanupRecorder;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -61,28 +59,28 @@ public class CreateAzureDatabaseStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    var cloudContext = context
+    var cloudContext =
+        context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     var landingZoneId =
-            landingZoneApiDispatch.getLandingZoneId(
-                    bearerToken, workspaceService.getWorkspace(workspaceId));
+        landingZoneApiDispatch.getLandingZoneId(
+            bearerToken, workspaceService.getWorkspace(workspaceId));
     var databaseResource =
-            landingZoneApiDispatch
-                    .getSharedDatabase(bearerToken, landingZoneId)
-                    .orElseThrow(() -> new RuntimeException("No shared database found"));
+        landingZoneApiDispatch
+            .getSharedDatabase(bearerToken, landingZoneId)
+            .orElseThrow(() -> new RuntimeException("No shared database found"));
     azureDatabaseUtilsRunner.createDatabaseWithDbRole(
-            cloudContext,
-        workspaceId,
-        getPodName(),
-        resource.getDatabaseName());
-    crlService.recordAzureCleanup(CreateDatabaseRequestData.builder()
+        cloudContext, workspaceId, getPodName(), resource.getDatabaseName());
+    crlService.recordAzureCleanup(
+        CreateDatabaseRequestData.builder()
             .setTenantId(cloudContext.getAzureTenantId())
             .setSubscriptionId(cloudContext.getAzureSubscriptionId())
             .setResourceGroupName(cloudContext.getAzureResourceGroupId())
             .setServerName(getResourceName(databaseResource))
-            .setDatabaseName(resource.getDatabaseName()).build());
+            .setDatabaseName(resource.getDatabaseName())
+            .build());
     return StepResult.getStepResultSuccess();
   }
 

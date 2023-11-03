@@ -24,8 +24,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.credential.TokenCredential;
-import com.azure.core.http.policy.HttpLogDetailLevel;
-import com.azure.core.http.policy.HttpLogOptions;
 import com.azure.core.http.policy.UserAgentPolicy;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
@@ -279,8 +277,8 @@ public class CrlService {
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configurePostgreSqlManager(
             bio.terra.cloudres.azure.resourcemanager.postgresflex.Defaults.crlConfigure(
-                    clientConfig, PostgreSqlManager.configure()))
-            .authenticate(azureCreds, azureProfile);
+                clientConfig, PostgreSqlManager.configure()))
+        .authenticate(azureCreds, azureProfile);
   }
 
   /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
@@ -578,7 +576,8 @@ public class CrlService {
   }
 
   public void recordAzureCleanup(ResourceManagerRequestData requestData) {
-    bio.terra.cloudres.azure.resourcemanager.common.Defaults.recordCleanup(requestData, clientConfig);
+    bio.terra.cloudres.azure.resourcemanager.common.Defaults.recordCleanup(
+        requestData, clientConfig);
   }
 
   private void assertCrlInUse() {
