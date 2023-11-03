@@ -11,43 +11,43 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-public class DumpAzureDatabaseStep implements Step {
+public class RestoreAzureDatabaseStep implements Step {
     private static final Logger logger =
-        LoggerFactory.getLogger(DumpAzureDatabaseStep.class);
+        LoggerFactory.getLogger(RestoreAzureDatabaseStep.class);
 
     private final AzureCloudContext azureCloudContext;
     private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
     private final UUID sourceWorkspaceId;
     private final UUID destinationWorkspaceId;
     private final String podName;
-    private final String sourceDbName;
+    private final String targetDbName;
     private final String dbServerName;
     private final String dbUserName;
     private final String blobFileName;
     private final String blobContainerName;
     private final String blobContainerUrlAuthenticated;
 
-    public DumpAzureDatabaseStep(
+    public RestoreAzureDatabaseStep(
         AzureCloudContext azureCloudContext,
         AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
         UUID sourceWorkspaceId,
         UUID destinationWorkspaceId,
-        String sourceDbName,
+        String targetDbName,
         String dbServerName,
         String dbUserName,
         String blobContainerUrlAuthenticated
-        ) {
+    ) {
         logger.info(
             "(sanity check) DumpAzureDatabaseStep constructor has been called");
         this.azureCloudContext = azureCloudContext;
         this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
         this.sourceWorkspaceId = sourceWorkspaceId;
         this.destinationWorkspaceId = destinationWorkspaceId;
-        this.podName = "dump-azure-db-step";
-        this.sourceDbName = sourceDbName;
+        this.podName = "restore-azure-db-step";
+        this.targetDbName = targetDbName;
         this.dbServerName = dbServerName;
         this.dbUserName = dbUserName;
-        this.blobFileName = sourceDbName + ".dump";
+        this.blobFileName = targetDbName + ".dump";
         this.blobContainerName = "sc-" + destinationWorkspaceId.toString();
         this.blobContainerUrlAuthenticated = blobContainerUrlAuthenticated;
     }
@@ -57,11 +57,11 @@ public class DumpAzureDatabaseStep implements Step {
         throws InterruptedException, RetryException {
 
         logger.info("<debug> context working map: {}", context.getWorkingMap());
-        this.azureDatabaseUtilsRunner.pgDumpDatabase(
+        this.azureDatabaseUtilsRunner.pgRestoreDatabase(
             azureCloudContext,
             sourceWorkspaceId,
             podName,
-            sourceDbName,
+            targetDbName,
             dbServerName,
             dbUserName,
             blobFileName,

@@ -5,12 +5,11 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
-import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.util.retry.Retry;
 
 import java.util.UUID;
 
@@ -55,6 +54,28 @@ public class CloneControlledAzureDatabaseResourceFlight extends Flight {
             sourceWorkspaceId,
             destinationWorkspaceId,
             sourceDbName,
+            dbServerName,
+            dbUserName,
+            blobContainerUrlAuthenticated
+        ),
+        RetryRules.shortDatabase());  // TODO: what kind of retry rule should be used?
+
+    String targetDbName = sourceDbName + "clone";
+
+    addStep(new CreateAzureDatabaseStep(
+        inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
+        flightBeanBag.getAzureDatabaseUtilsRunner(),
+        sourceWorkspaceId,
+        targetDbName
+    ), RetryRules.shortDatabase());
+
+    addStep(
+        new RestoreAzureDatabaseStep(
+            inputParameters.get(WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
+            flightBeanBag.getAzureDatabaseUtilsRunner(),
+            sourceWorkspaceId,
+            destinationWorkspaceId,
+            targetDbName,
             dbServerName,
             dbUserName,
             blobContainerUrlAuthenticated
