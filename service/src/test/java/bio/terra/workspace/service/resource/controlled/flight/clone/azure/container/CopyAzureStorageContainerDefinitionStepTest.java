@@ -92,7 +92,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, destResourceId);
     inputParams.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, destResourceName);
     inputParams.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
+        ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
         destContainerName);
     inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     workingMap.put(
@@ -141,7 +141,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     inputParams.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
     inputParams.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME, "fake");
+        ControlledResourceKeys.DESTINATION_RESOURCE_NAME, "fake");
     inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     var sourceContainer =

@@ -95,7 +95,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String BATCH_ACCOUNT_NAME = "batchAccountName";
     public static final String DESTINATION_RESOURCE_ID = "destinationResourceId";
     public static final String DESTINATION_FOLDER_ID = "destinationFolderId";
-    public static final String DESTINATION_CONTAINER_NAME = "destinationContainerName";
+    public static final String DESTINATION_RESOURCE_NAME = "destinationResourceName";
 
     // Deletion keys
     public static final String FORCE_DELETE = "forceDelete";

@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
+package bio.terra.workspace.service.resource.controlled.flight.clone.azure.common;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.stairway.FlightContext;
@@ -8,18 +8,25 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VerifyContainerResourceDoesNotExist implements Step {
+public class VerifyResourceDoesNotExist implements Step {
   private static final Logger logger =
-      LoggerFactory.getLogger(VerifyContainerResourceDoesNotExist.class);
+      LoggerFactory.getLogger(VerifyResourceDoesNotExist.class);
   private final ResourceDao resourceDao;
+  private final String nameKey;
 
-  public VerifyContainerResourceDoesNotExist(ResourceDao resourceDao) {
+  public VerifyResourceDoesNotExist(ResourceDao resourceDao) {
+    this(resourceDao, WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME);
+  }
+
+  public VerifyResourceDoesNotExist(ResourceDao resourceDao, String nameKey) {
     this.resourceDao = resourceDao;
+    this.nameKey = nameKey;
   }
 
   @Override
@@ -29,19 +36,19 @@ public class VerifyContainerResourceDoesNotExist implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME);
+            nameKey);
     var destinationWorkspaceId =
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     var destinationResourceName =
         inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME, String.class);
+                nameKey, String.class);
 
     if (resourceDao.resourceExists(destinationWorkspaceId, destinationResourceName)) {
-      logger.error("Storage container resource already exists, name = {}", destinationResourceName);
+      logger.error("Resource already exists, name = {}", destinationResourceName);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new ValidationException("Storage container resource already exists"));
+          new ValidationException("Resource already exists"));
     }
     return StepResult.getStepResultSuccess();
   }

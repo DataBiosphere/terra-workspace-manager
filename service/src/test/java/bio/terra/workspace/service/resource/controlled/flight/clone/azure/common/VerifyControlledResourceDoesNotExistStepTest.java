@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
+package bio.terra.workspace.service.resource.controlled.flight.clone.azure.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -14,7 +14,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-public class VerifyContainerResourceDoesNotExistStepTest extends BaseAzureUnitTest {
+public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitTest {
 
   @Test
   void doStep_resourceDoesNotExist() throws InterruptedException {
@@ -24,11 +24,11 @@ public class VerifyContainerResourceDoesNotExistStepTest extends BaseAzureUnitTe
     inputParameters.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
     inputParameters.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
         UUID.randomUUID());
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
 
-    var result = new VerifyContainerResourceDoesNotExist(resourceDao).doStep(flightContext);
+    var result = new VerifyResourceDoesNotExist(resourceDao).doStep(flightContext);
 
     assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
   }
@@ -45,13 +45,13 @@ public class VerifyContainerResourceDoesNotExistStepTest extends BaseAzureUnitTe
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         destinationWorkspaceId);
     inputParameters.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
         destinationContainerName);
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(resourceDao.resourceExists(destinationWorkspaceId, destinationContainerName))
         .thenReturn(true);
 
-    var result = new VerifyContainerResourceDoesNotExist(resourceDao).doStep(flightContext);
+    var result = new VerifyResourceDoesNotExist(resourceDao).doStep(flightContext);
 
     assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_FAILURE_FATAL);
     assertEquals(result.getException().get().getClass(), ValidationException.class);

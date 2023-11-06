@@ -13,30 +13,26 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.stairway.exception.StairwayExecutionException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.managedIdentity.CloneControlledAzureManagedIdentityResourceFlight;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import java.util.UUID;
-import javax.annotation.Nullable;
 
-public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implements Step {
+public class LaunchCloneControlledAzureManagedIdentityResourceFlightStep implements Step {
 
-  private final ControlledAzureStorageContainerResource sourceResource;
+  private final ControlledAzureManagedIdentityResource sourceResource;
   private final String subflightId;
   private final UUID destinationResourceId;
-  private final UUID destinationFolderId;
 
-  public LaunchCloneControlledAzureStorageContainerResourceFlightStep(
-      ControlledAzureStorageContainerResource sourceResource,
-      String subflightId,
-      UUID destinationResourceId,
-      @Nullable UUID destinationFolderId) {
+  public LaunchCloneControlledAzureManagedIdentityResourceFlightStep(
+          ControlledAzureManagedIdentityResource sourceResource,
+          String subflightId,
+          UUID destinationResourceId) {
     this.sourceResource = sourceResource;
     this.subflightId = subflightId;
     this.destinationResourceId = destinationResourceId;
-    this.destinationFolderId = destinationFolderId;
   }
 
   @Override
@@ -66,16 +62,13 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
         String.format(
-            "Clone Azure Storage Container %s", sourceResource.getResourceId().toString()));
-    String destinationContainerName =
-        String.format(
-            "clone-%s-%s", destinationWorkspaceId, sourceResource.getStorageContainerName());
+            "Clone Azure Managed Identity %s", sourceResource.getResourceId().toString()));
+    String destinationIdentityName = sourceResource.getName();
     subflightInputParameters.put(
-        ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
-        destinationContainerName.substring(0, Math.min(63, destinationContainerName.length())));
+        ResourceKeys.RESOURCE_NAME,
+            destinationIdentityName.substring(0, Math.min(63, destinationIdentityName.length())));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
-    subflightInputParameters.put(ControlledResourceKeys.DESTINATION_FOLDER_ID, destinationFolderId);
     // Do not do the policy merge on the sub-object clone. Policies are propagated to the
     // destination workspace as a separate step during the workspace clone flight, so we do not
     // do a policy merge for individual resource clones within the workspace
@@ -87,7 +80,7 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
           .getStairway()
           .submit(
               subflightId,
-              CloneControlledAzureStorageContainerResourceFlight.class,
+              CloneControlledAzureManagedIdentityResourceFlight.class,
               subflightInputParameters);
     } catch (DuplicateFlightIdException unused) {
       return StepResult.getStepResultSuccess();
