@@ -63,16 +63,22 @@ public class CreateAzureDatabaseStep implements Step {
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-    var landingZoneId =
-        landingZoneApiDispatch.getLandingZoneId(
-            bearerToken, workspaceService.getWorkspace(workspaceId));
-    var databaseResource =
-        landingZoneApiDispatch
-            .getSharedDatabase(bearerToken, landingZoneId)
-            .orElseThrow(() -> new RuntimeException("No shared database found"));
+
+    // Create the database
     azureDatabaseUtilsRunner.createDatabaseWithDbRole(
         cloudContext, workspaceId, getPodName(), resource.getDatabaseName());
+
+    // Query LZ for the postgres server
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var landingZoneId =
+            landingZoneApiDispatch.getLandingZoneId(
+                    bearerToken, workspaceService.getWorkspace(workspaceId));
+    var databaseResource =
+            landingZoneApiDispatch
+                    .getSharedDatabase(bearerToken, landingZoneId)
+                    .orElseThrow(() -> new RuntimeException("No shared database found"));
+
+    // Record resource for cleanup in Janitor
     crlService.recordAzureCleanup(
         CreateDatabaseRequestData.builder()
             .setTenantId(cloudContext.getAzureTenantId())

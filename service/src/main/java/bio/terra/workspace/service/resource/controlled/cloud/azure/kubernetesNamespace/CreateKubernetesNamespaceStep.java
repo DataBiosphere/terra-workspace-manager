@@ -51,6 +51,8 @@ public class CreateKubernetesNamespaceStep implements Step {
           null,
           null,
           null);
+
+      // Record namespace for cleanup in Janitor
       crlService.recordAzureCleanup(
           CreateKubernetesNamespaceRequestData.builder()
               .setNamespaceName(resource.getKubernetesNamespace())
