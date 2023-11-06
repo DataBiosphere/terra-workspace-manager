@@ -71,12 +71,12 @@ public class CreateAzureDatabaseStep implements Step {
     // Query LZ for the postgres server
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     var landingZoneId =
-            landingZoneApiDispatch.getLandingZoneId(
-                    bearerToken, workspaceService.getWorkspace(workspaceId));
+        landingZoneApiDispatch.getLandingZoneId(
+            bearerToken, workspaceService.getWorkspace(workspaceId));
     var databaseResource =
-            landingZoneApiDispatch
-                    .getSharedDatabase(bearerToken, landingZoneId)
-                    .orElseThrow(() -> new RuntimeException("No shared database found"));
+        landingZoneApiDispatch
+            .getSharedDatabase(bearerToken, landingZoneId)
+            .orElseThrow(() -> new RuntimeException("No shared database found"));
 
     // Record resource for cleanup in Janitor
     crlService.recordAzureCleanup(
