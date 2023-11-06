@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.cloudres.azure.resourcemanager.postgresflex.data.CreateDatabaseRequestData;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
@@ -52,9 +53,8 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private HttpResponse mockHttpResponse;
   @Mock private AzureDatabaseUtilsRunner mockAzureDatabaseUtilsRunner;
 
+  private final String databaseServerName = UUID.randomUUID().toString();
   private final UUID workspaceId = UUID.randomUUID();
-  private final String uamiName = UUID.randomUUID().toString();
-  private final String uamiPrincipalId = UUID.randomUUID().toString();
   private final ApiAzureDatabaseCreationParameters creationParameters =
       ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(null, false);
   private final ControlledAzureDatabaseResource databaseResource =
@@ -72,12 +72,20 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
             workspaceId,
             "create-" + databaseResource.getResourceId(),
             databaseResource.getDatabaseName());
+    verify(mockCrlService)
+        .recordAzureCleanup(
+            CreateDatabaseRequestData.builder()
+                .setTenantId(mockAzureCloudContext.getAzureTenantId())
+                .setSubscriptionId(mockAzureCloudContext.getAzureSubscriptionId())
+                .setResourceGroupName(mockAzureCloudContext.getAzureResourceGroupId())
+                .setServerName(databaseServerName)
+                .setDatabaseName(databaseResource.getDatabaseName())
+                .build());
   }
 
   @Test
   void testUndo() throws InterruptedException {
-    final String databaseServerName = UUID.randomUUID().toString();
-    CreateAzureDatabaseStep step = setupUndoTest(databaseServerName, workspaceId, databaseResource);
+    CreateAzureDatabaseStep step = setupUndoTest(workspaceId, databaseResource);
 
     doNothing()
         .when(mockDatabases)
@@ -89,9 +97,7 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
 
   @Test
   void testUndoDatabaseDoesNotExist() throws InterruptedException {
-    final String databaseServerName = UUID.randomUUID().toString();
-
-    CreateAzureDatabaseStep step = setupUndoTest(databaseServerName, workspaceId, databaseResource);
+    CreateAzureDatabaseStep step = setupUndoTest(workspaceId, databaseResource);
 
     HttpStatus httpStatus = HttpStatus.NOT_FOUND;
     doThrow(new ManagementException(httpStatus.name(), mockHttpResponse))
@@ -105,20 +111,12 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
 
   @NotNull
   private CreateAzureDatabaseStep setupUndoTest(
-      String databaseServerName,
-      UUID workspaceId,
-      ControlledAzureDatabaseResource databaseResource) {
+      UUID workspaceId, ControlledAzureDatabaseResource databaseResource) {
     createMockFlightContext();
 
     when(mockCrlService.getPostgreSqlManager(mockAzureCloudContext, mockAzureConfig))
         .thenReturn(mockPostgreSqlManager);
     when(mockPostgreSqlManager.databases()).thenReturn(mockDatabases);
-
-    when(mockLandingZoneApiDispatch.getSharedDatabase(any(), any()))
-        .thenReturn(Optional.of(mockDatabase));
-    when(mockDatabase.getResourceId()).thenReturn(databaseServerName);
-
-    when(mockSamService.getWsmServiceAccountToken()).thenReturn(UUID.randomUUID().toString());
 
     return new CreateAzureDatabaseStep(
         mockAzureConfig,
@@ -135,6 +133,10 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   private CreateAzureDatabaseStep setupStepTest() {
     createMockFlightContext();
 
+    when(mockAzureCloudContext.getAzureTenantId()).thenReturn("tenant");
+    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn("sub");
+    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn("rg");
+
     return new CreateAzureDatabaseStep(
         mockAzureConfig,
         mockCrlService,
@@ -150,6 +152,11 @@ public class CreateAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
         .thenReturn(mockAzureCloudContext);
+    when(mockSamService.getWsmServiceAccountToken()).thenReturn(UUID.randomUUID().toString());
+    when(mockLandingZoneApiDispatch.getLandingZoneId(any(), any())).thenReturn(UUID.randomUUID());
+    when(mockLandingZoneApiDispatch.getSharedDatabase(any(), any()))
+        .thenReturn(Optional.of(mockDatabase));
+    when(mockDatabase.getResourceId()).thenReturn(databaseServerName);
 
     return mockFlightContext;
   }

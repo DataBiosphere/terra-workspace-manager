@@ -150,10 +150,8 @@ public class KubernetesClientProvider {
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
-    var clusterResource =
-        landingZoneApiDispatch
-            .getSharedKubernetesCluster(bearerToken, landingZoneId)
-            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
-    return clusterResource;
+    return landingZoneApiDispatch
+        .getSharedKubernetesCluster(bearerToken, landingZoneId)
+        .orElseThrow(() -> new RuntimeException("No shared cluster found"));
   }
 }
