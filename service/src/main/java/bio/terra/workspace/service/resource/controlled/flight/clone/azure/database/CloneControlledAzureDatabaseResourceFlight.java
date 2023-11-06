@@ -5,6 +5,9 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.CreateAzureStorageContainerStep;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.UUID;
@@ -12,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CloneControlledAzureDatabaseResourceFlight extends Flight {
+
   private static final Logger logger =
       LoggerFactory.getLogger(CloneControlledAzureDatabaseResourceFlight.class);
 
@@ -60,6 +64,21 @@ public class CloneControlledAzureDatabaseResourceFlight extends Flight {
 
     String targetDbName = sourceDbName + "clone";
     String blobFileName = sourceDbName + ".dump";
+    String storageContainerName = sourceDbName + "-private-storage";  // TODO: are there problems with this name?
+
+//    addStep(
+//        new CreateAzureStorageContainerStep(
+//            flightBeanBag.getAzureConfig(),
+//            flightBeanBag.getCrlService(),
+//            ControlledAzureStorageContainerResource.builder()
+//                .storageContainerName(storageContainerName)
+//                .common(
+//                    ControlledResourceFields.builder()
+//                        .
+//                        .build()
+//                )
+//                .build()
+//        ));
 
     addStep(
         new DumpAzureDatabaseStep(
