@@ -114,10 +114,10 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceCloneInputs.getFlightId(),
                     resourceCloneInputs.getDestinationResourceId()));
             addStep(
-                    new AwaitCloneControlledAzureStorageContainerResourceFlightStep(
-                            resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY),
-                            resourceCloneInputs.getFlightId()),
-                    RetryRules.cloudLongRunning());
+                new AwaitCloneControlledAzureManagedIdentityResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY),
+                    resourceCloneInputs.getFlightId()),
+                RetryRules.cloudLongRunning());
           }
 
             // CONTROLLED_AZURE_DATABASE, CONTROLLED_AZURE_DISK
