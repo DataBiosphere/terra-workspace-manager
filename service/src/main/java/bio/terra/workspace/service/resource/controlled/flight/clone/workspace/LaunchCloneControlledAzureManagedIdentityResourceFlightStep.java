@@ -27,9 +27,9 @@ public class LaunchCloneControlledAzureManagedIdentityResourceFlightStep impleme
   private final UUID destinationResourceId;
 
   public LaunchCloneControlledAzureManagedIdentityResourceFlightStep(
-          ControlledAzureManagedIdentityResource sourceResource,
-          String subflightId,
-          UUID destinationResourceId) {
+      ControlledAzureManagedIdentityResource sourceResource,
+      String subflightId,
+      UUID destinationResourceId) {
     this.sourceResource = sourceResource;
     this.subflightId = subflightId;
     this.destinationResourceId = destinationResourceId;
@@ -65,8 +65,8 @@ public class LaunchCloneControlledAzureManagedIdentityResourceFlightStep impleme
             "Clone Azure Managed Identity %s", sourceResource.getResourceId().toString()));
     String destinationIdentityName = sourceResource.getName();
     subflightInputParameters.put(
-        ResourceKeys.RESOURCE_NAME,
-            destinationIdentityName.substring(0, Math.min(63, destinationIdentityName.length())));
+        ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
+        destinationIdentityName.substring(0, Math.min(63, destinationIdentityName.length())));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
     // Do not do the policy merge on the sub-object clone. Policies are propagated to the

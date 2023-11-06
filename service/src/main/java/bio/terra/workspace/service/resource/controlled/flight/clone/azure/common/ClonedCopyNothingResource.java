@@ -5,7 +5,5 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.util.UUID;
 
 public record ClonedCopyNothingResource(
-    CloningInstructions effectiveCloningInstructions,
-    UUID sourceWorkspaceId,
-    UUID sourceResourceId) implements ClonedAzureResource<ControlledResource> {
-}
+    CloningInstructions effectiveCloningInstructions, UUID sourceWorkspaceId, UUID sourceResourceId)
+    implements ClonedAzureResource<ControlledResource> {}

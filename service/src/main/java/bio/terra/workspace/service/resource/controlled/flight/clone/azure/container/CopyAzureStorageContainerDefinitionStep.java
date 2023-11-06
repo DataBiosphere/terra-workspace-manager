@@ -20,7 +20,6 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -81,9 +80,7 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             UUID.class);
     var destinationContainerName =
         getRequired(
-            inputParameters,
-            ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
-            String.class);
+            inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_NAME, String.class);
     var destinationResourceId =
         getRequired(
             inputParameters,

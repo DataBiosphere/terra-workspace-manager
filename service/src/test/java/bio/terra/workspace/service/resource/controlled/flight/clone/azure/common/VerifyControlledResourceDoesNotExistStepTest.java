@@ -24,8 +24,7 @@ public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitT
     inputParameters.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
     inputParameters.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
-        UUID.randomUUID());
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME, UUID.randomUUID());
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
 
     var result = new VerifyResourceDoesNotExist(resourceDao).doStep(flightContext);

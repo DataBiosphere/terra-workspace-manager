@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.commo
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -10,32 +9,27 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.CheckControlledResourceAuthStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.managedIdentity.CloneControlledAzureManagedIdentityResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.flight.update.RetrieveControlledResourceMetadataStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.StepRetryRulePair;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-public abstract class CloneControlledAzureResourceFlight<T extends ControlledResource> extends Flight {
+public abstract class CloneControlledAzureResourceFlight extends Flight {
   private static final Logger logger =
-          LoggerFactory.getLogger(CloneControlledAzureResourceFlight.class);
+      LoggerFactory.getLogger(CloneControlledAzureResourceFlight.class);
 
   protected CloneControlledAzureResourceFlight(
-      FlightMap inputParameters, Object applicationContext, WsmResourceType wsmResourceType) {
+      FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
-
-    logger.info("(sanity check) CloneControlledAzureResourceFlight constructor has been called for resource type {}", wsmResourceType);
-
-    logger.info("inputParameters {}", inputParameters.toString());
-    logger.info("applicationContext {}", applicationContext.toString());
 
     FlightUtils.validateRequiredEntries(
         inputParameters,
@@ -46,11 +40,7 @@ public abstract class CloneControlledAzureResourceFlight<T extends ControlledRes
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
-    logger.info("required entries validated");
-
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
-
-    logger.info("beanbag constructed");
 
     var sourceResource =
         FlightUtils.getRequired(
@@ -74,15 +64,10 @@ public abstract class CloneControlledAzureResourceFlight<T extends ControlledRes
                     CloningInstructions.class))
             .orElse(sourceResource.getCloningInstructions());
 
-    logger.info("inputs extracted from map");
-    logger.info("cloning instructions: {}", cloningInstructions);
-
     if (CloningInstructions.COPY_NOTHING == cloningInstructions) {
       copyNothing(flightBeanBag, inputParameters);
       return;
     }
-
-    logger.info("azure cloud context: {}", flightBeanBag.getAzureCloudContextService());
 
     // Get the cloud context and store it in the working map
     addStep(
@@ -119,32 +104,69 @@ public abstract class CloneControlledAzureResourceFlight<T extends ControlledRes
     // so we can reliably retry the copy definition step later on
     addStep(new VerifyResourceDoesNotExist(flightBeanBag.getResourceDao()));
 
+    List<StepRetryRulePair> resourceCloningSteps = new ArrayList<>();
+
     switch (cloningInstructions) {
-      case COPY_DEFINITION -> copyDefinition(flightBeanBag, inputParameters);
+      case COPY_DEFINITION -> resourceCloningSteps.addAll(
+          copyDefinition(flightBeanBag, inputParameters));
       case COPY_RESOURCE -> {
-        copyDefinition(flightBeanBag, inputParameters);
-        copyResource(flightBeanBag, inputParameters);
+        resourceCloningSteps.addAll(copyDefinition(flightBeanBag, inputParameters));
+        resourceCloningSteps.addAll(copyResource(flightBeanBag, inputParameters));
       }
-      case COPY_REFERENCE ->  copyReference(flightBeanBag, inputParameters);
-      case LINK_REFERENCE -> linkReference(flightBeanBag, inputParameters);
-      case COPY_NOTHING -> throw new IllegalStateException("Copy nothing instruction should not reach here.");
+      case COPY_REFERENCE -> resourceCloningSteps.addAll(
+          copyReference(flightBeanBag, inputParameters));
+      case LINK_REFERENCE -> resourceCloningSteps.addAll(
+          linkReference(flightBeanBag, inputParameters));
+      case COPY_NOTHING -> throw new IllegalStateException(
+          "Copy nothing instruction should not reach here.");
     }
-    var stringSteps = getSteps().stream().map(Step::toString).collect(Collectors.joining("\n - "));
-    logger.info("steps added:\n - {}", stringSteps);
+
+    resourceCloningSteps.forEach(
+        (stepRetryRulePair -> addStep(stepRetryRulePair.step(), stepRetryRulePair.retryRule())));
   }
 
-  protected void copyNothing(FlightBeanBag flightBeanBag, FlightMap inputParameters) {
-    var sourceResource = FlightUtils.getRequired(
+  protected List<StepRetryRulePair> copyNothing(
+      FlightBeanBag flightBeanBag, FlightMap inputParameters) {
+    var sourceResource =
+        FlightUtils.getRequired(
             inputParameters,
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
             ControlledResource.class);
-    addStep(new SetNoOpResourceCloneResponseStep<>(sourceResource) {});
+    return List.of(
+        new StepRetryRulePair(
+            new SetNoOpResourceCloneResponseStep<>(sourceResource), RetryRules.shortExponential()));
   }
 
-  protected abstract void copyDefinition(FlightBeanBag flightBeanBag, FlightMap inputParameters);
+  protected List<StepRetryRulePair> copyDefinition(
+      FlightBeanBag flightBeanBag, FlightMap inputParameters) {
+    throw cloneUnsupported(CloningInstructions.COPY_DEFINITION, inputParameters);
+  }
 
-  protected abstract void copyResource(FlightBeanBag flightBeanBag, FlightMap inputParameters);
-  protected abstract void copyReference(FlightBeanBag flightBeanBag, FlightMap inputParameters);
-  protected abstract void linkReference(FlightBeanBag flightBeanBag, FlightMap inputParameters);
+  protected List<StepRetryRulePair> copyResource(
+      FlightBeanBag flightBeanBag, FlightMap inputParameters) {
+    throw cloneUnsupported(CloningInstructions.COPY_RESOURCE, inputParameters);
+  }
 
+  protected List<StepRetryRulePair> copyReference(
+      FlightBeanBag flightBeanBag, FlightMap inputParameters) {
+    throw cloneUnsupported(CloningInstructions.COPY_REFERENCE, inputParameters);
+  }
+
+  protected List<StepRetryRulePair> linkReference(
+      FlightBeanBag flightBeanBag, FlightMap inputParameters) {
+    throw cloneUnsupported(CloningInstructions.LINK_REFERENCE, inputParameters);
+  }
+
+  private static IllegalArgumentException cloneUnsupported(
+      CloningInstructions cloningInstructions, FlightMap inputParameters) {
+    WsmResourceType sourceResourceType =
+        FlightUtils.getRequired(
+                inputParameters,
+                WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
+                ControlledResource.class)
+            .getResourceType();
+    return new IllegalArgumentException(
+        "Clone instruction %s not supported for resource type %s"
+            .formatted(cloningInstructions.toSql(), sourceResourceType.toSql()));
+  }
 }

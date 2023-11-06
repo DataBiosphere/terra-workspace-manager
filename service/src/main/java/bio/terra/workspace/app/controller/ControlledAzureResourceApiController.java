@@ -67,7 +67,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNam
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
@@ -576,7 +575,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private ApiCloneControlledAzureStorageContainerResult fetchCloneAzureContainerResult(
       String jobId) {
     JobApiUtils.AsyncJobResult<ClonedAzureStorageContainer> jobResult =
-            jobApiUtils.retrieveAsyncJobResult(jobId, ClonedAzureStorageContainer.class);
+        jobApiUtils.retrieveAsyncJobResult(jobId, ClonedAzureStorageContainer.class);
 
     ApiClonedControlledAzureStorageContainer containerResult = null;
     if (jobResult.getResult() != null) {

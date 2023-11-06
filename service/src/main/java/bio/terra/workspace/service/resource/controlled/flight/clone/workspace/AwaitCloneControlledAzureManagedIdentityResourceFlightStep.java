@@ -15,8 +15,6 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.managedIdentity.ClonedAzureManagedIdentity;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
@@ -38,7 +36,7 @@ public class AwaitCloneControlledAzureManagedIdentityResourceFlightStep implemen
   private final String subflightId;
 
   public AwaitCloneControlledAzureManagedIdentityResourceFlightStep(
-          ControlledAzureManagedIdentityResource resource, String subflightId) {
+      ControlledAzureManagedIdentityResource resource, String subflightId) {
     this.resource = resource;
     this.subflightId = subflightId;
   }

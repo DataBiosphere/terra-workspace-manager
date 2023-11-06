@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.manag
 
 import static bio.terra.workspace.common.utils.FlightUtils.getInputParameterOrWorkingValue;
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
-import static bio.terra.workspace.service.resource.controlled.flight.clone.workspace.WorkspaceCloneUtils.buildDestinationControlledAzureContainer;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -12,17 +11,13 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
-import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureManagedIdentityCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -77,15 +72,9 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
             WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
     var destinationWorkspaceId =
-        getRequired(
-            inputParameters,
-            ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-            UUID.class);
+        getRequired(inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     var destinationResourceId =
-        getRequired(
-            inputParameters,
-            ControlledResourceKeys.DESTINATION_RESOURCE_ID,
-            UUID.class);
+        getRequired(inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
     var userRequest =
         getRequired(
             inputParameters,
@@ -110,11 +99,10 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
         IamRoleUtils.getIamRoleForAccessScope(sourceIdentity.getAccessScope());
 
     // save the identity definition for downstream steps
-    workingMap.put(
-        ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
-        destinationIdentityResource);
+    workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, destinationIdentityResource);
 
-    ApiAzureManagedIdentityCreationParameters destinationCreationParameters = new ApiAzureManagedIdentityCreationParameters().name(destinationResourceName);
+    ApiAzureManagedIdentityCreationParameters destinationCreationParameters =
+        new ApiAzureManagedIdentityCreationParameters().name(destinationResourceName);
 
     // create the identity
     try {
@@ -154,29 +142,28 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
     try {
       if (clonedIdentity != null) {
         controlledResourceService.deleteControlledResourceSync(
-                clonedIdentity.getWorkspaceId(),
-                clonedIdentity.getResourceId(),
+            clonedIdentity.getWorkspaceId(),
+            clonedIdentity.getResourceId(),
             /* forceDelete= */ false,
             userRequest);
       }
     } catch (ResourceNotFoundException e) {
       logger.info(
           "No managed identity resource found {} in WSM, assuming it was previously removed.",
-              clonedIdentity.getResourceId());
+          clonedIdentity.getResourceId());
       return StepResult.getStepResultSuccess();
     } catch (ManagementException e) {
       if (AzureManagementExceptionUtils.isExceptionCode(
-              e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+          e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
             "Identity with ID {} not found in Azure, assuming it was previously removed. Result from Azure = {}",
-                clonedIdentity.getResourceId(),
+            clonedIdentity.getResourceId(),
             e.getValue().getCode(),
             e);
         return StepResult.getStepResultSuccess();
       }
       logger.warn(
-          "Deleting cloned identity with ID {} failed, retrying.",
-              clonedIdentity.getResourceId());
+          "Deleting cloned identity with ID {} failed, retrying.", clonedIdentity.getResourceId());
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
     return StepResult.getStepResultSuccess();
