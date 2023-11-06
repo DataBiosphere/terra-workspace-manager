@@ -7,24 +7,16 @@ import bio.terra.stairway.FlightStatus;
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.StairwayTestUtils;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
-import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.AzureTestUtils;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
-import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import java.time.Duration;
-import java.util.Optional;
-import java.util.UUID;
-
 import bio.terra.workspace.service.workspace.model.Workspace;
+import java.time.Duration;
+import java.util.UUID;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -32,78 +24,122 @@ import org.springframework.beans.factory.annotation.Autowired;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CloneControlledAzureDatabaseResourceFlightTest extends BaseAzureConnectedTest {
 
-    @Autowired private JobService jobService;
-    @Autowired private AzureTestUtils azureTestUtils;
-    @Autowired private WorkspaceService workspaceService;
-    @Autowired private UserAccessUtils userAccessUtils;
+  // Manual values used in flight test
+  private final String destinationWorkspaceId = "< fill me in >";
+  private final String sourceDbName = "workflowcloningtest";
+  private final String dbServerName = "< fill in value from mrg-terra-integration-test-20211118>";
+  private final String dbUserName = "< fill in value from mrg-terra-integration-test-20211118 >";
+  private final String blobContainerUrlAuthenticated =
+      "< fill in value from destination workspace file browser >";
 
-    private Workspace sharedWorkspace;
-    private UUID workspaceId;
+  // Manual values used in azureDatabaseUtils function tests
+  private final String blobFileName = "mypgdumpfile.tar";
+  private final String blobContainerName = "sc-" + destinationWorkspaceId;
+  private final String targetDbName = "workflowcloningtarget";
 
-    @BeforeAll
-    public void setup() throws InterruptedException {
-        AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-        sharedWorkspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
-        workspaceId = sharedWorkspace.getWorkspaceId();
-    }
+  @Autowired private JobService jobService;
+  @Autowired private AzureTestUtils azureTestUtils;
+  @Autowired private WorkspaceService workspaceService;
+  @Autowired private UserAccessUtils userAccessUtils;
+  @Autowired private AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
 
-    @AfterAll
-    public void cleanup() {
-        // Deleting the workspace will also delete any resources contained in the workspace, including
-        // VMs and the resources created during setup.
-        workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
-    }
+  private Workspace sharedWorkspace;
+  private UUID workspaceId;
 
-    @Test
-    void cloneControlledAzureDatabase_dummy()
-        throws InterruptedException {
+  @BeforeAll
+  public void setup() throws InterruptedException {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    sharedWorkspace = createWorkspaceWithCloudContext(workspaceService, userRequest);
+    workspaceId = sharedWorkspace.getWorkspaceId();
+  }
 
-        var creationParameters =
-            ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
-                UUID.randomUUID().toString(), false);
+  @AfterAll
+  public void cleanup() {
+    // Deleting the workspace will also delete any resources contained in the workspace, including
+    // VMs and the resources created during setup.
+    workspaceService.deleteWorkspace(sharedWorkspace, userAccessUtils.defaultUserAuthRequest());
+  }
 
-        var resource =
-            ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                    creationParameters, workspaceId)
-                .build();
+  @Test
+  void cloneControlledAzureDatabaseFlightTest() throws InterruptedException {
 
-        FlightMap inputs = new FlightMap();
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(
+            UUID.randomUUID().toString(), false);
 
-        // defined by test setup
-        inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);
-        inputs.put(WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT, azureTestUtils.getAzureCloudContext());
-        inputs.put(WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, workspaceId);
+    var resource =
+        ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
+                creationParameters, workspaceId)
+            .build();
 
-        // TODO: populate these values
-        inputs.put(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-            UUID.fromString("< workspace ID that owns the blob storage container in which the dumpfile will be written >"));
+    FlightMap inputs = new FlightMap();
 
-        inputs.put(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_SOURCE_DATABASE_NAME,
-            "< name of db within the integration test MRG's database server that should be cloned >");
+    // defined by test setup
+    inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);
+    inputs.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+        azureTestUtils.getAzureCloudContext());
+    inputs.put(WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID, workspaceId);
 
-        inputs.put(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_SOURCE_DATABASE_SERVER,
-            "< integration test MRG postgres server name >");
+    inputs.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        UUID.fromString(destinationWorkspaceId));
 
-        inputs.put(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_USER,
-            "< integration test MRG LZ managed identity >");
+    inputs.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_SOURCE_DATABASE_NAME, sourceDbName);
 
-        inputs.put(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_BLOB_CONTAINER_URL_AUTHENTICATED,
-            "< blob storage container url with SAS token >");
+    inputs.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_SOURCE_DATABASE_SERVER, dbServerName);
 
-        var result =
-            StairwayTestUtils.blockUntilFlightCompletes(
-                jobService.getStairway(),
-                CloneControlledAzureDatabaseResourceFlight.class,
-                inputs,
-                Duration.ofMinutes(1),
-                null);
+    inputs.put(WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_USER, dbUserName);
 
-        assertEquals(result.getFlightStatus(), FlightStatus.SUCCESS);
-    }
+    inputs.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_BLOB_CONTAINER_URL_AUTHENTICATED,
+        blobContainerUrlAuthenticated);
+
+    var result =
+        StairwayTestUtils.blockUntilFlightCompletes(
+            jobService.getStairway(),
+            CloneControlledAzureDatabaseResourceFlight.class,
+            inputs,
+            Duration.ofMinutes(1),
+            null);
+
+    assertEquals(result.getFlightStatus(), FlightStatus.SUCCESS);
+  }
+
+  @Test
+  public void createDbDummyTest() throws InterruptedException {
+    azureDatabaseUtilsRunner.createDatabaseWithDbRole(
+        azureTestUtils.getAzureCloudContext(), workspaceId, "createdb-test-pod", targetDbName);
+  }
+
+  @Test
+  public void pgDumpDatabaseTest() throws InterruptedException {
+
+    azureDatabaseUtilsRunner.pgDumpDatabase(
+        azureTestUtils.getAzureCloudContext(),
+        workspaceId,
+        "pgdump-test-pod",
+        sourceDbName,
+        dbServerName,
+        dbUserName,
+        blobFileName,
+        blobContainerName,
+        blobContainerUrlAuthenticated);
+  }
+
+  @Test
+  public void pgRestoreDatabaseTest() throws InterruptedException {
+    azureDatabaseUtilsRunner.pgRestoreDatabase(
+        azureTestUtils.getAzureCloudContext(),
+        workspaceId,
+        "pgrestore-test-pod",
+        targetDbName,
+        dbServerName,
+        dbUserName,
+        blobFileName,
+        blobContainerName,
+        blobContainerUrlAuthenticated);
+  }
 }
-
