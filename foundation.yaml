@@ -1,0 +1,50 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: terra-workspace-manager
+  description: |
+    WSM provides workspaces; contexts for holding the work of individuals and teams.
+  tags:
+    - java
+    - dsp
+    - terra
+    - springboot
+    - broadworkspaces
+  annotations:
+    github.com/project-slug: databiosphere/terra-workspace-manager
+spec:
+  type: service
+  lifecycle: production
+  owner: broadworkspaces
+  system: terra
+  dependsOn:
+    - component:sam
+    - component:terra-landing-zone-service
+    - component:terra-resource-buffer
+    - component:jade-data-repo
+  providesApis:
+    - terra-workspace-manager-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: terra-workspace-manager-api
+  description: |
+    Placeholder API description...
+  tags:
+    - java
+    - dsp
+    - terra
+    - springboot
+    - broadworkspaces
+  annotations:
+    github.com/project-slug: databiosphere/terra-workspace-manager
+spec:
+  type: openapi
+  lifecycle: production
+  system: terra
+  owner: broadworkspaces
+  definition:
+    $text: ./openapi/src/openapi_main.yaml
+---
