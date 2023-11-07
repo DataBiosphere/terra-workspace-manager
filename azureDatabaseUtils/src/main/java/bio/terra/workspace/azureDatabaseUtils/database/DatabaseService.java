@@ -98,7 +98,8 @@ public class DatabaseService {
       String adminUser,
       String blobFileName,
       String blobContainerName,
-      String blobContainerUrlAuthenticated) {
+      String blobContainerUrlAuthenticated)
+      throws PSQLException {
 
     // Grant the database role (dbName) to the landing zone identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -111,11 +112,7 @@ public class DatabaseService {
 
     List<String> commandList = generateCommandList("pg_dump", dbName, dbHost, dbPort, adminUser);
     Map<String, String> envVars = null;
-    try {
-      envVars = Map.of("PGPASSWORD", determinePassword());
-    } catch (PSQLException e) {
-      logger.error(e.getMessage());
-    }
+    envVars = Map.of("PGPASSWORD", determinePassword());
 
     logger.info(
         "Streaming DatabaseService.pgDump output into blob file {} in container: {}",
