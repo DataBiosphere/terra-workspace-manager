@@ -23,6 +23,8 @@ spec:
     - component:terra-landing-zone-service
     - component:terra-resource-buffer
     - component:jade-data-repo
+    - component:terra-billing-profile-manager
+    - component:terra-policy-service
   providesApis:
     - terra-workspace-manager-api
 ---
