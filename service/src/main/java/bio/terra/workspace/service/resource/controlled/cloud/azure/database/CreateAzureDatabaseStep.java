@@ -64,10 +64,6 @@ public class CreateAzureDatabaseStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
-    // Create the database
-    azureDatabaseUtilsRunner.createDatabaseWithDbRole(
-        cloudContext, workspaceId, getPodName(), resource.getDatabaseName());
-
     // Query LZ for the postgres server
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     var landingZoneId =
@@ -87,6 +83,11 @@ public class CreateAzureDatabaseStep implements Step {
             .setServerName(getResourceName(databaseResource))
             .setDatabaseName(resource.getDatabaseName())
             .build());
+
+    // Create the database
+    azureDatabaseUtilsRunner.createDatabaseWithDbRole(
+        cloudContext, workspaceId, getPodName(), resource.getDatabaseName());
+
     return StepResult.getStepResultSuccess();
   }
 

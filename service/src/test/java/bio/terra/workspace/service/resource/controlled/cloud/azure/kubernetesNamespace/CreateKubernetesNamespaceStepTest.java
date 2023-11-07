@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNa
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -102,6 +101,9 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
     var aksClusterResource =
         new ApiAzureLandingZoneDeployedResource().resourceId("path/to/aksCluster");
 
+    when(mockAzureCloudContext.getAzureTenantId()).thenReturn("tenant");
+    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn("sub");
+    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn("rg");
     when(mockKubernetesClientProvider.getClusterResource(workspaceId))
         .thenReturn(aksClusterResource);
     when(mockKubernetesClientProvider.createCoreApiClient(
@@ -123,7 +125,15 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
 
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
 
-    verify(mockCrlService, never()).recordAzureCleanup(any());
+    verify(mockCrlService)
+        .recordAzureCleanup(
+            CreateKubernetesNamespaceRequestData.builder()
+                .setNamespaceName(resource.getKubernetesNamespace())
+                .setClusterName("aksCluster")
+                .setTenantId("tenant")
+                .setSubscriptionId("sub")
+                .setResourceGroupName("rg")
+                .build());
   }
 
   @Test

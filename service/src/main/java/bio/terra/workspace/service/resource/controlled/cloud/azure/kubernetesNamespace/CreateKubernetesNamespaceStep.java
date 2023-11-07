@@ -41,6 +41,17 @@ public class CreateKubernetesNamespaceStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var clusterResource = kubernetesClientProvider.getClusterResource(workspaceId);
+
+    // Record namespace for cleanup in Janitor
+    crlService.recordAzureCleanup(
+        CreateKubernetesNamespaceRequestData.builder()
+            .setNamespaceName(resource.getKubernetesNamespace())
+            .setClusterName(getResourceName(clusterResource))
+            .setTenantId(azureCloudContext.getAzureTenantId())
+            .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
+            .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+            .build());
+
     var coreApiClient =
         kubernetesClientProvider.createCoreApiClient(azureCloudContext, clusterResource);
 
@@ -51,16 +62,6 @@ public class CreateKubernetesNamespaceStep implements Step {
           null,
           null,
           null);
-
-      // Record namespace for cleanup in Janitor
-      crlService.recordAzureCleanup(
-          CreateKubernetesNamespaceRequestData.builder()
-              .setNamespaceName(resource.getKubernetesNamespace())
-              .setClusterName(getResourceName(clusterResource))
-              .setTenantId(azureCloudContext.getAzureTenantId())
-              .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
-              .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
-              .build());
     } catch (ApiException e) {
       return kubernetesClientProvider.stepResultFromException(e, HttpStatus.CONFLICT);
     }
