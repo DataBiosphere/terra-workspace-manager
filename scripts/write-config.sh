@@ -322,8 +322,6 @@ landingzone:
       - leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
       - workspace-wsmtest@terra-kernel-k8s.iam.gserviceaccount.com
       - Elizabeth.Shadowmoon@test.firecloud.org
-pactbroker:
-  url: localhost:9292
 
 EOF
 else

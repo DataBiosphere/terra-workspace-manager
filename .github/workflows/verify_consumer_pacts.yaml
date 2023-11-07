@@ -28,7 +28,6 @@ on:
   push:
     branches:
       - develop
-      - AJ-1235-provider-pacts-for-wds
     paths-ignore:
       - 'README.md'
   workflow_dispatch:
@@ -93,15 +92,12 @@ jobs:
         id: extract-branch
         run: |
           GITHUB_EVENT_NAME=${{ github.event_name }}
-          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            GITHUB_REF=${{ github.ref }}
-            GITHUB_SHA=${{ github.sha }}
+          if [[ "$GITHUB_EVENT_NAME" == "push" || "$GITHUB_EVENT_NAME" == "workflow_dispatch"]]; then
+            GITHUB_REF=${{ github.ref }} # The Git Ref that this workflow runs on
+            GITHUB_SHA=${{ github.sha }} # The Git Sha that this workflow runs on
           elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             GITHUB_REF=refs/heads/${{ github.head_ref }}
             GITHUB_SHA=${{ github.event.pull_request.head.sha }}
-          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-            GITHUB_REF=${{ github.ref }} # The Git Ref that this workflow runs on
-            GITHUB_SHA=${{ github.sha }} # The Git Sha that this workflow runs on
           else
             echo "Failed to extract branch information"
             exit 1
@@ -195,7 +191,7 @@ jobs:
           path: service/build/reports
 
   can-i-deploy:
-    # The can-i-deploy job will run as a result of a jade-data-repo PR.
+    # The can-i-deploy job will run as a result of a workspace manager PR.
     # It reports the pact verification statuses on all deployed environments.
     runs-on: ubuntu-latest
     if: ${{ inputs.pb-event-type == '' }}
