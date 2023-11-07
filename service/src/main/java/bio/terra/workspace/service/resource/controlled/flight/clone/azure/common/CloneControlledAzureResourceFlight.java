@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.commo
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRuleNone;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -64,47 +65,55 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
                     CloningInstructions.class))
             .orElse(sourceResource.getCloningInstructions());
 
-    if (CloningInstructions.COPY_NOTHING == cloningInstructions) {
-      copyNothing(flightBeanBag, inputParameters);
-      return;
-    }
-
-    // Get the cloud context and store it in the working map
-    addStep(
-        new GetAzureCloudContextStep(
-            destinationWorkspaceId, flightBeanBag.getAzureCloudContextService()),
-        RetryRules.shortDatabase());
-
-    // 1. Check user has read access to source resource
-    // 2. Gather controlled resource metadata for source object
-    // 3. Check if the resource is already present
-    // 4. Create resource in new workspace
-
-    addStep(
-        new CheckControlledResourceAuthStep(
-            sourceResource, flightBeanBag.getControlledResourceMetadataManager(), userRequest),
-        RetryRules.shortExponential());
-
-    if (mergePolicies) {
-      addStep(
-          new MergePolicyAttributesStep(
-              sourceResource.getWorkspaceId(),
-              destinationWorkspaceId,
-              cloningInstructions,
-              flightBeanBag.getTpsApiDispatch()));
-    }
-
-    addStep(
-        new RetrieveControlledResourceMetadataStep(
-            flightBeanBag.getResourceDao(),
-            sourceResource.getWorkspaceId(),
-            sourceResource.getResourceId()));
-
-    // check that the resource does not already exist in the workspace
-    // so we can reliably retry the copy definition step later on
-    addStep(new VerifyResourceDoesNotExist(flightBeanBag.getResourceDao()));
-
     List<StepRetryRulePair> resourceCloningSteps = new ArrayList<>();
+
+    if (cloningInstructions != CloningInstructions.COPY_NOTHING) {
+      // Get the cloud context and store it in the working map
+      resourceCloningSteps.add(
+          new StepRetryRulePair(
+              new GetAzureCloudContextStep(
+                  destinationWorkspaceId, flightBeanBag.getAzureCloudContextService()),
+              RetryRules.shortDatabase()));
+
+      // 1. Check user has read access to source resource
+      // 2. Gather controlled resource metadata for source object
+      // 3. Check if the resource is already present
+      // 4. Create resource in new workspace
+
+      resourceCloningSteps.add(
+          new StepRetryRulePair(
+              new CheckControlledResourceAuthStep(
+                  sourceResource,
+                  flightBeanBag.getControlledResourceMetadataManager(),
+                  userRequest),
+              RetryRules.shortExponential()));
+
+      if (mergePolicies) {
+        resourceCloningSteps.add(
+            new StepRetryRulePair(
+                new MergePolicyAttributesStep(
+                    sourceResource.getWorkspaceId(),
+                    destinationWorkspaceId,
+                    cloningInstructions,
+                    flightBeanBag.getTpsApiDispatch()),
+                RetryRuleNone.getRetryRuleNone()));
+      }
+
+      resourceCloningSteps.add(
+          new StepRetryRulePair(
+              new RetrieveControlledResourceMetadataStep(
+                  flightBeanBag.getResourceDao(),
+                  sourceResource.getWorkspaceId(),
+                  sourceResource.getResourceId()),
+              RetryRuleNone.getRetryRuleNone()));
+
+      // check that the resource does not already exist in the workspace
+      // so we can reliably retry the copy definition step later on
+      resourceCloningSteps.add(
+          new StepRetryRulePair(
+              new VerifyResourceDoesNotExist(flightBeanBag.getResourceDao()),
+              RetryRuleNone.getRetryRuleNone()));
+    }
 
     switch (cloningInstructions) {
       case COPY_DEFINITION -> resourceCloningSteps.addAll(
@@ -117,9 +126,10 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
           copyReference(flightBeanBag, inputParameters));
       case LINK_REFERENCE -> resourceCloningSteps.addAll(
           linkReference(flightBeanBag, inputParameters));
-      case COPY_NOTHING -> throw new IllegalStateException(
-          "Copy nothing instruction should not reach here.");
+      case COPY_NOTHING -> resourceCloningSteps.addAll(copyNothing(flightBeanBag, inputParameters));
     }
+
+    resourceCloningSteps.addAll(setCloneResponse(flightBeanBag, inputParameters));
 
     resourceCloningSteps.forEach(
         (stepRetryRulePair -> addStep(stepRetryRulePair.step(), stepRetryRulePair.retryRule())));
@@ -134,7 +144,7 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
             ControlledResource.class);
     return List.of(
         new StepRetryRulePair(
-            new SetNoOpResourceCloneResponseStep<>(sourceResource), RetryRules.shortExponential()));
+            new SetNoOpResourceCloneResponseStep(sourceResource), RetryRules.shortExponential()));
   }
 
   protected List<StepRetryRulePair> copyDefinition(
@@ -155,6 +165,12 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
   protected List<StepRetryRulePair> linkReference(
       FlightBeanBag flightBeanBag, FlightMap inputParameters) {
     throw cloneUnsupported(CloningInstructions.LINK_REFERENCE, inputParameters);
+  }
+
+  protected List<StepRetryRulePair> setCloneResponse(
+      FlightBeanBag flightBeanBag, FlightMap inputParameters) {
+    return List.of(
+        new StepRetryRulePair(new SetCloneFlightResponseStep(), RetryRuleNone.getRetryRuleNone()));
   }
 
   private static IllegalArgumentException cloneUnsupported(

@@ -68,6 +68,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONE_ALL_RESOURCES_FLIGHT_ID = "cloneAllResourcesFlightId";
     public static final String CLONE_DEFINITION_RESULT = "cloneDefinitionResult";
     public static final String CLONED_RESOURCE_DEFINITION = "clonedResourceDefinition";
+    public static final String CLONED_RESOURCE = "clonedResource";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
 

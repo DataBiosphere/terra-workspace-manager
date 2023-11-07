@@ -10,4 +10,4 @@ public record ClonedAzureManagedIdentity(
     UUID sourceWorkspaceId,
     UUID sourceResourceId,
     ControlledAzureManagedIdentityResource managedIdentity)
-    implements ClonedAzureResource<ControlledAzureManagedIdentityResource> {}
+    implements ClonedAzureResource {}

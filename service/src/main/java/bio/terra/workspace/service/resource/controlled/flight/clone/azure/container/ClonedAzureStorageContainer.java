@@ -10,4 +10,4 @@ public record ClonedAzureStorageContainer(
     UUID sourceWorkspaceId,
     UUID sourceResourceId,
     ControlledAzureStorageContainerResource storageContainer)
-    implements ClonedAzureResource<ControlledAzureStorageContainerResource> {}
+    implements ClonedAzureResource {}

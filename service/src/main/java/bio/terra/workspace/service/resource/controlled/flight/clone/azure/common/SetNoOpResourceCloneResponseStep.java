@@ -4,15 +4,14 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import org.springframework.http.HttpStatus;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 
-public class SetNoOpResourceCloneResponseStep<T extends ControlledResource> implements Step {
-  private final T sourceResource;
+public class SetNoOpResourceCloneResponseStep implements Step {
+  private final ControlledResource sourceResource;
 
-  public SetNoOpResourceCloneResponseStep(T sourceResource) {
+  public SetNoOpResourceCloneResponseStep(ControlledResource sourceResource) {
     this.sourceResource = sourceResource;
   }
 
@@ -24,7 +23,9 @@ public class SetNoOpResourceCloneResponseStep<T extends ControlledResource> impl
             sourceResource.getWorkspaceId(),
             sourceResource.getResourceId());
 
-    FlightUtils.setResponse(context, noopResult, HttpStatus.OK);
+    context
+        .getWorkingMap()
+        .put(WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE, noopResult);
     return StepResult.getStepResultSuccess();
   }
 

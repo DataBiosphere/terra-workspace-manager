@@ -9,7 +9,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.generated.model.ApiAzureManagedIdentityCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -27,7 +26,6 @@ import com.azure.core.management.exception.ManagementException;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 public class CopyAzureManagedIdentityDefinitionStep implements Step {
   private static final Logger logger =
@@ -118,16 +116,14 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
           destinationResourceName);
     }
 
-    if (resolvedCloningInstructions.equals(CloningInstructions.COPY_DEFINITION)) {
-      var identityResult =
-          new ClonedAzureManagedIdentity(
-              resolvedCloningInstructions,
-              sourceIdentity.getWorkspaceId(),
-              sourceIdentity.getResourceId(),
-              destinationIdentityResource);
-      FlightUtils.setResponse(flightContext, identityResult, HttpStatus.OK);
-    }
+    var identityResult =
+        new ClonedAzureManagedIdentity(
+            resolvedCloningInstructions,
+            sourceIdentity.getWorkspaceId(),
+            sourceIdentity.getResourceId(),
+            destinationIdentityResource);
 
+    workingMap.put(WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE, identityResult);
     return StepResult.getStepResultSuccess();
   }
 
