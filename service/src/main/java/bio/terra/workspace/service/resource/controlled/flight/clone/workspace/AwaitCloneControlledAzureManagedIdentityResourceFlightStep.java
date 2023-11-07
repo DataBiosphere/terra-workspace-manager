@@ -16,6 +16,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -63,8 +64,8 @@ public class AwaitCloneControlledAzureManagedIdentityResourceFlightStep implemen
       cloneDetails.setSourceResourceId(resource.getResourceId());
       cloneDetails.setDestinationResourceId(
           Optional.ofNullable(clonedIdentity)
-              .map(ClonedAzureResource::managedIdentity)
-              .map(ControlledAzureManagedIdentityResource::getResourceId)
+              .map(ClonedAzureResource::resource)
+              .map(ControlledResource::getResourceId)
               .orElse(null));
       String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
       cloneDetails.setErrorMessage(errorMessage);
