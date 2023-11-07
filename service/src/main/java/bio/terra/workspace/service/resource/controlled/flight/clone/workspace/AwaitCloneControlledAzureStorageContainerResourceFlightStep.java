@@ -15,7 +15,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.ClonedAzureStorageContainer;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -56,14 +56,14 @@ public class AwaitCloneControlledAzureStorageContainerResourceFlightStep impleme
 
       FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
       var clonedContainer =
-          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureStorageContainer.class);
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
       cloneDetails.setDestinationResourceId(
           Optional.ofNullable(clonedContainer)
-              .map(ClonedAzureStorageContainer::storageContainer)
+              .map(ClonedAzureResource::storageContainer)
               .map(ControlledAzureStorageContainerResource::getResourceId)
               .orElse(null));
       String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);

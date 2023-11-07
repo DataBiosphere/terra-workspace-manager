@@ -17,6 +17,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -81,7 +82,7 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
 
     ControlledAzureManagedIdentityResource destinationIdentityResource =
         ControlledAzureManagedIdentityResource.builder()
-            .managedIdentityName(destinationResourceName)
+            .managedIdentityName("id%s".formatted(UUID.randomUUID().toString()))
             .common(
                 sourceIdentity.buildControlledCloneResourceCommonFields(
                     destinationWorkspaceId,
@@ -117,7 +118,7 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
     }
 
     var identityResult =
-        new ClonedAzureManagedIdentity(
+        new ClonedAzureResource(
             resolvedCloningInstructions,
             sourceIdentity.getWorkspaceId(),
             sourceIdentity.getResourceId(),

@@ -14,6 +14,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -64,6 +65,7 @@ public class CloneControlledAzureManagedIdentityResourceFlightTest extends BaseA
     var sourceResource =
         ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
                 creationParameters, sourceWorkspace.workspaceId())
+            .managedIdentityName("idfoobar")
             .build();
 
     azureUtils.createResource(
@@ -97,11 +99,11 @@ public class CloneControlledAzureManagedIdentityResourceFlightTest extends BaseA
             Duration.ofMinutes(1),
             null);
 
-    ClonedAzureManagedIdentity resultIdentity =
+    ClonedAzureResource resultIdentity =
         result
             .getResultMap()
             .get()
-            .get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureManagedIdentity.class);
+            .get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
     assertNotNull(resultIdentity);
     assertEquals(
         resultIdentity.effectiveCloningInstructions(), CloningInstructions.COPY_DEFINITION);
@@ -109,6 +111,8 @@ public class CloneControlledAzureManagedIdentityResourceFlightTest extends BaseA
         resultIdentity.managedIdentity().getWorkspaceId(), destinationWorkspace.workspaceId());
     assertEquals(resultIdentity.managedIdentity().getResourceId(), destinationResourceId);
     assertEquals(resultIdentity.managedIdentity().getName(), sourceResource.getName());
+    assertEquals(sourceResource.getManagedIdentityName(), "idfoobar");
+    assertTrue(resultIdentity.managedIdentity().getManagedIdentityName().startsWith("id"));
     assertNotEquals(
         resultIdentity.managedIdentity().getManagedIdentityName(),
         sourceResource.getManagedIdentityName());

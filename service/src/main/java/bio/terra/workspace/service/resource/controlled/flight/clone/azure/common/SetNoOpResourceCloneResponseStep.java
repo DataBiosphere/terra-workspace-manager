@@ -18,7 +18,7 @@ public class SetNoOpResourceCloneResponseStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     var noopResult =
-        new ClonedCopyNothingResource(
+        new ClonedAzureResource(
             CloningInstructions.COPY_NOTHING,
             sourceResource.getWorkspaceId(),
             sourceResource.getResourceId());

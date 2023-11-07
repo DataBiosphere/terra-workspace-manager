@@ -11,6 +11,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -65,7 +66,7 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
         result
             .getResultMap()
             .get()
-            .get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureStorageContainer.class);
+            .get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
 
     assertEquals(resultContainer.effectiveCloningInstructions(), CloningInstructions.COPY_NOTHING);
   }

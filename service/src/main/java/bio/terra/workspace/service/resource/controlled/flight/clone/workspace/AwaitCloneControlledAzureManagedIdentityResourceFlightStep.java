@@ -15,7 +15,7 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.managedIdentity.ClonedAzureManagedIdentity;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -56,14 +56,14 @@ public class AwaitCloneControlledAzureManagedIdentityResourceFlightStep implemen
 
       FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
       var clonedIdentity =
-          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureManagedIdentity.class);
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
       cloneDetails.setDestinationResourceId(
           Optional.ofNullable(clonedIdentity)
-              .map(ClonedAzureManagedIdentity::managedIdentity)
+              .map(ClonedAzureResource::managedIdentity)
               .map(ControlledAzureManagedIdentityResource::getResourceId)
               .orElse(null));
       String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
