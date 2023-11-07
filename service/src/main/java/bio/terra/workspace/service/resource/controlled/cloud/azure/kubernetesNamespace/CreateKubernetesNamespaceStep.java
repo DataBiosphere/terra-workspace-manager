@@ -1,9 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
+
+import bio.terra.cloudres.azure.resourcemanager.kubernetes.data.CreateKubernetesNamespaceRequestData;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -17,14 +21,17 @@ public class CreateKubernetesNamespaceStep implements Step {
   private final UUID workspaceId;
   private final KubernetesClientProvider kubernetesClientProvider;
   private final ControlledAzureKubernetesNamespaceResource resource;
+  private final CrlService crlService;
 
   public CreateKubernetesNamespaceStep(
       UUID workspaceId,
       KubernetesClientProvider kubernetesClientProvider,
-      ControlledAzureKubernetesNamespaceResource resource) {
+      ControlledAzureKubernetesNamespaceResource resource,
+      CrlService crlService) {
     this.workspaceId = workspaceId;
     this.kubernetesClientProvider = kubernetesClientProvider;
     this.resource = resource;
+    this.crlService = crlService;
   }
 
   @Override
@@ -33,9 +40,20 @@ public class CreateKubernetesNamespaceStep implements Step {
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+    var clusterResource = kubernetesClientProvider.getClusterResource(workspaceId);
+
+    // Record namespace for cleanup in Janitor
+    crlService.recordAzureCleanup(
+        CreateKubernetesNamespaceRequestData.builder()
+            .setNamespaceName(resource.getKubernetesNamespace())
+            .setClusterName(getResourceName(clusterResource))
+            .setTenantId(azureCloudContext.getAzureTenantId())
+            .setSubscriptionId(azureCloudContext.getAzureSubscriptionId())
+            .setResourceGroupName(azureCloudContext.getAzureResourceGroupId())
+            .build());
 
     var coreApiClient =
-        kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
+        kubernetesClientProvider.createCoreApiClient(azureCloudContext, clusterResource);
 
     try {
       coreApiClient.createNamespace(

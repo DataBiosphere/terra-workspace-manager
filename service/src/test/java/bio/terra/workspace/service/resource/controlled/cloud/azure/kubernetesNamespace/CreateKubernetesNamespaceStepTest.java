@@ -6,12 +6,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.cloudres.azure.resourcemanager.kubernetes.data.CreateKubernetesNamespaceRequestData;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
+import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -33,6 +36,7 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
   @Mock private FlightContext mockFlightContext;
   @Mock private KubernetesClientProvider mockKubernetesClientProvider;
   @Mock private CoreV1Api mockCoreV1Api;
+  @Mock private CrlService mockCrlService;
 
   @Test
   void testDoStep() throws Exception {
@@ -45,12 +49,21 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, workspaceId)
             .build();
+    var aksClusterResource =
+        new ApiAzureLandingZoneDeployedResource().resourceId("path/to/aksCluster");
 
-    when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
+    when(mockAzureCloudContext.getAzureTenantId()).thenReturn("tenant");
+    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn("sub");
+    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn("rg");
+    when(mockKubernetesClientProvider.getClusterResource(workspaceId))
+        .thenReturn(aksClusterResource);
+    when(mockKubernetesClientProvider.createCoreApiClient(
+            mockAzureCloudContext, aksClusterResource))
         .thenReturn(mockCoreV1Api);
 
     var result =
-        new CreateKubernetesNamespaceStep(workspaceId, mockKubernetesClientProvider, resource)
+        new CreateKubernetesNamespaceStep(
+                workspaceId, mockKubernetesClientProvider, resource, mockCrlService)
             .doStep(createMockFlightContext());
 
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
@@ -62,6 +75,16 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
             null,
             null,
             null);
+
+    verify(mockCrlService)
+        .recordAzureCleanup(
+            CreateKubernetesNamespaceRequestData.builder()
+                .setNamespaceName(resource.getKubernetesNamespace())
+                .setClusterName("aksCluster")
+                .setTenantId("tenant")
+                .setSubscriptionId("sub")
+                .setResourceGroupName("rg")
+                .build());
   }
 
   @Test
@@ -75,8 +98,16 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
         ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
                 creationParameters, workspaceId)
             .build();
+    var aksClusterResource =
+        new ApiAzureLandingZoneDeployedResource().resourceId("path/to/aksCluster");
 
-    when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
+    when(mockAzureCloudContext.getAzureTenantId()).thenReturn("tenant");
+    when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn("sub");
+    when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn("rg");
+    when(mockKubernetesClientProvider.getClusterResource(workspaceId))
+        .thenReturn(aksClusterResource);
+    when(mockKubernetesClientProvider.createCoreApiClient(
+            mockAzureCloudContext, aksClusterResource))
         .thenReturn(mockCoreV1Api);
     when(mockCoreV1Api.createNamespace(
             new V1Namespace().metadata(new V1ObjectMeta().name(resource.getKubernetesNamespace())),
@@ -88,10 +119,21 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
     when(mockKubernetesClientProvider.stepResultFromException(any(), any())).thenCallRealMethod();
 
     var result =
-        new CreateKubernetesNamespaceStep(workspaceId, mockKubernetesClientProvider, resource)
+        new CreateKubernetesNamespaceStep(
+                workspaceId, mockKubernetesClientProvider, resource, mockCrlService)
             .doStep(createMockFlightContext());
 
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
+
+    verify(mockCrlService)
+        .recordAzureCleanup(
+            CreateKubernetesNamespaceRequestData.builder()
+                .setNamespaceName(resource.getKubernetesNamespace())
+                .setClusterName("aksCluster")
+                .setTenantId("tenant")
+                .setSubscriptionId("sub")
+                .setResourceGroupName("rg")
+                .build());
   }
 
   @Test
@@ -110,7 +152,8 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
         .thenReturn(mockCoreV1Api);
 
     var result =
-        new CreateKubernetesNamespaceStep(workspaceId, mockKubernetesClientProvider, resource)
+        new CreateKubernetesNamespaceStep(
+                workspaceId, mockKubernetesClientProvider, resource, mockCrlService)
             .undoStep(createMockFlightContext());
 
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
@@ -141,7 +184,8 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
         .thenReturn(StepResult.getStepResultSuccess());
 
     var result =
-        new CreateKubernetesNamespaceStep(workspaceId, mockKubernetesClientProvider, resource)
+        new CreateKubernetesNamespaceStep(
+                workspaceId, mockKubernetesClientProvider, resource, mockCrlService)
             .undoStep(createMockFlightContext());
 
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));

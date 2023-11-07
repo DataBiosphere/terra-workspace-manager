@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
 
+import bio.terra.cloudres.azure.resourcemanager.postgresflex.data.CreateDatabaseRequestData;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -58,13 +59,35 @@ public class CreateAzureDatabaseStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    azureDatabaseUtilsRunner.createDatabaseWithDbRole(
+    var cloudContext =
         context
             .getWorkingMap()
-            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
-        workspaceId,
-        getPodName(),
-        resource.getDatabaseName());
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+
+    // Query LZ for the postgres server
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    var landingZoneId =
+        landingZoneApiDispatch.getLandingZoneId(
+            bearerToken, workspaceService.getWorkspace(workspaceId));
+    var databaseResource =
+        landingZoneApiDispatch
+            .getSharedDatabase(bearerToken, landingZoneId)
+            .orElseThrow(() -> new RuntimeException("No shared database found"));
+
+    // Record resource for cleanup in Janitor
+    crlService.recordAzureCleanup(
+        CreateDatabaseRequestData.builder()
+            .setTenantId(cloudContext.getAzureTenantId())
+            .setSubscriptionId(cloudContext.getAzureSubscriptionId())
+            .setResourceGroupName(cloudContext.getAzureResourceGroupId())
+            .setServerName(getResourceName(databaseResource))
+            .setDatabaseName(resource.getDatabaseName())
+            .build());
+
+    // Create the database
+    azureDatabaseUtilsRunner.createDatabaseWithDbRole(
+        cloudContext, workspaceId, getPodName(), resource.getDatabaseName());
+
     return StepResult.getStepResultSuccess();
   }
 
