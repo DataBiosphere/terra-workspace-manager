@@ -113,6 +113,8 @@ dependencies {
 
   // pact
   testImplementation 'au.com.dius.pact.consumer:junit5:4.3.19'
+  testImplementation 'au.com.dius.pact.provider:junit5:4.3.19'
+  testImplementation 'au.com.dius.pact.provider:junit5spring:4.3.19'
 
   annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
   annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.6.6"
