@@ -5,8 +5,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
-
-import java.util.Optional;
 import java.util.UUID;
 
 public record ClonedAzureResource(

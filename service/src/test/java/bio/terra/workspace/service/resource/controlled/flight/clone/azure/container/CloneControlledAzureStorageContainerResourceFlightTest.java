@@ -45,6 +45,8 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
             .storageContainerName(UUID.randomUUID().toString())
             .build();
 
+    UUID destinationWorkspaceId = UUID.randomUUID();
+
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
@@ -52,7 +54,12 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
     inputs.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
+        "clone-%s-%s"
+            .formatted(destinationWorkspaceId.toString(), resource.getStorageContainerName()));
+    inputs.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        destinationWorkspaceId);
 
     var result =
         StairwayTestUtils.blockUntilFlightCompletes(
