@@ -117,8 +117,10 @@ public class DatabaseService {
       logger.error(e.getMessage());
     }
 
-    logger.info("running DatabaseService.pgDump: {}", String.join(" ", commandList));
-    logger.info("blobContainerName: {}", blobContainerName);
+    logger.info(
+        "Streaming DatabaseService.pgDump output into blob file {} in container: {}",
+        blobFileName,
+        blobContainerName);
 
     LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
     localProcessLauncher.launchProcess(commandList, envVars);
@@ -142,8 +144,6 @@ public class DatabaseService {
       String blobContainerUrlAuthenticated)
       throws PSQLException {
 
-    boolean doCleanup = false;
-
     // Grant the database role (dbName) to the workspace identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
     // We are choosing to *not* revoke this role for now, because:
@@ -151,33 +151,28 @@ public class DatabaseService {
     // workspace at once;
     // (2) the workspace identity can grant itself access at any time, so revoking the role
     // doesn't protect us.
-    try {
-      databaseDao.grantRole(adminUser, dbName);
 
-      List<String> commandList = generateCommandList("psql", dbName, dbHost, dbPort, adminUser);
-      Map<String, String> envVars = null;
-      envVars = Map.of("PGPASSWORD", determinePassword());
-      LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
-      localProcessLauncher.launchProcess(commandList, envVars);
+    databaseDao.grantRole(adminUser, dbName);
 
-      logger.info("running DatabaseService.pgRestore: {}", String.join(" ", commandList));
-      logger.info("blobContainerName: {}", blobContainerName);
+    List<String> commandList = generateCommandList("psql", dbName, dbHost, dbPort, adminUser);
+    Map<String, String> envVars = null;
+    envVars = Map.of("PGPASSWORD", determinePassword());
+    LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
+    localProcessLauncher.launchProcess(commandList, envVars);
 
-      storage.streamInputFromBlobStorage(
-          localProcessLauncher.getOutputStream(),
-          blobFileName,
-          blobContainerName,
-          blobContainerUrlAuthenticated);
+    logger.info(
+        "Running DatabaseService.pgRestore on file {} from blob container: {}",
+        blobFileName,
+        blobContainerName);
 
-      // doCleanup isn't set to true until checkForError completes without throwing an exception
-      checkForError(localProcessLauncher);
-      databaseDao.reassignOwner(adminUser, dbName);
-      doCleanup = true;
-    } finally {
-      if (doCleanup) {
-        storage.deleteBlob(blobFileName, blobContainerName, blobContainerUrlAuthenticated);
-      }
-    }
+    storage.streamInputFromBlobStorage(
+        localProcessLauncher.getOutputStream(),
+        blobFileName,
+        blobContainerName,
+        blobContainerUrlAuthenticated);
+
+    checkForError(localProcessLauncher);
+    databaseDao.reassignOwner(adminUser, dbName);
   }
 
   public List<String> generateCommandList(
