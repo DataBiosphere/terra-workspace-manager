@@ -98,7 +98,7 @@ public class CloneControlledAzureResourceFlightTest extends BaseAzureUnitTest {
             inputsWithCloneInstruction(CloningInstructions.COPY_NOTHING), flightBeanBag);
     var expectedSteps =
         new ArrayList<>(
-            List.of(SetNoOpResourceCloneResponseStep.class, SetCloneFlightResponseStep.class));
+            List.of(SetNoOpResourceCloneResourceStep.class, SetCloneFlightResponseStep.class));
     assertEquals(copyNothingFlight.getSteps().size(), expectedSteps.size());
     assertEquals(
         0L,
@@ -120,7 +120,7 @@ public class CloneControlledAzureResourceFlightTest extends BaseAzureUnitTest {
                 GetAzureCloudContextStep.class,
                 CheckControlledResourceAuthStep.class,
                 RetrieveControlledResourceMetadataStep.class,
-                VerifyResourceDoesNotExist.class,
+                VerifyControlledResourceDoesNotExist.class,
                 CopyDefinitionStep.class,
                 SetCloneFlightResponseStep.class));
     assertEquals(copyDefinitionFlight.getSteps().size(), expectedSteps.size());
@@ -144,7 +144,7 @@ public class CloneControlledAzureResourceFlightTest extends BaseAzureUnitTest {
                 GetAzureCloudContextStep.class,
                 CheckControlledResourceAuthStep.class,
                 RetrieveControlledResourceMetadataStep.class,
-                VerifyResourceDoesNotExist.class,
+                VerifyControlledResourceDoesNotExist.class,
                 CopyDefinitionStep.class,
                 CopyResourceStep.class,
                 SetCloneFlightResponseStep.class));
@@ -169,7 +169,7 @@ public class CloneControlledAzureResourceFlightTest extends BaseAzureUnitTest {
                 GetAzureCloudContextStep.class,
                 CheckControlledResourceAuthStep.class,
                 RetrieveControlledResourceMetadataStep.class,
-                VerifyResourceDoesNotExist.class,
+                VerifyControlledResourceDoesNotExist.class,
                 CopyReferenceStep.class,
                 SetCloneFlightResponseStep.class));
     assertEquals(copyReferenceFlight.getSteps().size(), expectedSteps.size());
@@ -193,7 +193,7 @@ public class CloneControlledAzureResourceFlightTest extends BaseAzureUnitTest {
                 GetAzureCloudContextStep.class,
                 CheckControlledResourceAuthStep.class,
                 RetrieveControlledResourceMetadataStep.class,
-                VerifyResourceDoesNotExist.class,
+                VerifyControlledResourceDoesNotExist.class,
                 LinkReferenceStep.class,
                 SetCloneFlightResponseStep.class));
     assertEquals(linkReferenceFlight.getSteps().size(), expectedSteps.size());

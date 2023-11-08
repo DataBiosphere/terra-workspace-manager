@@ -8,10 +8,10 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 
-public class SetNoOpResourceCloneResponseStep implements Step {
+public class SetNoOpResourceCloneResourceStep implements Step {
   private final ControlledResource sourceResource;
 
-  public SetNoOpResourceCloneResponseStep(ControlledResource sourceResource) {
+  public SetNoOpResourceCloneResourceStep(ControlledResource sourceResource) {
     this.sourceResource = sourceResource;
   }
 

@@ -13,16 +13,17 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VerifyResourceDoesNotExist implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(VerifyResourceDoesNotExist.class);
+public class VerifyControlledResourceDoesNotExist implements Step {
+  private static final Logger logger =
+      LoggerFactory.getLogger(VerifyControlledResourceDoesNotExist.class);
   private final ResourceDao resourceDao;
   private final String nameKey;
 
-  public VerifyResourceDoesNotExist(ResourceDao resourceDao) {
+  public VerifyControlledResourceDoesNotExist(ResourceDao resourceDao) {
     this(resourceDao, WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME);
   }
 
-  public VerifyResourceDoesNotExist(ResourceDao resourceDao, String nameKey) {
+  public VerifyControlledResourceDoesNotExist(ResourceDao resourceDao, String nameKey) {
     this.resourceDao = resourceDao;
     this.nameKey = nameKey;
   }
