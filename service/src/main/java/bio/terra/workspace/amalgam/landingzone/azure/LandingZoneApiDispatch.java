@@ -189,6 +189,8 @@ public class LandingZoneApiDispatch {
     return result;
   }
 
+  // TODO: needed to *create* the container. To create a container, need to know which storage
+  // account.
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedStorageAccount(
       BearerToken bearerToken, UUID landingZoneId) {
     return getSharedResourceByType(bearerToken, landingZoneId, AZURE_STORAGE_ACCOUNT_RESOURCE_TYPE);
@@ -210,6 +212,7 @@ public class LandingZoneApiDispatch {
     return getSharedResourceByType(bearerToken, landingZoneId, AZURE_DATABASE_RESOURCE_TYPE);
   }
 
+  // TODO: use this for landing zone identity
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedDatabaseAdminIdentity(
       BearerToken bearerToken, UUID landingZoneId) {
     return getResourceByTypeAndPurpose(

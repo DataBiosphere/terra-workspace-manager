@@ -71,6 +71,8 @@ public final class WorkspaceFlightMapKeys {
     public static final String CLONED_RESOURCE = "clonedResource";
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
+    public static final String CLONE_DB_DUMPFILE = "cloneDbDumpfile";
+    public static final String CLONED_MANAGED_IDENTITY = "clonedManagedIdentity";
 
     public static final String SIGNED_URL_LIST = "signedUrlList";
     public static final String DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST =
@@ -109,6 +111,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
     public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
         "createAzureCloudContextFlightId";
+    public static final String AZURE_STORAGE_CONTAINER_NAME = "azureStorageContainerName";
 
     // AWS
     public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";

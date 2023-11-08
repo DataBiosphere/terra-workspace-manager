@@ -160,7 +160,7 @@ public class AzureDatabaseUtilsRunner {
 
   public void pgRestoreDatabase(
       AzureCloudContext azureCloudContext,
-      UUID sourceWorkspaceId,
+      UUID targetWorkspaceId,
       String podName,
       String targetDbName,
       String dbServerName,
@@ -182,8 +182,8 @@ public class AzureDatabaseUtilsRunner {
                 .value(blobContainerUrlAuthenticated));
     runAzureDatabaseUtils(
         azureCloudContext,
-        sourceWorkspaceId,
-        createPodDefinition(sourceWorkspaceId, podName, envVars),
+        targetWorkspaceId,
+        createPodDefinition(targetWorkspaceId, podName, envVars),
         aksNamespace);
   }
 
