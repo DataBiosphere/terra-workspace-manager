@@ -56,6 +56,8 @@ public class AzureDatabaseUtilsRunner {
 
   public static final String COMMAND_CREATE_NAMESPACE_ROLE = "CreateNamespaceRole";
   public static final String COMMAND_CREATE_DATABASE_WITH_DB_ROLE = "CreateDatabaseWithDbRole";
+  public static final String COMMAND_PGDUMP_DATABASE = "PgDumpDatabase";
+  public static final String COMMAND_PGRESTORE_DATABASE = "PgRestoreDatabase";
   public static final String COMMAND_DELETE_NAMESPACE_ROLE = "DeleteNamespaceRole";
   public static final String COMMAND_REVOKE_NAMESPACE_ROLE_ACCESS = "RevokeNamespaceRoleAccess";
   public static final String COMMAND_RESTORE_NAMESPACE_ROLE_ACCESS = "RestoreNamespaceRoleAccess";
@@ -72,6 +74,13 @@ public class AzureDatabaseUtilsRunner {
   public static final String PARAM_CONNECT_TO_DATABASE = "CONNECT_TO_DATABASE";
   public static final String PARAM_NEW_DB_USER_NAME = "NEW_DB_USER_NAME";
   public static final String PARAM_NEW_DB_USER_OID = "NEW_DB_USER_OID";
+
+  // Workflow cloning - TODO: which params can be reused?
+  public static final String PARAM_BLOB_FILE_NAME = "BLOB_FILE_NAME";
+  public static final String PARAM_DEST_WORKSPACE_ID = "DEST_WORKSPACE_ID";
+  public static final String PARAM_BLOB_CONTAINER_NAME = "BLOB_CONTAINER_NAME";
+  public static final String PARAM_BLOB_CONTAINER_URL_AUTHENTICATED =
+      "BLOB_CONTAINER_URL_AUTHENTICATED";
 
   private final AzureConfiguration azureConfig;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
@@ -117,6 +126,64 @@ public class AzureDatabaseUtilsRunner {
         azureCloudContext,
         workspaceId,
         createPodDefinition(workspaceId, podName, envVars),
+        aksNamespace);
+  }
+
+  public void pgDumpDatabase(
+      AzureCloudContext azureCloudContext,
+      UUID sourceWorkspaceId,
+      String podName,
+      String sourceDbName,
+      String dbServerName,
+      String dbUserName,
+      String blobFileName,
+      String blobContainerName,
+      String blobContainerUrlAuthenticated)
+      throws InterruptedException {
+    final List<V1EnvVar> envVars =
+        List.of(
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_PGDUMP_DATABASE),
+            new V1EnvVar().name(PARAM_CONNECT_TO_DATABASE).value(sourceDbName),
+            new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
+            new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
+            new V1EnvVar().name(PARAM_BLOB_FILE_NAME).value(blobFileName),
+            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName),
+            new V1EnvVar()
+                .name(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED)
+                .value(blobContainerUrlAuthenticated));
+    runAzureDatabaseUtils(
+        azureCloudContext,
+        sourceWorkspaceId,
+        createPodDefinition(sourceWorkspaceId, podName, envVars),
+        aksNamespace);
+  }
+
+  public void pgRestoreDatabase(
+      AzureCloudContext azureCloudContext,
+      UUID sourceWorkspaceId,
+      String podName,
+      String targetDbName,
+      String dbServerName,
+      String dbUserName,
+      String blobFileName,
+      String blobContainerName,
+      String blobContainerUrlAuthenticated)
+      throws InterruptedException {
+    final List<V1EnvVar> envVars =
+        List.of(
+            new V1EnvVar().name(PARAM_SPRING_PROFILES_ACTIVE).value(COMMAND_PGRESTORE_DATABASE),
+            new V1EnvVar().name(PARAM_CONNECT_TO_DATABASE).value(targetDbName),
+            new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
+            new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
+            new V1EnvVar().name(PARAM_BLOB_FILE_NAME).value(blobFileName),
+            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName),
+            new V1EnvVar()
+                .name(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED)
+                .value(blobContainerUrlAuthenticated));
+    runAzureDatabaseUtils(
+        azureCloudContext,
+        sourceWorkspaceId,
+        createPodDefinition(sourceWorkspaceId, podName, envVars),
         aksNamespace);
   }
 

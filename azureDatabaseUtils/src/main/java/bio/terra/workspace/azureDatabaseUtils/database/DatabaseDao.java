@@ -117,6 +117,14 @@ public class DatabaseDao {
         """.formatted(targetRoleName, roleName), Map.of());
   }
 
+  public void reassignOwner(String roleName, String targetRoleName) {
+    jdbcTemplate.update(
+        """
+        REASSIGN OWNED BY "%s" TO "%s"
+        """.formatted(roleName, targetRoleName),
+        Map.of());
+  }
+
   public void grantAllPrivileges(String roleName, String databaseName) {
     // databaseName should already be validated by the service layer
     // roleName should already be validated by the service layer
