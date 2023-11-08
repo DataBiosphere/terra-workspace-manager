@@ -565,7 +565,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_NAME, destinationResourceName)
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(
-                ControlledResourceKeys.DESTINATION_RESOURCE_NAME, destinationContainerName)
+                ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destinationContainerName)
             .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
             .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
             .addParameter(ControlledResourceKeys.PREFIXES_TO_CLONE, prefixesToClone);

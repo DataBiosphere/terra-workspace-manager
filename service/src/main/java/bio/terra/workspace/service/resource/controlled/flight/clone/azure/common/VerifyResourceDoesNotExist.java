@@ -19,7 +19,7 @@ public class VerifyResourceDoesNotExist implements Step {
   private final String nameKey;
 
   public VerifyResourceDoesNotExist(ResourceDao resourceDao) {
-    this(resourceDao, WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME);
+    this(resourceDao, WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME);
   }
 
   public VerifyResourceDoesNotExist(ResourceDao resourceDao, String nameKey) {

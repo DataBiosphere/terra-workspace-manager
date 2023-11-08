@@ -84,9 +84,7 @@ public class CloneControlledAzureManagedIdentityResourceFlightTest extends BaseA
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
         destinationResourceId);
-    inputs.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
-        sourceResource.getName());
+    inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, sourceResource.getName());
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         destinationWorkspace.workspaceId());

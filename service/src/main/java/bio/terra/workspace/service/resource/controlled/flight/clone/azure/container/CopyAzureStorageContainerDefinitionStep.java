@@ -79,7 +79,7 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             UUID.class);
     var destinationContainerName =
         getRequired(
-            inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_NAME, String.class);
+            inputParameters, ControlledResourceKeys.DESTINATION_CONTAINER_NAME, String.class);
     var destinationResourceId =
         getRequired(
             inputParameters,

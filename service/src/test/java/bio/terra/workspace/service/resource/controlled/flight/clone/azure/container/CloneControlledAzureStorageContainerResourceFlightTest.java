@@ -54,7 +54,7 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
     inputs.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
         "clone-%s-%s"
             .formatted(destinationWorkspaceId.toString(), resource.getStorageContainerName()));
     inputs.put(

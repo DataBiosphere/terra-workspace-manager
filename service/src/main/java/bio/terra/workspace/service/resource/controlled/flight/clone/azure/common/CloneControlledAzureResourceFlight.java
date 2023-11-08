@@ -36,9 +36,8 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
         inputParameters,
         WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
+        WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);

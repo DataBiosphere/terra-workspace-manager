@@ -1,7 +1,5 @@
-package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
+package bio.terra.workspace.service.resource.controlled.flight.clone.azure.managedIdentity;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -14,25 +12,25 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
-import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTest {
+@Tag("azureUnit")
+public class CopyAzureManagedIdentityDefinitionStepTest extends BaseAzureUnitTest {
 
   private UUID workspaceId;
   private FlightContext flightContext;
@@ -53,8 +51,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
 
     workingMap = new FlightMap();
     inputParams = new FlightMap();
-    inputParams.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, workspaceId);
+    inputParams.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, workspaceId);
 
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
     when(flightContext.getInputParameters()).thenReturn(inputParams);
@@ -64,10 +61,10 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
         .thenReturn("foo@gmail.com");
   }
 
-  private static ControlledAzureStorageContainerResource buildContainerResource(
-      String storageContainerName, String resourceName, UUID resourceId, UUID workspaceId) {
-    return new ControlledAzureStorageContainerResource.Builder()
-        .storageContainerName(storageContainerName)
+  private static ControlledAzureManagedIdentityResource buildIdentityResource(
+      String managedIdentityName, String resourceName, UUID resourceId, UUID workspaceId) {
+    return ControlledAzureManagedIdentityResource.builder()
+        .managedIdentityName(managedIdentityName)
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .resourceId(resourceId)
@@ -83,93 +80,55 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
 
   @Test
   void doStep_clonesDefinition() throws InterruptedException {
+    var identityName = "idappname";
+    var sourceManagedIdentityName = "id%s".formatted(UUID.randomUUID().toString());
+    var destManagedIdentityName = "id%s".formatted(UUID.randomUUID().toString());
     var destResourceId = UUID.randomUUID();
-    var destResourceName = "fake-dest-resource-name";
-    var destContainerName = "fake-dest-storage-container-name";
-    var sharedAccountRegion = "centralus";
 
-    inputParams.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, destResourceId);
-    inputParams.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, destResourceName);
-    inputParams.put(ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destContainerName);
+    inputParams.put(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destResourceId);
+    inputParams.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, identityName);
+    inputParams.put(ControlledResourceKeys.DESTINATION_IDENTITY_NAME, destManagedIdentityName);
     inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    workingMap.put(
-        ControlledResourceKeys.SHARED_STORAGE_ACCOUNT,
-        new ApiAzureLandingZoneDeployedResource()
-            .resourceId(UUID.randomUUID().toString())
-            .region(sharedAccountRegion));
-    var sourceContainer =
-        buildContainerResource(
-            "fake-source-container",
-            "fake-source-resource-name",
-            UUID.randomUUID(),
-            UUID.randomUUID());
+    var sourceIdentity =
+        buildIdentityResource(
+            sourceManagedIdentityName, identityName, UUID.randomUUID(), UUID.randomUUID());
     var createdContainer =
-        buildContainerResource(destContainerName, destResourceName, destResourceId, workspaceId);
+        buildIdentityResource(destManagedIdentityName, identityName, destResourceId, workspaceId);
 
     when(controlledResourceService.createControlledResourceSync(
             any(), any(), eq(userRequest), any()))
         .thenReturn(createdContainer);
 
     var step =
-        new CopyAzureStorageContainerDefinitionStep(
+        new CopyAzureManagedIdentityDefinitionStep(
             mockSamService(),
             userRequest,
-            sourceContainer,
+            sourceIdentity,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION);
 
     var result = step.doStep(flightContext);
     var cloned =
         workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
-            ControlledAzureStorageContainerResource.class);
+            ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
+            ControlledAzureManagedIdentityResource.class);
 
     assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
     verify(controlledResourceService).createControlledResourceSync(any(), any(), any(), any());
     assertEquals(cloned.getResourceId(), destResourceId);
-    assertEquals(cloned.getStorageContainerName(), destContainerName);
-    assertEquals(cloned.getName(), destResourceName);
+    assertEquals(cloned.getManagedIdentityName(), destManagedIdentityName);
+    assertEquals(cloned.getName(), identityName);
     assertEquals(cloned.getCloningInstructions(), CloningInstructions.COPY_DEFINITION);
-    assertEquals(sharedAccountRegion, cloned.getRegion());
   }
 
   @Test
-  void failsIfNoLandingZoneAccount() {
-    inputParams.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
-    inputParams.put(ControlledResourceKeys.DESTINATION_CONTAINER_NAME, "fake");
-    inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-
-    var sourceContainer =
-        buildContainerResource(
-            "fake-source-container",
-            "fake-source-resource-name",
-            UUID.randomUUID(),
-            UUID.randomUUID());
+  void undoStep_deletesIdentity() throws InterruptedException {
+    var clonedIdentity =
+        buildIdentityResource("idfake-mi", "fake-resource", UUID.randomUUID(), UUID.randomUUID());
+    workingMap.put(ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedIdentity);
 
     var step =
-        new CopyAzureStorageContainerDefinitionStep(
-            mockSamService(),
-            userRequest,
-            sourceContainer,
-            controlledResourceService,
-            CloningInstructions.COPY_DEFINITION);
-
-    var ex = assertThrows(MissingRequiredFieldsException.class, () -> step.doStep(flightContext));
-    assertThat(ex.getMessage(), containsString(ControlledResourceKeys.SHARED_STORAGE_ACCOUNT));
-  }
-
-  @Test
-  void undoStep_deletesContainer() throws InterruptedException {
-    var clonedContainer =
-        buildContainerResource(
-            "fake-container", "fake-resource", UUID.randomUUID(), UUID.randomUUID());
-    workingMap.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_RESOURCE_DEFINITION, clonedContainer);
-
-    var step =
-        new CopyAzureStorageContainerDefinitionStep(
+        new CopyAzureManagedIdentityDefinitionStep(
             mockSamService(),
             userRequest,
             null,

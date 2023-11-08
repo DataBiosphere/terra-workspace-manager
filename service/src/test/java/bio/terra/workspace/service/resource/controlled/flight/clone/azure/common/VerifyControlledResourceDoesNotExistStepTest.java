@@ -23,8 +23,7 @@ public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitT
     var inputParameters = new FlightMap();
     inputParameters.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
-    inputParameters.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME, UUID.randomUUID());
+    inputParameters.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, UUID.randomUUID());
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
 
     var result = new VerifyResourceDoesNotExist(resourceDao).doStep(flightContext);
@@ -44,8 +43,7 @@ public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitT
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         destinationWorkspaceId);
     inputParameters.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
-        destinationContainerName);
+        WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, destinationContainerName);
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(resourceDao.resourceExists(destinationWorkspaceId, destinationContainerName))
         .thenReturn(true);
