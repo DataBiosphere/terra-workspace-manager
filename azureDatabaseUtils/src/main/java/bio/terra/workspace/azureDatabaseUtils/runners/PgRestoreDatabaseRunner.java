@@ -1,6 +1,7 @@
 package bio.terra.workspace.azureDatabaseUtils.runners;
 
 import bio.terra.workspace.azureDatabaseUtils.database.DatabaseService;
+import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
 import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -41,6 +42,7 @@ public class PgRestoreDatabaseRunner implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) throws PSQLException {
+    LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
     databaseService.pgRestore(
         dbName,
         dbHost,
@@ -48,6 +50,7 @@ public class PgRestoreDatabaseRunner implements ApplicationRunner {
         dbUser,
         blobFileName,
         blobContainerName,
-        blobContainerUrlAuthenticated);
+        blobContainerUrlAuthenticated,
+        localProcessLauncher);
   }
 }

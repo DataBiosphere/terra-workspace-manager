@@ -7,7 +7,12 @@ import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 import com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import org.postgresql.plugin.AuthenticationRequestType;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
@@ -98,7 +103,8 @@ public class DatabaseService {
       String adminUser,
       String blobFileName,
       String blobContainerName,
-      String blobContainerUrlAuthenticated)
+      String blobContainerUrlAuthenticated,
+      LocalProcessLauncher localProcessLauncher)
       throws PSQLException {
 
     // Grant the database role (dbName) to the landing zone identity (adminUser).
@@ -111,15 +117,13 @@ public class DatabaseService {
     databaseDao.grantRole(adminUser, dbName);
 
     List<String> commandList = generateCommandList("pg_dump", dbName, dbHost, dbPort, adminUser);
-    Map<String, String> envVars = null;
-    envVars = Map.of("PGPASSWORD", determinePassword());
+    Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
 
     logger.info(
         "Streaming DatabaseService.pgDump output into blob file {} in container: {}",
         blobFileName,
         blobContainerName);
 
-    LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
     localProcessLauncher.launchProcess(commandList, envVars);
 
     storage.streamOutputToBlobStorage(
@@ -138,7 +142,8 @@ public class DatabaseService {
       String adminUser,
       String blobFileName,
       String blobContainerName,
-      String blobContainerUrlAuthenticated)
+      String blobContainerUrlAuthenticated,
+      LocalProcessLauncher localProcessLauncher)
       throws PSQLException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).
@@ -152,9 +157,8 @@ public class DatabaseService {
     databaseDao.grantRole(adminUser, dbName);
 
     List<String> commandList = generateCommandList("psql", dbName, dbHost, dbPort, adminUser);
-    Map<String, String> envVars = null;
-    envVars = Map.of("PGPASSWORD", determinePassword());
-    LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
+    Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
+
     localProcessLauncher.launchProcess(commandList, envVars);
 
     logger.info(
@@ -204,17 +208,16 @@ public class DatabaseService {
   private void checkForError(LocalProcessLauncher localProcessLauncher)
       throws LaunchProcessException {
     // materialize only the first 1024 bytes of the error stream to ensure we don't DoS ourselves
-    int errorLimit = 1024000;
+    final int errorLimit = 1024;
 
     int exitCode = localProcessLauncher.waitForTerminate();
-    if (exitCode != 0) {
+    if (exitCode == 1) {
       InputStream errorStream =
           localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
 
       String errorMsg;
       try {
-        String error = new String(errorStream.readNBytes(errorLimit)).trim();
-        errorMsg = "process error: " + error;
+        errorMsg = "process error: " + errorStream.readNBytes(errorLimit).toString().trim();
       } catch (IOException e) {
         errorMsg =
             "process failed with exit code "
