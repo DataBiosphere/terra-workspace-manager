@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.resource.controlled.flight.clone.azure.container;
+package bio.terra.workspace.service.resource.controlled.flight.clone.azure.common;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.stairway.FlightContext;
@@ -13,13 +13,18 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VerifyContainerResourceDoesNotExist implements Step {
-  private static final Logger logger =
-      LoggerFactory.getLogger(VerifyContainerResourceDoesNotExist.class);
+public class VerifyResourceDoesNotExist implements Step {
+  private static final Logger logger = LoggerFactory.getLogger(VerifyResourceDoesNotExist.class);
   private final ResourceDao resourceDao;
+  private final String nameKey;
 
-  public VerifyContainerResourceDoesNotExist(ResourceDao resourceDao) {
+  public VerifyResourceDoesNotExist(ResourceDao resourceDao) {
+    this(resourceDao, WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME);
+  }
+
+  public VerifyResourceDoesNotExist(ResourceDao resourceDao, String nameKey) {
     this.resourceDao = resourceDao;
+    this.nameKey = nameKey;
   }
 
   @Override
@@ -29,19 +34,16 @@ public class VerifyContainerResourceDoesNotExist implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME);
+        nameKey);
     var destinationWorkspaceId =
         inputParameters.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
-    var destinationResourceName =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME, String.class);
+    var destinationResourceName = inputParameters.get(nameKey, String.class);
 
     if (resourceDao.resourceExists(destinationWorkspaceId, destinationResourceName)) {
-      logger.error("Storage container resource already exists, name = {}", destinationResourceName);
+      logger.error("Resource already exists, name = {}", destinationResourceName);
       return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new ValidationException("Storage container resource already exists"));
+          StepStatus.STEP_RESULT_FAILURE_FATAL, new ValidationException("Resource already exists"));
     }
     return StepResult.getStepResultSuccess();
   }

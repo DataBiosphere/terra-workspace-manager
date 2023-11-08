@@ -5,6 +5,7 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.managedIdentity.CloneControlledAzureManagedIdentityResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SignedUrlListDataTransferFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
@@ -101,7 +102,10 @@ public enum ActivityFlight {
   // AZURE
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(
       CloneControlledAzureStorageContainerResourceFlight.class.getName(),
-      ActivityLogChangedTarget.CONTROLLED_AZURE_STORAGE_CONTAINER);
+      ActivityLogChangedTarget.CONTROLLED_AZURE_STORAGE_CONTAINER),
+  CONTROLLED_AZURE_MANAGED_IDENTITY_CLONE_FLIGHT(
+      CloneControlledAzureManagedIdentityResourceFlight.class.getName(),
+      ActivityLogChangedTarget.CONTROLLED_AZURE_MANAGED_IDENTITY);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;
