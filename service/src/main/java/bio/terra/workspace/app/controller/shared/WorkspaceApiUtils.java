@@ -20,7 +20,6 @@ import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
-import bio.terra.workspace.service.workspace.exceptions.StageDisabledException;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
@@ -109,10 +108,7 @@ public class WorkspaceApiUtils {
       throw new FeatureNotSupportedException(
           "TPS is not enabled on this instance of Workspace Manager, do not specify the policy field of a CreateWorkspace request.");
     }
-    if (workspaceStage == ApiWorkspaceStageModel.RAWLS_WORKSPACE) {
-      throw new StageDisabledException(
-          "Cannot apply policies to a RAWLS_WORKSPACE stage workspace");
-    }
+
     return TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(policyInputs);
   }
 

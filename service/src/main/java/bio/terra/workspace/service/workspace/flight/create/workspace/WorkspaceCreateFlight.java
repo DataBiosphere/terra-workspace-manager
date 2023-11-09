@@ -54,16 +54,16 @@ public class WorkspaceCreateFlight extends Flight {
     addStep(
         new CreateWorkspaceStartStep(workspace, appContext.getWorkspaceDao(), wsmResourceStateRule),
         dbRetryRule);
-
+    addStep(
+        new CreateWorkspacePoliciesStep(
+            workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
+        serviceRetryRule);
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspace.getWorkspaceStage()) {
       case MC_WORKSPACE -> {
         if (appContext.getFeatureConfiguration().isTpsEnabled()) {
-          addStep(
-              new CreateWorkspacePoliciesStep(
-                  workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
-              serviceRetryRule);
+
           // If we're cloning, we need to copy the policies from the source workspace.
           // This is here instead of in the CloneWorkspaceFlight because we need to do it before
           // we create the workspace in Sam in case there are auth domains.
