@@ -106,12 +106,27 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
           }
-            // CONTROLLED_AZURE_MANAGED_IDENTITY, CONTROLLED_AZURE_DATABASE, CONTROLLED_AZURE_DISK
+            // CONTROLLED_AZURE_MANAGED_IDENTITY, CONTROLLED_AZURE_DISK
             // CONTROLLED_AZURE_VM, CONTROLLED_AZURE_BATCH_POOL: not supported / implemented
 
             // AWS
             // TODO(BENCH-694): support clone CONTROLLED_AWS_S3_STORAGE_FOLDER
             // CONTROLLED_AWS_SAGEMAKER_NOTEBOOK: not supported
+
+          case CONTROLLED_AZURE_DATABASE -> {
+            addStep(
+                    new LaunchCloneControlledAzureDatabaseResourceFlightStep(
+                            resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE),
+                            resourceCloneInputs.getFlightId(),
+                            resourceCloneInputs.getDestinationResourceId()
+                    )
+            );
+            addStep(
+                    new AwaitCloneControlledAzureDatabaseResourceFlightStep(
+                            resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE),
+                            resourceCloneInputs.getFlightId()),
+                    RetryRules.shortDatabase());
+          }
 
             // Flexible
           case CONTROLLED_FLEXIBLE_RESOURCE -> {
