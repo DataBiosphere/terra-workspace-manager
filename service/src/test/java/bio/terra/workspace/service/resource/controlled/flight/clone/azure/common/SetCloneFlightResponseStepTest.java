@@ -56,7 +56,7 @@ class SetCloneFlightResponseStepTest extends BaseAzureUnitTest {
 
     var result = new SetCloneFlightResponseStep().doStep(flightContext);
 
-    assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     assertNull(workingMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class));
     assertEquals(
         HttpStatus.INTERNAL_SERVER_ERROR,

@@ -99,7 +99,7 @@ public class CloneControlledAzureResourceFlightTest extends BaseAzureUnitTest {
     var expectedSteps =
         new ArrayList<>(
             List.of(SetNoOpResourceCloneResourceStep.class, SetCloneFlightResponseStep.class));
-    assertEquals(copyNothingFlight.getSteps().size(), expectedSteps.size());
+    assertEquals(expectedSteps.size(), copyNothingFlight.getSteps().size());
     assertEquals(
         0L,
         copyNothingFlight.getSteps().stream()
@@ -123,7 +123,7 @@ public class CloneControlledAzureResourceFlightTest extends BaseAzureUnitTest {
                 VerifyControlledResourceDoesNotExist.class,
                 CopyDefinitionStep.class,
                 SetCloneFlightResponseStep.class));
-    assertEquals(copyDefinitionFlight.getSteps().size(), expectedSteps.size());
+    assertEquals(expectedSteps.size(), copyDefinitionFlight.getSteps().size());
     assertEquals(
         0L,
         copyDefinitionFlight.getSteps().stream()

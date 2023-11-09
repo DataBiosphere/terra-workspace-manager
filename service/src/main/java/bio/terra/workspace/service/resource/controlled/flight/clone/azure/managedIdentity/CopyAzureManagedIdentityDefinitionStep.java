@@ -14,7 +14,6 @@ import bio.terra.workspace.generated.model.ApiAzureManagedIdentityCreationParame
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
@@ -75,11 +74,6 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     var destinationResourceId =
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-    var userRequest =
-        getRequired(
-            inputParameters,
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
     var destinationIdentityName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_IDENTITY_NAME, String.class))

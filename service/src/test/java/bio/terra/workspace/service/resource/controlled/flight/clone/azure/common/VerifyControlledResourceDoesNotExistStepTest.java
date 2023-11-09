@@ -28,7 +28,7 @@ public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitT
 
     var result = new VerifyControlledResourceDoesNotExist(resourceDao).doStep(flightContext);
 
-    assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }
 
   @Test
@@ -50,7 +50,7 @@ public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitT
 
     var result = new VerifyControlledResourceDoesNotExist(resourceDao).doStep(flightContext);
 
-    assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_FAILURE_FATAL);
-    assertEquals(result.getException().get().getClass(), ValidationException.class);
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+    assertEquals(ValidationException.class, result.getException().get().getClass());
   }
 }

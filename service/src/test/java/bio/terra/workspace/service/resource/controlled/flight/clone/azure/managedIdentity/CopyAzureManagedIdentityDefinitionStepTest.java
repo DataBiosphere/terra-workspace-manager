@@ -113,12 +113,13 @@ public class CopyAzureManagedIdentityDefinitionStepTest extends BaseAzureUnitTes
             ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
             ControlledAzureManagedIdentityResource.class);
 
-    assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     verify(controlledResourceService).createControlledResourceSync(any(), any(), any(), any());
-    assertEquals(cloned.getResourceId(), destResourceId);
-    assertEquals(cloned.getManagedIdentityName(), destManagedIdentityName);
-    assertEquals(cloned.getName(), identityName);
-    assertEquals(cloned.getCloningInstructions(), CloningInstructions.COPY_DEFINITION);
+    assertNotNull(cloned);
+    assertEquals(destResourceId, cloned.getResourceId());
+    assertEquals(destManagedIdentityName, cloned.getManagedIdentityName());
+    assertEquals(identityName, cloned.getName());
+    assertEquals(CloningInstructions.COPY_DEFINITION, cloned.getCloningInstructions());
   }
 
   @Test
@@ -137,7 +138,7 @@ public class CopyAzureManagedIdentityDefinitionStepTest extends BaseAzureUnitTes
 
     var result = step.undoStep(flightContext);
 
-    assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
     verify(controlledResourceService).deleteControlledResourceSync(any(), any(), eq(false), any());
   }
 }
