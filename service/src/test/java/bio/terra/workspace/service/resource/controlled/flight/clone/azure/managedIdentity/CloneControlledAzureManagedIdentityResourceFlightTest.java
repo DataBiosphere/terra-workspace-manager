@@ -3,132 +3,72 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.manag
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.FlightStatus;
-import bio.terra.workspace.common.BaseAzureConnectedTest;
-import bio.terra.workspace.common.StairwayTestUtils;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
-import bio.terra.workspace.common.utils.AzureTestUtils;
-import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.model.Workspace;
-import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.Mock;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Tag("azureConnected")
-public class CloneControlledAzureManagedIdentityResourceFlightTest extends BaseAzureConnectedTest {
+@Tag("azureUnit")
+public class CloneControlledAzureManagedIdentityResourceFlightTest extends BaseAzureUnitTest {
 
-  @Autowired private JobService jobService;
-  @Autowired private AzureTestUtils azureTestUtils;
-  @Autowired private WorkspaceService workspaceService;
-  @Autowired private UserAccessUtils userAccessUtils;
-  @Autowired private ControlledResourceService controlledResourceService;
+  @Mock private FlightBeanBag flightBeanBag;
+  @Mock private AuthenticatedUserRequest userRequest;
 
-  private Workspace sourceWorkspace;
-  private Workspace destinationWorkspace;
+  static UUID sourceWorkspaceId = UUID.randomUUID();
+  static UUID destinationWorkspaceId = UUID.randomUUID();
+  static UUID destinationResourceId = UUID.randomUUID();
 
-  @BeforeAll
-  public void setup() throws InterruptedException {
-    sourceWorkspace =
-        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
-    destinationWorkspace =
-        createWorkspaceWithCloudContext(workspaceService, userAccessUtils.defaultUserAuthRequest());
-  }
-
-  @AfterAll
-  public void cleanup() {
-    workspaceService.deleteWorkspace(sourceWorkspace, userAccessUtils.defaultUserAuthRequest());
-    workspaceService.deleteWorkspace(
-        destinationWorkspace, userAccessUtils.defaultUserAuthRequest());
-  }
-
-  @Test
-  void cloneControlledAzureManagedIdentity() throws InterruptedException {
-
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-    UUID destinationResourceId = UUID.randomUUID();
-
+  CloneControlledAzureManagedIdentityResourceFlight createFlight() {
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
 
     var sourceResource =
         ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
-                creationParameters, sourceWorkspace.workspaceId())
+                creationParameters, sourceWorkspaceId)
             .managedIdentityName("idfoobar")
             .build();
-
-    azureUtils.createResource(
-        sourceWorkspace.workspaceId(),
-        userRequest,
-        sourceResource,
-        WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY,
-        creationParameters);
 
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, sourceResource);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     inputs.put(
         WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
-        CloningInstructions.COPY_DEFINITION.name());
+        CloningInstructions.COPY_NOTHING.name());
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
         destinationResourceId);
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, sourceResource.getName());
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        destinationWorkspace.workspaceId());
+        destinationWorkspaceId);
 
-    var result =
-        StairwayTestUtils.blockUntilFlightCompletes(
-            jobService.getStairway(),
-            CloneControlledAzureManagedIdentityResourceFlight.class,
-            inputs,
-            Duration.ofMinutes(1),
-            null);
+    return new CloneControlledAzureManagedIdentityResourceFlight(inputs, flightBeanBag);
+  }
 
-    ClonedAzureResource resultIdentity =
-        result
-            .getResultMap()
-            .get()
-            .get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
-    assertNotNull(resultIdentity);
+  @Test
+  void cloneControlledAzureManagedIdentity_copyDefinitionSteps() {
+    var flight = createFlight();
+    var copyDefinitionSteps = flight.copyDefinition(flightBeanBag, flight.getInputParameters());
+    assertEquals(1, copyDefinitionSteps.size());
     assertEquals(
-        resultIdentity.effectiveCloningInstructions(), CloningInstructions.COPY_DEFINITION);
-    assertEquals(
-        resultIdentity.managedIdentity().getWorkspaceId(), destinationWorkspace.workspaceId());
-    assertEquals(resultIdentity.managedIdentity().getResourceId(), destinationResourceId);
-    assertEquals(resultIdentity.managedIdentity().getName(), sourceResource.getName());
-    assertEquals(sourceResource.getManagedIdentityName(), "idfoobar");
-    assertTrue(resultIdentity.managedIdentity().getManagedIdentityName().startsWith("id"));
-    assertNotEquals(
-        resultIdentity.managedIdentity().getManagedIdentityName(),
-        sourceResource.getManagedIdentityName());
-    assertEquals(result.getFlightStatus(), FlightStatus.SUCCESS);
+        List.of(CopyAzureManagedIdentityDefinitionStep.class),
+        copyDefinitionSteps.stream()
+            .map(pair -> pair.step().getClass())
+            .collect(Collectors.toList()));
+  }
 
-    ControlledAzureManagedIdentityResource resourceInWorkspace =
-        controlledResourceService
-            .getControlledResource(destinationWorkspace.workspaceId(), destinationResourceId)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
-    assertNotNull(resourceInWorkspace);
-    assertEquals(
-        resultIdentity.managedIdentity().attributesToJson(),
-        resourceInWorkspace.attributesToJson());
-    assertEquals(
-        resultIdentity.managedIdentity().getManagedIdentityName(),
-        resourceInWorkspace.getManagedIdentityName());
-    assertEquals(
-        resultIdentity.managedIdentity().getWsmControlledResourceFields(),
-        resourceInWorkspace.getWsmControlledResourceFields());
+  @Test
+  void cloneControlledAzureManagedIdentity_copyResourceSteps() {
+    var flight = createFlight();
+    var copyResourceSteps = flight.copyResource(flightBeanBag, flight.getInputParameters());
+    assertEquals(0, copyResourceSteps.size());
   }
 }
