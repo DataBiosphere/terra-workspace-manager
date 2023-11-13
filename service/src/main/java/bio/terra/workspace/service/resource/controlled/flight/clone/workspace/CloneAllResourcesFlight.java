@@ -122,20 +122,19 @@ public class CloneAllResourcesFlight extends Flight {
 
           case CONTROLLED_AZURE_DATABASE -> {
             addStep(
-                    new LaunchCloneControlledAzureDatabaseResourceFlightStep(
-                            resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE),
-                            resourceCloneInputs.getFlightId(),
-                            resourceCloneInputs.getDestinationResourceId()
-                    )
-            );
+                new LaunchCloneControlledAzureDatabaseResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE),
+                    resourceCloneInputs.getFlightId(),
+                    resourceCloneInputs.getDestinationResourceId()));
             addStep(
-                    new AwaitCloneControlledAzureDatabaseResourceFlightStep(
-                            resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE),
-                            resourceCloneInputs.getFlightId()),
-                    RetryRules.shortDatabase());
+                new AwaitCloneControlledAzureDatabaseResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE),
+                    resourceCloneInputs.getFlightId()),
+                RetryRules.shortDatabase());
           }
 
-            // CONTROLLED_AZURE_DISK, CONTROLLED_AZURE_VM, CONTROLLED_AZURE_BATCH_POOL: not supported / implemented
+            // CONTROLLED_AZURE_DISK, CONTROLLED_AZURE_VM, CONTROLLED_AZURE_BATCH_POOL: not
+            // supported / implemented
 
             // AWS
             // TODO(BENCH-694): support clone CONTROLLED_AWS_S3_STORAGE_FOLDER
