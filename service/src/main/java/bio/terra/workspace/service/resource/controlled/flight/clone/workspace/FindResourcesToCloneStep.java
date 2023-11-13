@@ -94,13 +94,17 @@ public class FindResourcesToCloneStep implements Step {
   }
 
   private static boolean isCloneable(WsmResource resource) {
+    WsmResourceType wsmResourceType = resource.getResourceType();
+
+    boolean isCloneableResourceType =
+        WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE == wsmResourceType
+            || WsmResourceType.CONTROLLED_GCP_GCS_BUCKET == wsmResourceType
+            || WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET == wsmResourceType
+            || WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER == wsmResourceType
+            || WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY == wsmResourceType
+            || WsmResourceType.CONTROLLED_AZURE_DATABASE == wsmResourceType;
+
     return StewardshipType.REFERENCED == resource.getStewardshipType()
-        || (StewardshipType.CONTROLLED == resource.getStewardshipType()
-            && (WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE == resource.getResourceType()
-                || WsmResourceType.CONTROLLED_GCP_GCS_BUCKET == resource.getResourceType()
-                || WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET == resource.getResourceType()
-                || WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER == resource.getResourceType()
-                || WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY
-                    == resource.getResourceType()));
+        || (StewardshipType.CONTROLLED == resource.getStewardshipType() && isCloneableResourceType);
   }
 }
