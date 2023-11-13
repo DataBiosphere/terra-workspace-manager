@@ -74,7 +74,6 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     var destinationResourceId =
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-
     var destinationIdentityName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_IDENTITY_NAME, String.class))

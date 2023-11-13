@@ -138,8 +138,7 @@ public class CloneControlledAzureDatabaseResourceFlightTest extends BaseAzureCon
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
 
-    inputs.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME, databaseName);
+    inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, databaseName);
 
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,

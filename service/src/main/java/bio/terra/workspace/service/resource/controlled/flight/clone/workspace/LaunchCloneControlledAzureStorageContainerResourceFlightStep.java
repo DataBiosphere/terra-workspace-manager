@@ -69,7 +69,7 @@ public class LaunchCloneControlledAzureStorageContainerResourceFlightStep implem
         String.format(
             "clone-%s-%s", destinationWorkspaceId, sourceResource.getStorageContainerName());
     subflightInputParameters.put(
-        ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
+        ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
         destinationContainerName.substring(0, Math.min(63, destinationContainerName.length())));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
