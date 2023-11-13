@@ -9,6 +9,8 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -50,14 +52,15 @@ public class AwaitCloneControlledAzureDatabaseResourceFlightStep implements Step
 
       FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
       var clonedDatabase =
-          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ControlledAzureDatabaseResource.class);
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_AZURE_DATABASE);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
       cloneDetails.setDestinationResourceId(
           Optional.ofNullable(clonedDatabase)
-              .map(ControlledAzureDatabaseResource::getResourceId)
+              .map(ClonedAzureResource::resource)
+              .map(ControlledResource::getResourceId)
               .orElse(null));
       String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
       cloneDetails.setErrorMessage(errorMessage);
