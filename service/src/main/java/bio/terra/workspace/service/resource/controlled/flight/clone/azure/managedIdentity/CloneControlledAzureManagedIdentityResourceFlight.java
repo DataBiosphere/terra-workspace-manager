@@ -13,13 +13,9 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.List;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CloneControlledAzureManagedIdentityResourceFlight
     extends CloneControlledAzureResourceFlight {
-  private static final Logger logger =
-      LoggerFactory.getLogger(CloneControlledAzureManagedIdentityResourceFlight.class);
 
   public CloneControlledAzureManagedIdentityResourceFlight(
       FlightMap inputParameters, Object applicationContext) {

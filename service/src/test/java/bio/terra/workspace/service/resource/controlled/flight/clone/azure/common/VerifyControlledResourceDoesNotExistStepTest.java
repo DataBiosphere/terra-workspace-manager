@@ -23,13 +23,12 @@ public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitT
     var inputParameters = new FlightMap();
     inputParameters.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
-    inputParameters.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME, UUID.randomUUID());
+    inputParameters.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, UUID.randomUUID());
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
 
-    var result = new VerifyResourceDoesNotExist(resourceDao).doStep(flightContext);
+    var result = new VerifyControlledResourceDoesNotExist(resourceDao).doStep(flightContext);
 
-    assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_SUCCESS);
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
   }
 
   @Test
@@ -44,8 +43,7 @@ public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitT
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         destinationWorkspaceId);
     inputParameters.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
-        destinationContainerName);
+        WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, destinationContainerName);
     when(flightContext.getInputParameters()).thenReturn(inputParameters);
     when(resourceDao.resourceExists(destinationWorkspaceId, destinationContainerName))
         .thenReturn(true);
@@ -54,5 +52,9 @@ public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitT
 
     assertEquals(result.getStepStatus(), StepStatus.STEP_RESULT_FAILURE_FATAL);
     assertEquals(result.getException().get().getClass(), ValidationException.class);
+    var result = new VerifyControlledResourceDoesNotExist(resourceDao).doStep(flightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
+    assertEquals(ValidationException.class, result.getException().get().getClass());
   }
 }

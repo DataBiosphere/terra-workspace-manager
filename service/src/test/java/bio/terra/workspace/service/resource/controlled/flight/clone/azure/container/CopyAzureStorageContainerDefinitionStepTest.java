@@ -91,7 +91,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
     inputParams.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, destResourceId);
     inputParams.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, destResourceName);
-    inputParams.put(ControlledResourceKeys.DESTINATION_RESOURCE_NAME, destContainerName);
+    inputParams.put(ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destContainerName);
     inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     workingMap.put(
         ControlledResourceKeys.SHARED_STORAGE_ACCOUNT,
@@ -138,7 +138,7 @@ public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTe
   void failsIfNoLandingZoneAccount() {
     inputParams.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
-    inputParams.put(ControlledResourceKeys.DESTINATION_RESOURCE_NAME, "fake");
+    inputParams.put(ControlledResourceKeys.DESTINATION_CONTAINER_NAME, "fake");
     inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     var sourceContainer =

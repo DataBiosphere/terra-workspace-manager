@@ -21,12 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class CloneControlledAzureResourceFlight extends Flight {
-  private static final Logger logger =
-      LoggerFactory.getLogger(CloneControlledAzureResourceFlight.class);
 
   protected CloneControlledAzureResourceFlight(
       FlightMap inputParameters, Object applicationContext) {
@@ -36,9 +32,7 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
         inputParameters,
         WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
         JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID,
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
 
     var flightBeanBag = FlightBeanBag.getFromObject(applicationContext);
@@ -48,6 +42,10 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
             inputParameters,
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
             ControlledResource.class);
+    if (!inputParameters.containsKey(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME)) {
+      inputParameters.put(
+          WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, sourceResource.getName());
+    }
     var userRequest =
         inputParameters.get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
     var destinationWorkspaceId =
@@ -111,7 +109,7 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
       // so we can reliably retry the copy definition step later on
       resourceCloningSteps.add(
           new StepRetryRulePair(
-              new VerifyResourceDoesNotExist(flightBeanBag.getResourceDao()),
+              new VerifyControlledResourceDoesNotExist(flightBeanBag.getResourceDao()),
               RetryRuleNone.getRetryRuleNone()));
     }
 
@@ -144,7 +142,7 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
             ControlledResource.class);
     return List.of(
         new StepRetryRulePair(
-            new SetNoOpResourceCloneResponseStep(sourceResource), RetryRules.shortExponential()));
+            new SetNoOpResourceCloneResourceStep(sourceResource), RetryRules.shortExponential()));
   }
 
   protected List<StepRetryRulePair> copyDefinition(

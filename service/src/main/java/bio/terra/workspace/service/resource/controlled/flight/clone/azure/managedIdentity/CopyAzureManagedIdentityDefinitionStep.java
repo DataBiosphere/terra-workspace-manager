@@ -14,7 +14,6 @@ import bio.terra.workspace.generated.model.ApiAzureManagedIdentityCreationParame
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
@@ -24,6 +23,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.azure.core.management.exception.ManagementException;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,15 +74,15 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     var destinationResourceId =
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
-    var userRequest =
-        getRequired(
-            inputParameters,
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
+
+    var destinationIdentityName =
+        Optional.ofNullable(
+                inputParameters.get(ControlledResourceKeys.DESTINATION_IDENTITY_NAME, String.class))
+            .orElse("id%s".formatted(UUID.randomUUID().toString()));
 
     ControlledAzureManagedIdentityResource destinationIdentityResource =
         ControlledAzureManagedIdentityResource.builder()
-            .managedIdentityName("id%s".formatted(UUID.randomUUID().toString()))
+            .managedIdentityName(destinationIdentityName)
             .common(
                 sourceIdentity.buildControlledCloneResourceCommonFields(
                     destinationWorkspaceId,
@@ -108,7 +108,7 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
       controlledResourceService.createControlledResourceSync(
           destinationIdentityResource, iamRole, userRequest, destinationCreationParameters);
     } catch (DuplicateResourceException e) {
-      // We are catching DuplicateResourceException here since we check for the container's presence
+      // We are catching DuplicateResourceException here since we check for the identity's presence
       // earlier in the parent flight of this step and bail out if it already exists.
       // A duplicate resource being present in this context means we are in a retry and can move on
       logger.info(

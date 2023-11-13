@@ -56,8 +56,6 @@ public class LaunchCloneControlledAzureManagedIdentityResourceFlightStep impleme
     subflightInputParameters.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_WORKSPACE_ID, destinationWorkspaceId);
-    subflightInputParameters.put(
-        ResourceKeys.CLONING_INSTRUCTIONS, sourceResource.getCloningInstructions());
     subflightInputParameters.put(ResourceKeys.RESOURCE, sourceResource);
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
@@ -65,7 +63,7 @@ public class LaunchCloneControlledAzureManagedIdentityResourceFlightStep impleme
             "Clone Azure Managed Identity %s", sourceResource.getResourceId().toString()));
     String destinationIdentityName = sourceResource.getName();
     subflightInputParameters.put(
-        ControlledResourceKeys.DESTINATION_RESOURCE_NAME,
+        ResourceKeys.RESOURCE_NAME,
         destinationIdentityName.substring(0, Math.min(63, destinationIdentityName.length())));
     subflightInputParameters.put(
         ControlledResourceKeys.DESTINATION_RESOURCE_ID, destinationResourceId);
