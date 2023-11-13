@@ -160,7 +160,10 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
             new KubernetesNamespaceGuardStep(
                 getWorkspaceId(), flightBeanBag.getKubernetesClientProvider(), this),
             new CreateKubernetesNamespaceStep(
-                getWorkspaceId(), flightBeanBag.getKubernetesClientProvider(), this));
+                getWorkspaceId(),
+                flightBeanBag.getKubernetesClientProvider(),
+                this,
+                flightBeanBag.getCrlService()));
 
     return Stream.of(
             createNamespaceSteps,

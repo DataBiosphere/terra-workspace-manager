@@ -10,6 +10,7 @@ import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
+import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import com.azure.core.management.Region;
@@ -31,6 +32,7 @@ public class BaseAzureUnitTest extends BaseUnitTestMocks {
   @MockBean private WorkspaceService mockWorkspaceService;
   @MockBean private ControlledResourceMetadataManager mockControlledResourceMetadataManager;
   @MockBean private ControlledResourceService mockControlledResourceService;
+  @MockBean private ReferencedResourceService mockReferencedResourceService;
 
   public AzureStorageAccessService mockAzureStorageAccessService() {
     return mockAzureStorageAccessService;
@@ -54,6 +56,10 @@ public class BaseAzureUnitTest extends BaseUnitTestMocks {
 
   public ControlledResourceService getMockControlledResourceService() {
     return mockControlledResourceService;
+  }
+
+  public ReferencedResourceService mockReferencedResourceService() {
+    return mockReferencedResourceService;
   }
 
   public void setupMockLandingZoneRegion(Region region) {

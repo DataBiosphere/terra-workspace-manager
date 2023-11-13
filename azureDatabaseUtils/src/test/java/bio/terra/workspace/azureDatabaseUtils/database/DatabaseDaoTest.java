@@ -19,12 +19,14 @@ public class DatabaseDaoTest extends BaseUnitTest {
 
   private final String testDatabaseName = "testCreateDatabase";
   private final String testRoleName = "test-Create-Role";
+  private final String testRoleAdminName = "test-Admin-Role";
 
   @BeforeEach
   @AfterEach
   void cleanup() {
     jdbcTemplate.execute("DROP DATABASE IF EXISTS " + testDatabaseName);
     jdbcTemplate.execute("DROP ROLE IF EXISTS \"%s\"".formatted(testRoleName));
+    jdbcTemplate.execute("DROP ROLE IF EXISTS \"%s\"".formatted(testRoleAdminName));
   }
 
   @Test
@@ -108,6 +110,14 @@ public class DatabaseDaoTest extends BaseUnitTest {
   void testTerminateSessionsForRole() {
     createTestRole(testRoleName);
     assertThat(databaseDao.terminateSessionsForRole(testRoleName), equalTo(0));
+  }
+
+  @Test
+  void testReassignOwner() {
+    jdbcTemplate.execute("CREATE DATABASE " + testDatabaseName);
+    createTestRole(testRoleName);
+    createTestRole(testRoleAdminName);
+    databaseDao.reassignOwner(testRoleName, testRoleAdminName);
   }
 
   private void createTestRole(String testRoleName) {

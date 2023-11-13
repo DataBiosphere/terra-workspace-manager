@@ -6,13 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.generated.model.ApiAccessScope;
+import bio.terra.workspace.generated.model.ApiAzureManagedIdentityCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
+import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -61,7 +66,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
   }
 
   @Test
-  void cloneAzureWorkspaceWithContainer() {
+  void cloneAzureWorkspace() {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     UUID containerResourceId = UUID.randomUUID();
@@ -89,6 +94,29 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
         userRequest,
         new ApiAzureStorageContainerCreationParameters()
             .storageContainerName("storageContainerName"));
+
+    String managedIdentityResourceName = "idfoobar";
+    String managedIdentityName = "id%s".formatted(UUID.randomUUID().toString());
+
+    ControlledAzureManagedIdentityResource managedIdentityResource =
+        ControlledAzureManagedIdentityResource.builder()
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                    .workspaceUuid(sourceWorkspace.workspaceId())
+                    .name(managedIdentityResourceName)
+                    .cloningInstructions(CloningInstructions.COPY_DEFINITION)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(DEFAULT_AZURE_RESOURCE_REGION)
+                    .build())
+            .managedIdentityName(managedIdentityName)
+            .build();
+
+    controlledResourceService.createControlledResourceSync(
+        managedIdentityResource,
+        ControlledResourceIamRole.OWNER,
+        userRequest,
+        new ApiAzureManagedIdentityCreationParameters().name(managedIdentityName));
 
     UUID destUUID = UUID.randomUUID();
 
@@ -120,6 +148,16 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
             .enumerateResources(
                 destWorkspace.getWorkspaceId(),
                 WsmResourceFamily.AZURE_STORAGE_CONTAINER,
+                StewardshipType.CONTROLLED,
+                0,
+                100)
+            .size(),
+        1);
+    assertEquals(
+        wsmResourceService
+            .enumerateResources(
+                destWorkspace.getWorkspaceId(),
+                WsmResourceFamily.AZURE_MANAGED_IDENTITY,
                 StewardshipType.CONTROLLED,
                 0,
                 100)

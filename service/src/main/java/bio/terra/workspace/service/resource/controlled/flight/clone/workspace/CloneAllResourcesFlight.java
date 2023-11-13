@@ -106,12 +106,19 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
           }
-            // CONTROLLED_AZURE_MANAGED_IDENTITY, CONTROLLED_AZURE_DISK
-            // CONTROLLED_AZURE_VM, CONTROLLED_AZURE_BATCH_POOL: not supported / implemented
 
-            // AWS
-            // TODO(BENCH-694): support clone CONTROLLED_AWS_S3_STORAGE_FOLDER
-            // CONTROLLED_AWS_SAGEMAKER_NOTEBOOK: not supported
+          case CONTROLLED_AZURE_MANAGED_IDENTITY -> {
+            addStep(
+                new LaunchCloneControlledAzureManagedIdentityResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY),
+                    resourceCloneInputs.getFlightId(),
+                    resourceCloneInputs.getDestinationResourceId()));
+            addStep(
+                new AwaitCloneControlledAzureManagedIdentityResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY),
+                    resourceCloneInputs.getFlightId()),
+                RetryRules.cloudLongRunning());
+          }
 
           case CONTROLLED_AZURE_DATABASE -> {
             addStep(
@@ -127,6 +134,12 @@ public class CloneAllResourcesFlight extends Flight {
                             resourceCloneInputs.getFlightId()),
                     RetryRules.shortDatabase());
           }
+
+            // CONTROLLED_AZURE_DISK, CONTROLLED_AZURE_VM, CONTROLLED_AZURE_BATCH_POOL: not supported / implemented
+
+            // AWS
+            // TODO(BENCH-694): support clone CONTROLLED_AWS_S3_STORAGE_FOLDER
+            // CONTROLLED_AWS_SAGEMAKER_NOTEBOOK: not supported
 
             // Flexible
           case CONTROLLED_FLEXIBLE_RESOURCE -> {

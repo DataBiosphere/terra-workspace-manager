@@ -10,7 +10,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
-import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
@@ -20,6 +19,7 @@ import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -29,7 +29,6 @@ import com.azure.core.management.exception.ManagementException;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 public class CopyAzureStorageContainerDefinitionStep implements Step {
   private static final Logger logger =
@@ -80,9 +79,7 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
             UUID.class);
     var destinationContainerName =
         getRequired(
-            inputParameters,
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
-            String.class);
+            inputParameters, ControlledResourceKeys.DESTINATION_CONTAINER_NAME, String.class);
     var destinationResourceId =
         getRequired(
             inputParameters,
@@ -138,15 +135,14 @@ public class CopyAzureStorageContainerDefinitionStep implements Step {
           destinationResourceName);
     }
 
-    if (resolvedCloningInstructions.equals(CloningInstructions.COPY_DEFINITION)) {
-      var containerResult =
-          new ClonedAzureStorageContainer(
-              resolvedCloningInstructions,
-              sourceContainer.getWorkspaceId(),
-              sourceContainer.getResourceId(),
-              destinationContainerResource);
-      FlightUtils.setResponse(flightContext, containerResult, HttpStatus.OK);
-    }
+    var containerResult =
+        new ClonedAzureResource(
+            resolvedCloningInstructions,
+            sourceContainer.getWorkspaceId(),
+            sourceContainer.getResourceId(),
+            destinationContainerResource);
+
+    workingMap.put(ControlledResourceKeys.CLONED_RESOURCE, containerResult);
 
     return StepResult.getStepResultSuccess();
   }

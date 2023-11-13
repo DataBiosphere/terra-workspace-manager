@@ -14,7 +14,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -29,15 +29,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Wait for the clone storage container flight to complete and add the result to the appropriate map
+ * Wait for the clone managed identity flight to complete and add the result to the appropriate map
  */
-public class AwaitCloneControlledAzureStorageContainerResourceFlightStep implements Step {
+public class AwaitCloneControlledAzureManagedIdentityResourceFlightStep implements Step {
 
-  private final ControlledAzureStorageContainerResource resource;
+  private final ControlledAzureManagedIdentityResource resource;
   private final String subflightId;
 
-  public AwaitCloneControlledAzureStorageContainerResourceFlightStep(
-      ControlledAzureStorageContainerResource resource, String subflightId) {
+  public AwaitCloneControlledAzureManagedIdentityResourceFlightStep(
+      ControlledAzureManagedIdentityResource resource, String subflightId) {
     this.resource = resource;
     this.subflightId = subflightId;
   }
@@ -56,14 +56,14 @@ public class AwaitCloneControlledAzureStorageContainerResourceFlightStep impleme
       cloneDetails.setResult(cloneResult);
 
       FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
-      var clonedContainer =
+      var clonedIdentity =
           resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
-      cloneDetails.setResourceType(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+      cloneDetails.setResourceType(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
       cloneDetails.setSourceResourceId(resource.getResourceId());
       cloneDetails.setDestinationResourceId(
-          Optional.ofNullable(clonedContainer)
+          Optional.ofNullable(clonedIdentity)
               .map(ClonedAzureResource::resource)
               .map(ControlledResource::getResourceId)
               .orElse(null));
