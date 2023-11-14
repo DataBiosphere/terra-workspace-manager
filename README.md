@@ -698,6 +698,39 @@ The integration tests live in the `integration` project. Consult the integration
 In the early days of the project, there were JUnit-based integration tests. We are in
 process of migrating them to Test Runner.
 
+
+### Pact Tests
+
+Pact testing ensures workspace manager's APIs are compatible with the assumptions made
+by its clients and that workspace manager's assumptions about its dependency APIs are
+also correct.
+
+Pact testing involves interacting with a pact-broker which requires a little setup.
+
+To run pact tests locally:
+
+```
+# Get pactbroker credentials
+./service/src/test/render-pact-configs.sh
+# Reload your environment variables, e.g. src ~/.zshrc
+
+# Pact contract test settings
+export PACT_BROKER_USERNAME=$(cat /tmp/pact-ro-username.key)
+export PACT_BROKER_PASSWORD=$(cat /tmp/pact-ro-password.key)
+
+./gradlew verifyPacts
+```
+
+If you're working on adding new pacts and making local changes to them, it might be helpful to use a local
+pactbroker instead. To set up a local pactbroker, see:
+[Contract Test Local Development](https://broadworkbench.atlassian.net/wiki/spaces/IRT/pages/2829680649/Contract+Test+Local+Development).
+
+Once you have a local pactbroker, you can override the `PACT_BROKER_URL` environment variable:
+
+```
+PACT_BROKER_URL=http://localhost:9292 ./gradlew verifyPacts
+```
+
 ### Making tests fast
 
 #### Create one workspace/context/resource for entire test

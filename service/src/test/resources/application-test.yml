@@ -64,5 +64,3 @@ landingzone:
   landingzone-stairway-database:
     poolMaxIdle: 1
     uri: jdbc:${env.db.local-db}/landingzone_stairway_db
-pactbroker:
-  url: https://pact-broker.dsp-eng-tools.broadinstitute.org
