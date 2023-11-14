@@ -7,7 +7,6 @@ import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
@@ -83,12 +82,12 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   void authorizeLinkingUnknownId() {
     var ex =
         assertThrows(
-            BillingProfileManagerServiceAPIException.class,
+            SpendUnauthorizedException.class,
             () ->
                 spendProfileService.authorizeLinking(
                     new SpendProfileId(UUID.randomUUID().toString()),
                     true,
                     userAccessUtils.thirdUserAuthRequest()));
-    assert (ex.getStatusCode() == HttpStatus.NOT_FOUND);
+    assert (ex.getStatusCode() == HttpStatus.FORBIDDEN);
   }
 }
