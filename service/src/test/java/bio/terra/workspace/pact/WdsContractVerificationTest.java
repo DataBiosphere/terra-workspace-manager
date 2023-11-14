@@ -41,7 +41,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @ActiveProfiles({
   "unit-test" /* disable some unnecessary dependencies that would otherwise require mocking */,
-  "pact-test" /* set pact broker URL */
+  "pact-test" /* set Pact Broker URL */
 })
 @Tag("pact-verification")
 @Provider("workspacemanager") // should match the terra chart name
