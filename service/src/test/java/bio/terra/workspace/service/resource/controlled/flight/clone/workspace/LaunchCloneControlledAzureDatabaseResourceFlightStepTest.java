@@ -42,34 +42,9 @@ public class LaunchCloneControlledAzureDatabaseResourceFlightStepTest
 
   @Test
   public void testDoSuccessWithCorrectFlightParams() throws InterruptedException {
-    //    var flightIds = Map.of(azureDatabaseResource.getResourceId(),
-    // UUID.randomUUID().toString());
     var step =
         new LaunchCloneControlledAzureDatabaseResourceFlightStep(
             azureDatabaseResource, subFlightId.toString(), destinationResourceId);
-
-    mockWorkingMap = new FlightMap();
-    FlightMap mockInputParams = new FlightMap();
-    mockInputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    mockInputParams.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-        destinationWorkspaceId);
-
-    //    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-    when(mockFlightContext.getInputParameters()).thenReturn(mockInputParams);
-    //    when(mockFlightContext.getApplicationContext()).thenReturn(mockFlightBeanBag);
-    when(mockFlightContext.getStairway()).thenReturn(mockStairway);
-    //    var flightState =
-    //        mockFlightState(flightIds.get(azureDatabaseResource.getResourceId()),
-    // FlightStatus.SUCCESS);
-
-    var result = step.doStep(mockFlightContext);
-
-    assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
-
-    //    var expectedInputs = new FlightMap();
-    //    expectedInputs.put(
-    //        WorkspaceFlightMapKeys.ControlledResourceKeys.RESOURCE, azureDatabaseResource);
 
     var expectedInputs = new FlightMap();
     expectedInputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
@@ -90,35 +65,24 @@ public class LaunchCloneControlledAzureDatabaseResourceFlightStepTest
         destinationResourceId);
     expectedInputs.put(WorkspaceFlightMapKeys.MERGE_POLICIES, false);
 
+    mockWorkingMap = new FlightMap();
+    FlightMap mockInputParams = new FlightMap();
+    mockInputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
+    mockInputParams.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        destinationWorkspaceId);
+
+    when(mockFlightContext.getInputParameters()).thenReturn(mockInputParams);
+    when(mockFlightContext.getStairway()).thenReturn(mockStairway);
+
+    var result = step.doStep(mockFlightContext);
+
+    assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
+
     verify(mockStairway)
         .submit(
             eq(subFlightId.toString()),
             eq(CloneControlledAzureDatabaseResourceFlight.class),
             argThat(inputs -> inputs.getMap().equals(expectedInputs.getMap())));
   }
-
-  //  @NotNull
-  //  private LaunchCloneControlledAzureDatabaseResourceFlightStep setupStepTest(
-  //      List<ResourceRolePair> resourceRolesPairs, Map<UUID, String> flightIds) {
-  //    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-  //    when(mockWorkingMap.get(
-  //            eq(WorkspaceFlightMapKeys.ControlledResourceKeys.RESOURCE_ROLES_TO_REMOVE),
-  //            any(TypeReference.class)))
-  //        .thenReturn(resourceRolesPairs);
-  //    when(mockWorkingMap.get(eq(WorkspaceFlightMapKeys.FLIGHT_IDS), any(TypeReference.class)))
-  //        .thenReturn(flightIds);
-  //
-  //    return new LaunchCloneControlledAzureDatabaseResourceFlightStep(
-  //        azureDatabaseResource, UUID.randomUUID().toString(), UUID.randomUUID());
-  //  }
-  //
-  //  @NotNull
-  //  private FlightState mockFlightState(String flightIds, FlightStatus state)
-  //      throws InterruptedException {
-  //    var flightState = new FlightState();
-  //    flightState.setFlightId(flightIds);
-  //    flightState.setFlightStatus(state);
-  //    when(mockStairway.getFlightState(flightState.getFlightId())).thenReturn(flightState);
-  //    return flightState;
-  //  }
 }
