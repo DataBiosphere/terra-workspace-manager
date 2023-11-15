@@ -14,16 +14,19 @@ import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.azure.core.management.exception.ManagementException;
+import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,18 +40,21 @@ public class CopyControlledAzureDatabaseDefinitionStep implements Step {
   private final ControlledAzureDatabaseResource sourceDatabase;
   private final ControlledResourceService controlledResourceService;
   private final CloningInstructions resolvedCloningInstructions;
+  private final WsmResourceService wsmResourceService;
 
   public CopyControlledAzureDatabaseDefinitionStep(
       SamService samService,
       AuthenticatedUserRequest userRequest,
       ControlledAzureDatabaseResource sourceDatabase,
       ControlledResourceService controlledResourceService,
-      CloningInstructions resolvedCloningInstructions) {
+      CloningInstructions resolvedCloningInstructions,
+      WsmResourceService wsmResourceService) {
     this.samService = samService;
     this.userRequest = userRequest;
     this.sourceDatabase = sourceDatabase;
     this.controlledResourceService = controlledResourceService;
     this.resolvedCloningInstructions = resolvedCloningInstructions;
+    this.wsmResourceService = wsmResourceService;
   }
 
   @Override
@@ -70,27 +76,69 @@ public class CopyControlledAzureDatabaseDefinitionStep implements Step {
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_DESCRIPTION,
             WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
+    var sourceWorkspaceId = sourceDatabase.getWorkspaceId();
     var destinationWorkspaceId =
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     var destinationResourceId =
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
 
+    var sourceIdentity =
+        wsmResourceService
+            .enumerateResources(
+                sourceWorkspaceId,
+                WsmResourceFamily.AZURE_MANAGED_IDENTITY,
+                StewardshipType.CONTROLLED,
+                0,
+                100)
+            .stream()
+            .filter(
+                (wsmResource) ->
+                    wsmResource.getName().equals(sourceDatabase.getDatabaseOwner())
+                        || wsmResource
+                            .getResourceId()
+                            .toString()
+                            .equals(sourceDatabase.getDatabaseOwner()))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Could not find managed identity that owns database %s"
+                            .formatted(sourceDatabase.getResourceId())));
     var destinationManagedIdentity =
-        getRequired(
-            inputParameters,
-            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONED_MANAGED_IDENTITY,
-            String.class);
-
-    var userRequest =
-        getRequired(
-            inputParameters,
-            JobMapKeys.AUTH_USER_INFO.getKeyName(),
-            AuthenticatedUserRequest.class);
+        wsmResourceService
+            .enumerateResources(
+                destinationWorkspaceId,
+                WsmResourceFamily.AZURE_MANAGED_IDENTITY,
+                StewardshipType.CONTROLLED,
+                0,
+                100)
+            .stream()
+            .filter(
+                (wsmResource) ->
+                    wsmResource.getResourceLineage().stream()
+                        .anyMatch(
+                            resourceLineageEntry ->
+                                resourceLineageEntry
+                                        .getSourceResourceId()
+                                        .equals(sourceIdentity.getResourceId())
+                                    && resourceLineageEntry
+                                        .getSourceWorkspaceId()
+                                        .equals(sourceWorkspaceId)))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "No managed identity %s to own database %s in destination workspace"
+                            .formatted(sourceIdentity.getName(), destinationResourceId)));
+    var destinationDatabaseName =
+        Optional.ofNullable(
+                inputParameters.get(ControlledResourceKeys.DESTINATION_DATABASE_NAME, String.class))
+            .orElse("db%s".formatted(UUID.randomUUID().toString().replace("-", "_")));
 
     ControlledAzureDatabaseResource destinationDatabaseResource =
         ControlledAzureDatabaseResource.builder()
-            .databaseName(sourceDatabase.getDatabaseName())
-            .databaseOwner(destinationManagedIdentity)
+            .databaseName(destinationDatabaseName)
+            .databaseOwner(destinationManagedIdentity.getName())
             .common(
                 sourceDatabase.buildControlledCloneResourceCommonFields(
                     destinationWorkspaceId,

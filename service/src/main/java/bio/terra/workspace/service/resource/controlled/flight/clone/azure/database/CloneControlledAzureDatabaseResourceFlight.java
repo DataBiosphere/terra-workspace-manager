@@ -1,20 +1,19 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.database;
 
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRuleNone;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.database.CreateAzureDatabaseStep;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.CloneControlledAzureResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.StepRetryRulePair;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,17 +52,14 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
                 userRequest,
                 sourceDatabase,
                 flightBeanBag.getControlledResourceService(),
-                cloningInstructions),
-            RetryRules.cloud()));
+                cloningInstructions,
+                flightBeanBag.getWsmResourceService()),
+            RetryRuleNone.getRetryRuleNone())); // CreateDatabase already retries
   }
 
   @Override
   protected List<StepRetryRulePair> copyResource(
       FlightBeanBag flightBeanBag, FlightMap inputParameters) {
-
-    var destinationWorkspaceId =
-        inputParameters.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
 
     var sourceDatabase =
         FlightUtils.getRequired(
@@ -79,18 +75,8 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
                 flightBeanBag.getSamService(),
                 flightBeanBag.getWorkspaceService(),
                 flightBeanBag.getAzureStorageAccessService(),
-                flightBeanBag.getAzureDatabaseUtilsRunner()),
-            RetryRules.cloud()),
-        new StepRetryRulePair(
-            new CreateAzureDatabaseStep(
-                flightBeanBag.getAzureConfig(),
-                flightBeanBag.getCrlService(),
-                sourceDatabase,
-                flightBeanBag.getLandingZoneApiDispatch(),
-                flightBeanBag.getSamService(),
-                flightBeanBag.getWorkspaceService(),
-                destinationWorkspaceId,
-                flightBeanBag.getAzureDatabaseUtilsRunner()),
+                flightBeanBag.getAzureDatabaseUtilsRunner(),
+                flightBeanBag.getWsmResourceService()),
             RetryRules.cloud()),
         new StepRetryRulePair(
             new RestoreAzureDatabaseStep(

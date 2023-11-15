@@ -10,10 +10,13 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -61,18 +64,22 @@ public class RestoreAzureDatabaseStep implements Step {
             inputParameters,
             WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
             UUID.class);
-
-    var blobContainerName =
+    var userRequest =
         getRequired(
             inputParameters,
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_STORAGE_CONTAINER_NAME,
-            String.class);
+            JobMapKeys.AUTH_USER_INFO.getKeyName(),
+            AuthenticatedUserRequest.class);
 
-    // TODO: the SAS token should be generated on the fly, with something like:
-    //  azureStorageAccessService.createAzureStorageContainerSasToken(...)
-    //  For now, pass it in from the test with this unofficial input key.
-    var blobContainerUrlAuthenticated =
-        getRequired(inputParameters, "BLOB_CONTAINER_URL_AUTHENTICATED", String.class);
+    var destinationContainer =
+        getRequired(
+            workingMap,
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_STORAGE_CONTAINER,
+            ControlledAzureStorageContainerResource.class);
+
+    var sasToken =
+        azureStorageAccessService.createAzureStorageContainerSasToken(
+            destinationWorkspaceId, destinationContainer, userRequest, null, null, "rcwl");
+    var blobContainerUrlAuthenticated = sasToken.sasUrl();
 
     var blobFileName =
         workingMap.get(
@@ -103,7 +110,7 @@ public class RestoreAzureDatabaseStep implements Step {
         dbServerName,
         adminDbUserName,
         blobFileName,
-        blobContainerName,
+        destinationContainer.getStorageContainerName(),
         blobContainerUrlAuthenticated);
 
     return StepResult.getStepResultSuccess();
@@ -111,7 +118,7 @@ public class RestoreAzureDatabaseStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // TODO: delete the dumpfile
+    // Nothing to undo in this step
     return StepResult.getStepResultSuccess();
   }
 }
