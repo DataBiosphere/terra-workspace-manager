@@ -12,6 +12,7 @@ import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import java.util.UUID;
@@ -30,7 +31,7 @@ public class ValidateDatabaseOwnerStepTest extends BaseMockitoStrictStubbingTest
       ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(owner, false);
   private final ControlledAzureDatabaseResource databaseResource =
       ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-              creationParameters, UUID.randomUUID())
+              creationParameters, UUID.randomUUID(), CloningInstructions.COPY_NOTHING)
           .build();
 
   @Test
