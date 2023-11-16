@@ -240,12 +240,10 @@ public class WdsContractVerificationTest extends BaseUnitTestMocks {
                     .name(storageContainerName)
                     .workspaceUuid(workspaceUuid)
                     .createdByEmail("storage.container.creator@e.mail")
-                    // TODO(for reviewer): are these reasonable defaults for storage
-                    //   container?
                     .managedBy(ManagedByType.MANAGED_BY_USER)
-                    .accessScope(AccessScopeType.ACCESS_SCOPE_PRIVATE)
+                    .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
                     .resourceId(STORAGE_CONTAINER_RESOURCE_ID)
-                    .cloningInstructions(CloningInstructions.LINK_REFERENCE)
+                    .cloningInstructions(CloningInstructions.COPY_NOTHING)
                     .region(Region.US_SOUTH_CENTRAL.name())
                     .build())
             .build();
