@@ -11,13 +11,12 @@ name: Verify consumer pacts
 # 2. Provider makes a change (runs verification tests against ALL DEPLOYED consumer pact versions and publishes corresponding verification results)
 #
 #
-# The workflow requires the following Pact broker credentials:
+# The workflow requires the following Pact Broker credentials:
 # - PACT_BROKER_USERNAME - the Pact Broker username
 # - PACT_BROKER_PASSWORD - the Pact Broker password
 # They are managed by Atlantis and were added to Terraform here:
 # https://github.com/broadinstitute/terraform-ap-deployments/pull/1086
 env:
-  PACT_BROKER_URL: https://pact-broker.dsp-eng-tools.broadinstitute.org
   spring_profiles_active: human-readable-logging
 on:
   pull_request:

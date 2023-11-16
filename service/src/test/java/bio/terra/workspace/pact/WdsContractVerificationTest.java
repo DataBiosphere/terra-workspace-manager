@@ -9,6 +9,8 @@ import au.com.dius.pact.provider.junit5.PactVerificationContext;
 import au.com.dius.pact.provider.junitsupport.Provider;
 import au.com.dius.pact.provider.junitsupport.State;
 import au.com.dius.pact.provider.junitsupport.loader.PactBroker;
+import au.com.dius.pact.provider.junitsupport.loader.PactBrokerConsumerVersionSelectors;
+import au.com.dius.pact.provider.junitsupport.loader.SelectorBuilder;
 import au.com.dius.pact.provider.spring.junit5.MockMvcTestTarget;
 import au.com.dius.pact.provider.spring.junit5.PactVerificationSpringProvider;
 import bio.terra.policy.model.TpsPaoConflict;
@@ -37,9 +39,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-// set ActiveProfile to "unit-test" to disable some unnecessary dependencies (like
-// GoogleCredentials) that would otherwise require mocking
-@ActiveProfiles("unit-test")
+@ActiveProfiles({
+  "unit-test" /* disable some unnecessary dependencies that would otherwise require mocking */,
+  "pact-test" /* set Pact Broker URL */
+})
 @Tag("pact-verification")
 @Provider("workspacemanager") // should match the terra chart name
 @PactBroker()
@@ -54,10 +57,14 @@ public class WdsContractVerificationTest extends BaseUnitTestMocks {
   @MockBean private AuthenticatedUserRequestFactory mockAuthenticatedUserRequestFactory;
   @MockBean private ReferencedResourceService mockReferencedResourceService;
 
-  @TestTemplate
-  @ExtendWith(PactVerificationSpringProvider.class)
-  void pactVerificationTestTemplate(PactVerificationContext context) {
-    context.verifyInteraction();
+  @PactBrokerConsumerVersionSelectors
+  public static SelectorBuilder consumerVersionSelectors() {
+    // Select consumer pacts published from default branch or pacts marked as deployed or released.
+    // If you wish to pick up Pacts from a consumer's feature branch for development purposes or PR
+    // runs, and your consumer is publishing such Pacts under their feature branch name, you can add
+    // the following to the SelectorBuilder:
+    //   .branch("consumer-feature-branch-name")
+    return new SelectorBuilder().mainBranch().deployedOrReleased();
   }
 
   @BeforeEach
@@ -65,7 +72,13 @@ public class WdsContractVerificationTest extends BaseUnitTestMocks {
     context.setTarget(new MockMvcTestTarget(mockMvc));
   }
 
-  @State({"authenticated with the given email"})
+  @TestTemplate
+  @ExtendWith(PactVerificationSpringProvider.class)
+  void pactVerificationTestTemplate(PactVerificationContext context) {
+    context.verifyInteraction();
+  }
+
+  @State("authenticated with the given email")
   public void authenticatedAsAccount(Map<?, ?> parameters) throws InterruptedException {
     var authenticatedEmail = parameters.get("email").toString();
     var stubbedAuthenticatedRequest = new AuthenticatedUserRequest().email(authenticatedEmail);
