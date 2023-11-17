@@ -32,7 +32,7 @@ public class CloneControlledAzureDatabaseResourceFlightTest extends BaseAzureUni
 
     var sourceResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                creationParameters, sourceWorkspaceId)
+                creationParameters, sourceWorkspaceId, CloningInstructions.COPY_NOTHING)
             .build();
 
     FlightMap inputs = new FlightMap();
