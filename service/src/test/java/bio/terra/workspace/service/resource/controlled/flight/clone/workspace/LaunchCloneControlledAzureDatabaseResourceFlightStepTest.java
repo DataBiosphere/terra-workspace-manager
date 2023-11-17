@@ -8,7 +8,6 @@ import static org.mockito.Mockito.*;
 import bio.terra.stairway.*;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
-import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -25,8 +24,6 @@ import org.mockito.Mock;
 public class LaunchCloneControlledAzureDatabaseResourceFlightStepTest
     extends BaseMockitoStrictStubbingTest {
   @Mock private FlightContext mockFlightContext;
-  @Mock private FlightMap mockWorkingMap;
-  @Mock private FlightBeanBag mockFlightBeanBag;
   @Mock private Stairway mockStairway;
   @Mock private AuthenticatedUserRequest userRequest;
 
@@ -65,7 +62,6 @@ public class LaunchCloneControlledAzureDatabaseResourceFlightStepTest
         destinationResourceId);
     expectedInputs.put(WorkspaceFlightMapKeys.MERGE_POLICIES, false);
 
-    mockWorkingMap = new FlightMap();
     FlightMap mockInputParams = new FlightMap();
     mockInputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     mockInputParams.put(
