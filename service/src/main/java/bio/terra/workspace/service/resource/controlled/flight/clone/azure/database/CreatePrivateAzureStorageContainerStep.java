@@ -14,8 +14,6 @@ import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.CreateAzureStorageContainerStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -28,11 +26,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 import java.util.UUID;
 
-import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
-
 public class CreatePrivateAzureStorageContainerStep implements Step {
     private static final Logger logger =
-            LoggerFactory.getLogger(CreateAzureStorageContainerStep.class);
+            LoggerFactory.getLogger(CreatePrivateAzureStorageContainerStep.class);
     private final AzureConfiguration azureConfig;
     private final CrlService crlService;
     private final SamService samService;
