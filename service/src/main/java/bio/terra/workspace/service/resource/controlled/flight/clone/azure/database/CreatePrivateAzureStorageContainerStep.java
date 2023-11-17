@@ -68,10 +68,13 @@ public class CreatePrivateAzureStorageContainerStep implements Step {
 
         Optional<ApiAzureLandingZoneDeployedResource> storageAccount = landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
 
+        String storageAccountName = "";
 
         // The storage account name is stored by VerifyAzureStorageContainerCanBeCreated.
         // It can be workspace managed storage account or landing zone shared storage account
-        final String storageAccountName = storageAccount.get().getResourceName();
+        if (storageAccount.isPresent()) {
+            storageAccountName = storageAccount.get().getResourceName();
+        }
 
         if (storageAccountName == null) {
             logger.error(
