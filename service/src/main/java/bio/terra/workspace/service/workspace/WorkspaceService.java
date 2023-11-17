@@ -848,6 +848,17 @@ public class WorkspaceService {
         .submitAndWait();
   }
 
+  /**
+   * Links the policies from the source object (workspace, snapshot, etc.) to the policies of the
+   * target workspace. If the source object contains a group constraint, the groups will be added to
+   * the workspace's authorization domain.
+   *
+   * @param workspaceId Target workspace ID
+   * @param sourcePaoId PAO object to link policies from
+   * @param tpsUpdateMode DRY_RUN or FAIL_ON_CONFLICT
+   * @param userRequest Authenticated user request
+   * @return The updated PAO for the workspace
+   */
   @Traced
   public TpsPaoUpdateResult linkPolicies(
       UUID workspaceId,
@@ -859,6 +870,8 @@ public class WorkspaceService {
         workspaceId,
         sourcePaoId.getObjectId(),
         userRequest.getEmail());
+    TpsPaoGetResult paoBeforeUpdate =
+        Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(workspaceId), "getPao");
 
     Rethrow.onInterrupted(
         () ->
@@ -910,6 +923,9 @@ public class WorkspaceService {
             sourcePaoId.getObjectId(),
             userRequest.getEmail());
       }
+
+      patchWorkspaceAuthDomain(workspaceId, userRequest, paoBeforeUpdate, dryRun);
+
       return updateResult;
     }
   }
@@ -968,23 +984,31 @@ public class WorkspaceService {
             userRequest.getEmail());
       }
 
-      HashSet<String> addedGroups =
-          TpsUtilities.getAddedGroups(paoBeforeUpdate, dryRun.getResultingPao());
-      if (!addedGroups.isEmpty()) {
-        logger.info(
-            "Group policies have changed, adding additional groups to auth domain in Sam for workspace {}",
-            workspaceUuid);
-        Rethrow.onInterrupted(
-            () ->
-                samService.addGroupsToAuthDomain(
-                    userRequest,
-                    SamConstants.SamResource.WORKSPACE,
-                    workspaceUuid.toString(),
-                    addedGroups.stream().toList()),
-            "updateAuthDomains");
-      }
+      patchWorkspaceAuthDomain(workspaceUuid, userRequest, paoBeforeUpdate, dryRun);
 
       return result;
+    }
+  }
+
+  private void patchWorkspaceAuthDomain(
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest,
+      TpsPaoGetResult paoBeforeUpdate,
+      TpsPaoUpdateResult dryRun) {
+    HashSet<String> addedGroups =
+        TpsUtilities.getAddedGroups(paoBeforeUpdate, dryRun.getResultingPao());
+    if (!addedGroups.isEmpty()) {
+      logger.info(
+          "Group policies have changed, adding additional groups to auth domain in Sam for workspace {}",
+          workspaceUuid);
+      Rethrow.onInterrupted(
+          () ->
+              samService.addGroupsToAuthDomain(
+                  userRequest,
+                  SamConstants.SamResource.WORKSPACE,
+                  workspaceUuid.toString(),
+                  addedGroups.stream().toList()),
+          "updateAuthDomains");
     }
   }
 }
