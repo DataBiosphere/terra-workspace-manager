@@ -218,6 +218,9 @@ task verifyPacts(type: Test) {
     useJUnitPlatform {
         includeTags "pact-verification"
     }
+    testLogging {
+        events = ["passed", "failed", "skipped", "started", "standard_out"]
+    }
     outputs.upToDateWhen { false }
     if (isCiServer) {
         systemProperty 'pact.verifier.publishResults', true

@@ -19,9 +19,6 @@ import org.slf4j.LoggerFactory;
 
 public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledAzureResourceFlight {
 
-  private static final Logger logger =
-      LoggerFactory.getLogger(CloneControlledAzureDatabaseResourceFlight.class);
-
   public CloneControlledAzureDatabaseResourceFlight(
       FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);

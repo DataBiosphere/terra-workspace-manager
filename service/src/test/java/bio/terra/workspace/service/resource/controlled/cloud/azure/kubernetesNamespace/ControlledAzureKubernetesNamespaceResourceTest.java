@@ -16,6 +16,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.controlled.model.StepRetryRulePair;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
@@ -35,7 +36,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
 
     var dbResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                dbCreationParameters, workspaceId)
+                dbCreationParameters, workspaceId, CloningInstructions.COPY_NOTHING)
             .build();
 
     var creationParameters =
@@ -67,7 +68,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
 
     var dbResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                dbCreationParameters, workspaceId)
+                dbCreationParameters, workspaceId, CloningInstructions.COPY_NOTHING)
             .build();
 
     var creationParameters =

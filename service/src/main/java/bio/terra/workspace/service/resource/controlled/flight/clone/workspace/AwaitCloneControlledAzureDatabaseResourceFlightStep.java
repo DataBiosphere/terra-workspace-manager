@@ -40,7 +40,6 @@ public class AwaitCloneControlledAzureDatabaseResourceFlightStep implements Step
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
-
       FlightState subflightState =
           context.getStairway().waitForFlight(subflightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
 

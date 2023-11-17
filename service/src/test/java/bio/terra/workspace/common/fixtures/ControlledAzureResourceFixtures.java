@@ -474,13 +474,15 @@ public class ControlledAzureResourceFixtures {
 
   public static ControlledAzureDatabaseResource.Builder
       makeSharedControlledAzureDatabaseResourceBuilder(
-          ApiAzureDatabaseCreationParameters creationParameters, UUID workspaceId) {
+          ApiAzureDatabaseCreationParameters creationParameters,
+          UUID workspaceId,
+          CloningInstructions cloningInstructions) {
     return ControlledAzureDatabaseResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceId)
                 .name(getAzureName("db"))
-                .cloningInstructions(CloningInstructions.COPY_NOTHING)
+                .cloningInstructions(cloningInstructions)
                 .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
                 .region(DEFAULT_AZURE_RESOURCE_REGION)

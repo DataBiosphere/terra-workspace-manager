@@ -163,6 +163,7 @@ public class WorkspaceService {
       @Nullable List<String> applications,
       @Nullable CloudPlatform cloudPlatform,
       @Nullable SpendProfile spendProfile,
+      @Nullable String projectOwnerGroupId,
       String jobId,
       AuthenticatedUserRequest userRequest) {
 
@@ -185,7 +186,8 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
-            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications)
+            .addParameter(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, projectOwnerGroupId);
 
     // Add the cloud context params if we are making a cloud context
     // We mint a flight id here, so it is reliably constant for the inner cloud context flight
