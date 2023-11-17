@@ -42,6 +42,7 @@ public final class WorkspaceFlightMapKeys {
 
     public static final String WORKSPACE_ID = "workspaceId";
     public static final String RESOURCE = "resource";
+    public static final String AZURE_DB_DUMP_STORAGE_CONTAINER_NAME = "azureDbDumpStorageContainerName";
     public static final String RESOURCE_ROLES_TO_REMOVE = "resourceRolesToRemove";
     public static final String REMOVED_USER_CAN_READ_WORKSPACE = "removedUserIsWorkspaceMember";
     public static final String REMOVED_USER_CAN_WRITE_WORKSPACE = "removedUserCanWrite";
