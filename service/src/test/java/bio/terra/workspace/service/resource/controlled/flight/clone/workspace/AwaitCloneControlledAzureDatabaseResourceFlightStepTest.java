@@ -68,8 +68,7 @@ public class AwaitCloneControlledAzureDatabaseResourceFlightStepTest
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
     when(mockStairway.waitForFlight(eq(subFlightId.toString()), any(), any()))
         .thenReturn(flightState);
-    when(mockResultFlightMap.get(
-            eq(JobMapKeys.RESPONSE.getKeyName()), eq(ClonedAzureResource.class)))
+    when(mockResultFlightMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class))
         .thenReturn(clonedResource);
 
     var result = cloneFlightStep.doStep(mockFlightContext);
