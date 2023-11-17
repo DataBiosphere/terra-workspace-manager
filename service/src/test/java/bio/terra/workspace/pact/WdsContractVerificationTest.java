@@ -77,7 +77,7 @@ import org.springframework.test.web.servlet.MockMvc;
 })
 @Tag("pact-verification")
 @Provider("workspacemanager") // should match the terra chart name
-@PactBroker()
+@PactBroker(enablePendingPacts = "true", providerTags = "main")
 public class WdsContractVerificationTest extends BaseUnitTestMocks {
   // a randomly generated UUID that spans multiple stateful contract calls
   private static final UUID STORAGE_CONTAINER_RESOURCE_ID = UUID.randomUUID();
