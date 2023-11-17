@@ -25,11 +25,6 @@ public class CreateAzureStorageContainerStep implements Step {
   private final CrlService crlService;
   private final ControlledAzureStorageContainerResource resource;
 
-  // TODO: don't use this step exactly as is. We don't want to create a WSM resource for the storage
-  // container;
-  // if we do, the user will have access. Instead, use the logic in this step to create the storage
-  // container in azure,
-  // then delete it at the end.
   public CreateAzureStorageContainerStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
@@ -156,11 +151,6 @@ public class CreateAzureStorageContainerStep implements Step {
           ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
-
-    // TODO: do something like this to delete the *container* (not account)
-    // Need to delete in both the undo step, and a final deletion step.
-    // Storage account won't be deleted; it's a landing zone resource.
-    // It should exist before and after the flight is run.
 
     try {
       logger.warn(

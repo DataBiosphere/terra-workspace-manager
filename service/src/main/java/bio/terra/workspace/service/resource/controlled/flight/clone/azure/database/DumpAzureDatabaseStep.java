@@ -50,7 +50,6 @@ public class DumpAzureDatabaseStep implements Step {
       AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
       WsmResourceService wsmResourceService) {
 
-    logger.info("(sanity check) DumpAzureDatabaseStep constructor has been called");
     this.sourceDatabase = sourceDatabase;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
@@ -105,8 +104,6 @@ public class DumpAzureDatabaseStep implements Step {
         azureStorageAccessService.createAzureStorageContainerSasToken(
             destinationWorkspaceId, destinationContainer, userRequest, null, null, "rcw");
     var blobContainerUrlAuthenticated = sasToken.sasUrl();
-
-    logger.info("sasUrl {}", blobContainerUrlAuthenticated);
 
     var blobFileName =
         String.format(

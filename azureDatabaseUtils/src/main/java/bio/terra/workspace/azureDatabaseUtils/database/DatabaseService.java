@@ -218,7 +218,9 @@ public class DatabaseService {
 
       String errorMsg;
       try {
-        errorMsg = "process error: " + new String(errorStream.readNBytes(errorLimit), StandardCharsets.UTF_8).trim();
+        errorMsg =
+            "process error: "
+                + new String(errorStream.readNBytes(errorLimit), StandardCharsets.UTF_8).trim();
       } catch (IOException e) {
         errorMsg =
             "process failed with exit code "
