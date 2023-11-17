@@ -16,6 +16,7 @@ import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -71,7 +72,7 @@ public class AzureDatabaseGuardStepTest extends BaseMockitoStrictStubbingTest {
             UUID.randomUUID().toString(), false);
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                creationParameters, workspaceId)
+                creationParameters, workspaceId, CloningInstructions.COPY_NOTHING)
             .build();
 
     createMockFlightContext();
@@ -104,7 +105,7 @@ public class AzureDatabaseGuardStepTest extends BaseMockitoStrictStubbingTest {
             UUID.randomUUID().toString(), false);
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                creationParameters, workspaceId)
+                creationParameters, workspaceId, CloningInstructions.COPY_NOTHING)
             .build();
 
     createMockFlightContext();
