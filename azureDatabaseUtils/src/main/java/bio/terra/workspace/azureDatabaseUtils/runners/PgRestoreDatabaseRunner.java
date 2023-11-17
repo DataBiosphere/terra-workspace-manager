@@ -9,6 +9,10 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.NoSuchPaddingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
 @Profile("PgRestoreDatabase")
 @Component
 public class PgRestoreDatabaseRunner implements ApplicationRunner {
@@ -34,6 +38,9 @@ public class PgRestoreDatabaseRunner implements ApplicationRunner {
   @Value("${env.params.blobContainerUrlAuthenticated}")
   private String blobContainerUrlAuthenticated;
 
+  @Value("${env.params.encryptionKey}")
+  private String encryptionKey;
+
   private final DatabaseService databaseService;
 
   public PgRestoreDatabaseRunner(DatabaseService databaseService) {
@@ -41,7 +48,7 @@ public class PgRestoreDatabaseRunner implements ApplicationRunner {
   }
 
   @Override
-  public void run(ApplicationArguments args) throws PSQLException {
+  public void run(ApplicationArguments args) throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
     LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
     databaseService.pgRestore(
         dbName,
@@ -51,6 +58,7 @@ public class PgRestoreDatabaseRunner implements ApplicationRunner {
         blobFileName,
         blobContainerName,
         blobContainerUrlAuthenticated,
+        encryptionKey,
         localProcessLauncher);
   }
 }

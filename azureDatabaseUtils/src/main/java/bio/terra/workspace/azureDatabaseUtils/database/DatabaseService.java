@@ -14,6 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.io.OutputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
 import org.postgresql.plugin.AuthenticationRequestType;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
@@ -97,6 +103,31 @@ public class DatabaseService {
     databaseDao.restoreLoginPrivileges(namespaceRole);
   }
 
+  private SecretKey decodeBase64EncryptionKey(String encryptionKeyBase64) {
+    byte[] decodedKey = Base64.getDecoder().decode(encryptionKeyBase64);
+    return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+  }
+
+  private SecretKey decodeBase64Key(String encryptionKeyBase64) {
+    byte[] decodedKey = Base64.getDecoder().decode(encryptionKeyBase64);
+    return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+  }
+
+  private InputStream encryptStream(InputStream origin, String encryptionKeyBase64) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+    SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
+    Cipher c = Cipher.getInstance("AES");
+    c.init(Cipher.ENCRYPT_MODE, encryptionKey);
+    return new CipherInputStream(origin, c);
+  }
+
+  private OutputStream decryptStream(OutputStream origin, String encryptionKeyBase64) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+    SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
+    Cipher c = Cipher.getInstance("AES");
+    c.init(Cipher.DECRYPT_MODE, encryptionKey);
+    return new CipherOutputStream(origin, c);
+  }
+
+
   public void pgDump(
       String dbName,
       String dbHost,
@@ -105,8 +136,9 @@ public class DatabaseService {
       String blobFileName,
       String blobContainerName,
       String blobContainerUrlAuthenticated,
+      String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-      throws PSQLException {
+          throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
 
     // Grant the database role (dbName) to the landing zone identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -128,7 +160,7 @@ public class DatabaseService {
     localProcessLauncher.launchProcess(commandList, envVars);
 
     storage.streamOutputToBlobStorage(
-        localProcessLauncher.getInputStream(),
+        encryptStream(localProcessLauncher.getInputStream(), encryptionKeyBase64),
         blobFileName,
         blobContainerName,
         blobContainerUrlAuthenticated);
@@ -144,8 +176,9 @@ public class DatabaseService {
       String blobFileName,
       String blobContainerName,
       String blobContainerUrlAuthenticated,
+      String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-      throws PSQLException {
+          throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -168,7 +201,7 @@ public class DatabaseService {
         blobContainerName);
 
     storage.streamInputFromBlobStorage(
-        localProcessLauncher.getOutputStream(),
+        decryptStream(localProcessLauncher.getOutputStream(), encryptionKeyBase64),
         blobFileName,
         blobContainerName,
         blobContainerUrlAuthenticated);
