@@ -28,6 +28,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.service.danglingresource.DanglingResourceCleanupService;
 import bio.terra.workspace.service.iam.AuthHeaderKeys;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -86,6 +87,9 @@ public class WdsContractVerificationTest extends BaseUnitTestMocks {
   // Mocked out to prevent an error with missing service credentials
   @MockBean(name = "postSetupInitialization")
   private SmartInitializingSingleton unusedSmartInitializingSingleton;
+
+  // Mocked out to prevent error trying to clean up nonexistent tables
+  @MockBean private DanglingResourceCleanupService unusedDanglingResourceCleanupService;
 
   @MockBean private WorkspaceActivityLogDao unusedWorkspaceActivityLogDao;
 
