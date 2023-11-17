@@ -506,6 +506,7 @@ public class AzureDatabaseUtilsRunner {
                     new V1Container()
                         .name(safePodName)
                         .image(azureConfig.getAzureDatabaseUtilImage())
+                        .imagePullPolicy("Always")
                         .env(envVarsWithCommonArgs)));
   }
 }

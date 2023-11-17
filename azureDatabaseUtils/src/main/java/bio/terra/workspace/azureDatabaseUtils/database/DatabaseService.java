@@ -7,6 +7,7 @@ import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 import com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -217,7 +218,7 @@ public class DatabaseService {
 
       String errorMsg;
       try {
-        errorMsg = "process error: " + errorStream.readNBytes(errorLimit).toString().trim();
+        errorMsg = "process error: " + new String(errorStream.readNBytes(errorLimit), StandardCharsets.UTF_8).trim();
       } catch (IOException e) {
         errorMsg =
             "process failed with exit code "
