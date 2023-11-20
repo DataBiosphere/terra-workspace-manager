@@ -8,14 +8,9 @@ import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.CloneControlledAzureResourceFlight;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.StepRetryRulePair;
-import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.WsmResourceFields;
-import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.*;
 
@@ -67,38 +62,13 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
             ControlledAzureDatabaseResource.class);
 
     String storageContainerName = "dbdump-storage-container-%s".formatted(UUID.randomUUID());
-    UUID destinationResourceId = UUID.randomUUID();
-
-    ControlledAzureStorageContainerResource controlledContainerResource =
-        new ControlledAzureStorageContainerResource(
-            WsmResourceFields.builder()
-                .workspaceUuid(
-                    inputParameters.get(
-                        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
-                        UUID.class))
-                .resourceId(destinationResourceId)
-                .name(storageContainerName)
-                .cloningInstructions(CloningInstructions.COPY_NOTHING)
-                .properties(Map.of())
-                .createdByEmail(
-                    Objects.requireNonNull(
-                            inputParameters.get(
-                                JobMapKeys.AUTH_USER_INFO.getKeyName(),
-                                AuthenticatedUserRequest.class))
-                        .getEmail())
-                .state(WsmResourceState.CREATING)
-                .build(),
-            WsmControlledResourceFields.fromControlledResource(sourceDatabase),
-            storageContainerName);
-    UUID subflightId = UUID.randomUUID();
+    UUID destinationContainerId = UUID.randomUUID();
 
     return List.of(
         new StepRetryRulePair(
-            new LaunchCreateControlledResourceFlight(
-                controlledContainerResource, subflightId.toString(), destinationResourceId),
+            new CreateAzureStorageContainerStep(
+                    storageContainerName, destinationContainerId, flightBeanBag.getControlledResourceService()),
             RetryRules.cloud()),
-        new StepRetryRulePair(
-            new AwaitCreateControlledResourceFlight(subflightId.toString()), RetryRules.cloud()),
         new StepRetryRulePair(
             new DumpAzureDatabaseStep(
                 sourceDatabase,
