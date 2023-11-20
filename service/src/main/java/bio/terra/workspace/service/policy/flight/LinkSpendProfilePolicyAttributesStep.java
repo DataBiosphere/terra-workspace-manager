@@ -66,8 +66,15 @@ public class LinkSpendProfilePolicyAttributesStep implements Step {
     TpsPolicyInputs destinationAttributes = workspacePao.getAttributes();
     context.getWorkingMap().put(WorkspaceFlightMapKeys.POLICIES, destinationAttributes);
 
-    TpsPaoUpdateResult result =
-        tpsApiDispatch.linkPao(workspaceId, spendProfileUUID, TpsUpdateMode.FAIL_ON_CONFLICT);
+    TpsPaoUpdateResult result;
+    try {
+      result =
+          tpsApiDispatch.linkPao(workspaceId, spendProfileUUID, TpsUpdateMode.FAIL_ON_CONFLICT);
+    } catch (Exception ex) {
+      logger.info("Attempt to link PAOs for billing profile and workspace failed", ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
+    }
+
     if (!result.isUpdateApplied()) {
       for (TpsPaoConflict conflict : result.getConflicts()) {
         logger.info("Policy conflict: {}", conflict);
@@ -87,15 +94,22 @@ public class LinkSpendProfilePolicyAttributesStep implements Step {
     var destinationAttributes =
         context.getWorkingMap().get(WorkspaceFlightMapKeys.POLICIES, TpsPolicyInputs.class);
 
-    // If the working map didn't get populated, we failed before the merge, so
+    // If the working map didn't get populated, we failed before the link, so
     // consider it undone.
     if (destinationAttributes == null) {
       return StepResult.getStepResultSuccess();
     }
 
-    TpsPaoUpdateResult result =
-        tpsApiDispatch.replacePao(
-            workspaceId, destinationAttributes, TpsUpdateMode.FAIL_ON_CONFLICT);
+    TpsPaoUpdateResult result;
+    try {
+      result =
+          tpsApiDispatch.replacePao(
+              workspaceId, destinationAttributes, TpsUpdateMode.FAIL_ON_CONFLICT);
+    } catch (Exception ex) {
+      logger.info("Attempt to replace PAOs for workspace failed", ex);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
+    }
+
     if (!result.isUpdateApplied()) {
       List<String> conflictList =
           result.getConflicts().stream().map(c -> c.getNamespace() + ':' + c.getName()).toList();
