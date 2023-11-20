@@ -22,15 +22,15 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MergeBillingProfilePolicyAttributesStep implements Step {
+public class LinkSpendProfilePolicyAttributesStep implements Step {
   private static final Logger logger =
-      LoggerFactory.getLogger(MergeBillingProfilePolicyAttributesStep.class);
+      LoggerFactory.getLogger(LinkSpendProfilePolicyAttributesStep.class);
 
   private final UUID workspaceId;
   private final SpendProfileId spendProfileId;
   private final TpsApiDispatch tpsApiDispatch;
 
-  public MergeBillingProfilePolicyAttributesStep(
+  public LinkSpendProfilePolicyAttributesStep(
       UUID workspaceId, SpendProfileId spendProfileId, TpsApiDispatch tpsApiDispatch) {
     this.workspaceId = workspaceId;
     this.spendProfileId = spendProfileId;
@@ -39,26 +39,35 @@ public class MergeBillingProfilePolicyAttributesStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    UUID spendProfileUUID;
+    try {
+      spendProfileUUID = UUID.fromString(spendProfileId.getId());
+    } catch (IllegalArgumentException e) {
+      logger.info(
+          "non-UUID spend profile id provided, skipping spend profile and workspace PAO linking. [spendProfileId={}, workspaceId={}]",
+          spendProfileId,
+          workspaceId);
+      return StepResult.getStepResultSuccess();
+    }
+
     // Create PAOs if they don't exist; catch TPS exceptions and retry
-    TpsPaoGetResult destinationPao;
-    UUID spendProfileUUID = UUID.fromString(spendProfileId.getId());
+    TpsPaoGetResult workspacePao;
     try {
       tpsApiDispatch.getOrCreatePao(
           spendProfileUUID, TpsComponent.BPM, TpsObjectType.BILLING_PROFILE);
-      destinationPao =
+      workspacePao =
           tpsApiDispatch.getOrCreatePao(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
     } catch (Exception ex) {
-      logger.info(
-          "Attempt to create a PAO for billing profile or destination workspace failed", ex);
+      logger.info("Attempt to get a PAO for billing profile or workspace failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
 
-    // Save the destination attributes so that we can restore them if the flight fails
-    TpsPolicyInputs destinationAttributes = destinationPao.getAttributes();
+    // Save the workspace policy attributes so that we can restore them if the flight fails
+    TpsPolicyInputs destinationAttributes = workspacePao.getAttributes();
     context.getWorkingMap().put(WorkspaceFlightMapKeys.POLICIES, destinationAttributes);
 
     TpsPaoUpdateResult result =
-        tpsApiDispatch.mergePao(workspaceId, spendProfileUUID, TpsUpdateMode.FAIL_ON_CONFLICT);
+        tpsApiDispatch.linkPao(workspaceId, spendProfileUUID, TpsUpdateMode.FAIL_ON_CONFLICT);
     if (!result.isUpdateApplied()) {
       for (TpsPaoConflict conflict : result.getConflicts()) {
         logger.info("Policy conflict: {}", conflict);

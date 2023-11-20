@@ -11,7 +11,7 @@ import bio.terra.workspace.common.utils.MakeFlightIdsStep;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.policy.flight.MergeBillingProfilePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.LinkSpendProfilePolicyAttributesStep;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -62,7 +62,7 @@ public class CreateWorkspaceV2Flight extends Flight {
                   workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
               serviceRetryRule);
           addStep(
-              new MergeBillingProfilePolicyAttributesStep(
+              new LinkSpendProfilePolicyAttributesStep(
                   workspace.workspaceId(),
                   workspace.spendProfileId(),
                   appContext.getTpsApiDispatch()),

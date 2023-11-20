@@ -11,7 +11,7 @@ import bio.terra.workspace.common.utils.MakeFlightIdsStep;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.policy.flight.MergeBillingProfilePolicyAttributesStep;
+import bio.terra.workspace.service.policy.flight.LinkSpendProfilePolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
@@ -67,7 +67,7 @@ public class WorkspaceCreateFlight extends Flight {
               serviceRetryRule);
 
           addStep(
-              new MergeBillingProfilePolicyAttributesStep(
+              new LinkSpendProfilePolicyAttributesStep(
                   workspace.workspaceId(),
                   workspace.spendProfileId(),
                   appContext.getTpsApiDispatch()),
