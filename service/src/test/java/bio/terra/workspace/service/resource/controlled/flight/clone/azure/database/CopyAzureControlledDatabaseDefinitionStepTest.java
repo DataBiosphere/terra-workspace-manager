@@ -32,16 +32,17 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Tag("azureUnit")
 public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnitTest {
+  @MockBean private WsmResourceService mockWsmResourceService;
 
   private UUID workspaceId;
   private FlightContext flightContext;
   private FlightMap workingMap;
   private FlightMap inputParams;
   private ControlledResourceService controlledResourceService;
-  private WsmResourceService wsmResourceService;
 
   private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest()
@@ -59,7 +60,6 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
     inputParams.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, workspaceId);
 
     controlledResourceService = getMockControlledResourceService();
-    wsmResourceService = mockWsmResourceService();
 
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
     when(flightContext.getInputParameters()).thenReturn(inputParams);
@@ -75,7 +75,7 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
       UUID resourceId,
       UUID workspaceId,
       List<ResourceLineageEntry> resourceLineage) {
-    when(wsmResourceService.enumerateResources(
+    when(mockWsmResourceService.enumerateResources(
             eq(workspaceId),
             eq(WsmResourceFamily.AZURE_MANAGED_IDENTITY),
             eq(StewardshipType.CONTROLLED),
@@ -157,7 +157,7 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
             sourceDatabase,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION,
-            mockWsmResourceService());
+            mockWsmResourceService);
 
     var result = step.doStep(flightContext);
     var cloned =
@@ -187,7 +187,7 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
             null,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION,
-            wsmResourceService);
+            mockWsmResourceService);
 
     var result = step.undoStep(flightContext);
 

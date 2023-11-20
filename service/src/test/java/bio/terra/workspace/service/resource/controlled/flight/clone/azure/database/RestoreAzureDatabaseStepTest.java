@@ -70,15 +70,15 @@ public class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest 
 
     verify(mockAzureDatabaseUtilsRunner)
         .pgRestoreDatabase(
-            eq(mockAzureCloudContext),
-            eq(databaseResource.getWorkspaceId()),
-            eq("restore-db-%s".formatted(databaseResource.getResourceId())),
-            eq(databaseResource.getDatabaseName()),
-            eq(databaseServerName),
-            eq(databaseUserName),
-            eq("dumpfile-foo.dump"),
-            eq("sc-%s".formatted(mockDestinationWorkspaceId)),
-            eq(mockSasBundle.sasUrl()));
+            mockAzureCloudContext,
+            databaseResource.getWorkspaceId(),
+            "restore-db-%s".formatted(databaseResource.getResourceId()),
+            databaseResource.getDatabaseName(),
+            databaseServerName,
+            databaseUserName,
+            "dumpfile-foo.dump",
+            "sc-%s".formatted(mockDestinationWorkspaceId),
+            mockSasBundle.sasUrl());
   }
 
   @NotNull
