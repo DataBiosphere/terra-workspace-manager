@@ -189,9 +189,9 @@ public class CreateAzureVmStep implements Step {
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-    ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
+    //ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
 
-    return AzureVmHelper.deleteVm(azureCloudContext, computeManager, resource.getVmName());
+    return null; //AzureVmHelper.deleteVm(azureCloudContext, computeManager, resource.getVmName());
   }
 
   private VirtualMachine.DefinitionStages.WithCreate buildVmConfiguration(
