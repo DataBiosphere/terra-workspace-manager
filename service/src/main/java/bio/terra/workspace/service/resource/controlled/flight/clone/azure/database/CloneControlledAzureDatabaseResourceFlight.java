@@ -74,6 +74,9 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
                 flightBeanBag.getControlledResourceService()),
             RetryRules.cloud()),
         new StepRetryRulePair(
+            new CreateDbDumpEncryptionKeyStep(),
+            RetryRules.shortExponential()),
+        new StepRetryRulePair(
             new DumpAzureDatabaseStep(
                 sourceDatabase,
                 flightBeanBag.getLandingZoneApiDispatch(),

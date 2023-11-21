@@ -79,6 +79,7 @@ public class AzureDatabaseUtilsRunner {
   public static final String PARAM_BLOB_FILE_NAME = "BLOB_FILE_NAME";
   public static final String PARAM_DEST_WORKSPACE_ID = "DEST_WORKSPACE_ID";
   public static final String PARAM_BLOB_CONTAINER_NAME = "BLOB_CONTAINER_NAME";
+  public static final String PARAM_ENCRYPTION_KEY = "ENCRYPTION_KEY";
   public static final String PARAM_BLOB_CONTAINER_URL_AUTHENTICATED =
       "BLOB_CONTAINER_URL_AUTHENTICATED";
 
@@ -138,7 +139,8 @@ public class AzureDatabaseUtilsRunner {
       String dbUserName,
       String blobFileName,
       String blobContainerName,
-      String blobContainerUrlAuthenticated)
+      String blobContainerUrlAuthenticated,
+      String encryptionKey)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
@@ -150,7 +152,10 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName),
             new V1EnvVar()
                 .name(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED)
-                .value(blobContainerUrlAuthenticated));
+                .value(blobContainerUrlAuthenticated),
+            new V1EnvVar().name(PARAM_ENCRYPTION_KEY).value(encryptionKey)
+        );
+
     runAzureDatabaseUtils(
         azureCloudContext,
         sourceWorkspaceId,
@@ -167,7 +172,8 @@ public class AzureDatabaseUtilsRunner {
       String dbUserName,
       String blobFileName,
       String blobContainerName,
-      String blobContainerUrlAuthenticated)
+      String blobContainerUrlAuthenticated,
+      String encryptionKey)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
@@ -179,7 +185,9 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName),
             new V1EnvVar()
                 .name(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED)
-                .value(blobContainerUrlAuthenticated));
+                .value(blobContainerUrlAuthenticated),
+            new V1EnvVar().name(PARAM_ENCRYPTION_KEY).value(encryptionKey)
+        );
     runAzureDatabaseUtils(
         azureCloudContext,
         targetWorkspaceId,
