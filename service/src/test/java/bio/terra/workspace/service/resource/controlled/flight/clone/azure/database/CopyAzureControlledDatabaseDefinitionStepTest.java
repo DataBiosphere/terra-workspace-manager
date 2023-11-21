@@ -20,12 +20,8 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
-import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,33 +66,22 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
   }
 
   private void buildIdentityResource(
-      String managedIdentityName,
-      String resourceName,
-      UUID resourceId,
-      UUID workspaceId,
-      List<ResourceLineageEntry> resourceLineage) {
-    when(mockResourceDao.enumerateResources(
-            eq(workspaceId),
-            eq(WsmResourceFamily.AZURE_MANAGED_IDENTITY),
-            eq(StewardshipType.CONTROLLED),
-            anyInt(),
-            anyInt()))
+      String managedIdentityName, String resourceName, UUID resourceId, UUID workspaceId) {
+    when(mockResourceDao.getResourceByName(workspaceId, resourceName))
         .thenReturn(
-            List.of(
-                ControlledAzureManagedIdentityResource.builder()
-                    .managedIdentityName(managedIdentityName)
-                    .common(
-                        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                            .resourceId(resourceId)
-                            .workspaceUuid(workspaceId)
-                            .cloningInstructions(CloningInstructions.COPY_DEFINITION)
-                            .properties(Map.of())
-                            .name(resourceName)
-                            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-                            .managedBy(ManagedByType.MANAGED_BY_USER)
-                            .resourceLineage(resourceLineage)
-                            .build())
-                    .build()));
+            ControlledAzureManagedIdentityResource.builder()
+                .managedIdentityName(managedIdentityName)
+                .common(
+                    ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                        .resourceId(resourceId)
+                        .workspaceUuid(workspaceId)
+                        .cloningInstructions(CloningInstructions.COPY_DEFINITION)
+                        .properties(Map.of())
+                        .name(resourceName)
+                        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+                        .managedBy(ManagedByType.MANAGED_BY_USER)
+                        .build())
+                .build());
   }
 
   private ControlledAzureDatabaseResource buildDatabaseResource(
@@ -120,26 +105,17 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
   @Test
   void doStep_clonesDefinition() throws InterruptedException {
     var resourceName = "dbappname";
-    var sourceIdentityName = "id%s".formatted(UUID.randomUUID().toString());
-    var destIdentityName = "id%s".formatted(UUID.randomUUID().toString());
+    var identityResourceName = "id%s".formatted(UUID.randomUUID().toString());
     var sourceDatabaseName = "db%s".formatted(UUID.randomUUID().toString().replace('-', '_'));
     var destDatabaseName = "db%s".formatted(UUID.randomUUID().toString().replace('-', '_'));
     var destResourceId = UUID.randomUUID();
     var sourceWorkspaceId = UUID.randomUUID();
-    var sourceIdentityId = UUID.randomUUID();
 
     inputParams.put(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destResourceId);
     inputParams.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, resourceName);
     inputParams.put(ControlledResourceKeys.DESTINATION_DATABASE_NAME, destDatabaseName);
     inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    buildIdentityResource(
-        sourceIdentityName, "idowner", sourceIdentityId, sourceWorkspaceId, List.of());
-    buildIdentityResource(
-        destIdentityName,
-        "idowner",
-        UUID.randomUUID(),
-        workspaceId,
-        List.of(new ResourceLineageEntry(sourceWorkspaceId, sourceIdentityId)));
+    buildIdentityResource(identityResourceName, "idowner", UUID.randomUUID(), workspaceId);
     var sourceDatabase =
         buildDatabaseResource(
             sourceDatabaseName, resourceName, UUID.randomUUID(), sourceWorkspaceId);

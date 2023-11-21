@@ -21,8 +21,6 @@ import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import com.azure.core.management.exception.ManagementException;
@@ -76,60 +74,21 @@ public class CopyControlledAzureDatabaseDefinitionStep implements Step {
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_DESCRIPTION,
             WorkspaceFlightMapKeys.ResourceKeys.PREVIOUS_RESOURCE_DESCRIPTION,
             String.class);
-    var sourceWorkspaceId = sourceDatabase.getWorkspaceId();
     var destinationWorkspaceId =
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class);
     var destinationResourceId =
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
 
-    var sourceIdentity =
-        resourceDao
-            .enumerateResources(
-                sourceWorkspaceId,
-                WsmResourceFamily.AZURE_MANAGED_IDENTITY,
-                StewardshipType.CONTROLLED,
-                0,
-                100)
-            .stream()
-            .filter(
-                (wsmResource) ->
-                    wsmResource.getName().equals(sourceDatabase.getDatabaseOwner())
-                        || wsmResource
-                            .getResourceId()
-                            .toString()
-                            .equals(sourceDatabase.getDatabaseOwner()))
-            .findFirst()
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Could not find managed identity that owns database %s"
-                            .formatted(sourceDatabase.getResourceId())));
     var destinationManagedIdentity =
-        resourceDao
-            .enumerateResources(
-                destinationWorkspaceId,
-                WsmResourceFamily.AZURE_MANAGED_IDENTITY,
-                StewardshipType.CONTROLLED,
-                0,
-                100)
-            .stream()
-            .filter(
-                (wsmResource) ->
-                    wsmResource.getResourceLineage().stream()
-                        .anyMatch(
-                            resourceLineageEntry ->
-                                resourceLineageEntry
-                                        .getSourceResourceId()
-                                        .equals(sourceIdentity.getResourceId())
-                                    && resourceLineageEntry
-                                        .getSourceWorkspaceId()
-                                        .equals(sourceWorkspaceId)))
-            .findFirst()
+        Optional.ofNullable(
+                resourceDao.getResourceByName(
+                    destinationWorkspaceId, sourceDatabase.getDatabaseOwner()))
             .orElseThrow(
                 () ->
                     new IllegalStateException(
                         "No managed identity %s to own database %s in destination workspace"
-                            .formatted(sourceIdentity.getName(), destinationResourceId)));
+                            .formatted(sourceDatabase.getDatabaseOwner(), destinationResourceId)));
+
     var destinationDatabaseName =
         Optional.ofNullable(
                 inputParameters.get(ControlledResourceKeys.DESTINATION_DATABASE_NAME, String.class))
