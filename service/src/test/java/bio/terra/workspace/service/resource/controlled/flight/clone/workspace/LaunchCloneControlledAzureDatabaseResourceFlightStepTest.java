@@ -48,9 +48,6 @@ public class LaunchCloneControlledAzureDatabaseResourceFlightStepTest
     expectedInputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         destinationWorkspaceId);
-    expectedInputs.put(
-        WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
-        CloningInstructions.COPY_RESOURCE);
     expectedInputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, azureDatabaseResource);
     expectedInputs.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
