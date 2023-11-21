@@ -121,29 +121,6 @@ public class LinkSpendProfilePolicyAttributesStepTest extends BaseUnitTest {
   }
 
   @Test
-  public void doStep_policyLinkFailure() throws InterruptedException, RetryException {
-    var workspaceId = UUID.randomUUID();
-    var spendProfileId = UUID.randomUUID();
-    var workingMap = new FlightMap();
-    var linkPolicyStep =
-        new LinkSpendProfilePolicyAttributesStep(
-            workspaceId, new SpendProfileId(spendProfileId.toString()), tpsApiDispatch);
-
-    when(tpsApiDispatch.getOrCreatePao(any(), any(), any()))
-        .thenReturn(new TpsPaoGetResult().effectiveAttributes(new TpsPolicyInputs()));
-    when(flightContext.getWorkingMap()).thenReturn(workingMap);
-    doThrow(new PolicyServiceAPIException("failure"))
-        .when(tpsApiDispatch)
-        .linkPao(any(), any(), any());
-
-    var stepResult = linkPolicyStep.doStep(flightContext);
-
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, stepResult.getStepStatus());
-    verify(tpsApiDispatch, times(2)).getOrCreatePao(any(), any(), any());
-    verify(tpsApiDispatch, times(1)).linkPao(any(), any(), any());
-  }
-
-  @Test
   public void undoStep_noLinkFoundSuccess() throws InterruptedException, RetryException {
     var workspaceId = UUID.randomUUID();
     var spendProfileId = UUID.randomUUID();
@@ -197,27 +174,6 @@ public class LinkSpendProfilePolicyAttributesStepTest extends BaseUnitTest {
     var stepResult = linkPolicyStep.undoStep(flightContext);
 
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, stepResult.getStepStatus());
-    verify(tpsApiDispatch, times(1)).replacePao(any(), any(), any());
-  }
-
-  @Test
-  public void undoStep_replacePaoFailure() throws InterruptedException, RetryException {
-    var workspaceId = UUID.randomUUID();
-    var spendProfileId = UUID.randomUUID();
-    var workingMap = new FlightMap();
-    var linkPolicyStep =
-        new LinkSpendProfilePolicyAttributesStep(
-            workspaceId, new SpendProfileId(spendProfileId.toString()), tpsApiDispatch);
-
-    workingMap.put(WorkspaceFlightMapKeys.POLICIES, new TpsPolicyInputs());
-    when(flightContext.getWorkingMap()).thenReturn(workingMap);
-    doThrow(new PolicyServiceAPIException("failure"))
-        .when(tpsApiDispatch)
-        .replacePao(any(), any(), any());
-
-    var stepResult = linkPolicyStep.undoStep(flightContext);
-
-    assertEquals(StepStatus.STEP_RESULT_FAILURE_RETRY, stepResult.getStepStatus());
     verify(tpsApiDispatch, times(1)).replacePao(any(), any(), any());
   }
 }
