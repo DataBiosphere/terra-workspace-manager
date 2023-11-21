@@ -13,12 +13,12 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureSasBundle;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
@@ -48,7 +48,7 @@ public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private FlightMap mockWorkingMap;
   @Mock private FlightMap mockInputParameters;
   @Mock private AzureDatabaseUtilsRunner mockAzureDatabaseUtilsRunner;
-  @Mock private WsmResourceService mockWsmResourceService;
+  @Mock private ResourceDao mockResourceDao;
   @Mock private AzureStorageAccessService mockAzureStorageAccessService;
 
   private final String databaseServerName = UUID.randomUUID().toString();
@@ -110,7 +110,7 @@ public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         mockWorkspaceService,
         mockAzureStorageAccessService,
         mockAzureDatabaseUtilsRunner,
-        mockWsmResourceService);
+        mockResourceDao);
   }
 
   private FlightContext createMockFlightContext() {
@@ -123,7 +123,7 @@ public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         .thenReturn(mockUserRequest);
     when(mockInputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class))
         .thenReturn(mockDestinationWorkspaceId);
-    when(mockWsmResourceService.enumerateResources(
+    when(mockResourceDao.enumerateResources(
             eq(mockDestinationWorkspaceId),
             eq(WsmResourceFamily.AZURE_STORAGE_CONTAINER),
             eq(StewardshipType.CONTROLLED),

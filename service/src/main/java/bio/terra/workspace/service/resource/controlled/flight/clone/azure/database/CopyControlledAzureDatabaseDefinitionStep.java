@@ -10,11 +10,11 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
@@ -40,7 +40,7 @@ public class CopyControlledAzureDatabaseDefinitionStep implements Step {
   private final ControlledAzureDatabaseResource sourceDatabase;
   private final ControlledResourceService controlledResourceService;
   private final CloningInstructions resolvedCloningInstructions;
-  private final WsmResourceService wsmResourceService;
+  private final ResourceDao resourceDao;
 
   public CopyControlledAzureDatabaseDefinitionStep(
       SamService samService,
@@ -48,13 +48,13 @@ public class CopyControlledAzureDatabaseDefinitionStep implements Step {
       ControlledAzureDatabaseResource sourceDatabase,
       ControlledResourceService controlledResourceService,
       CloningInstructions resolvedCloningInstructions,
-      WsmResourceService wsmResourceService) {
+      ResourceDao resourceDao) {
     this.samService = samService;
     this.userRequest = userRequest;
     this.sourceDatabase = sourceDatabase;
     this.controlledResourceService = controlledResourceService;
     this.resolvedCloningInstructions = resolvedCloningInstructions;
-    this.wsmResourceService = wsmResourceService;
+    this.resourceDao = resourceDao;
   }
 
   @Override
@@ -83,7 +83,7 @@ public class CopyControlledAzureDatabaseDefinitionStep implements Step {
         getRequired(inputParameters, ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.class);
 
     var sourceIdentity =
-        wsmResourceService
+        resourceDao
             .enumerateResources(
                 sourceWorkspaceId,
                 WsmResourceFamily.AZURE_MANAGED_IDENTITY,
@@ -105,7 +105,7 @@ public class CopyControlledAzureDatabaseDefinitionStep implements Step {
                         "Could not find managed identity that owns database %s"
                             .formatted(sourceDatabase.getResourceId())));
     var destinationManagedIdentity =
-        wsmResourceService
+        resourceDao
             .enumerateResources(
                 destinationWorkspaceId,
                 WsmResourceFamily.AZURE_MANAGED_IDENTITY,

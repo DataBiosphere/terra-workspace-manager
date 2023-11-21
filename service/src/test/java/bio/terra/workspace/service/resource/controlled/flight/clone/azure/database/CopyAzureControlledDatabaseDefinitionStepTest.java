@@ -11,9 +11,9 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
@@ -36,7 +36,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Tag("azureUnit")
 public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnitTest {
-  @MockBean private WsmResourceService mockWsmResourceService;
+  @MockBean private ResourceDao mockResourceDao;
 
   private UUID workspaceId;
   private FlightContext flightContext;
@@ -75,7 +75,7 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
       UUID resourceId,
       UUID workspaceId,
       List<ResourceLineageEntry> resourceLineage) {
-    when(mockWsmResourceService.enumerateResources(
+    when(mockResourceDao.enumerateResources(
             eq(workspaceId),
             eq(WsmResourceFamily.AZURE_MANAGED_IDENTITY),
             eq(StewardshipType.CONTROLLED),
@@ -157,7 +157,7 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
             sourceDatabase,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION,
-            mockWsmResourceService);
+            mockResourceDao);
 
     var result = step.doStep(flightContext);
     var cloned =
@@ -187,7 +187,7 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
             null,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION,
-            mockWsmResourceService);
+            mockResourceDao);
 
     var result = step.undoStep(flightContext);
 

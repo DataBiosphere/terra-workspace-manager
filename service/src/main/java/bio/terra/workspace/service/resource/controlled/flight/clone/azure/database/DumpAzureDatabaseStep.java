@@ -10,10 +10,10 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
@@ -39,7 +39,7 @@ public class DumpAzureDatabaseStep implements Step {
   private final WorkspaceService workspaceService;
   private final AzureStorageAccessService azureStorageAccessService;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
-  private final WsmResourceService wsmResourceService;
+  private final ResourceDao resourceDao;
 
   public DumpAzureDatabaseStep(
       ControlledAzureDatabaseResource sourceDatabase,
@@ -48,7 +48,7 @@ public class DumpAzureDatabaseStep implements Step {
       WorkspaceService workspaceService,
       AzureStorageAccessService azureStorageAccessService,
       AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
-      WsmResourceService wsmResourceService) {
+      ResourceDao resourceDao) {
 
     this.sourceDatabase = sourceDatabase;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
@@ -56,7 +56,7 @@ public class DumpAzureDatabaseStep implements Step {
     this.workspaceService = workspaceService;
     this.azureStorageAccessService = azureStorageAccessService;
     this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
-    this.wsmResourceService = wsmResourceService;
+    this.resourceDao = resourceDao;
   }
 
   @Override
@@ -74,7 +74,7 @@ public class DumpAzureDatabaseStep implements Step {
 
     // TODO WM-2366: replace with storage container created in WM-2371
     ControlledAzureStorageContainerResource destinationContainer =
-        wsmResourceService
+        resourceDao
             .enumerateResources(
                 destinationWorkspaceId,
                 WsmResourceFamily.AZURE_STORAGE_CONTAINER,
