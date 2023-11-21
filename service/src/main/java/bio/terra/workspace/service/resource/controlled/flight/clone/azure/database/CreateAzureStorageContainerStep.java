@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.datab
 
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.IamRoleUtils;
 import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
@@ -14,10 +15,15 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContai
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
+import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import com.azure.core.management.exception.ManagementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -109,6 +115,46 @@ public class CreateAzureStorageContainerStep implements Step {
   // Nothing to undo; can't undo a launch step
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
+    var userRequest =
+            context
+                    .getInputParameters()
+                    .get(JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class);
+    var createdContainer =
+            context
+                    .getWorkingMap()
+                    .get(
+                            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_STORAGE_CONTAINER,
+                            ControlledAzureStorageContainerResource.class);
+    try {
+      if (createdContainer != null) {
+        controlledResourceService.deleteControlledResourceSync(
+                createdContainer.getWorkspaceId(),
+                createdContainer.getResourceId(),
+                /* forceDelete= */ false,
+                userRequest);
+      }
+    } catch (ResourceNotFoundException e) {
+      logger.info(
+              "No storage container resource found {} in WSM, assuming it was previously removed.",
+              createdContainer.getResourceId());
+      return StepResult.getStepResultSuccess();
+    } catch (ManagementException e) {
+      if (AzureManagementExceptionUtils.isExceptionCode(
+              e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)
+              || AzureManagementExceptionUtils.isExceptionCode(
+              e, AzureManagementExceptionUtils.CONTAINER_NOT_FOUND)) {
+        logger.info(
+                "Container with ID {} not found in Azure, assuming it was previously removed. Result from Azure = {}",
+                createdContainer.getResourceId(),
+                e.getValue().getCode(),
+                e);
+        return StepResult.getStepResultSuccess();
+      }
+      logger.warn(
+              "Deleting cloned container with ID {} failed, retrying.",
+              createdContainer.getResourceId());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    }
     return StepResult.getStepResultSuccess();
   }
 }
