@@ -40,6 +40,7 @@ public class DumpAzureDatabaseStep implements Step {
   private final AzureStorageAccessService azureStorageAccessService;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
   private final WsmResourceService wsmResourceService;
+  private final UUID temporaryStorageContainerResourceId;
 
   public DumpAzureDatabaseStep(
       ControlledAzureDatabaseResource sourceDatabase,
@@ -48,7 +49,8 @@ public class DumpAzureDatabaseStep implements Step {
       WorkspaceService workspaceService,
       AzureStorageAccessService azureStorageAccessService,
       AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
-      WsmResourceService wsmResourceService) {
+      WsmResourceService wsmResourceService,
+      UUID temporaryStorageContainerResourceId) {
 
     this.sourceDatabase = sourceDatabase;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
@@ -57,6 +59,7 @@ public class DumpAzureDatabaseStep implements Step {
     this.azureStorageAccessService = azureStorageAccessService;
     this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
     this.wsmResourceService = wsmResourceService;
+    this.temporaryStorageContainerResourceId = temporaryStorageContainerResourceId;
   }
 
   @Override
@@ -72,29 +75,11 @@ public class DumpAzureDatabaseStep implements Step {
             JobMapKeys.AUTH_USER_INFO.getKeyName(),
             AuthenticatedUserRequest.class);
 
-    // TODO WM-2366: replace with storage container created in WM-2371
-    ControlledAzureStorageContainerResource destinationContainer =
-        wsmResourceService
-            .enumerateResources(
-                destinationWorkspaceId,
-                WsmResourceFamily.AZURE_STORAGE_CONTAINER,
-                StewardshipType.CONTROLLED,
-                0,
-                100)
-            .stream()
-            .filter(
-                (wsmResource) ->
-                    wsmResource
-                        .castToControlledResource()
-                        .getAccessScope()
-                        .equals(AccessScopeType.ACCESS_SCOPE_SHARED))
-            .findFirst()
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "No storage container to own dumpfile destination workspace %s"
-                            .formatted(destinationWorkspaceId)))
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    var destinationContainer =
+            getRequired(
+                    workingMap,
+                    WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_STORAGE_CONTAINER,
+                    ControlledAzureStorageContainerResource.class);
 
     workingMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_STORAGE_CONTAINER,

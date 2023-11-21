@@ -13,6 +13,7 @@ import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.resource.exception.DuplicateResourceException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -91,8 +92,12 @@ public class CreateAzureStorageContainerStep implements Step {
             IamRoleUtils.getIamRoleForAccessScope(sourceDatabase.getAccessScope());
 
     try {
-      controlledResourceService.createControlledResourceSync(
+      ControlledResource destinationContainer = controlledResourceService.createControlledResourceSync(
               controlledContainerResource, iamRole, userRequest, destinationCreationParameters);
+
+      context.getWorkingMap().put(
+              WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_STORAGE_CONTAINER,
+              destinationContainer);
     } catch (DuplicateResourceException e) {
       // We are catching DuplicateResourceException here since we check for the container's presence
       // earlier in the parent flight of this step and bail out if it already exists.

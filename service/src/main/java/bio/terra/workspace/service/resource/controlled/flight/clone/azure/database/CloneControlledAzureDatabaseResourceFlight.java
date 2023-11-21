@@ -77,7 +77,8 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
                 flightBeanBag.getWorkspaceService(),
                 flightBeanBag.getAzureStorageAccessService(),
                 flightBeanBag.getAzureDatabaseUtilsRunner(),
-                flightBeanBag.getWsmResourceService()),
+                flightBeanBag.getWsmResourceService(),
+                destinationContainerId),
             RetryRules.cloud()),
         new StepRetryRulePair(
             new RestoreAzureDatabaseStep(
