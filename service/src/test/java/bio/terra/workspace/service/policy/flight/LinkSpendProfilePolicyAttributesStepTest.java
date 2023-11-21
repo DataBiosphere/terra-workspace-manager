@@ -21,7 +21,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.policy.exception.PolicyServiceAPIException;
+import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -76,14 +76,14 @@ public class LinkSpendProfilePolicyAttributesStepTest extends BaseUnitTest {
   }
 
   @Test
-  public void doStep_getPaoFailure() throws InterruptedException, RetryException {
+  public void doStep_getPaoDuplicateFailure() throws InterruptedException, RetryException {
     var workspaceId = UUID.randomUUID();
     var spendProfileId = UUID.randomUUID();
     var linkPolicyStep =
         new LinkSpendProfilePolicyAttributesStep(
             workspaceId, new SpendProfileId(spendProfileId.toString()), tpsApiDispatch);
 
-    doThrow(new PolicyServiceAPIException("failure"))
+    doThrow(new PolicyServiceDuplicateException("duplicate pao"))
         .when(tpsApiDispatch)
         .getOrCreatePao(any(), any(), any());
 

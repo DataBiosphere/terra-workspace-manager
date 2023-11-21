@@ -14,6 +14,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
+import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -57,7 +58,7 @@ public class LinkSpendProfilePolicyAttributesStep implements Step {
           spendProfileUUID, TpsComponent.BPM, TpsObjectType.BILLING_PROFILE);
       workspacePao =
           tpsApiDispatch.getOrCreatePao(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE);
-    } catch (Exception ex) {
+    } catch (PolicyServiceDuplicateException ex) {
       logger.info("Attempt to get a PAO for billing profile or workspace failed", ex);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
