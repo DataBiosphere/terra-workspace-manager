@@ -871,15 +871,16 @@ public class WorkspaceService {
         sourcePaoId.getObjectId(),
         userRequest.getEmail());
     TpsPaoGetResult paoBeforeUpdate =
-        Rethrow.onInterrupted(() -> tpsApiDispatch.getPao(workspaceId), "getPao");
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.getOrCreatePao(
+                    workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+            "getOrCreatePao");
 
     Rethrow.onInterrupted(
         () ->
             tpsApiDispatch.getOrCreatePao(
                 sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType()),
-        "getOrCreatePao");
-    Rethrow.onInterrupted(
-        () -> tpsApiDispatch.getOrCreatePao(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
         "getOrCreatePao");
 
     TpsPaoUpdateResult dryRun =
