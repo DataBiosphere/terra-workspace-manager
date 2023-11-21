@@ -107,18 +107,6 @@ public class CreateAzureStorageContainerStep implements Step {
               resourceId,
               storageContainerName);
     }
-
-
-    // launch the flight
-//    try {
-//      context
-//          .getStairway()
-//          .submit(subflightId, CreateControlledResourceFlight.class, subflightInputParameters);
-//    } catch (DuplicateFlightIdException unused) {
-//      return StepResult.getStepResultSuccess();
-//    } catch (StairwayExecutionException e) {
-//      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-//    }
     return StepResult.getStepResultSuccess();
   }
 
