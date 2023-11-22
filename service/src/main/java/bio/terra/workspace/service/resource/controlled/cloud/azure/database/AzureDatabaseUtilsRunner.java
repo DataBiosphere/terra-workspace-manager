@@ -16,20 +16,26 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1EnvVar;
+import io.kubernetes.client.openapi.models.V1EnvVarSource;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodStatus;
+import io.kubernetes.client.openapi.models.V1Secret;
+import io.kubernetes.client.openapi.models.V1SecretKeySelector;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -149,17 +155,19 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
             new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
             new V1EnvVar().name(PARAM_BLOB_FILE_NAME).value(blobFileName),
-            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName),
-            new V1EnvVar()
-                .name(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED)
-                .value(blobContainerUrlAuthenticated),
-            new V1EnvVar().name(PARAM_ENCRYPTION_KEY).value(encryptionKey)
+            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName)
         );
+
+    final Map<String, String> secretStringData =
+        Map.ofEntries(
+            Map.entry(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED, blobContainerUrlAuthenticated),
+            Map.entry(PARAM_ENCRYPTION_KEY, encryptionKey));
 
     runAzureDatabaseUtils(
         azureCloudContext,
         sourceWorkspaceId,
-        createPodDefinition(sourceWorkspaceId, podName, envVars),
+        createPodDefinition(sourceWorkspaceId, podName, envVars, secretStringData),
+        secretStringData,
         aksNamespace);
   }
 
@@ -182,16 +190,19 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
             new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
             new V1EnvVar().name(PARAM_BLOB_FILE_NAME).value(blobFileName),
-            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName),
-            new V1EnvVar()
-                .name(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED)
-                .value(blobContainerUrlAuthenticated),
-            new V1EnvVar().name(PARAM_ENCRYPTION_KEY).value(encryptionKey)
+            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName)
         );
+
+    final Map<String, String> secretStringData =
+        Map.ofEntries(
+            Map.entry(PARAM_BLOB_CONTAINER_URL_AUTHENTICATED, blobContainerUrlAuthenticated),
+            Map.entry(PARAM_ENCRYPTION_KEY, encryptionKey));
+
     runAzureDatabaseUtils(
         azureCloudContext,
         targetWorkspaceId,
-        createPodDefinition(targetWorkspaceId, podName, envVars),
+        createPodDefinition(targetWorkspaceId, podName, envVars, secretStringData),
+        secretStringData,
         aksNamespace);
   }
 
@@ -369,9 +380,39 @@ public class AzureDatabaseUtilsRunner {
   private void runAzureDatabaseUtils(
       AzureCloudContext azureCloudContext, UUID workspaceId, V1Pod podDefinition, String namespace)
       throws InterruptedException {
+    runAzureDatabaseUtils(
+        azureCloudContext, workspaceId, podDefinition, new HashMap<>(), namespace);
+  }
+
+  private void runAzureDatabaseUtils(
+      AzureCloudContext azureCloudContext,
+      UUID workspaceId,
+      V1Pod podDefinition,
+      Map<String, String> secretStringData,
+      String namespace)
+      throws InterruptedException {
     var aksApi = kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
+
     // strip underscores to avoid violating azure's naming conventions for pods
     var safePodName = podDefinition.getMetadata().getName();
+    var doSecretCleanup = false;
+    if (getPodDefinitionEnvVarsWithSecretRefs(podDefinition).size() > 0
+        && secretStringData.isEmpty()) {
+      throw new RuntimeException(
+          "definition of pod {} contains env vars that refer to secrets, but no secret data was provided."
+              .formatted(safePodName));
+    } else if (secretStringData.size() > 0) {
+      try {
+        createSecret(
+            aksApi,
+            secretStringData,
+            safePodName, // give the secret the same name as the pod
+            namespace);
+      } catch (ApiException e) {
+        throw new RetryException(e);
+      }
+    }
+
     try {
       startContainer(aksApi, podDefinition, namespace);
       var finalPhase = waitForContainer(aksApi, safePodName, namespace);
@@ -389,6 +430,35 @@ public class AzureDatabaseUtilsRunner {
           workspaceId,
           namespace);
       deleteContainer(aksApi, safePodName, namespace);
+      deleteSecret(aksApi, safePodName, namespace);
+    }
+  }
+
+  private void createSecret(
+      CoreV1Api aksApi, Map<String, String> secretStringData, String secretName, String namespace)
+      throws ApiException {
+
+    final V1Secret secretDefinition = new V1Secret().metadata(new V1ObjectMeta().name(secretName));
+    secretStringData.forEach(secretDefinition::putStringDataItem);
+
+    try {
+      logger.info("Creating secret {}", secretDefinition);
+      aksApi.createNamespacedSecret(namespace, secretDefinition, null, null, null, null);
+    } catch (ApiException e) {
+      var status = Optional.ofNullable(HttpStatus.resolve(e.getCode()));
+      // If the secret already exists, assume this is a retry.
+      if (status.stream().noneMatch(s -> s == HttpStatus.CONFLICT)) {
+        logger.error("Error in azure database utils; response = {}", e.getResponseBody(), e);
+        throw e;
+      }
+    }
+  }
+
+  private void deleteSecret(CoreV1Api aksApi, String secretName, String namespace) {
+    try {
+      aksApi.deleteNamespacedSecret(secretName, namespace, null, null, null, null, null, null);
+    } catch (ApiException e) {
+      logger.warn("Failed to delete azure database utils secret", e);
     }
   }
 
@@ -478,8 +548,35 @@ public class AzureDatabaseUtilsRunner {
     }
   }
 
+  private V1Pod createPodDefinition(
+      UUID workspaceId,
+      String podName,
+      List<V1EnvVar> envVars,
+      Map<String, String> secretStringData) {
+
+    List<V1EnvVar> secretEnvVars = new ArrayList<>();
+    var safePodName = k8sSafeName(podName);
+    secretStringData
+        .keySet()
+        .forEach(
+            k -> {
+              var envVarSource =
+                  new V1EnvVarSource()
+                      .secretKeyRef(
+                          new V1SecretKeySelector()
+                              .name(safePodName) // give the secret the same name as the pod
+                              .key(k));
+              secretEnvVars.add(new V1EnvVar().name(k).valueFrom(envVarSource));
+            });
+
+    final List<V1EnvVar> envVarsWithSecrets =
+        Stream.concat(envVars.stream(), secretEnvVars.stream()).collect(Collectors.toList());
+
+    return createPodDefinition(workspaceId, podName, envVarsWithSecrets);
+  }
+
   private V1Pod createPodDefinition(UUID workspaceId, String podName, List<V1EnvVar> envVars) {
-    var safePodName = podName.replace('_', '-').toLowerCase();
+    var safePodName = k8sSafeName(podName);
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     var landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
@@ -516,5 +613,16 @@ public class AzureDatabaseUtilsRunner {
                         .image(azureConfig.getAzureDatabaseUtilImage())
                         .imagePullPolicy("Always")
                         .env(envVarsWithCommonArgs)));
+  }
+
+  private List getPodDefinitionEnvVarsWithSecretRefs(V1Pod podDefinition) {
+    var container = podDefinition.getSpec().getContainers().get(0);
+    return container.getEnv().stream()
+        .filter(e -> e.getValueFrom() != null && e.getValueFrom().getSecretKeyRef() != null)
+        .collect(Collectors.toList());
+  }
+
+  private String k8sSafeName(String name) {
+    return name.replace('_', '-').toLowerCase();
   }
 }
