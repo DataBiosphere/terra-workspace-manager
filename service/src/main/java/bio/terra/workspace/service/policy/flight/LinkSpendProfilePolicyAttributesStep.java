@@ -42,7 +42,14 @@ public class LinkSpendProfilePolicyAttributesStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     UUID spendProfileUUID;
     try {
-      spendProfileUUID = UUID.fromString(spendProfileId.getId());
+      if (spendProfileId != null) {
+        spendProfileUUID = UUID.fromString(spendProfileId.getId());
+      } else {
+        logger.info(
+            "no spend profile id found, skipping spend profile and workspace PAO linking. [workspaceId={}]",
+            workspaceId);
+        return StepResult.getStepResultSuccess();
+      }
     } catch (IllegalArgumentException e) {
       logger.info(
           "non-UUID spend profile id provided, skipping spend profile and workspace PAO linking. [spendProfileId={}, workspaceId={}]",
