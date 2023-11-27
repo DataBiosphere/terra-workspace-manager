@@ -8,11 +8,11 @@ import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
@@ -42,7 +42,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired private WsmResourceService wsmResourceService;
+  @Autowired private ResourceDao resourceDao;
   @Autowired private UserAccessUtils userAccessUtils;
 
   private Workspace sourceWorkspace = null;
@@ -157,7 +157,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
   void assertXofResourceY(int expectedNumber, WsmResourceFamily resourceType) {
     assertEquals(
         expectedNumber,
-        wsmResourceService
+        resourceDao
             .enumerateResources(
                 destWorkspace.getWorkspaceId(), resourceType, StewardshipType.CONTROLLED, 0, 100)
             .size());

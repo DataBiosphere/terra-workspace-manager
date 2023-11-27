@@ -47,7 +47,7 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
                 sourceDatabase,
                 flightBeanBag.getControlledResourceService(),
                 cloningInstructions,
-                flightBeanBag.getWsmResourceService()),
+                flightBeanBag.getResourceDao()),
             RetryRuleNone.getRetryRuleNone())); // CreateDatabase already retries
   }
 
@@ -76,9 +76,7 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
                 flightBeanBag.getSamService(),
                 flightBeanBag.getWorkspaceService(),
                 flightBeanBag.getAzureStorageAccessService(),
-                flightBeanBag.getAzureDatabaseUtilsRunner(),
-                flightBeanBag.getWsmResourceService(),
-                destinationContainerId),
+                flightBeanBag.getAzureDatabaseUtilsRunner()),
             RetryRules.cloud()),
         new StepRetryRulePair(
             new RestoreAzureDatabaseStep(

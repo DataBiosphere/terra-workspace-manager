@@ -13,7 +13,6 @@ import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
@@ -39,8 +38,6 @@ public class DumpAzureDatabaseStep implements Step {
   private final WorkspaceService workspaceService;
   private final AzureStorageAccessService azureStorageAccessService;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
-  private final WsmResourceService wsmResourceService;
-  private final UUID temporaryStorageContainerResourceId;
 
   public DumpAzureDatabaseStep(
       ControlledAzureDatabaseResource sourceDatabase,
@@ -48,18 +45,13 @@ public class DumpAzureDatabaseStep implements Step {
       SamService samService,
       WorkspaceService workspaceService,
       AzureStorageAccessService azureStorageAccessService,
-      AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
-      WsmResourceService wsmResourceService,
-      UUID temporaryStorageContainerResourceId) {
-
+      AzureDatabaseUtilsRunner azureDatabaseUtilsRunner) {
     this.sourceDatabase = sourceDatabase;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.azureStorageAccessService = azureStorageAccessService;
     this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
-    this.wsmResourceService = wsmResourceService;
-    this.temporaryStorageContainerResourceId = temporaryStorageContainerResourceId;
   }
 
   @Override
