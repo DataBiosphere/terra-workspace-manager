@@ -11,37 +11,33 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
-import bio.terra.workspace.service.resource.model.ResourceLineageEntry;
-import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Tag("azureUnit")
 public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnitTest {
-
+  @MockBean private ResourceDao mockResourceDao;
   private UUID workspaceId;
   private FlightContext flightContext;
   private FlightMap workingMap;
   private FlightMap inputParams;
   private ControlledResourceService controlledResourceService;
-  private WsmResourceService wsmResourceService;
 
   private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest()
@@ -59,7 +55,6 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
     inputParams.put(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, workspaceId);
 
     controlledResourceService = getMockControlledResourceService();
-    wsmResourceService = mockWsmResourceService();
 
     when(flightContext.getWorkingMap()).thenReturn(workingMap);
     when(flightContext.getInputParameters()).thenReturn(inputParams);
@@ -70,33 +65,22 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
   }
 
   private void buildIdentityResource(
-      String managedIdentityName,
-      String resourceName,
-      UUID resourceId,
-      UUID workspaceId,
-      List<ResourceLineageEntry> resourceLineage) {
-    when(wsmResourceService.enumerateResources(
-            eq(workspaceId),
-            eq(WsmResourceFamily.AZURE_MANAGED_IDENTITY),
-            eq(StewardshipType.CONTROLLED),
-            anyInt(),
-            anyInt()))
+      String managedIdentityName, String resourceName, UUID resourceId, UUID workspaceId) {
+    when(mockResourceDao.getResourceByName(workspaceId, resourceName))
         .thenReturn(
-            List.of(
-                ControlledAzureManagedIdentityResource.builder()
-                    .managedIdentityName(managedIdentityName)
-                    .common(
-                        ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
-                            .resourceId(resourceId)
-                            .workspaceUuid(workspaceId)
-                            .cloningInstructions(CloningInstructions.COPY_DEFINITION)
-                            .properties(Map.of())
-                            .name(resourceName)
-                            .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
-                            .managedBy(ManagedByType.MANAGED_BY_USER)
-                            .resourceLineage(resourceLineage)
-                            .build())
-                    .build()));
+            ControlledAzureManagedIdentityResource.builder()
+                .managedIdentityName(managedIdentityName)
+                .common(
+                    ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                        .resourceId(resourceId)
+                        .workspaceUuid(workspaceId)
+                        .cloningInstructions(CloningInstructions.COPY_DEFINITION)
+                        .properties(Map.of())
+                        .name(resourceName)
+                        .accessScope(AccessScopeType.ACCESS_SCOPE_SHARED)
+                        .managedBy(ManagedByType.MANAGED_BY_USER)
+                        .build())
+                .build());
   }
 
   private ControlledAzureDatabaseResource buildDatabaseResource(
@@ -120,26 +104,17 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
   @Test
   void doStep_clonesDefinition() throws InterruptedException {
     var resourceName = "dbappname";
-    var sourceIdentityName = "id%s".formatted(UUID.randomUUID().toString());
-    var destIdentityName = "id%s".formatted(UUID.randomUUID().toString());
+    var identityResourceName = "id%s".formatted(UUID.randomUUID().toString());
     var sourceDatabaseName = "db%s".formatted(UUID.randomUUID().toString().replace('-', '_'));
     var destDatabaseName = "db%s".formatted(UUID.randomUUID().toString().replace('-', '_'));
     var destResourceId = UUID.randomUUID();
     var sourceWorkspaceId = UUID.randomUUID();
-    var sourceIdentityId = UUID.randomUUID();
 
     inputParams.put(ControlledResourceKeys.DESTINATION_RESOURCE_ID, destResourceId);
     inputParams.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE_NAME, resourceName);
     inputParams.put(ControlledResourceKeys.DESTINATION_DATABASE_NAME, destDatabaseName);
     inputParams.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
-    buildIdentityResource(
-        sourceIdentityName, "idowner", sourceIdentityId, sourceWorkspaceId, List.of());
-    buildIdentityResource(
-        destIdentityName,
-        "idowner",
-        UUID.randomUUID(),
-        workspaceId,
-        List.of(new ResourceLineageEntry(sourceWorkspaceId, sourceIdentityId)));
+    buildIdentityResource(identityResourceName, "idowner", UUID.randomUUID(), workspaceId);
     var sourceDatabase =
         buildDatabaseResource(
             sourceDatabaseName, resourceName, UUID.randomUUID(), sourceWorkspaceId);
@@ -157,7 +132,7 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
             sourceDatabase,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION,
-            mockWsmResourceService());
+            mockResourceDao);
 
     var result = step.doStep(flightContext);
     var cloned =
@@ -187,7 +162,7 @@ public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnit
             null,
             controlledResourceService,
             CloningInstructions.COPY_DEFINITION,
-            wsmResourceService);
+            mockResourceDao);
 
     var result = step.undoStep(flightContext);
 

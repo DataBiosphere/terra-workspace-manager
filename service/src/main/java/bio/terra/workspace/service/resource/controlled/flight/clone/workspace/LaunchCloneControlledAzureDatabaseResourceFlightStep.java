@@ -65,9 +65,6 @@ public class LaunchCloneControlledAzureDatabaseResourceFlightStep implements Ste
     // do a policy merge for individual resource clones within the workspace
     subflightInputParameters.put(WorkspaceFlightMapKeys.MERGE_POLICIES, false);
 
-    // TODO: Additional inputs as needed to be added in
-    // https://broadworkbench.atlassian.net/browse/WM-2349
-
     // launch the flight
     try {
       context
