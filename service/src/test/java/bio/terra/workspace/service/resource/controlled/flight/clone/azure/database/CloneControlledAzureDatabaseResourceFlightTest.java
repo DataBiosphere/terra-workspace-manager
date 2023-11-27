@@ -68,12 +68,9 @@ public class CloneControlledAzureDatabaseResourceFlightTest extends BaseAzureUni
   void cloneControlledAzureDatabase_copyResourceSteps() {
     var flight = createFlight();
     var copyResourceSteps = flight.copyResource(flightBeanBag, flight.getInputParameters());
-    assertEquals(3, copyResourceSteps.size());
+    assertEquals(4, copyResourceSteps.size());
     assertEquals(
-        List.of(
-            CreateAzureStorageContainerStep.class,
-            DumpAzureDatabaseStep.class,
-            RestoreAzureDatabaseStep.class),
+        List.of(CreateAzureStorageContainerStep.class, DumpAzureDatabaseStep.class, RestoreAzureDatabaseStep.class, DeleteAzureStorageContainerStep.class),
         copyResourceSteps.stream()
             .map(pair -> pair.step().getClass())
             .collect(Collectors.toList()));
