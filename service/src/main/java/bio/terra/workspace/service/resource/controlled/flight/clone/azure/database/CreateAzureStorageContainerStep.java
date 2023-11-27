@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.azure.database;
 
-import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
-
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
@@ -44,11 +42,6 @@ public class CreateAzureStorageContainerStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    validateRequiredEntries(
-        context.getInputParameters(),
-        JobMapKeys.AUTH_USER_INFO.getKeyName(),
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID);
-
     var userRequest =
         context
             .getInputParameters()
