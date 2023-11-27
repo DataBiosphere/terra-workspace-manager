@@ -20,7 +20,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
@@ -128,8 +127,7 @@ public class FlightBeanBag {
       LandingZoneBatchAccountFinder landingZoneBatchAccountFinder,
       KubernetesClientProvider kubernetesClientProvider,
       AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
-      WsmApplicationService applicationService,
-      WsmResourceService wsmResourceService) {
+      WsmApplicationService applicationService) {
     this.applicationDao = applicationDao;
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
