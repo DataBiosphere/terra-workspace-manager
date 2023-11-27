@@ -50,7 +50,7 @@ public class CreateDbDumpEncryptionKeyStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
 
-    kg.init(new SecureRandom());
+    kg.init(256, new SecureRandom());
     SecretKey secretKey = kg.generateKey();
     String encodedString = java.util.Base64.getEncoder().encodeToString(secretKey.getEncoded());
 
