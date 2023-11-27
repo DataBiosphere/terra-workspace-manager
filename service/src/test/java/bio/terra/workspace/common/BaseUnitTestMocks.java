@@ -5,7 +5,6 @@ import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 /*
@@ -17,6 +16,7 @@ public class BaseUnitTestMocks extends BaseTest {
   @MockBean private FeatureService mockFeatureService;
   @MockBean private SamService mockSamService;
   @MockBean private TpsApiDispatch mockTpsApiDispatch;
+
   public CrlService mockCrlService() {
     return mockCrlService;
   }

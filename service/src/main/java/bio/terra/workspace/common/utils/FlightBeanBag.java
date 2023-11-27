@@ -88,6 +88,7 @@ public class FlightBeanBag {
   private final KubernetesClientProvider kubernetesClientProvider;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
   private final WsmApplicationService applicationService;
+
   @Lazy
   @Autowired
   public FlightBeanBag(

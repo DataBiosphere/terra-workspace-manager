@@ -67,7 +67,9 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
     return List.of(
         new StepRetryRulePair(
             new CreateAzureStorageContainerStep(
-                    storageContainerName, destinationContainerId, flightBeanBag.getControlledResourceService()),
+                storageContainerName,
+                destinationContainerId,
+                flightBeanBag.getControlledResourceService()),
             RetryRules.cloud()),
         new StepRetryRulePair(
             new DumpAzureDatabaseStep(
