@@ -17,8 +17,6 @@ public class BaseUnitTestMocks extends BaseTest {
   @MockBean private FeatureService mockFeatureService;
   @MockBean private SamService mockSamService;
   @MockBean private TpsApiDispatch mockTpsApiDispatch;
-  @MockBean private WsmResourceService mockWsmResourceService;
-
   public CrlService mockCrlService() {
     return mockCrlService;
   }
@@ -37,9 +35,5 @@ public class BaseUnitTestMocks extends BaseTest {
 
   public TpsApiDispatch mockTpsApiDispatch() {
     return mockTpsApiDispatch;
-  }
-
-  public WsmResourceService mockWsmResourceService() {
-    return mockWsmResourceService;
   }
 }

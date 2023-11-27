@@ -88,8 +88,6 @@ public class FlightBeanBag {
   private final KubernetesClientProvider kubernetesClientProvider;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
   private final WsmApplicationService applicationService;
-  private final WsmResourceService wsmResourceService;
-
   @Lazy
   @Autowired
   public FlightBeanBag(
@@ -168,7 +166,6 @@ public class FlightBeanBag {
     this.kubernetesClientProvider = kubernetesClientProvider;
     this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
     this.applicationService = applicationService;
-    this.wsmResourceService = wsmResourceService;
   }
 
   public static FlightBeanBag getFromObject(Object object) {
@@ -321,9 +318,5 @@ public class FlightBeanBag {
 
   public WsmApplicationService getApplicationService() {
     return applicationService;
-  }
-
-  public WsmResourceService getWsmResourceService() {
-    return wsmResourceService;
   }
 }
