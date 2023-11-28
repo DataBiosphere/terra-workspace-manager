@@ -14,6 +14,7 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledAzureResourceFlight {
 
@@ -62,7 +63,16 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
             WorkspaceFlightMapKeys.ResourceKeys.RESOURCE,
             ControlledAzureDatabaseResource.class);
 
+    String storageContainerName = "dbdump-storage-container-%s".formatted(UUID.randomUUID());
+    UUID destinationContainerId = UUID.randomUUID();
+
     return List.of(
+        new StepRetryRulePair(
+            new CreateAzureStorageContainerStep(
+                storageContainerName,
+                destinationContainerId,
+                flightBeanBag.getControlledResourceService()),
+            RetryRules.cloud()),
         new StepRetryRulePair(
             new DumpAzureDatabaseStep(
                 sourceDatabase,
@@ -70,8 +80,7 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
                 flightBeanBag.getSamService(),
                 flightBeanBag.getWorkspaceService(),
                 flightBeanBag.getAzureStorageAccessService(),
-                flightBeanBag.getAzureDatabaseUtilsRunner(),
-                flightBeanBag.getResourceDao()),
+                flightBeanBag.getAzureDatabaseUtilsRunner()),
             RetryRules.cloud()),
         new StepRetryRulePair(
             new RestoreAzureDatabaseStep(

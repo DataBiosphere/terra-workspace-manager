@@ -10,7 +10,6 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
-import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -18,10 +17,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
-import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -39,7 +34,6 @@ public class DumpAzureDatabaseStep implements Step {
   private final WorkspaceService workspaceService;
   private final AzureStorageAccessService azureStorageAccessService;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
-  private final ResourceDao resourceDao;
 
   public DumpAzureDatabaseStep(
       ControlledAzureDatabaseResource sourceDatabase,
@@ -47,16 +41,13 @@ public class DumpAzureDatabaseStep implements Step {
       SamService samService,
       WorkspaceService workspaceService,
       AzureStorageAccessService azureStorageAccessService,
-      AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
-      ResourceDao resourceDao) {
-
+      AzureDatabaseUtilsRunner azureDatabaseUtilsRunner) {
     this.sourceDatabase = sourceDatabase;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.azureStorageAccessService = azureStorageAccessService;
     this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
-    this.resourceDao = resourceDao;
   }
 
   @Override
@@ -72,29 +63,11 @@ public class DumpAzureDatabaseStep implements Step {
             JobMapKeys.AUTH_USER_INFO.getKeyName(),
             AuthenticatedUserRequest.class);
 
-    // TODO WM-2366: replace with storage container created in WM-2371
-    ControlledAzureStorageContainerResource destinationContainer =
-        resourceDao
-            .enumerateResources(
-                destinationWorkspaceId,
-                WsmResourceFamily.AZURE_STORAGE_CONTAINER,
-                StewardshipType.CONTROLLED,
-                0,
-                100)
-            .stream()
-            .filter(
-                (wsmResource) ->
-                    wsmResource
-                        .castToControlledResource()
-                        .getAccessScope()
-                        .equals(AccessScopeType.ACCESS_SCOPE_SHARED))
-            .findFirst()
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "No storage container to own dumpfile destination workspace %s"
-                            .formatted(destinationWorkspaceId)))
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    var destinationContainer =
+        getRequired(
+            workingMap,
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_STORAGE_CONTAINER,
+            ControlledAzureStorageContainerResource.class);
 
     workingMap.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_STORAGE_CONTAINER,

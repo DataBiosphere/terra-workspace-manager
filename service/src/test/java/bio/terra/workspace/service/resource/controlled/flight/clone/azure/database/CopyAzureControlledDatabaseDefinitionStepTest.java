@@ -33,7 +33,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 @Tag("azureUnit")
 public class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnitTest {
   @MockBean private ResourceDao mockResourceDao;
-
   private UUID workspaceId;
   private FlightContext flightContext;
   private FlightMap workingMap;

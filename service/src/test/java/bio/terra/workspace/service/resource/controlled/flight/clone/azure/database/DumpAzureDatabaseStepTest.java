@@ -109,8 +109,7 @@ public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         mockSamService,
         mockWorkspaceService,
         mockAzureStorageAccessService,
-        mockAzureDatabaseUtilsRunner,
-        mockResourceDao);
+        mockAzureDatabaseUtilsRunner);
   }
 
   private FlightContext createMockFlightContext() {
