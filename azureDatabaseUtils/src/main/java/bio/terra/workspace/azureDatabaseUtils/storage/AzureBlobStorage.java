@@ -54,7 +54,7 @@ public class AzureBlobStorage implements BlobStorage {
       String blobContainerName,
       String blobContainerUrlAuthenticated) {
     BlobContainerClient blobContainerClient =
-        constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
+            constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
     try (toStream) {
       blobContainerClient.getBlobClient(blobName).downloadStream(toStream);
       toStream.flush();
@@ -68,7 +68,7 @@ public class AzureBlobStorage implements BlobStorage {
     // blobContainerUrlAuthenticated is a URL with a query parameter containing a SAS token
 
     BlobServiceClient blobServiceClient =
-        new BlobServiceClientBuilder().endpoint(blobContainerUrlAuthenticated).buildClient();
+            new BlobServiceClientBuilder().endpoint(blobContainerUrlAuthenticated).buildClient();
 
     try {
       // the way storage containers are set up in a workspace are as follows:
