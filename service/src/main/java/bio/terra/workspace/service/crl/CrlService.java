@@ -539,16 +539,16 @@ public class CrlService {
 
   private ClientConfig buildClientConfig() {
     var builder = ClientConfig.Builder.newBuilder().setClient(CLIENT_NAME);
-    if (crlConfig.useJanitor()) {
-      builder.setCleanupConfig(
-          CleanupConfig.builder()
-              .setCleanupId(CLIENT_NAME + "-test")
-              .setTimeToLive(TEST_RESOURCE_TIME_TO_LIVE)
-              .setJanitorProjectId(crlConfig.getJanitorTrackResourceProjectId())
-              .setJanitorTopicName(crlConfig.getJanitorTrackResourceTopicId())
-              .setCredentials(getJanitorCredentials(crlConfig.getJanitorClientCredentialFilePath()))
-              .build());
-    }
+//    if (crlConfig.useJanitor()) {
+//      builder.setCleanupConfig(
+//          CleanupConfig.builder()
+//              .setCleanupId(CLIENT_NAME + "-test")
+//              .setTimeToLive(TEST_RESOURCE_TIME_TO_LIVE)
+//              .setJanitorProjectId(crlConfig.getJanitorTrackResourceProjectId())
+//              .setJanitorTopicName(crlConfig.getJanitorTrackResourceTopicId())
+//              .setCredentials(getJanitorCredentials(crlConfig.getJanitorClientCredentialFilePath()))
+//              .build());
+//    }
     return builder.build();
   }
 
