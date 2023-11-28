@@ -18,7 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.*;
 
-public class DatabaseServiceUnitTest {
+public class DatabaseServiceDumpRestoreTest {
 
   static class TestableDatabaseService extends DatabaseService {
     public TestableDatabaseService(DatabaseDao databaseDao, Validator validator, BlobStorage blobStorage) {
