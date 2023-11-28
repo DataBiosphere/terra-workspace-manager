@@ -102,30 +102,24 @@ public class DatabaseService {
     databaseDao.restoreLoginPrivileges(namespaceRole);
   }
 
-  private SecretKey decodeBase64EncryptionKey(String encryptionKeyBase64) {
-    byte[] decodedKey = Base64.getDecoder().decode(encryptionKeyBase64);
-    return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
-  }
-
   private SecretKey decodeBase64Key(String encryptionKeyBase64) {
     byte[] decodedKey = Base64.getDecoder().decode(encryptionKeyBase64);
     return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
   }
 
-  private InputStream encryptStream(InputStream origin, String encryptionKeyBase64) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+  private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyBase64) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
     Cipher c = Cipher.getInstance("AES");
     c.init(Cipher.ENCRYPT_MODE, encryptionKey);
-    return new CipherInputStream(origin, c);
+    return new CipherOutputStream(origin, c);
   }
 
-  private InputStream decryptStream(InputStream origin, String encryptionKeyBase64) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+  private InputStream decryptFromInputStream(InputStream origin, String encryptionKeyBase64) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
     Cipher c = Cipher.getInstance("AES");
     c.init(Cipher.DECRYPT_MODE, encryptionKey);
     return new CipherInputStream(origin, c);
   }
-
 
   public void pgDump(
       String dbName,
@@ -149,31 +143,24 @@ public class DatabaseService {
     databaseDao.grantRole(adminUser, dbName);
 
     List<String> commandList = generateCommandList("pg_dump", dbName, dbHost, dbPort, adminUser);
-    Map<String, String> envVars = Map.of("PGPASSWORD", "FIXME"); // determinePassword()
+    Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
 
     logger.info(
-        "Streaming DatabaseService.pgDump output into blob file {} in container: {} with key: {}",
+        "Streaming DatabaseService.pgDump output into blob file {} in container: {}",
         blobFileName,
-        blobContainerName,
-        encryptionKeyBase64);
+        blobContainerName);
 
     localProcessLauncher.launchProcess(commandList, envVars);
 
-    byte[] processOutput = localProcessLauncher.getInputStream().readAllBytes();
-    String base64Output = Base64.getEncoder().encodeToString(processOutput);
-    logger.info("Dump output bytes: {}", base64Output.substring(0, Math.min(base64Output.length(), 50)));
-
-    byte[] encryptedProcessOutput = encryptStream(new ByteArrayInputStream(processOutput), encryptionKeyBase64).readAllBytes();
-    String base64EncodedOutput = Base64.getEncoder().encodeToString(encryptedProcessOutput);
-    logger.info("Encoded output bytes: {}", base64EncodedOutput.substring(0, Math.min(base64EncodedOutput.length(), 50)));
-
-    storage.streamOutputToBlobStorage(
-        new ByteArrayInputStream(base64EncodedOutput.getBytes(StandardCharsets.UTF_8)),
-        blobFileName,
-        blobContainerName,
-        blobContainerUrlAuthenticated);
-
-    logger.info("Stream to blob storage complete");
+    // Stream wrapping is confusing, so in English: local process output -> encryption -> base64 encoding -> blob storage
+    try(OutputStream blobOutputStream = storage.getBlobStorageUploadOutputStream(blobFileName, blobContainerName, blobContainerUrlAuthenticated)) {
+      try(OutputStream encoderWrappedOutputStream = Base64.getEncoder().wrap(blobOutputStream)) {
+        try(OutputStream encryptedBlobOutputStream = encryptIntoOutputStream(encoderWrappedOutputStream, encryptionKeyBase64)) {
+          localProcessLauncher.getInputStream().transferTo(encryptedBlobOutputStream);
+          encryptedBlobOutputStream.flush();
+        }
+      }
+    }
 
     checkForError(localProcessLauncher);
   }
@@ -201,32 +188,30 @@ public class DatabaseService {
     databaseDao.grantRole(adminUser, dbName);
 
     List<String> commandList = generateCommandList("psql", dbName, dbHost, dbPort, adminUser);
-    Map<String, String> envVars = Map.of("PGPASSWORD", "FIXME"); // determinePassword());
+    Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
+
+    logger.info(
+            "Streaming DatabaseService.pgRestore input from blob file {} in container: {}",
+            blobFileName,
+            blobContainerName);
 
     localProcessLauncher.launchProcess(commandList, envVars);
 
-    logger.info(
-        "Running DatabaseService.pgRestore on file {} from blob container: {} with key: {}",
-        blobFileName,
-        blobContainerName,
-        encryptionKeyBase64);
+    // Stream wrapping is confusing, so in English: blob storage > base 64 decoding > decryption > local process input
+    // NB we use the pipes to receive blob storage via an output stream and convert that into an input stream for the subsequent processing
+    // NB we use a separate thread to handle the download so that we can be downloading and sending to the thread in parallel
+    try(PipedOutputStream blobStorageReceiver = new PipedOutputStream(); PipedInputStream blobStorageReplayer = new PipedInputStream(blobStorageReceiver, 2048)) {
+        try(InputStream decoderWrappedInputStream = Base64.getDecoder().wrap(blobStorageReplayer)) {
+            try(InputStream decryptedBlobInputStream = decryptFromInputStream(decoderWrappedInputStream, encryptionKeyBase64)) {
+              Runnable downloadThread = () -> storage.streamInputFromBlobStorage(blobStorageReceiver, blobFileName, blobContainerName, blobContainerUrlAuthenticated);
+              Thread downloadThreadInstance = new Thread(downloadThread);
+              downloadThreadInstance.start();
 
-    ByteArrayOutputStream fileDownloadStream = new ByteArrayOutputStream();
-    storage.streamInputFromBlobStorage(fileDownloadStream, blobFileName, blobContainerName, blobContainerUrlAuthenticated);
-    String downloadedFileBase64 = fileDownloadStream.toString(StandardCharsets.UTF_8);
-    logger.info("Downloaded file bytes: {}", downloadedFileBase64.substring(0, Math.min(downloadedFileBase64.length(), 50)));
-
-    byte[] base64DecodedFile = Base64.getDecoder().decode(downloadedFileBase64);
-
-    ByteArrayInputStream downloadedFileInputStream = new ByteArrayInputStream(base64DecodedFile);
-    byte[] decryptedFileBytes = decryptStream(downloadedFileInputStream, encryptionKeyBase64).readAllBytes();
-    String decryptedFileBytesString = new String(decryptedFileBytes, StandardCharsets.UTF_8);
-    logger.info("Decrypted file bytes: {}", decryptedFileBytesString.substring(0, Math.min(decryptedFileBytesString.length(), 50)));
-
-    localProcessLauncher.getOutputStream().write(decryptedFileBytes);
-    checkForError(localProcessLauncher);
-
-    logger.info("Stream to local process complete");
+              decryptedBlobInputStream.transferTo(localProcessLauncher.getOutputStream());
+            }
+        }
+    }
+    localProcessLauncher.getOutputStream().flush();
 
     databaseDao.reassignOwner(adminUser, dbName);
   }
@@ -286,46 +271,9 @@ public class DatabaseService {
     }
   }
 
-  private String determinePassword() throws PSQLException {
+  protected String determinePassword() throws PSQLException {
     return new String(
         new AzurePostgresqlAuthenticationPlugin(new Properties())
             .getPassword(AuthenticationRequestType.CLEARTEXT_PASSWORD));
   }
-
-//  @Test
-//  void testPgDump() throws Exception {
-//
-//    DatabaseDao databaseDao = mock(DatabaseDao.class);
-//    Validator validator = mock(Validator.class);
-//    BlobStorage storage = mock(BlobStorage.class);
-//    LocalProcessLauncher localProcessLauncher = mock(LocalProcessLauncher.class);
-//
-//    DatabaseService testDatabaseService = new DatabaseService(databaseDao, validator, storage);
-//
-//
-//    doNothing().when(databaseDao).grantRole(any(), any());
-//    doNothing().when(localProcessLauncher).launchProcess(any(), any());
-//
-//    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("MYTESTINPUTCONTENT".getBytes());
-//    when(localProcessLauncher.getInputStream()).thenReturn(byteArrayInputStream);
-//
-//    ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor.forClass(InputStream.class);
-//    doNothing().when(storage).streamOutputToBlobStorage(inputStreamArgumentCaptor.capture(), any(), any(), any());
-//
-//    testDatabaseService.pgDump(
-//            "testdb",
-//            "http://host.org",
-//            "5432",
-//            "testuser",
-//            "testfile",
-//            "testcontainer",
-//            "http://host.org",
-//            "AAA",
-//            localProcessLauncher);
-//
-//    byte[] bytes = inputStreamArgumentCaptor.getValue().readAllBytes();
-//    String output = Base64.getEncoder().encodeToString(bytes);
-//    assertThat(output, equalTo("MYTESTINPUTCONTENT"));
-//
-//  }
 }

@@ -10,24 +10,30 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.Duration;
-import java.util.Base64;
-import java.util.Random;
+import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.mockito.Mockito.*;
 
 public class DatabaseServiceUnitTest {
 
-  private static String plaintext = "MYTESTINPUTCONTENT";
-  private static String key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-  private static String ciphertext = "hnNZyda6cTsdhH/cXMvuBd6+ZmaUOe5w05iBlKmPMGk=";
+  static class TestableDatabaseService extends DatabaseService {
+    public TestableDatabaseService(DatabaseDao databaseDao, Validator validator, BlobStorage blobStorage) {
+      super(databaseDao, validator, blobStorage);
+    }
+
+    @Override
+    public String determinePassword() {
+      return "N/A for testing";
+    }
+  }
+
+  private static final String plaintext = "MYTESTINPUTCONTENT";
+  private static final String key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  private static final String ciphertext = "hnNZyda6cTsdhH/cXMvuBd6+ZmaUOe5w05iBlKmPMGk=";
 
   @Test
   void testPgDump() throws Exception {
@@ -35,16 +41,17 @@ public class DatabaseServiceUnitTest {
     Validator validator = mock(Validator.class);
     BlobStorage storage = mock(BlobStorage.class);
     LocalProcessLauncher localProcessLauncher = mock(LocalProcessLauncher.class);
-    DatabaseService testDatabaseService = new DatabaseService(databaseDao, validator, storage);
+    DatabaseService testDatabaseService = new TestableDatabaseService(databaseDao, validator, storage);
 
     doNothing().when(databaseDao).grantRole(any(), any());
     doNothing().when(localProcessLauncher).launchProcess(any(), any());
 
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("MYTESTINPUTCONTENT".getBytes());
+    System.out.println(byteArrayInputStream.available());
     when(localProcessLauncher.getInputStream()).thenReturn(byteArrayInputStream);
 
-    ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor.forClass(InputStream.class);
-    doNothing().when(storage).streamOutputToBlobStorage(inputStreamArgumentCaptor.capture(), any(), any(), any());
+    ByteArrayOutputStream blobStorageUploadStream = new ByteArrayOutputStream();
+    when(storage.getBlobStorageUploadOutputStream(any(), any(), any())).thenReturn(blobStorageUploadStream);
 
     testDatabaseService.pgDump(
         "testdb",
@@ -57,8 +64,10 @@ public class DatabaseServiceUnitTest {
         key,
         localProcessLauncher);
 
-    byte[] bytes = inputStreamArgumentCaptor.getValue().readAllBytes();
-    String output = new String(bytes);
+
+    System.out.println(byteArrayInputStream.available());
+
+    String output = blobStorageUploadStream.toString();
     assertThat(output, equalTo(ciphertext));
   }
 
@@ -69,7 +78,7 @@ public class DatabaseServiceUnitTest {
     BlobStorage storage = mock(BlobStorage.class);
     LocalProcessLauncher localProcessLauncher = mock(LocalProcessLauncher.class);
 
-    DatabaseService testDatabaseService = new DatabaseService(databaseDao, validator, storage);
+    DatabaseService testDatabaseService = new TestableDatabaseService(databaseDao, validator, storage);
 
 
     doNothing().when(databaseDao).grantRole(any(), any());
@@ -103,7 +112,7 @@ public class DatabaseServiceUnitTest {
     Validator validator = mock(Validator.class);
     BlobStorage storage = mock(BlobStorage.class);
     LocalProcessLauncher localProcessLauncher = mock(LocalProcessLauncher.class);
-    DatabaseService testDatabaseService = new DatabaseService(databaseDao, validator, storage);
+    DatabaseService testDatabaseService = new TestableDatabaseService(databaseDao, validator, storage);
 
     doNothing().when(databaseDao).grantRole(any(), any());
     doNothing().when(localProcessLauncher).launchProcess(any(), any());
@@ -111,8 +120,8 @@ public class DatabaseServiceUnitTest {
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(dumpContents);
     when(localProcessLauncher.getInputStream()).thenReturn(byteArrayInputStream);
 
-    ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor.forClass(InputStream.class);
-    doNothing().when(storage).streamOutputToBlobStorage(inputStreamArgumentCaptor.capture(), any(), any(), any());
+    ByteArrayOutputStream blobStorageUploadStream = new ByteArrayOutputStream();
+    when(storage.getBlobStorageUploadOutputStream(any(), any(), any())).thenReturn(blobStorageUploadStream);
 
     testDatabaseService.pgDump(
             "testdb",
@@ -125,14 +134,19 @@ public class DatabaseServiceUnitTest {
             key,
             localProcessLauncher);
 
-    byte[] bytes = inputStreamArgumentCaptor.getValue().readAllBytes();
+    byte[] bytes = blobStorageUploadStream.toByteArray();
 
     ByteArrayOutputStream localProcessStdIn = new ByteArrayOutputStream();
     when(localProcessLauncher.getOutputStream()).thenReturn(localProcessStdIn);
 
     ArgumentCaptor<OutputStream> outputStreamArgumentCaptor = ArgumentCaptor.forClass(OutputStream.class);
     doAnswer(invocation -> {
-      outputStreamArgumentCaptor.getValue().write(bytes);
+      // Written in analogy to the AzureBlobStorage implementation:
+      OutputStream toStream = outputStreamArgumentCaptor.getValue();
+      try (toStream) {
+        toStream.write(bytes);
+        toStream.flush();
+      }
       return null;
     }).when(storage).streamInputFromBlobStorage(outputStreamArgumentCaptor.capture(), any(), any(), any());
 
@@ -147,6 +161,7 @@ public class DatabaseServiceUnitTest {
             key,
             localProcessLauncher);
 
+    localProcessStdIn.flush();
     assertThat(localProcessStdIn.toByteArray(), equalTo(dumpContents));
   }
 
@@ -170,7 +185,6 @@ public class DatabaseServiceUnitTest {
     KeyGenerator kg;
     kg = KeyGenerator.getInstance("AES");
 
-
     kg.init(256, new SecureRandom());
     SecretKey secretKey = kg.generateKey();
     return Base64.getEncoder().encodeToString(secretKey.getEncoded());
@@ -182,23 +196,54 @@ public class DatabaseServiceUnitTest {
   }
 
   @Test
-  void test200RandomPrintableCharacterRoundTripRandomKey() throws Exception {
-    testDumpRestoreEncryptDecryptRoundTrip(generateRandomPrintableString(200).getBytes(), generateKeyString());
-  }
-
-  @Test
   void test10000RandomPrintableCharacterRoundTripRandomKey() throws Exception {
-    testDumpRestoreEncryptDecryptRoundTrip(generateRandomPrintableString(10000).getBytes(), generateKeyString());
-  }
-
-  @Test
-  void test200RandomBytesRoundTripRandomKey() throws Exception {
-    testDumpRestoreEncryptDecryptRoundTrip(generateRandomBytes(200), generateKeyString());
+    testDumpRestoreEncryptDecryptRoundTrip(generateRandomPrintableString(10003).getBytes(), generateKeyString());
   }
 
   @Test
   void test10000RandomBytesRoundTripRandomKey() throws Exception {
-    testDumpRestoreEncryptDecryptRoundTrip(generateRandomBytes(10000), generateKeyString());
+    testDumpRestoreEncryptDecryptRoundTrip(generateRandomBytes(10016), generateKeyString());
   }
 
+  @Test
+  void test0To200LengthRandomByteRoundTrips() {
+    List<Integer> failedLengths = new ArrayList<>();
+    int successes = 0;
+
+    int min = 0;
+    int max = 200;
+
+    for (int testCase = min; testCase < max; testCase++) {
+      try {
+        testDumpRestoreEncryptDecryptRoundTrip(generateRandomBytes(testCase), generateKeyString());
+        successes++;
+      } catch (Exception e) {
+        failedLengths.add(testCase);
+      }
+    }
+
+    assertThat(successes, equalTo(max - min));
+    assertThat(failedLengths, equalTo(List.of()));
+  }
+
+  @Test
+  void test0To200LengthPrintableCharacterRoundTrips() {
+    List<Integer> failedLengths = new ArrayList<>();
+    int successes = 0;
+
+    int min = 0;
+    int max = 200;
+
+    for (int testCase = min; testCase < max; testCase++) {
+      try {
+        testDumpRestoreEncryptDecryptRoundTrip(generateRandomPrintableString(testCase).getBytes(), generateKeyString());
+        successes++;
+      } catch (Exception e) {
+        failedLengths.add(testCase);
+      }
+    }
+
+    assertThat(successes, equalTo(max - min));
+    assertThat(failedLengths, equalTo(List.of()));
+  }
 }
