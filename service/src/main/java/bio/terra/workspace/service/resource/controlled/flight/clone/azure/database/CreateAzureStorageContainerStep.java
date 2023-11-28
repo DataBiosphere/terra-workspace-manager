@@ -112,7 +112,6 @@ public class CreateAzureStorageContainerStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  // Nothing to undo; can't undo a launch step
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     var userRequest =
