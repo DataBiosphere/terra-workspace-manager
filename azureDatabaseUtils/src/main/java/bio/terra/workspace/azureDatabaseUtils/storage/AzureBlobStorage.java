@@ -57,7 +57,6 @@ public class AzureBlobStorage implements BlobStorage {
             constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
     try (toStream) {
       blobContainerClient.getBlobClient(blobName).downloadStream(toStream);
-      toStream.flush();
     } catch (IOException ioEx) {
       throw new LaunchProcessException("Error streaming input to child process", ioEx);
     }
