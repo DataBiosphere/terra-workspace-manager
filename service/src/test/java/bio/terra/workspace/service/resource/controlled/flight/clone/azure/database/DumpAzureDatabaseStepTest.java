@@ -24,12 +24,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
-import bio.terra.workspace.service.resource.model.StewardshipType;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
@@ -122,20 +119,16 @@ public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         .thenReturn(mockUserRequest);
     when(mockInputParameters.get(ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.class))
         .thenReturn(mockDestinationWorkspaceId);
-    when(mockResourceDao.enumerateResources(
-            eq(mockDestinationWorkspaceId),
-            eq(WsmResourceFamily.AZURE_STORAGE_CONTAINER),
-            eq(StewardshipType.CONTROLLED),
-            anyInt(),
-            anyInt()))
+    when(mockWorkingMap.get(
+            ControlledResourceKeys.AZURE_STORAGE_CONTAINER,
+            ControlledAzureStorageContainerResource.class))
         .thenReturn(
-            List.of(
-                ControlledAzureStorageContainerResource.builder()
-                    .common(
-                        ControlledResourceFixtures.makeDefaultControlledResourceFields(
-                            mockDestinationWorkspaceId))
-                    .storageContainerName("sc-%s".formatted(mockDestinationWorkspaceId.toString()))
-                    .build()));
+            ControlledAzureStorageContainerResource.builder()
+                .common(
+                    ControlledResourceFixtures.makeDefaultControlledResourceFields(
+                        mockDestinationWorkspaceId))
+                .storageContainerName("sc-%s".formatted(mockDestinationWorkspaceId.toString()))
+                .build());
     when(mockAzureStorageAccessService.createAzureStorageContainerSasToken(
             eq(mockDestinationWorkspaceId),
             any(ControlledAzureStorageContainerResource.class),

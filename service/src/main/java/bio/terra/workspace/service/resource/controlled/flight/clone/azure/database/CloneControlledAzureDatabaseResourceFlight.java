@@ -92,9 +92,9 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
             RetryRules.cloud()),
         new StepRetryRulePair(
             new DeleteAzureStorageContainerStep(
-                    storageContainerName,
-                    destinationContainerId,
-                    flightBeanBag.getControlledResourceService()),
+                storageContainerName,
+                destinationContainerId,
+                flightBeanBag.getControlledResourceService()),
             RetryRules.cloud()));
   }
 }

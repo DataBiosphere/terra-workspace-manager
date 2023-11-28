@@ -63,7 +63,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseAzureUnitTest {
         .thenReturn("foo@gmail.com");
   }
 
-  private static ControlledAzureStorageContainerResource buildContainerResource(
+  static ControlledAzureStorageContainerResource buildContainerResource(
       String storageContainerName, String resourceName, UUID resourceId, UUID workspaceId) {
     return new ControlledAzureStorageContainerResource.Builder()
         .storageContainerName(storageContainerName)
