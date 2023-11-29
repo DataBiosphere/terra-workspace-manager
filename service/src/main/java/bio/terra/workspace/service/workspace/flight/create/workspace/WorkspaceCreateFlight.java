@@ -11,6 +11,7 @@ import bio.terra.workspace.common.utils.MakeFlightIdsStep;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.LinkSpendProfilePolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
@@ -64,6 +65,14 @@ public class WorkspaceCreateFlight extends Flight {
               new CreateWorkspacePoliciesStep(
                   workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
               serviceRetryRule);
+
+          addStep(
+              new LinkSpendProfilePolicyAttributesStep(
+                  workspace.workspaceId(),
+                  workspace.spendProfileId(),
+                  appContext.getTpsApiDispatch()),
+              serviceRetryRule);
+
           // If we're cloning, we need to copy the policies from the source workspace.
           // This is here instead of in the CloneWorkspaceFlight because we need to do it before
           // we create the workspace in Sam in case there are auth domains.
