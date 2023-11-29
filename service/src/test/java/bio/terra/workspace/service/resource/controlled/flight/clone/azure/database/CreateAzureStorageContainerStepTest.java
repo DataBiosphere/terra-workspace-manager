@@ -2,12 +2,14 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.datab
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseCreationParameters;
@@ -82,5 +84,36 @@ public class CreateAzureStorageContainerStepTest extends BaseMockitoStrictStubbi
     when(mockFlightContext.getInputParameters()).thenReturn(mockInputParameters);
 
     return mockFlightContext;
+  }
+
+  @Test
+  void undoStep_deletesContainer() throws InterruptedException {
+    var createdContainer =
+        DeleteAzureStorageContainerStepTest.buildContainerResource(
+            "fake-container",
+            storageContainerName,
+            destinationContainerId,
+            mockDestinationWorkspaceId);
+
+    when(mockFlightContext.getInputParameters()).thenReturn(mockInputParameters);
+    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
+    when(mockInputParameters.get(
+            JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class))
+        .thenReturn(mockUserRequest);
+    when(mockWorkingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_STORAGE_CONTAINER,
+            ControlledAzureStorageContainerResource.class))
+        .thenReturn(createdContainer);
+
+    var step =
+        new CreateAzureStorageContainerStep(
+            storageContainerName, destinationContainerId, mockControlledResourceService);
+
+    var result = step.undoStep(mockFlightContext);
+
+    assertEquals(StepStatus.STEP_RESULT_SUCCESS, result.getStepStatus());
+    verify(mockControlledResourceService)
+        .deleteControlledResourceSync(
+            eq(mockDestinationWorkspaceId), eq(destinationContainerId), eq(false), any());
   }
 }
