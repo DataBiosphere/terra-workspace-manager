@@ -3,6 +3,11 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
+      ref:
+        description: "The branch, tag or SHA to checkout"
+        default: ''
+        required: false
+        type: string
       dry-run:
         description: "Determine the next version without tagging the branch. The workflow can use the outputs new_tag and tag in subsequent steps. Possible values are true and false (default)"
         default: false
@@ -38,6 +43,7 @@ jobs:
       - name: Checkout current code
         uses: actions/checkout@v3
         with:
+          ref: ${{ inputs.ref }}
           token: ${{ secrets.BROADBOT_TOKEN }} # this allows the push to succeed later
       - name: Bump the tag to a new version
         # https://github.com/DataBiosphere/github-actions/tree/master/actions/bumper
@@ -50,7 +56,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry-run }}
           RELEASE_BRANCHES: main
           VERSION_FILE_PATH: settings.gradle
-          VERSION_LINE_MATCH: "^\\s*gradle.ext.releaseVersion\\s*=\\s*'.*'"
+          VERSION_LINE_MATCH: "^\\s*gradle.ext.wsmVersion\\s*=\\s*\".*\""
           VERSION_SUFFIX: SNAPSHOT
       - name: Echo tag to console
         if: ${{ inputs.print-tag == 'true' }}

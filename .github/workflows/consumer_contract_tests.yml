@@ -63,6 +63,9 @@ jobs:
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
     uses: ./.github/workflows/tag.yml
     with:
+      # The 'ref' parameter ensures that the consumer version is postfixed with the HEAD commit of the PR branch,
+      # facilitating cross-referencing of a pact between Pact Broker and GitHub.
+      ref: ${{ github.head_ref || '' }}
       dry-run: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     secrets: inherit
 
