@@ -66,7 +66,7 @@ public class ProfileApiTest {
             .uuid("id");
     return builder
         .given("a GCP billing profile")
-        .uponReceiving("A request to retrieve a billing profile noop change")
+        .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
         .pathFromProviderState(
             "/api/profiles/v1/${gcpProfileId}",
