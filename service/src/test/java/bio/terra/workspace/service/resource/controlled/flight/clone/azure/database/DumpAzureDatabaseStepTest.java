@@ -133,8 +133,8 @@ public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
                 .storageContainerName("sc-%s".formatted(mockDestinationWorkspaceId.toString()))
                 .build());
     when(mockWorkingMap.get(
-          WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
-          String.class))
+            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
+            String.class))
         .thenReturn(mockEncryptionKey);
     when(mockAzureStorageAccessService.createAzureStorageContainerSasToken(
             eq(mockDestinationWorkspaceId),

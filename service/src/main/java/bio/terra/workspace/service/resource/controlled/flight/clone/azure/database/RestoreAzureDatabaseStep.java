@@ -102,8 +102,9 @@ public class RestoreAzureDatabaseStep implements Step {
                 .orElseThrow(
                     () -> new RuntimeException("No shared database admin identity found")));
     var dumpEncryptionKey =
-            workingMap.get(
-                    WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY, String.class);
+        workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
+            String.class);
 
     this.azureDatabaseUtilsRunner.pgRestoreDatabase(
         workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class),

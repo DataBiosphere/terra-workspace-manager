@@ -5,13 +5,8 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobStorageException;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -35,16 +30,11 @@ public class AzureBlobStorage implements BlobStorage {
    */
 
   public OutputStream getBlobStorageUploadOutputStream(
-          String blobName,
-          String blobContainerName,
-          String blobContainerUrlAuthenticated) {
+      String blobName, String blobContainerName, String blobContainerUrlAuthenticated) {
     BlobContainerClient blobContainerClient =
-            constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
+        constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
     // https://learn.microsoft.com/en-us/java/api/overview/azure/storage-blob-readme?view=azure-java-stable#upload-a-blob-via-an-outputstream
-    return blobContainerClient
-            .getBlobClient(blobName)
-            .getBlockBlobClient()
-            .getBlobOutputStream();
+    return blobContainerClient.getBlobClient(blobName).getBlockBlobClient().getBlobOutputStream();
   }
 
   @Override
@@ -54,7 +44,7 @@ public class AzureBlobStorage implements BlobStorage {
       String blobContainerName,
       String blobContainerUrlAuthenticated) {
     BlobContainerClient blobContainerClient =
-            constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
+        constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
     try (toStream) {
       blobContainerClient.getBlobClient(blobName).downloadStream(toStream);
     } catch (IOException ioEx) {
@@ -67,7 +57,7 @@ public class AzureBlobStorage implements BlobStorage {
     // blobContainerUrlAuthenticated is a URL with a query parameter containing a SAS token
 
     BlobServiceClient blobServiceClient =
-            new BlobServiceClientBuilder().endpoint(blobContainerUrlAuthenticated).buildClient();
+        new BlobServiceClientBuilder().endpoint(blobContainerUrlAuthenticated).buildClient();
 
     try {
       // the way storage containers are set up in a workspace are as follows:

@@ -5,13 +5,14 @@ import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
 import bio.terra.workspace.azureDatabaseUtils.storage.BlobStorage;
 import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 import com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -19,8 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -115,14 +114,16 @@ public class DatabaseService {
     return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
   }
 
-  private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyBase64) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+  private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyBase64)
+      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
     Cipher c = Cipher.getInstance("AES");
     c.init(Cipher.ENCRYPT_MODE, encryptionKey);
     return new CipherOutputStream(origin, c);
   }
 
-  private InputStream decryptFromInputStream(InputStream origin, String encryptionKeyBase64) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+  private InputStream decryptFromInputStream(InputStream origin, String encryptionKeyBase64)
+      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
     Cipher c = Cipher.getInstance("AES");
     c.init(Cipher.DECRYPT_MODE, encryptionKey);
@@ -139,7 +140,8 @@ public class DatabaseService {
       String blobContainerUrlAuthenticated,
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-          throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IOException {
+      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          IOException {
 
     // Grant the database role (dbName) to the landing zone identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -160,10 +162,14 @@ public class DatabaseService {
 
     localProcessLauncher.launchProcess(commandList, envVars);
 
-    // Stream wrapping is confusing, so in English: local process output -> encryption -> base64 encoding -> blob storage
-    try(OutputStream blobOutputStream = storage.getBlobStorageUploadOutputStream(blobFileName, blobContainerName, blobContainerUrlAuthenticated)) {
-      try(OutputStream encoderWrappedOutputStream = Base64.getEncoder().wrap(blobOutputStream)) {
-        try(OutputStream encryptedBlobOutputStream = encryptIntoOutputStream(encoderWrappedOutputStream, encryptionKeyBase64)) {
+    // Stream wrapping is confusing, so in English: local process output -> encryption -> base64
+    // encoding -> blob storage
+    try (OutputStream blobOutputStream =
+        storage.getBlobStorageUploadOutputStream(
+            blobFileName, blobContainerName, blobContainerUrlAuthenticated)) {
+      try (OutputStream encoderWrappedOutputStream = Base64.getEncoder().wrap(blobOutputStream)) {
+        try (OutputStream encryptedBlobOutputStream =
+            encryptIntoOutputStream(encoderWrappedOutputStream, encryptionKeyBase64)) {
           localProcessLauncher.getInputStream().transferTo(encryptedBlobOutputStream);
           encryptedBlobOutputStream.flush();
         }
@@ -183,7 +189,8 @@ public class DatabaseService {
       String blobContainerUrlAuthenticated,
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-          throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IOException {
+      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          IOException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -199,25 +206,36 @@ public class DatabaseService {
     Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
 
     logger.info(
-            "Streaming DatabaseService.pgRestore input from blob file {} in container: {}",
-            blobFileName,
-            blobContainerName);
+        "Streaming DatabaseService.pgRestore input from blob file {} in container: {}",
+        blobFileName,
+        blobContainerName);
 
     localProcessLauncher.launchProcess(commandList, envVars);
 
-    // Stream wrapping is confusing, so in English: blob storage > base 64 decoding > decryption > local process input
-    // NB we use the pipes to receive blob storage via an output stream and convert that into an input stream for the subsequent processing
-    // NB we use a separate thread to handle the download so that we can be downloading and sending to the thread in parallel
-    try(PipedOutputStream blobStorageReceiver = new PipedOutputStream(); PipedInputStream blobStorageReplayer = new PipedInputStream(blobStorageReceiver, 2048)) {
-        try(InputStream decoderWrappedInputStream = Base64.getDecoder().wrap(blobStorageReplayer)) {
-            try(InputStream decryptedBlobInputStream = decryptFromInputStream(decoderWrappedInputStream, encryptionKeyBase64)) {
-              Runnable downloadThread = () -> storage.streamInputFromBlobStorage(blobStorageReceiver, blobFileName, blobContainerName, blobContainerUrlAuthenticated);
-              Thread downloadThreadInstance = new Thread(downloadThread);
-              downloadThreadInstance.start();
+    // Stream wrapping is confusing, so in English: blob storage > base 64 decoding > decryption >
+    // local process input
+    // NB we use the pipes to receive blob storage via an output stream and convert that into an
+    // input stream for the subsequent processing
+    // NB we use a separate thread to handle the download so that we can be downloading and sending
+    // to the thread in parallel
+    try (PipedOutputStream blobStorageReceiver = new PipedOutputStream();
+        PipedInputStream blobStorageReplayer = new PipedInputStream(blobStorageReceiver, 2048)) {
+      try (InputStream decoderWrappedInputStream = Base64.getDecoder().wrap(blobStorageReplayer)) {
+        try (InputStream decryptedBlobInputStream =
+            decryptFromInputStream(decoderWrappedInputStream, encryptionKeyBase64)) {
+          Runnable downloadThread =
+              () ->
+                  storage.streamInputFromBlobStorage(
+                      blobStorageReceiver,
+                      blobFileName,
+                      blobContainerName,
+                      blobContainerUrlAuthenticated);
+          Thread downloadThreadInstance = new Thread(downloadThread);
+          downloadThreadInstance.start();
 
-              decryptedBlobInputStream.transferTo(localProcessLauncher.getOutputStream());
-            }
+          decryptedBlobInputStream.transferTo(localProcessLauncher.getOutputStream());
         }
+      }
     }
     localProcessLauncher.getOutputStream().flush();
 

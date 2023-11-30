@@ -1,27 +1,27 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.*;
+
 import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
 import bio.terra.workspace.azureDatabaseUtils.storage.BlobStorage;
 import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.security.SecureRandom;
 import java.util.*;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.Mockito.*;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 public class DatabaseServiceDumpRestoreTest {
 
   static class TestableDatabaseService extends DatabaseService {
-    public TestableDatabaseService(DatabaseDao databaseDao, Validator validator, BlobStorage blobStorage) {
+    public TestableDatabaseService(
+        DatabaseDao databaseDao, Validator validator, BlobStorage blobStorage) {
       super(databaseDao, validator, blobStorage);
     }
 
@@ -41,17 +41,20 @@ public class DatabaseServiceDumpRestoreTest {
     Validator validator = mock(Validator.class);
     BlobStorage storage = mock(BlobStorage.class);
     LocalProcessLauncher localProcessLauncher = mock(LocalProcessLauncher.class);
-    DatabaseService testDatabaseService = new TestableDatabaseService(databaseDao, validator, storage);
+    DatabaseService testDatabaseService =
+        new TestableDatabaseService(databaseDao, validator, storage);
 
     doNothing().when(databaseDao).grantRole(any(), any());
     doNothing().when(localProcessLauncher).launchProcess(any(), any());
 
-    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("MYTESTINPUTCONTENT".getBytes());
+    ByteArrayInputStream byteArrayInputStream =
+        new ByteArrayInputStream("MYTESTINPUTCONTENT".getBytes());
     System.out.println(byteArrayInputStream.available());
     when(localProcessLauncher.getInputStream()).thenReturn(byteArrayInputStream);
 
     ByteArrayOutputStream blobStorageUploadStream = new ByteArrayOutputStream();
-    when(storage.getBlobStorageUploadOutputStream(any(), any(), any())).thenReturn(blobStorageUploadStream);
+    when(storage.getBlobStorageUploadOutputStream(any(), any(), any()))
+        .thenReturn(blobStorageUploadStream);
 
     testDatabaseService.pgDump(
         "testdb",
@@ -63,7 +66,6 @@ public class DatabaseServiceDumpRestoreTest {
         "http://host.org",
         key,
         localProcessLauncher);
-
 
     System.out.println(byteArrayInputStream.available());
 
@@ -78,8 +80,8 @@ public class DatabaseServiceDumpRestoreTest {
     BlobStorage storage = mock(BlobStorage.class);
     LocalProcessLauncher localProcessLauncher = mock(LocalProcessLauncher.class);
 
-    DatabaseService testDatabaseService = new TestableDatabaseService(databaseDao, validator, storage);
-
+    DatabaseService testDatabaseService =
+        new TestableDatabaseService(databaseDao, validator, storage);
 
     doNothing().when(databaseDao).grantRole(any(), any());
     doNothing().when(localProcessLauncher).launchProcess(any(), any());
@@ -87,22 +89,26 @@ public class DatabaseServiceDumpRestoreTest {
     ByteArrayOutputStream localProcessStdIn = new ByteArrayOutputStream();
     when(localProcessLauncher.getOutputStream()).thenReturn(localProcessStdIn);
 
-    ArgumentCaptor<OutputStream> outputStreamArgumentCaptor = ArgumentCaptor.forClass(OutputStream.class);
-    doAnswer(invocation -> {
-      outputStreamArgumentCaptor.getValue().write(ciphertext.getBytes());
-      return null;
-    }).when(storage).streamInputFromBlobStorage(outputStreamArgumentCaptor.capture(), any(), any(), any());
+    ArgumentCaptor<OutputStream> outputStreamArgumentCaptor =
+        ArgumentCaptor.forClass(OutputStream.class);
+    doAnswer(
+            invocation -> {
+              outputStreamArgumentCaptor.getValue().write(ciphertext.getBytes());
+              return null;
+            })
+        .when(storage)
+        .streamInputFromBlobStorage(outputStreamArgumentCaptor.capture(), any(), any(), any());
 
     testDatabaseService.pgRestore(
-            "testdb",
-            "http://host.org",
-            "5432",
-            "testuser",
-            "testfile",
-            "testcontainer",
-            "http://host.org",
-            key,
-            localProcessLauncher);
+        "testdb",
+        "http://host.org",
+        "5432",
+        "testuser",
+        "testfile",
+        "testcontainer",
+        "http://host.org",
+        key,
+        localProcessLauncher);
 
     assertThat(localProcessStdIn.toString(), equalTo(plaintext));
   }
@@ -112,7 +118,8 @@ public class DatabaseServiceDumpRestoreTest {
     Validator validator = mock(Validator.class);
     BlobStorage storage = mock(BlobStorage.class);
     LocalProcessLauncher localProcessLauncher = mock(LocalProcessLauncher.class);
-    DatabaseService testDatabaseService = new TestableDatabaseService(databaseDao, validator, storage);
+    DatabaseService testDatabaseService =
+        new TestableDatabaseService(databaseDao, validator, storage);
 
     doNothing().when(databaseDao).grantRole(any(), any());
     doNothing().when(localProcessLauncher).launchProcess(any(), any());
@@ -121,45 +128,50 @@ public class DatabaseServiceDumpRestoreTest {
     when(localProcessLauncher.getInputStream()).thenReturn(byteArrayInputStream);
 
     ByteArrayOutputStream blobStorageUploadStream = new ByteArrayOutputStream();
-    when(storage.getBlobStorageUploadOutputStream(any(), any(), any())).thenReturn(blobStorageUploadStream);
+    when(storage.getBlobStorageUploadOutputStream(any(), any(), any()))
+        .thenReturn(blobStorageUploadStream);
 
     testDatabaseService.pgDump(
-            "testdb",
-            "http://host.org",
-            "5432",
-            "testuser",
-            "testfile",
-            "testcontainer",
-            "http://host.org",
-            key,
-            localProcessLauncher);
+        "testdb",
+        "http://host.org",
+        "5432",
+        "testuser",
+        "testfile",
+        "testcontainer",
+        "http://host.org",
+        key,
+        localProcessLauncher);
 
     byte[] bytes = blobStorageUploadStream.toByteArray();
 
     ByteArrayOutputStream localProcessStdIn = new ByteArrayOutputStream();
     when(localProcessLauncher.getOutputStream()).thenReturn(localProcessStdIn);
 
-    ArgumentCaptor<OutputStream> outputStreamArgumentCaptor = ArgumentCaptor.forClass(OutputStream.class);
-    doAnswer(invocation -> {
-      // Written in analogy to the AzureBlobStorage implementation:
-      OutputStream toStream = outputStreamArgumentCaptor.getValue();
-      try (toStream) {
-        toStream.write(bytes);
-        toStream.flush();
-      }
-      return null;
-    }).when(storage).streamInputFromBlobStorage(outputStreamArgumentCaptor.capture(), any(), any(), any());
+    ArgumentCaptor<OutputStream> outputStreamArgumentCaptor =
+        ArgumentCaptor.forClass(OutputStream.class);
+    doAnswer(
+            invocation -> {
+              // Written in analogy to the AzureBlobStorage implementation:
+              OutputStream toStream = outputStreamArgumentCaptor.getValue();
+              try (toStream) {
+                toStream.write(bytes);
+                toStream.flush();
+              }
+              return null;
+            })
+        .when(storage)
+        .streamInputFromBlobStorage(outputStreamArgumentCaptor.capture(), any(), any(), any());
 
     testDatabaseService.pgRestore(
-            "testdb",
-            "http://host.org",
-            "5432",
-            "testuser",
-            "testfile",
-            "testcontainer",
-            "http://host.org",
-            key,
-            localProcessLauncher);
+        "testdb",
+        "http://host.org",
+        "5432",
+        "testuser",
+        "testfile",
+        "testcontainer",
+        "http://host.org",
+        key,
+        localProcessLauncher);
 
     localProcessStdIn.flush();
     assertThat(localProcessStdIn.toByteArray(), equalTo(dumpContents));
@@ -169,10 +181,11 @@ public class DatabaseServiceDumpRestoreTest {
     int leftLimit = 32; // space
     int rightLimit = 126; // tilde
 
-    return new Random().ints(leftLimit, rightLimit + 1)
-            .limit(length)
-            .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-            .toString();
+    return new Random()
+        .ints(leftLimit, rightLimit + 1)
+        .limit(length)
+        .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+        .toString();
   }
 
   private byte[] generateRandomBytes(int length) {
@@ -197,7 +210,8 @@ public class DatabaseServiceDumpRestoreTest {
 
   @Test
   void test10000RandomPrintableCharacterRoundTripRandomKey() throws Exception {
-    testDumpRestoreEncryptDecryptRoundTrip(generateRandomPrintableString(10003).getBytes(), generateKeyString());
+    testDumpRestoreEncryptDecryptRoundTrip(
+        generateRandomPrintableString(10003).getBytes(), generateKeyString());
   }
 
   @Test
@@ -236,7 +250,8 @@ public class DatabaseServiceDumpRestoreTest {
 
     for (int testCase = min; testCase < max; testCase++) {
       try {
-        testDumpRestoreEncryptDecryptRoundTrip(generateRandomPrintableString(testCase).getBytes(), generateKeyString());
+        testDumpRestoreEncryptDecryptRoundTrip(
+            generateRandomPrintableString(testCase).getBytes(), generateKeyString());
         successes++;
       } catch (Exception e) {
         failedLengths.add(testCase);

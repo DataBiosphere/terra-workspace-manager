@@ -103,8 +103,9 @@ public class DumpAzureDatabaseStep implements Step {
                     () -> new RuntimeException("No shared database admin identity found")));
 
     var dumpEncryptionKey =
-            workingMap.get(
-                    WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY, String.class);
+        workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
+            String.class);
     logger.info(
         "running DumpAzureDatabaseStep with blobContainerName {} and blobFileName {}",
         destinationContainer.getStorageContainerName(),

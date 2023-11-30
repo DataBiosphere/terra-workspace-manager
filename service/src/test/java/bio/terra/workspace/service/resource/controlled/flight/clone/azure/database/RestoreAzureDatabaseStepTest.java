@@ -118,8 +118,8 @@ public class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest 
             ControlledAzureDatabaseResource.class))
         .thenReturn(databaseResource);
     when(mockWorkingMap.get(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
-        String.class))
+            WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
+            String.class))
         .thenReturn(mockEncryptionKey);
     when(mockInputParameters.get(
             JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class))

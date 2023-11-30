@@ -2,17 +2,16 @@ package bio.terra.workspace.azureDatabaseUtils.runners;
 
 import bio.terra.workspace.azureDatabaseUtils.database.DatabaseService;
 import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import javax.crypto.NoSuchPaddingException;
 import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
-import javax.crypto.NoSuchPaddingException;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 @Profile("PgRestoreDatabase")
 @Component
@@ -49,7 +48,9 @@ public class PgRestoreDatabaseRunner implements ApplicationRunner {
   }
 
   @Override
-  public void run(ApplicationArguments args) throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IOException {
+  public void run(ApplicationArguments args)
+      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          IOException {
     LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
     databaseService.pgRestore(
         dbName,
