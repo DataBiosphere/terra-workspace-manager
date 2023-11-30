@@ -101,6 +101,9 @@ public class RestoreAzureDatabaseStep implements Step {
                 .getSharedDatabaseAdminIdentity(bearerToken, landingZoneId)
                 .orElseThrow(
                     () -> new RuntimeException("No shared database admin identity found")));
+    var dumpEncryptionKey =
+            workingMap.get(
+                    WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY, String.class);
 
     this.azureDatabaseUtilsRunner.pgRestoreDatabase(
         workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
@@ -111,7 +114,8 @@ public class RestoreAzureDatabaseStep implements Step {
         adminDbUserName,
         blobFileName,
         destinationContainer.getStorageContainerName(),
-        blobContainerUrlAuthenticated);
+        blobContainerUrlAuthenticated,
+        dumpEncryptionKey);
 
     return StepResult.getStepResultSuccess();
   }

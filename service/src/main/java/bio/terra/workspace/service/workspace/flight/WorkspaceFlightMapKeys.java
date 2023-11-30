@@ -72,6 +72,7 @@ public final class WorkspaceFlightMapKeys {
     public static final String CONTROL_PLANE_PROJECT_ID = "controlPlaneProjectId";
     public static final String DESTINATION_BUCKET_NAME = "destinationBucketName";
     public static final String CLONE_DB_DUMPFILE = "cloneDbDumpfile";
+    public static final String CLONE_DB_DUMP_ENCRYPTION_KEY = "cloneDbDumpEncryptionKey";
 
     public static final String SIGNED_URL_LIST = "signedUrlList";
     public static final String DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST =
