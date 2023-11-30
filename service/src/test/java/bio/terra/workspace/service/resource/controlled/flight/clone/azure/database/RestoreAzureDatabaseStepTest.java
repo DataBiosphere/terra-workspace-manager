@@ -24,6 +24,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.database.Azur
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.Optional;
@@ -62,6 +63,7 @@ public class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest 
       ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
               creationParameters, mockDestinationWorkspaceId, null)
           .build();
+  private final String mockEncryptionKey = "mock-encryption-key-123";
 
   @Test
   void testSuccess() throws InterruptedException {
@@ -78,7 +80,8 @@ public class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest 
             databaseUserName,
             "dumpfile-foo.dump",
             "sc-%s".formatted(mockDestinationWorkspaceId),
-            mockSasBundle.sasUrl());
+            mockSasBundle.sasUrl(),
+            mockEncryptionKey);
   }
 
   @NotNull
@@ -114,6 +117,10 @@ public class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest 
             ControlledResourceKeys.CLONED_RESOURCE_DEFINITION,
             ControlledAzureDatabaseResource.class))
         .thenReturn(databaseResource);
+    when(mockWorkingMap.get(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
+        String.class))
+        .thenReturn(mockEncryptionKey);
     when(mockInputParameters.get(
             JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class))
         .thenReturn(mockUserRequest);

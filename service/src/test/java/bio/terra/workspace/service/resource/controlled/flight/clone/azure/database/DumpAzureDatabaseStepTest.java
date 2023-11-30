@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.database.Azur
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.Optional;
@@ -66,6 +67,7 @@ public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
       ControlledAzureResourceFixtures.makePrivateControlledAzureDatabaseResourceBuilder(
               creationParameters, workspaceId, null)
           .build();
+  private final String mockEncryptionKey = "mock-encryption-key-123";
 
   @Test
   void testSuccess() throws InterruptedException {
@@ -93,7 +95,8 @@ public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
             eq(databaseUserName),
             argThat(matchesDumpFile),
             eq("sc-%s".formatted(mockDestinationWorkspaceId)),
-            eq(mockSasBundle.sasUrl()));
+            eq(mockSasBundle.sasUrl()),
+            eq(mockEncryptionKey));
   }
 
   @NotNull
@@ -129,6 +132,10 @@ public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
                         mockDestinationWorkspaceId))
                 .storageContainerName("sc-%s".formatted(mockDestinationWorkspaceId.toString()))
                 .build());
+    when(mockWorkingMap.get(
+          WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
+          String.class))
+        .thenReturn(mockEncryptionKey);
     when(mockAzureStorageAccessService.createAzureStorageContainerSasToken(
             eq(mockDestinationWorkspaceId),
             any(ControlledAzureStorageContainerResource.class),
