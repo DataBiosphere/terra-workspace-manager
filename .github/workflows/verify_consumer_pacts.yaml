@@ -210,7 +210,7 @@ jobs:
         # pactbroker.{host, scheme}
         # pactbroker.auth.{username, password}
         env:
-          PACT_BROKER_URL: pact-broker.dsp-eng-tools.broadinstitute.org
+          PACT_BROKER_URL: 'https://pact-broker.dsp-eng-tools.broadinstitute.org'
           PACT_PROVIDER_VERSION: ${{ env.PROVIDER_VERSION }}
           PACT_PROVIDER_BRANCH:  ${{ env.PROVIDER_BRANCH }}
           PACT_BROKER_USERNAME:  ${{ secrets.PACT_BROKER_USERNAME }}
