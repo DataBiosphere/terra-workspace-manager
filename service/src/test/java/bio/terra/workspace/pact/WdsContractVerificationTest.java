@@ -81,6 +81,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class WdsContractVerificationTest extends BaseUnitTestMocks {
   // a randomly generated UUID that spans multiple stateful contract calls
   private static final UUID STORAGE_CONTAINER_RESOURCE_ID = UUID.randomUUID();
+  private static final String CONSUMER_BRANCH = System.getenv("CONSUMER_BRANCH");
 
   @Autowired private MockMvc mockMvc;
 
@@ -107,7 +108,17 @@ public class WdsContractVerificationTest extends BaseUnitTestMocks {
     // runs, and your consumer is publishing such Pacts under their feature branch name, you can add
     // the following to the SelectorBuilder:
     //   .branch("consumer-feature-branch-name")
-    return new SelectorBuilder().mainBranch().deployedOrReleased();
+    // Updated comments
+    // The following match condition basically says
+    // If verification is triggered by Pact Broker webhook due to consumer pact change, verify only
+    // the changed pact.
+    // Otherwise, this is a PR, verify all consumer pacts in Pact Broker marked with a deployment
+    // tag (e.g. dev, alpha).
+    if (StringUtils.isBlank(CONSUMER_BRANCH)) {
+      return new SelectorBuilder().mainBranch().deployedOrReleased();
+    } else {
+      return new SelectorBuilder().branch(CONSUMER_BRANCH);
+    }
   }
 
   @BeforeEach
