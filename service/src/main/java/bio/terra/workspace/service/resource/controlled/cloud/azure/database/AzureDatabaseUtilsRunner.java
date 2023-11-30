@@ -155,8 +155,7 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
             new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
             new V1EnvVar().name(PARAM_BLOB_FILE_NAME).value(blobFileName),
-            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName)
-        );
+            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName));
 
     final Map<String, String> secretStringData =
         Map.ofEntries(
@@ -190,8 +189,7 @@ public class AzureDatabaseUtilsRunner {
             new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName),
             new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(dbUserName),
             new V1EnvVar().name(PARAM_BLOB_FILE_NAME).value(blobFileName),
-            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName)
-        );
+            new V1EnvVar().name(PARAM_BLOB_CONTAINER_NAME).value(blobContainerName));
 
     final Map<String, String> secretStringData =
         Map.ofEntries(
@@ -395,25 +393,19 @@ public class AzureDatabaseUtilsRunner {
 
     // strip underscores to avoid violating azure's naming conventions for pods
     var safePodName = podDefinition.getMetadata().getName();
-    var doSecretCleanup = false;
     if (getPodDefinitionEnvVarsWithSecretRefs(podDefinition).size() > 0
         && secretStringData.isEmpty()) {
       throw new RuntimeException(
           "definition of pod {} contains env vars that refer to secrets, but no secret data was provided."
               .formatted(safePodName));
-    } else if (secretStringData.size() > 0) {
-      try {
-        createSecret(
-            aksApi,
-            secretStringData,
-            safePodName, // give the secret the same name as the pod
-            namespace);
-      } catch (ApiException e) {
-        throw new RetryException(e);
-      }
     }
 
     try {
+      createSecret(
+          aksApi,
+          secretStringData,
+          safePodName, // give the secret the same name as the pod
+          namespace);
       startContainer(aksApi, podDefinition, namespace);
       var finalPhase = waitForContainer(aksApi, safePodName, namespace);
       if (finalPhase.stream().anyMatch(phase -> phase.equals(POD_FAILED))) {
@@ -430,7 +422,7 @@ public class AzureDatabaseUtilsRunner {
           workspaceId,
           namespace);
       deleteContainer(aksApi, safePodName, namespace);
-      deleteSecret(aksApi, safePodName, namespace);
+      deleteSecret(aksApi, secretStringData, safePodName, namespace);
     }
   }
 
@@ -438,27 +430,35 @@ public class AzureDatabaseUtilsRunner {
       CoreV1Api aksApi, Map<String, String> secretStringData, String secretName, String namespace)
       throws ApiException {
 
-    final V1Secret secretDefinition = new V1Secret().metadata(new V1ObjectMeta().name(secretName));
-    secretStringData.forEach(secretDefinition::putStringDataItem);
+    if (secretStringData.size() > 0) {
+      final V1Secret secretDefinition =
+          new V1Secret().metadata(new V1ObjectMeta().name(secretName));
+      secretStringData.forEach(secretDefinition::putStringDataItem);
 
-    try {
-      logger.info("Creating secret {}", secretDefinition);
-      aksApi.createNamespacedSecret(namespace, secretDefinition, null, null, null, null);
-    } catch (ApiException e) {
-      var status = Optional.ofNullable(HttpStatus.resolve(e.getCode()));
-      // If the secret already exists, assume this is a retry.
-      if (status.stream().noneMatch(s -> s == HttpStatus.CONFLICT)) {
-        logger.error("Error in azure database utils; response = {}", e.getResponseBody(), e);
-        throw e;
+      try {
+        logger.info("Creating secret: {}", secretDefinition.getMetadata());
+        aksApi.createNamespacedSecret(namespace, secretDefinition, null, null, null, null);
+      } catch (ApiException e) {
+        var status = Optional.ofNullable(HttpStatus.resolve(e.getCode()));
+        // If the secret already exists, assume this is a retry.
+        if (status.stream().noneMatch(s -> s == HttpStatus.CONFLICT)) {
+          logger.error("Error in azure database utils; response = {}", e.getResponseBody(), e);
+          throw e;
+        }
       }
+    } else {
+      logger.info("Skipping secret creation; no data provided.");
     }
   }
 
-  private void deleteSecret(CoreV1Api aksApi, String secretName, String namespace) {
-    try {
-      aksApi.deleteNamespacedSecret(secretName, namespace, null, null, null, null, null, null);
-    } catch (ApiException e) {
-      logger.warn("Failed to delete azure database utils secret", e);
+  private void deleteSecret(
+      CoreV1Api aksApi, Map<String, String> secretStringData, String secretName, String namespace) {
+    if (secretStringData.size() > 0) {
+      try {
+        aksApi.deleteNamespacedSecret(secretName, namespace, null, null, null, null, null, null);
+      } catch (ApiException e) {
+        logger.warn("Failed to delete azure database utils secret", e);
+      }
     }
   }
 
