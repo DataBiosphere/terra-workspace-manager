@@ -117,20 +117,20 @@ jobs:
           fetch-depth: 0
 
       - name: Extract branch
-          id: extract-branch
-          run: |
-            GITHUB_EVENT_NAME=${{ github.event_name }}
-            if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-              GITHUB_REF=${{ github.ref }}
-            elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
-              GITHUB_REF=refs/heads/${{ github.head_ref }}
-            elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
-              GITHUB_REF=${{ github.ref }} # The Git Ref that this workflow runs on
-            else
-              echo "Failed to extract branch information"
-              exit 1
-            fi
-            echo "CURRENT_BRANCH=${GITHUB_REF/refs\/heads\//""}" >> $GITHUB_ENV
+        id: extract-branch
+        run: |
+          GITHUB_EVENT_NAME=${{ github.event_name }}
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            GITHUB_REF=${{ github.ref }}
+          elif [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            GITHUB_REF=refs/heads/${{ github.head_ref }}
+          elif [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            GITHUB_REF=${{ github.ref }} # The Git Ref that this workflow runs on
+          else
+            echo "Failed to extract branch information"
+            exit 1
+          fi
+          echo "CURRENT_BRANCH=${GITHUB_REF/refs\/heads\//""}" >> $GITHUB_ENV
 
       - name: Capture webhook event payload as envvars
         if: ${{ inputs.pb-event-type != '' }}
