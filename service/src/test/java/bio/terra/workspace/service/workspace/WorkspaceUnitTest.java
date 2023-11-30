@@ -18,14 +18,18 @@ import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoConflict;
 import bio.terra.policy.model.TpsPaoDescription;
+import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPaoUpdateResult;
+import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.StateDao;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.PolicyValidator;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
@@ -192,6 +196,50 @@ public class WorkspaceUnitTest extends BaseUnitTest {
   }
 
   @Test
+  void linkPolicies_groupConstraints() throws InterruptedException {
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    UUID sourceId = UUID.randomUUID();
+    var groupInput =
+        new TpsPolicyInput()
+            .namespace("terra")
+            .name("group-constraint")
+            .addAdditionalDataItem(new TpsPolicyPair().key("group").value("my-group"));
+    when(mockTpsApiDispatch().linkPao(workspace.workspaceId(), sourceId, TpsUpdateMode.DRY_RUN))
+        .thenReturn(
+            new TpsPaoUpdateResult()
+                .resultingPao(
+                    new TpsPaoGetResult()
+                        .effectiveAttributes(new TpsPolicyInputs().addInputsItem(groupInput)))
+                .conflicts(List.of())
+                .updateApplied(false));
+    when(mockTpsApiDispatch()
+            .linkPao(workspace.workspaceId(), sourceId, TpsUpdateMode.FAIL_ON_CONFLICT))
+        .thenReturn(
+            new TpsPaoUpdateResult()
+                .resultingPao(
+                    new TpsPaoGetResult()
+                        .effectiveAttributes(new TpsPolicyInputs().addInputsItem(groupInput)))
+                .conflicts(List.of())
+                .updateApplied(true));
+
+    workspaceService.linkPolicies(
+        workspace.workspaceId(),
+        new TpsPaoDescription()
+            .objectId(sourceId)
+            .component(TpsComponent.TDR)
+            .objectType(TpsObjectType.SNAPSHOT),
+        TpsUpdateMode.FAIL_ON_CONFLICT,
+        USER_REQUEST);
+
+    verify(mockSamService())
+        .addGroupsToAuthDomain(
+            USER_REQUEST,
+            SamConstants.SamResource.WORKSPACE,
+            workspace.workspaceId().toString(),
+            List.of("my-group"));
+  }
+
+  @Test
   void updatePolicies_dryRun() throws Exception {
     Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
     when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
@@ -292,5 +340,51 @@ public class WorkspaceUnitTest extends BaseUnitTest {
             OperationType.UPDATE,
             workspace.workspaceId().toString(),
             ActivityLogChangedTarget.POLICIES);
+  }
+
+  @Test
+  void updatePolicies_groupConstraints() throws InterruptedException {
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    when(mockWorkspaceDao.getWorkspace(workspace.workspaceId())).thenReturn(workspace);
+    var groupInput =
+        new TpsPolicyInput()
+            .namespace("terra")
+            .name("group-constraint")
+            .addAdditionalDataItem(new TpsPolicyPair().key("group").value("my-group"));
+    when(mockTpsApiDispatch()
+            .updatePao(eq(workspace.workspaceId()), any(), any(), eq(TpsUpdateMode.DRY_RUN)))
+        .thenReturn(
+            new TpsPaoUpdateResult()
+                .resultingPao(
+                    new TpsPaoGetResult()
+                        .effectiveAttributes(new TpsPolicyInputs().addInputsItem(groupInput)))
+                .conflicts(List.of())
+                .updateApplied(false));
+    when(mockTpsApiDispatch()
+            .updatePao(
+                eq(workspace.workspaceId()), any(), any(), eq(TpsUpdateMode.FAIL_ON_CONFLICT)))
+        .thenReturn(
+            new TpsPaoUpdateResult()
+                .resultingPao(
+                    new TpsPaoGetResult()
+                        .effectiveAttributes(new TpsPolicyInputs().addInputsItem(groupInput)))
+                .conflicts(List.of())
+                .updateApplied(true));
+    when(mockTpsApiDispatch().getPao(eq(workspace.workspaceId())))
+        .thenReturn(new TpsPaoGetResult().effectiveAttributes(new TpsPolicyInputs()));
+
+    workspaceService.updatePolicy(
+        workspace.workspaceId(),
+        new TpsPolicyInputs().addInputsItem(groupInput),
+        new TpsPolicyInputs(),
+        TpsUpdateMode.FAIL_ON_CONFLICT,
+        USER_REQUEST);
+
+    verify(mockSamService())
+        .addGroupsToAuthDomain(
+            USER_REQUEST,
+            SamConstants.SamResource.WORKSPACE,
+            workspace.workspaceId().toString(),
+            List.of("my-group"));
   }
 }
