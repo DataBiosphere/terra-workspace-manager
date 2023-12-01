@@ -28,6 +28,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
+import bio.terra.workspace.service.danglingresource.DanglingResourceCleanupService;
 import bio.terra.workspace.service.iam.AuthHeaderKeys;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -76,16 +77,20 @@ import org.springframework.test.web.servlet.MockMvc;
 })
 @Tag("pact-verification")
 @Provider("workspacemanager") // should match the terra chart name
-@PactBroker()
+@PactBroker(enablePendingPacts = "true", providerTags = "main")
 public class WdsContractVerificationTest extends BaseUnitTestMocks {
   // a randomly generated UUID that spans multiple stateful contract calls
   private static final UUID STORAGE_CONTAINER_RESOURCE_ID = UUID.randomUUID();
+  private static final String CONSUMER_BRANCH = System.getenv("CONSUMER_BRANCH");
 
   @Autowired private MockMvc mockMvc;
 
   // Mocked out to prevent an error with missing service credentials
   @MockBean(name = "postSetupInitialization")
   private SmartInitializingSingleton unusedSmartInitializingSingleton;
+
+  // Mocked out to prevent error trying to clean up nonexistent tables
+  @MockBean private DanglingResourceCleanupService unusedDanglingResourceCleanupService;
 
   @MockBean private WorkspaceActivityLogDao unusedWorkspaceActivityLogDao;
 
@@ -98,12 +103,16 @@ public class WdsContractVerificationTest extends BaseUnitTestMocks {
 
   @PactBrokerConsumerVersionSelectors
   public static SelectorBuilder consumerVersionSelectors() {
-    // Select consumer pacts published from default branch or pacts marked as deployed or released.
-    // If you wish to pick up Pacts from a consumer's feature branch for development purposes or PR
-    // runs, and your consumer is publishing such Pacts under their feature branch name, you can add
-    // the following to the SelectorBuilder:
-    //   .branch("consumer-feature-branch-name")
-    return new SelectorBuilder().mainBranch().deployedOrReleased();
+    // The following match condition basically says
+    // If verification is triggered by Pact Broker webhook due to consumer pact change, verify only
+    // the changed pact.
+    // Otherwise, this is a PR, verify all consumer pacts in Pact Broker marked with a deployment
+    // tag (e.g. dev, alpha).
+    if (StringUtils.isBlank(CONSUMER_BRANCH)) {
+      return new SelectorBuilder().mainBranch().deployedOrReleased();
+    } else {
+      return new SelectorBuilder().branch(CONSUMER_BRANCH);
+    }
   }
 
   @BeforeEach
