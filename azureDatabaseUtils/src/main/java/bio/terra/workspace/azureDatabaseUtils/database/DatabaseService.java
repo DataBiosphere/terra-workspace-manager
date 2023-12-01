@@ -11,10 +11,7 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.*;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -22,11 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
+import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.postgresql.plugin.AuthenticationRequestType;
@@ -112,34 +105,62 @@ public class DatabaseService {
     databaseDao.restoreLoginPrivileges(namespaceRole);
   }
 
-  private SecretKey decodeBase64Key(String encryptionKeyBase64) {
-    byte[] decodedKey = Base64.getDecoder().decode(encryptionKeyBase64);
-    return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
-  }
-
   private byte[] getRandomIVWithSize(int size) {
     byte[] iv = new byte[size];
     new SecureRandom().nextBytes(iv);
     return iv;
   }
 
-  private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyBase64)
-      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          InvalidAlgorithmParameterException {
-    SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
-    Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
-    byte[] iv = getRandomIVWithSize(12); // GCM recommended IV size is 12
-    c.init(Cipher.ENCRYPT_MODE, encryptionKey, new GCMParameterSpec(128, iv));
+  record KeyAndIv(SecretKey key, byte[] iv) {
+    static KeyAndIv fromBase64(String encryptionKeyBase64) {
+      byte[] decodedKeyAndIv = Base64.getDecoder().decode(encryptionKeyBase64);
+
+      // The first 256 bits (32 bytes) of the decoded string are the key:
+      SecretKey key = new SecretKeySpec(decodedKeyAndIv, 0, 32, "AES");
+
+      // The remaining 96 bits (12 bytes) are the IV:
+      byte[] iv = new byte[12];
+      System.arraycopy(decodedKeyAndIv, 32, iv, 0, 12);
+      return new KeyAndIv(key, iv);
+    }
+
+    String toBase64() {
+      byte[] keyBytes = key.getEncoded();
+      byte[] keyAndIvBytes = new byte[keyBytes.length + iv.length];
+      System.arraycopy(keyBytes, 0, keyAndIvBytes, 0, keyBytes.length);
+      System.arraycopy(iv, 0, keyAndIvBytes, keyBytes.length, iv.length);
+      return Base64.getEncoder().encodeToString(keyAndIvBytes);
+    }
+
+    public static KeyAndIv random() throws NoSuchAlgorithmException, NoSuchProviderException {
+      KeyGenerator kg;
+      kg = KeyGenerator.getInstance("AES", "BCFIPS");
+
+      kg.init(256, new SecureRandom());
+      SecretKey secretKey = kg.generateKey();
+
+      byte[] iv = new byte[12];
+      new SecureRandom().nextBytes(iv);
+
+      return new KeyAndIv(secretKey, iv);
+    }
+  }
+
+  private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyAndIvBase64)
+          throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          InvalidAlgorithmParameterException, NoSuchProviderException {
+    KeyAndIv keyAndIv = KeyAndIv.fromBase64(encryptionKeyAndIvBase64);
+    Cipher c = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
+    c.init(Cipher.ENCRYPT_MODE, keyAndIv.key(), new GCMParameterSpec(128, keyAndIv.iv()));
     return new CipherOutputStream(origin, c);
   }
 
   private InputStream decryptFromInputStream(InputStream origin, String encryptionKeyBase64)
-      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          InvalidAlgorithmParameterException {
-    SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
-    Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
-    byte[] iv = getRandomIVWithSize(12); // GCM recommended IV size is 12
-    c.init(Cipher.DECRYPT_MODE, encryptionKey, new GCMParameterSpec(128, iv));
+          throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          InvalidAlgorithmParameterException, NoSuchProviderException {
+    KeyAndIv keyAndIv = KeyAndIv.fromBase64(encryptionKeyBase64);
+    Cipher c = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
+    c.init(Cipher.DECRYPT_MODE, keyAndIv.key(), new GCMParameterSpec(128, keyAndIv.iv()));
     return new CipherInputStream(origin, c);
   }
 
@@ -153,8 +174,8 @@ public class DatabaseService {
       String blobContainerUrlAuthenticated,
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException, InvalidAlgorithmParameterException {
+          throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          IOException, InvalidAlgorithmParameterException, NoSuchProviderException {
 
     // Grant the database role (dbName) to the landing zone identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -202,8 +223,8 @@ public class DatabaseService {
       String blobContainerUrlAuthenticated,
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException, InvalidAlgorithmParameterException {
+          throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          IOException, InvalidAlgorithmParameterException, NoSuchProviderException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
