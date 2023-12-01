@@ -245,7 +245,7 @@ public class DatabaseService {
   public List<String> generateCommandList(
       String pgCommandPath, String dbName, String dbHost, String dbPort, String dbUser) {
     Map<String, String> command = new LinkedHashMap<>();
-
+    validator.validateDatabaseNameFormat(dbName);
     command.put(pgCommandPath, null);
     if (pgCommandPath.contains("pg_dump")) {
       command.put("-b", null);
