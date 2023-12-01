@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 @Tag("azure-unit")
-public class DeleteAzureStorageContainerStepTest extends BaseAzureUnitTest {
+class DeleteAzureStorageContainerStepTest extends BaseAzureUnitTest {
 
   private UUID resourceId;
   private String resourceName;

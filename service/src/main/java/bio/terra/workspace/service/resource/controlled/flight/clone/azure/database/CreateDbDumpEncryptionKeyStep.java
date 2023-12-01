@@ -10,12 +10,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class CreateDbDumpEncryptionKeyStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(CreateDbDumpEncryptionKeyStep.class);
-
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
 

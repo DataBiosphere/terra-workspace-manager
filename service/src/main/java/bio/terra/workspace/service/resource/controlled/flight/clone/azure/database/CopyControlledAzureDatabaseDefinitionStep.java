@@ -122,7 +122,7 @@ public class CopyControlledAzureDatabaseDefinitionStep implements Step {
       controlledResourceService.createControlledResourceSync(
           destinationDatabaseResource, iamRole, userRequest, destinationCreationParameters);
     } catch (DuplicateResourceException e) {
-      // We are catching DuplicateResourceException here since we check for the container's presence
+      // We are catching DuplicateResourceException here since we check for the database's presence
       // earlier in the parent flight of this step and bail out if it already exists.
       // A duplicate resource being present in this context means we are in a retry and can move on
       logger.info(

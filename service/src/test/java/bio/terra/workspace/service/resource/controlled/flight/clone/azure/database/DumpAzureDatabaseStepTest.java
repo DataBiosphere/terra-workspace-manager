@@ -37,7 +37,7 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 
 @Tag("azure-unit")
-public class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
+class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
   @Mock private SamService mockSamService;
   @Mock private WorkspaceService mockWorkspaceService;

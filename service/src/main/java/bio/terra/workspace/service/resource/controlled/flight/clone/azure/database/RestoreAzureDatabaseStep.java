@@ -21,11 +21,8 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RestoreAzureDatabaseStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(RestoreAzureDatabaseStep.class);
 
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;

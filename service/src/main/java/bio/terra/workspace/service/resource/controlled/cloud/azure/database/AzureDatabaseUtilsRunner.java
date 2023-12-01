@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -393,11 +392,12 @@ public class AzureDatabaseUtilsRunner {
 
     // strip underscores to avoid violating azure's naming conventions for pods
     var safePodName = podDefinition.getMetadata().getName();
-    if (getPodDefinitionEnvVarsWithSecretRefs(podDefinition).size() > 0
+    if (!getPodDefinitionEnvVarsWithSecretRefs(podDefinition).isEmpty()
         && secretStringData.isEmpty()) {
       throw new RuntimeException(
-          "definition of pod {} contains env vars that refer to secrets, but no secret data was provided."
-              .formatted(safePodName));
+          String.format(
+              "definition of pod %s contains env vars that refer to secrets, but no secret data was provided.",
+              safePodName));
     }
 
     try {
@@ -430,7 +430,7 @@ public class AzureDatabaseUtilsRunner {
       CoreV1Api aksApi, Map<String, String> secretStringData, String secretName, String namespace)
       throws ApiException {
 
-    if (secretStringData.size() > 0) {
+    if (!secretStringData.isEmpty()) {
       final V1Secret secretDefinition =
           new V1Secret().metadata(new V1ObjectMeta().name(secretName));
       secretStringData.forEach(secretDefinition::putStringDataItem);
@@ -453,7 +453,7 @@ public class AzureDatabaseUtilsRunner {
 
   private void deleteSecret(
       CoreV1Api aksApi, Map<String, String> secretStringData, String secretName, String namespace) {
-    if (secretStringData.size() > 0) {
+    if (!secretStringData.isEmpty()) {
       try {
         aksApi.deleteNamespacedSecret(secretName, namespace, null, null, null, null, null, null);
       } catch (ApiException e) {
@@ -570,7 +570,7 @@ public class AzureDatabaseUtilsRunner {
             });
 
     final List<V1EnvVar> envVarsWithSecrets =
-        Stream.concat(envVars.stream(), secretEnvVars.stream()).collect(Collectors.toList());
+        Stream.concat(envVars.stream(), secretEnvVars.stream()).toList();
 
     return createPodDefinition(workspaceId, podName, envVarsWithSecrets);
   }
@@ -615,11 +615,11 @@ public class AzureDatabaseUtilsRunner {
                         .env(envVarsWithCommonArgs)));
   }
 
-  private List getPodDefinitionEnvVarsWithSecretRefs(V1Pod podDefinition) {
+  private List<V1EnvVar> getPodDefinitionEnvVarsWithSecretRefs(V1Pod podDefinition) {
     var container = podDefinition.getSpec().getContainers().get(0);
     return container.getEnv().stream()
         .filter(e -> e.getValueFrom() != null && e.getValueFrom().getSecretKeyRef() != null)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private String k8sSafeName(String name) {

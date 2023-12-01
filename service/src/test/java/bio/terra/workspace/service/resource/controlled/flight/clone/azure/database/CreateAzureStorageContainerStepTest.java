@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 @Tag("azure-unit")
-public class CreateAzureStorageContainerStepTest extends BaseMockitoStrictStubbingTest {
+class CreateAzureStorageContainerStepTest extends BaseMockitoStrictStubbingTest {
 
   @Mock private ControlledResourceService mockControlledResourceService;
   @Mock private ControlledResource mockControlledResource;

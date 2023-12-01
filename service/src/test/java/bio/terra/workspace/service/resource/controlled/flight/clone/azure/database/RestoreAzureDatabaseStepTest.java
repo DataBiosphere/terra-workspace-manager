@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 @Tag("azure-unit")
-public class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
+class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
   @Mock private SamService mockSamService;
   @Mock private WorkspaceService mockWorkspaceService;
