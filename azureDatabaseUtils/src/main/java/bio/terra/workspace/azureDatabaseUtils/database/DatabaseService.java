@@ -120,7 +120,7 @@ public class DatabaseService {
       throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
           InvalidAlgorithmParameterException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
-    Cipher c = Cipher.getInstance("AES/GCM/PKCS5Padding");
+    Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
     c.init(Cipher.ENCRYPT_MODE, encryptionKey, new GCMParameterSpec(128, c.getIV()));
     return new CipherOutputStream(origin, c);
   }
@@ -129,7 +129,7 @@ public class DatabaseService {
       throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
           InvalidAlgorithmParameterException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
-    Cipher c = Cipher.getInstance("AES/GCM/PKCS5Padding");
+    Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
     c.init(Cipher.DECRYPT_MODE, encryptionKey, new GCMParameterSpec(128, c.getIV()));
     return new CipherInputStream(origin, c);
   }
