@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -116,12 +117,19 @@ public class DatabaseService {
     return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
   }
 
+  private byte[] getRandomIVWithSize(int size) {
+    byte[] iv = new byte[size];
+    new SecureRandom().nextBytes(iv);
+    return iv;
+  }
+
   private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyBase64)
       throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
           InvalidAlgorithmParameterException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
     Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
-    c.init(Cipher.ENCRYPT_MODE, encryptionKey, new GCMParameterSpec(128, c.getIV()));
+    byte[] iv = getRandomIVWithSize(12); // GCM recommended IV size is 12
+    c.init(Cipher.ENCRYPT_MODE, encryptionKey, new GCMParameterSpec(128, iv));
     return new CipherOutputStream(origin, c);
   }
 
@@ -130,7 +138,8 @@ public class DatabaseService {
           InvalidAlgorithmParameterException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
     Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
-    c.init(Cipher.DECRYPT_MODE, encryptionKey, new GCMParameterSpec(128, c.getIV()));
+    byte[] iv = getRandomIVWithSize(12); // GCM recommended IV size is 12
+    c.init(Cipher.DECRYPT_MODE, encryptionKey, new GCMParameterSpec(128, iv));
     return new CipherInputStream(origin, c);
   }
 
