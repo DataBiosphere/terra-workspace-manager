@@ -103,12 +103,6 @@ public class WdsContractVerificationTest extends BaseUnitTestMocks {
 
   @PactBrokerConsumerVersionSelectors
   public static SelectorBuilder consumerVersionSelectors() {
-    // Select consumer pacts published from default branch or pacts marked as deployed or released.
-    // If you wish to pick up Pacts from a consumer's feature branch for development purposes or PR
-    // runs, and your consumer is publishing such Pacts under their feature branch name, you can add
-    // the following to the SelectorBuilder:
-    //   .branch("consumer-feature-branch-name")
-    // Updated comments
     // The following match condition basically says
     // If verification is triggered by Pact Broker webhook due to consumer pact change, verify only
     // the changed pact.
