@@ -120,7 +120,10 @@ public class RestoreAzureDatabaseStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Nothing to undo in this step
+    // In theory, the proper "undo" action for this step would be to drop the database tables,
+    // but leave the database intact. Instead, we rely on the fact that
+    // CopyControlledAzureDatabaseDefinitionStep.undoStep() deletes the entire database -
+    // so anytime this step would be undone, the database will be deleted anyway.
     return StepResult.getStepResultSuccess();
   }
 }

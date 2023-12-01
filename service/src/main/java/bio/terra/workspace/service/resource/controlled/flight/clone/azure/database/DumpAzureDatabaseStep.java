@@ -94,13 +94,13 @@ public class DumpAzureDatabaseStep implements Step {
         getResourceName(
             landingZoneApiDispatch
                 .getSharedDatabase(bearerToken, landingZoneId)
-                .orElseThrow(() -> new RuntimeException("No shared database found")));
+                .orElseThrow(() -> new IllegalStateException("No shared database found")));
     var adminDbUserName =
         getResourceName(
             landingZoneApiDispatch
                 .getSharedDatabaseAdminIdentity(bearerToken, landingZoneId)
                 .orElseThrow(
-                    () -> new RuntimeException("No shared database admin identity found")));
+                    () -> new IllegalStateException("No shared database admin identity found")));
 
     var dumpEncryptionKey =
         workingMap.get(

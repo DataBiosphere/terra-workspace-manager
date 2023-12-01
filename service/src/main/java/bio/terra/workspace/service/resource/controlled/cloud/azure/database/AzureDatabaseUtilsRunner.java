@@ -394,7 +394,7 @@ public class AzureDatabaseUtilsRunner {
     var safePodName = podDefinition.getMetadata().getName();
     if (!getPodDefinitionEnvVarsWithSecretRefs(podDefinition).isEmpty()
         && secretStringData.isEmpty()) {
-      throw new RuntimeException(
+      throw new IllegalStateException(
           String.format(
               "definition of pod %s contains env vars that refer to secrets, but no secret data was provided.",
               safePodName));
@@ -585,13 +585,13 @@ public class AzureDatabaseUtilsRunner {
         getResourceName(
             landingZoneApiDispatch
                 .getSharedDatabase(bearerToken, landingZoneId)
-                .orElseThrow(() -> new RuntimeException("No shared database found")));
+                .orElseThrow(() -> new IllegalStateException("No shared database found")));
     var adminDbUserName =
         getResourceName(
             landingZoneApiDispatch
                 .getSharedDatabaseAdminIdentity(bearerToken, landingZoneId)
                 .orElseThrow(
-                    () -> new RuntimeException("No shared database admin identity found")));
+                    () -> new IllegalStateException("No shared database admin identity found")));
 
     List<V1EnvVar> envVarsWithCommonArgs = new ArrayList<>();
     envVarsWithCommonArgs.add(new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName));

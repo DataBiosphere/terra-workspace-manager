@@ -25,6 +25,8 @@ public class DeleteAzureStorageContainerStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    // this is an unusual usage of the .undoStep method. ideally, storage container
+    // creation/deletion would be abstracted into a service-level method.
     return new CreateAzureStorageContainerStep(
             storageContainerName, resourceId, controlledResourceService)
         .undoStep(context);
