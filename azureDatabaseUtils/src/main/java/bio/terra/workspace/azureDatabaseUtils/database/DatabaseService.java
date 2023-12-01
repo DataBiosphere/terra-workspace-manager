@@ -160,6 +160,7 @@ public class DatabaseService {
         blobFileName,
         blobContainerName);
 
+    validator.validatePgDumpCommand(commandList);
     localProcessLauncher.launchProcess(commandList, envVars);
 
     // Stream wrapping is confusing, so in English: local process output -> encryption -> base64
@@ -210,6 +211,7 @@ public class DatabaseService {
         blobFileName,
         blobContainerName);
 
+    validator.validatePgRestoreCommand(commandList);
     localProcessLauncher.launchProcess(commandList, envVars);
 
     // Stream wrapping is confusing, so in English: blob storage > base 64 decoding > decryption >

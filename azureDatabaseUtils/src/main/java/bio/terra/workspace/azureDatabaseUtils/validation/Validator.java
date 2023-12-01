@@ -1,5 +1,6 @@
 package bio.terra.workspace.azureDatabaseUtils.validation;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -22,5 +23,32 @@ public class Validator {
 
   public void validateOidFormat(String userOid) {
     UUID.fromString(Objects.requireNonNull(userOid, "userOid must be specified"));
+  }
+
+  public void validatePgDumpCommand(List<String> commandList) {
+    var commandPath = commandList.get(0);
+    if (!commandPath.equals("pg_dump")) {
+      throw new IllegalArgumentException("commandPath must be `pg_dump`");
+    }
+    if (commandList.size() != 14) {
+      throw new IllegalArgumentException(
+          "pg_dump command list must contain exactly 14 arguments and values");
+    }
+
+    // What other validations should be used?
+
+  }
+
+  public void validatePgRestoreCommand(List<String> commandList) {
+    var commandPath = commandList.get(0);
+    if (!commandPath.equals("psql")) {
+      throw new IllegalArgumentException("commandPath must be `psql`");
+    }
+    if (commandList.size() != 11) {
+      throw new IllegalArgumentException(
+          "psql command list must contain exactly 11 arguments and values");
+    }
+
+    // What other validations should be used?
   }
 }
