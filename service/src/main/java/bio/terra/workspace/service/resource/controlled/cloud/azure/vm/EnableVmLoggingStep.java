@@ -100,7 +100,7 @@ public class EnableVmLoggingStep implements Step {
     var extension =
         virtualMachine
             .update()
-            .defineNewExtension("AzureMonitorLinuxAgent:" + Math.round(Math.random() * 1000))
+            .defineNewExtension("AzureMonitorLinuxAgent" + java.util.UUID.randomUUID())
             .withPublisher("Microsoft.Azure.Monitor")
             .withType("AzureMonitorLinuxAgent")
             .withVersion(azureConfig.getAzureMonitorLinuxAgentVersion())
