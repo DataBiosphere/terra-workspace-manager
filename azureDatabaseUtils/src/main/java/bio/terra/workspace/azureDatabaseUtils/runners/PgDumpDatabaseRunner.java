@@ -3,6 +3,7 @@ package bio.terra.workspace.azureDatabaseUtils.runners;
 import bio.terra.workspace.azureDatabaseUtils.database.DatabaseService;
 import bio.terra.workspace.azureDatabaseUtils.process.LocalProcessLauncher;
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import javax.crypto.NoSuchPaddingException;
@@ -50,7 +51,7 @@ public class PgDumpDatabaseRunner implements ApplicationRunner {
   @Override
   public void run(ApplicationArguments args)
       throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException {
+          IOException, InvalidAlgorithmParameterException {
     LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
     databaseService.pgDump(
         dbName,

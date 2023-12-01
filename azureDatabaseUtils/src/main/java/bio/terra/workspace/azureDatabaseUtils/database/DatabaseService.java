@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.postgresql.plugin.AuthenticationRequestType;
 import org.postgresql.util.PSQLException;
@@ -115,18 +117,20 @@ public class DatabaseService {
   }
 
   private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyBase64)
-      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          InvalidAlgorithmParameterException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
-    Cipher c = Cipher.getInstance("AES");
-    c.init(Cipher.ENCRYPT_MODE, encryptionKey);
+    Cipher c = Cipher.getInstance("AES/GCM/PKCS5Padding");
+    c.init(Cipher.ENCRYPT_MODE, encryptionKey, new GCMParameterSpec(128, c.getIV()));
     return new CipherOutputStream(origin, c);
   }
 
   private InputStream decryptFromInputStream(InputStream origin, String encryptionKeyBase64)
-      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          InvalidAlgorithmParameterException {
     SecretKey encryptionKey = decodeBase64Key(encryptionKeyBase64);
-    Cipher c = Cipher.getInstance("AES");
-    c.init(Cipher.DECRYPT_MODE, encryptionKey);
+    Cipher c = Cipher.getInstance("AES/GCM/PKCS5Padding");
+    c.init(Cipher.DECRYPT_MODE, encryptionKey, new GCMParameterSpec(128, c.getIV()));
     return new CipherInputStream(origin, c);
   }
 
@@ -141,7 +145,7 @@ public class DatabaseService {
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
       throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException {
+          IOException, InvalidAlgorithmParameterException {
 
     // Grant the database role (dbName) to the landing zone identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -190,7 +194,7 @@ public class DatabaseService {
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
       throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException {
+          IOException, InvalidAlgorithmParameterException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
