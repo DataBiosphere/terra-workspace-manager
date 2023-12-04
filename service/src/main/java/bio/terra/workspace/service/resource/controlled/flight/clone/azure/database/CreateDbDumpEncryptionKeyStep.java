@@ -9,22 +9,17 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 
 public class CreateDbDumpEncryptionKeyStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
 
-    KeyGenerator kg;
-    try {
-      kg = KeyGenerator.getInstance("AES");
-    } catch (NoSuchAlgorithmException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-    }
+    int keyLengthBytes = 32; // 256 bits
+    int ivLength = 12; // 96 bits
 
-    kg.init(256, new SecureRandom());
-    SecretKey secretKey = kg.generateKey();
-    String encodedString = java.util.Base64.getEncoder().encodeToString(secretKey.getEncoded());
+    byte[] keyAndIvBytes = new byte[keyLengthBytes + ivLength];
+    new SecureRandom().nextBytes(keyAndIvBytes);
+    String encodedString = java.util.Base64.getEncoder().encodeToString(keyAndIvBytes);
 
     context
         .getWorkingMap()

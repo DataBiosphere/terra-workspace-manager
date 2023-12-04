@@ -8,6 +8,7 @@ dependencies {
 
   // Deps whose versions are controlled by Spring
   implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
+  implementation group: "org.bouncycastle", name: "bc-fips"
 
   // Test deps
   testImplementation('org.springframework.boot:spring-boot-starter-test')

@@ -10,14 +10,18 @@ import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.security.SecureRandom;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.*;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class DatabaseServiceDumpRestoreTest {
+
+  static {
+    // Add bouncy castle (FIPS) provider:
+    java.security.Security.addProvider(new org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider());
+  }
 
   static class TestableDatabaseService extends DatabaseService {
     public TestableDatabaseService(
@@ -31,9 +35,9 @@ public class DatabaseServiceDumpRestoreTest {
     }
   }
 
-  private static final String plaintext = "MYTESTINPUTCONTENT";
-  private static final String key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-  private static final String ciphertext = "hnNZyda6cTsdhH/cXMvuBd6+ZmaUOe5w05iBlKmPMGk=";
+  private static final String predeterminedPlaintext = "MYTESTINPUTCONTENT";
+  private static final String predeterminedKeyAndIvString = "7i61YC3yvog8U4fNXFblpK5wy/r2Wj4WnoWqrDig2BDtKbCkChTuNI5lJWU=";
+  private static final String predeterminedCiphertext = "XMnxlzCvmt6oEnl0CFJpij+mDX1CGQzQfEtvkVhlqfGjFg==";
 
   @Test
   void testPgDump() throws Exception {
@@ -48,8 +52,7 @@ public class DatabaseServiceDumpRestoreTest {
     doNothing().when(localProcessLauncher).launchProcess(any(), any());
 
     ByteArrayInputStream byteArrayInputStream =
-        new ByteArrayInputStream("MYTESTINPUTCONTENT".getBytes());
-    System.out.println(byteArrayInputStream.available());
+        new ByteArrayInputStream(predeterminedPlaintext.getBytes());
     when(localProcessLauncher.getInputStream()).thenReturn(byteArrayInputStream);
 
     ByteArrayOutputStream blobStorageUploadStream = new ByteArrayOutputStream();
@@ -64,13 +67,11 @@ public class DatabaseServiceDumpRestoreTest {
         "testfile",
         "testcontainer",
         "http://host.org",
-        key,
+        predeterminedKeyAndIvString,
         localProcessLauncher);
 
-    System.out.println(byteArrayInputStream.available());
-
     String output = blobStorageUploadStream.toString();
-    assertThat(output, equalTo(ciphertext));
+    assertThat(output, equalTo(predeterminedCiphertext));
   }
 
   @Test
@@ -93,7 +94,7 @@ public class DatabaseServiceDumpRestoreTest {
         ArgumentCaptor.forClass(OutputStream.class);
     doAnswer(
             invocation -> {
-              outputStreamArgumentCaptor.getValue().write(ciphertext.getBytes());
+              outputStreamArgumentCaptor.getValue().write(predeterminedCiphertext.getBytes());
               return null;
             })
         .when(storage)
@@ -107,10 +108,10 @@ public class DatabaseServiceDumpRestoreTest {
         "testfile",
         "testcontainer",
         "http://host.org",
-        key,
+        predeterminedKeyAndIvString,
         localProcessLauncher);
 
-    assertThat(localProcessStdIn.toString(), equalTo(plaintext));
+    assertThat(localProcessStdIn.toString(), equalTo(predeterminedPlaintext));
   }
 
   void testDumpRestoreEncryptDecryptRoundTrip(byte[] dumpContents, String key) throws Exception {
@@ -194,18 +195,13 @@ public class DatabaseServiceDumpRestoreTest {
     return array;
   }
 
-  private String generateKeyString() throws Exception {
-    KeyGenerator kg;
-    kg = KeyGenerator.getInstance("AES");
-
-    kg.init(256, new SecureRandom());
-    SecretKey secretKey = kg.generateKey();
-    return Base64.getEncoder().encodeToString(secretKey.getEncoded());
+  private String generateKeyString() throws NoSuchAlgorithmException, NoSuchProviderException {
+    return DatabaseService.KeyAndIv.random().toBase64();
   }
 
   @Test
   void testRoundTripRandomKey() throws Exception {
-    testDumpRestoreEncryptDecryptRoundTrip(plaintext.getBytes(), generateKeyString());
+    testDumpRestoreEncryptDecryptRoundTrip(predeterminedPlaintext.getBytes(), generateKeyString());
   }
 
   @Test
