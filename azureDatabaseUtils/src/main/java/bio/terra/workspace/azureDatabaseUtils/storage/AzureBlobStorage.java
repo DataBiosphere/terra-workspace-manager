@@ -5,13 +5,8 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobStorageException;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -33,31 +28,13 @@ public class AzureBlobStorage implements BlobStorage {
   backups will be stored inside the workspace container in a path determined by function GenerateBackupFilename
   which exists within BackupService.java.
    */
-  @Override
-  public void streamOutputToBlobStorage(
-      InputStream fromStream,
-      String blobName,
-      String blobContainerName,
-      String blobContainerUrlAuthenticated) {
+
+  public OutputStream getBlobStorageUploadOutputStream(
+      String blobName, String blobContainerName, String blobContainerUrlAuthenticated) {
     BlobContainerClient blobContainerClient =
         constructBlockBlobClient(blobContainerName, blobContainerUrlAuthenticated);
     // https://learn.microsoft.com/en-us/java/api/overview/azure/storage-blob-readme?view=azure-java-stable#upload-a-blob-via-an-outputstream
-    try (BufferedOutputStream blobOS =
-        new BufferedOutputStream(
-            blobContainerClient
-                .getBlobClient(blobName)
-                .getBlockBlobClient()
-                .getBlobOutputStream())) {
-      try (BufferedReader bufferedReader =
-          new BufferedReader(new InputStreamReader(fromStream, StandardCharsets.UTF_8))) {
-        int line;
-        while ((line = bufferedReader.read()) != -1) {
-          blobOS.write(line);
-        }
-      }
-    } catch (IOException ioEx) {
-      throw new LaunchProcessException("Error streaming output of child process", ioEx);
-    }
+    return blobContainerClient.getBlobClient(blobName).getBlockBlobClient().getBlobOutputStream();
   }
 
   @Override
@@ -90,19 +67,6 @@ public class AzureBlobStorage implements BlobStorage {
     } catch (BlobStorageException e) {
       // if the default workspace container doesn't exist, something went horribly wrong
       logger.error("Default storage container missing; could not find {}", blobContainerName);
-      throw (e);
-    }
-  }
-
-  @Override
-  public void deleteBlob(String blobFile, String blobContainerName, String authToken) {
-    BlobContainerClient blobContainerClient =
-        constructBlockBlobClient(blobContainerName, authToken);
-    try {
-      var blobClient = blobContainerClient.getBlobClient(blobFile);
-      blobClient.delete();
-    } catch (BlobStorageException e) {
-      logger.error("Failed to delete file with name {}. ", blobFile);
       throw (e);
     }
   }

@@ -28,4 +28,15 @@ public record WsmControlledResourceFields(
         dbResource.getApplicationId().orElse(null),
         dbResource.getRegion());
   }
+
+  public static WsmControlledResourceFields fromControlledResource(
+      ControlledResource controlledResource) {
+    return new WsmControlledResourceFields(
+        controlledResource.getAssignedUser().orElse(null),
+        controlledResource.getPrivateResourceState().orElse(null),
+        controlledResource.getAccessScope(),
+        controlledResource.getManagedBy(),
+        controlledResource.getApplicationId(),
+        controlledResource.getRegion());
+  }
 }

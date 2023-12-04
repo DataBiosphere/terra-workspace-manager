@@ -7,12 +7,21 @@ import bio.terra.workspace.azureDatabaseUtils.validation.Validator;
 import com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.*;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import org.postgresql.plugin.AuthenticationRequestType;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
@@ -96,6 +105,65 @@ public class DatabaseService {
     databaseDao.restoreLoginPrivileges(namespaceRole);
   }
 
+  private byte[] getRandomIVWithSize(int size) {
+    byte[] iv = new byte[size];
+    new SecureRandom().nextBytes(iv);
+    return iv;
+  }
+
+  record KeyAndIv(SecretKey key, byte[] iv) {
+    static KeyAndIv fromBase64(String encryptionKeyBase64) {
+      byte[] decodedKeyAndIv = Base64.getDecoder().decode(encryptionKeyBase64);
+
+      // The first 256 bits (32 bytes) of the decoded string are the key:
+      SecretKey key = new SecretKeySpec(decodedKeyAndIv, 0, 32, "AES");
+
+      // The remaining 96 bits (12 bytes) are the IV:
+      byte[] iv = new byte[12];
+      System.arraycopy(decodedKeyAndIv, 32, iv, 0, 12);
+      return new KeyAndIv(key, iv);
+    }
+
+    String toBase64() {
+      byte[] keyBytes = key.getEncoded();
+      byte[] keyAndIvBytes = new byte[keyBytes.length + iv.length];
+      System.arraycopy(keyBytes, 0, keyAndIvBytes, 0, keyBytes.length);
+      System.arraycopy(iv, 0, keyAndIvBytes, keyBytes.length, iv.length);
+      return Base64.getEncoder().encodeToString(keyAndIvBytes);
+    }
+
+    public static KeyAndIv random() throws NoSuchAlgorithmException, NoSuchProviderException {
+      KeyGenerator kg;
+      kg = KeyGenerator.getInstance("AES", "BCFIPS");
+
+      kg.init(256, new SecureRandom());
+      SecretKey secretKey = kg.generateKey();
+
+      byte[] iv = new byte[12];
+      new SecureRandom().nextBytes(iv);
+
+      return new KeyAndIv(secretKey, iv);
+    }
+  }
+
+  private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyAndIvBase64)
+      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          InvalidAlgorithmParameterException, NoSuchProviderException {
+    KeyAndIv keyAndIv = KeyAndIv.fromBase64(encryptionKeyAndIvBase64);
+    Cipher c = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
+    c.init(Cipher.ENCRYPT_MODE, keyAndIv.key(), new GCMParameterSpec(128, keyAndIv.iv()));
+    return new CipherOutputStream(origin, c);
+  }
+
+  private InputStream decryptFromInputStream(InputStream origin, String encryptionKeyBase64)
+      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          InvalidAlgorithmParameterException, NoSuchProviderException {
+    KeyAndIv keyAndIv = KeyAndIv.fromBase64(encryptionKeyBase64);
+    Cipher c = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
+    c.init(Cipher.DECRYPT_MODE, keyAndIv.key(), new GCMParameterSpec(128, keyAndIv.iv()));
+    return new CipherInputStream(origin, c);
+  }
+
   public void pgDump(
       String dbName,
       String dbHost,
@@ -104,8 +172,10 @@ public class DatabaseService {
       String blobFileName,
       String blobContainerName,
       String blobContainerUrlAuthenticated,
+      String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-      throws PSQLException {
+      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          IOException, InvalidAlgorithmParameterException, NoSuchProviderException {
 
     // Grant the database role (dbName) to the landing zone identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -126,11 +196,19 @@ public class DatabaseService {
 
     localProcessLauncher.launchProcess(commandList, envVars);
 
-    storage.streamOutputToBlobStorage(
-        localProcessLauncher.getInputStream(),
-        blobFileName,
-        blobContainerName,
-        blobContainerUrlAuthenticated);
+    // Stream wrapping is confusing, so in English: local process output -> encryption -> base64
+    // encoding -> blob storage
+    try (OutputStream blobOutputStream =
+        storage.getBlobStorageUploadOutputStream(
+            blobFileName, blobContainerName, blobContainerUrlAuthenticated)) {
+      try (OutputStream encoderWrappedOutputStream = Base64.getEncoder().wrap(blobOutputStream)) {
+        try (OutputStream encryptedBlobOutputStream =
+            encryptIntoOutputStream(encoderWrappedOutputStream, encryptionKeyBase64)) {
+          localProcessLauncher.getInputStream().transferTo(encryptedBlobOutputStream);
+          encryptedBlobOutputStream.flush();
+        }
+      }
+    }
 
     checkForError(localProcessLauncher);
   }
@@ -143,8 +221,10 @@ public class DatabaseService {
       String blobFileName,
       String blobContainerName,
       String blobContainerUrlAuthenticated,
+      String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-      throws PSQLException {
+      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+          IOException, InvalidAlgorithmParameterException, NoSuchProviderException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -159,27 +239,47 @@ public class DatabaseService {
     List<String> commandList = generateCommandList("psql", dbName, dbHost, dbPort, adminUser);
     Map<String, String> envVars = Map.of("PGPASSWORD", determinePassword());
 
-    localProcessLauncher.launchProcess(commandList, envVars);
-
     logger.info(
-        "Running DatabaseService.pgRestore on file {} from blob container: {}",
+        "Streaming DatabaseService.pgRestore input from blob file {} in container: {}",
         blobFileName,
         blobContainerName);
 
-    storage.streamInputFromBlobStorage(
-        localProcessLauncher.getOutputStream(),
-        blobFileName,
-        blobContainerName,
-        blobContainerUrlAuthenticated);
+    localProcessLauncher.launchProcess(commandList, envVars);
 
-    checkForError(localProcessLauncher);
+    // Stream wrapping is confusing, so in English: blob storage > base 64 decoding > decryption >
+    // local process input
+    // NB we use the pipes to receive blob storage via an output stream and convert that into an
+    // input stream for the subsequent processing
+    // NB we use a separate thread to handle the download so that we can be downloading and sending
+    // to the thread in parallel
+    try (PipedOutputStream blobStorageReceiver = new PipedOutputStream();
+        PipedInputStream blobStorageReplayer = new PipedInputStream(blobStorageReceiver, 2048)) {
+      try (InputStream decoderWrappedInputStream = Base64.getDecoder().wrap(blobStorageReplayer)) {
+        try (InputStream decryptedBlobInputStream =
+            decryptFromInputStream(decoderWrappedInputStream, encryptionKeyBase64)) {
+          Runnable downloadThread =
+              () ->
+                  storage.streamInputFromBlobStorage(
+                      blobStorageReceiver,
+                      blobFileName,
+                      blobContainerName,
+                      blobContainerUrlAuthenticated);
+          Thread downloadThreadInstance = new Thread(downloadThread);
+          downloadThreadInstance.start();
+
+          decryptedBlobInputStream.transferTo(localProcessLauncher.getOutputStream());
+        }
+      }
+    }
+    localProcessLauncher.getOutputStream().flush();
+
     databaseDao.reassignOwner(adminUser, dbName);
   }
 
   public List<String> generateCommandList(
       String pgCommandPath, String dbName, String dbHost, String dbPort, String dbUser) {
     Map<String, String> command = new LinkedHashMap<>();
-
+    validator.validateDatabaseNameFormat(dbName);
     command.put(pgCommandPath, null);
     if (pgCommandPath.contains("pg_dump")) {
       command.put("-b", null);
@@ -211,13 +311,15 @@ public class DatabaseService {
     final int errorLimit = 1024;
 
     int exitCode = localProcessLauncher.waitForTerminate();
-    if (exitCode == 1) {
+    if (exitCode != 0) {
       InputStream errorStream =
           localProcessLauncher.getOutputForProcess(LocalProcessLauncher.Output.ERROR);
 
       String errorMsg;
       try {
-        errorMsg = "process error: " + errorStream.readNBytes(errorLimit).toString().trim();
+        errorMsg =
+            "process error: "
+                + new String(errorStream.readNBytes(errorLimit), StandardCharsets.UTF_8).trim();
       } catch (IOException e) {
         errorMsg =
             "process failed with exit code "
@@ -229,7 +331,7 @@ public class DatabaseService {
     }
   }
 
-  private String determinePassword() throws PSQLException {
+  protected String determinePassword() throws PSQLException {
     return new String(
         new AzurePostgresqlAuthenticationPlugin(new Properties())
             .getPassword(AuthenticationRequestType.CLEARTEXT_PASSWORD));

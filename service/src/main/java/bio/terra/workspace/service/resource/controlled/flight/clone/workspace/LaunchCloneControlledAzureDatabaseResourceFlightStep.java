@@ -52,9 +52,6 @@ public class LaunchCloneControlledAzureDatabaseResourceFlightStep implements Ste
     subflightInputParameters.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
         destinationWorkspaceId);
-    subflightInputParameters.put(
-        WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS,
-        sourceResource.getCloningInstructions());
     subflightInputParameters.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, sourceResource);
     subflightInputParameters.put(
         JobMapKeys.DESCRIPTION.getKeyName(),
@@ -67,9 +64,6 @@ public class LaunchCloneControlledAzureDatabaseResourceFlightStep implements Ste
     // destination workspace as a separate step during the workspace clone flight, so we do not
     // do a policy merge for individual resource clones within the workspace
     subflightInputParameters.put(WorkspaceFlightMapKeys.MERGE_POLICIES, false);
-
-    // TODO: Additional inputs as needed to be added in
-    // https://broadworkbench.atlassian.net/browse/WM-2349
 
     // launch the flight
     try {
