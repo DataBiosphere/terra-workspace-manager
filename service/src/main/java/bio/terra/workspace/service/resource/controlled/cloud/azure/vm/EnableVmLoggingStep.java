@@ -80,27 +80,49 @@ public class EnableVmLoggingStep implements Step {
   @Traced
   private void createDataCollectionRuleAssociation(
       FlightContext context, ApiAzureLandingZoneDeployedResource dcr, String vmId) {
-    getMonitorManager(context)
-        .diagnosticSettings()
-        .manager()
-        .serviceClient()
-        .getDataCollectionRuleAssociations()
-        .createWithResponse(
+    try {
+      getMonitorManager(context)
+          .diagnosticSettings()
+          .manager()
+          .serviceClient()
+          .getDataCollectionRuleAssociations()
+          .createWithResponse(
+              vmId,
+              resource.getVmName(),
+              new DataCollectionRuleAssociationProxyOnlyResourceInner()
+                  .withDataCollectionRuleId(dcr.getResourceId()),
+              Context.NONE);
+    } catch (ManagementException e) {
+      if (e.getResponse().getStatusCode() == 409) {
+        logger.info(
+            "data collection rule association already exists for vm {} and dcr {}",
             vmId,
-            resource.getVmName(),
-            new DataCollectionRuleAssociationProxyOnlyResourceInner()
-                .withDataCollectionRuleId(dcr.getResourceId()),
-            Context.NONE);
+            dcr.getResourceId());
+      } else {
+        throw e;
+      }
+    }
   }
 
   @Traced
   private void addMonitorAgentToVm(FlightContext context, String vmId) {
     var virtualMachine = getComputeManager(context).virtualMachines().getById(vmId);
 
+    var extensionName = "AzureMonitorLinuxAgent";
+    Optional.ofNullable(virtualMachine.listExtensions().get(extensionName))
+        .ifPresent(
+            (extension) -> {
+              logger.info(
+                  "extension {} already exists on vm {}, deleting it to retry",
+                  extensionName,
+                  vmId);
+              virtualMachine.update().withoutExtension(extensionName).apply();
+            });
+
     var extension =
         virtualMachine
             .update()
-            .defineNewExtension("AzureMonitorLinuxAgent")
+            .defineNewExtension(extensionName)
             .withPublisher("Microsoft.Azure.Monitor")
             .withType("AzureMonitorLinuxAgent")
             .withVersion(azureConfig.getAzureMonitorLinuxAgentVersion())
