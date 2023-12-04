@@ -109,12 +109,15 @@ public class EnableVmLoggingStep implements Step {
     var virtualMachine = getComputeManager(context).virtualMachines().getById(vmId);
 
     var extensionName = "AzureMonitorLinuxAgent";
-    Optional.ofNullable(virtualMachine.listExtensions().get(extensionName)).ifPresent(
-        (extension) -> {
-          logger.info("extension {} already exists on vm {}, deleting it to retry", extensionName, vmId);
-          virtualMachine.update().withoutExtension(extensionName).apply();
-        }
-    );
+    Optional.ofNullable(virtualMachine.listExtensions().get(extensionName))
+        .ifPresent(
+            (extension) -> {
+              logger.info(
+                  "extension {} already exists on vm {}, deleting it to retry",
+                  extensionName,
+                  vmId);
+              virtualMachine.update().withoutExtension(extensionName).apply();
+            });
 
     var extension =
         virtualMachine
