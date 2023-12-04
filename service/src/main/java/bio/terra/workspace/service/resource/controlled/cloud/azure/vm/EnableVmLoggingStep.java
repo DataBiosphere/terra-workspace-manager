@@ -10,14 +10,12 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.management.exception.ManagementException;
 import com.azure.core.util.Context;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
@@ -60,21 +58,17 @@ public class EnableVmLoggingStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    try {
-      getDataCollectionRuleFromLandingZone()
-          .ifPresent(
-              dcr -> {
-                final String vmId =
-                    context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_VM_ID, String.class);
+    getDataCollectionRuleFromLandingZone()
+        .ifPresent(
+            dcr -> {
+              final String vmId =
+                  context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_VM_ID, String.class);
 
-                addMonitorAgentToVm(context, vmId);
+              addMonitorAgentToVm(context, vmId);
 
-                createDataCollectionRuleAssociation(context, dcr, vmId);
-              });
-      return StepResult.getStepResultSuccess();
-    } catch (ManagementException e) {
-      return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(e), e);
-    }
+              createDataCollectionRuleAssociation(context, dcr, vmId);
+            });
+    return StepResult.getStepResultSuccess();
   }
 
   @Traced
