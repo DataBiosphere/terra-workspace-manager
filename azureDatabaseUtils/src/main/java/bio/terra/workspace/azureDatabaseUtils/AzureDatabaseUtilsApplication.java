@@ -8,7 +8,8 @@ public class AzureDatabaseUtilsApplication {
 
   static {
     // Add bouncy castle (FIPS) provider:
-    java.security.Security.addProvider(new org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider());
+    java.security.Security.addProvider(
+        new org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider());
   }
 
   public static void main(String[] args) {

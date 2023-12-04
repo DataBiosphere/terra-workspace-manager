@@ -20,7 +20,8 @@ public class DatabaseServiceDumpRestoreTest {
 
   static {
     // Add bouncy castle (FIPS) provider:
-    java.security.Security.addProvider(new org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider());
+    java.security.Security.addProvider(
+        new org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider());
   }
 
   static class TestableDatabaseService extends DatabaseService {
@@ -36,8 +37,10 @@ public class DatabaseServiceDumpRestoreTest {
   }
 
   private static final String predeterminedPlaintext = "MYTESTINPUTCONTENT";
-  private static final String predeterminedKeyAndIvString = "7i61YC3yvog8U4fNXFblpK5wy/r2Wj4WnoWqrDig2BDtKbCkChTuNI5lJWU=";
-  private static final String predeterminedCiphertext = "XMnxlzCvmt6oEnl0CFJpij+mDX1CGQzQfEtvkVhlqfGjFg==";
+  private static final String predeterminedKeyAndIvString =
+      "7i61YC3yvog8U4fNXFblpK5wy/r2Wj4WnoWqrDig2BDtKbCkChTuNI5lJWU=";
+  private static final String predeterminedCiphertext =
+      "XMnxlzCvmt6oEnl0CFJpij+mDX1CGQzQfEtvkVhlqfGjFg==";
 
   @Test
   void testPgDump() throws Exception {

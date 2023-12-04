@@ -3,12 +3,9 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.datab
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import javax.crypto.KeyGenerator;
 
 public class CreateDbDumpEncryptionKeyStep implements Step {
   @Override

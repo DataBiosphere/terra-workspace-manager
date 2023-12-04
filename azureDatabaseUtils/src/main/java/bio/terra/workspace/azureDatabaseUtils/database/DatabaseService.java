@@ -147,7 +147,7 @@ public class DatabaseService {
   }
 
   private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyAndIvBase64)
-          throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
           InvalidAlgorithmParameterException, NoSuchProviderException {
     KeyAndIv keyAndIv = KeyAndIv.fromBase64(encryptionKeyAndIvBase64);
     Cipher c = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
@@ -156,7 +156,7 @@ public class DatabaseService {
   }
 
   private InputStream decryptFromInputStream(InputStream origin, String encryptionKeyBase64)
-          throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
           InvalidAlgorithmParameterException, NoSuchProviderException {
     KeyAndIv keyAndIv = KeyAndIv.fromBase64(encryptionKeyBase64);
     Cipher c = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
@@ -174,7 +174,7 @@ public class DatabaseService {
       String blobContainerUrlAuthenticated,
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-          throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
           IOException, InvalidAlgorithmParameterException, NoSuchProviderException {
 
     // Grant the database role (dbName) to the landing zone identity (adminUser).
@@ -223,7 +223,7 @@ public class DatabaseService {
       String blobContainerUrlAuthenticated,
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-          throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
           IOException, InvalidAlgorithmParameterException, NoSuchProviderException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).
