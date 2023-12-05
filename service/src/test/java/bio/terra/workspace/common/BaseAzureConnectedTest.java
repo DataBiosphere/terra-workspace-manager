@@ -44,15 +44,18 @@ public class BaseAzureConnectedTest extends BaseTest {
       WorkspaceService workspaceService, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
     initSpendProfileMock();
-    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    createLandingZone();
 
+    Workspace workspace = azureTestUtils.createWorkspace(workspaceService);
+    azureUtils.createCloudContext(workspace.getWorkspaceId(), userRequest);
+    return workspace;
+  }
+
+  protected void createLandingZone() {
     // create quasi landing zone with no resources, tests can add any they need
     landingZoneId = UUID.fromString(landingZoneTestUtils.getDefaultLandingZoneId());
     testLandingZoneManager = new TestLandingZoneManager(landingZoneDao, azureTestUtils);
     testLandingZoneManager.createLandingZoneDbRecord(landingZoneId);
-
-    azureUtils.createCloudContext(workspace.getWorkspaceId(), userRequest);
-    return workspace;
   }
 
   /**
