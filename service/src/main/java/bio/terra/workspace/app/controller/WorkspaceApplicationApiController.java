@@ -12,11 +12,11 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +47,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
     return authenticatedUserRequestFactory.from(request);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> disableWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceUuid,
@@ -62,7 +62,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> enableWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceUuid,
@@ -77,7 +77,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> getWorkspaceApplication(
       @PathVariable("workspaceId") UUID workspaceUuid,
@@ -91,7 +91,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescriptionList> listWorkspaceApplications(
       @PathVariable("workspaceId") UUID workspaceUuid,

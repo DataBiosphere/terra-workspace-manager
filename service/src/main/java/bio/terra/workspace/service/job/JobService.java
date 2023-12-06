@@ -47,7 +47,8 @@ import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -76,6 +77,7 @@ public class JobService {
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
   private final ObjectMapper objectMapper;
+  private final OpenTelemetry openTelemetry;
   private FlightDebugInfo flightDebugInfo;
 
   @Autowired
@@ -86,7 +88,8 @@ public class JobService {
       WorkspaceActivityLogHook workspaceActivityLogHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
-      ObjectMapper objectMapper) {
+      ObjectMapper objectMapper,
+      OpenTelemetry openTelemetry) {
     this.jobConfig = jobConfig;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.mdcHook = mdcHook;
@@ -94,11 +97,16 @@ public class JobService {
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
+    this.openTelemetry = openTelemetry;
   }
 
   // Fully fluent style of JobBuilder
   public JobBuilder newJob() {
     return new JobBuilder(this, stairwayComponent, mdcHook);
+  }
+
+  public OpenTelemetry getOpenTelemetry() {
+    return openTelemetry;
   }
 
   // submit a new job to stairway
@@ -163,7 +171,7 @@ public class JobService {
             .dataSource(DataSourceInitializer.initializeDataSource(stairwayDatabaseConfiguration))
             .context(flightBeanBag)
             .addHook(mdcHook)
-            .addHook(new MonitoringHook())
+            .addHook(new MonitoringHook(openTelemetry))
             .addHook(workspaceActivityLogHook)
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }
@@ -313,7 +321,7 @@ public class JobService {
     return filter;
   }
 
-  @Traced
+  @WithSpan
   public FlightState retrieveJob(String jobId) {
     try {
       return stairwayComponent.get().getFlightState(jobId);
@@ -326,7 +334,7 @@ public class JobService {
   }
 
   /** Retrieves Job Result specifying the result class type. */
-  @Traced
+  @WithSpan
   public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
     return retrieveJobResult(jobId, resultClass, /*typeReference=*/ null);
   }
@@ -355,7 +363,7 @@ public class JobService {
    *     set to null.
    * @return object of the result class pulled from the result map
    */
-  @Traced
+  @WithSpan
   public <T> JobResultOrException<T> retrieveJobResult(
       String jobId, @Nullable Class<T> resultClass, @Nullable TypeReference<T> typeReference) {
     try {

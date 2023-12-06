@@ -7,7 +7,7 @@ plugins {
     id 'com.github.spotbugs'
 }
 
-def useMavenLocal = false
+def useMavenLocal = true
 repositories {
     if (useMavenLocal) {
         mavenLocal()

@@ -68,11 +68,11 @@ import bio.terra.workspace.service.resource.referenced.model.ReferencedResource;
 import bio.terra.workspace.service.resource.referenced.terra.workspace.ReferencedTerraWorkspaceResource;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.util.Optional;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -118,7 +118,7 @@ public class ReferencedGcpResourceController extends ControllerBase
 
   // -- GCS Bucket object -- //
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsObjectResource> createGcsObjectReference(
       UUID workspaceUuid, @Valid ApiCreateGcpGcsObjectReferenceRequestBody body) {
@@ -147,7 +147,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referencedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsObjectResource> getGcsObjectReference(
       UUID uuid, UUID referenceId) {
@@ -160,7 +160,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsObjectResource> getGcsObjectReferenceByName(
       UUID uuid, String name) {
@@ -173,7 +173,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsObjectResource> updateBucketObjectReferenceResource(
       UUID workspaceUuid, UUID resourceUuid, ApiUpdateGcsBucketObjectReferenceRequestBody body) {
@@ -198,7 +198,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteGcsObjectReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -213,7 +213,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   }
 
   // -- GCS Bucket -- //
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> createBucketReference(
       UUID workspaceUuid, @Valid ApiCreateGcpGcsBucketReferenceRequestBody body) {
@@ -241,7 +241,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> getBucketReference(UUID uuid, UUID referenceId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -256,7 +256,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> getBucketReferenceByName(UUID uuid, String name) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -268,7 +268,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> updateBucketReferenceResource(
       UUID workspaceUuid, UUID resourceUuid, ApiUpdateGcsBucketReferenceRequestBody body) {
@@ -295,7 +295,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteBucketReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -309,7 +309,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   }
 
   // -- BigQuery DataTable -- //
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> createBigQueryDataTableReference(
       UUID workspaceUuid, @Valid ApiCreateGcpBigQueryDataTableReferenceRequestBody body) {
@@ -336,7 +336,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> getBigQueryDataTableReference(
       UUID uuid, UUID referenceId) {
@@ -349,7 +349,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> getBigQueryDataTableReferenceByName(
       UUID uuid, String name) {
@@ -362,7 +362,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> updateBigQueryDataTableReferenceResource(
       UUID workspaceUuid, UUID resourceUuid, ApiUpdateBigQueryDataTableReferenceRequestBody body) {
@@ -387,7 +387,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteBigQueryDataTableReference(
       UUID workspaceUuid, UUID resourceUuid) {
@@ -406,7 +406,7 @@ public class ReferencedGcpResourceController extends ControllerBase
 
   // -- Big Query Dataset -- //
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> createBigQueryDatasetReference(
       UUID uuid, @Valid ApiCreateGcpBigQueryDatasetReferenceRequestBody body) {
@@ -435,7 +435,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDatasetReference(
       UUID uuid, UUID referenceId) {
@@ -448,7 +448,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> getBigQueryDatasetReferenceByName(
       UUID uuid, String name) {
@@ -461,7 +461,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> updateBigQueryDatasetReferenceResource(
       UUID workspaceUuid, UUID resourceUuid, ApiUpdateBigQueryDatasetReferenceRequestBody body) {
@@ -485,7 +485,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteBigQueryDatasetReference(
       UUID workspaceUuid, UUID resourceUuid) {
@@ -501,7 +501,7 @@ public class ReferencedGcpResourceController extends ControllerBase
 
   // -- Data Repo Snapshot -- //
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> createDataRepoSnapshotReference(
       UUID uuid, @Valid ApiCreateDataRepoSnapshotReferenceRequestBody body) {
@@ -548,7 +548,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     }
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> getDataRepoSnapshotReference(
       UUID uuid, UUID referenceId) {
@@ -561,7 +561,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> getDataRepoSnapshotReferenceByName(
       UUID uuid, String name) {
@@ -574,7 +574,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> updateDataRepoSnapshotReferenceResource(
       UUID workspaceUuid, UUID resourceUuid, ApiUpdateDataRepoSnapshotReferenceRequestBody body) {
@@ -598,7 +598,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteDataRepoSnapshotReference(
       UUID workspaceUuid, UUID resourceUuid) {
@@ -615,7 +615,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsObjectResourceResult> cloneGcpGcsObjectReference(
       UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
@@ -679,7 +679,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
       UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
@@ -744,7 +744,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDataTableResourceResult>
       cloneGcpBigQueryDataTableReference(
@@ -811,7 +811,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
       cloneGcpBigQueryDatasetReference(
@@ -879,7 +879,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
       cloneGcpDataRepoSnapshotReference(
@@ -947,7 +947,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   }
 
   // - Git Repo referenced resource - //
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGitRepoResource> createGitRepoReference(
       UUID workspaceUuid, @Valid ApiCreateGitRepoReferenceRequestBody body) {
@@ -976,7 +976,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGitRepoResource> getGitRepoReference(
       UUID workspaceUuid, UUID resourceUuid) {
@@ -990,7 +990,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGitRepoResource> getGitRepoReferenceByName(
       UUID workspaceUuid, String resourceName) {
@@ -1004,7 +1004,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiGitRepoResource> updateGitRepoReference(
       UUID workspaceUuid, UUID resourceUuid, ApiUpdateGitRepoReferenceRequestBody body) {
@@ -1033,7 +1033,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteGitRepoReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -1047,7 +1047,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCloneReferencedGitRepoResourceResult> cloneGitRepoReference(
       UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
@@ -1111,7 +1111,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   }
 
   // - Terra workspace referenced resource - //
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiTerraWorkspaceResource> createTerraWorkspaceReference(
       UUID workspaceUuid, @Valid ApiCreateTerraWorkspaceReferenceRequestBody body) {
@@ -1144,7 +1144,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiTerraWorkspaceResource> getTerraWorkspaceReference(
       UUID workspaceUuid, UUID resourceUuid) {
@@ -1158,7 +1158,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiTerraWorkspaceResource> getTerraWorkspaceReferenceByName(
       UUID workspaceUuid, String resourceName) {
@@ -1172,7 +1172,7 @@ public class ReferencedGcpResourceController extends ControllerBase
     return new ResponseEntity<>(referenceResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteTerraWorkspaceReference(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();

@@ -11,8 +11,8 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobService;
-import io.opencensus.contrib.spring.aop.Traced;
-import javax.servlet.http.HttpServletRequest;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -42,7 +42,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
     this.adminService = adminService;
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiJobResult> syncIamRoles(Boolean wetRun) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -55,7 +55,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiJobResult> getSyncIamRolesResult(String jobId) {
     return getApiJobResult(jobId);
@@ -69,7 +69,7 @@ public class AdminApiController extends ControllerBase implements AdminApi {
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiJobResult> getBackfillControlledResourcesRegionsResult(String jobId) {
     return getApiJobResult(jobId);

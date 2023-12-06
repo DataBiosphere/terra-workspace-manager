@@ -26,7 +26,7 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
@@ -666,7 +666,7 @@ public class WorkspaceDao {
    * @param limit The maximum number of items to return.
    * @return map of Workspaces descriptions indexed by workspace id
    */
-  @Traced
+  @WithSpan
   @ReadTransaction
   public Map<UUID, DbWorkspaceDescription> getWorkspaceDescriptionMapFromIdList(
       Set<UUID> idList, int offset, int limit) {

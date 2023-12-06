@@ -1,15 +1,20 @@
 package bio.terra.workspace.service.datarepo;
 
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.tracing.JakartaTracingFilter;
 import bio.terra.datarepo.api.RepositoryApi;
 import bio.terra.datarepo.client.ApiClient;
 import bio.terra.datarepo.client.ApiException;
+import bio.terra.datarepo.model.SnapshotRetrieveIncludeModel;
 import bio.terra.workspace.app.configuration.external.DataRepoConfiguration;
 import bio.terra.workspace.service.datarepo.exception.DataRepoInternalServerErrorException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.ws.rs.client.Client;
 import java.util.HashMap;
-import javax.ws.rs.client.Client;
+import java.util.List;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +28,10 @@ public class DataRepoService {
   private final Client commonHttpClient;
 
   @Autowired
-  public DataRepoService(DataRepoConfiguration dataRepoConfiguration) {
+  public DataRepoService(DataRepoConfiguration dataRepoConfiguration, OpenTelemetry openTelemetry) {
     this.dataRepoConfiguration = dataRepoConfiguration;
-    commonHttpClient = new ApiClient().getHttpClient();
+    commonHttpClient =
+        new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
   }
 
   private final Logger logger = LoggerFactory.getLogger(DataRepoService.class);
@@ -59,13 +65,14 @@ public class DataRepoService {
    * Returns whether or not a given snapshot is readable for a given user. On the TDR side,
    * retrieveSnapshot requires that a user have read access to the snapshot's data.
    */
-  @Traced
+  @WithSpan
   public boolean snapshotReadable(
       String instanceName, String snapshotId, AuthenticatedUserRequest userRequest) {
     RepositoryApi repositoryApi = repositoryApi(instanceName, userRequest);
 
     try {
-      repositoryApi.retrieveSnapshot(snapshotId);
+      repositoryApi.retrieveSnapshot(
+          UUID.fromString(snapshotId), List.of(SnapshotRetrieveIncludeModel.NONE));
       logger.info("Retrieved snapshotId {} on Data Repo instance {}", snapshotId, instanceName);
       return true;
     } catch (ApiException e) {
@@ -76,6 +83,9 @@ public class DataRepoService {
         throw new DataRepoInternalServerErrorException(
             "Data Repo returned the following unexpected error: " + e.getMessage(), e.getCause());
       }
+    } catch (IllegalArgumentException e) {
+      logger.info("Invalid snapshotId {} on Data Repo instance {}", snapshotId, instanceName, e);
+      return false;
     }
   }
 }

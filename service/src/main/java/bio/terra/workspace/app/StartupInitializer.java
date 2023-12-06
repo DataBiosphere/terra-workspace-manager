@@ -8,7 +8,6 @@ import bio.terra.workspace.app.configuration.external.StartupConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.logging.StackdriverExporter;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
@@ -51,9 +50,6 @@ public final class StartupInitializer {
 
     // Initialize Terra Landing Zone library
     LandingZoneMain.initialize(applicationContext, migrateService);
-
-    // Initialize stackdriver exporter
-    applicationContext.getBean(StackdriverExporter.class).initialize();
 
     // NOTE:
     // Fill in this method with any other initialization that needs to happen

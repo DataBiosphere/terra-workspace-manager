@@ -23,7 +23,7 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.monitor.fluent.models.DataCollectionRuleAssociationProxyOnlyResourceInner;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,7 +77,7 @@ public class EnableVmLoggingStep implements Step {
     }
   }
 
-  @Traced
+  @WithSpan
   private void createDataCollectionRuleAssociation(
       FlightContext context, ApiAzureLandingZoneDeployedResource dcr, String vmId) {
     try {
@@ -104,7 +104,7 @@ public class EnableVmLoggingStep implements Step {
     }
   }
 
-  @Traced
+  @WithSpan
   private void addMonitorAgentToVm(FlightContext context, String vmId) {
     var virtualMachine = getComputeManager(context).virtualMachines().getById(vmId);
 

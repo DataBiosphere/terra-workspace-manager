@@ -31,12 +31,12 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.JobStateFilter;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,7 +74,7 @@ public class Alpha1ApiController implements Alpha1Api {
     this.request = request;
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiLoadUrlListResult> loadUrlList(
       UUID workspaceId, UUID resourceId, ApiLoadUrlListRequestBody body) {
@@ -93,7 +93,7 @@ public class Alpha1ApiController implements Alpha1Api {
     return ResponseEntity.ok(fetchApiLoadSignedUrlListResult(jobId));
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiLoadUrlListResult> fetchLoadUrlListResult(
       UUID workspaceId, UUID resourceId, String jobId) {
@@ -111,7 +111,7 @@ public class Alpha1ApiController implements Alpha1Api {
         .errorReport(jobResult.getApiErrorReport());
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiEnumerateJobsResult> enumerateJobs(
       UUID workspaceUuid,

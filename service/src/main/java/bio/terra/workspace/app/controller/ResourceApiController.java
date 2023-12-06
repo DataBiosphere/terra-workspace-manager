@@ -30,13 +30,13 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,7 +74,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     this.referencedResourceService = referencedResourceService;
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiResourceList> enumerateResources(
       UUID workspaceUuid,
@@ -102,7 +102,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiResourceDescription> getResource(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -115,7 +115,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(apiResourceDescription, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -126,7 +126,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(isValid, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> updateResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<ApiProperty> properties) {
@@ -143,7 +143,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {

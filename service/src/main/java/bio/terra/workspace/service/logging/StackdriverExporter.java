@@ -1,14 +1,15 @@
 package bio.terra.workspace.service.logging;
 
 import bio.terra.workspace.service.features.FeatureService;
-import io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
-import java.io.IOException;
+import com.google.cloud.opentelemetry.metric.GoogleCloudMetricExporter;
+import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@Component
+@Configuration
 public class StackdriverExporter {
 
   private static final Logger logger = LoggerFactory.getLogger(StackdriverExporter.class);
@@ -20,15 +21,13 @@ public class StackdriverExporter {
     this.featureService = featureService;
   }
 
-  public void initialize() {
+  @Bean(destroyMethod = "close")
+  public PeriodicMetricReader metricReader() {
     if (!featureService.isFeatureEnabled(FeatureService.WSM_STACKDRIVER_EXPORTER_ENABLED)) {
       logger.info("Stackdriver exporter is not enabled, skip initializing.");
-      return;
+      return null;
     }
-    try {
-      StackdriverStatsExporter.createAndRegister();
-    } catch (IOException e) {
-      logger.error("Unable to initialize Stackdriver stats exporting.", e);
-    }
+
+    return PeriodicMetricReader.create(GoogleCloudMetricExporter.createWithDefaultConfiguration());
   }
 }

@@ -8,7 +8,7 @@ import bio.terra.workspace.generated.model.ApiRegions;
 import bio.terra.workspace.generated.model.ApiWsmPolicyLocation;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import javax.annotation.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ public class PolicyApiController implements PolicyApi {
     this.tpsApiDispatch = tpsApiDispatch;
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiWsmPolicyLocation> getLocationInfo(
       ApiCloudPlatform platform, @Nullable String location) {
