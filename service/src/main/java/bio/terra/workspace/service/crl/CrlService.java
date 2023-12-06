@@ -23,14 +23,7 @@ import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.credential.TokenCredential;
-import com.azure.core.credential.TokenRequestContext;
-import com.azure.core.http.policy.HttpLogDetailLevel;
-import com.azure.core.http.policy.HttpLogOptions;
 import com.azure.core.http.policy.UserAgentPolicy;
-import com.azure.core.management.AzureEnvironment;
-import com.azure.core.management.profile.AzureProfile;
-import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.batch.BatchManager;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.containerservice.ContainerServiceManager;
@@ -269,7 +262,6 @@ public class CrlService {
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
     assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
-
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
             bio.terra.cloudres.azure.resourcemanager.common.Defaults.crlConfigure(
