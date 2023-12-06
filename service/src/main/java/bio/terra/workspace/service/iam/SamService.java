@@ -26,6 +26,7 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceC
 import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
+import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -67,8 +68,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-
-import static bio.terra.workspace.common.utils.AzureUtils.getManagedAppCredentials;
 
 /**
  * SamService encapsulates logic for interacting with Sam. HTTP Statuses returned by Sam are
@@ -162,11 +161,9 @@ public class SamService {
     try {
       if (features.isAzureControlPlaneEnabled())
       {
-        TokenCredential credential = getManagedAppCredentials(azureConfiguration);
-        AccessToken token = credential.getToken(new TokenRequestContext().addScopes((String[])SAM_OAUTH_SCOPES.toArray())).block();
-        String s = token.getToken();
-        System.out.println("TOKEN " + s);
-        return s;
+        TokenCredential credential = new DefaultAzureCredentialBuilder().build();
+        AccessToken token = credential.getToken(new TokenRequestContext().addScopes("https://graph.microsoft.com/.default")).block();
+        return token.getToken();
       }
       else
       {
