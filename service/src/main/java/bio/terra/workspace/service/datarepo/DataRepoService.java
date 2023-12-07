@@ -85,6 +85,7 @@ public class DataRepoService {
       }
     } catch (IllegalArgumentException e) {
       logger.info("Invalid snapshotId {} on Data Repo instance {}", snapshotId, instanceName, e);
+      // this can't exist so return false
       return false;
     }
   }

@@ -179,8 +179,10 @@ terra.common:
     completed-flight-retention: 90d
 
   tracing:
-    stackdriverExportEnabled: ${env.tracing.exportEnabled}
-    samplingRate: ${env.tracing.samplingRate}
+    samplingRatio: ${env.tracing.samplingRate}
+  google:
+    tracing:
+      enabled: ${env.tracing.exportEnabled}
 
 #Terra Landing Zone Service configuration
 landingzone:
@@ -276,3 +278,13 @@ reference:
       - dev.azure.com
       - ssh.dev.azure.com
 
+otel:
+  sdk:
+    disabled: false # set to true to disable all open telemetry features
+
+  springboot:
+    resource:
+      attributes:
+        service:
+          name: ${spring.application.name}
+          version: ${version.gitTag:unknown}

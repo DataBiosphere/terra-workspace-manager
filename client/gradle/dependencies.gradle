@@ -4,7 +4,7 @@ dependencies {
   implementation group: "org.glassfish.jersey.core", name: "jersey-client"
   implementation group: "org.glassfish.jersey.media", name: "jersey-media-json-jackson"
   implementation group: "org.glassfish.jersey.media", name: "jersey-media-multipart"
-  implementation group: "org.glassfish.jersey.connectors", name: "jersey-jdk-connector"
+  implementation group: "org.glassfish.jersey.connectors", name: "jersey-jdk-connector", version: "3.1.2"
   implementation gradle.librarySwaggerAnnotations
   swaggerCodegen gradle.librarySwaggerCli
 

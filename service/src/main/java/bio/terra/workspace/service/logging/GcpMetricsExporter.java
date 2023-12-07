@@ -10,24 +10,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class StackdriverExporter {
+public class GcpMetricsExporter {
 
-  private static final Logger logger = LoggerFactory.getLogger(StackdriverExporter.class);
+  private static final Logger logger = LoggerFactory.getLogger(GcpMetricsExporter.class);
 
   private final FeatureService featureService;
 
   @Autowired
-  public StackdriverExporter(FeatureService featureService) {
+  public GcpMetricsExporter(FeatureService featureService) {
     this.featureService = featureService;
   }
 
   @Bean(destroyMethod = "close")
   public PeriodicMetricReader metricReader() {
     if (!featureService.isFeatureEnabled(FeatureService.WSM_STACKDRIVER_EXPORTER_ENABLED)) {
-      logger.info("Stackdriver exporter is not enabled, skip initializing.");
+      logger.info("Gcp Metrics exporter is not enabled, skip initializing.");
       return null;
+    } else {
+      logger.info("Gcp Metrics exporter enabled.");
+      return PeriodicMetricReader.create(
+          GoogleCloudMetricExporter.createWithDefaultConfiguration());
     }
-
-    return PeriodicMetricReader.create(GoogleCloudMetricExporter.createWithDefaultConfiguration());
   }
 }
