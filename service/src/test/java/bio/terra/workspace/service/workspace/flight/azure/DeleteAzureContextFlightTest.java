@@ -13,7 +13,6 @@ import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
@@ -51,7 +50,6 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
   private static final Duration CREATION_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
 
   @Autowired private WorkspaceService workspaceService;
-  @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private JobService jobService;
   @Autowired private AzureCloudContextService azureCloudContextService;
@@ -61,6 +59,8 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
 
   @BeforeEach
   public void setup() {
+    createLandingZone();
+
     // Create a new workspace at the start of each test.
     workspaceUuid = UUID.randomUUID();
     SpendProfileId spendProfileId = initSpendProfileMock();
