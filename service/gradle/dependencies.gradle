@@ -76,8 +76,8 @@ dependencies {
 
   // Versioned direct deps
   implementation group: "org.hashids", name: "hashids", version: "1.0.3"
-  implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.4"
-  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: "2.13.4"
+  implementation group: "com.fasterxml.jackson.core", name: "jackson-core"
+  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
   implementation group: "org.liquibase", name: "liquibase-core", version: "4.8.0"
   implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
   runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.7"

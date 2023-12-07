@@ -32,7 +32,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,7 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class ResourceApiController extends ControllerBase implements ResourceApi {
@@ -78,10 +76,10 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
   @Override
   public ResponseEntity<ApiResourceList> enumerateResources(
       UUID workspaceUuid,
-      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
-      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
-      @Valid ApiResourceType resource,
-      @Valid ApiStewardshipType stewardship) {
+      Integer offset,
+      Integer limit,
+      ApiResourceType resource,
+      ApiStewardshipType stewardship) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     ControllerValidationUtils.validatePaginationParams(offset, limit);
     workspaceService.validateWorkspaceAndAction(
