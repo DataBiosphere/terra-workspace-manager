@@ -79,7 +79,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -90,7 +89,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class ControlledAzureResourceApiController extends ControlledResourceControllerBase
@@ -228,7 +226,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledAzureStorageContainer> createAzureStorageContainer(
-      UUID workspaceUuid, @Valid ApiCreateControlledAzureStorageContainerRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledAzureStorageContainerRequestBody body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -267,7 +265,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledAzureVmResult> createAzureVm(
-      UUID workspaceUuid, @Valid ApiCreateControlledAzureVmRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledAzureVmRequestBody body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -380,9 +378,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @WithSpan
   @Override
-  public ResponseEntity<Void> deleteAzureBatchPool(
-      @PathVariable("workspaceId") UUID workspaceUuid,
-      @PathVariable("resourceId") UUID resourceUuid) {
+  public ResponseEntity<Void> deleteAzureBatchPool(UUID workspaceUuid, UUID resourceUuid) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -403,21 +399,21 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureStorageContainer(
-      UUID workspaceUuid, UUID resourceUuid, @Valid ApiDeleteControlledAzureResourceRequest body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAzureResourceRequest body) {
     return deleteHelper(workspaceUuid, resourceUuid, body, "Azure Storage Container");
   }
 
   @WithSpan
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDisk(
-      UUID workspaceUuid, UUID resourceUuid, @Valid ApiDeleteControlledAzureResourceRequest body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAzureResourceRequest body) {
     return deleteHelper(workspaceUuid, resourceUuid, body, "Azure Disk");
   }
 
   @WithSpan
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureVm(
-      UUID workspaceUuid, UUID resourceUuid, @Valid ApiDeleteControlledAzureResourceRequest body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAzureResourceRequest body) {
     return deleteHelper(workspaceUuid, resourceUuid, body, "Azure VM");
   }
 
@@ -480,7 +476,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteHelper(
       UUID workspaceUuid,
       UUID resourceUuid,
-      @Valid ApiDeleteControlledAzureResourceRequest body,
+      ApiDeleteControlledAzureResourceRequest body,
       String resourceName) {
     features.azureEnabledCheck();
 

@@ -57,7 +57,6 @@ import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.google.common.base.Strings;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.util.Collection;
@@ -237,7 +236,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledAwsS3StorageFolder> createAwsS3StorageFolder(
-      UUID workspaceUuid, @Valid ApiCreateControlledAwsS3StorageFolderRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledAwsS3StorageFolderRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     Workspace workspace =
@@ -327,7 +326,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiAwsS3StorageFolderResource> updateAwsS3StorageFolder(
       UUID workspaceUuid,
       UUID resourceUuid,
-      @Valid ApiUpdateControlledAwsS3StorageFolderRequestBody body) {
+      ApiUpdateControlledAwsS3StorageFolderRequestBody body) {
     logger.info(
         "Updating AWS S3 Storage Folder resourceId {} workspaceUuid {}",
         resourceUuid,
@@ -360,9 +359,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @WithSpan
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsS3StorageFolder(
-      UUID workspaceUuid,
-      UUID resourceUuid,
-      @Valid ApiDeleteControlledAwsResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAwsResourceRequestBody body) {
     return deleteAwsResource(
         workspaceUuid, resourceUuid, WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER, body);
   }
@@ -398,7 +395,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @WithSpan
   @Override
   public ResponseEntity<ApiAwsResourceCloudName> generateAwsSageMakerNotebookCloudName(
-      UUID workspaceUuid, @Valid ApiGenerateAwsResourceCloudNameRequestBody body) {
+      UUID workspaceUuid, ApiGenerateAwsResourceCloudNameRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
@@ -430,7 +427,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @WithSpan
   @Override
   public ResponseEntity<ApiCreateControlledAwsSageMakerNotebookResult> createAwsSageMakerNotebook(
-      UUID workspaceUuid, @Valid ApiCreateControlledAwsSageMakerNotebookRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledAwsSageMakerNotebookRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     Workspace workspace =
@@ -537,7 +534,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   public ResponseEntity<ApiAwsSageMakerNotebookResource> updateAwsSageMakerNotebook(
       UUID workspaceUuid,
       UUID resourceUuid,
-      @Valid ApiUpdateControlledAwsSageMakerNotebookRequestBody body) {
+      ApiUpdateControlledAwsSageMakerNotebookRequestBody body) {
     logger.info(
         "Updating AWS SageMaker Notebook resourceId {} workspaceUuid {}",
         resourceUuid,
@@ -570,9 +567,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
   @WithSpan
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsSageMakerNotebook(
-      UUID workspaceUuid,
-      UUID resourceUuid,
-      @Valid ApiDeleteControlledAwsResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAwsResourceRequestBody body) {
     return deleteAwsResource(
         workspaceUuid, resourceUuid, WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK, body);
   }

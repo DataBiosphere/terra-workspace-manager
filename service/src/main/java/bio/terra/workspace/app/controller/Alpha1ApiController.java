@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.generated.controller.Alpha1Api;
 import bio.terra.workspace.generated.model.ApiEnumerateJobsResult;
@@ -126,7 +125,6 @@ public class Alpha1ApiController implements Alpha1Api {
 
     // Prepare the inputs
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControllerValidationUtils.validatePaginationParams(0, limit);
     ResourceValidationUtils.validateOptionalResourceName(name);
 
     // Make sure the caller has read access to the workspace

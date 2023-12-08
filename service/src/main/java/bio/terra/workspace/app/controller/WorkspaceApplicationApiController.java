@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.WorkspaceApplicationApi;
 import bio.terra.workspace.generated.model.ApiWorkspaceApplicationDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceApplicationDescriptionList;
@@ -14,15 +13,12 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WorkspaceApplicationApiController implements WorkspaceApplicationApi {
@@ -50,8 +46,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   @WithSpan
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> disableWorkspaceApplication(
-      @PathVariable("workspaceId") UUID workspaceUuid,
-      @PathVariable("applicationId") String applicationId) {
+      UUID workspaceUuid, String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
@@ -65,8 +60,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   @WithSpan
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> enableWorkspaceApplication(
-      @PathVariable("workspaceId") UUID workspaceUuid,
-      @PathVariable("applicationId") String applicationId) {
+      UUID workspaceUuid, String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
@@ -80,8 +74,7 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   @WithSpan
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescription> getWorkspaceApplication(
-      @PathVariable("workspaceId") UUID workspaceUuid,
-      @PathVariable("applicationId") String applicationId) {
+      UUID workspaceUuid, String applicationId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
@@ -94,11 +87,8 @@ public class WorkspaceApplicationApiController implements WorkspaceApplicationAp
   @WithSpan
   @Override
   public ResponseEntity<ApiWorkspaceApplicationDescriptionList> listWorkspaceApplications(
-      @PathVariable("workspaceId") UUID workspaceUuid,
-      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
-      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
+      UUID workspaceUuid, Integer offset, Integer limit) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControllerValidationUtils.validatePaginationParams(offset, limit);
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
             userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);

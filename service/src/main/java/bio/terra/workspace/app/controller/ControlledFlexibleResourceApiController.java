@@ -33,7 +33,6 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +82,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
   @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledFlexibleResource> createFlexibleResource(
-      UUID workspaceUuid, @Valid ApiCreateControlledFlexibleResourceRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledFlexibleResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
@@ -129,9 +128,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
   @WithSpan
   @Override
   public ResponseEntity<ApiFlexibleResource> updateFlexibleResource(
-      UUID workspaceUuid,
-      UUID resourceUuid,
-      @Valid ApiUpdateControlledFlexibleResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiUpdateControlledFlexibleResourceRequestBody body) {
     logger.info(
         "Updating flexible resource; resourceId {} workspaceId {}", resourceUuid, workspaceUuid);
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -203,9 +200,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
   @WithSpan
   @Override
   public ResponseEntity<ApiCloneControlledFlexibleResourceResult> cloneFlexibleResource(
-      UUID workspaceUuid,
-      UUID resourceUuid,
-      @Valid ApiCloneControlledFlexibleResourceRequest body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiCloneControlledFlexibleResourceRequest body) {
     logger.info(
         "Cloning flex resource resourceId {} workspaceUuid {}", resourceUuid, workspaceUuid);
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();

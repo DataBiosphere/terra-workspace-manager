@@ -70,7 +70,6 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,7 +120,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsObjectResource> createGcsObjectReference(
-      UUID workspaceUuid, @Valid ApiCreateGcpGcsObjectReferenceRequestBody body) {
+      UUID workspaceUuid, ApiCreateGcpGcsObjectReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
@@ -216,7 +215,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiGcpGcsBucketResource> createBucketReference(
-      UUID workspaceUuid, @Valid ApiCreateGcpGcsBucketReferenceRequestBody body) {
+      UUID workspaceUuid, ApiCreateGcpGcsBucketReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
@@ -312,7 +311,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDataTableResource> createBigQueryDataTableReference(
-      UUID workspaceUuid, @Valid ApiCreateGcpBigQueryDataTableReferenceRequestBody body) {
+      UUID workspaceUuid, ApiCreateGcpBigQueryDataTableReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
@@ -409,7 +408,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiGcpBigQueryDatasetResource> createBigQueryDatasetReference(
-      UUID uuid, @Valid ApiCreateGcpBigQueryDatasetReferenceRequestBody body) {
+      UUID uuid, ApiCreateGcpBigQueryDatasetReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
@@ -504,7 +503,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiDataRepoSnapshotResource> createDataRepoSnapshotReference(
-      UUID uuid, @Valid ApiCreateDataRepoSnapshotReferenceRequestBody body) {
+      UUID uuid, ApiCreateDataRepoSnapshotReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
@@ -618,7 +617,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsObjectResourceResult> cloneGcpGcsObjectReference(
-      UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -682,7 +681,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiCloneReferencedGcpGcsBucketResourceResult> cloneGcpGcsBucketReference(
-      UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -748,9 +747,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDataTableResourceResult>
       cloneGcpBigQueryDataTableReference(
-          UUID workspaceUuid,
-          UUID resourceUuid,
-          @Valid ApiCloneReferencedResourceRequestBody body) {
+          UUID workspaceUuid, UUID resourceUuid, ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -815,9 +812,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<ApiCloneReferencedGcpBigQueryDatasetResourceResult>
       cloneGcpBigQueryDatasetReference(
-          UUID workspaceUuid,
-          UUID resourceUuid,
-          @Valid ApiCloneReferencedResourceRequestBody body) {
+          UUID workspaceUuid, UUID resourceUuid, ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -883,9 +878,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @Override
   public ResponseEntity<ApiCloneReferencedGcpDataRepoSnapshotResourceResult>
       cloneGcpDataRepoSnapshotReference(
-          UUID workspaceUuid,
-          UUID resourceUuid,
-          @Valid ApiCloneReferencedResourceRequestBody body) {
+          UUID workspaceUuid, UUID resourceUuid, ApiCloneReferencedResourceRequestBody body) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -950,7 +943,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiGitRepoResource> createGitRepoReference(
-      UUID workspaceUuid, @Valid ApiCreateGitRepoReferenceRequestBody body) {
+      UUID workspaceUuid, ApiCreateGitRepoReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(
@@ -1050,7 +1043,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiCloneReferencedGitRepoResourceResult> cloneGitRepoReference(
-      UUID workspaceUuid, UUID resourceUuid, @Valid ApiCloneReferencedResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiCloneReferencedResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // For cloning, we need to check that the caller has both read access to the source workspace
     // and write access to the destination workspace.
@@ -1114,7 +1107,7 @@ public class ReferencedGcpResourceController extends ControllerBase
   @WithSpan
   @Override
   public ResponseEntity<ApiTerraWorkspaceResource> createTerraWorkspaceReference(
-      UUID workspaceUuid, @Valid ApiCreateTerraWorkspaceReferenceRequestBody body) {
+      UUID workspaceUuid, ApiCreateTerraWorkspaceReferenceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateWorkspaceAndAction(

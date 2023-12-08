@@ -6,7 +6,6 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -81,7 +80,6 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
       ApiResourceType resource,
       ApiStewardshipType stewardship) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControllerValidationUtils.validatePaginationParams(offset, limit);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 

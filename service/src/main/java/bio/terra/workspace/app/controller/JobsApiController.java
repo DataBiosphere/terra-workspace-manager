@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class JobsApiController implements JobsApi {
@@ -41,7 +40,7 @@ public class JobsApiController implements JobsApi {
 
   @WithSpan
   @Override
-  public ResponseEntity<ApiJobReport> retrieveJob(@PathVariable("jobId") String jobId) {
+  public ResponseEntity<ApiJobReport> retrieveJob(String jobId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest);
     FlightState flightState = jobService.retrieveJob(jobId);
