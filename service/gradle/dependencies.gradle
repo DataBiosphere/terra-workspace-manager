@@ -40,7 +40,7 @@ dependencies {
   implementation group: "bio.terra", name:"terra-aws-resource-discovery", version:"v0.6.2-SNAPSHOT"
 
   // hk2 is required to use datarepo client, but not correctly exposed by the client
-  implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
+  implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2"
 
   // OpenTelemetry utilities for various HTTP clients
   var openTelemetryVersion = '1.32.0'
@@ -61,7 +61,8 @@ dependencies {
 
   // Get stairway via TCL
   implementation("bio.terra:terra-common-lib:0.1.7-SNAPSHOT")
-  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-2cd8969"
+  // sam is not semantically versioned so force the version here
+  implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-6ce2431"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
 
   // Cloud Resource Library
