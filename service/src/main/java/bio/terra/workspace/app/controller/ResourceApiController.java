@@ -6,7 +6,6 @@ import static bio.terra.workspace.common.utils.ControllerValidationUtils.validat
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
@@ -30,18 +29,16 @@ import bio.terra.workspace.service.resource.referenced.ReferencedResourceService
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class ResourceApiController extends ControllerBase implements ResourceApi {
@@ -74,16 +71,15 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     this.referencedResourceService = referencedResourceService;
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiResourceList> enumerateResources(
       UUID workspaceUuid,
-      @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
-      @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
-      @Valid ApiResourceType resource,
-      @Valid ApiStewardshipType stewardship) {
+      Integer offset,
+      Integer limit,
+      ApiResourceType resource,
+      ApiStewardshipType stewardship) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControllerValidationUtils.validatePaginationParams(offset, limit);
     workspaceService.validateWorkspaceAndAction(
         userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
 
@@ -102,7 +98,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiResourceDescription> getResource(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -115,7 +111,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(apiResourceDescription, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Boolean> checkReferenceAccess(UUID workspaceUuid, UUID resourceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -126,7 +122,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(isValid, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> updateResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<ApiProperty> properties) {
@@ -143,7 +139,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteResourceProperties(
       UUID workspaceUuid, UUID resourceUuid, List<String> propertyKeys) {

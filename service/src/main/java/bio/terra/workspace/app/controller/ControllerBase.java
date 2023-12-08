@@ -21,9 +21,9 @@ import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateUserRole;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 
 /**

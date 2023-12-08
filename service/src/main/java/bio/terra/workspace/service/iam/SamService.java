@@ -25,8 +25,9 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import io.opencensus.contrib.spring.aop.Traced;
-import io.opencensus.trace.Tracing;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +38,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
@@ -85,7 +85,8 @@ public class SamService {
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, SamUserFactory samUserFactory) {
+  public SamService(
+      SamConfiguration samConfig, SamUserFactory samUserFactory, OpenTelemetry openTelemetry) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.wsmServiceAccountInitialized = false;
@@ -93,7 +94,7 @@ public class SamService {
         new ApiClient()
             .getHttpClient()
             .newBuilder()
-            .addInterceptor(new OkHttpClientTracingInterceptor(Tracing.getTracer()))
+            .addInterceptor(new OkHttpClientTracingInterceptor(openTelemetry))
             .build();
   }
 
@@ -129,7 +130,7 @@ public class SamService {
     return new AdminApi(getApiClient(accessToken));
   }
 
-  @Traced
+  @WithSpan
   private boolean isAdmin(AuthenticatedUserRequest userRequest) throws InterruptedException {
     try {
       // If the user can successfully call sam admin api, the user has terra level admin access.
@@ -309,7 +310,7 @@ public class SamService {
    * reader and writer policies are also created. Errors from the Sam client will be thrown as Sam
    * specific exception types.
    */
-  @Traced
+  @WithSpan
   public void createWorkspaceWithDefaults(
       AuthenticatedUserRequest userRequest,
       UUID uuid,
@@ -351,7 +352,7 @@ public class SamService {
    *
    * @return map from workspace ID to AccessibleWorkspace record
    */
-  @Traced
+  @WithSpan
   public Map<UUID, AccessibleWorkspace> listWorkspaceIdsAndHighestRoles(
       AuthenticatedUserRequest userRequest, WsmIamRole minimumHighestRoleFromRequest)
       throws InterruptedException {
@@ -398,7 +399,7 @@ public class SamService {
     return result;
   }
 
-  @Traced
+  @WithSpan
   public void deleteWorkspace(AuthenticatedUserRequest userRequest, UUID uuid)
       throws InterruptedException {
     String authToken = userRequest.getRequiredToken();
@@ -446,7 +447,7 @@ public class SamService {
     }
   }
 
-  @Traced
+  @WithSpan
   public List<String> listResourceActions(
       AuthenticatedUserRequest userRequest, String resourceType, String resourceId)
       throws InterruptedException {
@@ -459,7 +460,7 @@ public class SamService {
     }
   }
 
-  @Traced
+  @WithSpan
   public void addGroupsToAuthDomain(
       AuthenticatedUserRequest userRequest,
       String resourceType,
@@ -476,7 +477,7 @@ public class SamService {
     }
   }
 
-  @Traced
+  @WithSpan
   public boolean isAuthorized(
       AuthenticatedUserRequest userRequest,
       String iamResourceType,
@@ -507,7 +508,7 @@ public class SamService {
    * @return True if userToCheck may perform the specified action on the specified resource. False
    *     otherwise.
    */
-  @Traced
+  @WithSpan
   public boolean userIsAuthorized(
       String iamResourceType,
       String resourceId,
@@ -548,7 +549,7 @@ public class SamService {
    * @param uuid The ID of the resource being checked
    * @param action The action being checked on the resource
    */
-  @Traced
+  @WithSpan
   public void checkAuthz(
       AuthenticatedUserRequest userRequest, String type, String uuid, String action)
       throws InterruptedException {
@@ -568,7 +569,7 @@ public class SamService {
    *
    * @param userRequest Credentials of the user whose permissions are being checked
    */
-  @Traced
+  @WithSpan
   public void checkAdminAuthz(AuthenticatedUserRequest userRequest) throws InterruptedException {
     boolean isAuthorized = isAdmin(userRequest);
     final String userEmail = getUserEmailFromSam(userRequest);
@@ -590,7 +591,7 @@ public class SamService {
    * @param role The role being granted.
    * @param email The user being granted a role.
    */
-  @Traced
+  @WithSpan
   public void grantWorkspaceRole(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
       throws InterruptedException {
@@ -619,7 +620,7 @@ public class SamService {
    * permissions directly on other workspaces. Trying to remove a role that a user does not have
    * will succeed, though Sam will error if the email is not a registered user.
    */
-  @Traced
+  @WithSpan
   public void removeWorkspaceRole(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest, WsmIamRole role, String email)
       throws InterruptedException {
@@ -653,7 +654,7 @@ public class SamService {
    * @param role The role to remove
    * @param email Email identifier of the user whose role is being removed.
    */
-  @Traced
+  @WithSpan
   public void removeResourceRole(
       ControlledResource resource, ControlledResourceIamRole role, String email)
       throws InterruptedException {
@@ -689,7 +690,7 @@ public class SamService {
    * @param role The role to restore
    * @param email Email identifier of the user whose role is being restored.
    */
-  @Traced
+  @WithSpan
   public void restoreResourceRole(
       ControlledResource resource, ControlledResourceIamRole role, String email)
       throws InterruptedException {
@@ -720,7 +721,7 @@ public class SamService {
    * <p>This operation is only available to MC_WORKSPACE stage workspaces, as Rawls manages
    * permissions directly on other workspaces.
    */
-  @Traced
+  @WithSpan
   public List<RoleBinding> listRoleBindings(
       UUID workspaceUuid, AuthenticatedUserRequest userRequest) throws InterruptedException {
 
@@ -751,7 +752,7 @@ public class SamService {
   }
 
   /** Wrapper around Sam client to fetch the list of users with a specific role in a workspace. */
-  @Traced
+  @WithSpan
   public List<String> listUsersWithWorkspaceRole(
       UUID workspaceUuid, WsmIamRole role, AuthenticatedUserRequest userRequest) {
     ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
@@ -785,7 +786,7 @@ public class SamService {
   }
 
   /** Wrapper around Sam client to fetch requester roles on specified resource. */
-  @Traced
+  @WithSpan
   public List<WsmIamRole> listRequesterRoles(
       AuthenticatedUserRequest userRequest, String samResourceType, String resourceId) {
     ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
@@ -801,7 +802,7 @@ public class SamService {
     }
   }
 
-  @Traced
+  @WithSpan
   public boolean isApplicationEnabledInSam(
       UUID workspaceUuid, String email, AuthenticatedUserRequest userRequest) {
     // We detect that an application is enabled in Sam by checking if the application has
@@ -823,7 +824,7 @@ public class SamService {
    *
    * <p>This operation in Sam is idempotent, so we don't worry about calling this multiple times.
    */
-  @Traced
+  @WithSpan
   public String syncWorkspacePolicy(
       UUID workspaceUuid, WsmIamRole role, AuthenticatedUserRequest userRequest)
       throws InterruptedException {
@@ -884,7 +885,7 @@ public class SamService {
    * @param userRequest User authentication
    * @return Sam policy group name
    */
-  @Traced
+  @WithSpan
   public String syncResourcePolicy(
       ControlledResource resource,
       ControlledResourceIamRole role,
@@ -948,7 +949,7 @@ public class SamService {
    *     constraints as privateIamRoles.
    * @param userRequest Credentials to use for talking to Sam.
    */
-  @Traced
+  @WithSpan
   public void createControlledResource(
       ControlledResource resource,
       @Nullable ControlledResourceIamRole privateIamRole,
@@ -1017,7 +1018,7 @@ public class SamService {
    * @param token access token
    * @throws InterruptedException on thread interrupt
    */
-  @Traced
+  @WithSpan
   public void deleteControlledResource(ControlledResource resource, String token)
       throws InterruptedException {
     logger.info("Deleting controlled resource {}", resource.getResourceId());
@@ -1053,7 +1054,7 @@ public class SamService {
    * @param userRequest user performing the delete
    * @throws InterruptedException on thread interrupt
    */
-  @Traced
+  @WithSpan
   public void deleteControlledResource(
       ControlledResource resource, AuthenticatedUserRequest userRequest)
       throws InterruptedException {

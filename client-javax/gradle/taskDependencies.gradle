@@ -1,0 +1,19 @@
+// These tasks are not useful for the client, as we don't care what generated code looks like. More
+// importantly, they can also cause false negatives in the up-to-date checking.
+final TASKS_TO_SKIP = [
+        javadoc,
+        spotbugsMain,
+        spotbugsTest,
+        spotlessJava,
+        spotlessJavaApply,
+        spotlessJavaCheck,
+        spotlessCheck,
+        spotlessApply]
+
+for (task in TASKS_TO_SKIP) {
+  task.configure {
+    onlyIf {
+      false // never execute
+    }
+  }
+}

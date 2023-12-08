@@ -55,14 +55,13 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants;
 import com.google.common.base.Strings;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -218,7 +217,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiAwsResourceCloudName> generateAwsS3StorageFolderCloudName(
       UUID workspaceUuid, ApiGenerateAwsResourceCloudNameRequestBody body) {
@@ -234,10 +233,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         new ApiAwsResourceCloudName().awsResourceCloudName(generatedCloudName), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledAwsS3StorageFolder> createAwsS3StorageFolder(
-      UUID workspaceUuid, @Valid ApiCreateControlledAwsS3StorageFolderRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledAwsS3StorageFolderRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     Workspace workspace =
@@ -309,7 +308,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiAwsS3StorageFolderResource> getAwsS3StorageFolder(
       UUID workspaceUuid, UUID resourceUuid) {
@@ -322,12 +321,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiAwsS3StorageFolderResource> updateAwsS3StorageFolder(
       UUID workspaceUuid,
       UUID resourceUuid,
-      @Valid ApiUpdateControlledAwsS3StorageFolderRequestBody body) {
+      ApiUpdateControlledAwsS3StorageFolderRequestBody body) {
     logger.info(
         "Updating AWS S3 Storage Folder resourceId {} workspaceUuid {}",
         resourceUuid,
@@ -357,24 +356,22 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsS3StorageFolder(
-      UUID workspaceUuid,
-      UUID resourceUuid,
-      @Valid ApiDeleteControlledAwsResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAwsResourceRequestBody body) {
     return deleteAwsResource(
         workspaceUuid, resourceUuid, WsmResourceType.CONTROLLED_AWS_S3_STORAGE_FOLDER, body);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsS3StorageFolderResult(
       UUID workspaceUuid, String jobId) {
     return getDeleteAwsResourceResult(workspaceUuid, jobId);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiAwsCredential> getAwsS3StorageFolderCredential(
       UUID workspaceUuid,
@@ -395,10 +392,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest));
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiAwsResourceCloudName> generateAwsSageMakerNotebookCloudName(
-      UUID workspaceUuid, @Valid ApiGenerateAwsResourceCloudNameRequestBody body) {
+      UUID workspaceUuid, ApiGenerateAwsResourceCloudNameRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
@@ -427,10 +424,10 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
         .awsSageMakerNotebook(apiResource);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCreateControlledAwsSageMakerNotebookResult> createAwsSageMakerNotebook(
-      UUID workspaceUuid, @Valid ApiCreateControlledAwsSageMakerNotebookRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledAwsSageMakerNotebookRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     Workspace workspace =
@@ -508,7 +505,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(result, getAsyncResponseCode((result.getJobReport())));
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCreateControlledAwsSageMakerNotebookResult>
       getCreateAwsSageMakerNotebookResult(UUID workspaceUuid, String jobId) {
@@ -519,7 +516,7 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiAwsSageMakerNotebookResource> getAwsSageMakerNotebook(
       UUID workspaceUuid, UUID resourceUuid) {
@@ -532,12 +529,12 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiAwsSageMakerNotebookResource> updateAwsSageMakerNotebook(
       UUID workspaceUuid,
       UUID resourceUuid,
-      @Valid ApiUpdateControlledAwsSageMakerNotebookRequestBody body) {
+      ApiUpdateControlledAwsSageMakerNotebookRequestBody body) {
     logger.info(
         "Updating AWS SageMaker Notebook resourceId {} workspaceUuid {}",
         resourceUuid,
@@ -567,24 +564,22 @@ public class ControlledAwsResourceApiController extends ControlledResourceContro
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> deleteAwsSageMakerNotebook(
-      UUID workspaceUuid,
-      UUID resourceUuid,
-      @Valid ApiDeleteControlledAwsResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAwsResourceRequestBody body) {
     return deleteAwsResource(
         workspaceUuid, resourceUuid, WsmResourceType.CONTROLLED_AWS_SAGEMAKER_NOTEBOOK, body);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiDeleteControlledAwsResourceResult> getDeleteAwsSageMakerNotebookResult(
       UUID workspaceUuid, String jobId) {
     return getDeleteAwsResourceResult(workspaceUuid, jobId);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiAwsCredential> getAwsSageMakerNotebookCredential(
       UUID workspaceUuid,

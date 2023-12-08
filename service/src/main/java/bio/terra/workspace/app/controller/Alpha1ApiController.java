@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.common.utils.ErrorReportUtils;
 import bio.terra.workspace.generated.controller.Alpha1Api;
 import bio.terra.workspace.generated.model.ApiEnumerateJobsResult;
@@ -31,12 +30,12 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.JobStateFilter;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,7 +73,7 @@ public class Alpha1ApiController implements Alpha1Api {
     this.request = request;
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiLoadUrlListResult> loadUrlList(
       UUID workspaceId, UUID resourceId, ApiLoadUrlListRequestBody body) {
@@ -93,7 +92,7 @@ public class Alpha1ApiController implements Alpha1Api {
     return ResponseEntity.ok(fetchApiLoadSignedUrlListResult(jobId));
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiLoadUrlListResult> fetchLoadUrlListResult(
       UUID workspaceId, UUID resourceId, String jobId) {
@@ -111,7 +110,7 @@ public class Alpha1ApiController implements Alpha1Api {
         .errorReport(jobResult.getApiErrorReport());
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiEnumerateJobsResult> enumerateJobs(
       UUID workspaceUuid,
@@ -126,7 +125,6 @@ public class Alpha1ApiController implements Alpha1Api {
 
     // Prepare the inputs
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    ControllerValidationUtils.validatePaginationParams(0, limit);
     ResourceValidationUtils.validateOptionalResourceName(name);
 
     // Make sure the caller has read access to the workspace
