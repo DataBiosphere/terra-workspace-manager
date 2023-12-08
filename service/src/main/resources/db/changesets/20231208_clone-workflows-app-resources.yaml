@@ -1,0 +1,34 @@
+databaseChangeLog:
+- changeSet:
+    id: Set cloneInstructions to COPY_RESOURCE for WORKFLOWS_APP resources.
+    author: mspector
+    changes:
+    - update:
+        tableName: resource
+        columns:
+            - column:
+                name: cloning_instructions
+                value: "COPY_RESOURCE"
+        where:
+          or:
+              and:
+                - column:
+                    name: resource_type
+                    value: "AZURE_DATABASE"
+                - column:
+                    name: name
+                    value: "cbas"
+    - update:
+          tableName: resource
+          columns:
+              - column:
+                    name: cloning_instructions
+                    value: "COPY_RESOURCE"
+          where:
+              and:
+                  - column:
+                        name: resource_type
+                        value: "AZURE_MANAGED_IDENTITY"
+                  - column:
+                        name: name
+                        value: "idworkflows_app"

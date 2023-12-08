@@ -21,4 +21,5 @@
     <include file="changesets/20230202_temporary_grant.yaml" relativeToChangelogFile="true" />
     <include file="changesets/20230222_states.yaml" relativeToChangelogFile="true" />
     <include file="changesets/20230427_workspace_states.yaml" relativeToChangelogFile="true" />
+    <include file="changesets/20231208_clone-workflows-app-resources.yaml" relativeToChangelogFile="true" />
 </databaseChangeLog>
