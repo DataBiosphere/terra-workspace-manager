@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.spendprofile;
 
 import bio.terra.common.exception.ValidationException;
+import bio.terra.common.tracing.JakartaTracingFilter;
 import bio.terra.profile.api.ProfileApi;
 import bio.terra.profile.client.ApiClient;
 import bio.terra.profile.client.ApiException;
@@ -17,15 +18,13 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.google.api.client.util.Strings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
-import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
-import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
-import io.opencensus.contrib.spring.aop.Traced;
-import io.opencensus.trace.Tracing;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.ws.rs.client.Client;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,15 +43,19 @@ public class SpendProfileService {
   private final SamService samService;
   private final Map<SpendProfileId, SpendProfile> spendProfiles;
   private final SpendProfileConfiguration spendProfileConfiguration;
+  private final OpenTelemetry openTelemetry;
   private final Client commonHttpClient;
 
   @Autowired
   public SpendProfileService(
-      SamService samService, SpendProfileConfiguration spendProfileConfiguration) {
+      SamService samService,
+      SpendProfileConfiguration spendProfileConfiguration,
+      OpenTelemetry openTelemetry) {
     this(
         samService,
         adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
-        spendProfileConfiguration);
+        spendProfileConfiguration,
+        openTelemetry);
   }
 
   /** This constructor is only used for unit testing. DO NOT USE FOR PRODUCTION */
@@ -60,17 +63,15 @@ public class SpendProfileService {
   public SpendProfileService(
       SamService samService,
       List<SpendProfile> spendProfiles,
-      SpendProfileConfiguration spendProfileConfiguration) {
+      SpendProfileConfiguration spendProfileConfiguration,
+      OpenTelemetry openTelemetry) {
     this.samService = samService;
     this.spendProfiles = Maps.uniqueIndex(spendProfiles, SpendProfile::id);
     this.spendProfileConfiguration = spendProfileConfiguration;
+    this.openTelemetry = openTelemetry;
 
     this.commonHttpClient =
-        new ApiClient()
-            .getHttpClient()
-            .register(
-                new JaxrsClientFilter(
-                    new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
+        new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
   }
 
   /**
@@ -78,7 +79,7 @@ public class SpendProfileService {
    * the id if there is one and the user is authorized to link it. Otherwise, throws a {@link
    * SpendUnauthorizedException}.
    */
-  @Traced
+  @WithSpan
   public SpendProfile authorizeLinking(
       SpendProfileId spendProfileId, boolean bpmEnabled, AuthenticatedUserRequest userRequest) {
 
@@ -143,7 +144,7 @@ public class SpendProfileService {
         .collect(Collectors.toList());
   }
 
-  @Traced
+  @WithSpan
   private SpendProfile getSpendProfileFromBpm(
       AuthenticatedUserRequest userRequest, SpendProfileId spendProfileId) {
     SpendProfile spend;

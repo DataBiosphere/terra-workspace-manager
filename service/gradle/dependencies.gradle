@@ -12,7 +12,7 @@ dependencies {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
     implementation 'org.json:json:20231013' // security vulnerability
   }
-  implementation platform('com.google.cloud:libraries-bom:26.0.0')
+  implementation platform('com.google.cloud:libraries-bom:26.27.0')
 
   implementation 'com.google.cloud:google-cloud-bigquery'
   implementation 'com.google.cloud:google-cloud-bigquerydatatransfer'
@@ -34,43 +34,57 @@ dependencies {
   implementation 'software.amazon.awssdk:sts'
 
   // Terra deps
-  implementation group: "bio.terra", name: "datarepo-client", version: "1.41.0-SNAPSHOT"
-  implementation group: "bio.terra", name:"billing-profile-manager-client", version: "0.1.29-SNAPSHOT"
-  implementation group: "bio.terra", name:"terra-policy-client", version:"0.2.50-SNAPSHOT"
+  implementation group: "bio.terra", name: "datarepo-jakarta-client", version: "1.557.0-SNAPSHOT"
+  implementation group: "bio.terra", name:"billing-profile-manager-client", version: "0.1.237-SNAPSHOT"
+  implementation group: "bio.terra", name:"terra-policy-client", version:"1.0.7-SNAPSHOT"
   implementation group: "bio.terra", name:"terra-aws-resource-discovery", version:"v0.6.2-SNAPSHOT"
 
   // hk2 is required to use datarepo client, but not correctly exposed by the client
-  implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2", version: "2.32"
+  implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2"
 
-  // Opencensus utilities for various HTTP clients
-  implementation group: "io.opencensus", name: "opencensus-contrib-http-jaxrs", version: "0.28.3"
-  implementation group: 'io.opencensus', name: 'opencensus-exporter-stats-stackdriver', version: '0.31.1'
+  // OpenTelemetry utilities for various HTTP clients
+  var openTelemetryVersion = '1.32.0'
+  implementation "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
+  implementation "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}"
+  implementation "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
+  implementation "io.opentelemetry:opentelemetry-sdk-metrics:${openTelemetryVersion}"
+  implementation "io.opentelemetry:opentelemetry-exporter-logging:${openTelemetryVersion}"
+  implementation "io.opentelemetry.semconv:opentelemetry-semconv:1.21.0-alpha"
+  implementation "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0:${openTelemetryVersion}-alpha"
+  implementation "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:${openTelemetryVersion}"
+  implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot:${openTelemetryVersion}-alpha"
+
+  var gcpOpenTelemetryExporterVersion = '0.25.2'
+  implementation "com.google.cloud.opentelemetry:exporter-trace:${gcpOpenTelemetryExporterVersion}"
+  implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
+
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.0.94-SNAPSHOT")
-  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-fd8ee25"
-  implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.4.3-SNAPSHOT"
+  implementation("bio.terra:terra-common-lib:0.1.7-SNAPSHOT")
+  // sam is not semantically versioned so force the version here
+  implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-5a5bf28"
+  implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.27-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.30-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.250-SNAPSHOT')
+  implementation ('bio.terra:terra-landing-zone-service:0.0.251-SNAPSHOT')
 
   // Storage transfer service
-  implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20220324-1.32.1'
-  implementation group: "com.google.auth", name: "google-auth-library-oauth2-http", version: "1.6.0"
+  implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20230831-2.0.0'
+  implementation group: "com.google.auth", name: "google-auth-library-oauth2-http"
 
   // Versioned direct deps
   implementation group: "org.hashids", name: "hashids", version: "1.0.3"
-  implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.4"
-  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: "2.13.4"
+  implementation group: "com.fasterxml.jackson.core", name: "jackson-core"
+  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
   implementation group: "org.liquibase", name: "liquibase-core", version: "4.8.0"
   implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
   runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.7"
 
   // Deps whose versions are controlled by Spring
-  implementation group: "javax.validation", name: "validation-api"
+  implementation group: "jakarta.validation", name: "jakarta.validation-api"
   implementation group: "org.apache.commons", name: "commons-dbcp2"
   implementation group: "org.apache.commons", name: "commons-lang3"
   implementation group: "org.apache.commons", name: "commons-pool2"
@@ -116,6 +130,8 @@ dependencies {
   testImplementation 'au.com.dius.pact.provider:junit5:4.3.19'
   testImplementation 'au.com.dius.pact.provider:junit5spring:4.3.19'
 
+  testImplementation 'com.google.code.findbugs:annotations:3.0.1'
+
   annotationProcessor group: "com.google.auto.value", name: "auto-value", version: "1.7.4"
-  annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.6.6"
+  annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
 }

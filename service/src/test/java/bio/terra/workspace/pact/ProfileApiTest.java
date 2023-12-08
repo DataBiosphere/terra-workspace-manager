@@ -17,6 +17,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import io.opentelemetry.api.OpenTelemetry;
 import java.util.Optional;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -101,7 +102,7 @@ public class ProfileApiTest {
     var userRequest = new AuthenticatedUserRequest();
     userRequest.token(Optional.of("dummyValue"));
     var spendProfileId = new SpendProfileId(dummyAzureProfileId);
-    var service = new SpendProfileService(samService, config);
+    var service = new SpendProfileService(samService, config, OpenTelemetry.noop());
 
     service.authorizeLinking(spendProfileId, true, userRequest);
   }
@@ -118,7 +119,7 @@ public class ProfileApiTest {
     var userRequest = new AuthenticatedUserRequest();
     userRequest.token(Optional.of("dummyValue"));
     var spendProfileId = new SpendProfileId(dummyGCPProfileId);
-    var service = new SpendProfileService(samService, config);
+    var service = new SpendProfileService(samService, config, OpenTelemetry.noop());
 
     service.authorizeLinking(spendProfileId, true, userRequest);
   }
@@ -135,7 +136,7 @@ public class ProfileApiTest {
     var userRequest = new AuthenticatedUserRequest();
     userRequest.token(Optional.of("dummyValue"));
     var spendProfileId = new SpendProfileId(dummyAzureProfileId);
-    var service = new SpendProfileService(samService, config);
+    var service = new SpendProfileService(samService, config, OpenTelemetry.noop());
     assertThrows(
         SpendUnauthorizedException.class,
         () -> service.authorizeLinking(spendProfileId, true, userRequest));

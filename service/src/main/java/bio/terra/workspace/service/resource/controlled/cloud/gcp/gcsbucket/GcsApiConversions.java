@@ -208,7 +208,7 @@ public class GcsApiConversions {
 
     resultBuilder.setAge(condition.getAge());
     // This DateTime object doesn't include a time in the BucketInfo structure
-    resultBuilder.setCreatedBefore(toGoogleDateTimeDateOnly(condition.getCreatedBefore()));
+    resultBuilder.setCreatedBeforeOffsetDateTime(condition.getCreatedBefore());
     resultBuilder.setNumberOfNewerVersions(condition.getNumNewerVersions());
     resultBuilder.setIsLive(condition.isLive());
     resultBuilder.setDaysSinceNoncurrentTime(condition.getDaysSinceNoncurrentTime());

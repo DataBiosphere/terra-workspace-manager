@@ -17,7 +17,7 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.stage.StageService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.UUID;
 import org.apache.commons.codec.binary.StringUtils;
 import org.springframework.stereotype.Component;
@@ -117,7 +117,7 @@ public class ControlledResourceMetadataManager {
    * @param action the action to authorize against the resource
    * @return validated resource
    */
-  @Traced
+  @WithSpan
   public ControlledResource validateControlledResourceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, UUID resourceId, String action) {
     stageService.assertMcWorkspace(workspaceUuid, action);
@@ -204,7 +204,7 @@ public class ControlledResourceMetadataManager {
    * @param resourceId id of the resource in question
    * @return validated resource
    */
-  @Traced
+  @WithSpan
   public ControlledResource validateCloneAction(
       AuthenticatedUserRequest userRequest,
       UUID sourceWorkspaceUuid,

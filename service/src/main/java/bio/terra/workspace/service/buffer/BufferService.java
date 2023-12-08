@@ -6,14 +6,13 @@ import bio.terra.buffer.client.ApiException;
 import bio.terra.buffer.model.HandoutRequestBody;
 import bio.terra.buffer.model.ResourceInfo;
 import bio.terra.common.logging.RequestIdFilter;
+import bio.terra.common.tracing.JakartaTracingFilter;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
-import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
-import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
-import io.opencensus.trace.Tracing;
+import io.opentelemetry.api.OpenTelemetry;
+import jakarta.ws.rs.client.Client;
 import java.io.IOException;
-import javax.ws.rs.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -30,14 +29,11 @@ public class BufferService {
   private final Client commonHttpClient;
 
   @Autowired
-  public BufferService(BufferServiceConfiguration bufferServiceConfiguration) {
+  public BufferService(
+      BufferServiceConfiguration bufferServiceConfiguration, OpenTelemetry openTelemetry) {
     this.bufferServiceConfiguration = bufferServiceConfiguration;
     this.commonHttpClient =
-        new ApiClient()
-            .getHttpClient()
-            .register(
-                new JaxrsClientFilter(
-                    new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
+        new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
   }
 
   private ApiClient getApiClient(String accessToken) {

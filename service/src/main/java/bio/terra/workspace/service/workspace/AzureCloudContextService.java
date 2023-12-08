@@ -19,7 +19,7 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -132,7 +132,7 @@ public class AzureCloudContextService implements CloudContextService {
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional Azure cloud context
    */
-  @Traced
+  @WithSpan
   public Optional<AzureCloudContext> getAzureCloudContext(UUID workspaceUuid) {
     return workspaceDao
         .getCloudContext(workspaceUuid, CloudPlatform.AZURE)

@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.policy;
 
 import bio.terra.common.logging.RequestIdFilter;
+import bio.terra.common.tracing.JakartaTracingFilter;
 import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
 import bio.terra.policy.client.ApiException;
@@ -28,10 +29,9 @@ import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import io.opencensus.contrib.http.jaxrs.JaxrsClientExtractor;
-import io.opencensus.contrib.http.jaxrs.JaxrsClientFilter;
-import io.opencensus.contrib.spring.aop.Traced;
-import io.opencensus.trace.Tracing;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.ws.rs.client.Client;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import javax.ws.rs.client.Client;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,21 +56,19 @@ public class TpsApiDispatch {
 
   @Autowired
   public TpsApiDispatch(
-      FeatureConfiguration features, PolicyServiceConfiguration policyServiceConfiguration) {
+      FeatureConfiguration features,
+      PolicyServiceConfiguration policyServiceConfiguration,
+      OpenTelemetry openTelemetry) {
     this.features = features;
     this.policyServiceConfiguration = policyServiceConfiguration;
     this.commonHttpClient =
-        new ApiClient()
-            .getHttpClient()
-            .register(
-                new JaxrsClientFilter(
-                    new JaxrsClientExtractor(), Tracing.getPropagationComponent().getB3Format()));
+        new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
 
     logger.info("TPS base path: '{}'", policyServiceConfiguration.getBasePath());
   }
 
   // -- Policy Attribute Object Interface --
-  @Traced
+  @WithSpan
   public void createPao(
       UUID objectId,
       @Nullable TpsPolicyInputs policyInputs,
@@ -108,7 +105,7 @@ public class TpsApiDispatch {
    * @return PAO
    * @throws InterruptedException on timer interrupt
    */
-  @Traced
+  @WithSpan
   public TpsPaoGetResult getOrCreatePao(
       UUID objectId, TpsComponent component, TpsObjectType objectType) throws InterruptedException {
     Optional<TpsPaoGetResult> pao = getPaoIfExists(objectId);
@@ -120,7 +117,7 @@ public class TpsApiDispatch {
     return getPao(objectId);
   }
 
-  @Traced
+  @WithSpan
   public void deletePao(UUID workspaceUuid) throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
@@ -145,7 +142,7 @@ public class TpsApiDispatch {
     }
   }
 
-  @Traced
+  @WithSpan
   public TpsPaoGetResult getPao(UUID workspaceUuid) throws InterruptedException {
     features.tpsEnabledCheck();
     TpsApi tpsApi = policyApi();
@@ -156,7 +153,7 @@ public class TpsApiDispatch {
     }
   }
 
-  @Traced
+  @WithSpan
   public TpsPaoUpdateResult linkPao(
       UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode)
       throws InterruptedException {
@@ -171,7 +168,7 @@ public class TpsApiDispatch {
     }
   }
 
-  @Traced
+  @WithSpan
   public TpsPaoUpdateResult mergePao(
       UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode)
       throws InterruptedException {
@@ -186,7 +183,7 @@ public class TpsApiDispatch {
     }
   }
 
-  @Traced
+  @WithSpan
   public TpsPaoUpdateResult replacePao(
       UUID workspaceUuid, TpsPolicyInputs policyInputs, TpsUpdateMode updateMode)
       throws InterruptedException {
@@ -201,7 +198,7 @@ public class TpsApiDispatch {
     }
   }
 
-  @Traced
+  @WithSpan
   public TpsPaoUpdateResult updatePao(
       UUID workspaceUuid,
       TpsPolicyInputs addAttributes,
@@ -222,7 +219,7 @@ public class TpsApiDispatch {
     }
   }
 
-  @Traced
+  @WithSpan
   public List<String> listValidRegions(UUID workspaceId, CloudPlatform platform)
       throws InterruptedException {
     features.tpsEnabledCheck();
@@ -239,7 +236,7 @@ public class TpsApiDispatch {
     return new ArrayList<>();
   }
 
-  @Traced
+  @WithSpan
   public List<String> listValidRegionsForPao(TpsPaoGetResult tpsPao, CloudPlatform platform)
       throws InterruptedException {
     features.tpsEnabledCheck();
@@ -259,7 +256,7 @@ public class TpsApiDispatch {
     return new ArrayList<>();
   }
 
-  @Traced
+  @WithSpan
   public PolicyExplainResult explain(
       UUID workspaceId,
       int depth,
@@ -289,7 +286,7 @@ public class TpsApiDispatch {
     }
   }
 
-  @Traced
+  @WithSpan
   public TpsLocation getLocationInfo(CloudPlatform platform, String location)
       throws InterruptedException {
     features.tpsEnabledCheck();
