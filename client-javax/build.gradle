@@ -1,0 +1,96 @@
+plugins {
+    id 'maven-publish'
+    id 'com.jfrog.artifactory'
+    id "org.hidetake.swagger.generator" version "2.19.2"
+    id 'java-library'
+    id 'idea'
+    id 'com.diffplug.spotless'
+    id 'com.github.spotbugs'
+}
+
+repositories {
+    maven {
+        // Terra proxy for maven central
+        url 'https://broadinstitute.jfrog.io/broadinstitute/maven-central/'
+    }
+    mavenCentral()
+    maven {
+        url 'https://broadinstitute.jfrog.io/broadinstitute/libs-release/'
+    }
+    maven {
+        url 'https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/'
+    }
+}
+
+version = gradle.wsmVersion
+group = 'bio.terra'
+
+// Spotless configuration
+spotless {
+    java {
+        googleJavaFormat()
+        targetExclude("${buildDir}/**", "**/generated/**")
+    }
+}
+build.dependsOn spotlessApply
+// Spotbugs configuration
+spotbugs {
+    toolVersion = '4.7.3'
+    effort = 'max'
+    excludeFilter = file("$rootDir/gradle/config/spotbugs/exclude.xml")
+}
+// The latest version of spotbugs still pulls in a vulnerable dependency.
+// This can be removed when a new spotbugs version is available.
+dependencies {
+    constraints {
+        spotbugs 'org.apache.bcel:bcel:6.6.1'
+    }
+}
+spotbugsMain {
+    reports {
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/main.html")
+            stylesheet = 'fancy.xsl'
+        }
+    }
+}
+spotbugsTest {
+    reports {
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/test.html")
+            stylesheet = 'fancy.xsl'
+        }
+    }
+}
+java {
+    // Builds Javadoc into the published package as part of the 'assemble' task.
+    withJavadocJar()
+    // Builds sources into the published package as part of the 'assemble' task.
+    withSourcesJar()
+}
+
+def includeDir = "$projectDir/gradle"
+apply(from: "$includeDir/dependencies.gradle")
+apply(from: "$includeDir/openapi.gradle")
+apply(from: "$includeDir/taskDependencies.gradle")
+
+// Keep the client library at Java 11 for now
+// TODO: remove this as part PF-1540
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+publishing {
+    publications {
+        workspaceManagerClientLibrary(MavenPublication) {
+            artifactId = "workspace-manager-client-javax"
+            from components.java
+            versionMapping {
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
+        }
+    }
+}

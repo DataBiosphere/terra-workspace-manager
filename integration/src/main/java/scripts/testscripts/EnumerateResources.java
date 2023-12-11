@@ -193,7 +193,8 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
             () ->
                 ownerResourceApi.enumerateResources(
                     getWorkspaceId(), -11, 2, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
-    TestUtils.assertContains(invalidPaginationException.getMessage(), "Invalid pagination");
+    TestUtils.assertContains(invalidPaginationException.getMessage(), "enumerateResources.offset");
+    assertThat(invalidPaginationException.getCode(), equalTo(400));
 
     invalidPaginationException =
         assertThrows(
@@ -201,7 +202,8 @@ public class EnumerateResources extends WorkspaceAllocateTestScriptBase {
             () ->
                 ownerResourceApi.enumerateResources(
                     getWorkspaceId(), 0, 0, ResourceType.GCS_BUCKET, StewardshipType.CONTROLLED));
-    TestUtils.assertContains(invalidPaginationException.getMessage(), "Invalid pagination");
+    TestUtils.assertContains(invalidPaginationException.getMessage(), "enumerateResources.limit");
+    assertThat(invalidPaginationException.getCode(), equalTo(400));
   }
 
   private void logResult(String tag, ResourceList resourceList) {

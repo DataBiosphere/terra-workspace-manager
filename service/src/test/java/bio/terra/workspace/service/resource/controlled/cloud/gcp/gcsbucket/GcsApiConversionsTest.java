@@ -16,7 +16,6 @@ import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucke
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toBucketInfo;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGcsApi;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGoogleDateTime;
-import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toGoogleDateTimeDateOnly;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toOffsetDateTime;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toUpdateParameters;
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.GcsApiConversions.toWsmApi;
@@ -84,8 +83,7 @@ public class GcsApiConversionsTest extends BaseUnitTest {
     LifecycleRule gcsRule1 = bucketInfo1.getLifecycleRules().get(0);
     assertEquals(DeleteLifecycleAction.TYPE, gcsRule1.getAction().getActionType());
     assertEquals(31, gcsRule1.getCondition().getAge());
-    assertEquals(
-        toGoogleDateTimeDateOnly(OFFSET_DATE_TIME_2), gcsRule1.getCondition().getCreatedBefore());
+    assertEquals(OFFSET_DATE_TIME_2, gcsRule1.getCondition().getCreatedBeforeOffsetDateTime());
     assertTrue(gcsRule1.getCondition().getIsLive());
     assertThat(gcsRule1.getCondition().getMatchesStorageClass(), hasSize(2));
   }
@@ -182,8 +180,8 @@ public class GcsApiConversionsTest extends BaseUnitTest {
     LifecycleCondition googleLifecycleCondition1 = toGcsApi(WSM_LIFECYCLE_RULE_CONDITION_1);
     assertEquals(WSM_LIFECYCLE_RULE_CONDITION_1.getAge(), googleLifecycleCondition1.getAge());
     assertEquals(
-        toGoogleDateTimeDateOnly(WSM_LIFECYCLE_RULE_CONDITION_1.getCreatedBefore()),
-        googleLifecycleCondition1.getCreatedBefore());
+        WSM_LIFECYCLE_RULE_CONDITION_1.getCreatedBefore(),
+        googleLifecycleCondition1.getCreatedBeforeOffsetDateTime());
     ApiGcpGcsBucketLifecycleRuleCondition roundTrippedCondition =
         toWsmApi(googleLifecycleCondition1);
     // We can't compare the round-tripped condition with the original for equality, because the

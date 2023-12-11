@@ -38,7 +38,7 @@ import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -177,7 +177,7 @@ public class AwsCloudContextService implements CloudContextService {
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional {@link AwsCloudContext}
    */
-  @Traced
+  @WithSpan
   public Optional<AwsCloudContext> getAwsCloudContext(UUID workspaceUuid) {
     return workspaceDao
         .getCloudContext(workspaceUuid, CloudPlatform.AWS)

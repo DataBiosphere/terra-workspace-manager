@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.iam;
 
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest.AuthType;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 

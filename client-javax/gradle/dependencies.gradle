@@ -1,0 +1,13 @@
+dependencies {
+  // Swagger deps, versions controlled by dependencyManagement in root project
+  implementation group: "com.fasterxml.jackson.datatype", name: "jackson-datatype-jsr310", version: "2.15.2"
+  implementation group: "org.glassfish.jersey.core", name: "jersey-client", version: "2.36"
+  implementation group: "org.glassfish.jersey.media", name: "jersey-media-json-jackson", version: "2.36"
+  implementation group: "org.glassfish.jersey.media", name: "jersey-media-multipart", version: "2.36"
+  implementation group: "org.glassfish.jersey.connectors", name: "jersey-jdk-connector", version: "2.36"
+  implementation gradle.librarySwaggerAnnotations
+  swaggerCodegen gradle.librarySwaggerCli
+
+  // Expose to consumer applications compile and use the generated client
+  api group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: '2.41'
+}

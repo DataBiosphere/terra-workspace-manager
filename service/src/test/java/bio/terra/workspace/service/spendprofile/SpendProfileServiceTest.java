@@ -9,6 +9,7 @@ import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
 import com.google.common.collect.ImmutableList;
+import io.opentelemetry.api.OpenTelemetry;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,8 @@ class SpendProfileServiceTest extends BaseConnectedTest {
     SpendProfile profile =
         SpendProfile.buildGcpSpendProfile(id, spendUtils.defaultBillingAccountId());
     SpendProfileService service =
-        new SpendProfileService(samService, ImmutableList.of(profile), spendProfileConfiguration);
+        new SpendProfileService(
+            samService, ImmutableList.of(profile), spendProfileConfiguration, OpenTelemetry.noop());
 
     assertEquals(
         profile, service.authorizeLinking(id, false, userAccessUtils.defaultUserAuthRequest()));
@@ -47,7 +49,8 @@ class SpendProfileServiceTest extends BaseConnectedTest {
     SpendProfile profile =
         SpendProfile.buildGcpSpendProfile(new SpendProfileId("bad-profile-id"), "fake");
     SpendProfileService service =
-        new SpendProfileService(samService, ImmutableList.of(profile), spendProfileConfiguration);
+        new SpendProfileService(
+            samService, ImmutableList.of(profile), spendProfileConfiguration, OpenTelemetry.noop());
 
     assertThrows(
         SpendUnauthorizedException.class,
@@ -58,7 +61,8 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @DisabledIf("bpmUnavailable")
   void authorizeLinkingUnknownIdThrowsUnauthorized() {
     SpendProfileService service =
-        new SpendProfileService(samService, ImmutableList.of(), spendProfileConfiguration);
+        new SpendProfileService(
+            samService, ImmutableList.of(), spendProfileConfiguration, OpenTelemetry.noop());
     assertThrows(
         SpendUnauthorizedException.class,
         () ->
@@ -69,7 +73,8 @@ class SpendProfileServiceTest extends BaseConnectedTest {
   @Test
   @DisabledIf("bpmUnavailable")
   void parseSpendProfileConfiguration() {
-    SpendProfileService service = new SpendProfileService(samService, spendProfileConfiguration);
+    SpendProfileService service =
+        new SpendProfileService(samService, spendProfileConfiguration, OpenTelemetry.noop());
     assertEquals(
         SpendProfile.buildGcpSpendProfile(
             spendUtils.defaultSpendId(), spendUtils.defaultBillingAccountId()),
