@@ -7,10 +7,10 @@ import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtension;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,46 +34,59 @@ public class VmExtensionHelper {
     public String toString() {
       return status;
     }
+
+    public static ExtensionStatus fromString(String status) {
+      for (ExtensionStatus extensionStatus : ExtensionStatus.values()) {
+        if (StringUtils.equalsIgnoreCase(extensionStatus.status, status)) {
+          return extensionStatus;
+        }
+      }
+      throw new IllegalArgumentException(
+          "No enum constant " + ExtensionStatus.class + " for status " + status);
+    }
   }
 
+  /**
+   * Installs a custom script extension on a VM if the extension is configured in the supplied
+   * creation parameters
+   *
+   * @param creationParameters
+   * @param vmId
+   * @param computeManager
+   * @return
+   */
   public StepResult maybeInstallExtension(
-      ApiAzureVmCreationParameters creationParameters,
-      AzureCloudContext azureCloudContext,
-      String vmId,
-      ComputeManager computeManager) {
-    var result = StepResult.getStepResultSuccess();
-    if (Objects.nonNull(creationParameters)
-        && creationParameters.getCustomScriptExtension() != null) {
-
-      logger.info("Checking if custom script extension is already installed on VM {}", vmId);
-      var extensionStatus =
-          this.checkExtensionInstalled(
-              vmId, creationParameters.getCustomScriptExtension(), computeManager);
-      switch (extensionStatus) {
-        case FAILED:
-        case CANCELED:
-          logger.info("Custom script extension is in a failed or canceled state, uninstalling");
-          this.uninstallVmExtension(
-              vmId, creationParameters.getCustomScriptExtension(), computeManager);
-        case CREATING:
-          // todo better exception
-          var msg = "Custom script extension is still being created in VM " + vmId + ", retrying";
-          logger.info(msg);
-          return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, new RuntimeException(msg));
-        case SUCCEEDED:
-          logger.info("Custom script extension is already installed on VM {}, skipping", vmId);
-          return result;
-      }
-
-      logger.info("Installing custom script extension on VM {}", vmId);
-      result =
-          this.installVmExtension(
-              vmId, creationParameters.getCustomScriptExtension(), computeManager);
-    } else {
+      ApiAzureVmCreationParameters creationParameters, String vmId, ComputeManager computeManager) {
+    if (creationParameters == null || creationParameters.getCustomScriptExtension() == null) {
       logger.info("No custom script extension to install on VM {}, skipping", vmId);
+      return StepResult.getStepResultSuccess();
     }
 
-    return result;
+    logger.info("Checking if custom script extension is already installed on VM {}", vmId);
+    var extensionStatus =
+        this.checkExtensionInstalled(
+            vmId, creationParameters.getCustomScriptExtension(), computeManager);
+    switch (extensionStatus) {
+      case FAILED:
+      case CANCELED:
+        logger.info("Custom script extension is in a failed or canceled state, uninstalling");
+        this.uninstallVmExtension(
+            vmId, creationParameters.getCustomScriptExtension(), computeManager);
+      case CREATING:
+        var msg =
+            String.format(
+                "Custom script extension is still being created in VM %s, retrying", vmId);
+        logger.info(msg);
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_RETRY, new VmExtensionInstallInProgressException(msg));
+      case SUCCEEDED:
+        logger.info("Custom script extension is already installed on VM {}, skipping", vmId);
+        return StepResult.getStepResultSuccess();
+    }
+
+    logger.info("Installing custom script extension on VM {}", vmId);
+    return this.installVmExtension(
+        vmId, creationParameters.getCustomScriptExtension(), computeManager);
   }
 
   public StepResult maybeUninstallExtension(
@@ -92,7 +105,7 @@ public class VmExtensionHelper {
       case FAILED:
       case CANCELED:
       case SUCCEEDED:
-        logger.info("Uninstalling custom script extension on VM {}", vmId);
+        logger.info("Custom script is in state {}, uninstalling first on VM {}", state, vmId);
         this.uninstallVmExtension(vmId, creationParams.getCustomScriptExtension(), computeManager);
         break;
       case CREATING:
@@ -114,6 +127,8 @@ public class VmExtensionHelper {
       ApiAzureVmCustomScriptExtension customScriptExtensionConfig,
       ComputeManager computeManager) {
     var virtualMachine = computeManager.virtualMachines().getById(virtualMachineId);
+    // handle not found
+
     var extensions = virtualMachine.listExtensions();
     if (extensions.containsKey(customScriptExtensionConfig.getName())) {
       logger.info(
@@ -121,7 +136,7 @@ public class VmExtensionHelper {
           virtualMachine.id());
       var extension = extensions.get(customScriptExtensionConfig.getName());
       // https://learn.microsoft.com/en-us/rest/api/azurestack/vm-extensions/create?view=rest-azurestack-2015-12-01-preview&tabs=HTTP#provisioningstate
-      var state = ExtensionStatus.valueOf(extension.provisioningState());
+      var state = ExtensionStatus.fromString(extension.provisioningState());
       return state;
     } else {
       logger.info("Custom script extension not installed on VM {}", virtualMachine.id());
@@ -159,6 +174,11 @@ public class VmExtensionHelper {
     var virtualMachine = computeManager.virtualMachines().getById(virtualMachineId);
 
     try {
+      var publicSettings =
+          AzureUtils.vmSettingsFrom(customScriptExtensionConfig.getPublicSettings());
+      var protectedSettings =
+          AzureUtils.vmSettingsFrom(customScriptExtensionConfig.getProtectedSettings());
+      var tags = AzureUtils.vmTagsFrom(customScriptExtensionConfig.getTags());
       var customScriptExtension =
           virtualMachine
               .update()
@@ -166,11 +186,9 @@ public class VmExtensionHelper {
               .withPublisher(customScriptExtensionConfig.getPublisher())
               .withType(customScriptExtensionConfig.getType())
               .withVersion(customScriptExtensionConfig.getVersion())
-              .withPublicSettings(
-                  AzureUtils.vmSettingsFrom(customScriptExtensionConfig.getPublicSettings()))
-              .withProtectedSettings(
-                  AzureUtils.vmSettingsFrom(customScriptExtensionConfig.getProtectedSettings()))
-              .withTags(AzureUtils.vmTagsFrom(customScriptExtensionConfig.getTags()));
+              .withPublicSettings(publicSettings)
+              .withProtectedSettings(protectedSettings)
+              .withTags(tags);
 
       if (customScriptExtensionConfig.isMinorVersionAutoUpgrade()) {
         customScriptExtension.withMinorVersionAutoUpgrade();

@@ -13,7 +13,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 
 /**
- * Installs a custom vm extension script on a previously setup Azure VM
+ * Installs a custom vm extension script on a previously created Azure VM
  *
  * <p>Input parameter requirements:
  *
@@ -54,10 +54,7 @@ public class InstallCustomVmExtension implements Step {
     var vmId = getVmIdFromFlightContext(context);
 
     return vmExtensionHelper.maybeInstallExtension(
-        creationParameters,
-        azureCloudContext,
-        vmId,
-        crlService.getComputeManager(azureCloudContext, azureConfig));
+        creationParameters, vmId, crlService.getComputeManager(azureCloudContext, azureConfig));
   }
 
   @Override

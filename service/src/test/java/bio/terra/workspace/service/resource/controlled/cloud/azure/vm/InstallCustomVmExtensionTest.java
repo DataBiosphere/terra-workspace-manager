@@ -50,13 +50,13 @@ class InstallCustomVmExtensionTest extends BaseAzureUnitTest {
         .put(WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParams);
 
     var vmExtensionHelper = mock(VmExtensionHelper.class);
-    when(vmExtensionHelper.maybeInstallExtension(eq(creationParams), any(), any(), any()))
+    when(vmExtensionHelper.maybeInstallExtension(eq(creationParams), any(), any()))
         .thenReturn(StepResult.getStepResultSuccess());
     var step = new InstallCustomVmExtension(azureConfig, crlService, vmExtensionHelper);
 
     step.doStep(flightContext);
 
-    verify(vmExtensionHelper).maybeInstallExtension(eq(creationParams), any(), any(), any());
+    verify(vmExtensionHelper).maybeInstallExtension(eq(creationParams), any(), any());
   }
 
   @Test
