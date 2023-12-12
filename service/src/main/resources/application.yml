@@ -158,7 +158,7 @@ workspace:
     sas-token-start-time-minutes-offset: 15
     sas-token-expiry-time-minutes-offset: 60
     sas-token-expiry-time-maximum-minutes-offset: 1440
-    azure-monitor-linux-agent-version: "1.22"
+    azure-monitor-linux-agent-version: "1.28"
     cors-allowed-origins:
     protected-data-landing-zone-defs: ["ProtectedDataResourcesFactory"]
     azure-database-util-image: "us.gcr.io/broad-dsp-gcr-public/azure-database-utils:${version.gitHash}"
