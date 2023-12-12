@@ -86,7 +86,7 @@ public class VmExtensionHelper {
             vmId);
         return new StepResult(
             StepStatus.STEP_RESULT_FAILURE_RETRY,
-            new RuntimeException(
+            new VmExtensionInstallInProgressException(
                 "Custom script extension is still being created in VM " + vmId + ", retrying"));
       case NOT_PRESENT:
         logger.info("Custom script extension is not installed on VM {}, skipping", vmId);
@@ -101,8 +101,6 @@ public class VmExtensionHelper {
       ApiAzureVmCustomScriptExtension customScriptExtensionConfig,
       ComputeManager computeManager) {
     var virtualMachine = computeManager.virtualMachines().getById(virtualMachineId);
-    // handle not found
-
     var extensions = virtualMachine.listExtensions();
     if (extensions.containsKey(customScriptExtensionConfig.getName())) {
       logger.info(
