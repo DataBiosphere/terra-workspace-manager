@@ -1,6 +1,6 @@
 databaseChangeLog:
 - changeSet:
-    id: Set cloneInstructions to COPY_RESOURCE for WORKFLOWS_APP resources.
+    id: Set cloneInstructions to COPY_RESOURCE for resources related to CBAS database.
     author: mspector
     changes:
     - sql:
