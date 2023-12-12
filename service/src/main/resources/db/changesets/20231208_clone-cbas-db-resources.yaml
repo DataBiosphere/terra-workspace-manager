@@ -1,0 +1,15 @@
+databaseChangeLog:
+- changeSet:
+    id: Set cloneInstructions to COPY_RESOURCE for resources related to CBAS database.
+    author: mspector
+    changes:
+    - sql:
+        sql: |
+          UPDATE resource
+          SET cloning_instructions = 'COPY_RESOURCE'
+          WHERE resource_type = 'AZURE_DATABASE' AND name = 'cbas' AND attributes->>'databaseOwner' = 'idworkflows_app';
+    - sql:
+        sql: |
+          UPDATE resource
+          SET cloning_instructions = 'COPY_RESOURCE'
+          WHERE resource_type = 'AZURE_MANAGED_IDENTITY' AND name = 'idworkflows_app';
