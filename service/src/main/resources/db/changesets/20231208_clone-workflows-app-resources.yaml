@@ -7,7 +7,7 @@ databaseChangeLog:
         sql: |
           UPDATE resource
           SET cloning_instructions = 'COPY_RESOURCE'
-          WHERE resource_type = 'AZURE_DATABASE' AND name = 'cbas';
+          WHERE resource_type = 'AZURE_DATABASE' AND name = 'cbas' AND attributes->>'databaseOwner' = 'idworkflows_app';
     - sql:
         sql: |
           UPDATE resource
