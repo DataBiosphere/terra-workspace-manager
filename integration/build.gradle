@@ -11,7 +11,7 @@ plugins {
 dependencies {
     ext {
         apacheMath = '3.6.1'
-        findbugsAnnotations = "3.0.1"
+        findbugsAnnotations = "3.0.1u2"
         guava = "29.0-jre"
         jackson = "2.10.2"
         jersey = "2.32"
