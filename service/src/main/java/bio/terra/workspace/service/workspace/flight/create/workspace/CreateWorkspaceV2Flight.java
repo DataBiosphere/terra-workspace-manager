@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 
 public class CreateWorkspaceV2Flight extends Flight {
+  // Test: trigger build.
 
   public CreateWorkspaceV2Flight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
