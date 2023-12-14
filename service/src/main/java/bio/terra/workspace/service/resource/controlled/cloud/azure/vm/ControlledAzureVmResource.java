@@ -158,6 +158,10 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService()),
         cloudRetry);
+    flight.addStep(
+        new InstallCustomVmExtension(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), new VmExtensionHelper()),
+        cloudRetry);
   }
 
   /** {@inheritDoc} */
