@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # Enable version updates for Gradle
+  - package-ecosystem: "gradle"
+    directory: "/"
+    open-pull-requests-limit: 10
+    schedule:
+      interval: "weekly"
+      time: "06:00"
+      timezone: "America/New_York"
+    target-branch: "main"
+    reviewers:
+      - "@DataBiosphere/broadworkspaces"
+    labels:
+      - "dependency"
+      - "gradle"
+    commit-message:
+      prefix: "[No Ticket]"
