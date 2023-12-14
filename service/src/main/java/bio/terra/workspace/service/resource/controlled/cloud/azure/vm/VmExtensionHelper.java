@@ -89,7 +89,7 @@ public class VmExtensionHelper {
             new VmExtensionInstallInProgressException(
                 "Custom script extension is still being created in VM " + vmId + ", retrying"));
       case NOT_PRESENT:
-        logger.info("Custom script extension is not installed on VM {}, skipping", vmId);
+        logger.info("Custom script extension is not installed on VM {}, skipping uninstallation", vmId);
         break;
     }
 
@@ -108,8 +108,7 @@ public class VmExtensionHelper {
           virtualMachine.id());
       var extension = extensions.get(customScriptExtensionConfig.getName());
       // https://learn.microsoft.com/en-us/rest/api/azurestack/vm-extensions/create?view=rest-azurestack-2015-12-01-preview&tabs=HTTP#provisioningstate
-      var state = ExtensionStatus.fromString(extension.provisioningState());
-      return state;
+      return ExtensionStatus.fromString(extension.provisioningState());
     } else {
       logger.info("Custom script extension not installed on VM {}", virtualMachine.id());
     }
