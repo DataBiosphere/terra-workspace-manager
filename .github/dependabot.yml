@@ -16,6 +16,3 @@ updates:
       - "gradle"
     commit-message:
       prefix: "[No Ticket]"
-    ignore:
-      - dependency-name: "au.com.dius.pact*"
-        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
