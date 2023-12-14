@@ -15,7 +15,7 @@ dependencies {
         guava = "29.0-jre"
         jackson = "2.10.2"
         jersey = "2.32"
-        kubernetesClient = "18.0.0"
+        kubernetesClient = "19.0.0"
         logback = "1.2.3"
         slf4j = "1.7.25"
         hamcrest = "2.2"
