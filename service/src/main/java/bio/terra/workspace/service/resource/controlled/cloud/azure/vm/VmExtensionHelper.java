@@ -89,7 +89,8 @@ public class VmExtensionHelper {
             new VmExtensionInstallInProgressException(
                 "Custom script extension is still being created in VM " + vmId + ", retrying"));
       case NOT_PRESENT:
-        logger.info("Custom script extension is not installed on VM {}, skipping uninstallation", vmId);
+        logger.info(
+            "Custom script extension is not installed on VM {}, skipping uninstallation", vmId);
         break;
     }
 
