@@ -87,16 +87,22 @@ public class RestoreAzureDatabaseStep implements Step {
 
     // Query LZ for the postgres server info
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    logger.info("LZ Info: bearerToken = {}", bearerToken);
     var landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(destinationDatabase.getWorkspaceId()));
 
+    logger.info("LZ Info: destinationDatabase.getWorkspaceId() = {}", destinationDatabase.getWorkspaceId());
+    logger.info("LZ Info: landingZoneId = {}", landingZoneId);
+
     // use landingZoneApiDispatch.getSharedKubernetesCluster to get the destination aksNamespace
-    var destinationAksNamespace =
+    var aksClusterResource =
         landingZoneApiDispatch
             .getSharedKubernetesCluster(bearerToken, landingZoneId)
-            .orElseThrow(() -> new RuntimeException("No destination AKS cluster found"))
-            .getResourceName();
+            .orElseThrow(() -> new RuntimeException("No destination AKS cluster found"));
+    var destinationAksNamespace = getResourceName(aksClusterResource);
+    logger.info("LZ Info: destinationAksNamespace = {}", destinationAksNamespace);
+    logger.info("LZ Info: aksNamespace = {}", destinationAksNamespace);
 
     var dbServerName =
         getResourceName(

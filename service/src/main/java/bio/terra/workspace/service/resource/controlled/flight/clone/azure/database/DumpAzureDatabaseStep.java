@@ -87,20 +87,27 @@ public class DumpAzureDatabaseStep implements Step {
 
     // Query LZ for the postgres server info
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    logger.info("LZ Info: bearerToken = {}", bearerToken);
+
     var landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(sourceDatabase.getWorkspaceId()));
 
+    logger.info("LZ Info: destinationDatabase.getWorkspaceId() = {}", sourceDatabase.getWorkspaceId());
+    logger.info("LZ Info: landingZoneId = {}", landingZoneId);
+
     var landingZoneIdDestination =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(destinationWorkspaceId));
+    logger.info("LZ Info: landingZoneIdDestination = {}", landingZoneIdDestination);
 
     // use landingZoneApiDispatch.getSharedKubernetesCluster to get the destination aksNamespace
-    var destinationAksNamespace =
+    var aksClusterResource =
         landingZoneApiDispatch
             .getSharedKubernetesCluster(bearerToken, landingZoneIdDestination)
-            .orElseThrow(() -> new RuntimeException("No destination AKS cluster found"))
-            .getResourceName();
+            .orElseThrow(() -> new RuntimeException("No destination AKS cluster found"));
+    var destinationAksNamespace = getResourceName(aksClusterResource);
+    logger.info("LZ Info: destinationAksNamespace = {}", destinationAksNamespace);
 
     var dbServerName =
         getResourceName(
