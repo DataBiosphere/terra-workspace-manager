@@ -375,20 +375,24 @@ public class AzureDatabaseUtilsRunner {
   }
 
   private void runAzureDatabaseUtils(
-      AzureCloudContext azureCloudContext, UUID workspaceId, V1Pod podDefinition, String namespace)
+      AzureCloudContext azureCloudContext,
+      UUID destinationWorkspaceId,
+      V1Pod podDefinition,
+      String namespace)
       throws InterruptedException {
     runAzureDatabaseUtils(
-        azureCloudContext, workspaceId, podDefinition, new HashMap<>(), namespace);
+        azureCloudContext, destinationWorkspaceId, podDefinition, new HashMap<>(), namespace);
   }
 
   private void runAzureDatabaseUtils(
       AzureCloudContext azureCloudContext,
-      UUID workspaceId,
+      UUID destinationWorkspaceId,
       V1Pod podDefinition,
       Map<String, String> secretStringData,
       String namespace)
       throws InterruptedException {
-    var aksApi = kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
+    var aksApi =
+        kubernetesClientProvider.createCoreApiClient(azureCloudContext, destinationWorkspaceId);
 
     // strip underscores to avoid violating azure's naming conventions for pods
     var safePodName = podDefinition.getMetadata().getName();
@@ -419,7 +423,7 @@ public class AzureDatabaseUtilsRunner {
           aksApi,
           safePodName,
           azureConfig.getAzureDatabaseUtilLogsTailLines(),
-          workspaceId,
+          destinationWorkspaceId,
           namespace);
       deleteContainer(aksApi, safePodName, namespace);
       deleteSecret(aksApi, secretStringData, safePodName, namespace);
