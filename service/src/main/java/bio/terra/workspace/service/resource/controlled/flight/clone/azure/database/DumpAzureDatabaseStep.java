@@ -90,6 +90,18 @@ public class DumpAzureDatabaseStep implements Step {
     var landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(sourceDatabase.getWorkspaceId()));
+
+    var landingZoneIdDestination =
+        landingZoneApiDispatch.getLandingZoneId(
+            bearerToken, workspaceService.getWorkspace(destinationWorkspaceId));
+
+    // use landingZoneApiDispatch.getSharedKubernetesCluster to get the destination aksNamespace
+    var destinationAksNamespace =
+        landingZoneApiDispatch
+            .getSharedKubernetesCluster(bearerToken, landingZoneIdDestination)
+            .orElseThrow(() -> new RuntimeException("No destination AKS cluster found"))
+            .getResourceName();
+
     var dbServerName =
         getResourceName(
             landingZoneApiDispatch
@@ -121,7 +133,8 @@ public class DumpAzureDatabaseStep implements Step {
         blobFileName,
         destinationContainer.getStorageContainerName(),
         blobContainerUrlAuthenticated,
-        dumpEncryptionKey);
+        dumpEncryptionKey,
+        destinationAksNamespace);
 
     return StepResult.getStepResultSuccess();
   }

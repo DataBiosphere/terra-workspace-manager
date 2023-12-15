@@ -87,6 +87,14 @@ public class RestoreAzureDatabaseStep implements Step {
     var landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(destinationDatabase.getWorkspaceId()));
+
+    // use landingZoneApiDispatch.getSharedKubernetesCluster to get the destination aksNamespace
+    var destinationAksNamespace =
+        landingZoneApiDispatch
+            .getSharedKubernetesCluster(bearerToken, landingZoneId)
+            .orElseThrow(() -> new RuntimeException("No destination AKS cluster found"))
+            .getResourceName();
+
     var dbServerName =
         getResourceName(
             landingZoneApiDispatch
@@ -113,7 +121,8 @@ public class RestoreAzureDatabaseStep implements Step {
         blobFileName,
         destinationContainer.getStorageContainerName(),
         blobContainerUrlAuthenticated,
-        dumpEncryptionKey);
+        dumpEncryptionKey,
+        destinationAksNamespace);
 
     return StepResult.getStepResultSuccess();
   }
