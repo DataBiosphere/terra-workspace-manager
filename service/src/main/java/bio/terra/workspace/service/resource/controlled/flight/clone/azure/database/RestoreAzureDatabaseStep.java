@@ -21,11 +21,8 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RestoreAzureDatabaseStep implements Step {
-  private static final Logger logger = LoggerFactory.getLogger(RestoreAzureDatabaseStep.class);
 
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;
@@ -87,23 +84,9 @@ public class RestoreAzureDatabaseStep implements Step {
 
     // Query LZ for the postgres server info
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
-    logger.info("LZ Info: bearerToken = {}", bearerToken);
     var landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(destinationDatabase.getWorkspaceId()));
-
-    logger.info(
-        "LZ Info: destinationDatabase.getWorkspaceId() = {}", destinationDatabase.getWorkspaceId());
-    logger.info("LZ Info: landingZoneId = {}", landingZoneId);
-
-    // use landingZoneApiDispatch.getSharedKubernetesCluster to get the destination aksNamespace
-    var aksClusterResource =
-        landingZoneApiDispatch
-            .getSharedKubernetesCluster(bearerToken, landingZoneId)
-            .orElseThrow(() -> new RuntimeException("No destination AKS cluster found"));
-    var destinationAksClusterName = getResourceName(aksClusterResource);
-    logger.info("LZ Info: destinationAksClusterName = {}", destinationAksClusterName);
-
     var dbServerName =
         getResourceName(
             landingZoneApiDispatch
@@ -119,11 +102,6 @@ public class RestoreAzureDatabaseStep implements Step {
         workingMap.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
             String.class);
-    logger.info(
-        "running RestoreAzureDatabaseStep with blobContainerName {}, blobFileName {}, aksNamespace {}",
-        destinationContainer.getStorageContainerName(),
-        blobFileName,
-        destinationAksClusterName);
 
     this.azureDatabaseUtilsRunner.pgRestoreDatabase(
         workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
