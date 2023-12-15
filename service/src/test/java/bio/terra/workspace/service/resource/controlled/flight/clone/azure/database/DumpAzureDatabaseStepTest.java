@@ -24,6 +24,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -48,6 +49,7 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private AzureDatabaseUtilsRunner mockAzureDatabaseUtilsRunner;
   @Mock private ResourceDao mockResourceDao;
   @Mock private AzureStorageAccessService mockAzureStorageAccessService;
+  @Mock private AzureCloudContextService mockAzureCloudContextService;
 
   private final String databaseServerName = UUID.randomUUID().toString();
   private final String databaseUserName = UUID.randomUUID().toString();
@@ -109,14 +111,13 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         mockSamService,
         mockWorkspaceService,
         mockAzureStorageAccessService,
-        mockAzureDatabaseUtilsRunner);
+        mockAzureDatabaseUtilsRunner,
+        mockAzureCloudContextService);
   }
 
   private FlightContext createMockFlightContext() {
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockFlightContext.getInputParameters()).thenReturn(mockInputParameters);
-    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
-        .thenReturn(mockAzureCloudContext);
     when(mockInputParameters.get(
             JobMapKeys.AUTH_USER_INFO.getKeyName(), AuthenticatedUserRequest.class))
         .thenReturn(mockUserRequest);
@@ -150,6 +151,8 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         .thenReturn(Optional.of(mockDatabase));
     when(mockLandingZoneApiDispatch.getSharedDatabaseAdminIdentity(any(), any()))
         .thenReturn(Optional.of(mockDatabaseIdentity));
+    when(mockAzureCloudContextService.getAzureCloudContext(any()))
+        .thenReturn(Optional.of(mockAzureCloudContext));
 
     return mockFlightContext;
   }

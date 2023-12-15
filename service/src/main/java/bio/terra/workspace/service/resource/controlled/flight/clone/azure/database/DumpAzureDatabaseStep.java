@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.datab
 
 import static bio.terra.workspace.common.utils.FlightUtils.getRequired;
 import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureUtils.getResourceName;
-import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT;
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
@@ -17,9 +16,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
-import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.text.SimpleDateFormat;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -34,6 +33,7 @@ public class DumpAzureDatabaseStep implements Step {
   private final WorkspaceService workspaceService;
   private final AzureStorageAccessService azureStorageAccessService;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
+  private final AzureCloudContextService azureCloudContextService;
 
   public DumpAzureDatabaseStep(
       ControlledAzureDatabaseResource sourceDatabase,
@@ -41,13 +41,15 @@ public class DumpAzureDatabaseStep implements Step {
       SamService samService,
       WorkspaceService workspaceService,
       AzureStorageAccessService azureStorageAccessService,
-      AzureDatabaseUtilsRunner azureDatabaseUtilsRunner) {
+      AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
+      AzureCloudContextService azureCloudContextService) {
     this.sourceDatabase = sourceDatabase;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
     this.workspaceService = workspaceService;
     this.azureStorageAccessService = azureStorageAccessService;
     this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
+    this.azureCloudContextService = azureCloudContextService;
   }
 
   @Override
@@ -111,8 +113,16 @@ public class DumpAzureDatabaseStep implements Step {
         destinationContainer.getStorageContainerName(),
         blobFileName);
 
+    var sourceAzureContext =
+        azureCloudContextService
+            .getAzureCloudContext(sourceDatabase.getWorkspaceId())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Cloud context for the workspace containing the source database could not be found."));
+
     this.azureDatabaseUtilsRunner.pgDumpDatabase(
-        workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
+        sourceAzureContext,
         sourceDatabase.getWorkspaceId(),
         "dump-db-" + this.sourceDatabase.getResourceId(),
         sourceDatabase.getDatabaseName(),
