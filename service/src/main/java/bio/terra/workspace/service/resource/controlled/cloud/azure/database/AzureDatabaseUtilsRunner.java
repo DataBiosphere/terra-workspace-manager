@@ -80,7 +80,6 @@ public class AzureDatabaseUtilsRunner {
   public static final String PARAM_NEW_DB_USER_NAME = "NEW_DB_USER_NAME";
   public static final String PARAM_NEW_DB_USER_OID = "NEW_DB_USER_OID";
 
-  // Workflow cloning - TODO: which params can be reused?
   public static final String PARAM_BLOB_FILE_NAME = "BLOB_FILE_NAME";
   public static final String PARAM_DEST_WORKSPACE_ID = "DEST_WORKSPACE_ID";
   public static final String PARAM_BLOB_CONTAINER_NAME = "BLOB_CONTAINER_NAME";
@@ -137,7 +136,7 @@ public class AzureDatabaseUtilsRunner {
 
   public void pgDumpDatabase(
       AzureCloudContext azureCloudContext,
-      UUID destinationWorkspaceId,
+      UUID workspaceId,
       String podName,
       String sourceDbName,
       String dbServerName,
@@ -163,8 +162,8 @@ public class AzureDatabaseUtilsRunner {
 
     runAzureDatabaseUtils(
         azureCloudContext,
-        destinationWorkspaceId,
-        createPodDefinition(destinationWorkspaceId, podName, envVars, secretStringData),
+        workspaceId,
+        createPodDefinition(workspaceId, podName, envVars, secretStringData),
         secretStringData,
         aksNamespace);
   }
@@ -375,26 +374,20 @@ public class AzureDatabaseUtilsRunner {
   }
 
   private void runAzureDatabaseUtils(
-      AzureCloudContext azureCloudContext,
-      UUID destinationWorkspaceId,
-      V1Pod podDefinition,
-      String namespace)
+      AzureCloudContext azureCloudContext, UUID workspaceId, V1Pod podDefinition, String namespace)
       throws InterruptedException {
     runAzureDatabaseUtils(
-        azureCloudContext, destinationWorkspaceId, podDefinition, new HashMap<>(), namespace);
+        azureCloudContext, workspaceId, podDefinition, new HashMap<>(), namespace);
   }
 
   private void runAzureDatabaseUtils(
       AzureCloudContext azureCloudContext,
-      UUID destinationWorkspaceId,
+      UUID workspaceId,
       V1Pod podDefinition,
       Map<String, String> secretStringData,
       String namespace)
       throws InterruptedException {
-
-    // use the destination workspace's ID when creating the k8s client.
-    var aksApi =
-        kubernetesClientProvider.createCoreApiClient(azureCloudContext, destinationWorkspaceId);
+    var aksApi = kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
 
     // strip underscores to avoid violating azure's naming conventions for pods
     var safePodName = podDefinition.getMetadata().getName();
@@ -425,7 +418,7 @@ public class AzureDatabaseUtilsRunner {
           aksApi,
           safePodName,
           azureConfig.getAzureDatabaseUtilLogsTailLines(),
-          destinationWorkspaceId,
+          workspaceId,
           namespace);
       deleteContainer(aksApi, safePodName, namespace);
       deleteSecret(aksApi, secretStringData, safePodName, namespace);
