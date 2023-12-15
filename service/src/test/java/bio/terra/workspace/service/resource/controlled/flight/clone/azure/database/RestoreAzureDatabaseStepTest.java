@@ -48,7 +48,6 @@ class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
 
   private final String databaseServerName = UUID.randomUUID().toString();
   private final String databaseUserName = UUID.randomUUID().toString();
-
   private final ApiAzureLandingZoneDeployedResource mockDatabase =
       new ApiAzureLandingZoneDeployedResource().resourceId(databaseServerName);
   private final ApiAzureLandingZoneDeployedResource mockDatabaseIdentity =
