@@ -88,7 +88,7 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
     verify(mockAzureDatabaseUtilsRunner)
         .pgDumpDatabase(
             eq(mockAzureCloudContext),
-            eq(databaseResource.getWorkspaceId()),
+            eq(mockDestinationWorkspaceId),
             eq("dump-db-%s".formatted(databaseResource.getResourceId())),
             eq(databaseResource.getDatabaseName()),
             eq(databaseServerName),

@@ -391,6 +391,8 @@ public class AzureDatabaseUtilsRunner {
       Map<String, String> secretStringData,
       String namespace)
       throws InterruptedException {
+
+    // use the destination workspace's ID when creating the k8s client.
     var aksApi =
         kubernetesClientProvider.createCoreApiClient(azureCloudContext, destinationWorkspaceId);
 
