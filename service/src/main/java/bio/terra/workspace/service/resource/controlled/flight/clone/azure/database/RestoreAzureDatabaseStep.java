@@ -92,7 +92,8 @@ public class RestoreAzureDatabaseStep implements Step {
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(destinationDatabase.getWorkspaceId()));
 
-    logger.info("LZ Info: destinationDatabase.getWorkspaceId() = {}", destinationDatabase.getWorkspaceId());
+    logger.info(
+        "LZ Info: destinationDatabase.getWorkspaceId() = {}", destinationDatabase.getWorkspaceId());
     logger.info("LZ Info: landingZoneId = {}", landingZoneId);
 
     // use landingZoneApiDispatch.getSharedKubernetesCluster to get the destination aksNamespace
@@ -100,9 +101,8 @@ public class RestoreAzureDatabaseStep implements Step {
         landingZoneApiDispatch
             .getSharedKubernetesCluster(bearerToken, landingZoneId)
             .orElseThrow(() -> new RuntimeException("No destination AKS cluster found"));
-    var destinationAksNamespace = getResourceName(aksClusterResource);
-    logger.info("LZ Info: destinationAksNamespace = {}", destinationAksNamespace);
-    logger.info("LZ Info: aksNamespace = {}", destinationAksNamespace);
+    var destinationAksClusterName = getResourceName(aksClusterResource);
+    logger.info("LZ Info: destinationAksClusterName = {}", destinationAksClusterName);
 
     var dbServerName =
         getResourceName(
@@ -123,7 +123,7 @@ public class RestoreAzureDatabaseStep implements Step {
         "running RestoreAzureDatabaseStep with blobContainerName {}, blobFileName {}, aksNamespace {}",
         destinationContainer.getStorageContainerName(),
         blobFileName,
-        destinationAksNamespace);
+        destinationAksClusterName);
 
     this.azureDatabaseUtilsRunner.pgRestoreDatabase(
         workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
@@ -135,8 +135,7 @@ public class RestoreAzureDatabaseStep implements Step {
         blobFileName,
         destinationContainer.getStorageContainerName(),
         blobContainerUrlAuthenticated,
-        dumpEncryptionKey,
-        destinationAksNamespace);
+        dumpEncryptionKey);
 
     return StepResult.getStepResultSuccess();
   }

@@ -137,7 +137,7 @@ public class AzureDatabaseUtilsRunner {
 
   public void pgDumpDatabase(
       AzureCloudContext azureCloudContext,
-      UUID sourceWorkspaceId,
+      UUID destinationWorkspaceId,
       String podName,
       String sourceDbName,
       String dbServerName,
@@ -145,8 +145,7 @@ public class AzureDatabaseUtilsRunner {
       String blobFileName,
       String blobContainerName,
       String blobContainerUrlAuthenticated,
-      String encryptionKey,
-      String destinationAksNamespace)
+      String encryptionKey)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
@@ -164,10 +163,10 @@ public class AzureDatabaseUtilsRunner {
 
     runAzureDatabaseUtils(
         azureCloudContext,
-        sourceWorkspaceId,
-        createPodDefinition(sourceWorkspaceId, podName, envVars, secretStringData),
+        destinationWorkspaceId,
+        createPodDefinition(destinationWorkspaceId, podName, envVars, secretStringData),
         secretStringData,
-        destinationAksNamespace);
+        aksNamespace);
   }
 
   public void pgRestoreDatabase(
@@ -180,8 +179,7 @@ public class AzureDatabaseUtilsRunner {
       String blobFileName,
       String blobContainerName,
       String blobContainerUrlAuthenticated,
-      String encryptionKey,
-      String destinationAksNamespace)
+      String encryptionKey)
       throws InterruptedException {
     final List<V1EnvVar> envVars =
         List.of(
@@ -202,7 +200,7 @@ public class AzureDatabaseUtilsRunner {
         targetWorkspaceId,
         createPodDefinition(targetWorkspaceId, podName, envVars, secretStringData),
         secretStringData,
-        destinationAksNamespace);
+        aksNamespace);
   }
 
   /**

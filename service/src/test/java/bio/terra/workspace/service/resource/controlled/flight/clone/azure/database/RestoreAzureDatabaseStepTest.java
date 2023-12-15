@@ -48,13 +48,11 @@ class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
 
   private final String databaseServerName = UUID.randomUUID().toString();
   private final String databaseUserName = UUID.randomUUID().toString();
-  private final String aksClusterName = "lz" + UUID.randomUUID();
+
   private final ApiAzureLandingZoneDeployedResource mockDatabase =
       new ApiAzureLandingZoneDeployedResource().resourceId(databaseServerName);
   private final ApiAzureLandingZoneDeployedResource mockDatabaseIdentity =
       new ApiAzureLandingZoneDeployedResource().resourceId(databaseUserName);
-  private final ApiAzureLandingZoneDeployedResource mockAksCluster =
-      new ApiAzureLandingZoneDeployedResource().resourceName(aksClusterName);
 
   private final UUID mockDestinationWorkspaceId = UUID.randomUUID();
   private final AuthenticatedUserRequest mockUserRequest = new AuthenticatedUserRequest();
@@ -84,8 +82,7 @@ class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
             "dumpfile-foo.dump",
             "sc-%s".formatted(mockDestinationWorkspaceId),
             mockSasBundle.sasUrl(),
-            mockEncryptionKey,
-            aksClusterName);
+            mockEncryptionKey);
   }
 
   @NotNull
@@ -144,8 +141,6 @@ class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         .thenReturn(Optional.of(mockDatabase));
     when(mockLandingZoneApiDispatch.getSharedDatabaseAdminIdentity(any(), any()))
         .thenReturn(Optional.of(mockDatabaseIdentity));
-    when(mockLandingZoneApiDispatch.getSharedKubernetesCluster(any(), any()))
-        .thenReturn(Optional.of(mockAksCluster));
 
     return mockFlightContext;
   }

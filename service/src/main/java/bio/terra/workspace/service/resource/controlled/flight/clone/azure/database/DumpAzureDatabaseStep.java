@@ -93,7 +93,8 @@ public class DumpAzureDatabaseStep implements Step {
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(sourceDatabase.getWorkspaceId()));
 
-    logger.info("LZ Info: destinationDatabase.getWorkspaceId() = {}", sourceDatabase.getWorkspaceId());
+    logger.info(
+        "LZ Info: destinationDatabase.getWorkspaceId() = {}", sourceDatabase.getWorkspaceId());
     logger.info("LZ Info: landingZoneId = {}", landingZoneId);
 
     var landingZoneIdDestination =
@@ -106,8 +107,8 @@ public class DumpAzureDatabaseStep implements Step {
         landingZoneApiDispatch
             .getSharedKubernetesCluster(bearerToken, landingZoneIdDestination)
             .orElseThrow(() -> new RuntimeException("No destination AKS cluster found"));
-    var destinationAksNamespace = getResourceName(aksClusterResource);
-    logger.info("LZ Info: destinationAksNamespace = {}", destinationAksNamespace);
+    var destinationAksClusterName = getResourceName(aksClusterResource);
+    logger.info("LZ Info: destinationAksClusterName = {}", destinationAksClusterName);
 
     var dbServerName =
         getResourceName(
@@ -129,11 +130,11 @@ public class DumpAzureDatabaseStep implements Step {
         "running DumpAzureDatabaseStep with blobContainerName {}, blobFileName {}, aksNamespace {}",
         destinationContainer.getStorageContainerName(),
         blobFileName,
-        destinationAksNamespace);
+        destinationAksClusterName);
 
     this.azureDatabaseUtilsRunner.pgDumpDatabase(
         workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
-        sourceDatabase.getWorkspaceId(),
+        destinationWorkspaceId,
         "dump-db-" + this.sourceDatabase.getResourceId(),
         sourceDatabase.getDatabaseName(),
         dbServerName,
@@ -141,8 +142,7 @@ public class DumpAzureDatabaseStep implements Step {
         blobFileName,
         destinationContainer.getStorageContainerName(),
         blobContainerUrlAuthenticated,
-        dumpEncryptionKey,
-        destinationAksNamespace);
+        dumpEncryptionKey);
 
     return StepResult.getStepResultSuccess();
   }
