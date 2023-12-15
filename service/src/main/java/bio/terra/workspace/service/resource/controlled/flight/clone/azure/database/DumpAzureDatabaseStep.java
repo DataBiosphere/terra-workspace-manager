@@ -119,9 +119,10 @@ public class DumpAzureDatabaseStep implements Step {
             WorkspaceFlightMapKeys.ControlledResourceKeys.CLONE_DB_DUMP_ENCRYPTION_KEY,
             String.class);
     logger.info(
-        "running DumpAzureDatabaseStep with blobContainerName {} and blobFileName {}",
+        "running DumpAzureDatabaseStep with blobContainerName {}, blobFileName {}, aksNamespace {}",
         destinationContainer.getStorageContainerName(),
-        blobFileName);
+        blobFileName,
+        destinationAksNamespace);
 
     this.azureDatabaseUtilsRunner.pgDumpDatabase(
         workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
