@@ -69,7 +69,7 @@ dependencies {
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.30-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.251-SNAPSHOT')
+  implementation ('bio.terra:terra-landing-zone-service:0.0.257-SNAPSHOT')
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20230831-2.0.0'
