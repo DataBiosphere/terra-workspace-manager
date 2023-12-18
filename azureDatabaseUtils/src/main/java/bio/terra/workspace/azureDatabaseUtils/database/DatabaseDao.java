@@ -1,7 +1,6 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,45 +121,49 @@ public class DatabaseDao {
   }
 
   public void reassignOwnerForCbasDatabase(String targetRoleName) {
-    // Note: here we use "ALTER TABLE" command instead of "REASSIGN OWNED BY" because for 'cbas' databases
-    // where the database is either empty or has 1/2 rows in each table, "REASSIGN OWNED BY" wasn't reassigning
-    // permissions as expected leading to bug mentioned in https://broadworkbench.atlassian.net/browse/WM-2418.
+    // Note: here we use "ALTER TABLE" command instead of "REASSIGN OWNED BY" because for 'cbas'
+    // databases where the database is either empty or has 1/2 rows in each table, "REASSIGN OWNED
+    // BY" wasn't reassigning permissions as expected leading to bug mentioned in
+    // https://broadworkbench.atlassian.net/browse/WM-2418.
 
     jdbcTemplate.update(
         """
         ALTER TABLE databasechangelog OWNER TO "%s"
-        """.formatted(targetRoleName),
+        """
+            .formatted(targetRoleName),
         Map.of());
 
     jdbcTemplate.update(
-            """
+        """
             ALTER TABLE databasechangeloglock OWNER TO "%s"
-            """.formatted(targetRoleName),
-            Map.of());
-
-   jdbcTemplate.update(
             """
+            .formatted(targetRoleName),
+        Map.of());
+
+    jdbcTemplate.update(
+        """
             ALTER TABLE method OWNER TO "%s"
             """.formatted(targetRoleName),
-            Map.of());
+        Map.of());
 
     jdbcTemplate.update(
-            """
+        """
             ALTER TABLE method_version OWNER TO "%s"
-            """.formatted(targetRoleName),
-            Map.of());
-
-   jdbcTemplate.update(
             """
+            .formatted(targetRoleName),
+        Map.of());
+
+    jdbcTemplate.update(
+        """
             ALTER TABLE run OWNER TO "%s"
             """.formatted(targetRoleName),
-            Map.of());
+        Map.of());
 
     jdbcTemplate.update(
-            """
+        """
             ALTER TABLE run_set OWNER TO "%s"
             """.formatted(targetRoleName),
-            Map.of());
+        Map.of());
   }
 
   public void grantAllPrivileges(String roleName, String databaseName) {
