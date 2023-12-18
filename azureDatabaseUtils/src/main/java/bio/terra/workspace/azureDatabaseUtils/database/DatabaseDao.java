@@ -1,6 +1,9 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class DatabaseDao {
   private final NamedParameterJdbcTemplate jdbcTemplate;
+  private static final Logger logger = LoggerFactory.getLogger(DatabaseDao.class);
 
   @Autowired
   public DatabaseDao(NamedParameterJdbcTemplate jdbcTemplate) {
@@ -118,11 +122,64 @@ public class DatabaseDao {
   }
 
   public void reassignOwner(String roleName, String targetRoleName) {
-    jdbcTemplate.update(
+    logger.info(
+            "*** FIND ME *** Reassigning ownership from {} to {}",
+            roleName,
+            targetRoleName);
+
+    int databaseChangelogUpdate = jdbcTemplate.update(
         """
-        REASSIGN OWNED BY "%s" TO "%s"
-        """.formatted(roleName, targetRoleName),
+        ALTER TABLE databasechangelog OWNER TO "%s"
+        """.formatted(targetRoleName),
         Map.of());
+    logger.info(
+            "*** FIND ME *** Number of rows updated after reassigning ownership for 'databasechangelog': {}",
+            databaseChangelogUpdate);
+
+    int databaseChangelogLockUpdate = jdbcTemplate.update(
+            """
+            ALTER TABLE databasechangeloglock OWNER TO "%s"
+            """.formatted(targetRoleName),
+            Map.of());
+    logger.info(
+            "*** FIND ME *** Number of rows updated after reassigning ownership for 'databasechangeloglock': {}",
+            databaseChangelogLockUpdate);
+
+    int methodUpdate = jdbcTemplate.update(
+            """
+            ALTER TABLE method OWNER TO "%s"
+            """.formatted(targetRoleName),
+            Map.of());
+    logger.info(
+            "*** FIND ME *** Number of rows updated after reassigning ownership for 'method': {}",
+            methodUpdate);
+
+    int method_versionUpdate = jdbcTemplate.update(
+            """
+            ALTER TABLE method_version OWNER TO "%s"
+            """.formatted(targetRoleName),
+            Map.of());
+    logger.info(
+            "*** FIND ME *** Number of rows updated after reassigning ownership for 'method_version': {}",
+            method_versionUpdate);
+
+    int runUpdate = jdbcTemplate.update(
+            """
+            ALTER TABLE run OWNER TO "%s"
+            """.formatted(targetRoleName),
+            Map.of());
+    logger.info(
+            "*** FIND ME *** Number of rows updated after reassigning ownership for 'run': {}",
+            runUpdate);
+
+    int run_setUpdate = jdbcTemplate.update(
+            """
+            ALTER TABLE run_set OWNER TO "%s"
+            """.formatted(targetRoleName),
+            Map.of());
+    logger.info(
+            "*** FIND ME *** Number of rows updated after reassigning ownership for 'run_set': {}",
+            run_setUpdate);
   }
 
   public void grantAllPrivileges(String roleName, String databaseName) {
