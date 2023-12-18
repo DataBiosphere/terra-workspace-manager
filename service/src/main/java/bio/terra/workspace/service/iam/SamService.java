@@ -147,7 +147,6 @@ public class SamService {
     }
   }
 
-  @VisibleForTesting
   public String getWsmServiceAccountToken() {
     try {
       GoogleCredentials creds =
