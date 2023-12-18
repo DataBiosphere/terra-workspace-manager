@@ -117,7 +117,7 @@ public class DatabaseDaoTest extends BaseUnitTest {
     jdbcTemplate.execute("CREATE DATABASE " + testDatabaseName);
     createTestRole(testRoleName);
     createTestRole(testRoleAdminName);
-    databaseDao.reassignOwner(testRoleName, testRoleAdminName);
+    databaseDao.reassignOwnerForCbasDatabase(testRoleAdminName);
   }
 
   private void createTestRole(String testRoleName) {

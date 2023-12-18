@@ -273,7 +273,9 @@ public class DatabaseService {
     }
     localProcessLauncher.getOutputStream().flush();
 
-    databaseDao.reassignOwner(adminUser, dbName);
+    // this reassignment of permissions is specific to 'cbas' database for Workflows app. This should be made more
+    // generalized in the future.
+    databaseDao.reassignOwnerForCbasDatabase(dbName);
   }
 
   public List<String> generateCommandList(

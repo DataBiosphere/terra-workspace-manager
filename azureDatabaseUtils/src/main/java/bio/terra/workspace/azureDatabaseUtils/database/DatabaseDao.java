@@ -121,65 +121,46 @@ public class DatabaseDao {
         """.formatted(targetRoleName, roleName), Map.of());
   }
 
-  public void reassignOwner(String roleName, String targetRoleName) {
-    logger.info(
-            "*** FIND ME *** Reassigning ownership from {} to {}",
-            roleName,
-            targetRoleName);
+  public void reassignOwnerForCbasDatabase(String targetRoleName) {
+    // Note: here we use "ALTER TABLE" command instead of "REASSIGN OWNED BY" because for 'cbas' databases
+    // where the database is either empty or has 1/2 rows in each table, "REASSIGN OWNED BY" wasn't reassigning
+    // permissions as expected leading to bug mentioned in https://broadworkbench.atlassian.net/browse/WM-2418.
 
-    int databaseChangelogUpdate = jdbcTemplate.update(
+    jdbcTemplate.update(
         """
         ALTER TABLE databasechangelog OWNER TO "%s"
         """.formatted(targetRoleName),
         Map.of());
-    logger.info(
-            "*** FIND ME *** Number of rows updated after reassigning ownership for 'databasechangelog': {}",
-            databaseChangelogUpdate);
 
-    int databaseChangelogLockUpdate = jdbcTemplate.update(
+    jdbcTemplate.update(
             """
             ALTER TABLE databasechangeloglock OWNER TO "%s"
             """.formatted(targetRoleName),
             Map.of());
-    logger.info(
-            "*** FIND ME *** Number of rows updated after reassigning ownership for 'databasechangeloglock': {}",
-            databaseChangelogLockUpdate);
 
-    int methodUpdate = jdbcTemplate.update(
+   jdbcTemplate.update(
             """
             ALTER TABLE method OWNER TO "%s"
             """.formatted(targetRoleName),
             Map.of());
-    logger.info(
-            "*** FIND ME *** Number of rows updated after reassigning ownership for 'method': {}",
-            methodUpdate);
 
-    int method_versionUpdate = jdbcTemplate.update(
+    jdbcTemplate.update(
             """
             ALTER TABLE method_version OWNER TO "%s"
             """.formatted(targetRoleName),
             Map.of());
-    logger.info(
-            "*** FIND ME *** Number of rows updated after reassigning ownership for 'method_version': {}",
-            method_versionUpdate);
 
-    int runUpdate = jdbcTemplate.update(
+   jdbcTemplate.update(
             """
             ALTER TABLE run OWNER TO "%s"
             """.formatted(targetRoleName),
             Map.of());
-    logger.info(
-            "*** FIND ME *** Number of rows updated after reassigning ownership for 'run': {}",
-            runUpdate);
 
-    int run_setUpdate = jdbcTemplate.update(
+    jdbcTemplate.update(
             """
             ALTER TABLE run_set OWNER TO "%s"
             """.formatted(targetRoleName),
             Map.of());
-    logger.info(
-            "*** FIND ME *** Number of rows updated after reassigning ownership for 'run_set': {}",
-            run_setUpdate);
   }
 
   public void grantAllPrivileges(String roleName, String databaseName) {
