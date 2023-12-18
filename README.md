@@ -412,21 +412,6 @@ This build, and others in MC Terra require access to the Broad Institute's
 Artifactory server. That is where supporting libraries are published and where we publish
 the WSM client
 
-### Dependencies
-We use [Gradle's dependency locking](https://docs.gradle.org/current/userguide/dependency_locking.html)
-to ensure that builds use the same transitive dependencies, so they're reproducible. This means that
-adding or updating a dependency requires telling Gradle to save the change.
-
-Each WSM project has separate dependency lock state.  If you're getting errors
-that mention "dependency lock state" after changing a build file, you will need to one of
-these commands:
-
-```sh
-./gradlew :service:dependencies --write-locks
-./gradlew :client:dependencies --write-locks
-./gradlew :integration:dependencies --write-locks
-```
-
 ### Workspace Manager Service
 The bulk of the code is in the `service` project. This section describes that project.
 
