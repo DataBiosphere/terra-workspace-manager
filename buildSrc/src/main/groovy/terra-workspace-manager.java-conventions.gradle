@@ -25,11 +25,6 @@ repositories {
     }
 }
 
-dependencyLocking {
-    lockAllConfigurations()
-    lockMode = LockMode.STRICT
-}
-
 jacoco {
     toolVersion = '0.8.8'
 }
