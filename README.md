@@ -297,7 +297,7 @@ psql -f service/local-dev/local-postgres-init.sql
    right corner), make sure the project SDK is set to Java 17. If not, IntelliJ should
    detect it on your system in the dropdown, otherwise click "Add JDK..." and navigate to
    the folder from the last step.
-3. Set up [google-java-format](https://github.com/google/google-java-format). We use the
+3. Set up [google-java-format](https://github.com/google/google-java-format#intellij-android-studio-and-other-jetbrains-ides). We use the
    spotless checker to force code to a standard format. Installing the IntelliJ plug-in
    and library makes it easier to get it in the right format from the start.
 4. See some optional tips below in the ["Tips"](#tips) section.
@@ -900,5 +900,5 @@ For each environment:
     restart the server.
     ![Main Run Configuration Dialog](docs/images/main_run_config.png)
 - To run unit and connected tests with a local DB (which can be helpful for examining DB contents after testing), set the `TEST_LOCAL_DB` environment variable
-  to point to a local postgres URI, e.g `export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'`. See [above](/#Database Configuration) for setting up a local DB.
+  to point to a local postgres URI, e.g `export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'`. See [above](#postgres) for setting up a local DB.
   - Note that parallel tests using a shared database may interfere with each other - [you can set the `TEST_SINGLE_THREAD` env var](service/gradle/testing.gradle) to restrict tests to a single thread.
