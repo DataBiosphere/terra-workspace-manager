@@ -128,59 +128,60 @@ public class DatabaseDao {
     // BY" wasn't reassigning permissions as expected leading to bug mentioned in
     // https://broadworkbench.atlassian.net/browse/WM-2418.
 
-    jdbcTemplate.query(
-        """
-        SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'
-        """.formatted(databaseName),
-        Map.of(),
-        (rs, rowNum) -> rs.getString(1))
-        .forEach(tableName -> {
-          logger.info("Updating owner of public.{} to {}", tableName, targetRoleName);
-          jdbcTemplate.update(
-              """
-              ALTER TABLE "%s" OWNER TO "%s"
-              """.formatted(tableName, targetRoleName),
-              Map.of());
-        });
+//    logger.info("About to update owner of");
+//    jdbcTemplate.query(
+//        """
+//        SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'
+//        """.formatted(databaseName),
+//        Map.of(),
+//        (rs, rowNum) -> rs.getString(rowNum))
+//        .forEach(tableName -> {
+//          logger.info("Updating owner of public.{} to {}", tableName, targetRoleName);
+//          jdbcTemplate.update(
+//              """
+//              ALTER TABLE "%s"."%s" OWNER TO "%s"
+//              """.formatted(databaseName, tableName, targetRoleName),
+//              Map.of());
+//        });
 
-//    jdbcTemplate.update(
-//        """
-//        ALTER TABLE databasechangelog OWNER TO "%s"
-//        """
-//            .formatted(targetRoleName),
-//        Map.of());
-//
-//    jdbcTemplate.update(
-//        """
-//            ALTER TABLE databasechangeloglock OWNER TO "%s"
-//            """
-//            .formatted(targetRoleName),
-//        Map.of());
-//
-//    jdbcTemplate.update(
-//        """
-//            ALTER TABLE method OWNER TO "%s"
-//            """.formatted(targetRoleName),
-//        Map.of());
-//
-//    jdbcTemplate.update(
-//        """
-//            ALTER TABLE method_version OWNER TO "%s"
-//            """
-//            .formatted(targetRoleName),
-//        Map.of());
-//
-//    jdbcTemplate.update(
-//        """
-//            ALTER TABLE run OWNER TO "%s"
-//            """.formatted(targetRoleName),
-//        Map.of());
-//
-//    jdbcTemplate.update(
-//        """
-//            ALTER TABLE run_set OWNER TO "%s"
-//            """.formatted(targetRoleName),
-//        Map.of());
+    jdbcTemplate.update(
+        """
+        ALTER TABLE %s.databasechangelog OWNER TO "%s"
+        """
+            .formatted(databaseName, targetRoleName),
+        Map.of());
+
+    jdbcTemplate.update(
+        """
+            ALTER TABLE %s.databasechangeloglock OWNER TO "%s"
+            """
+            .formatted(databaseName, targetRoleName),
+        Map.of());
+
+    jdbcTemplate.update(
+        """
+            ALTER TABLE %s.method OWNER TO "%s"
+            """.formatted(databaseName, targetRoleName),
+        Map.of());
+
+    jdbcTemplate.update(
+        """
+            ALTER TABLE %s.method_version OWNER TO "%s"
+            """
+            .formatted(databaseName, targetRoleName),
+        Map.of());
+
+    jdbcTemplate.update(
+        """
+            ALTER TABLE %s.run OWNER TO "%s"
+            """.formatted(databaseName, targetRoleName),
+        Map.of());
+
+    jdbcTemplate.update(
+        """
+            ALTER TABLE %s.run_set OWNER TO "%s"
+            """.formatted(databaseName, targetRoleName),
+        Map.of());
   }
 
   public void grantAllPrivileges(String roleName, String databaseName) {
