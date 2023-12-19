@@ -132,7 +132,7 @@ public class DatabaseDao {
     jdbcTemplate.query(
         """
         SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
-        """.formatted(databaseName),
+        """,
         Map.of(),
         (rs, rowNum) -> rs.getString(rowNum))
         .forEach(tableName -> {
@@ -140,7 +140,7 @@ public class DatabaseDao {
           jdbcTemplate.update(
               """
               ALTER TABLE public."%s" OWNER TO "%s"
-              """.formatted(databaseName, tableName, targetRoleName),
+              """.formatted(tableName, targetRoleName),
               Map.of());
         });
 //

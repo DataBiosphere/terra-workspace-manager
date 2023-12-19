@@ -275,7 +275,7 @@ public class DatabaseService {
 
     // This reassignment of permissions is specific to 'cbas' database for Workflows app.
     // It can be made more generalized in the future.
-    databaseDao.reassignOwnerForCbasDatabase(dbName, dbName);
+    databaseDao.reassignOwnerForCbasDatabase(dbName);
   }
 
   public List<String> generateCommandList(
