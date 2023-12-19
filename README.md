@@ -316,10 +316,6 @@ psql -f service/local-dev/local-postgres-init.sql
    plug-in and library makes it easier to get it in the right format from the start.
 4. See some optional tips below in the ["Tips"](#tips) section.
 
-### Postgres
-We are currently using Postgres 13.1.
-
-
 ## Running
 
 ### Writing Configuration
