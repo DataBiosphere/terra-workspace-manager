@@ -1,6 +1,9 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -15,6 +18,8 @@ public class DatabaseDao {
   public DatabaseDao(NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
+
+  private static final Logger logger = LoggerFactory.getLogger(DatabaseDao.class);
 
   /**
    * Create a database with the given name
@@ -117,50 +122,65 @@ public class DatabaseDao {
         """.formatted(targetRoleName, roleName), Map.of());
   }
 
-  public void reassignOwnerForCbasDatabase(String targetRoleName) {
+  public void reassignOwnerForCbasDatabase(String databaseName, String targetRoleName) {
     // Note: here we use "ALTER TABLE" command instead of "REASSIGN OWNED BY" because for 'cbas'
     // databases where the database is either empty or has 1/2 rows in each table, "REASSIGN OWNED
     // BY" wasn't reassigning permissions as expected leading to bug mentioned in
     // https://broadworkbench.atlassian.net/browse/WM-2418.
 
-    jdbcTemplate.update(
+    jdbcTemplate.query(
         """
-        ALTER TABLE databasechangelog OWNER TO "%s"
-        """
-            .formatted(targetRoleName),
-        Map.of());
+        SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'
+        """.formatted(tableName),
+        Map.of(),
+        (rs, rowNum) -> rs.getString(1))
+        .forEach(tableName -> {
+          logger.info("Updating owner of public.{} to {}", tableName, targetRoleName);
+          jdbcTemplate.update(
+              """
+              ALTER TABLE "%s" OWNER TO "%s"
+              """.formatted(tableName, targetRoleName),
+              Map.of());
+        });
 
-    jdbcTemplate.update(
-        """
-            ALTER TABLE databasechangeloglock OWNER TO "%s"
-            """
-            .formatted(targetRoleName),
-        Map.of());
-
-    jdbcTemplate.update(
-        """
-            ALTER TABLE method OWNER TO "%s"
-            """.formatted(targetRoleName),
-        Map.of());
-
-    jdbcTemplate.update(
-        """
-            ALTER TABLE method_version OWNER TO "%s"
-            """
-            .formatted(targetRoleName),
-        Map.of());
-
-    jdbcTemplate.update(
-        """
-            ALTER TABLE run OWNER TO "%s"
-            """.formatted(targetRoleName),
-        Map.of());
-
-    jdbcTemplate.update(
-        """
-            ALTER TABLE run_set OWNER TO "%s"
-            """.formatted(targetRoleName),
-        Map.of());
+//    jdbcTemplate.update(
+//        """
+//        ALTER TABLE databasechangelog OWNER TO "%s"
+//        """
+//            .formatted(targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE databasechangeloglock OWNER TO "%s"
+//            """
+//            .formatted(targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE method OWNER TO "%s"
+//            """.formatted(targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE method_version OWNER TO "%s"
+//            """
+//            .formatted(targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE run OWNER TO "%s"
+//            """.formatted(targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE run_set OWNER TO "%s"
+//            """.formatted(targetRoleName),
+//        Map.of());
   }
 
   public void grantAllPrivileges(String roleName, String databaseName) {

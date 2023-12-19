@@ -133,7 +133,7 @@ public class DatabaseDaoTest extends BaseUnitTest {
     jdbcTemplate.execute("CREATE TABLE run_set ()");
     createTestRole(testRoleName);
 
-    databaseDao.reassignOwnerForCbasDatabase(testRoleName);
+    databaseDao.reassignOwnerForCbasDatabase(testDatabaseName, testRoleName);
   }
 
   private void createTestRole(String testRoleName) {
