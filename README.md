@@ -253,6 +253,19 @@ environment. Consider installing `virtualenv` for your developer use. It can be 
 python3 -m pip install virtualenv
 ```
 
+#### jq
+
+`jq` is required and used to parse various JSON-responses while running various shell scripts.
+
+If you are using homebrew, you can install this with the following:
+
+```shell
+brew install jq
+```
+
+If you are not using homebrew, `jq`'s site lists a variety of ways to
+[install the tool](https://jqlang.github.io/jq/download/) as well.
+
 ### Database Configuration
 Workspace Manager Service relies on a Postgresql database server containing two databases:
 one for the service itself, and one for
