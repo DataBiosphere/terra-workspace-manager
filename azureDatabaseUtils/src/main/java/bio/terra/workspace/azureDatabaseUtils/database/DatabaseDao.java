@@ -1,7 +1,6 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,20 +128,23 @@ public class DatabaseDao {
     // https://broadworkbench.atlassian.net/browse/WM-2418.
 
     logger.info("About to update owner of public schema to {}", targetRoleName);
-    jdbcTemplate.query(
-        """
+    jdbcTemplate
+        .query(
+            """
         SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
         """,
-        Map.of(),
-        (rs, rowNum) -> rs.getString(1))
-        .forEach(tableName -> {
-          logger.info("Updating owner of public.{} to {}", tableName, targetRoleName);
-          jdbcTemplate.update(
-              """
+            Map.of(),
+            (rs, rowNum) -> rs.getString(1))
+        .forEach(
+            tableName -> {
+              logger.info("Updating owner of public.{} to {}", tableName, targetRoleName);
+              jdbcTemplate.update(
+                  """
               ALTER TABLE public."%s" OWNER TO "%s"
-              """.formatted(tableName, targetRoleName),
-              Map.of());
-        });
+              """
+                      .formatted(tableName, targetRoleName),
+                  Map.of());
+            });
   }
 
   public void grantAllPrivileges(String roleName, String databaseName) {

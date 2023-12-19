@@ -26,12 +26,10 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
@@ -160,10 +158,11 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
   }
 
   void assertXofResourceY(int expectedNumber, WsmResourceFamily resourceType) {
-    List<WsmResource> resources = resourceDao
-            .enumerateResources(
-                    destWorkspace.getWorkspaceId(), resourceType, StewardshipType.CONTROLLED, 0, 100);
-    String resourcesString = resources.stream().map(WsmResource::getName).collect(Collectors.joining(", "));
+    List<WsmResource> resources =
+        resourceDao.enumerateResources(
+            destWorkspace.getWorkspaceId(), resourceType, StewardshipType.CONTROLLED, 0, 100);
+    String resourcesString =
+        resources.stream().map(WsmResource::getName).collect(Collectors.joining(", "));
 
     assertEquals(
         expectedNumber,
@@ -171,7 +170,9 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
             .enumerateResources(
                 destWorkspace.getWorkspaceId(), resourceType, StewardshipType.CONTROLLED, 0, 100)
             .size(),
-            String.format("Expected %d %s resources, but found %d: %s", expectedNumber, resourceType, resources.size(), resourcesString));
+        String.format(
+            "Expected %d %s resources, but found %d: %s",
+            expectedNumber, resourceType, resources.size(), resourcesString));
   }
 
   @Test
