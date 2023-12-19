@@ -25,6 +25,15 @@ public class DatabaseDaoTest extends BaseUnitTest {
   @AfterEach
   void cleanup() {
     jdbcTemplate.execute("DROP DATABASE IF EXISTS " + testDatabaseName);
+
+    // clean 'cbas' database
+    jdbcTemplate.execute("DROP TABLE IF EXISTS databasechangelog");
+    jdbcTemplate.execute("DROP TABLE IF EXISTS databasechangeloglock");
+    jdbcTemplate.execute("DROP TABLE IF EXISTS method");
+    jdbcTemplate.execute("DROP TABLE IF EXISTS method_version");
+    jdbcTemplate.execute("DROP TABLE IF EXISTS run");
+    jdbcTemplate.execute("DROP TABLE IF EXISTS run_set");
+
     jdbcTemplate.execute("DROP ROLE IF EXISTS \"%s\"".formatted(testRoleName));
     jdbcTemplate.execute("DROP ROLE IF EXISTS \"%s\"".formatted(testRoleAdminName));
   }
@@ -114,10 +123,17 @@ public class DatabaseDaoTest extends BaseUnitTest {
 
   @Test
   void testReassignOwner() {
+    // create mock 'cbas' database and its tables
     jdbcTemplate.execute("CREATE DATABASE " + testDatabaseName);
+    jdbcTemplate.execute("CREATE TABLE databasechangelog ()");
+    jdbcTemplate.execute("CREATE TABLE databasechangeloglock ()");
+    jdbcTemplate.execute("CREATE TABLE method ()");
+    jdbcTemplate.execute("CREATE TABLE method_version ()");
+    jdbcTemplate.execute("CREATE TABLE run ()");
+    jdbcTemplate.execute("CREATE TABLE run_set ()");
     createTestRole(testRoleName);
-    createTestRole(testRoleAdminName);
-    databaseDao.reassignOwnerForCbasDatabase(testRoleAdminName);
+
+    databaseDao.reassignOwnerForCbasDatabase(testRoleName);
   }
 
   private void createTestRole(String testRoleName) {

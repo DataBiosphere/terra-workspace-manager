@@ -1,8 +1,6 @@
 package bio.terra.workspace.azureDatabaseUtils.database;
 
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -12,7 +10,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class DatabaseDao {
   private final NamedParameterJdbcTemplate jdbcTemplate;
-  private static final Logger logger = LoggerFactory.getLogger(DatabaseDao.class);
 
   @Autowired
   public DatabaseDao(NamedParameterJdbcTemplate jdbcTemplate) {
