@@ -255,9 +255,9 @@ python3 -m pip install virtualenv
 
 #### jq
 
-`jq` is required and used to parse various JSON-responses while running various shell scripts.
+`jq` is required and used to parse JSON-responses while running various shell scripts in this repo.
 
-If you are using homebrew, you can install this with the following:
+If you are using homebrew, you can install `jq` with the following:
 
 ```shell
 brew install jq
@@ -310,10 +310,15 @@ psql -f service/local-dev/local-postgres-init.sql
    right corner), make sure the project SDK is set to Java 17. If not, IntelliJ should
    detect it on your system in the dropdown, otherwise click "Add JDK..." and navigate to
    the folder from the last step.
-3. Set up [google-java-format](https://github.com/google/google-java-format#intellij-android-studio-and-other-jetbrains-ides). We use the
-   spotless checker to force code to a standard format. Installing the IntelliJ plug-in
-   and library makes it easier to get it in the right format from the start.
+3. Set up
+   [google-java-format](https://github.com/google/google-java-format#intellij-android-studio-and-other-jetbrains-ides).
+   We use the spotless checker to force code to a standard format. Installing the IntelliJ
+   plug-in and library makes it easier to get it in the right format from the start.
 4. See some optional tips below in the ["Tips"](#tips) section.
+
+### Postgres
+We are currently using Postgres 13.1.
+
 
 ## Running
 
