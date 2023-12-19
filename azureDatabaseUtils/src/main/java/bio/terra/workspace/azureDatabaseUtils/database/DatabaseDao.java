@@ -122,66 +122,66 @@ public class DatabaseDao {
         """.formatted(targetRoleName, roleName), Map.of());
   }
 
-  public void reassignOwnerForCbasDatabase(String databaseName, String targetRoleName) {
+  public void reassignOwnerForCbasDatabase(String targetRoleName) {
     // Note: here we use "ALTER TABLE" command instead of "REASSIGN OWNED BY" because for 'cbas'
     // databases where the database is either empty or has 1/2 rows in each table, "REASSIGN OWNED
     // BY" wasn't reassigning permissions as expected leading to bug mentioned in
     // https://broadworkbench.atlassian.net/browse/WM-2418.
 
-//    logger.info("About to update owner of");
-//    jdbcTemplate.query(
+    logger.info("About to update owner of public schema to {}", targetRoleName);
+    jdbcTemplate.query(
+        """
+        SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
+        """.formatted(databaseName),
+        Map.of(),
+        (rs, rowNum) -> rs.getString(rowNum))
+        .forEach(tableName -> {
+          logger.info("Updating owner of public.{} to {}", tableName, targetRoleName);
+          jdbcTemplate.update(
+              """
+              ALTER TABLE public."%s" OWNER TO "%s"
+              """.formatted(databaseName, tableName, targetRoleName),
+              Map.of());
+        });
+//
+//    jdbcTemplate.update(
 //        """
-//        SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'
-//        """.formatted(databaseName),
-//        Map.of(),
-//        (rs, rowNum) -> rs.getString(rowNum))
-//        .forEach(tableName -> {
-//          logger.info("Updating owner of public.{} to {}", tableName, targetRoleName);
-//          jdbcTemplate.update(
-//              """
-//              ALTER TABLE "%s"."%s" OWNER TO "%s"
-//              """.formatted(databaseName, tableName, targetRoleName),
-//              Map.of());
-//        });
-
-    jdbcTemplate.update(
-        """
-        ALTER TABLE %s.databasechangelog OWNER TO "%s"
-        """
-            .formatted(databaseName, targetRoleName),
-        Map.of());
-
-    jdbcTemplate.update(
-        """
-            ALTER TABLE %s.databasechangeloglock OWNER TO "%s"
-            """
-            .formatted(databaseName, targetRoleName),
-        Map.of());
-
-    jdbcTemplate.update(
-        """
-            ALTER TABLE %s.method OWNER TO "%s"
-            """.formatted(databaseName, targetRoleName),
-        Map.of());
-
-    jdbcTemplate.update(
-        """
-            ALTER TABLE %s.method_version OWNER TO "%s"
-            """
-            .formatted(databaseName, targetRoleName),
-        Map.of());
-
-    jdbcTemplate.update(
-        """
-            ALTER TABLE %s.run OWNER TO "%s"
-            """.formatted(databaseName, targetRoleName),
-        Map.of());
-
-    jdbcTemplate.update(
-        """
-            ALTER TABLE %s.run_set OWNER TO "%s"
-            """.formatted(databaseName, targetRoleName),
-        Map.of());
+//        ALTER TABLE %s.databasechangelog OWNER TO "%s"
+//        """
+//            .formatted(databaseName, targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE %s.databasechangeloglock OWNER TO "%s"
+//            """
+//            .formatted(databaseName, targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE %s.method OWNER TO "%s"
+//            """.formatted(databaseName, targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE %s.method_version OWNER TO "%s"
+//            """
+//            .formatted(databaseName, targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE %s.run OWNER TO "%s"
+//            """.formatted(databaseName, targetRoleName),
+//        Map.of());
+//
+//    jdbcTemplate.update(
+//        """
+//            ALTER TABLE %s.run_set OWNER TO "%s"
+//            """.formatted(databaseName, targetRoleName),
+//        Map.of());
   }
 
   public void grantAllPrivileges(String roleName, String databaseName) {
