@@ -30,6 +30,6 @@ include 'azureDatabaseUtils'
 // For defining shared state and common dependencies
 gradle.ext.wsmVersion = "0.254.983-SNAPSHOT"
 
-// Single place to define the versions of dependencies shared between components. <REMOVE>
+// Single place to define the versions of dependencies shared between components.
 gradle.ext.librarySwaggerAnnotations = "io.swagger.core.v3:swagger-annotations:2.2.19"
 gradle.ext.librarySwaggerCli = "io.swagger.codegen.v3:swagger-codegen-cli:3.0.47"
