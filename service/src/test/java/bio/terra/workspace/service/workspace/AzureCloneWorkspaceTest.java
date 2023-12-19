@@ -166,10 +166,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
 
     assertEquals(
         expectedNumber,
-        resourceDao
-            .enumerateResources(
-                destWorkspace.getWorkspaceId(), resourceType, StewardshipType.CONTROLLED, 0, 100)
-            .size(),
+        resources.size(),
         String.format(
             "Expected %d %s resources, but found %d: %s",
             expectedNumber, resourceType, resources.size(), resourcesString));

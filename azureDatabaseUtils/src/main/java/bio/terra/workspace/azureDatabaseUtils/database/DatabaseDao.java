@@ -121,7 +121,7 @@ public class DatabaseDao {
         """.formatted(targetRoleName, roleName), Map.of());
   }
 
-  public void reassignOwnerForCbasDatabase(String targetRoleName) {
+  public void reassignOwnerForDatabase(String targetRoleName) {
     // Note: here we use "ALTER TABLE" command instead of "REASSIGN OWNED BY" because for 'cbas'
     // databases where the database is either empty or has 1/2 rows in each table, "REASSIGN OWNED
     // BY" wasn't reassigning permissions as expected leading to bug mentioned in
