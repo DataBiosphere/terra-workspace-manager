@@ -131,7 +131,7 @@ public class DatabaseDao {
     jdbcTemplate.query(
         """
         SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'
-        """.formatted(tableName),
+        """.formatted(databaseName),
         Map.of(),
         (rs, rowNum) -> rs.getString(1))
         .forEach(tableName -> {
