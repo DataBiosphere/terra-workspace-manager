@@ -42,14 +42,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # Sparse check out terra-helmfile repo version directories
-    - uses: ./.github/actions/checkout-helm-versions
-      with:
-        repository: broadinstitute/terra-helmfile
-        ref: master
-        token: ${{ secrets.BROADBOT_TOKEN }}
-        path: integration/terra-helmfile
-
     - name: Initialize Postgres DB for local server test run
       env:
         PGPASSWORD: postgres

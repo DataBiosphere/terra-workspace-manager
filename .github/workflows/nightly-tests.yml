@@ -22,14 +22,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Sparse check out terra-helmfile repo version directories
-      - uses: ./.github/actions/checkout-helm-versions
-        with:
-          repository: broadinstitute/terra-helmfile
-          ref: master
-          token: ${{ secrets.BROADBOT_TOKEN }}
-          path: integration/terra-helmfile
-
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
         uses: google-github-actions/auth@v1
@@ -135,7 +127,7 @@ jobs:
         with:
           test-server: workspace-wsmtest.json
           test: suites/NightlyOnlyIntegration.json
-          
+
       - name: clean databases before integration suite
         if: always()
         uses: ./.github/actions/clean-databases
