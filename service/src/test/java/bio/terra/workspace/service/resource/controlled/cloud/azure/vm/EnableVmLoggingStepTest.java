@@ -121,8 +121,7 @@ class EnableVmLoggingStepTest extends BaseAzureUnitTest {
     try (MockedStatic mockedUtils = mockStatic(AzureManagementExceptionUtils.class)) {
       step.doStep(flightContext);
       mockedUtils.verify(
-          () -> AzureManagementExceptionUtils.maybeRetryStatus(any(ManagementException.class)),
-          times(1));
+          () -> AzureManagementExceptionUtils.maybeRetryStatus(any(ManagementException.class)));
     }
   }
 
@@ -158,7 +157,7 @@ class EnableVmLoggingStepTest extends BaseAzureUnitTest {
         };
 
     assertEquals(step.doStep(flightContext), StepResult.getStepResultSuccess());
-    verify(updateMachineMock, times(1)).withoutExtension("AzureMonitorLinuxAgent");
-    verify(updateMachineMock, times(1)).apply();
+    verify(updateMachineMock).withoutExtension("AzureMonitorLinuxAgent");
+    verify(updateMachineMock).apply();
   }
 }
