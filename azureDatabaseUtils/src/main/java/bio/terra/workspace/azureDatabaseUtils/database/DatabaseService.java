@@ -224,7 +224,7 @@ public class DatabaseService {
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
       throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException, InvalidAlgorithmParameterException, NoSuchProviderException {
+          IOException, InvalidAlgorithmParameterException, NoSuchProviderException, InterruptedException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -272,7 +272,7 @@ public class DatabaseService {
       }
     }
     localProcessLauncher.getOutputStream().flush();
-    localProcessLauncher.waitForTerminate();
+    Thread.sleep(5);
 
     databaseDao.reassignOwner(adminUser, dbName);
   }
