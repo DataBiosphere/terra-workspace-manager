@@ -271,7 +271,7 @@ public class DatabaseService {
         }
       }
     }
-//    localProcessLauncher.getOutputStream().flush();
+    localProcessLauncher.getOutputStream().flush();
     Thread.sleep(5);
 
     databaseDao.reassignOwner(adminUser, dbName);
