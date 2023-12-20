@@ -147,7 +147,6 @@ class EnableVmLoggingStepTest extends BaseAzureUnitTest {
           @Override
           void createExtension(FlightContext context, VirtualMachine virtualMachine) {
             // do nothing ...
-            // the Microsoft classes are package private and not mockable
           }
 
           @Override
