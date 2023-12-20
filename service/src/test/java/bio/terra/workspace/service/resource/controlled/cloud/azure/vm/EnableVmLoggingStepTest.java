@@ -91,9 +91,8 @@ class EnableVmLoggingStepTest extends BaseAzureUnitTest {
     var mockVirtualMachine = mock(VirtualMachine.class);
     when(mockVirtualMachine.listExtensions()).thenReturn(extensionSpy);
 
-    // this needs to do a bunch of things to satisfy #addMonitorAgentToVm
     updateMachineMock = mock(VirtualMachine.Update.class);
-    // verify apply is called on removing the extension
+    // verify #apply() is called on removing the extension
     when(updateMachineMock.withoutExtension(any())).thenReturn(updateMachineMock);
     when(mockVirtualMachine.update()).thenReturn(updateMachineMock);
 
@@ -129,7 +128,7 @@ class EnableVmLoggingStepTest extends BaseAzureUnitTest {
 
   @Test
   void confirmBackoutOnFailure() throws InterruptedException {
-    // set up the backout on doing the initial step
+
     when(samService.getWsmServiceAccountToken()).thenReturn(bearerToken.getToken());
 
     var step =
