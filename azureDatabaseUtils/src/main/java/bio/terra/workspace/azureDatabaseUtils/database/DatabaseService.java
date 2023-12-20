@@ -224,7 +224,8 @@ public class DatabaseService {
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
       throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException, InvalidAlgorithmParameterException, NoSuchProviderException, InterruptedException {
+          IOException, InvalidAlgorithmParameterException, NoSuchProviderException,
+          InterruptedException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
