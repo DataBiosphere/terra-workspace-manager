@@ -514,7 +514,7 @@ dynamically created objects.
 
 There are two styles for declaring autowiring.
 The preferred method of autowiring, is to put the annotation on the constructor
-of the class. Spring will autowire all of the inputs to the constructor.
+of the class. Spring will autowire all the inputs to the constructor.
 
 ```java
 @Component
@@ -550,7 +550,7 @@ public class Foo {
 ###### JSON Annotations
 We use the Jackson JSON library for serializing objects to and from JSON. Most of the time, you don't need to
 use JSON annotations. It is sufficient to provide setter/getter methods for class members
-and let Jackson figure things out with interospection. There are cases where it needs help
+and let Jackson figure things out with introspection. There are cases where it needs help
 and you have to be specific.
 
 The common JSON annotations are:
