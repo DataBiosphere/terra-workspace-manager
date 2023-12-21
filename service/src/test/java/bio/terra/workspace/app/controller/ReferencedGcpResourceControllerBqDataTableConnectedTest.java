@@ -130,8 +130,8 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
         projectId,
         sourceDatasetName,
         sourceTableId,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
+        /* expectedLastUpdatedBy= */ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiGcpBigQueryDataTableResource gotResource =
@@ -218,11 +218,11 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
     mockGcpApi.cloneReferencedBqDataTableAndExpect(
         userAccessUtils.secondUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_FORBIDDEN);
   }
 
@@ -241,11 +241,11 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
 
     mockGcpApi.cloneReferencedBqDataTableAndExpect(
         userAccessUtils.secondUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_FORBIDDEN);
 
     mockWorkspaceV1Api.removeRole(
@@ -280,7 +280,7 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
             sourceResource.getMetadata().getResourceId(),
             workspaceId2,
             ApiCloningInstructionsEnum.REFERENCE,
-            /*destResourceName=*/ null);
+            /* destResourceName= */ null);
 
     assertClonedBqTable(
         clonedResource,
@@ -290,7 +290,7 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
         projectId,
         sourceDatasetName,
         sourceTableId,
-        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getSecondUserEmail(),
         userAccessUtils.secondUserAuthRequest());
     mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
@@ -315,9 +315,9 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
     ApiGcpBigQueryDataTableResource clonedResource =
         mockGcpApi.cloneReferencedBqDataTable(
             userRequest,
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId,
+            /* destWorkspaceId= */ workspaceId,
             ApiCloningInstructionsEnum.NOTHING,
             destResourceName);
 
@@ -335,9 +335,9 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
     ApiGcpBigQueryDataTableResource clonedResource =
         mockGcpApi.cloneReferencedBqDataTable(
             userAccessUtils.defaultUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId,
+            /* destWorkspaceId= */ workspaceId,
             ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
@@ -345,12 +345,12 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
     assertClonedBqTable(
         clonedResource,
         ApiCloningInstructionsEnum.NOTHING,
-        /*expectedDestWorkspaceId=*/ workspaceId,
+        /* expectedDestWorkspaceId= */ workspaceId,
         destResourceName,
         projectId,
         sourceDatasetName,
         sourceTableId,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
@@ -369,9 +369,9 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
     ApiGcpBigQueryDataTableResource clonedResource =
         mockGcpApi.cloneReferencedBqDataTable(
             userAccessUtils.defaultUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId2,
+            /* destWorkspaceId= */ workspaceId2,
             ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
@@ -379,12 +379,12 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
     assertClonedBqTable(
         clonedResource,
         ApiCloningInstructionsEnum.NOTHING,
-        /*expectedDestWorkspaceId=*/ workspaceId2,
+        /* expectedDestWorkspaceId= */ workspaceId2,
         destResourceName,
         projectId,
         sourceDatasetName,
         sourceTableId,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
@@ -414,21 +414,21 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /* policiesToRemove= */ null);
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
+        /* policiesToRemove= */ null);
 
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     mockGcpApi.cloneReferencedBqDataTable(
         userAccessUtils.defaultUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
+        /* sourceWorkspaceId= */ workspaceId,
         sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
         destResourceName);
 
@@ -465,7 +465,7 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceDescription,
-        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        /* expectedResourceLineage= */ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);
 
@@ -494,8 +494,8 @@ public class ReferencedGcpResourceControllerBqDataTableConnectedTest extends Bas
         expectedWorkspaceId,
         expectedResourceName,
         RESOURCE_DESCRIPTION,
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,
         StewardshipType.REFERENCED,
         cloneUserRequest);

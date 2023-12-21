@@ -122,8 +122,8 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         RESOURCE_DESCRIPTION,
         sourceInstanceName,
         sourceSnapshot,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
+        /* expectedLastUpdatedBy= */ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiDataRepoSnapshotResource gotResource =
@@ -207,11 +207,11 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
     mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         userAccessUtils.secondUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_FORBIDDEN);
   }
 
@@ -230,11 +230,11 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
 
     mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         userAccessUtils.secondUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_FORBIDDEN);
 
     mockWorkspaceV1Api.removeRole(
@@ -265,11 +265,11 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
     ApiDataRepoSnapshotResource clonedResource =
         mockDataRepoApi.cloneReferencedDataRepoSnapshot(
             userAccessUtils.secondUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
-            /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId2,
+            /* sourceWorkspaceId= */ workspaceId,
+            /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+            /* destWorkspaceId= */ workspaceId2,
             ApiCloningInstructionsEnum.REFERENCE,
-            /*destResourceName=*/ null);
+            /* destResourceName= */ null);
     assertClonedDataRepoSnapshot(
         clonedResource,
         ApiStewardshipType.REFERENCED,
@@ -279,7 +279,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         sourceResource.getMetadata().getDescription(),
         sourceInstanceName,
         sourceSnapshot,
-        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getSecondUserEmail(),
         userAccessUtils.secondUserAuthRequest());
 
     mockWorkspaceV1Api.removeRole(
@@ -305,9 +305,9 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
     ApiDataRepoSnapshotResource clonedResource =
         mockDataRepoApi.cloneReferencedDataRepoSnapshot(
             userRequest,
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId,
+            /* destWorkspaceId= */ workspaceId,
             ApiCloningInstructionsEnum.NOTHING,
             destResourceName);
 
@@ -325,9 +325,9 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
     ApiDataRepoSnapshotResource clonedResource =
         mockDataRepoApi.cloneReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId,
+            /* destWorkspaceId= */ workspaceId,
             ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
@@ -341,7 +341,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         sourceResource.getMetadata().getDescription(),
         sourceInstanceName,
         sourceSnapshot,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
@@ -360,9 +360,9 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
     ApiDataRepoSnapshotResource clonedResource =
         mockDataRepoApi.cloneReferencedDataRepoSnapshot(
             userAccessUtils.defaultUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId2,
+            /* destWorkspaceId= */ workspaceId2,
             ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
@@ -376,7 +376,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
         sourceResource.getMetadata().getDescription(),
         sourceInstanceName,
         sourceSnapshot,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
@@ -406,21 +406,21 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /* policiesToRemove= */ null);
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
+        /* policiesToRemove= */ null);
 
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         userAccessUtils.defaultUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
+        /* sourceWorkspaceId= */ workspaceId,
         sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
         destResourceName);
 
@@ -449,14 +449,14 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
       String expectedLastUpdatedBy) {
     assertResourceMetadata(
         actualResource.getMetadata(),
-        /*expectedCloudPlatform=*/ null,
+        /* expectedCloudPlatform= */ null,
         ApiResourceType.DATA_REPO_SNAPSHOT,
         ApiStewardshipType.REFERENCED,
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceDescription,
-        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        /* expectedResourceLineage= */ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);
 
@@ -478,15 +478,15 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
       throws InterruptedException {
     mockMvcUtils.assertClonedResourceMetadata(
         actualResource.getMetadata(),
-        /*expectedCloudPlatform=*/ null,
+        /* expectedCloudPlatform= */ null,
         ApiResourceType.DATA_REPO_SNAPSHOT,
         expectedStewardshipType,
         expectedCloningInstructions,
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceDescription,
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,
         StewardshipType.REFERENCED,
         cloneUserRequest);

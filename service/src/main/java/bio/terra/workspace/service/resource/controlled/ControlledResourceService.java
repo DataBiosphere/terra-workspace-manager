@@ -461,8 +461,7 @@ public class ControlledResourceService {
             case WRITER -> policyGroup = cloudContext.getSamPolicyWriter();
             case READER -> policyGroup = cloudContext.getSamPolicyReader();
             case APPLICATION -> policyGroup = cloudContext.getSamPolicyApplication();
-            default -> {
-            }
+            default -> {}
           }
           break;
       }

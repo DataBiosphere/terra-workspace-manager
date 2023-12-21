@@ -35,7 +35,7 @@ public class UpdateControlledResourceRegionStep implements Step {
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     // The resource should get deleted eventually as the step is undone.
-    resourceDao.updateControlledResourceRegion(resourceId, /*region=*/ null);
+    resourceDao.updateControlledResourceRegion(resourceId, /* region= */ null);
     return StepResult.getStepResultSuccess();
   }
 }

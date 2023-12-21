@@ -179,14 +179,14 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
     ResourceApi noAccessApi = ClientTestUtils.getResourceClient(noAccessUser, server);
     ResourceList referenceList =
         noAccessApi.enumerateResources(
-            getWorkspaceId(), 0, 5, /*referenceType=*/ null, StewardshipType.REFERENCED);
+            getWorkspaceId(), 0, 5, /* referenceType= */ null, StewardshipType.REFERENCED);
     assertEquals(4, referenceList.getResources().size());
     ResourceList bucketList =
         noAccessApi.enumerateResources(
             getWorkspaceId(),
             0,
             5,
-            /*referenceType=*/ ResourceType.GCS_BUCKET,
+            /* referenceType= */ ResourceType.GCS_BUCKET,
             StewardshipType.REFERENCED);
     assertEquals(2, bucketList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_BUCKET, bucketList);
@@ -195,7 +195,7 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
             getWorkspaceId(),
             0,
             5,
-            /*referenceType=*/ ResourceType.GCS_OBJECT,
+            /* referenceType= */ ResourceType.GCS_OBJECT,
             StewardshipType.REFERENCED);
     assertEquals(2, fileList.getResources().size());
     MultiResourcesUtils.assertResourceType(ResourceType.GCS_OBJECT, fileList);
@@ -304,10 +304,10 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
                 partialAccessApi,
                 getWorkspaceId(),
                 bucketResourceId,
-                /*name=*/ null,
-                /*description=*/ null,
+                /* name= */ null,
+                /* description= */ null,
                 fineGrainedBucket.getAttributes().getBucketName(),
-                /*cloningInstructions=*/ null));
+                /* cloningInstructions= */ null));
     // Successfully update the referencing target because the {@code userWithFullAccess} has
     // access to the bucket with fine-grained access.
     GcpGcsBucketResource bucketReferenceSecondUpdate =
@@ -315,10 +315,10 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
             fullAccessApi,
             getWorkspaceId(),
             bucketResourceId,
-            /*name=*/ null,
-            /*description=*/ null,
+            /* name= */ null,
+            /* description= */ null,
             fineGrainedBucket.getAttributes().getBucketName(),
-            /*cloningInstructions=*/ null);
+            /* cloningInstructions= */ null);
     assertEquals(newBucketName, bucketReferenceSecondUpdate.getMetadata().getName());
     assertEquals(newBucketDescription, bucketReferenceSecondUpdate.getMetadata().getDescription());
     assertEquals(
@@ -335,8 +335,8 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
             fileResourceId,
             newBlobName,
             newBlobDescription,
-            /*bucketName=*/ null,
-            /*objectName=*/ null,
+            /* bucketName= */ null,
+            /* objectName= */ null,
             CloningInstructionsEnum.NOTHING);
     assertEquals(newBlobName, blobResource.getMetadata().getName());
     assertEquals(newBlobDescription, blobResource.getMetadata().getDescription());
@@ -357,22 +357,22 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
                 partialAccessApi,
                 getWorkspaceId(),
                 fileResourceId,
-                /*name=*/ null,
-                /*description=*/ null,
+                /* name= */ null,
+                /* description= */ null,
                 gcsFileAttributes.getBucketName(),
                 gcsFolderAttributes.getFileName(),
-                /*cloningInstructions=*/ null));
+                /* cloningInstructions= */ null));
     // User with access to foo/ can successfully update the referencing target to foo/.
     GcpGcsObjectResource blobReferenceSecondUpdate =
         GcsBucketUtils.updateGcsBucketObjectReference(
             fullAccessApi,
             getWorkspaceId(),
             fileResourceId,
-            /*name=*/ null,
-            /*description=*/ null,
-            /*bucketName=*/ null,
+            /* name= */ null,
+            /* description= */ null,
+            /* bucketName= */ null,
             gcsFolderAttributes.getFileName(),
-            /*cloningInstructions=*/ null);
+            /* cloningInstructions= */ null);
     assertEquals(
         gcsFileAttributes.getBucketName(),
         blobReferenceSecondUpdate.getAttributes().getBucketName());
@@ -387,11 +387,11 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
             fullAccessApi,
             getWorkspaceId(),
             fileResourceId,
-            /*name=*/ null,
-            /*description=*/ null,
-            /*bucketName=*/ gcsUniformAccessBucketAttributes.getBucketName(),
-            /*objectName=*/ null,
-            /*cloningInstructions=*/ null);
+            /* name= */ null,
+            /* description= */ null,
+            /* bucketName= */ gcsUniformAccessBucketAttributes.getBucketName(),
+            /* objectName= */ null,
+            /* cloningInstructions= */ null);
     assertEquals(
         gcsUniformAccessBucketAttributes.getBucketName(),
         blobReferenceThirdUpdate.getAttributes().getBucketName());
@@ -406,11 +406,11 @@ public class ReferencedGcsResourceLifecycle extends WorkspaceAllocateTestScriptB
             fullAccessApi,
             getWorkspaceId(),
             fileResourceId,
-            /*name=*/ null,
-            /*description=*/ null,
-            /*bucketName=*/ gcsFileAttributes.getBucketName(),
+            /* name= */ null,
+            /* description= */ null,
+            /* bucketName= */ gcsFileAttributes.getBucketName(),
             gcsFileAttributes.getFileName(),
-            /*cloningInstructions=*/ null);
+            /* cloningInstructions= */ null);
     assertEquals(
         gcsFileAttributes.getBucketName(),
         blobReferenceFourthUpdate.getAttributes().getBucketName());

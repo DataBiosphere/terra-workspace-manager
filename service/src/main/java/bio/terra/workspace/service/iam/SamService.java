@@ -604,7 +604,7 @@ public class SamService {
                   workspaceUuid.toString(),
                   role.toSamRole(),
                   email.toLowerCase(),
-                  /* body = */ null));
+                  /* body= */ null));
       logger.info(
           "Granted role {} to user {} in workspace {}", role.toSamRole(), email, workspaceUuid);
     } catch (ApiException apiException) {
@@ -703,7 +703,7 @@ public class SamService {
                   resource.getResourceId().toString(),
                   role.toSamRole(),
                   email,
-                  /* body = */ null));
+                  /* body= */ null));
       logger.info(
           "Restored role {} to user {} on resource {}",
           role.toSamRole(),
@@ -930,7 +930,7 @@ public class SamService {
       // Sam makes no guarantees about what values are returned from the POST call, so we instead
       // fetch the group in a separate call after syncing.
       SamRetry.retry(
-          () -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName, /* body = */ null));
+          () -> googleApi.syncPolicy(resourceTypeName, resourceId, policyName, /* body= */ null));
       return SamRetry.retry(() -> googleApi.syncStatus(resourceTypeName, resourceId, policyName))
           .getEmail();
     } catch (ApiException apiException) {

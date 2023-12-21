@@ -131,7 +131,7 @@ public class WorkspaceService {
         workspace,
         policies,
         applications,
-        /*sourceWorkspaceUuid=*/ null,
+        /* sourceWorkspaceUuid= */ null,
         CloningInstructions.COPY_NOTHING,
         projectOwnerGroupId,
         userRequest);

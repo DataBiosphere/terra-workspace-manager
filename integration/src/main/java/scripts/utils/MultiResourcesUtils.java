@@ -75,11 +75,11 @@ public class MultiResourcesUtils {
     GcpAiNotebookInstanceResource notebook =
         NotebookUtils.makeControlledNotebookUserPrivate(
                 workspaceUuid,
-                /*instanceId=*/ null,
-                /*location=*/ null,
+                /* instanceId= */ null,
+                /* location= */ null,
                 controlledGcpResourceApi,
-                /*testValue=*/ null,
-                /*postStartupScript=*/ null)
+                /* testValue= */ null,
+                /* postStartupScript= */ null)
             .getAiNotebookInstance();
     // Create references to the above buckets and datasets
     GcpGcsBucketResource sharedBucketReference =

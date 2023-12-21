@@ -202,7 +202,7 @@ public class MockFlexibleResourceApi {
             // clone_copyNothing sometimes returns SC_OK, even for the initial call. So accept both
             // to avoid flakes.
             MockMvcUtils.JOB_SUCCESS_CODES,
-            /*shouldUndo=*/ false);
+            /* shouldUndo= */ false);
     logger.info("Controlled flex clone of resource %s completed.".formatted(sourceResourceId));
     return result.getResource();
   }
@@ -285,7 +285,7 @@ public class MockFlexibleResourceApi {
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceDescription,
-        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        /* expectedResourceLineage= */ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);
 

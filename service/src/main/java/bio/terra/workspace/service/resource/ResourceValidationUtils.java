@@ -161,7 +161,9 @@ public class ResourceValidationUtils {
     }
   }
 
-  /** @return policy violation error messages */
+  /**
+   * @return policy violation error messages
+   */
   public static List<String> validateExistingResourceRegions(
       UUID workspaceId,
       List<String> validRegions,

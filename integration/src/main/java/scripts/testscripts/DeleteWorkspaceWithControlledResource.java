@@ -55,7 +55,7 @@ public class DeleteWorkspaceWithControlledResource extends WorkspaceAllocateTest
     var workspaceMissingException =
         assertThrows(
             ApiException.class,
-            () -> workspaceApi.getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null));
+            () -> workspaceApi.getWorkspace(getWorkspaceId(), /* minimumHighestRole= */ null));
     assertEquals(HttpStatus.SC_NOT_FOUND, workspaceMissingException.getCode());
 
     // Confirm the controlled resource was deleted

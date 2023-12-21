@@ -275,14 +275,14 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
         InvalidNameException.class,
         () ->
             GcpResourceValidationUtils.validateGcsObjectName(
-                RandomStringUtils.random(1025, /*letters=*/ true, /*numbers=*/ true)));
+                RandomStringUtils.random(1025, /* letters= */ true, /* numbers= */ true)));
   }
 
   @Test
   public void validateBucketFileName_legalFileName_validate() {
     GcpResourceValidationUtils.validateGcsObjectName("hello.txt");
     GcpResourceValidationUtils.validateGcsObjectName(
-        RandomStringUtils.random(1024, /*letters=*/ true, /*numbers=*/ true));
+        RandomStringUtils.random(1024, /* letters= */ true, /* numbers= */ true));
     GcpResourceValidationUtils.validateGcsObjectName("你好.png");
   }
 

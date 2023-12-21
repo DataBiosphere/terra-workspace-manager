@@ -64,7 +64,7 @@ public class DataprocUtils {
             resourceApi,
             workspaceUuid,
             stagingBucketName,
-            /*bucketName=*/ stagingBucketName,
+            /* bucketName= */ stagingBucketName,
             AccessScope.PRIVATE_ACCESS,
             ManagedBy.USER,
             CloningInstructionsEnum.NOTHING,
@@ -74,7 +74,7 @@ public class DataprocUtils {
             resourceApi,
             workspaceUuid,
             tempBucketName,
-            /*bucketName=*/ tempBucketName,
+            /* bucketName= */ tempBucketName,
             AccessScope.PRIVATE_ACCESS,
             ManagedBy.USER,
             CloningInstructionsEnum.NOTHING,
@@ -112,7 +112,7 @@ public class DataprocUtils {
     var commonParameters =
         makeControlledResourceCommonFields(
             resourceName,
-            /*privateUser=*/ null,
+            /* privateUser= */ null,
             CloningInstructionsEnum.NOTHING,
             ManagedBy.USER,
             AccessScope.PRIVATE_ACCESS);

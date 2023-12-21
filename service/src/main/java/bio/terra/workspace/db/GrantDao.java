@@ -64,6 +64,7 @@ public class GrantDao {
       """
     DELETE FROM temporary_grant WHERE grant_id = :grant_id and revoke_flight_id = :flight_id
     """;
+
   /** Query and mapper to retrieve a grant into GrantData */
   private static final String GET_GRANT_SQL =
       """
@@ -101,7 +102,9 @@ public class GrantDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  /** @return expired grants that are not already being revoked */
+  /**
+   * @return expired grants that are not already being revoked
+   */
   @ReadTransaction
   public List<ExpiredGrant> getExpiredGrants() {
     var params =

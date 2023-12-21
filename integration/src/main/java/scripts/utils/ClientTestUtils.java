@@ -294,7 +294,9 @@ public class ClientTestUtils {
     return result;
   }
 
-  /** @return a generated unique resource name consisting of letters, numbers, and underscores. */
+  /**
+   * @return a generated unique resource name consisting of letters, numbers, and underscores.
+   */
   public static String generateCloudResourceName() {
     String name = RESOURCE_NAME_PREFIX + UUID.randomUUID();
     return name.replace("-", "_");

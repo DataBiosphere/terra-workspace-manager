@@ -146,12 +146,12 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   public void createWorkspace_duplicateUuid_throws400() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     mockWorkspaceV1Api.createWorkspaceWithoutCloudContextExpectError(
-        USER_REQUEST, workspaceId, /*stageModel=*/ null, /*policies=*/ null, HttpStatus.SC_OK);
+        USER_REQUEST, workspaceId, /* stageModel= */ null, /* policies= */ null, HttpStatus.SC_OK);
     mockWorkspaceV1Api.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST,
         workspaceId,
-        /*stageModel=*/ null,
-        /*policies=*/ null,
+        /* stageModel= */ null,
+        /* policies= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -209,8 +209,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         newUserFacingId,
         newDisplayName,
         newDescription,
-        /*expectedCreatedByEmail=*/ USER_REQUEST.getEmail(),
-        /*expectedLastUpdatedByEmail=*/ USER_REQUEST.getEmail());
+        /* expectedCreatedByEmail= */ USER_REQUEST.getEmail(),
+        /* expectedLastUpdatedByEmail= */ USER_REQUEST.getEmail());
 
     // As second user, update only description
     String secondUserEmail = "foo@gmail.com";
@@ -221,8 +221,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         mockWorkspaceV1Api.updateWorkspace(
             USER_REQUEST,
             workspace.getId(),
-            /*newUserFacingId=*/ null,
-            /*newDisplayName=*/ null,
+            /* newUserFacingId= */ null,
+            /* newDisplayName= */ null,
             secondNewDescription);
 
     // Assert description is updated, while ufId and displayName are the same
@@ -231,8 +231,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         newUserFacingId,
         newDisplayName,
         secondNewDescription,
-        /*expectedCreatedByEmail=*/ USER_REQUEST.getEmail(),
-        /*expectedLastUpdatedByEmail=*/ secondUserEmail);
+        /* expectedCreatedByEmail= */ USER_REQUEST.getEmail(),
+        /* expectedLastUpdatedByEmail= */ secondUserEmail);
 
     // Assert second updated workspace's dates, in relation to first updated workspace
     assertEquals(secondUpdatedWorkspace.getCreatedDate(), updatedWorkspace.getCreatedDate());
@@ -595,7 +595,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     return mockWorkspaceV1Api.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST,
-        /*workspaceId=*/ UUID.randomUUID(),
+        /* workspaceId= */ UUID.randomUUID(),
         ApiWorkspaceStageModel.RAWLS_WORKSPACE,
         policyInputs,
         expectedCode);

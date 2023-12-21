@@ -233,7 +233,7 @@ public class AwsCloudContextService implements CloudContextService {
             metadata.getEnvironmentAlias(),
             securityGroupId),
         new CloudContextCommonFields(
-            spendProfileId, WsmResourceState.CREATING, flightId, /*error=*/ null));
+            spendProfileId, WsmResourceState.CREATING, flightId, /* error= */ null));
   }
 
   /**

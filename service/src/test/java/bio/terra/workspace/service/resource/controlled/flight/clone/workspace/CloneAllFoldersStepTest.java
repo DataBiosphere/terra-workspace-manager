@@ -58,10 +58,10 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             SOURCE_WORKSPACE_ID,
             SOURCE_PARENT_FOLDER_NAME,
             SOURCE_PARENT_FOLDER_DESCRIPTION,
-            /*parentFolderId=*/ null,
-            /*properties=*/ Map.of("foo", "bar"),
+            /* parentFolderId= */ null,
+            /* properties= */ Map.of("foo", "bar"),
             DEFAULT_USER_EMAIL,
-            /*createdDate=*/ null));
+            /* createdDate= */ null));
     folderDao.createFolder(
         new Folder(
             SOURCE_SON_FOLDER_ID,
@@ -69,9 +69,9 @@ public class CloneAllFoldersStepTest extends BaseUnitTest {
             SOURCE_SON_FOLDER_NAME,
             SOURCE_SON_FOLDER_DESCRIPTION,
             SOURCE_PARENT_FOLDER_ID,
-            /*properties=*/ Map.of("fooSon", "barSon"),
+            /* properties= */ Map.of("fooSon", "barSon"),
             DEFAULT_USER_EMAIL,
-            /*createdDate=*/ null));
+            /* createdDate= */ null));
 
     cloneAllFoldersStep = new CloneAllFoldersStep(mockSamService(), folderDao);
     when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
