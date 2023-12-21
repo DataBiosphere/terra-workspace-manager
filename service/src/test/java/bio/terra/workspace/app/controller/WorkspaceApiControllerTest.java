@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -465,7 +466,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .objectId(workspace.getId())
             .sourcesObjectIds(Collections.emptyList());
     // Return a policy object for the first workspace
-    when(mockTpsApiDispatch().listPaos(List.of(workspace.getId(), noPolicyWorkspace.getId())))
+    when(mockTpsApiDispatch().listPaos(argThat(l -> l.contains(workspace.getId()))))
         .thenReturn(List.of(getPolicyResult));
 
     List<ApiWorkspaceDescription> workspaces = listWorkspaces();
