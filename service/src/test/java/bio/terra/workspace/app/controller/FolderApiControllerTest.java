@@ -323,7 +323,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
   private ApiJobReport deleteFolderAndWaitForJob(UUID workspaceId, ApiFolder folder)
       throws Exception {
     String serializedResponse =
-        deleteFolderExpectCode(workspaceId, folder.getId(), HttpStatus.SC_ACCEPTED)
+        deleteFolder(workspaceId, folder.getId())
+            .andExpect(status().is2xxSuccessful())
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -730,10 +731,12 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
   private ResultActions deleteFolderExpectCode(UUID workspaceId, UUID folderId, int code)
       throws Exception {
-    return mockMvc
-        .perform(
-            addAuth(post(String.format(FOLDERS_PATH_FORMAT, workspaceId, folderId)), USER_REQUEST))
-        .andExpect(status().is(code));
+    return deleteFolder(workspaceId, folderId).andExpect(status().is(code));
+  }
+
+  private ResultActions deleteFolder(UUID workspaceId, UUID folderId) throws Exception {
+    return mockMvc.perform(
+        addAuth(post(String.format(FOLDERS_PATH_FORMAT, workspaceId, folderId)), USER_REQUEST));
   }
 
   private void updateFolderPropertiesExpectCode(
