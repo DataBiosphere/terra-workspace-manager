@@ -62,8 +62,7 @@ public class StopAwsSageMakerNotebookStep implements Step {
             String.format(
                 "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
                 resource.getResourceId(), notebookStatus));
-        case STOPPED, FAILED -> {
-        } // already stopped
+        case STOPPED, FAILED -> {} // already stopped
       }
 
     } catch (ApiException | UnauthorizedException | BadRequestException e) {
@@ -119,8 +118,7 @@ public class StopAwsSageMakerNotebookStep implements Step {
             String.format(
                 "Cannot start AWS SageMaker Notebook resource %s, status %s.",
                 resource.getResourceId(), notebookStatus));
-        case IN_SERVICE -> {
-        } // already started
+        case IN_SERVICE -> {} // already started
       }
 
     } catch (ApiException | NotFoundException | UnauthorizedException | BadRequestException e) {

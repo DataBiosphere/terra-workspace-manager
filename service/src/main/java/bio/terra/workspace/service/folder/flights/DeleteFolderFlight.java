@@ -14,7 +14,9 @@ import java.util.UUID;
 /** A flight to delete folder and its sub-folders, along with all the resources in it. */
 public class DeleteFolderFlight extends DeleteControlledResourcesFlight {
 
-  /** @inheritdoc */
+  /**
+   * @inheritdoc
+   */
   public DeleteFolderFlight(FlightMap inputParameters, Object beanBag) throws InterruptedException {
     // Steps are added in the super class `DeleteControlledResourcesFlight` to delete
     // controlled resources.

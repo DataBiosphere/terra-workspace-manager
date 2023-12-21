@@ -38,7 +38,7 @@ public class ValidateMRGStep implements Step {
                 spendProfile.id(),
                 WsmResourceState.CREATING,
                 flightContext.getFlightId(),
-                /*error=*/ null));
+                /* error= */ null));
 
     try {
       ResourceManager resourceManager =

@@ -50,15 +50,15 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            /*destinationFolderId=*/ null,
+            /* destinationFolderId= */ null,
             cloneResourceName,
             cloneDescription,
             cloneDatasetName,
             cloneProjectName,
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
-            /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifetime=*/ null);
+            /* defaultTableLifetime= */ null,
+            /* defaultPartitionLifetime= */ null);
 
     assertResourceCommonFields(sourceDataset, cloneResourceName, cloneDescription, datasetToClone);
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
@@ -80,15 +80,15 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            /*destinationFolderId=*/ null,
-            /*name=*/ null,
-            /*description=*/ null,
+            /* destinationFolderId= */ null,
+            /* name= */ null,
+            /* description= */ null,
             cloneDatasetName,
             cloneProjectName,
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
-            /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifetime=*/ null);
+            /* defaultTableLifetime= */ null,
+            /* defaultPartitionLifetime= */ null);
 
     assertResourceCommonFields(
         sourceDataset, sourceDataset.getName(), sourceDataset.getDescription(), datasetToClone);
@@ -116,15 +116,15 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            /*destinationFolderId=*/ null,
+            /* destinationFolderId= */ null,
             RandomStringUtils.randomAlphabetic(5),
-            /*description=*/ null,
+            /* description= */ null,
             RandomStringUtils.randomAlphabetic(5),
             "my-cloned-gcp-project",
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
-            /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifetime=*/ null);
+            /* defaultTableLifetime= */ null,
+            /* defaultPartitionLifetime= */ null);
 
     assertEquals(PrivateResourceState.INITIALIZING, datasetToClone.getPrivateResourceState().get());
     assertControlledResourceCommonField(sourceDataset, datasetToClone);
@@ -144,15 +144,15 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            /*destinationFolderId=*/ null,
-            /*name=*/ RandomStringUtils.randomAlphabetic(5),
-            /*description=*/ "This is a cloned dataset",
-            /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
-            /*destinationProjectId=*/ "my-cloned-gcp-project",
+            /* destinationFolderId= */ null,
+            /* name= */ RandomStringUtils.randomAlphabetic(5),
+            /* description= */ "This is a cloned dataset",
+            /* cloudInstanceName= */ RandomStringUtils.randomAlphabetic(5),
+            /* destinationProjectId= */ "my-cloned-gcp-project",
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
-            /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifetime=*/ null);
+            /* defaultTableLifetime= */ null,
+            /* defaultPartitionLifetime= */ null);
 
     ImmutableMap<String, String> properties = datasetToClone.getProperties();
     assertFalse(properties.containsKey(FOLDER_ID_KEY));
@@ -173,15 +173,15 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceDataset,
             sourceDataset.getWorkspaceId(),
             DESTINATION_RESOURCE_ID,
-            /*destinationFolderId=*/ null,
-            /*name=*/ RandomStringUtils.randomAlphabetic(5),
-            /*description=*/ "This is a cloned dataset",
-            /*cloudInstanceName=*/ RandomStringUtils.randomAlphabetic(5),
-            /*destinationProjectId=*/ "my-gcp-project",
+            /* destinationFolderId= */ null,
+            /* name= */ RandomStringUtils.randomAlphabetic(5),
+            /* description= */ "This is a cloned dataset",
+            /* cloudInstanceName= */ RandomStringUtils.randomAlphabetic(5),
+            /* destinationProjectId= */ "my-gcp-project",
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION,
-            /*defaultTableLifetime=*/ null,
-            /*defaultPartitionLifetime=*/ null);
+            /* defaultTableLifetime= */ null,
+            /* defaultPartitionLifetime= */ null);
 
     assertTrue(datasetToClone.getProperties().containsKey(FOLDER_ID_KEY));
   }
@@ -200,7 +200,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            /*destinationFolderId=*/ null,
+            /* destinationFolderId= */ null,
             cloneResourceName,
             cloneDescription,
             cloneBucketName,
@@ -226,9 +226,9 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            /*destinationFolderId=*/ null,
-            /*name=*/ null,
-            /*description=*/ null,
+            /* destinationFolderId= */ null,
+            /* name= */ null,
+            /* description= */ null,
             cloneBucketName,
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION);
@@ -257,7 +257,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            /*destinationFolderId=*/ null,
+            /* destinationFolderId= */ null,
             RandomStringUtils.randomAlphabetic(5),
             "This is a cloned private bucket",
             // Gcs bucket cloud instance id must be lower-case.
@@ -280,11 +280,11 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             sourceBucket,
             DESTINATION_WORKSPACE_ID,
             DESTINATION_RESOURCE_ID,
-            /*destinationFolderId=*/ null,
-            /*name=*/ RandomStringUtils.randomAlphabetic(5),
-            /*description=*/ "This is a cloned bucket",
+            /* destinationFolderId= */ null,
+            /* name= */ RandomStringUtils.randomAlphabetic(5),
+            /* description= */ "This is a cloned bucket",
             // Gcs bucket cloud instance id must be lower-case.
-            /*cloudInstanceName=*/ TestUtils.appendRandomNumber("gcsbucket"),
+            /* cloudInstanceName= */ TestUtils.appendRandomNumber("gcsbucket"),
             DEFAULT_USER_EMAIL,
             DEFAULT_GCP_RESOURCE_REGION);
 
@@ -311,7 +311,7 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             referencedResource.buildReferencedClone(
                 DESTINATION_WORKSPACE_ID,
                 DESTINATION_RESOURCE_ID,
-                /*destinationFolderId=*/ null,
+                /* destinationFolderId= */ null,
                 cloneResourceName,
                 cloneDescription,
                 DEFAULT_USER_EMAIL);
@@ -339,9 +339,9 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             referencedResource.buildReferencedClone(
                 DESTINATION_WORKSPACE_ID,
                 DESTINATION_RESOURCE_ID,
-                /*destinationFolderId=*/ null,
-                /*name=*/ RandomStringUtils.randomAlphabetic(5),
-                /*description=*/ "This is a cloned data repo snapshot referenced resource",
+                /* destinationFolderId= */ null,
+                /* name= */ RandomStringUtils.randomAlphabetic(5),
+                /* description= */ "This is a cloned data repo snapshot referenced resource",
                 DEFAULT_USER_EMAIL);
 
     ImmutableMap<String, String> properties = snapshotToClone.getProperties();
@@ -366,9 +366,9 @@ public class WorkspaceCloneUtilsTest extends BaseUnitTest {
             referencedResource.buildReferencedClone(
                 referencedResource.getWorkspaceId(),
                 DESTINATION_RESOURCE_ID,
-                /*destinationFolderId=*/ null,
-                /*name=*/ RandomStringUtils.randomAlphabetic(5),
-                /*description=*/ "This is a cloned data repo snapshot referenced resource",
+                /* destinationFolderId= */ null,
+                /* name= */ RandomStringUtils.randomAlphabetic(5),
+                /* description= */ "This is a cloned data repo snapshot referenced resource",
                 DEFAULT_USER_EMAIL);
 
     assertTrue(snapshotToClone.getProperties().containsKey(FOLDER_ID_KEY));

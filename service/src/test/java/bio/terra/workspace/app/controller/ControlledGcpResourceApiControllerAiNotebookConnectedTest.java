@@ -162,7 +162,7 @@ public class ControlledGcpResourceApiControllerAiNotebookConnectedTest extends B
         expectedWorkspaceId,
         actualResource.getMetadata().getName(),
         actualResource.getMetadata().getDescription(),
-        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        /* expectedResourceLineage= */ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);
 

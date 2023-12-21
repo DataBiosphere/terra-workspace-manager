@@ -86,6 +86,7 @@ import org.springframework.http.HttpStatus;
 public class ControlledResourceServiceNotebookTest extends BaseConnectedTest {
   /** The default roles to use when creating user private AI notebook instance resources */
   private static final ControlledResourceIamRole DEFAULT_ROLE = ControlledResourceIamRole.WRITER;
+
   /** The default GCP location to create notebooks for this test. */
   private static final String DEFAULT_NOTEBOOK_LOCATION = "us-east1-b";
 

@@ -194,7 +194,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     // Create a folder in the workspace, and add controlled GCS bucket resource to it
     UUID folderId =
         addResourceToFolder(
-            /*folderId=*/ Optional.empty(),
+            /* folderId= */ Optional.empty(),
             sourceOwnerUser,
             getWorkspaceId(),
             sharedSourceBucket.getResourceId());
@@ -302,7 +302,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     // Create a folder in the workspace, and add reference GCS bucket resource to it
     folderId =
         addResourceToFolder(
-            /*folderId=*/ Optional.empty(),
+            /* folderId= */ Optional.empty(),
             sourceOwnerUser,
             getWorkspaceId(),
             sourceBucketFileReference.getMetadata().getResourceId());
@@ -358,7 +358,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
     assertNotNull(destinationWorkspaceId, "Destination workspace ID available immediately.");
     assertEquals(destinationUserFacingId, cloneResult.getWorkspace().getDestinationUserFacingId());
     final WorkspaceDescription destinationWorkspaceDescription =
-        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId, /*minimumHighestRole=*/ null);
+        cloningUserWorkspaceApi.getWorkspace(
+            destinationWorkspaceId, /* minimumHighestRole= */ null);
     assertNotNull(
         destinationWorkspaceDescription,
         "Destination workspace is available in DB immediately after return from cloneWorkspace().");
@@ -366,7 +367,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         destinationWorkspaceId, destinationWorkspaceDescription.getId(), "Destination IDs match");
     assertEquals(
         sourceOwnerWorkspaceApi
-                .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
+                .getWorkspace(getWorkspaceId(), /* minimumHighestRole= */ null)
                 .getUserFacingId()
             + " (Copy)",
         destinationWorkspaceDescription.getDisplayName(),
@@ -398,7 +399,7 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
         RetryUtils.getWithRetryOnException(
             () ->
                 sourceOwnerWorkspaceApi
-                    .getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null)
+                    .getWorkspace(getWorkspaceId(), /* minimumHighestRole= */ null)
                     .getProperties());
     assertEquals(
         destinationWorkspaceDescription.getProperties(),
@@ -458,7 +459,8 @@ public class CloneWorkspace extends WorkspaceAllocateTestScriptBase {
 
     // We need to get the destination bucket name and project ID
     final WorkspaceDescription destinationWorkspace =
-        cloningUserWorkspaceApi.getWorkspace(destinationWorkspaceId, /*minimumHighestRole=*/ null);
+        cloningUserWorkspaceApi.getWorkspace(
+            destinationWorkspaceId, /* minimumHighestRole= */ null);
     assertEquals(destinationUserFacingId, destinationWorkspace.getUserFacingId());
     final String destinationProjectId = destinationWorkspace.getGcpContext().getProjectId();
     final var clonedSharedBucket =

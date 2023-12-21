@@ -168,6 +168,7 @@ public final class StorageTransferServiceUtils {
     // Since our start and end days are the same, we get Run Once Now behavior.
     return new Schedule().setScheduleStartDate(runDate).setScheduleEndDate(runDate);
   }
+
   /** Create transfer spec from gcs bucket to gcs bucket. */
   public static TransferSpec createTransferSpecForSourceBucket(
       String sourceBucketName, String destinationBucketName) {

@@ -91,7 +91,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
             getWorkspaceId(),
             clusterId,
             /* region= */ null,
-            /*startupScriptUrl=*/ null,
+            /* startupScriptUrl= */ null,
             resourceUserApi);
 
     UUID resourceId = creationResult.getDataprocCluster().getMetadata().getResourceId();
@@ -324,9 +324,9 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     CreatedControlledGcpDataprocClusterResult resourceWithoutClusterId =
         DataprocUtils.createPrivateDataprocCluster(
             getWorkspaceId(),
-            /*clusterId=*/ null,
-            /*location=*/ null,
-            /*startupScriptUrl=*/ null,
+            /* clusterId= */ null,
+            /* location= */ null,
+            /* startupScriptUrl= */ null,
             resourceUserApi);
     assertNotNull(resourceWithoutClusterId.getDataprocCluster().getAttributes().getClusterId());
     UUID resourceId = resourceWithoutClusterId.getDataprocCluster().getMetadata().getResourceId();

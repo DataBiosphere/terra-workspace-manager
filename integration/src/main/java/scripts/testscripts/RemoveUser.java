@@ -127,10 +127,10 @@ public class RemoveUser extends WorkspaceAllocateTestScriptBase {
         NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(),
             notebookInstanceId,
-            /*location=*/ null,
+            /* location= */ null,
             privateUserResourceApi,
-            /*testValue=*/ null,
-            /*postStartupScript=*/ null);
+            /* testValue= */ null,
+            /* postStartupScript= */ null);
   }
 
   @Override

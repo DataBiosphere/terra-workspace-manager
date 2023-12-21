@@ -82,7 +82,7 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
     // Enumerate the reference
     ResourceList referenceList =
         resourceApi.enumerateResources(
-            getWorkspaceId(), 0, 5, /*referenceType=*/ null, /*stewardShipType=*/ null);
+            getWorkspaceId(), 0, 5, /* referenceType= */ null, /* stewardShipType= */ null);
     assertEquals(1, referenceList.getResources().size());
     assertEquals(
         StewardshipType.REFERENCED,
@@ -120,7 +120,7 @@ public class ReferencedGitRepoLifecycle extends WorkspaceAllocateTestScriptBase 
             gitResourceId,
             newGitRepoReferenceName,
             newGitRepoReferenceDescription,
-            /*gitCloneUrl=*/ null,
+            /* gitCloneUrl= */ null,
             CloningInstructionsEnum.NOTHING);
     assertEquals(newGitRepoReferenceName, updatedResource.getMetadata().getName());
     assertEquals(newGitRepoReferenceDescription, updatedResource.getMetadata().getDescription());

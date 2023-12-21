@@ -132,7 +132,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     getWorkspaceExpectingError(
         userAccessUtils.secondUserAuthRequest(),
         workspace.getId(),
-        /*minimumHighestRole=*/ Optional.empty(),
+        /* minimumHighestRole= */ Optional.empty(),
         HttpStatus.SC_FORBIDDEN);
   }
 
@@ -148,7 +148,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     getWorkspaceExpectingError(
         userAccessUtils.secondUserAuthRequest(),
         workspace.getId(),
-        /*minimumHighestRole=*/ Optional.of(ApiIamRole.READER),
+        /* minimumHighestRole= */ Optional.of(ApiIamRole.READER),
         HttpStatus.SC_FORBIDDEN);
   }
 
@@ -166,7 +166,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         getWorkspace(
             userAccessUtils.secondUserAuthRequest(),
             workspace.getId(),
-            /*minimumHighestRole=*/ Optional.of(ApiIamRole.DISCOVERER));
+            /* minimumHighestRole= */ Optional.of(ApiIamRole.DISCOVERER));
 
     assertStrippedWorkspace(gotWorkspace);
   }
@@ -200,7 +200,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     getWorkspaceByUserFacingIdExpectingError(
         userAccessUtils.secondUserAuthRequest(),
         workspaceDescription.getUserFacingId(),
-        /*minimumHighestRole=*/ Optional.empty(),
+        /* minimumHighestRole= */ Optional.empty(),
         HttpStatus.SC_FORBIDDEN);
   }
 
@@ -221,7 +221,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
     getWorkspaceByUserFacingIdExpectingError(
         userAccessUtils.secondUserAuthRequest(),
         workspaceDescription.getUserFacingId(),
-        /*minimumHighestRole=*/ Optional.of(ApiIamRole.READER),
+        /* minimumHighestRole= */ Optional.of(ApiIamRole.READER),
         HttpStatus.SC_FORBIDDEN);
   }
 
@@ -243,7 +243,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
         getWorkspaceByUserFacingId(
             userAccessUtils.secondUserAuthRequest(),
             workspaceDescription.getUserFacingId(),
-            /*minimumHighestRole=*/ Optional.of(ApiIamRole.DISCOVERER));
+            /* minimumHighestRole= */ Optional.of(ApiIamRole.DISCOVERER));
 
     assertStrippedWorkspace(gotWorkspace);
   }
@@ -718,7 +718,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   private ApiWorkspaceDescription getWorkspace(AuthenticatedUserRequest request, UUID id)
       throws Exception {
-    return getWorkspace(request, id, /*minimumHighestRole=*/ Optional.empty());
+    return getWorkspace(request, id, /* minimumHighestRole= */ Optional.empty());
   }
 
   private ApiWorkspaceDescription getWorkspace(
@@ -752,7 +752,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
   private ApiWorkspaceDescription getWorkspaceByUserFacingId(
       AuthenticatedUserRequest request, String userFacingId) throws Exception {
     return getWorkspaceByUserFacingId(
-        request, userFacingId, /*minimumHighestRole=*/ Optional.empty());
+        request, userFacingId, /* minimumHighestRole= */ Optional.empty());
   }
 
   private ApiWorkspaceDescription getWorkspaceByUserFacingId(
@@ -789,7 +789,7 @@ public class WorkspaceApiControllerConnectedTest extends BaseConnectedTest {
 
   private List<ApiWorkspaceDescription> listWorkspaces(AuthenticatedUserRequest request)
       throws Exception {
-    return listWorkspaces(request, /*minimumHighestRole=*/ Optional.empty());
+    return listWorkspaces(request, /* minimumHighestRole= */ Optional.empty());
   }
 
   private List<ApiWorkspaceDescription> listWorkspaces(

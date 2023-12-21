@@ -90,7 +90,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
                 body.getParentFolderId(),
                 convertApiPropertyToMap(body.getProperties()),
                 samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
-                /*createdDate=*/ null));
+                /* createdDate= */ null));
     workspaceActivityLogService.writeActivity(
         userRequest,
         workspaceUuid,

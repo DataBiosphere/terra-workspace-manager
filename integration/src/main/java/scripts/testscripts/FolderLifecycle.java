@@ -153,11 +153,11 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     CreatedControlledGcpAiNotebookInstanceResult firstUserPrivateBucket =
         NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(),
-            /*instanceId=*/ RandomStringUtils.randomAlphabetic(8).toLowerCase(),
-            /*location=*/ null,
+            /* instanceId= */ RandomStringUtils.randomAlphabetic(8).toLowerCase(),
+            /* location= */ null,
             controlledGcpResourceApi,
-            /*testValue=*/ null,
-            /*postStartupScript=*/ null);
+            /* testValue= */ null,
+            /* postStartupScript= */ null);
     resourceApi.updateResourceProperties(
         List.of(new Property().key(TERRA_FOLDER_ID).value(folderLoo.getId().toString())),
         getWorkspaceId(),
@@ -166,11 +166,11 @@ public class FolderLifecycle extends WorkspaceAllocateTestScriptBase {
     CreatedControlledGcpAiNotebookInstanceResult secondUserPrivateBucket =
         NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(),
-            /*instanceId=*/ RandomStringUtils.randomAlphabetic(8).toLowerCase(),
-            /*location=*/ null,
+            /* instanceId= */ RandomStringUtils.randomAlphabetic(8).toLowerCase(),
+            /* location= */ null,
             controlledGcpResourceApi,
-            /*testValue=*/ null,
-            /*postStartupScript=*/ null);
+            /* testValue= */ null,
+            /* postStartupScript= */ null);
     resourceApi.updateResourceProperties(
         List.of(new Property().key(TERRA_FOLDER_ID).value(folderLoo.getId().toString())),
         getWorkspaceId(),

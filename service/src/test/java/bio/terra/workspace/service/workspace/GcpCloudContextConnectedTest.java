@@ -264,9 +264,9 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             FOLDER_ID,
             workspaceId,
             FOLDER_NAME,
-            /*description=*/ null,
-            /*parentFolderId=*/ null,
-            /*properties=*/ Map.of(),
+            /* description= */ null,
+            /* parentFolderId= */ null,
+            /* properties= */ Map.of(),
             "foo@gmail.com",
             null);
     folderDao.createFolder(sourceFolder);
@@ -287,10 +287,10 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             sourceWorkspace,
             userAccessUtils.defaultUserAuthRequest(),
             destinationLocation,
-            /*additionalPolicies=*/ null,
+            /* additionalPolicies= */ null,
             destinationWorkspace,
             spendUtils.defaultGcpSpendProfile(),
-            /*projectOwnerGroupId=*/ null);
+            /* projectOwnerGroupId= */ null);
     jobService.waitForJob(cloneJobId);
     JobResultOrException<ApiClonedWorkspace> cloneResultOrException =
         jobService.retrieveJobResult(cloneJobId, ApiClonedWorkspace.class);
@@ -348,9 +348,9 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             FOLDER_ID,
             workspaceId,
             FOLDER_NAME,
-            /*description=*/ null,
-            /*parentFolderId=*/ null,
-            /*properties=*/ Map.of(),
+            /* description= */ null,
+            /* parentFolderId= */ null,
+            /* properties= */ Map.of(),
             "foo@gmail.com",
             null));
 
@@ -416,10 +416,10 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
                 sourceWorkspace,
                 userAccessUtils.defaultUserAuthRequest(),
                 destinationLocation,
-                /*additionalPolicies=*/ null,
+                /* additionalPolicies= */ null,
                 destinationWorkspace,
                 spendUtils.defaultGcpSpendProfile(),
-                /*projectOwnerGroupId=*/ null));
+                /* projectOwnerGroupId= */ null));
     assertThrows(
         WorkspaceNotFoundException.class,
         () -> workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId()));

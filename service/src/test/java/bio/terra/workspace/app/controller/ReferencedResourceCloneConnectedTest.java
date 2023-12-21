@@ -91,8 +91,8 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     testResourceClone(ApiCloningInstructionsEnum.REFERENCE);
 
     updateRegionPolicy(
-        /*locationsToAdd=*/ List.of(PolicyFixtures.REGION_POLICY_IOWA),
-        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
+        /* locationsToAdd= */ List.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /* locationsToRemove= */ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
     checkRegionPolicy(destinationWorkspaceId, List.of("usa"));
@@ -104,8 +104,8 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     testResourceClone(ApiCloningInstructionsEnum.LINK_REFERENCE);
 
     updateRegionPolicy(
-        /*locationsToAdd=*/ List.of(PolicyFixtures.REGION_POLICY_IOWA),
-        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
+        /* locationsToAdd= */ List.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /* locationsToRemove= */ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
     checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));
@@ -118,8 +118,8 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     testWorkspaceClone(ApiCloningInstructionsEnum.REFERENCE);
 
     updateRegionPolicy(
-        /*locationsToAdd=*/ List.of(PolicyFixtures.REGION_POLICY_IOWA),
-        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
+        /* locationsToAdd= */ List.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /* locationsToRemove= */ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
     checkRegionPolicy(destinationWorkspaceId, List.of("usa"));
@@ -132,8 +132,8 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
     testWorkspaceClone(ApiCloningInstructionsEnum.LINK_REFERENCE);
 
     updateRegionPolicy(
-        /*locationsToAdd=*/ List.of(PolicyFixtures.REGION_POLICY_IOWA),
-        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
+        /* locationsToAdd= */ List.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /* locationsToRemove= */ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("iowa"));
     checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));
@@ -150,8 +150,8 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
     // When we link, the destination tracks the source policy
     updateRegionPolicyWithConflict(
-        /*locationsToAdd=*/ List.of(makeRegionPolicyInput("oregon")),
-        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA),
+        /* locationsToAdd= */ List.of(makeRegionPolicyInput("oregon")),
+        /* locationsToRemove= */ List.of(PolicyFixtures.REGION_POLICY_USA),
         PolicyFixtures.REGION_CONSTRAINT);
 
     checkRegionPolicy(sourceWorkspaceId, List.of("usa"));
@@ -170,8 +170,8 @@ public class ReferencedResourceCloneConnectedTest extends BaseConnectedTest {
 
     // When we copy, the destination does not track the source policy
     updateRegionPolicy(
-        /*locationsToAdd=*/ List.of(makeRegionPolicyInput("oregon")),
-        /*locationsToRemove=*/ List.of(PolicyFixtures.REGION_POLICY_USA));
+        /* locationsToAdd= */ List.of(makeRegionPolicyInput("oregon")),
+        /* locationsToRemove= */ List.of(PolicyFixtures.REGION_POLICY_USA));
 
     checkRegionPolicy(sourceWorkspaceId, List.of("oregon"));
     checkRegionPolicy(destinationWorkspaceId, List.of("iowa"));

@@ -101,7 +101,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             ownerResourceApi,
             getWorkspaceId(),
             DATASET_RESOURCE_NAME,
-            /*datasetId=*/ null,
+            /* datasetId= */ null,
             CloningInstructionsEnum.NOTHING);
     assertEquals(DATASET_RESOURCE_NAME, createdDataset.getAttributes().getDatasetId());
     assertEquals(getResourceDefaultProperties(), createdDataset.getMetadata().getProperties());
@@ -270,7 +270,7 @@ public class ControlledBigQueryDatasetLifecycle extends GcpWorkspaceCloneTestScr
             getWorkspaceId(),
             datasetResourceName,
             datasetIdName,
-            /*cloningInstructions=*/ null);
+            /* cloningInstructions= */ null);
     assertEquals(
         datasetIdName, createdDatasetWithDifferentDatasetId.getAttributes().getDatasetId());
 

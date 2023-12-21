@@ -89,7 +89,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
       AccessScopeType accessScopeType,
       ManagedByType managedByType) {
     return ControlledAzureResourceFixtures.makeDefaultAzureStorageContainerResourceBuilder(
-            /*workspaceId=*/ UUID.randomUUID())
+            /* workspaceId= */ UUID.randomUUID())
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .managedBy(managedByType)

@@ -66,10 +66,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.DEFINITION,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -79,10 +79,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockDataRepoApi.cloneReferencedDataRepoSnapshot(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.RESOURCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -92,10 +92,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGcpApi.cloneReferencedBqDatasetAndExpect(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.DEFINITION,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -105,10 +105,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGcpApi.cloneReferencedBqDatasetAndExpect(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.RESOURCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -118,10 +118,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGcpApi.cloneReferencedBqDataTableAndExpect(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.DEFINITION,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -131,10 +131,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGcpApi.cloneReferencedBqDataTableAndExpect(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.RESOURCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -144,10 +144,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGcpApi.cloneReferencedGcsBucketAndExpect(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.DEFINITION,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -157,10 +157,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGcpApi.cloneReferencedGcsBucketAndExpect(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.RESOURCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -170,10 +170,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGcpApi.cloneReferencedGcsObjectAndExpect(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.DEFINITION,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -183,10 +183,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGcpApi.cloneReferencedGcsObjectAndExpect(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.RESOURCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -196,10 +196,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGitRepoApi.cloneReferencedGitRepo(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.DEFINITION,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -209,10 +209,10 @@ public class ReferencedGcpResourceControllerTest extends BaseUnitTest {
     mockGitRepoApi.cloneReferencedGitRepo(
         USER_REQUEST,
         workspaceId,
-        /*sourceResourceId=*/ UUID.randomUUID(),
-        /*destWorkspaceId=*/ workspaceId,
+        /* sourceResourceId= */ UUID.randomUUID(),
+        /* destWorkspaceId= */ workspaceId,
         ApiCloningInstructionsEnum.RESOURCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_BAD_REQUEST);
   }
 }

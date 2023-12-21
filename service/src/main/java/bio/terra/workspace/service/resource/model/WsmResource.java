@@ -119,6 +119,7 @@ public abstract class WsmResource {
   public @Nullable ErrorReportException getError() {
     return wsmResourceFields.getError();
   }
+
   /**
    * Sub-classes must identify their stewardship type
    *

@@ -28,14 +28,19 @@ import org.slf4j.LoggerFactory;
 public class BaseStatusService {
   private static final Logger logger = LoggerFactory.getLogger(BaseStatusService.class);
   private static final int PARALLELISM_THRESHOLD = 1;
+
   /** cached status */
   private final AtomicBoolean statusOk;
+
   /** configuration parameters */
   private final StatusCheckConfiguration configuration;
+
   /** set of status methods to check */
   private final ConcurrentHashMap<String, Supplier<Boolean>> statusCheckMap;
+
   /** scheduler */
   private final ScheduledExecutorService scheduler;
+
   /** last time cache was updated */
   private Instant lastStatusUpdate;
 

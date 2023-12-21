@@ -17,7 +17,7 @@ public class GetWorkspace extends WorkspaceAllocateTestScriptBase {
     // This GetWorkspace test expects a valid workspace id created by the setup step.
     // Throw exception if anything goes wrong
     final WorkspaceDescription workspaceDescription =
-        workspaceApi.getWorkspace(getWorkspaceId(), /*minimumHighestRole=*/ null);
+        workspaceApi.getWorkspace(getWorkspaceId(), /* minimumHighestRole= */ null);
     assertThat(workspaceDescription.getId(), equalTo(getWorkspaceId()));
 
     // userFacingId was not set in CreateWorkspace request. Make sure it is set now.

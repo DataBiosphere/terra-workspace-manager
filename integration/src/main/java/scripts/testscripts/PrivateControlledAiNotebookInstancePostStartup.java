@@ -42,16 +42,16 @@ public class PrivateControlledAiNotebookInstancePostStartup
 
     ControlledGcpResourceApi resourceUserApi =
         ClientTestUtils.getControlledGcpResourceClient(resourceUser, server);
-    String testValue = RandomStringUtils.random(5, /*letters=*/ true, /*numbers=*/ true);
+    String testValue = RandomStringUtils.random(5, /* letters= */ true, /* numbers= */ true);
     String localBranch = System.getenv("TEST_LOCAL_BRANCH");
     CreatedControlledGcpAiNotebookInstanceResult creationResult =
         NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(),
             INSTANCE_ID,
-            /*location=*/ null,
+            /* location= */ null,
             resourceUserApi,
             testValue,
-            /*postStartupScript=*/ StringUtils.isEmpty(localBranch)
+            /* postStartupScript= */ StringUtils.isEmpty(localBranch)
                 ? null
                 : String.format(
                     "https://raw.githubusercontent.com/DataBiosphere/terra-workspace-manager/%s/service/src/main/java/bio/terra/workspace/service/resource/controlled/cloud/gcp/ainotebook/post-startup.sh",

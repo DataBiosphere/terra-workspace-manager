@@ -107,7 +107,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     // First update. No change will be applied.
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
+            userAccessUtils.defaultUserAuthRequest(), /* wetRun= */ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
@@ -133,7 +133,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     // Second update, dry run
     jobId =
         adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ false);
+            userAccessUtils.defaultUserAuthRequest(), /* wetRun= */ false);
     jobService.waitForJob(jobId);
 
     for (String projectId : projectIds) {
@@ -144,7 +144,7 @@ public class AdminServiceTest extends BaseConnectedTest {
     // Third update, wet run
     jobId =
         adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
+            userAccessUtils.defaultUserAuthRequest(), /* wetRun= */ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(
@@ -196,7 +196,7 @@ public class AdminServiceTest extends BaseConnectedTest {
 
     String jobId =
         adminService.syncIamRoleForAllGcpProjects(
-            userAccessUtils.defaultUserAuthRequest(), /*wetRun=*/ true);
+            userAccessUtils.defaultUserAuthRequest(), /* wetRun= */ true);
     jobService.waitForJob(jobId);
     for (String projectId : projectIds) {
       assertProjectReaderRoleMatchesExpected(

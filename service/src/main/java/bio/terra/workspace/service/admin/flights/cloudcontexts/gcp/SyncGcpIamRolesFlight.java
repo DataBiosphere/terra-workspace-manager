@@ -19,7 +19,9 @@ import java.util.UUID;
 /** Flight to sync IAM roles of existing GCP projects. */
 public class SyncGcpIamRolesFlight extends Flight {
 
-  /** @InheritDoc */
+  /**
+   * @InheritDoc
+   */
   public SyncGcpIamRolesFlight(FlightMap inputParameters, Object applicationContext) {
     super(inputParameters, applicationContext);
     FlightBeanBag appContext = FlightBeanBag.getFromObject(applicationContext);

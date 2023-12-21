@@ -17,7 +17,7 @@ public class TpsApiConversionUtilsTest extends BaseUnitTest {
 
   @Test
   public void convertExplanation() {
-    var tpsPolicyExplanation = createExplanation(/*curr=*/ 0, /*depth=*/ 3);
+    var tpsPolicyExplanation = createExplanation(/* curr= */ 0, /* depth= */ 3);
 
     ApiWsmPolicyExplanation wsmPolicyExplanation =
         TpsApiConversionUtils.convertExplanation(tpsPolicyExplanation);

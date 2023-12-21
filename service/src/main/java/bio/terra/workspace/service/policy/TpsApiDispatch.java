@@ -154,6 +154,17 @@ public class TpsApiDispatch {
   }
 
   @WithSpan
+  public List<TpsPaoGetResult> listPaos(List<UUID> objectIds) throws InterruptedException {
+    features.tpsEnabledCheck();
+    TpsApi tpsApi = policyApi();
+    try {
+      return TpsRetry.retry(() -> tpsApi.listPaos(objectIds));
+    } catch (ApiException e) {
+      throw convertApiException(e);
+    }
+  }
+
+  @WithSpan
   public TpsPaoUpdateResult linkPao(
       UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode)
       throws InterruptedException {

@@ -84,11 +84,11 @@ public class PolicyApiControllerConnectedTest extends BaseConnectedTest {
   @EnabledIf(expression = "${feature.tps-enabled}", loadContext = true)
   public void getLocationInfo_invalidRegion_404() throws Exception {
     getRegionInfoExpect(
-        ApiCloudPlatform.GCP.name(), /*location=*/ "invalid", HttpStatus.SC_NOT_FOUND);
+        ApiCloudPlatform.GCP.name(), /* location= */ "invalid", HttpStatus.SC_NOT_FOUND);
   }
 
   private ApiWsmPolicyLocation getLocationInfo(String platform) throws Exception {
-    return getLocationInfo(platform, /*location=*/ null);
+    return getLocationInfo(platform, /* location= */ null);
   }
 
   private ApiWsmPolicyLocation getLocationInfo(String platform, String location) throws Exception {

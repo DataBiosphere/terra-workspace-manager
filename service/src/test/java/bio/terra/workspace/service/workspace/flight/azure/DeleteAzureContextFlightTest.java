@@ -44,6 +44,7 @@ public class DeleteAzureContextFlightTest extends BaseAzureConnectedTest {
    * How long to wait for a delete context Stairway flight to complete before timing out the test.
    */
   private static final Duration DELETION_FLIGHT_TIMEOUT = Duration.ofMinutes(3);
+
   /**
    * How long to wait for a create context Stairway flight to complete before timing out the test.
    */

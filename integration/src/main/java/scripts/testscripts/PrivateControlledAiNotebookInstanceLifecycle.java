@@ -88,10 +88,10 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
         NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(),
             instanceId,
-            /*location=*/ null,
+            /* location= */ null,
             resourceUserApi,
-            /*testValue=*/ null,
-            /*postStartupScript=*/ null);
+            /* testValue= */ null,
+            /* postStartupScript= */ null);
 
     UUID resourceId = creationResult.getAiNotebookInstance().getMetadata().getResourceId();
     assertEquals(
@@ -234,11 +234,11 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(),
-            /*instanceId=*/ null,
-            /*location=*/ null,
+            /* instanceId= */ null,
+            /* location= */ null,
             resourceUserApi,
-            /*testValue=*/ null,
-            /*postStartupScript=*/ null);
+            /* testValue= */ null,
+            /* postStartupScript= */ null);
     assertNotNull(
         resourceWithNotebookInstanceIdNotSpecified
             .getAiNotebookInstance()
@@ -259,11 +259,11 @@ public class PrivateControlledAiNotebookInstanceLifecycle extends WorkspaceAlloc
     CreatedControlledGcpAiNotebookInstanceResult resourceWithNotebookInstanceIdNotSpecified =
         NotebookUtils.makeControlledNotebookUserPrivate(
             getWorkspaceId(),
-            /*instanceId=*/ null,
-            /*location=*/ location,
+            /* instanceId= */ null,
+            /* location= */ location,
             resourceUserApi,
-            /*testValue=*/ null,
-            /*postStartupScript=*/ null);
+            /* testValue= */ null,
+            /* postStartupScript= */ null);
     assertEquals(
         location,
         resourceWithNotebookInstanceIdNotSpecified

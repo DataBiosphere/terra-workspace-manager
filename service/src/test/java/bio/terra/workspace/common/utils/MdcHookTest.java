@@ -114,6 +114,7 @@ class MdcHookTest extends BaseUnitTest {
       addStep(new CheckMdc(ImmutableMap.of()));
     }
   }
+
   /** A step that asserts the MDC context is what's expected on do and undo. */
   public static class CheckMdc implements Step {
     private final ImmutableMap<String, String> expectedContext;

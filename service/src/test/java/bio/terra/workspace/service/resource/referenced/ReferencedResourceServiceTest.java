@@ -187,7 +187,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
             .setName(updatedName)
             .setCloningInstructions(StewardshipType.REFERENCED, updatedCloningInstructions);
     wsmResourceService.updateResource(
-        USER_REQUEST, referencedResource, commonUpdateParameters, /*updateParameters=*/ null);
+        USER_REQUEST, referencedResource, commonUpdateParameters, /* updateParameters= */ null);
 
     referencedResource =
         referenceResourceService.getReferenceResourceByName(workspaceUuid, updatedName);
@@ -206,7 +206,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
         .setName(null)
         .setCloningInstructions(StewardshipType.REFERENCED, noUpdateCloningInstructions);
     wsmResourceService.updateResource(
-        USER_REQUEST, referencedResource, commonUpdateParameters, /*updateParameters=*/ null);
+        USER_REQUEST, referencedResource, commonUpdateParameters, /* updateParameters= */ null);
 
     referencedResource =
         referenceResourceService.getReferenceResource(
@@ -236,7 +236,7 @@ class ReferencedResourceServiceTest extends BaseUnitTestMockDataRepoService {
     String updatedDescription2 = "2" + updatedDescription;
     commonUpdateParameters.setDescription(updatedDescription2).setName(updatedName2);
     wsmResourceService.updateResource(
-        USER_REQUEST, referencedResource, commonUpdateParameters, /*updateParameters=*/ null);
+        USER_REQUEST, referencedResource, commonUpdateParameters, /* updateParameters= */ null);
 
     referencedResource =
         referenceResourceService.getReferenceResource(

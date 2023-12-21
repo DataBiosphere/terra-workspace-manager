@@ -25,6 +25,7 @@ public class SetCreateResponseStep implements Step {
 
   private final AuthenticatedUserRequest userRequest;
   private final WorkspaceActivityLogService workspaceActivityLogService;
+
   /**
    * This step retrieves the created resource from the database and returns it as the response.
    *
