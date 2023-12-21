@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -67,7 +68,6 @@ import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -466,14 +466,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .objectId(workspace.getId())
             .sourcesObjectIds(Collections.emptyList());
     // Return a policy object for the first workspace
-    when(mockTpsApiDispatch().getPao(eq(workspace.getId()))).thenReturn(getPolicyResult);
-    when(mockTpsApiDispatch().getOrCreatePao(eq(workspace.getId()), any(), any()))
-        .thenReturn(getPolicyResult);
-    // Treat the second workspace like it was created before policy existed. It should receive an
-    // empty Pao.
-    TpsPaoGetResult emptyPao =
-        new TpsPaoGetResult().effectiveAttributes(new TpsPolicyInputs().inputs(new ArrayList<>()));
-    when(mockTpsApiDispatch().getPao(eq(noPolicyWorkspace.getId()))).thenReturn(emptyPao);
+    when(mockTpsApiDispatch().listPaos(argThat(l -> l.contains(workspace.getId()))))
+        .thenReturn(List.of(getPolicyResult));
 
     List<ApiWorkspaceDescription> workspaces = listWorkspaces();
 

@@ -65,6 +65,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -522,20 +524,21 @@ public class WorkspaceService {
         workspaceDao.getWorkspaceDescriptionMapFromIdList(
             accessibleWorkspaces.keySet(), offset, limit);
 
-    // TODO: PF-2710(part 2): make a batch getOrCreatePao in TPS and use it here
-    Map<UUID, TpsPaoGetResult> paoMap = new HashMap<>();
+    Map<UUID, TpsPaoGetResult> paoMap;
     if (features.isTpsEnabled()) {
-      for (DbWorkspaceDescription dbWorkspaceDescription : dbWorkspaceDescriptions.values()) {
-        TpsPaoGetResult workspacePao =
-            Rethrow.onInterrupted(
-                () ->
-                    tpsApiDispatch.getOrCreatePao(
-                        dbWorkspaceDescription.getWorkspace().workspaceId(),
-                        TpsComponent.WSM,
-                        TpsObjectType.WORKSPACE),
-                "getOrCreatePao");
-        paoMap.put(dbWorkspaceDescription.getWorkspace().workspaceId(), workspacePao);
-      }
+      var workspacePaos =
+          Rethrow.onInterrupted(
+              () ->
+                  tpsApiDispatch.listPaos(
+                      dbWorkspaceDescriptions.values().stream()
+                          .map(d -> d.getWorkspace().workspaceId())
+                          .toList()),
+              "listPaos");
+      paoMap =
+          workspacePaos.stream()
+              .collect(Collectors.toMap(TpsPaoGetResult::getObjectId, Function.identity()));
+    } else {
+      paoMap = new HashMap<>();
     }
 
     // Join the DAO workspace descriptions with the Sam info to generate a list of
