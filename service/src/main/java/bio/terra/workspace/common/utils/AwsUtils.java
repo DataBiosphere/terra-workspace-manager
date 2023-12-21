@@ -910,7 +910,7 @@ public class AwsUtils {
   }
 
   public static void checkException(SdkException ex, String altMessage) {
-    checkException(ex, altMessage, /*ignoreNotFound= */ false);
+    checkException(ex, altMessage, /* ignoreNotFound= */ false);
   }
 
   /**

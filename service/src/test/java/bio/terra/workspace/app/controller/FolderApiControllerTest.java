@@ -163,16 +163,16 @@ public class FolderApiControllerTest extends BaseUnitTest {
     createFolderExpectCode(
         workspaceId,
         displayName,
-        /*description=*/ null,
+        /* description= */ null,
         firstFolder.getId(),
-        /*properties=*/ Map.of(),
+        /* properties= */ Map.of(),
         HttpStatus.SC_OK);
     createFolderExpectCode(
         workspaceId,
         displayName,
-        /*description=*/ null,
+        /* description= */ null,
         firstFolder.getId(),
-        /*properties=*/ Map.of(),
+        /* properties= */ Map.of(),
         HttpStatus.SC_BAD_REQUEST);
   }
 
@@ -181,23 +181,23 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiFolder firstFolder = createFolder(workspaceId);
     ApiFolder secondFolder =
-        createFolder(workspaceId, /*displayName=*/ "bar", /*parentFolderId=*/ null);
+        createFolder(workspaceId, /* displayName= */ "bar", /* parentFolderId= */ null);
 
     String duplicateDisplayName = "foo";
     ApiFolder thirdFolder =
         createFolder(
             workspaceId,
             duplicateDisplayName,
-            /*description=*/ null,
-            /*parentFolderId=*/ firstFolder.getId(),
-            /*properties=*/ Map.of());
+            /* description= */ null,
+            /* parentFolderId= */ firstFolder.getId(),
+            /* properties= */ Map.of());
     ApiFolder fourthFolder =
         createFolder(
             workspaceId,
             duplicateDisplayName,
-            /*description=*/ null,
-            /*parentFolderId=*/ secondFolder.getId(),
-            /*properties=*/ Map.of());
+            /* description= */ null,
+            /* parentFolderId= */ secondFolder.getId(),
+            /* properties= */ Map.of());
 
     assertEquals(duplicateDisplayName, thirdFolder.getDisplayName());
     assertEquals(duplicateDisplayName, fourthFolder.getDisplayName());
@@ -233,8 +233,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
   @Test
   public void getFolder_workspaceDoNotExist_throws404() throws Exception {
     getFolderExpectCode(
-        /*workspaceId=*/ UUID.randomUUID(),
-        /*folderId=*/ UUID.randomUUID(),
+        /* workspaceId= */ UUID.randomUUID(),
+        /* folderId= */ UUID.randomUUID(),
         HttpStatus.SC_NOT_FOUND);
   }
 
@@ -242,7 +242,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
   public void getFolder_folderDoNotExist_throws404() throws Exception {
     UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
 
-    getFolderExpectCode(workspaceId, /*folderId=*/ UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
+    getFolderExpectCode(workspaceId, /* folderId= */ UUID.randomUUID(), HttpStatus.SC_NOT_FOUND);
   }
 
   @Test
@@ -250,9 +250,9 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     String displayName = "foo";
 
-    ApiFolder firstFolder = createFolder(workspaceId, displayName, /*parentFolderId=*/ null);
+    ApiFolder firstFolder = createFolder(workspaceId, displayName, /* parentFolderId= */ null);
     ApiFolder secondFolder =
-        createFolder(workspaceId, displayName, /*parentFolderId=*/ firstFolder.getId());
+        createFolder(workspaceId, displayName, /* parentFolderId= */ firstFolder.getId());
     List<ApiFolder> retrievedFolders = listFolders(workspaceId).getFolders().stream().toList();
     assertThat(retrievedFolders, containsInAnyOrder(firstFolder, secondFolder));
   }
@@ -308,9 +308,11 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
     ApiFolder firstFolder = createFolder(workspaceId);
     ApiFolder secondFolder =
-        createFolder(workspaceId, /*displayName=*/ "foo", /*parentFolderId=*/ firstFolder.getId());
+        createFolder(
+            workspaceId, /* displayName= */ "foo", /* parentFolderId= */ firstFolder.getId());
     ApiFolder thirdFolder =
-        createFolder(workspaceId, /*displayName=*/ "foo", /*parentFolderId=*/ secondFolder.getId());
+        createFolder(
+            workspaceId, /* displayName= */ "foo", /* parentFolderId= */ secondFolder.getId());
 
     ApiJobReport jobReport = deleteFolderAndWaitForJob(workspaceId, firstFolder);
 
@@ -346,9 +348,9 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     String displayName = "foo";
 
-    ApiFolder firstFolder = createFolder(workspaceId, displayName, /*parentFolderId=*/ null);
+    ApiFolder firstFolder = createFolder(workspaceId, displayName, /* parentFolderId= */ null);
     ApiFolder secondFolder =
-        createFolder(workspaceId, displayName, /*parentFolderId=*/ firstFolder.getId());
+        createFolder(workspaceId, displayName, /* parentFolderId= */ firstFolder.getId());
 
     String newDisplayName = "sofoo";
     String newDescription = "This is a very foo folder";
@@ -358,8 +360,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
             secondFolder.getId(),
             newDisplayName,
             newDescription,
-            /*parentFolderId=*/ null,
-            /*updateParent=*/ false);
+            /* parentFolderId= */ null,
+            /* updateParent= */ false);
 
     assertEquals(newDisplayName, updatedFolder.getDisplayName());
     assertEquals(newDescription, updatedFolder.getDescription());
@@ -372,18 +374,18 @@ public class FolderApiControllerTest extends BaseUnitTest {
     UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     String displayName = "foo";
 
-    ApiFolder firstFolder = createFolder(workspaceId, displayName, /*parentFolderId=*/ null);
+    ApiFolder firstFolder = createFolder(workspaceId, displayName, /* parentFolderId= */ null);
     ApiFolder secondFolder =
-        createFolder(workspaceId, displayName, /*parentFolderId=*/ firstFolder.getId());
+        createFolder(workspaceId, displayName, /* parentFolderId= */ firstFolder.getId());
 
     ApiFolder updatedFolder =
         updateFolder(
             workspaceId,
             secondFolder.getId(),
-            /*newDisplayName=*/ "bar", // There is already a top-level foo.
-            /*newDescription=*/ null,
-            /*parentFolderId=*/ null,
-            /*updateParent=*/ true);
+            /* newDisplayName= */ "bar", // There is already a top-level foo.
+            /* newDescription= */ null,
+            /* parentFolderId= */ null,
+            /* updateParent= */ true);
 
     assertNull(updatedFolder.getParentFolderId());
     assertTrue(updatedFolder.getLastUpdatedDate().isAfter(secondFolder.getLastUpdatedDate()));
@@ -405,10 +407,10 @@ public class FolderApiControllerTest extends BaseUnitTest {
     updateFolderExpectCode(
         workspaceId,
         folder.getId(),
-        /*newDisplayName=*/ null,
-        /*newDescription=*/ null,
-        /*parentFolderId=*/ null,
-        /*updateParent=*/ true,
+        /* newDisplayName= */ null,
+        /* newDescription= */ null,
+        /* parentFolderId= */ null,
+        /* updateParent= */ true,
         HttpStatus.SC_FORBIDDEN);
 
     ApiFolder gotFolder = getFolder(workspaceId, folder.getId());
@@ -427,8 +429,8 @@ public class FolderApiControllerTest extends BaseUnitTest {
         folder.getId(),
         newDisplayName,
         newDescription,
-        /*parentFolderId=*/ UUID.randomUUID(),
-        /*updateParent=*/ false,
+        /* parentFolderId= */ UUID.randomUUID(),
+        /* updateParent= */ false,
         HttpStatus.SC_NOT_FOUND);
 
     ApiFolder gotFolder = getFolder(workspaceId, folder.getId());
@@ -498,7 +500,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
 
     updateFolderPropertiesExpectCode(
         workspaceId,
-        /*folderId=*/ UUID.randomUUID(),
+        /* folderId= */ UUID.randomUUID(),
         Map.of("cake", "lava"),
         USER_REQUEST,
         HttpStatus.SC_NOT_FOUND);
@@ -549,16 +551,16 @@ public class FolderApiControllerTest extends BaseUnitTest {
   private ApiFolder createFolder(UUID workspaceId) throws Exception {
     return createFolder(
         workspaceId,
-        /*displayName=*/ "foo",
-        /*description=*/ null,
-        /*parentFolderId=*/ null,
+        /* displayName= */ "foo",
+        /* description= */ null,
+        /* parentFolderId= */ null,
         Map.of("foo", "bar"));
   }
 
   private ApiFolder createFolder(UUID workspaceId, String displayName, UUID parentFolderId)
       throws Exception {
     return createFolder(
-        workspaceId, displayName, /*description=*/ null, parentFolderId, Map.of("foo", "bar"));
+        workspaceId, displayName, /* description= */ null, parentFolderId, Map.of("foo", "bar"));
   }
 
   private ApiFolder createFolder(
@@ -580,9 +582,9 @@ public class FolderApiControllerTest extends BaseUnitTest {
   private ResultActions createFolderExpectCode(UUID workspaceId, int code) throws Exception {
     return createFolderExpectCode(
         workspaceId,
-        /*displayName=*/ "foo",
-        /*description=*/ null,
-        /*parentFolderId=*/ null,
+        /* displayName= */ "foo",
+        /* description= */ null,
+        /* parentFolderId= */ null,
         Map.of("foo", "bar"),
         code);
   }
@@ -592,7 +594,7 @@ public class FolderApiControllerTest extends BaseUnitTest {
     return createFolderExpectCode(
         workspaceId,
         displayName,
-        /*description=*/ null,
+        /* description= */ null,
         parentFolderId,
         Map.of("foo", "bar"),
         code);

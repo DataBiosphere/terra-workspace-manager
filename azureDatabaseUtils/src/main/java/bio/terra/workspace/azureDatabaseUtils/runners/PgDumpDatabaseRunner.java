@@ -51,8 +51,13 @@ public class PgDumpDatabaseRunner implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args)
-      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException, InvalidAlgorithmParameterException, NoSuchProviderException {
+      throws PSQLException,
+          NoSuchPaddingException,
+          NoSuchAlgorithmException,
+          InvalidKeyException,
+          IOException,
+          InvalidAlgorithmParameterException,
+          NoSuchProviderException {
     LocalProcessLauncher localProcessLauncher = new LocalProcessLauncher();
     databaseService.pgDump(
         dbName,

@@ -26,8 +26,10 @@ public class GcpResourceConstants {
    * startup script
    */
   public static final String MAIN_BRANCH = "main";
+
   /** The GCE instance enable guest attributes metadata key */
   public static final String ENABLE_GUEST_ATTRIBUTES_METADATA_KEY = "enable-guest-attributes";
+
   /**
    * The GCE instance startup script url metadata key for providing a startup script to the instance
    */

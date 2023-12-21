@@ -417,8 +417,8 @@ public class MockWorkspaceV1Api {
     updatePolicies(
         userRequest,
         workspaceId,
-        /*policiesToAdd=*/ null,
-        /*policiesToRemove=*/ workspace.getPolicies().stream()
+        /* policiesToAdd= */ null,
+        /* policiesToRemove= */ workspace.getPolicies().stream()
             .filter(
                 p ->
                     // We cannot remove group policies but will remove all others.
@@ -451,7 +451,7 @@ public class MockWorkspaceV1Api {
 
   public ApiWsmPolicyUpdateResult updatePolicies(
       AuthenticatedUserRequest userRequest, UUID workspaceId) throws Exception {
-    return updateRegionPolicy(userRequest, workspaceId, /*region=*/ "US");
+    return updateRegionPolicy(userRequest, workspaceId, /* region= */ "US");
   }
 
   public ApiWsmPolicyUpdateResult updatePolicies(

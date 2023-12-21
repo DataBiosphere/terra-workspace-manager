@@ -73,7 +73,7 @@ public class FindResourcesToCloneStep implements Step {
             new ResourceCloneInputs(
                 resource,
                 context.getStairway().createFlightId(),
-                /*destinationResourceId=*/ UUID.randomUUID(),
+                /* destinationResourceId= */ UUID.randomUUID(),
                 folderId != null ? UUID.fromString(folderIdMap.get(folderId)) : null));
       }
 

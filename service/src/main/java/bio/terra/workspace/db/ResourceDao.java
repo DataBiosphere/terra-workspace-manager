@@ -152,10 +152,10 @@ public class ResourceDao {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
     stateDao.updateState(
         dbResource,
-        /*expectedFlightId=*/ null,
+        /* expectedFlightId= */ null,
         flightId,
         WsmResourceState.DELETING,
-        /*exception=*/ null);
+        /* exception= */ null);
   }
 
   /**
@@ -168,11 +168,12 @@ public class ResourceDao {
   @WriteTransaction
   public void deleteResourceSuccess(UUID workspaceUuid, UUID resourceId, String flightId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    if (!stateDao.isResourceInState(dbResource, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
+    if (!stateDao.isResourceInState(
+        dbResource, WsmResourceState.NOT_EXISTS, /* flightId= */ null)) {
       // Validate the state transition to not exists
       stateDao.updateState(
-          dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
-      deleteResourceWorker(workspaceUuid, resourceId, /*resourceType=*/ null);
+          dbResource, flightId, /* targetFlightId= */ null, WsmResourceState.NOT_EXISTS, null);
+      deleteResourceWorker(workspaceUuid, resourceId, /* resourceType= */ null);
     }
   }
 
@@ -191,7 +192,7 @@ public class ResourceDao {
       UUID workspaceUuid, UUID resourceId, String flightId, @Nullable Exception exception) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
     stateDao.updateState(
-        dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, exception);
+        dbResource, flightId, /* targetFlightId= */ null, WsmResourceState.READY, exception);
   }
 
   /**
@@ -203,7 +204,7 @@ public class ResourceDao {
    */
   @WriteTransaction
   public void deleteReferencedResource(UUID workspaceUuid, UUID resourceId) {
-    deleteResourceWorker(workspaceUuid, resourceId, /*resourceType=*/ null);
+    deleteResourceWorker(workspaceUuid, resourceId, /* resourceType= */ null);
   }
 
   /**
@@ -727,13 +728,13 @@ public class ResourceDao {
     }
 
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    stateDao.updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+    stateDao.updateState(dbResource, flightId, /* flightId= */ null, WsmResourceState.READY, null);
   }
 
   @WriteTransaction
   public void updateResourceFailure(UUID workspaceUuid, UUID resourceId, String flightId) {
     DbResource dbResource = getDbResourceFromIds(workspaceUuid, resourceId);
-    stateDao.updateState(dbResource, flightId, /*flightId=*/ null, WsmResourceState.READY, null);
+    stateDao.updateState(dbResource, flightId, /* flightId= */ null, WsmResourceState.READY, null);
   }
 
   // TODO: [PF-2269, PF-2556] this can go away when backfill
@@ -812,9 +813,9 @@ public class ResourceDao {
     stateDao.updateState(
         dbResource,
         flightId,
-        /*targetFlightId=*/ null,
+        /* targetFlightId= */ null,
         WsmResourceState.READY,
-        /*exception=*/ null);
+        /* exception= */ null);
     return getResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
@@ -846,13 +847,13 @@ public class ResourceDao {
           // There is no guarantee this is the flight which created this resource. Validate that it
           // is before attempting to delete the workspace.
           stateDao.updateState(
-              dbResource, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+              dbResource, flightId, /* targetFlightId= */ null, WsmResourceState.NOT_EXISTS, null);
           deleteResourceWorker(
-              resource.getWorkspaceId(), resource.getResourceId(), /*resourceType=*/ null);
+              resource.getWorkspaceId(), resource.getResourceId(), /* resourceType= */ null);
         }
         case BROKEN_ON_FAILURE -> {
           stateDao.updateState(
-              dbResource, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+              dbResource, flightId, /* flightId= */ null, WsmResourceState.BROKEN, exception);
         }
         default -> throw new InternalLogicException("Invalid switch case");
       }

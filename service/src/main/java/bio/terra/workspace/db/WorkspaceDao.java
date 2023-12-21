@@ -308,9 +308,9 @@ public class WorkspaceDao {
     stateDao.updateState(
         dbWorkspace,
         flightId,
-        /*targetFlightId=*/ null,
+        /* targetFlightId= */ null,
         WsmResourceState.READY,
-        /*exception=*/ null);
+        /* exception= */ null);
   }
 
   /**
@@ -340,12 +340,12 @@ public class WorkspaceDao {
           // There is no guarantee this is the flight which created this workspace. Validate that it
           // is before attempting to delete the workspace.
           stateDao.updateState(
-              dbWorkspace, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+              dbWorkspace, flightId, /* targetFlightId= */ null, WsmResourceState.NOT_EXISTS, null);
           deleteWorkspaceWorker(workspaceUuid);
         }
         case BROKEN_ON_FAILURE -> {
           stateDao.updateState(
-              dbWorkspace, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+              dbWorkspace, flightId, /* flightId= */ null, WsmResourceState.BROKEN, exception);
         }
         default -> throw new InternalLogicException("Invalid switch case");
       }
@@ -373,10 +373,10 @@ public class WorkspaceDao {
     }
     stateDao.updateState(
         dbWorkspace,
-        /*expectedFlightId=*/ null,
+        /* expectedFlightId= */ null,
         flightId,
         WsmResourceState.DELETING,
-        /*exception=*/ null);
+        /* exception= */ null);
   }
 
   /**
@@ -390,9 +390,10 @@ public class WorkspaceDao {
   @WriteTransaction
   public boolean deleteWorkspaceSuccess(UUID workspaceUuid, String flightId) {
     DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
-    if (!stateDao.isResourceInState(dbWorkspace, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
+    if (!stateDao.isResourceInState(
+        dbWorkspace, WsmResourceState.NOT_EXISTS, /* flightId= */ null)) {
       stateDao.updateState(
-          dbWorkspace, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+          dbWorkspace, flightId, /* targetFlightId= */ null, WsmResourceState.NOT_EXISTS, null);
       return deleteWorkspaceWorker(workspaceUuid);
     }
     return false;
@@ -412,7 +413,7 @@ public class WorkspaceDao {
   public void deleteWorkspaceFailure(UUID workspaceUuid, String flightId) {
     DbWorkspace dbWorkspace = getDbWorkspace(workspaceUuid);
     stateDao.updateState(
-        dbWorkspace, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, null);
+        dbWorkspace, flightId, /* targetFlightId= */ null, WsmResourceState.READY, null);
   }
 
   private boolean deleteWorkspaceWorker(UUID workspaceUuid) {
@@ -808,9 +809,9 @@ public class WorkspaceDao {
     stateDao.updateState(
         cloudContext,
         flightId,
-        /*targetFlightId=*/ null,
+        /* targetFlightId= */ null,
         WsmResourceState.READY,
-        /*exception=*/ null);
+        /* exception= */ null);
 
     // We do an additional update to store the context if it is provided.
     if (context != null) {
@@ -864,13 +865,17 @@ public class WorkspaceDao {
           // that
           // it is before attempting to delete the workspace.
           stateDao.updateState(
-              cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+              cloudContext,
+              flightId,
+              /* targetFlightId= */ null,
+              WsmResourceState.NOT_EXISTS,
+              null);
           // flightId is now null due to the updateState call above.
           deleteCloudContextWorker(workspaceUuid, cloudPlatform, null);
         }
         case BROKEN_ON_FAILURE -> {
           stateDao.updateState(
-              cloudContext, flightId, /*flightId=*/ null, WsmResourceState.BROKEN, exception);
+              cloudContext, flightId, /* flightId= */ null, WsmResourceState.BROKEN, exception);
         }
         default -> throw new InternalLogicException("Invalid switch case");
       }
@@ -947,10 +952,10 @@ public class WorkspaceDao {
     }
     stateDao.updateState(
         cloudContext,
-        /*expectedFlightId=*/ null,
+        /* expectedFlightId= */ null,
         flightId,
         WsmResourceState.DELETING,
-        /*exception=*/ null);
+        /* exception= */ null);
   }
 
   /**
@@ -965,11 +970,11 @@ public class WorkspaceDao {
       UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
     if (!stateDao.isResourceInState(
-        cloudContext, WsmResourceState.NOT_EXISTS, /*flightId=*/ null)) {
+        cloudContext, WsmResourceState.NOT_EXISTS, /* flightId= */ null)) {
       // Validate the state transition to not exists - this clears the flight id, so we do not
       // pass that in when deleting the context.
       stateDao.updateState(
-          cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.NOT_EXISTS, null);
+          cloudContext, flightId, /* targetFlightId= */ null, WsmResourceState.NOT_EXISTS, null);
       deleteCloudContextWorker(workspaceUuid, cloudPlatform, null);
     }
   }
@@ -988,7 +993,7 @@ public class WorkspaceDao {
       UUID workspaceUuid, CloudPlatform cloudPlatform, String flightId) {
     DbCloudContext cloudContext = getDbCloudContext(workspaceUuid, cloudPlatform);
     stateDao.updateState(
-        cloudContext, flightId, /*targetFlightId=*/ null, WsmResourceState.READY, null);
+        cloudContext, flightId, /* targetFlightId= */ null, WsmResourceState.READY, null);
   }
 
   /**

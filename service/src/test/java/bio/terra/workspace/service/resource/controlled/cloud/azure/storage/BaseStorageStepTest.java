@@ -35,7 +35,7 @@ public class BaseStorageStepTest extends BaseAzureUnitTest {
   protected final ManagementException resourceNotFoundException =
       new ManagementException(
           "Resource was not found.",
-          /*response=*/ null,
+          /* response= */ null,
           new ManagementError(
               AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, "Resource was not found."));
 

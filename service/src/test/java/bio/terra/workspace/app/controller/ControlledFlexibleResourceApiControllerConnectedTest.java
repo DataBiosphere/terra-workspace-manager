@@ -140,21 +140,21 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /* policiesToRemove= */ null);
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
+        /* policiesToRemove= */ null);
 
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     mockFlexibleResourceApi.cloneFlexibleResourceAndWait(
         userAccessUtils.defaultUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
+        /* sourceWorkspaceId= */ workspaceId,
         sourceFlexResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.RESOURCE,
         destResourceName,
         /*destDescription*/ null);
@@ -180,9 +180,9 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
     ApiFlexibleResource clonedFlexResource =
         mockFlexibleResourceApi.cloneFlexibleResourceAndWait(
             userAccessUtils.defaultUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceFlexResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId2,
+            /* destWorkspaceId= */ workspaceId2,
             ApiCloningInstructionsEnum.RESOURCE,
             destResourcename,
             destDescription);
@@ -191,7 +191,7 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
     assertClonedControlledFlexibleResource(
         sourceFlexResource,
         clonedFlexResource,
-        /*expectedDestWorkspaceId=*/ workspaceId2,
+        /* expectedDestWorkspaceId= */ workspaceId2,
         destResourcename,
         destDescription,
         userAccessUtils.getDefaultUserEmail(),
@@ -214,14 +214,14 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
     mockFlexibleResourceApi.cloneFlexibleResourceAndExpect(
         userRequest,
-        /*sourceWorkspaceId=*/ workspaceId,
+        /* sourceWorkspaceId= */ workspaceId,
         sourceFlexResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.RESOURCE,
         destResourceName,
         destDescription,
         List.of(HttpStatus.SC_INTERNAL_SERVER_ERROR),
-        /*shouldUndo=*/ true);
+        /* shouldUndo= */ true);
 
     // Assert clone doesn't exist. There's no resource ID, so search on resource name.
     mockWorkspaceV1Api.assertNoResourceWithName(userRequest, workspaceId2, destResourceName);
@@ -232,14 +232,14 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     mockFlexibleResourceApi.cloneFlexibleResourceAndExpect(
         userAccessUtils.secondUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceFlexResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceFlexResource.getMetadata().getResourceId(),
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.RESOURCE,
-        /*destResourceName=*/ destResourceName,
-        /*description=*/ null,
+        /* destResourceName= */ destResourceName,
+        /* description= */ null,
         List.of(HttpStatus.SC_FORBIDDEN),
-        /*shouldUndo=*/ false);
+        /* shouldUndo= */ false);
   }
 
   @Test
@@ -255,14 +255,14 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
       String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
       mockFlexibleResourceApi.cloneFlexibleResourceAndExpect(
           userAccessUtils.secondUserAuthRequest(),
-          /*sourceWorkspaceId=*/ workspaceId,
-          /*sourceResourceId=*/ sourceFlexResource.getMetadata().getResourceId(),
-          /*destWorkspaceId=*/ workspaceId2,
+          /* sourceWorkspaceId= */ workspaceId,
+          /* sourceResourceId= */ sourceFlexResource.getMetadata().getResourceId(),
+          /* destWorkspaceId= */ workspaceId2,
           ApiCloningInstructionsEnum.RESOURCE,
-          /*destResourceName=*/ destResourceName,
-          /*description=*/ null,
+          /* destResourceName= */ destResourceName,
+          /* description= */ null,
           List.of(HttpStatus.SC_FORBIDDEN),
-          /*shouldUndo=*/ false);
+          /* shouldUndo= */ false);
     } finally {
       mockWorkspaceV1Api.removeRole(
           userRequest, workspaceId, WsmIamRole.READER, userAccessUtils.getSecondUserEmail());
@@ -291,18 +291,18 @@ public class ControlledFlexibleResourceApiControllerConnectedTest extends BaseCo
       ApiFlexibleResource clonedFlexResource =
           mockFlexibleResourceApi.cloneFlexibleResourceAndWait(
               userAccessUtils.secondUserAuthRequest(),
-              /*sourceWorkspaceId=*/ workspaceId,
+              /* sourceWorkspaceId= */ workspaceId,
               sourceFlexResource.getMetadata().getResourceId(),
-              /*destWorkspaceId=*/ workspaceId2,
+              /* destWorkspaceId= */ workspaceId2,
               ApiCloningInstructionsEnum.RESOURCE,
               destResourceName,
               destDescription);
       assertClonedControlledFlexibleResource(
           sourceFlexResource,
           clonedFlexResource,
-          /*expectedDestWorkspaceId=*/ workspaceId2,
+          /* expectedDestWorkspaceId= */ workspaceId2,
           destResourceName,
-          /*expectedResourceDescription=*/ destDescription,
+          /* expectedResourceDescription= */ destDescription,
           userAccessUtils.getSecondUserEmail(),
           userAccessUtils.getSecondUserEmail());
       mockFlexibleResourceApi.deleteFlexibleResource(

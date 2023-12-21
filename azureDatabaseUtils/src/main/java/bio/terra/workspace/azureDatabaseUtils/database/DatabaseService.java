@@ -147,8 +147,11 @@ public class DatabaseService {
   }
 
   private OutputStream encryptIntoOutputStream(OutputStream origin, String encryptionKeyAndIvBase64)
-      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          InvalidAlgorithmParameterException, NoSuchProviderException {
+      throws NoSuchPaddingException,
+          NoSuchAlgorithmException,
+          InvalidKeyException,
+          InvalidAlgorithmParameterException,
+          NoSuchProviderException {
     KeyAndIv keyAndIv = KeyAndIv.fromBase64(encryptionKeyAndIvBase64);
     Cipher c = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
     c.init(Cipher.ENCRYPT_MODE, keyAndIv.key(), new GCMParameterSpec(128, keyAndIv.iv()));
@@ -156,8 +159,11 @@ public class DatabaseService {
   }
 
   private InputStream decryptFromInputStream(InputStream origin, String encryptionKeyBase64)
-      throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          InvalidAlgorithmParameterException, NoSuchProviderException {
+      throws NoSuchPaddingException,
+          NoSuchAlgorithmException,
+          InvalidKeyException,
+          InvalidAlgorithmParameterException,
+          NoSuchProviderException {
     KeyAndIv keyAndIv = KeyAndIv.fromBase64(encryptionKeyBase64);
     Cipher c = Cipher.getInstance("AES/GCM/NoPadding", "BCFIPS");
     c.init(Cipher.DECRYPT_MODE, keyAndIv.key(), new GCMParameterSpec(128, keyAndIv.iv()));
@@ -174,8 +180,13 @@ public class DatabaseService {
       String blobContainerUrlAuthenticated,
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException, InvalidAlgorithmParameterException, NoSuchProviderException {
+      throws PSQLException,
+          NoSuchPaddingException,
+          NoSuchAlgorithmException,
+          InvalidKeyException,
+          IOException,
+          InvalidAlgorithmParameterException,
+          NoSuchProviderException {
 
     // Grant the database role (dbName) to the landing zone identity (adminUser).
     // In theory, we should be revoking this role after the operation is complete.
@@ -223,8 +234,13 @@ public class DatabaseService {
       String blobContainerUrlAuthenticated,
       String encryptionKeyBase64,
       LocalProcessLauncher localProcessLauncher)
-      throws PSQLException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-          IOException, InvalidAlgorithmParameterException, NoSuchProviderException,
+      throws PSQLException,
+          NoSuchPaddingException,
+          NoSuchAlgorithmException,
+          InvalidKeyException,
+          IOException,
+          InvalidAlgorithmParameterException,
+          NoSuchProviderException,
           InterruptedException {
 
     // Grant the database role (dbName) to the workspace identity (adminUser).

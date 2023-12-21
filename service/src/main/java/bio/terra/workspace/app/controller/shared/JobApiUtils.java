@@ -36,14 +36,15 @@ public class JobApiUtils {
 
   /** Retrieves the result of an asynchronous job. */
   public <T> AsyncJobResult<T> retrieveAsyncJobResult(String jobId, Class<T> resultClass) {
-    return retrieveAsyncJobResult(jobId, resultClass, /*typeReference=*/ null);
+    return retrieveAsyncJobResult(jobId, resultClass, /* typeReference= */ null);
   }
 
   /** Retrieves the result of an asynchronous job. */
   public <T> AsyncJobResult<T> retrieveAsyncJobResult(
       String jobId, TypeReference<T> typeReference) {
-    return retrieveAsyncJobResult(jobId, /*resultClass=*/ null, typeReference);
+    return retrieveAsyncJobResult(jobId, /* resultClass= */ null, typeReference);
   }
+
   /**
    * Retrieves the result of an asynchronous job.
    *
@@ -141,7 +142,7 @@ public class JobApiUtils {
 
   public ApiJobResult fetchJobResult(String jobId) {
     AsyncJobResult<Void> jobResult =
-        retrieveAsyncJobResult(jobId, /*resultClass=*/ null, /*typeReference=*/ null);
+        retrieveAsyncJobResult(jobId, /* resultClass= */ null, /* typeReference= */ null);
     return new ApiJobResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());

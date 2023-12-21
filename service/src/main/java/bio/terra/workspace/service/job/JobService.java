@@ -336,7 +336,7 @@ public class JobService {
   /** Retrieves Job Result specifying the result class type. */
   @WithSpan
   public <T> JobResultOrException<T> retrieveJobResult(String jobId, Class<T> resultClass) {
-    return retrieveJobResult(jobId, resultClass, /*typeReference=*/ null);
+    return retrieveJobResult(jobId, resultClass, /* typeReference= */ null);
   }
 
   /**

@@ -449,7 +449,7 @@ public class ControlledGcpResourceApiController extends ControlledResourceContro
     final ControlledBigQueryDatasetResource createdDataset =
         controlledResourceService
             .createControlledResourceSync(
-                resource, commonFields.getIamRole(), userRequest, /*creationParameters=*/ null)
+                resource, commonFields.getIamRole(), userRequest, /* creationParameters= */ null)
             .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
 
     UUID resourceUuid = createdDataset.getResourceId();

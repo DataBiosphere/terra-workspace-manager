@@ -207,11 +207,11 @@ public class MockGcpApi {
             // clone_copyNothing sometimes returns SC_OK, even for the initial call. So accept both
             // to avoid flakes.
             MockMvcUtils.JOB_SUCCESS_CODES,
-            /*shouldUndo=*/ false);
+            /* shouldUndo= */ false);
 
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
+      Thread.sleep(/* millis= */ 5000);
       result =
           mockWorkspaceV1Api.createResourceJobResult(
               ApiCloneControlledGcpGcsBucketResult.class,
@@ -336,7 +336,7 @@ public class MockGcpApi {
 
     ApiErrorReport errorReport;
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 3000);
+      Thread.sleep(/* millis= */ 3000);
       String serializedResponse =
           mockMvcUtils.getSerializedResponseForGetJobResult_error(
               userRequest, CLONE_RESULT_CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT, workspaceId, jobId);
@@ -614,11 +614,11 @@ public class MockGcpApi {
     return createControlledBqDataset(
         userRequest,
         workspaceId,
-        /*resourceName=*/ TestUtils.appendRandomNumber("resource-name"),
-        /*datasetName=*/ TestUtils.appendRandomNumber("dataset-name"),
-        /*location=*/ null,
-        /*defaultTableLifetime=*/ null,
-        /*defaultPartitionTableLifetime=*/ null);
+        /* resourceName= */ TestUtils.appendRandomNumber("resource-name"),
+        /* datasetName= */ TestUtils.appendRandomNumber("dataset-name"),
+        /* location= */ null,
+        /* defaultTableLifetime= */ null,
+        /* defaultPartitionTableLifetime= */ null);
   }
 
   public ApiCreatedControlledGcpBigQueryDataset createControlledBqDataset(
@@ -728,9 +728,9 @@ public class MockGcpApi {
         cloningInstructions,
         destResourceName,
         destDatasetName,
-        /*location=*/ null,
-        /*defaultTableLifetime=*/ null,
-        /*defaultPartitionLifetime=*/ null);
+        /* location= */ null,
+        /* defaultTableLifetime= */ null,
+        /* defaultPartitionLifetime= */ null);
   }
 
   public ApiGcpBigQueryDatasetResource cloneControlledBqDatasetAndWait(
@@ -760,11 +760,11 @@ public class MockGcpApi {
             // clone_copyNothing sometimes returns SC_OK, even for the initial call. So accept both
             // to avoid flakes.
             MockMvcUtils.JOB_SUCCESS_CODES,
-            /*shouldUndo=*/ false);
+            /* shouldUndo= */ false);
 
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
+      Thread.sleep(/* millis= */ 5000);
       result =
           mockWorkspaceV1Api.createResourceJobResult(
               ApiCloneControlledGcpBigQueryDatasetResult.class,
@@ -895,7 +895,7 @@ public class MockGcpApi {
 
     ApiErrorReport errorReport;
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 3000);
+      Thread.sleep(/* millis= */ 3000);
       String serializedResponse =
           mockMvcUtils.getSerializedResponseForGetJobResult_error(
               userRequest, CLONE_RESULT_CONTROLLED_GCP_BQ_DATASETS_PATH_FORMAT, workspaceId, jobId);
@@ -1160,7 +1160,7 @@ public class MockGcpApi {
       AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String location)
       throws Exception {
     return createAiNotebookInstanceAndWait(
-        userRequest, workspaceId, /*instanceId=*/ null, location);
+        userRequest, workspaceId, /* instanceId= */ null, location);
   }
 
   public ApiCreatedControlledGcpAiNotebookInstanceResult createAiNotebookInstanceAndWait(
@@ -1233,7 +1233,7 @@ public class MockGcpApi {
   public ApiCreatedControlledGcpGceInstanceResult createGceInstance(
       AuthenticatedUserRequest userRequest, UUID workspaceId, @Nullable String zone)
       throws Exception {
-    return createGceInstanceAndWait(userRequest, workspaceId, /*instanceId=*/ null, zone);
+    return createGceInstanceAndWait(userRequest, workspaceId, /* instanceId= */ null, zone);
   }
 
   public ApiCreatedControlledGcpGceInstanceResult createGceInstanceAndWait(
@@ -1278,7 +1278,7 @@ public class MockGcpApi {
 
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
+      Thread.sleep(/* millis= */ 5000);
       result =
           mockWorkspaceV1Api.createResourceJobResult(
               ApiCreatedControlledGcpGceInstanceResult.class,
@@ -1310,7 +1310,7 @@ public class MockGcpApi {
       UUID tempBucketId)
       throws Exception {
     return createDataprocClusterAndWait(
-        userRequest, workspaceId, region, stagingBucketId, tempBucketId, /*clusterId=*/ null);
+        userRequest, workspaceId, region, stagingBucketId, tempBucketId, /* clusterId= */ null);
   }
 
   public ApiCreatedControlledGcpDataprocClusterResult createDataprocClusterAndWait(
@@ -1368,7 +1368,7 @@ public class MockGcpApi {
 
     String jobId = result.getJobReport().getId();
     while (StairwayTestUtils.jobIsRunning(result.getJobReport())) {
-      Thread.sleep(/*millis=*/ 5000);
+      Thread.sleep(/* millis= */ 5000);
       result =
           mockWorkspaceV1Api.createResourceJobResult(
               ApiCreatedControlledGcpDataprocClusterResult.class,
