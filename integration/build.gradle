@@ -12,7 +12,7 @@ dependencies {
     ext {
         apacheMath = '3.6.1'
         findbugsAnnotations = "3.0.1"
-        guava = "29.0-jre"
+        guava = "33.0.0-jre"
         jackson = "2.15.2"
         jersey = "2.32"
         kubernetesClient = "19.0.0"
@@ -36,7 +36,7 @@ dependencies {
 
     // Google dependencies
     constraints {
-        implementation 'com.google.guava:guava:30.1.1-jre'
+        implementation 'com.google.guava:guava:33.0.0-jre'
         implementation 'org.json:json:20231013' // security vulnerability
     }
     implementation platform('com.google.cloud:libraries-bom:26.27.0')
