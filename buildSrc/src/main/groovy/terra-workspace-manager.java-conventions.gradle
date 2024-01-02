@@ -77,7 +77,7 @@ if (hasProperty("buildScan")) {
 // Spotbugs configuration
 spotbugs {
     toolVersion = '4.7.3'
-    effort = 'max'
+    effort = Effort.valueOf('MAX')
     excludeFilter = file("$rootDir/gradle/config/spotbugs/exclude.xml")
 }
 // The latest version of spotbugs still pulls in a vulnerable dependency.
