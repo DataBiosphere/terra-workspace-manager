@@ -72,7 +72,8 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
             mockCrlService,
             workspaceId,
             mockResourceDao,
-            identityResource.getName());
+            identityResource.getName(),
+            MissingIdentityBehavior.FAIL_ON_MISSING);
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
     verify(mockWorkingMap).put(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, mockIdentity.name());
@@ -115,7 +116,8 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
             mockCrlService,
             workspaceId,
             mockResourceDao,
-            identityResource.getResourceId().toString());
+            identityResource.getResourceId().toString(),
+            MissingIdentityBehavior.FAIL_ON_MISSING);
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
     verify(mockWorkingMap).put(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, mockIdentity.name());
@@ -135,6 +137,34 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
   void testRetry() throws InterruptedException {
     StepResult stepResult = testWithError(HttpStatus.SERVICE_UNAVAILABLE);
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_RETRY));
+  }
+
+  @Test
+  void testSuccessOnMissingWhenConfigured() throws InterruptedException {
+    var workspaceId = UUID.randomUUID();
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureManagedIdentityCreationParameters();
+    var identityResource =
+        ControlledAzureResourceFixtures.makeDefaultControlledAzureManagedIdentityResourceBuilder(
+                creationParameters, workspaceId)
+            .build();
+    when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
+    when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
+        .thenReturn(mockAzureCloudContext);
+
+    when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
+    when(mockResourceDao.getResourceByName(workspaceId, identityResource.getName()))
+        .thenThrow(new ResourceNotFoundException("not found"));
+
+    var step =
+        new GetWorkspaceManagedIdentityStep(
+            mockAzureConfig,
+            mockCrlService,
+            workspaceId,
+            mockResourceDao,
+            identityResource.getName(),
+            MissingIdentityBehavior.ALLOW_MISSING);
+    assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
   }
 
   private StepResult testWithError(HttpStatus httpStatus) throws InterruptedException {
@@ -164,7 +194,8 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
             mockCrlService,
             workspaceId,
             mockResourceDao,
-            identityResource.getName());
+            identityResource.getName(),
+            MissingIdentityBehavior.FAIL_ON_MISSING);
     return step.doStep(mockFlightContext);
   }
 

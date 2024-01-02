@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.MissingIdentityBehavior;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
@@ -189,7 +190,7 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   private List<Step> getCreateFederatedCredentialsSteps(FlightBeanBag flightBeanBag) {
     if (requiresFederatedCredentials()) {
       return List.of(
-          getGetManagedIdentityStep(flightBeanBag),
+          getGetManagedIdentityStep(flightBeanBag, MissingIdentityBehavior.FAIL_ON_MISSING),
           new GetFederatedIdentityStep(
               getKubernetesNamespace(),
               getKubernetesServiceAccount(),
@@ -213,14 +214,16 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   }
 
   @NotNull
-  private Step getGetManagedIdentityStep(FlightBeanBag flightBeanBag) {
+  private Step getGetManagedIdentityStep(
+      FlightBeanBag flightBeanBag, MissingIdentityBehavior missingIdentityBehavior) {
     return switch (getAccessScope()) {
       case ACCESS_SCOPE_SHARED -> new GetWorkspaceManagedIdentityStep(
           flightBeanBag.getAzureConfig(),
           flightBeanBag.getCrlService(),
           getWorkspaceId(),
           flightBeanBag.getResourceDao(),
-          getManagedIdentity());
+          getManagedIdentity(),
+          missingIdentityBehavior);
 
       case ACCESS_SCOPE_PRIVATE -> new GetPetManagedIdentityStep(
           flightBeanBag.getAzureConfig(),
@@ -283,11 +286,12 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   private List<Step> getFederatedCredentialsDeleteSteps(FlightBeanBag flightBeanBag) {
     if (requiresFederatedCredentials()) {
       return List.of(
-          getGetManagedIdentityStep(flightBeanBag),
+          getGetManagedIdentityStep(flightBeanBag, MissingIdentityBehavior.ALLOW_MISSING),
           new DeleteFederatedCredentialStep(
               getKubernetesNamespace(),
               flightBeanBag.getAzureConfig(),
-              flightBeanBag.getCrlService()));
+              flightBeanBag.getCrlService(),
+              MissingIdentityBehavior.ALLOW_MISSING));
     } else {
       return List.of();
     }

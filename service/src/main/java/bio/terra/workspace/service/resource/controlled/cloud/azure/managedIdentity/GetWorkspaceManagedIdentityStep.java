@@ -15,25 +15,33 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import java.util.UUID;
 
-/** Gets an Azure Managed Identity that exists in a workspace. */
+/**
+ * Gets an Azure Managed Identity that exists in a workspace. Failure behavior is configured via the
+ * MissingIdentityBehavior parameter; if the identity is not found and the behavior is
+ * ALLOW_MISSING, the step will succeed. This helps in deletion scenarios when the managed identity
+ * may have already been deleted out of band but consuming flights want to proceed.
+ */
 public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentityStep {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final UUID workspaceId;
   private final ResourceDao resourceDao;
   private final String managedIdentityName;
+  private final MissingIdentityBehavior missingIdentityBehavior;
 
   public GetWorkspaceManagedIdentityStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       UUID workspaceId,
       ResourceDao resourceDao,
-      String managedIdentityName) {
+      String managedIdentityName,
+      MissingIdentityBehavior failOnMissing) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.workspaceId = workspaceId;
     this.resourceDao = resourceDao;
     this.managedIdentityName = managedIdentityName;
+    this.missingIdentityBehavior = failOnMissing;
   }
 
   @Override
@@ -43,7 +51,14 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
+
     var managedIdentityResource = getManagedIdentityResource();
+
+    if (managedIdentityResource == null
+        && missingIdentityBehavior == MissingIdentityBehavior.ALLOW_MISSING) {
+      return StepResult.getStepResultSuccess();
+    }
+
     var uamiName = managedIdentityResource.getManagedIdentityName();
 
     try {
@@ -74,7 +89,11 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
             .getResource(workspaceId, UUID.fromString(managedIdentityName))
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
       } catch (ResourceNotFoundException | IllegalArgumentException ex) {
-        throw e;
+        if (missingIdentityBehavior.equals(MissingIdentityBehavior.FAIL_ON_MISSING)) {
+          throw e;
+        } else {
+          return null;
+        }
       }
     }
   }
