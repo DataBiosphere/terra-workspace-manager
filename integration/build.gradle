@@ -14,7 +14,7 @@ dependencies {
         findbugsAnnotations = "3.0.1"
         guava = "33.0.0-jre"
         jackson = "2.10.2"
-        jersey = "2.32"
+        jersey = "3.1.5"
         kubernetesClient = "19.0.0"
         logback = "1.2.3"
         slf4j = "1.7.25"
