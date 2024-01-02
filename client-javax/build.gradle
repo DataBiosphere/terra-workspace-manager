@@ -36,7 +36,7 @@ build.dependsOn spotlessApply
 // Spotbugs configuration
 spotbugs {
     toolVersion = '4.7.3'
-    effort = 'max'
+    effort = com.github.spotbugs.snom.Effort.valueOf('MAX')
     excludeFilter = file("$rootDir/gradle/config/spotbugs/exclude.xml")
 }
 // The latest version of spotbugs still pulls in a vulnerable dependency.
