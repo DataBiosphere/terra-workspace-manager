@@ -1,5 +1,3 @@
-import java.time.ZonedDateTime
-
 // Deploy config
 jib {
   from {
@@ -7,11 +5,13 @@ jib {
     image = "docker://azure-database-utils-base:latest"
   }
   extraDirectories {
+    mkdir jibExtraDirectory
     paths = [file(jibExtraDirectory)]
   }
 }
 
 tasks.register('buildBaseImage', Exec) {
+
   workingDir "$projectDir"
   commandLine "docker", "build", "-t", "azure-database-utils-base:latest", "."
 }
