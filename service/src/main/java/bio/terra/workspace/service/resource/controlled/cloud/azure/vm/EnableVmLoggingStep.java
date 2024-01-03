@@ -23,6 +23,7 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.monitor.fluent.models.DataCollectionRuleAssociationProxyOnlyResourceInner;
+import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,7 @@ public class EnableVmLoggingStep implements Step {
   }
 
   @WithSpan
+  @VisibleForTesting
   void createDataCollectionRuleAssociation(
       FlightContext context, ApiAzureLandingZoneDeployedResource dcr, String vmId) {
     try {
@@ -112,6 +114,7 @@ public class EnableVmLoggingStep implements Step {
     createExtension(context, virtualMachine);
   }
 
+  @VisibleForTesting
   void createExtension(FlightContext context, VirtualMachine virtualMachine) {
     var extension =
         virtualMachine
@@ -142,6 +145,7 @@ public class EnableVmLoggingStep implements Step {
    * @param vmId
    * @param virtualMachine
    */
+  @VisibleForTesting
   void removeExtension(String vmId, VirtualMachine virtualMachine) {
     Optional.ofNullable(virtualMachine.listExtensions().get(EXTENSION_NAME))
         .ifPresent(
