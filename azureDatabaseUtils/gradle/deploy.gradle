@@ -11,7 +11,6 @@ jib {
 }
 
 tasks.register('buildBaseImage', Exec) {
-
   workingDir "$projectDir"
   commandLine "docker", "build", "-t", "azure-database-utils-base:latest", "."
 }
