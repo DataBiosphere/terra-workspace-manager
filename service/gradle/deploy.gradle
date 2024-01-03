@@ -8,6 +8,7 @@ jib {
     image = "us.gcr.io/broad-dsp-gcr-public/base/jre:17-debian"
   }
   extraDirectories {
+    mkdir jibExtraDirectory
     paths = [file(jibExtraDirectory)]
   }
   container {
