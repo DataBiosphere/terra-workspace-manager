@@ -23,6 +23,7 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.monitor.MonitorManager;
 import com.azure.resourcemanager.monitor.fluent.models.DataCollectionRuleAssociationProxyOnlyResourceInner;
+import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 public class EnableVmLoggingStep implements Step {
 
+  public static final String EXTENSION_NAME = "AzureMonitorLinuxAgent";
   private static final Logger logger = LoggerFactory.getLogger(EnableVmLoggingStep.class);
   public static final String DATA_COLLECTION_RULES_TYPE = "Microsoft.Insights/dataCollectionRules";
 
@@ -78,7 +80,8 @@ public class EnableVmLoggingStep implements Step {
   }
 
   @WithSpan
-  private void createDataCollectionRuleAssociation(
+  @VisibleForTesting
+  void createDataCollectionRuleAssociation(
       FlightContext context, ApiAzureLandingZoneDeployedResource dcr, String vmId) {
     try {
       getMonitorManager(context)
@@ -107,22 +110,16 @@ public class EnableVmLoggingStep implements Step {
   @WithSpan
   private void addMonitorAgentToVm(FlightContext context, String vmId) {
     var virtualMachine = getComputeManager(context).virtualMachines().getById(vmId);
+    removeExtension(vmId, virtualMachine);
+    createExtension(context, virtualMachine);
+  }
 
-    var extensionName = "AzureMonitorLinuxAgent";
-    Optional.ofNullable(virtualMachine.listExtensions().get(extensionName))
-        .ifPresent(
-            (extension) -> {
-              logger.info(
-                  "extension {} already exists on vm {}, deleting it to retry",
-                  extensionName,
-                  vmId);
-              virtualMachine.update().withoutExtension(extensionName).apply();
-            });
-
+  @VisibleForTesting
+  void createExtension(FlightContext context, VirtualMachine virtualMachine) {
     var extension =
         virtualMachine
             .update()
-            .defineNewExtension(extensionName)
+            .defineNewExtension(EXTENSION_NAME)
             .withPublisher("Microsoft.Azure.Monitor")
             .withType("AzureMonitorLinuxAgent")
             .withVersion(azureConfig.getAzureMonitorLinuxAgentVersion())
@@ -140,6 +137,25 @@ public class EnableVmLoggingStep implements Step {
             (() -> enableSystemAssignedIdentity(virtualMachine)));
 
     extension.attach().apply();
+  }
+
+  /**
+   * If the EXTENSION_NAME exists on the `virtualMachine`, remove it. Otherwise, no-op.
+   *
+   * @param vmId
+   * @param virtualMachine
+   */
+  @VisibleForTesting
+  void removeExtension(String vmId, VirtualMachine virtualMachine) {
+    Optional.ofNullable(virtualMachine.listExtensions().get(EXTENSION_NAME))
+        .ifPresent(
+            (extension) -> {
+              logger.info(
+                  "extension {} already exists on vm {}, deleting it to retry",
+                  EXTENSION_NAME,
+                  vmId);
+              virtualMachine.update().withoutExtension(EXTENSION_NAME).apply();
+            });
   }
 
   private void enableSystemAssignedIdentity(VirtualMachine virtualMachine) {
@@ -167,7 +183,7 @@ public class EnableVmLoggingStep implements Step {
     return crlService.getComputeManager(azureCloudContext, azureConfig);
   }
 
-  private Optional<ApiAzureLandingZoneDeployedResource> getDataCollectionRuleFromLandingZone() {
+  Optional<ApiAzureLandingZoneDeployedResource> getDataCollectionRuleFromLandingZone() {
     try {
       var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
       final UUID lzId =

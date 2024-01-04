@@ -253,6 +253,19 @@ environment. Consider installing `virtualenv` for your developer use. It can be 
 python3 -m pip install virtualenv
 ```
 
+#### jq
+
+`jq` is required and used to parse JSON-responses while running various shell scripts in this repo.
+
+If you are using homebrew, you can install `jq` with the following:
+
+```shell
+brew install jq
+```
+
+If you are not using homebrew, `jq`'s site lists a variety of ways to
+[install the tool](https://jqlang.github.io/jq/download/) as well.
+
 ### Database Configuration
 Workspace Manager Service relies on a Postgresql database server containing two databases:
 one for the service itself, and one for
@@ -297,9 +310,10 @@ psql -f service/local-dev/local-postgres-init.sql
    right corner), make sure the project SDK is set to Java 17. If not, IntelliJ should
    detect it on your system in the dropdown, otherwise click "Add JDK..." and navigate to
    the folder from the last step.
-3. Set up [google-java-format](https://github.com/google/google-java-format). We use the
-   spotless checker to force code to a standard format. Installing the IntelliJ plug-in
-   and library makes it easier to get it in the right format from the start.
+3. Set up
+   [google-java-format](https://github.com/google/google-java-format#intellij-android-studio-and-other-jetbrains-ides).
+   We use the spotless checker to force code to a standard format. Installing the IntelliJ
+   plug-in and library makes it easier to get it in the right format from the start.
 4. See some optional tips below in the ["Tips"](#tips) section.
 
 ## Running
@@ -485,7 +499,7 @@ dynamically created objects.
 
 There are two styles for declaring autowiring.
 The preferred method of autowiring, is to put the annotation on the constructor
-of the class. Spring will autowire all of the inputs to the constructor.
+of the class. Spring will autowire all the inputs to the constructor.
 
 ```java
 @Component
@@ -521,7 +535,7 @@ public class Foo {
 ###### JSON Annotations
 We use the Jackson JSON library for serializing objects to and from JSON. Most of the time, you don't need to
 use JSON annotations. It is sufficient to provide setter/getter methods for class members
-and let Jackson figure things out with interospection. There are cases where it needs help
+and let Jackson figure things out with introspection. There are cases where it needs help
 and you have to be specific.
 
 The common JSON annotations are:
@@ -885,5 +899,5 @@ For each environment:
     restart the server.
     ![Main Run Configuration Dialog](docs/images/main_run_config.png)
 - To run unit and connected tests with a local DB (which can be helpful for examining DB contents after testing), set the `TEST_LOCAL_DB` environment variable
-  to point to a local postgres URI, e.g `export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'`. See [above](/#Database Configuration) for setting up a local DB.
+  to point to a local postgres URI, e.g `export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'`. See [above](#postgres) for setting up a local DB.
   - Note that parallel tests using a shared database may interfere with each other - [you can set the `TEST_SINGLE_THREAD` env var](service/gradle/testing.gradle) to restrict tests to a single thread.
