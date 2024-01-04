@@ -61,7 +61,7 @@ public class GetWorkspaceManagedIdentityStep implements Step, GetManagedIdentity
     var uamiName = managedIdentityResource.getManagedIdentityName();
 
     try {
-      var uami = managedIdentityHelper.getUamiName(azureCloudContext, uamiName);
+      var uami = managedIdentityHelper.getIdentity(azureCloudContext, uamiName);
       putManagedIdentityInContext(context, uami);
 
       return StepResult.getStepResultSuccess();

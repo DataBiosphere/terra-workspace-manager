@@ -44,10 +44,10 @@ public class ManagedIdentityHelper {
     }
   }
 
-  public Identity getUamiName(AzureCloudContext azureCloudContext, String uamiName) {
+  public Identity getIdentity(AzureCloudContext azureCloudContext, String identityName) {
     return crlService
         .getMsiManager(azureCloudContext, azureConfiguration)
         .identities()
-        .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), uamiName);
+        .getByResourceGroup(azureCloudContext.getAzureResourceGroupId(), identityName);
   }
 }
