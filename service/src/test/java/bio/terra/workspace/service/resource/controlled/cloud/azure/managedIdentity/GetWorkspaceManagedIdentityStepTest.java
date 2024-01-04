@@ -68,12 +68,10 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
 
     var step =
         new GetWorkspaceManagedIdentityStep(
-            mockAzureConfig,
-            mockCrlService,
             workspaceId,
-            mockResourceDao,
             identityResource.getName(),
-            MissingIdentityBehavior.FAIL_ON_MISSING);
+            MissingIdentityBehavior.FAIL_ON_MISSING,
+            new ManagedIdentityHelper(mockResourceDao, mockCrlService, mockAzureConfig));
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
     verify(mockWorkingMap).put(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, mockIdentity.name());
@@ -112,12 +110,10 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
 
     var step =
         new GetWorkspaceManagedIdentityStep(
-            mockAzureConfig,
-            mockCrlService,
             workspaceId,
-            mockResourceDao,
             identityResource.getResourceId().toString(),
-            MissingIdentityBehavior.FAIL_ON_MISSING);
+            MissingIdentityBehavior.FAIL_ON_MISSING,
+            new ManagedIdentityHelper(mockResourceDao, mockCrlService, mockAzureConfig));
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
     verify(mockWorkingMap).put(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, mockIdentity.name());
@@ -152,18 +148,16 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
         .thenReturn(mockAzureCloudContext);
 
-    when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
+    //    when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
     when(mockResourceDao.getResourceByName(workspaceId, identityResource.getName()))
         .thenThrow(new ResourceNotFoundException("not found"));
 
     var step =
         new GetWorkspaceManagedIdentityStep(
-            mockAzureConfig,
-            mockCrlService,
             workspaceId,
-            mockResourceDao,
             identityResource.getName(),
-            MissingIdentityBehavior.ALLOW_MISSING);
+            MissingIdentityBehavior.ALLOW_MISSING,
+            new ManagedIdentityHelper(mockResourceDao, mockCrlService, mockAzureConfig));
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
   }
 
@@ -190,12 +184,10 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
 
     var step =
         new GetWorkspaceManagedIdentityStep(
-            mockAzureConfig,
-            mockCrlService,
             workspaceId,
-            mockResourceDao,
             identityResource.getName(),
-            MissingIdentityBehavior.FAIL_ON_MISSING);
+            MissingIdentityBehavior.FAIL_ON_MISSING,
+            new ManagedIdentityHelper(mockResourceDao, mockCrlService, mockAzureConfig));
     return step.doStep(mockFlightContext);
   }
 
