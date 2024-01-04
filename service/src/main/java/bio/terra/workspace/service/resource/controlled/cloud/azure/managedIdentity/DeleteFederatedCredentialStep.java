@@ -41,7 +41,7 @@ public class DeleteFederatedCredentialStep implements Step {
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
 
     // guard against the managed identity not existing from a previous deletion
-    if (!GetManagedIdentityStep.managedIdentityExists(context)
+    if (!GetManagedIdentityStep.managedIdentityExistsInFlightWorkingMap(context)
         && missingIdentityBehavior == MissingIdentityBehavior.ALLOW_MISSING) {
       logger.info("Managed identity not found, but allowed to be missing");
       return StepResult.getStepResultSuccess();
