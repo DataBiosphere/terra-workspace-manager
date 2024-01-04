@@ -21,6 +21,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ManagedIdentityHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.MissingIdentityBehavior;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
@@ -218,12 +219,13 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
       FlightBeanBag flightBeanBag, MissingIdentityBehavior missingIdentityBehavior) {
     return switch (getAccessScope()) {
       case ACCESS_SCOPE_SHARED -> new GetWorkspaceManagedIdentityStep(
-          flightBeanBag.getAzureConfig(),
-          flightBeanBag.getCrlService(),
           getWorkspaceId(),
-          flightBeanBag.getResourceDao(),
           getManagedIdentity(),
-          missingIdentityBehavior);
+          missingIdentityBehavior,
+          new ManagedIdentityHelper(
+              flightBeanBag.getResourceDao(),
+              flightBeanBag.getCrlService(),
+              flightBeanBag.getAzureConfig()));
 
       case ACCESS_SCOPE_PRIVATE -> new GetPetManagedIdentityStep(
           flightBeanBag.getAzureConfig(),
