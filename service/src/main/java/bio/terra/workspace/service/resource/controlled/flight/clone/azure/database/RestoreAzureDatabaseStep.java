@@ -75,7 +75,7 @@ public class RestoreAzureDatabaseStep implements Step {
 
     var sasToken =
         azureStorageAccessService.createAzureStorageContainerSasToken(
-            destinationWorkspaceId, destinationContainer, userRequest, null, null, "rcwl");
+            destinationWorkspaceId, destinationContainer, userRequest, null, null, "rcwl", false);
     var blobContainerUrlAuthenticated = sasToken.sasUrl();
 
     var blobFileName =

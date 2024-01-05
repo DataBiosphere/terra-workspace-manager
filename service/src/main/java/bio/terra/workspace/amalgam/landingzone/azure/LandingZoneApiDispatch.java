@@ -59,6 +59,8 @@ public class LandingZoneApiDispatch {
       "Microsoft.DBforPostgreSQL/flexibleServers";
   private static final String AZURE_UAMI_RESOURCE_TYPE =
       "Microsoft.ManagedIdentity/userAssignedIdentities";
+  private static final String AZURE_RELAY_NAMESPACE_RESOURCE_TYPE =
+          "Microsoft.Relay/Namespaces";
 
   private final LandingZoneService landingZoneService;
   private final FeatureConfiguration features;
@@ -208,6 +210,11 @@ public class LandingZoneApiDispatch {
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedDatabase(
       BearerToken bearerToken, UUID landingZoneId) {
     return getSharedResourceByType(bearerToken, landingZoneId, AZURE_DATABASE_RESOURCE_TYPE);
+  }
+
+  public Optional<ApiAzureLandingZoneDeployedResource> getSharedRelayNamespace(
+          BearerToken bearerToken, UUID landingZoneId) {
+    return getSharedResourceByType(bearerToken, landingZoneId, AZURE_RELAY_NAMESPACE_RESOURCE_TYPE);
   }
 
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedDatabaseAdminIdentity(

@@ -75,7 +75,7 @@ public class DumpAzureDatabaseStep implements Step {
 
     var sasToken =
         azureStorageAccessService.createAzureStorageContainerSasToken(
-            destinationWorkspaceId, destinationContainer, userRequest, null, null, "rcw");
+            destinationWorkspaceId, destinationContainer, userRequest, null, null, "rcw", false);
     var blobContainerUrlAuthenticated = sasToken.sasUrl();
 
     var blobFileName =

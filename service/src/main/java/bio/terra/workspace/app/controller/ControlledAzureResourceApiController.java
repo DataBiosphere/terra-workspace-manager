@@ -183,7 +183,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
           String sasIpRange,
           Long sasExpirationDuration,
           String sasPermissions,
-          String sasBlobName) {
+          String sasBlobName,
+          Boolean sasEnableProxy) {
     features.azureEnabledCheck();
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     // You must have at least READ on the workspace to use this method. Actual permissions
@@ -214,7 +215,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             storageContainerUuid,
             userRequest,
-            new SasTokenOptions(sasIpRange, startTime, expiryTime, sasBlobName, sasPermissions));
+            new SasTokenOptions(sasIpRange, startTime, expiryTime, sasBlobName, sasPermissions, sasEnableProxy));
 
     return new ResponseEntity<>(
         new ApiCreatedAzureStorageContainerSasToken()

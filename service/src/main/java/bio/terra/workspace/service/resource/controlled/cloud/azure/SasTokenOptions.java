@@ -7,4 +7,5 @@ public record SasTokenOptions(
     OffsetDateTime startTime,
     OffsetDateTime expiryTime,
     String blobName,
-    String permissions) {}
+    String permissions,
+    Boolean enableProxy) {}

@@ -74,8 +74,8 @@ paths:
         - $ref: '#/components/parameters/WorkspaceId'
         - $ref: '#/components/parameters/ResourceId'
       summary: |
-        Delete a controlled Azure Storage Container resource. This is async, 
-        because the operation can take a few minutes. OpenAPI does not support 
+        Delete a controlled Azure Storage Container resource. This is async,
+        because the operation can take a few minutes. OpenAPI does not support
         request body in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureStorageContainer
       tags: [ ControlledAzureResource ]
@@ -103,6 +103,7 @@ paths:
       - $ref: '#/components/parameters/SasExpirationDuration'
       - $ref: '#/components/parameters/SasPermissions'
       - $ref: '#/components/parameters/SasBlobName'
+      - $ref: '#/components/parameters/SasEnableProxy'
     post:
       summary: Create a SAS token to access the storage container
       operationId: createAzureStorageContainerSasToken

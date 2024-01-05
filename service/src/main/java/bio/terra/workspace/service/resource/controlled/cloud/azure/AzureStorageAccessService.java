@@ -148,7 +148,8 @@ public class AzureStorageAccessService {
       AuthenticatedUserRequest userRequest,
       String sasIpRange,
       String sasBlobName,
-      String sasPermissions) {
+      String sasPermissions,
+      Boolean enableProxy) {
 
     OffsetDateTime startTime =
         OffsetDateTime.now().minusMinutes(azureConfiguration.getSasTokenStartTimeMinutesOffset());
@@ -159,7 +160,7 @@ public class AzureStorageAccessService {
         workspaceUuid,
         storageContainerResource.getResourceId(),
         userRequest,
-        new SasTokenOptions(sasIpRange, startTime, expiryTime, sasBlobName, sasPermissions));
+        new SasTokenOptions(sasIpRange, startTime, expiryTime, sasBlobName, sasPermissions, enableProxy));
   }
 
   /**
@@ -253,14 +254,22 @@ public class AzureStorageAccessService {
         workspaceUuid,
         sha256hex);
 
+    String url;
+    if (sasTokenOptions.enableProxy()) {
+      var namespaceName = getRelayNamespaceData(workspaceUuid, userRequest);
+      url =  String.format(Locale.ROOT, "https://%s.servicebus.windows.net/%s?%s", namespaceName, resourceName, token);
+    } else {
+      url =  String.format(
+              Locale.ROOT,
+              "https://%s.blob.core.windows.net/%s?%s",
+              storageData.storageAccountName(),
+              resourceName,
+              token);
+    }
+
     return new AzureSasBundle(
         token,
-        String.format(
-            Locale.ROOT,
-            "https://%s.blob.core.windows.net/%s?%s",
-            storageData.storageAccountName(),
-            resourceName,
-            token),
+        url,
         sha256hex);
   }
 
@@ -369,6 +378,63 @@ public class AzureStorageAccessService {
 
     storageAccountCache.put(
         new StorageAccountCoordinates(workspaceUuid, storageContainerUuid), result);
+    return result;
+  }
+
+  public String getRelayNamespaceData(
+          UUID workspaceUuid, AuthenticatedUserRequest userRequest) {
+    // Creating an AzureStorageContainerSasToken requires checking the user's access to both the
+    // storage container and storage account resource
+    // TODO: PF-2823 Access control checks should be done in the controller layer
+    // TODO this is redundant with what we're doing for storage account keys, they should be unified
+//    final ControlledAzureStorageContainerResource storageContainerResource =
+//            controlledResourceMetadataManager
+//                    .validateControlledResourceAndAction(
+//                            userRequest,
+//                            workspaceUuid,
+//                            storageContainerUuid,
+//                            SamConstants.SamControlledResourceActions.READ_ACTION)
+//                    .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+
+//    StorageData maybeStorageData =
+//            storageAccountCache.get(new StorageAccountCoordinates(workspaceUuid, storageContainerUuid));
+//    if (maybeStorageData != null) {
+//      return maybeStorageData;
+//    }
+
+    // get details from LZ shared relay namespace
+    var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
+    UUID landingZoneId =
+            landingZoneApiDispatch.getLandingZoneId(
+                    bearerToken, workspaceService.getWorkspace(workspaceUuid));
+    Optional<ApiAzureLandingZoneDeployedResource> existingSharedRelayNamespace =
+            landingZoneApiDispatch.getSharedRelayNamespace(bearerToken, landingZoneId);
+    if (existingSharedRelayNamespace.isEmpty()) {
+      // redefine exception
+      throw new IllegalStateException(
+              String.format(
+                      "Shared relay namespace not found. LandingZoneId='%s'."
+                              + " Please validate that landing zone deployment complete.",
+                      landingZoneId));
+    }
+    var relayManager =
+            crlService.getRelayManager(
+                    azureCloudContextService.getRequiredAzureCloudContext(workspaceUuid),
+                    azureConfiguration);
+    var namespace =
+            relayManager
+                    .namespaces()
+                    .getById(existingSharedRelayNamespace.get().getResourceId());
+
+    var result = namespace.name();
+//    var result =
+//            new StorageData(
+//                    storageAccount.name(),
+//                    storageAccount.endPoints().primary().blob().toLowerCase(Locale.ROOT),
+//                    storageContainerResource);
+//
+//    storageAccountCache.put(
+//            new StorageAccountCoordinates(workspaceUuid, storageContainerUuid), result);
     return result;
   }
 }

@@ -112,12 +112,22 @@ components:
         type: integer
         format: int64
 
+    SasEnableProxy:
+      name: sasEnableProxy
+      in: query
+      description: |
+        True to proxy SAS URLs through Azure Relay. Default false.
+      required: false
+      schema:
+        type: boolean
+        default: false
+
     SasPermissions:
       name: sasPermissions
       in: query
       required: false
       description: |
-        Permissions associated with the SAS indicating what operations a client may perform on the resource. Must be a 
+        Permissions associated with the SAS indicating what operations a client may perform on the resource. Must be a
         string consisting of some combination following available permissions:
 
         | Permission | Description |
@@ -133,7 +143,7 @@ components:
         For example:
           * To construct a SAS with permissions limited to read, write and list the caller would supply the string
         `rwl`.
-          * To construct a SAS with permissions limited to add, create, write and delete, the caller would supply the 
+          * To construct a SAS with permissions limited to add, create, write and delete, the caller would supply the
         string `acwd`.
 
         If the calling user does not have the requisite role against the workspace for the requested permissions, this

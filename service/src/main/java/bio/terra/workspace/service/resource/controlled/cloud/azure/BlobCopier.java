@@ -103,7 +103,7 @@ public class BlobCopier {
             userRequest,
             null,
             sourceBlobItem.getName(),
-            "r");
+            "r", false);
     var sourceBlobClient = sourceBlobContainerClient.getBlobClient(sourceBlobItem.getName());
     var destinationBlobClient = destBlobContainerClient.getBlobClient(sourceBlobItem.getName());
     var sourceBlobUrl = sourceBlobClient.getBlobUrl() + "?" + sasBundle.sasToken();
