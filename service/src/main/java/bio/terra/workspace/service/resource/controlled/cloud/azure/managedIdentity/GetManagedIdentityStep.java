@@ -23,7 +23,7 @@ public interface GetManagedIdentityStep {
     return FlightUtils.getRequired(context.getWorkingMap(), MANAGED_IDENTITY_NAME, String.class);
   }
 
-  static boolean managedIdentityExists(FlightContext context) {
+  static boolean managedIdentityExistsInFlightWorkingMap(FlightContext context) {
     return context.getWorkingMap().containsKey(MANAGED_IDENTITY_NAME);
   }
 
