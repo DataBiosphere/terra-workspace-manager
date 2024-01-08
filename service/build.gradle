@@ -10,7 +10,7 @@ plugins {
     id 'ru.vyarus.quality' version '4.9.0'
     id 'org.gradle.test-retry' version '1.4.0'
     id "org.sonarqube" version "3.5.0.2730"
-    id "au.com.dius.pact" version "4.3.19"
+    id "au.com.dius.pact" version "4.6.4"
 }
 
 // constants visible to all .gradle files in this project
