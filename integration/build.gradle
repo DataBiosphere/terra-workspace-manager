@@ -19,7 +19,7 @@ dependencies {
         logback = "1.4.14"
         slf4j = "1.7.25"
         hamcrest = "2.2"
-        jUnit = "5.7.0"
+        jUnit = "5.10.1"
 
         testRunnerVersion = "0.2.0-SNAPSHOT"
     }
