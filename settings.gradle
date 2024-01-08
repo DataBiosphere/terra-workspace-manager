@@ -28,7 +28,7 @@ include 'azureDatabaseUtils'
 
 // -- Global Variables --
 // For defining shared state and common dependencies
-gradle.ext.wsmVersion = "0.254.1002-SNAPSHOT"
+gradle.ext.wsmVersion = "0.254.1003-SNAPSHOT"
 
 // Single place to define the versions of dependencies shared between components.
 gradle.ext.librarySwaggerAnnotations = "io.swagger.core.v3:swagger-annotations:2.2.20"
