@@ -43,7 +43,7 @@ spotbugs {
 // This can be removed when a new spotbugs version is available.
 dependencies {
     constraints {
-        spotbugs 'org.apache.bcel:bcel:6.6.1'
+        spotbugs 'org.apache.bcel:bcel:6.8.0'
     }
 }
 spotbugsMain {
