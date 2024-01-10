@@ -52,15 +52,18 @@ public class CreateWorkspaceV2Flight extends Flight {
         new CreateWorkspaceStartStep(workspace, appContext.getWorkspaceDao(), wsmResourceStateRule),
         dbRetryRule);
 
+    if (appContext.getFeatureConfiguration().isTpsEnabled()) {
+      addStep(
+          new CreateWorkspacePoliciesStep(
+              workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
+          serviceRetryRule);
+    }
+
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspace.getWorkspaceStage()) {
       case MC_WORKSPACE -> {
         if (appContext.getFeatureConfiguration().isTpsEnabled()) {
-          addStep(
-              new CreateWorkspacePoliciesStep(
-                  workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
-              serviceRetryRule);
           addStep(
               new LinkSpendProfilePolicyAttributesStep(
                   workspace.workspaceId(),

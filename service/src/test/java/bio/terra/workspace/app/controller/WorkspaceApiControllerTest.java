@@ -156,14 +156,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   }
 
   @Test
-  public void createWorkspace_policyRejectedForRawlsWorkspace_throws400() throws Exception {
-    ApiErrorReport errorReport =
-        createRawlsWorkspaceWithPolicyExpectError(HttpStatus.SC_BAD_REQUEST);
-    assertTrue(
-        errorReport.getMessage().contains(ApiWorkspaceStageModel.RAWLS_WORKSPACE.toString()));
-  }
-
-  @Test
   public void createWorkspace_policyRejectedIfTpsDisabled_throws501() throws Exception {
     // Disable TPS feature flag for this test only
     when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
