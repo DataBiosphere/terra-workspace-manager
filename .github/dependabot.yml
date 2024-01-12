@@ -5,12 +5,7 @@ updates:
     directory: "/"
     open-pull-requests-limit: 5
     groups:
-      npm-major-dependencies:
-        patterns:
-          - "*"
-        update-types:
-          - "major"
-      npm-minor-patch-dependencies:
+      minor-patch-dependencies:
         patterns:
           - "*"
         update-types:
