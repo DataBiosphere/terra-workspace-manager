@@ -3,7 +3,19 @@ updates:
   # Enable version updates for Gradle
   - package-ecosystem: "gradle"
     directory: "/"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    groups:
+      npm-major-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      npm-minor-patch-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     schedule:
       interval: "weekly"
       time: "06:00"
