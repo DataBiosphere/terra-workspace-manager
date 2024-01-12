@@ -232,6 +232,23 @@ landingzone:
       - SentinelHealth
       - StorageBlobLogs
       - Syslog
+  regions:
+    default-parameters:
+      eastus:
+        AKS_MACHINE_TYPE: "Standard_D4as_v5"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v5"
+      southcentralus:
+        AKS_MACHINE_TYPE: "Standard_D4as_v4"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v4"
+      centralus:
+        AKS_MACHINE_TYPE: "Standard_D4as_v4"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v4"
+      westus2:
+        AKS_MACHINE_TYPE: "Standard_D4as_v5"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v4"
+      southafricanorth:
+        AKS_MACHINE_TYPE: "Standard_D4as_v4"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v5"
 
 
 # Feature flags
