@@ -108,8 +108,7 @@ public class WorkspaceV2Api {
       spendProfileId = spendProfile.id();
     }
 
-    TpsPolicyInputs policies =
-        workspaceApiUtils.validateAndConvertPolicies(body.getPolicies(), body.getStage());
+    TpsPolicyInputs policies = workspaceApiUtils.validateAndConvertPolicies(body.getPolicies());
     WorkspaceStage workspaceStage = WorkspaceApiUtils.getStageFromApiStage(body.getStage());
     // WSM requires a userFacingId. Create one, if it is not provided.
     String userFacingId =

@@ -202,8 +202,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceApiUtils.validateSpendProfilePermission(userRequest, body.getSpendProfile());
     SpendProfileId spendProfileId = (spendProfile == null) ? null : spendProfile.id();
 
-    TpsPolicyInputs policies =
-        workspaceApiUtils.validateAndConvertPolicies(body.getPolicies(), body.getStage());
+    TpsPolicyInputs policies = workspaceApiUtils.validateAndConvertPolicies(body.getPolicies());
     WorkspaceStage workspaceStage = WorkspaceApiUtils.getStageFromApiStage(body.getStage());
 
     // WSM requires a userFacingId. Create one, if it is not provided.
@@ -342,7 +341,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
 
     Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
+        workspaceService.validateWorkspaceAndAction(
             userRequest, workspaceUuid, SamWorkspaceAction.OWN);
     workspaceService.validateWorkspaceState(workspace);
 

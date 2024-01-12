@@ -9,6 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import bio.terra.policy.model.TpsComponent;
+import bio.terra.policy.model.TpsObjectType;
+import bio.terra.policy.model.TpsPolicyInput;
+import bio.terra.policy.model.TpsPolicyInputs;
+import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.common.fixtures.PolicyFixtures;
@@ -28,6 +33,7 @@ import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -63,6 +69,7 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
   @Autowired ObjectMapper objectMapper;
   @Autowired UserAccessUtils userAccessUtils;
   @Autowired FeatureConfiguration features;
+  @Autowired TpsApiDispatch tpsApiDispatch;
 
   private UUID workspaceId;
   private UUID workspaceId2;
@@ -105,6 +112,9 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
   @AfterAll
   public void cleanup() throws Exception {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    // Clean up policies and workspaces
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
     mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId);
     mockWorkspaceV2Api.deleteWorkspaceAndWait(userRequest, workspaceId2);
   }
@@ -132,6 +142,43 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
             workspaceId,
             sourceResource.getMetadata().getResourceId());
     assertApiDataRepoEquals(sourceResource, gotResource);
+  }
+
+  @Test
+  public void create_withSnapshotHavingGroupConstraint() throws Exception {
+    // Clean up policies from previous runs, if any exist
+    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+
+    var groupConstrainedSourceResourceName = TestUtils.appendRandomNumber("source-resource-name");
+    var groupConstrainedSourceInstanceName = TestUtils.appendRandomNumber("source-instance-name");
+    var groupConstrainedSnapshotId = UUID.randomUUID();
+    var groupConstrainedSnapshot = groupConstrainedSnapshotId.toString();
+
+    // apply a group-constraint policy to the snapshot being added as a reference and verify that
+    // the policy is applied to the workspace
+    tpsApiDispatch.createPao(
+        groupConstrainedSnapshotId,
+        new TpsPolicyInputs()
+            .addInputsItem(
+                new TpsPolicyInput()
+                    .namespace(PolicyFixtures.NAMESPACE)
+                    .name(PolicyFixtures.GROUP_CONSTRAINT)
+                    .addAdditionalDataItem(
+                        new TpsPolicyPair()
+                            .key(PolicyFixtures.GROUP)
+                            .value(PolicyFixtures.DEFAULT_GROUP))),
+        TpsComponent.TDR,
+        TpsObjectType.SNAPSHOT);
+    mockDataRepoApi.createReferencedDataRepoSnapshot(
+        userAccessUtils.defaultUserAuthRequest(),
+        workspaceId,
+        ApiCloningInstructionsEnum.NOTHING,
+        groupConstrainedSourceResourceName,
+        groupConstrainedSourceInstanceName,
+        groupConstrainedSnapshot);
+    var workspace =
+        mockWorkspaceV1Api.getWorkspace(userAccessUtils.defaultUserAuthRequest(), workspaceId);
+    assertThat(workspace.getPolicies(), containsInAnyOrder(PolicyFixtures.GROUP_POLICY_DEFAULT));
   }
 
   @Test
@@ -392,16 +439,6 @@ public class ReferencedGcpResourceControllerDataRepoSnapshotConnectedTest
   // workspace policy
   @Test
   void clone_policiesMerged() throws Exception {
-    logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
-    // Don't run the test if TPS is disabled
-    if (!features.isTpsEnabled()) {
-      return;
-    }
-
-    // Clean up policies from previous runs, if any exist
-    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
-    mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);
-
     // Add broader region policy to destination, narrow policy on source.
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
