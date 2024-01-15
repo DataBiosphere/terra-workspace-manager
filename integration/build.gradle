@@ -42,8 +42,8 @@ dependencies {
     implementation platform('com.google.cloud:libraries-bom:26.29.0')
     implementation "com.google.api-client:google-api-client:2.2.0"
     implementation "com.google.apis:google-api-services-container:v1-rev20231122-2.0.0"
-    implementation "com.google.apis:google-api-services-iam:v1-rev20230914-2.0.0"
-    implementation "com.google.apis:google-api-services-notebooks:v1-rev20231019-2.0.0"
+    implementation "com.google.apis:google-api-services-iam:v2-rev20240108-2.0.0"
+    implementation "com.google.apis:google-api-services-notebooks:v2-rev20231213-2.0.0"
     implementation "com.google.apis:google-api-services-dataproc:v1-rev20240103-2.0.0"
     implementation "com.google.auth:google-auth-library-oauth2-http"
     implementation "com.google.cloud:google-cloud-bigquery"
