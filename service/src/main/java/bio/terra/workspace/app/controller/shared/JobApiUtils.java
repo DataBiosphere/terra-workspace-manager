@@ -125,8 +125,9 @@ public class JobApiUtils {
             statusCode = HttpStatus.OK;
           }
         }
-        default -> throw new IllegalStateException(
-            "Cannot get status code of flight in unknown state " + jobStatus);
+        default ->
+            throw new IllegalStateException(
+                "Cannot get status code of flight in unknown state " + jobStatus);
       }
     }
 

@@ -157,10 +157,10 @@ public class CloneAllResourcesFlight extends Flight {
           }
 
           default ->
-          // Can't throw in a flight constructor
-          logger.error(
-              "Unsupported controlled resource type {}",
-              resourceCloneInputs.getResource().getResourceType());
+              // Can't throw in a flight constructor
+              logger.error(
+                  "Unsupported controlled resource type {}",
+                  resourceCloneInputs.getResource().getResourceType());
         }
         break;
 

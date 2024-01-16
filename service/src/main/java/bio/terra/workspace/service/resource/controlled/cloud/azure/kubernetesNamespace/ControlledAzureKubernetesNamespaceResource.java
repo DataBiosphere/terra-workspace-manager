@@ -218,20 +218,22 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   private Step getGetManagedIdentityStep(
       FlightBeanBag flightBeanBag, MissingIdentityBehavior missingIdentityBehavior) {
     return switch (getAccessScope()) {
-      case ACCESS_SCOPE_SHARED -> new GetWorkspaceManagedIdentityStep(
-          getWorkspaceId(),
-          getManagedIdentity(),
-          missingIdentityBehavior,
-          new ManagedIdentityHelper(
-              flightBeanBag.getResourceDao(),
-              flightBeanBag.getCrlService(),
-              flightBeanBag.getAzureConfig()));
+      case ACCESS_SCOPE_SHARED ->
+          new GetWorkspaceManagedIdentityStep(
+              getWorkspaceId(),
+              getManagedIdentity(),
+              missingIdentityBehavior,
+              new ManagedIdentityHelper(
+                  flightBeanBag.getResourceDao(),
+                  flightBeanBag.getCrlService(),
+                  flightBeanBag.getAzureConfig()));
 
-      case ACCESS_SCOPE_PRIVATE -> new GetPetManagedIdentityStep(
-          flightBeanBag.getAzureConfig(),
-          flightBeanBag.getCrlService(),
-          flightBeanBag.getSamService(),
-          getAssignedUser().orElseThrow());
+      case ACCESS_SCOPE_PRIVATE ->
+          new GetPetManagedIdentityStep(
+              flightBeanBag.getAzureConfig(),
+              flightBeanBag.getCrlService(),
+              flightBeanBag.getSamService(),
+              getAssignedUser().orElseThrow());
     };
   }
 

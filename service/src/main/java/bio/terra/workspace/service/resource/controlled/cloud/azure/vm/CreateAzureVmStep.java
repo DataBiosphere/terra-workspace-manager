@@ -170,8 +170,9 @@ public class CreateAzureVmStep implements Step {
               StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
         }
 
-        default -> new StepResult(
-            AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
+        default ->
+            new StepResult(
+                AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
       };
     }
     return StepResult.getStepResultSuccess();

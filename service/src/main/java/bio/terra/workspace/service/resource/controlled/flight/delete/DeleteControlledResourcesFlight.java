@@ -72,15 +72,19 @@ public class DeleteControlledResourcesFlight extends Flight {
 
     // Get the cloud context for the resource we are deleting
     switch (resource.getResourceType().getCloudPlatform()) {
-      case GCP -> addStep(
-          new GetGcpCloudContextStep(workspaceUuid, flightBeanBag.getGcpCloudContextService()),
-          cloudRetry);
-      case AZURE -> addStep(
-          new GetAzureCloudContextStep(workspaceUuid, flightBeanBag.getAzureCloudContextService()),
-          cloudRetry);
-      case AWS -> addStep(
-          new GetAwsCloudContextStep(workspaceUuid, flightBeanBag.getAwsCloudContextService()),
-          cloudRetry);
+      case GCP ->
+          addStep(
+              new GetGcpCloudContextStep(workspaceUuid, flightBeanBag.getGcpCloudContextService()),
+              cloudRetry);
+      case AZURE ->
+          addStep(
+              new GetAzureCloudContextStep(
+                  workspaceUuid, flightBeanBag.getAzureCloudContextService()),
+              cloudRetry);
+      case AWS ->
+          addStep(
+              new GetAwsCloudContextStep(workspaceUuid, flightBeanBag.getAwsCloudContextService()),
+              cloudRetry);
     }
 
     // Delete the cloud resource. This has unique logic for each resource type. Depending on the
