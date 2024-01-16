@@ -110,7 +110,12 @@ public class LandingZoneApiDispatchTest extends BaseAzureUnitTest {
     List<LandingZone> landingZoneList =
         List.of(
             new LandingZone(
-                LANDING_ZONE_ID, BILLING_PROFILE_ID, "definition", "version", CREATED_DATE));
+                LANDING_ZONE_ID,
+                BILLING_PROFILE_ID,
+                "definition",
+                "version",
+                "region",
+                CREATED_DATE));
     String resultEndpoint = String.format("%s/%s/%s", "someServletPath", "create-result", JOB_ID);
     ApiCreateAzureLandingZoneRequestBody request =
         AzureLandingZoneFixtures.buildCreateAzureLandingZoneRequest(JOB_ID, BILLING_PROFILE_ID);
