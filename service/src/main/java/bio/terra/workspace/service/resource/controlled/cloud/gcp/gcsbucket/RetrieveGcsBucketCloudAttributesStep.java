@@ -70,14 +70,17 @@ public class RetrieveGcsBucketCloudAttributesStep implements Step {
     // get the attributes
     final BucketInfo existingBucketInfo = existingBucketCow.getBucketInfo();
     switch (retrievalMode) {
-      case UPDATE_PARAMETERS -> workingMap.put(
-          ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS,
-          GcsApiConversions.toUpdateParameters(existingBucketInfo));
-      case CREATION_PARAMETERS -> workingMap.put(
-          ControlledResourceKeys.CREATION_PARAMETERS,
-          GcsApiConversions.toCreationParameters(existingBucketInfo));
-      default -> throw new BadRequestException(
-          String.format("Unsupported Retrieval mode %s", retrievalMode));
+      case UPDATE_PARAMETERS ->
+          workingMap.put(
+              ControlledResourceKeys.PREVIOUS_UPDATE_PARAMETERS,
+              GcsApiConversions.toUpdateParameters(existingBucketInfo));
+      case CREATION_PARAMETERS ->
+          workingMap.put(
+              ControlledResourceKeys.CREATION_PARAMETERS,
+              GcsApiConversions.toCreationParameters(existingBucketInfo));
+      default ->
+          throw new BadRequestException(
+              String.format("Unsupported Retrieval mode %s", retrievalMode));
     }
 
     return StepResult.getStepResultSuccess();

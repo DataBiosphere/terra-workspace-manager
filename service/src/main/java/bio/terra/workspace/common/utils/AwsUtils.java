@@ -885,8 +885,9 @@ public class AwsUtils {
             case IN_SERVICE -> sageMakerWaiter.waitUntilNotebookInstanceInService(describeRequest);
             case STOPPED -> sageMakerWaiter.waitUntilNotebookInstanceStopped(describeRequest);
             case DELETING -> sageMakerWaiter.waitUntilNotebookInstanceDeleted(describeRequest);
-            default -> throw new BadRequestException(
-                "Can only wait for notebook InService, Stopped or Deleting");
+            default ->
+                throw new BadRequestException(
+                    "Can only wait for notebook InService, Stopped or Deleting");
           };
 
       ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =

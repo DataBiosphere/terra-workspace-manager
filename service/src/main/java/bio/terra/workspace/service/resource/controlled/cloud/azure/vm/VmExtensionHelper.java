@@ -180,8 +180,9 @@ public class VmExtensionHelper {
           logger.info("Custom script extension already installed on VM {}", virtualMachine.id());
           yield StepResult.getStepResultSuccess();
         }
-        default -> new StepResult(
-            AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
+        default ->
+            new StepResult(
+                AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
       };
     }
 

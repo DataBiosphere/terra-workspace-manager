@@ -151,10 +151,11 @@ public class GcsApiConversions {
   public static LifecycleAction toGcsApi(ApiGcpGcsBucketLifecycleRuleAction lifecycleRuleAction) {
     return switch (lifecycleRuleAction.getType()) {
       case DELETE -> LifecycleAction.newDeleteAction();
-      case SET_STORAGE_CLASS -> LifecycleAction.newSetStorageClassAction(
-          toGcsApi(lifecycleRuleAction.getStorageClass()));
-      default -> throw new BadRequestException(
-          "Unrecognized lifecycle action type " + lifecycleRuleAction.getType());
+      case SET_STORAGE_CLASS ->
+          LifecycleAction.newSetStorageClassAction(toGcsApi(lifecycleRuleAction.getStorageClass()));
+      default ->
+          throw new BadRequestException(
+              "Unrecognized lifecycle action type " + lifecycleRuleAction.getType());
     };
   }
 
@@ -168,10 +169,12 @@ public class GcsApiConversions {
   public static ApiGcpGcsBucketLifecycleRuleActionType toWsmApi(String lifecycleActionType) {
     return switch (lifecycleActionType) {
       case DeleteLifecycleAction.TYPE -> ApiGcpGcsBucketLifecycleRuleActionType.DELETE;
-      case SetStorageClassLifecycleAction.TYPE -> ApiGcpGcsBucketLifecycleRuleActionType
-          .SET_STORAGE_CLASS;
-      default -> throw new IllegalArgumentException(
-          String.format("GCS BucketLifecycle action type %s not recognized.", lifecycleActionType));
+      case SetStorageClassLifecycleAction.TYPE ->
+          ApiGcpGcsBucketLifecycleRuleActionType.SET_STORAGE_CLASS;
+      default ->
+          throw new IllegalArgumentException(
+              String.format(
+                  "GCS BucketLifecycle action type %s not recognized.", lifecycleActionType));
     };
   }
 

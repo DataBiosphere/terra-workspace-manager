@@ -81,11 +81,13 @@ public class CreateWorkspaceV2Flight extends Flight {
                 projectOwnerGroupId),
             serviceRetryRule);
       }
-      case RAWLS_WORKSPACE -> addStep(
-          new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
-          serviceRetryRule);
-      default -> throw new InternalLogicException(
-          "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
+      case RAWLS_WORKSPACE ->
+          addStep(
+              new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
+              serviceRetryRule);
+      default ->
+          throw new InternalLogicException(
+              "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
     }
 
     // If we have a cloud context to create, add the step to run that flight

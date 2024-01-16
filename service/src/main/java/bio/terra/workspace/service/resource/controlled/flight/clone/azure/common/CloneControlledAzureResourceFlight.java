@@ -114,16 +114,16 @@ public abstract class CloneControlledAzureResourceFlight extends Flight {
     }
 
     switch (cloningInstructions) {
-      case COPY_DEFINITION -> resourceCloningSteps.addAll(
-          copyDefinition(flightBeanBag, inputParameters));
+      case COPY_DEFINITION ->
+          resourceCloningSteps.addAll(copyDefinition(flightBeanBag, inputParameters));
       case COPY_RESOURCE -> {
         resourceCloningSteps.addAll(copyDefinition(flightBeanBag, inputParameters));
         resourceCloningSteps.addAll(copyResource(flightBeanBag, inputParameters));
       }
-      case COPY_REFERENCE -> resourceCloningSteps.addAll(
-          copyReference(flightBeanBag, inputParameters));
-      case LINK_REFERENCE -> resourceCloningSteps.addAll(
-          linkReference(flightBeanBag, inputParameters));
+      case COPY_REFERENCE ->
+          resourceCloningSteps.addAll(copyReference(flightBeanBag, inputParameters));
+      case LINK_REFERENCE ->
+          resourceCloningSteps.addAll(linkReference(flightBeanBag, inputParameters));
       case COPY_NOTHING -> resourceCloningSteps.addAll(copyNothing(flightBeanBag, inputParameters));
     }
 
