@@ -29,6 +29,10 @@ jobs:
         ports:
           - 5432:5432
 
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
       - uses: actions/checkout@v3
 
@@ -55,26 +59,35 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Get Vault token
-        id: vault-token-step
-        env:
-          VAULT_ADDR: https://clotho.broadinstitute.org:8200
-        run: |
-          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-            -e "VAULT_ADDR=${VAULT_ADDR}" \
-            vault:1.1.0 \
-            vault write -field token \
-              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-          echo ::add-mask::$VAULT_TOKEN    
-          echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
+      #      - name: Get Vault token
+      #        id: vault-token-step
+      #        env:
+      #          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+      #        run: |
+      #          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
+      #            -e "VAULT_ADDR=${VAULT_ADDR}" \
+      #            vault:1.1.0 \
+      #            vault write -field token \
+      #              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
+      #              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
+      #          echo ::add-mask::$VAULT_TOKEN
+      #          echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
 
-      - name: Write config
-        id: config
-        uses: ./.github/actions/write-config
+      #      - name: Write config
+      #        id: config
+      #        uses: ./.github/actions/write-config
+      #        with:
+      #          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+      #          target: local
+
+      - name: Authenticate with Google
+        id: 'obtain-owner-token'
+        uses: google-github-actions/auth@v2
         with:
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-          target: local
+          token_format: 'access_token'
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: "buffer-client-dev@broad-dsde-dev.iam.gserviceaccount.com"
+          export_environment_variables: false
 
       # Configure up so the cronjobs do not start
       - name: Start the server with immediate exit
