@@ -72,6 +72,12 @@ management:
     web:
       exposure:
         include: "prometheus"
+  metrics:
+    distribution:
+      # Used to publish a histogram suitable for computing aggregable (across dimensions) percentile
+      # latency approximations in Prometheus (by using histogram_quantile)
+      # For more information: https://micrometer.io/docs/concepts#_histograms_and_percentiles
+      percentiles-histogram[http.server.requests]: true
 
 workspace:
   datarepo.instances:
