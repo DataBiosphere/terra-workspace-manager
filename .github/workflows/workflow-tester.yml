@@ -88,11 +88,22 @@ jobs:
           service_account: "workspace-dev@broad-dsde-dev.iam.gserviceaccount.com"
 
       # Configure up so the cronjobs do not start
-      - name: Start the server with immediate exit
-        env:
-          spring_profiles_active: human-readable-logging
-          workspace_startup_exitafterinitialization: true
-          workspace_danglingresourcecleanup_enabled: false
-          workspace_temporarygrantrevoke_revokeenabled: false
-          workspace_privateresourcecleanup_enabled: false
-        run: ./gradlew service:bootRun
+#      - name: Start the server with immediate exit
+#        env:
+#          spring_profiles_active: human-readable-logging
+#          workspace_startup_exitafterinitialization: true
+#          workspace_danglingresourcecleanup_enabled: false
+#          workspace_temporarygrantrevoke_revokeenabled: false
+#          workspace_privateresourcecleanup_enabled: false
+#        run: ./gradlew service:bootRun
+
+
+      - name: Launch local server
+        uses: ./.github/actions/start-local-server
+
+      - name: Run the integration test suite
+        id: integration-test
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-local.json
+          test: suites/PRIntegration.json
