@@ -80,7 +80,7 @@ jobs:
       #          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
       #          target: local
 
-      - name: Authenticate with Google
+      - name: Authenticate with Google Cloud as WSM
         id: 'obtain-owner-token'
         uses: google-github-actions/auth@v2
         with:
@@ -101,9 +101,18 @@ jobs:
       - name: Launch local server
         uses: ./.github/actions/start-local-server
 
-      - name: Run the integration test suite
-        id: integration-test
-        uses: ./.github/actions/integration-test
+      - name: Authenticate with Google Cloud as Testrunner
+        id: 'obtain-owner-token'
+        uses: google-github-actions/auth@v2
         with:
-          test-server: workspace-local.json
-          test: suites/PRIntegration.json
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: "workspace-dev@broad-dsde-dev.iam.gserviceaccount.com"
+
+      - name: Run tests
+        if: steps.skiptest.outputs.is-bump == 'no'
+        env:
+          # PRINT_STANDARD_STREAMS is temporary to let us inspect logs for a particular
+          # issue with Stairway serdes.
+          PRINT_STANDARD_STREAMS: please
+          TEST_ENV: local
+        run: ./gradlew :service:unitTest --scan
