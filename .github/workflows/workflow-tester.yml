@@ -102,7 +102,6 @@ jobs:
         uses: ./.github/actions/start-local-server
 
       - name: Run tests
-        if: steps.skiptest.outputs.is-bump == 'no'
         env:
           # PRINT_STANDARD_STREAMS is temporary to let us inspect logs for a particular
           # issue with Stairway serdes.
