@@ -84,10 +84,8 @@ jobs:
         id: 'obtain-owner-token'
         uses: google-github-actions/auth@v2
         with:
-          token_format: 'access_token'
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: "workspace-dev@broad-dsde-dev.iam.gserviceaccount.com"
-          export_environment_variables: false
 
       # Configure up so the cronjobs do not start
       - name: Start the server with immediate exit
