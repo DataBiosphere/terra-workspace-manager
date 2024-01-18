@@ -103,7 +103,7 @@ jobs:
 
 
       - name: Authenticate with Google Cloud as fcdev
-        id: 'obtain-owner-token'
+        id: 'obtain-fcdev-token'
         uses: google-github-actions/auth@v2
         with:
           token_format: 'access_token'
