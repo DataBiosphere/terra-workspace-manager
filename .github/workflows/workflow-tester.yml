@@ -108,7 +108,6 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           export_environment_variables: true
-          token_format: 'access_token'
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: "firecloud-dev@broad-dsde-dev.iam.gserviceaccount.com"
 
