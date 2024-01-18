@@ -16,18 +16,18 @@ jobs:
   server-startup-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:13.1
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+#    services:
+#      postgres:
+#        image: postgres:13.1
+#        env:
+#          POSTGRES_PASSWORD: postgres
+#        options: >-
+#          --health-cmd pg_isready
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
+#        ports:
+#          - 5432:5432
 
     permissions:
       contents: 'read'
