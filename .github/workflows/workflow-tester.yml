@@ -102,14 +102,18 @@ jobs:
         uses: ./.github/actions/start-local-server
 
 
-      - name: Authenticate with Google Cloud as Testrunner
-        id: 'obtain-fcdev-token'
+      - name: Authenticate with Google Cloud as fcdev
+        id: 'obtain-owner-token'
         uses: google-github-actions/auth@v2
         with:
+          token_format: 'access_token'
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: "firecloud-dev@broad-dsde-dev.iam.gserviceaccount.com"
-          credentials_file_path: ${{ github.workspace }}/config/user-delegated-sa.json
 
+      - name: Setup user delegated creds
+        id: 'setup-user-delegated-creds'
+        run: ./scripts/copy-credential.sh
+        shell: bash
 
       - name: Authenticate with Google Cloud as Testrunner
         id: 'obtain-testrunner-token'
