@@ -101,13 +101,22 @@ jobs:
       - name: Launch local server
         uses: ./.github/actions/start-local-server
 
+
+      - name: Authenticate with Google Cloud as Testrunner
+        id: 'obtain-fcdev-token'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: "firecloud-dev@broad-dsde-dev.iam.gserviceaccount.com"
+          credentials_file_path: ${{ github.workspace }}/config/user-delegated-sa.json
+
+
       - name: Authenticate with Google Cloud as Testrunner
         id: 'obtain-testrunner-token'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: "testrunner-integration@terra-kernel-k8s.iam.gserviceaccount.com"
-
 
       - name: Run the integration test suite
         id: integration-test
