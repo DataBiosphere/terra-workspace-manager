@@ -9,6 +9,7 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null  && pwd )"
 outputdir="${script_dir}/config"
 
 echo "Copying creds from ${GOOGLE_APPLICATION_CREDENTIALS} to ${outputdir}/user-delegated-sa.json"
+mkdir -p "${outputdir}"
 cp "${script_dir}/README.md" "${outputdir}/user-delegated-sa.json"
 
 result=$?
