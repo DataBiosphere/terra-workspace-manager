@@ -101,10 +101,26 @@ jobs:
       - name: Launch local server
         uses: ./.github/actions/start-local-server
 
-      - name: Run tests
-        env:
-          # PRINT_STANDARD_STREAMS is temporary to let us inspect logs for a particular
-          # issue with Stairway serdes.
-          PRINT_STANDARD_STREAMS: please
-          TEST_ENV: local
-        run: ./gradlew :service:unitTest --scan
+      - name: Authenticate with Google Cloud as Testrunner
+        id: 'obtain-testrunner-token'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: "testrunner-integration@terra-kernel-k8s.iam.gserviceaccount.com"
+
+
+      - name: Run the integration test suite
+        id: integration-test
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-local.json
+          test: suites/PRIntegration.json
+
+#      - name: Run unit tests
+#        if: steps.skiptest.outputs.is-bump == 'no'
+#        env:
+#          # PRINT_STANDARD_STREAMS is temporary to let us inspect logs for a particular
+#          # issue with Stairway serdes.
+#          PRINT_STANDARD_STREAMS: please
+#          TEST_ENV: local
+#        run: ./gradlew :service:unitTest --scan
