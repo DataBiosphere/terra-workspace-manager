@@ -108,6 +108,8 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           export_environment_variables: true
+          access_token_scopes: 'profile, email, openid'
+          access_token_subject: "bella.redwalker@test.firecloud.org"
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: "firecloud-dev@broad-dsde-dev.iam.gserviceaccount.com"
 
