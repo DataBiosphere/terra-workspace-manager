@@ -9,7 +9,7 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null  && pwd )"
 outputdir="${script_dir}/config"
 
 echo "Copying creds from ${GOOGLE_APPLICATION_CREDENTIALS} to ${outputdir}/user-delegated-sa.json"
-cp "${GOOGLE_APPLICATION_CREDENTIALS}" "${outputdir}/user-delegated-sa.json"
+cp "${GOOGLE_APPLICATION_CREDENTIALS}" "../config/user-delegated-sa.json"
 
 result=$?
 if [ $result -ne 0 ]; then
