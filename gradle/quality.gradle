@@ -4,8 +4,7 @@ quality {
   // under control. Note that full console output is only available for strict = false.
   strict = false
 
-  // Enable Spotbugs only for now -- others when build is clean
-  spotbugs = true
+  // Enable when build is clean
   pmd = false
   cpd = false
   checkstyle = false

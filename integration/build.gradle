@@ -66,9 +66,4 @@ dependencies {
     implementation("bio.terra:terra-common-lib:0.1.7-SNAPSHOT") {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
-
-    // Spotbugs dependency
-    // For SpotBugs annotations (still FindBugs annotations)
-    compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
-    spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
 }

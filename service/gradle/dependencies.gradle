@@ -107,11 +107,6 @@ dependencies {
   swaggerCodegen gradle.librarySwaggerCli
   runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
 
-  // Spotbugs dependency
-  // For SpotBugs annotations
-  compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
-  spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
-
   // Test deps
   testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
   testImplementation('org.springframework.boot:spring-boot-starter-test') {
