@@ -5,7 +5,6 @@ plugins {
     id 'java-library'
     id 'idea'
     id 'com.diffplug.spotless'
-    id 'com.github.spotbugs'
 }
 
 repositories {
@@ -33,37 +32,6 @@ spotless {
     }
 }
 build.dependsOn spotlessApply
-// Spotbugs configuration
-spotbugs {
-    toolVersion = '4.7.3'
-    effort = 'max'
-    excludeFilter = file("$rootDir/gradle/config/spotbugs/exclude.xml")
-}
-// The latest version of spotbugs still pulls in a vulnerable dependency.
-// This can be removed when a new spotbugs version is available.
-dependencies {
-    constraints {
-        spotbugs 'org.apache.bcel:bcel:6.8.1'
-    }
-}
-spotbugsMain {
-    reports {
-        html {
-            enabled = true
-            destination = file("$buildDir/reports/spotbugs/main.html")
-            stylesheet = 'fancy.xsl'
-        }
-    }
-}
-spotbugsTest {
-    reports {
-        html {
-            enabled = true
-            destination = file("$buildDir/reports/spotbugs/test.html")
-            stylesheet = 'fancy.xsl'
-        }
-    }
-}
 java {
     // Builds Javadoc into the published package as part of the 'assemble' task.
     withJavadocJar()

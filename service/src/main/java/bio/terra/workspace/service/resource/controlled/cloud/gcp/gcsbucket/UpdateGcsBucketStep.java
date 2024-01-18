@@ -19,15 +19,11 @@ import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import com.google.cloud.storage.BucketInfo.LifecycleRule;
 import com.google.cloud.storage.StorageClass;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressFBWarnings(
-    value = "RV_RETURN_VALUE_IGNORED_INFERRED",
-    justification = "OK to ignore return value from BucketCow.update()")
 public class UpdateGcsBucketStep implements Step {
   private final Logger logger = LoggerFactory.getLogger(UpdateGcsBucketStep.class);
   private final ControlledGcsBucketResource bucketResource;
