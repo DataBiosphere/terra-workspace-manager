@@ -67,7 +67,6 @@ dependencies {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
 
-
     // Spotbugs dependency
     // For SpotBugs annotations (still FindBugs annotations)
     compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
