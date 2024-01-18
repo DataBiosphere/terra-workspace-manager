@@ -18,7 +18,6 @@ import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCl
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.List;
 import java.util.Optional;
@@ -31,9 +30,6 @@ import org.springframework.stereotype.Component;
  * This service provides methods for managing Azure cloud context. These methods do not perform any
  * access control and operate directly against the {@link WorkspaceDao}
  */
-@SuppressFBWarnings(
-    value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
-    justification = "Enable both injection and static lookup")
 @Component
 public class AzureCloudContextService implements CloudContextService {
   private static AzureCloudContextService theService;

@@ -11,7 +11,6 @@ plugins {
 dependencies {
     ext {
         apacheMath = '3.6.1'
-        findbugsAnnotations = "3.0.1"
         guava = "33.0.0-jre"
         jackson = "2.16.1"
         jersey = "3.1.5"
@@ -25,7 +24,6 @@ dependencies {
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
-    compileOnly "com.google.code.findbugs:annotations:${findbugsAnnotations}"
     implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson}"
     implementation "org.glassfish.jersey.inject:jersey-hk2:${jersey}"

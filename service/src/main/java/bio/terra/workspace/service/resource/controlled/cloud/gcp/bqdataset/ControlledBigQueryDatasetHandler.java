@@ -7,7 +7,6 @@ import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import com.google.common.base.CharMatcher;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.ws.rs.BadRequestException;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,9 +16,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@SuppressFBWarnings(
-    value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
-    justification = "Enable both injection and static lookup")
 @Component
 public class ControlledBigQueryDatasetHandler implements WsmResourceHandler {
 

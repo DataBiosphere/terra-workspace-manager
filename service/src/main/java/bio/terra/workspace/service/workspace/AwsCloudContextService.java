@@ -37,7 +37,6 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.io.IOException;
 import java.util.List;
@@ -55,9 +54,6 @@ import software.amazon.awssdk.regions.Region;
  * This service provides methods for managing AWS cloud context. These methods do not perform any
  * access control and operate directly against the {@link WorkspaceDao}
  */
-@SuppressFBWarnings(
-    value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
-    justification = "Enable both injection and static lookup")
 @Component
 public class AwsCloudContextService implements CloudContextService {
   private final AwsConfiguration awsConfiguration;
