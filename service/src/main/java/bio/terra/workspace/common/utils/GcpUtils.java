@@ -135,7 +135,7 @@ public class GcpUtils {
       return ((ServiceAccountSigner) wsmCredentials).getAccount();
     } else {
       throw new SaCredentialsMissingException(
-          "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
+          "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account; type = "+wsmCredentials.getClass());
     }
   }
 
