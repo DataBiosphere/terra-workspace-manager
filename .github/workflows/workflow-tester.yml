@@ -88,6 +88,14 @@ jobs:
           echo $BUFFER_CLIENT_SA | jq .type
           mkdir -p config
           echo $BUFFER_CLIENT_SA > config/buffer-client-sa.json
+          
+          TESTRUNNER_SA_B64=${{ secrets.TESTRUNNER_SA_DEV }}
+          echo ::add-mask::$TESTRUNNER_SA_B64
+          TESTRUNNER_SA=$(echo $TESTRUNNER_SA_B64 | base64 --decode)
+          echo ::add-mask::$TESTRUNNER_SA
+          echo $TESTRUNNER_SA | jq .type
+          mkdir -p config
+          echo $TESTRUNNER_SA > config/testrunner-sa.json
         shell: bash
 
       - name: Authenticate with Google Cloud as Testrunner
