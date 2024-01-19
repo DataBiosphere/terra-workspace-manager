@@ -36,10 +36,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-#      - name: Initialize Postgres DB for local server test run
-#        env:
-#          PGPASSWORD: postgres
-#        run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+      - name: Initialize Postgres DB for local server test run
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -59,27 +59,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      #      - name: Get Vault token
-      #        id: vault-token-step
-      #        env:
-      #          VAULT_ADDR: https://clotho.broadinstitute.org:8200
-      #        run: |
-      #          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-      #            -e "VAULT_ADDR=${VAULT_ADDR}" \
-      #            vault:1.1.0 \
-      #            vault write -field token \
-      #              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-      #              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-      #          echo ::add-mask::$VAULT_TOKEN
-      #          echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
-
-      #      - name: Write config
-      #        id: config
-      #        uses: ./.github/actions/write-config
-      #        with:
-      #          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-      #          target: local
-
       - name: Authenticate with Google Cloud as WSM
         id: 'obtain-owner-token'
         uses: google-github-actions/auth@v2
@@ -88,9 +67,8 @@ jobs:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: "workspace-dev@broad-dsde-dev.iam.gserviceaccount.com"
 
-#
-#      - name: Launch local server
-#        uses: ./.github/actions/start-local-server
+      - name: Launch local server
+        uses: ./.github/actions/start-local-server
 
       - name: Setup user delegated creds
         id: 'setup-user-delegated-creds'
