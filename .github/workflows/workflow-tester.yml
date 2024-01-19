@@ -97,6 +97,7 @@ jobs:
         run: |
           USER_DELEGATED_SA=${{ secrets.USER_DELEGATED_SA_DEV }} | base64 -d
           echo ::add-mask::$USER_DELEGATED_SA
+          echo $USER_DELEGATED_SA | jq .type
           mkdir -p config
           echo $USER_DELEGATED_SA > config/user-delegated-sa.json
         shell: bash
