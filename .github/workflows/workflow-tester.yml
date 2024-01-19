@@ -95,7 +95,9 @@ jobs:
       - name: Setup user delegated creds
         id: 'setup-user-delegated-creds'
         run: |
-          USER_DELEGATED_SA=${{ secrets.USER_DELEGATED_SA_DEV }} | base64 -d
+          USER_DELEGATED_SA_B64=${{ secrets.USER_DELEGATED_SA_DEV }}
+          echo ::add-mask::$USER_DELEGATED_SA_B64
+          USER_DELEGATED_SA=$(echo $USER_DELEGATED_SA_B64 | base64 --decode)
           echo ::add-mask::$USER_DELEGATED_SA
           echo $USER_DELEGATED_SA | jq .type
           mkdir -p config
