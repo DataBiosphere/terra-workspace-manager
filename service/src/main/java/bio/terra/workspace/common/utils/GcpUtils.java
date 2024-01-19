@@ -15,9 +15,11 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.cloudresourcemanager.v3.model.Project;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.ExternalAccountCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.IdTokenCredentials;
 import com.google.auth.oauth2.IdTokenProvider;
+import com.google.auth.oauth2.IdentityPoolCredentials;
 import com.google.cloud.ServiceOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
@@ -133,6 +135,8 @@ public class GcpUtils {
     // sources depending on whether it is running in GCP or locally.
     if (wsmCredentials instanceof ServiceAccountSigner) {
       return ((ServiceAccountSigner) wsmCredentials).getAccount();
+    } else if (wsmCredentials instanceof ExternalAccountCredentials) {
+      return ((ExternalAccountCredentials) wsmCredentials).getServiceAccountEmail();
     } else {
       throw new SaCredentialsMissingException(
           "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account; type = "+wsmCredentials.getClass());
