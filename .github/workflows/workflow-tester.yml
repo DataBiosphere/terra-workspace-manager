@@ -80,6 +80,14 @@ jobs:
           echo $USER_DELEGATED_SA | jq .type
           mkdir -p config
           echo $USER_DELEGATED_SA > config/user-delegated-sa.json
+          
+          BUFFER_CLIENT_SA_B64=${{ secrets.BUFFER_CLIENT_SA_DEV }}
+          echo ::add-mask::$BUFFER_CLIENT_SA_B64
+          BUFFER_CLIENT_SA=$(echo $BUFFER_CLIENT_SA_B64 | base64 --decode)
+          echo ::add-mask::$BUFFER_CLIENT_SA
+          echo $BUFFER_CLIENT_SA | jq .type
+          mkdir -p config
+          echo $BUFFER_CLIENT_SA > config/buffer-client-sa.json
         shell: bash
 
       - name: Authenticate with Google Cloud as Testrunner
