@@ -36,10 +36,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Initialize Postgres DB for local server test run
-        env:
-          PGPASSWORD: postgres
-        run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+#      - name: Initialize Postgres DB for local server test run
+#        env:
+#          PGPASSWORD: postgres
+#        run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -88,26 +88,17 @@ jobs:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
           service_account: "workspace-dev@broad-dsde-dev.iam.gserviceaccount.com"
 
-      # Configure up so the cronjobs do not start
-#      - name: Start the server with immediate exit
-#        env:
-#          spring_profiles_active: human-readable-logging
-#          workspace_startup_exitafterinitialization: true
-#          workspace_danglingresourcecleanup_enabled: false
-#          workspace_temporarygrantrevoke_revokeenabled: false
-#          workspace_privateresourcecleanup_enabled: false
-#        run: ./gradlew service:bootRun
-
 #
-      - name: Launch local server
-        uses: ./.github/actions/start-local-server
+#      - name: Launch local server
+#        uses: ./.github/actions/start-local-server
 
       - name: Setup user delegated creds
         id: 'setup-user-delegated-creds'
         run: |
           USER_DELEGATED_SA=${{ secrets.USER_DELEGATED_SA }}
           echo ::add-mask::$USER_DELEGATED_SA
-          echo $USER_DELEGATED_SA > user-delegated-sa.json
+          mkdir -p config
+          echo $USER_DELEGATED_SA > config/user-delegated-sa.json
         shell: bash
 
       - name: Authenticate with Google Cloud as Testrunner
