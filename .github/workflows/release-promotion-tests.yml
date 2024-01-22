@@ -183,7 +183,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           status: ${{ job.status }}
-          channel: "#dsp-workspace-test-alerts"
+          channel: "#dsp-workspaces-test-alerts"
           username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
           author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} integrationTest"
           fields: repo,job,workflow,commit,eventName,author,took

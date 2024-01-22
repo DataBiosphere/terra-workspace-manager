@@ -217,7 +217,7 @@ jobs:
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
       with:
         status: ${{ job.status }}
-        channel: "#dsp-workspace-test-alerts"
+        channel: "#dsp-workspaces-test-alerts"
         username: "WSM push to main branch"
         author_name: "${{ matrix.gradleTask }}"
         icon_emoji: ":triangular_ruler:"

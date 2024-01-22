@@ -192,7 +192,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           status: ${{ job.status }}
-          channel: "#dsp-workspace-test-alerts"
+          channel: "#dsp-workspaces-test-alerts"
           username: "WSM nightly test"
           author_name: ${{ steps.status-message.outputs.status-bold }}
           icon_emoji: ${{ steps.status-message.outputs.status-emoji }}
