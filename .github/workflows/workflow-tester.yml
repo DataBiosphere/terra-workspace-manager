@@ -59,26 +59,24 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Authenticate with Google Cloud as WSM
-        id: 'obtain-owner-token'
-        uses: google-github-actions/auth@v2
-        with:
-          export_environment_variables: true
-          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
-          service_account: "workspace-wsmtest@terra-kernel-k8s.iam.gserviceaccount.com"
+#      - name: Authenticate with Google Cloud as WSM
+#        id: 'obtain-owner-token'
+#        uses: google-github-actions/auth@v2
+#        with:
+#          export_environment_variables: true
+#          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+#          service_account: "workspace-wsmtest@terra-kernel-k8s.iam.gserviceaccount.com"
 
-      - name: Launch local server
-        uses: ./.github/actions/start-local-server
 
       - name: Setup user delegated creds
         id: 'setup-user-delegated-creds'
         run: |
+          mkdir -p config
           USER_DELEGATED_SA_B64=${{ secrets.USER_DELEGATED_SA_DEV }}
           echo ::add-mask::$USER_DELEGATED_SA_B64
           USER_DELEGATED_SA=$(echo $USER_DELEGATED_SA_B64 | base64 --decode)
           echo ::add-mask::$USER_DELEGATED_SA
           echo $USER_DELEGATED_SA | jq .type
-          mkdir -p config
           echo $USER_DELEGATED_SA > config/user-delegated-sa.json
           
           BUFFER_CLIENT_SA_B64=${{ secrets.BUFFER_CLIENT_SA_DEV }}
@@ -86,7 +84,6 @@ jobs:
           BUFFER_CLIENT_SA=$(echo $BUFFER_CLIENT_SA_B64 | base64 --decode)
           echo ::add-mask::$BUFFER_CLIENT_SA
           echo $BUFFER_CLIENT_SA | jq .type
-          mkdir -p config
           echo $BUFFER_CLIENT_SA > config/buffer-client-sa.json
           
           TESTRUNNER_SA_B64=${{ secrets.TESTRUNNER_SA_DEV }}
@@ -94,18 +91,26 @@ jobs:
           TESTRUNNER_SA=$(echo $TESTRUNNER_SA_B64 | base64 --decode)
           echo ::add-mask::$TESTRUNNER_SA
           echo $TESTRUNNER_SA | jq .type
-          mkdir -p config
           echo $TESTRUNNER_SA > config/testrunner-sa.json
 
           TESTRUNNER_K8S_SA_B64=${{ secrets.TESTRUNNER_K8S_SA_DEV }}
           echo ::add-mask::$TESTRUNNER_K8S_SA_B64
           TESTRUNNER_K8S_SA=$(echo $TESTRUNNER_K8S_SA_B64 | base64 --decode)
           echo ::add-mask::$TESTRUNNER_K8S_SA
-          mkdir -p config
           echo $TESTRUNNER_K8S_SA | jq -r ".data[\"ca.crt\"]" > config/testrunner-k8s-sa-key.txt
           echo $TESTRUNNER_K8S_SA | jq -r .data.token | base64 --decode > config/testrunner-k8s-sa-token.txt
 
+          WSM_SA_B64=${{ secrets.WSM_SA_DEV }}
+          echo ::add-mask::$WSM_SA_B64
+          WSM_SA=$(echo $WSM_SA_B64 | base64 --decode)
+          echo ::add-mask::$WSM_SA
+          echo $WSM_SA | jq .type
+          echo $WSM_SA > config/wsm-sa.json
         shell: bash
+
+      - name: Launch local server
+        uses: ./.github/actions/start-local-server
+
 
 #      - name: Authenticate with Google Cloud as Testrunner
 #        id: 'obtain-testrunner-token'
