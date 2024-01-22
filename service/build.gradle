@@ -12,7 +12,6 @@ plugins {
     id "org.sonarqube" version "4.4.1.3373"
     id "au.com.dius.pact" version "4.6.5"
 }
-
 // constants visible to all .gradle files in this project
 project.ext {
     artifactGroup = "${group}.workspace"
