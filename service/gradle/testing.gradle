@@ -4,11 +4,11 @@
 // Created by scripts/write_config.sh
 //def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 bootRun {
-//  environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+  environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
 }
 
 tasks.withType(Test).configureEach {
-  //environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
+  environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
   systemProperty 'spring.profiles.include', 'human-readable-logging'
   testLogging {
     if (System.getenv('PRINT_STANDARD_STREAMS') == null) {
