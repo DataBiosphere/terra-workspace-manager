@@ -65,7 +65,7 @@ jobs:
         with:
           export_environment_variables: true
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
-          service_account: "workspace-dev@broad-dsde-dev.iam.gserviceaccount.com"
+          service_account: "workspace-wsmtest@terra-kernel-k8s.iam.gserviceaccount.com"
 
       - name: Launch local server
         uses: ./.github/actions/start-local-server
@@ -111,6 +111,7 @@ jobs:
         with:
           test-server: workspace-local.json
           test: suites/PRIntegration.json
+
 
 #      - name: Run unit tests
 #        if: steps.skiptest.outputs.is-bump == 'no'
