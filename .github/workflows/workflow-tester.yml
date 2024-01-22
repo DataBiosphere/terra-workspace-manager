@@ -96,14 +96,23 @@ jobs:
           echo $TESTRUNNER_SA | jq .type
           mkdir -p config
           echo $TESTRUNNER_SA > config/testrunner-sa.json
+
+          TESTRUNNER_K8S_SA_B64=${{ secrets.TESTRUNNER_K8S_SA_DEV }}
+          echo ::add-mask::$TESTRUNNER_K8S_SA_B64
+          TESTRUNNER_K8S_SA=$(echo $TESTRUNNER_K8S_SA_B64 | base64 --decode)
+          echo ::add-mask::$TESTRUNNER_K8S_SA
+          mkdir -p config
+          echo $TESTRUNNER_K8S_SA | jq -r ".data[\"ca.crt\"]" > config/testrunner-k8s-sa-key.txt
+          echo $TESTRUNNER_K8S_SA | jq -r .data.token | base64 ---decode > config/testrunner-k8s-sa-token.txt
+
         shell: bash
 
-      - name: Authenticate with Google Cloud as Testrunner
-        id: 'obtain-testrunner-token'
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
-          service_account: "testrunner-integration@terra-kernel-k8s.iam.gserviceaccount.com"
+#      - name: Authenticate with Google Cloud as Testrunner
+#        id: 'obtain-testrunner-token'
+#        uses: google-github-actions/auth@v2
+#        with:
+#          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+#          service_account: "testrunner-integration@terra-kernel-k8s.iam.gserviceaccount.com"
 
       - name: Run the integration test suite
         id: integration-test
