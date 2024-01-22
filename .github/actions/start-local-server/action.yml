@@ -42,8 +42,5 @@ runs:
         then
           echo "Server did not start successfully. Dumping log file"
           cat wsm.log
-        
-          echo "DONEDONEDONE"
-          exit 1
         fi
       shell: bash
