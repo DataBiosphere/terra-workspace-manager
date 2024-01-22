@@ -92,7 +92,7 @@ jobs:
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
       with:
         status: ${{ job.status }}
-        channel: "#terra-wsm-alerts"
+        channel: "#dsp-workspace-test-alerts"
         username: "WSM full integration test"
         author_name: "${{ matrix.gradleTask }}"
         icon_emoji: ":bangbang:"
