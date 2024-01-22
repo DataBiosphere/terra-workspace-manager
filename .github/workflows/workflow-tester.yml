@@ -103,7 +103,7 @@ jobs:
           echo ::add-mask::$TESTRUNNER_K8S_SA
           mkdir -p config
           echo $TESTRUNNER_K8S_SA | jq -r ".data[\"ca.crt\"]" > config/testrunner-k8s-sa-key.txt
-          echo $TESTRUNNER_K8S_SA | jq -r .data.token | base64 ---decode > config/testrunner-k8s-sa-token.txt
+          echo $TESTRUNNER_K8S_SA | jq -r .data.token | base64 --decode > config/testrunner-k8s-sa-token.txt
 
         shell: bash
 
