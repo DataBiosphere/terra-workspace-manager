@@ -1,20 +1,23 @@
 name: 'write-credentials'
-description: 'Collect the needed credentials for testing'
+description: |
+  Collect the needed credentials for testing and place them in the
+  appropriate config directory. Note that all of these secrets are
+  assumed to be base64-encoded JSON service account keys.
 inputs:
   user-delegated-sa-b64:
-    description: 'Base64-encoded ser delegated service account'
+    description: 'Base64-encoded user delegated service account'
     required: true
   buffer-client-sa-b64:
-    description: 'Buffer client service account'
+    description: 'Base64-encoded Buffer client service account'
     required: true
   testrunner-sa-b64:
-    description: 'Testrunner service account'
+    description: 'Base64-encoded Testrunner service account'
     required: true
   testrunner-k8s-sa-b64:
-    description: 'Testrunner k8s service account'
+    description: 'Base64-encoded Testrunner k8s service account'
     required: true
   wsm-sa-b64:
-    description: 'WSM service account'
+    description: 'Base64-encoded WSM service account'
     required: true
 
 runs:
@@ -29,21 +32,18 @@ runs:
           echo ::add-mask::$USER_DELEGATED_SA_B64
           USER_DELEGATED_SA=$(echo $USER_DELEGATED_SA_B64 | base64 --decode)
           echo ::add-mask::$USER_DELEGATED_SA
-          echo $USER_DELEGATED_SA | jq .type
           echo $USER_DELEGATED_SA > config/user-delegated-sa.json
 
           BUFFER_CLIENT_SA_B64=${{ inputs.buffer-client-sa-b64 }}
           echo ::add-mask::$BUFFER_CLIENT_SA_B64
           BUFFER_CLIENT_SA=$(echo $BUFFER_CLIENT_SA_B64 | base64 --decode)
           echo ::add-mask::$BUFFER_CLIENT_SA
-          echo $BUFFER_CLIENT_SA | jq .type
           echo $BUFFER_CLIENT_SA > config/buffer-client-sa.json
 
           TESTRUNNER_SA_B64=${{ inputs.testrunner-sa-b64 }}
           echo ::add-mask::$TESTRUNNER_SA_B64
           TESTRUNNER_SA=$(echo $TESTRUNNER_SA_B64 | base64 --decode)
           echo ::add-mask::$TESTRUNNER_SA
-          echo $TESTRUNNER_SA | jq .type
           echo $TESTRUNNER_SA > config/testrunner-sa.json
 
           TESTRUNNER_K8S_SA_B64=${{ inputs.testrunner-k8s-sa-b64 }}
@@ -57,6 +57,5 @@ runs:
           echo ::add-mask::$WSM_SA_B64
           WSM_SA=$(echo $WSM_SA_B64 | base64 --decode)
           echo ::add-mask::$WSM_SA
-          echo $WSM_SA | jq .type
           echo $WSM_SA > config/wsm-sa.json
         shell: bash
