@@ -169,12 +169,15 @@ jobs:
     - name: Write config
       if: matrix.gradleTask != 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
       id: config
-      uses: ./.github/actions/write-config
+      uses: ./.github/actions/write-credentials
       with:
-        # Note that unit and connected tests run with local configuration regardless of
+        # Note that unit and connected tests run with dev configuration regardless of
         # the test-env specified on the workflow-dispatch input.
-        target: local
-        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+        user-delegated-sa-b64: ${{ secrets.USER_DELEGATED_SA_DEV }}
+        buffer-client-sa-b64: ${{ secrets.BUFFER_CLIENT_SA_DEV }}
+        testrunner-sa-b64: ${{ secrets.TESTRUNNER_SA_DEV }}
+        testrunner-k8s-sa-b64: ${{ secrets.TESTRUNNER_K8S_SA_DEV }}
+        wsm-sa-b64: ${{ secrets.WSM_SA_DEV }}
 
       # Run tests
     - name: Run tests
