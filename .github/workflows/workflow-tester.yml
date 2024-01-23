@@ -108,14 +108,32 @@ jobs:
 #          echo $WSM_SA > config/wsm-sa.json
 #        shell: bash
 
+
+      - id: setup-env-var-names
+        name: 'Setup env var names'
+        env:
+          TERRA_ENV: ${{ inputs.terra-env }}
+        run: |
+          echo "USER_DELEGATED_SA_VAR=USER_DELEGATED_SA_${TERRA_ENV}" >> ${GITHUB_OUTPUT}
+          echo "BUFFER_CLIENT_SA_VAR=BUFFER_CLIENT_SA_${TERRA_ENV}" >> ${GITHUB_OUTPUT}
+          echo "TESTRUNNER_SA_VAR=TESTRUNNER_SA_${TERRA_ENV}" >> ${GITHUB_OUTPUT}
+          echo "TESTRUNNER_K8S_SA_VAR=TESTRUNNER_K8S_SA_${TERRA_ENV}" >> ${GITHUB_OUTPUT}
+          echo "WSM_SA_VAR=WSM_SA_${TERRA_ENV}" >> ${GITHUB_OUTPUT}
+        
+
       - name: Write config
         id: config
         uses: ./.github/actions/write-credentials
         with:
-          target: dev
+            user-delegated-sa-b64: ${{ secrets[steps.setup-env-var-names.outputs.USER_DELEGATED_SA_VAR] }}
+            buffer-client-sa-b64: ${{ secrets[steps.setup-env-var-names.outputs.BUFFER_CLIENT_SA_VAR] }}
+            testrunner-sa-b64: ${{ secrets[steps.setup-env-var-names.outputs.TESTRUNNER_SA_VAR] }}
+            testrunner-k8s-sa-b64: ${{ secrets[steps.setup-env-var-names.outputs.TESTRUNNER_K8S_SA_VAR] }}
+            wsm-sa-b64: ${{ secrets[steps.setup-env-var-names.outputs.WSM_SA_VAR] }}
 
       - name: Launch local server
         uses: ./.github/actions/start-local-server
+
 
 
 #      - name: Authenticate with Google Cloud as Testrunner
