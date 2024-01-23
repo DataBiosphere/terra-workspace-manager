@@ -22,6 +22,9 @@ inputs:
   wsm-sa-b64:
     description: 'Base64-encoded WSM service account'
     required: true
+  policy-client-sa-b64:
+    description: "Base64-encoded policy client service account"
+    required: true
 
 runs:
   using: "composite"
@@ -61,6 +64,12 @@ runs:
         JANITOR_SA=$(echo $JANITOR_SA_B64 | base64 --decode)
         echo ::add-mask::$JANITOR_SA
         echo $JANITOR_SA > config/janitor-client-sa.json
+
+        POLICY_CLIENT_SA_B64=${{ inputs.policy-client-sa-b64 }}
+        echo ::add-mask::$POLICY_CLIENT_SA_B64
+        POLICY_CLIENT_SA=$(echo $POLICY_CLIENT_SA_B64 | base64 --decode)
+        echo ::add-mask::$POLICY_CLIENT_SA
+        echo $POLICY_CLIENT_SA > config/policy-client-sa.json
 
         WSM_SA_B64=${{ inputs.wsm-sa-b64 }}
         echo ::add-mask::$WSM_SA_B64

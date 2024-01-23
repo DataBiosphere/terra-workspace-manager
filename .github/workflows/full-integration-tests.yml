@@ -61,6 +61,7 @@ jobs:
         testrunner-k8s-sa-b64: ${{ secrets.TESTRUNNER_K8S_SA_DEV }}
         wsm-sa-b64: ${{ secrets.WSM_SA_DEV }}
         janitor-sa-b64: ${{ secrets.JANITOR_SA_DEV }}
+        policy-client-sa-b64: ${{ secrets.POLICY_CLIENT_SA_DEV }}
 
     - name: Launch local server
       uses: ./.github/actions/start-local-server
