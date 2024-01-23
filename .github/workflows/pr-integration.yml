@@ -37,93 +37,82 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-        - 5432:5432
+          - 5432:5432
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Initialize Postgres DB for local server test run
-      env:
-        PGPASSWORD: postgres
-      run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
+      - name: Initialize Postgres DB for local server test run
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -f ./service/local-dev/local-postgres-init.sql
 
-    - name: Set up JDK
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: 17
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
 
-    - name: Cache Gradle packages
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
-        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
+          restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-    - name: Get Vault token
-      id: vault-token-step
-      env:
-        VAULT_ADDR: https://clotho.broadinstitute.org:8200
-      run: |
-        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault write -field token \
-            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-        echo ::add-mask::$VAULT_TOKEN    
-        echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
+      - name: Write config
+        id: config
+        uses: ./.github/actions/write-credentials
+        with:
+          user-delegated-sa-b64: ${{ secrets.USER_DELEGATED_SA_DEV }}
+          buffer-client-sa-b64: ${{ secrets.BUFFER_CLIENT_SA_DEV }}
+          testrunner-sa-b64: ${{ secrets.TESTRUNNER_SA_DEV }}
+          testrunner-k8s-sa-b64: ${{ secrets.TESTRUNNER_K8S_SA_DEV }}
+          wsm-sa-b64: ${{ secrets.WSM_SA_DEV }}
 
-    - name: Write config
-      id: config
-      uses: ./.github/actions/write-config
-      with:
-        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
-        target: local
+      - name: Launch local server
+        uses: ./.github/actions/start-local-server
 
-    - name: Launch local server
-      uses: ./.github/actions/start-local-server
+      - name: Run the integration test suite
+        id: integration-test
+        uses: ./.github/actions/integration-test
+        with:
+          test-server: workspace-local.json
+          test: suites/PRIntegration.json
 
-    - name: Run the integration test suite
-      id: integration-test
-      uses: ./.github/actions/integration-test
-      with:
-        test-server: workspace-local.json
-        test: suites/PRIntegration.json
+      - name: Skip version bump merges
+        id: bump-check
+        uses: ./.github/actions/bump-skip
+        with:
+          event-name: ${{ github.event_name }}
 
-    - name: Skip version bump merges
-      id: bump-check
-      uses: ./.github/actions/bump-skip
-      with:
-        event-name: ${{ github.event_name }}
+      - name: "Notify WSM Slack"
+        # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
+        if: failure() && github.event_name == 'push' && steps.bump-check.outputs.is-bump == 'no'
+        uses: broadinstitute/action-slack@v3.8.0
+        # see https://github.com/broadinstitute/action-slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          MATRIX_CONTEXT: ${{ toJson(matrix) }}
+        with:
+          status: ${{ job.status }}
+          channel: "#terra-wsm-alerts"
+          username: "WSM push to main branch"
+          author_name: "integrationTest"
+          icon_emoji: ":triangular_ruler:"
+          fields: job, commit
 
-    - name: "Notify WSM Slack"
-      # post to WSM Slack when a regular push (i.e. non-bumper push) is made to main branch
-      if: failure() && github.event_name == 'push' && steps.bump-check.outputs.is-bump == 'no'
-      uses: broadinstitute/action-slack@v3.8.0
-      # see https://github.com/broadinstitute/action-slack
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        MATRIX_CONTEXT: ${{ toJson(matrix) }}
-      with:
-        status: ${{ job.status }}
-        channel: "#dsp-workspaces-test-alerts"
-        username: "WSM push to main branch"
-        author_name: "integrationTest"
-        icon_emoji: ":triangular_ruler:"
-        fields: job, commit
-
-    - name: Archive WSM and TestRunner logs
-      id: archive_logs
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: wsm-and-testrunner-logs
-        path: |
-          wsm.log
-          ${{ steps.integration-test.outputs.results-dir }}
+      - name: Archive WSM and TestRunner logs
+        id: archive_logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: wsm-and-testrunner-logs
+          path: |
+            wsm.log
+            ${{ steps.integration-test.outputs.results-dir }}
