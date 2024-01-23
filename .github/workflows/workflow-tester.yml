@@ -112,7 +112,7 @@ jobs:
       - id: setup-env-var-names
         name: 'Setup env var names'
         env:
-          TERRA_ENV: ${{ inputs.terra-env }}
+          TERRA_ENV: 'DEV'
         run: |
           echo "USER_DELEGATED_SA_VAR=USER_DELEGATED_SA_${TERRA_ENV}" >> ${GITHUB_OUTPUT}
           echo "BUFFER_CLIENT_SA_VAR=BUFFER_CLIENT_SA_${TERRA_ENV}" >> ${GITHUB_OUTPUT}
