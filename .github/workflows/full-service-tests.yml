@@ -59,29 +59,15 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # These steps aren't needed for unit tests
-    - name: Get Vault token
-      id: vault-token-step
-      env:
-        VAULT_ADDR: https://clotho.broadinstitute.org:8200
-      run: |
-        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault write -field token \
-            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-        echo ::add-mask::$VAULT_TOKEN    
-        echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
-
     - name: Write config
       id: config
-      uses: ./.github/actions/write-config
+      uses: ./.github/actions/write-credentials
       with:
-        # Note that unit and connected tests run with local configuration regardless of
-        # the test-env specified on the workflow-dispatch input.
-        target: local
-        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+        user-delegated-sa-b64: ${{ secrets.USER_DELEGATED_SA_DEV }}
+        buffer-client-sa-b64: ${{ secrets.BUFFER_CLIENT_SA_DEV }}
+        testrunner-sa-b64: ${{ secrets.TESTRUNNER_SA_DEV }}
+        testrunner-k8s-sa-b64: ${{ secrets.TESTRUNNER_K8S_SA_DEV }}
+        wsm-sa-b64: ${{ secrets.WSM_SA_DEV }}
 
       # Run tests
     - name: Run tests
