@@ -149,6 +149,15 @@ integration environments), update the
 3. This updates the default [version mapping for the app in question](https://github.com/broadinstitute/terra-helmfile/blob/master/versions.yaml).
 4. [Our deployment of ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications) monitors the above repo, and any environments in which the app is set to auto-sync will immediately pick up the new version of the image. If the app is not set to auto-sync in an environment, it can be manually synced via the ArgoCD UI or API.
 
+## Release to Upper Environments (Staging, Prod)
+
+WSM follows standards for deployment via DSP DevOps services
+([Beehive](https://beehive.dsp-devops.broadinstitute.org/)).
+
+For more information on how to release WSM to upper environments (including on demand via independent release), please see
+[Releasing our Code](https://broadworkbench.atlassian.net/wiki/spaces/WOR/pages/2974449675/Releasing+our+Code)
+in Confluence.
+
 ## Setup
 
 ### Prerequisites:
