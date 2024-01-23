@@ -16,6 +16,9 @@ inputs:
   testrunner-k8s-sa-b64:
     description: 'Base64-encoded Testrunner k8s service account'
     required: true
+  janitor-sa-b64:
+    description: 'Base64-encoded CRL Janitor service account'
+    required: true
   wsm-sa-b64:
     description: 'Base64-encoded WSM service account'
     required: true
@@ -53,6 +56,12 @@ runs:
         echo $TESTRUNNER_K8S_SA | jq -r ".data[\"ca.crt\"]" > config/testrunner-k8s-sa-key.txt
         echo $TESTRUNNER_K8S_SA | jq -r .data.token | base64 --decode > config/testrunner-k8s-sa-token.txt
         
+        JANITOR_SA_B64=${{ inputs.janitor-sa-b64 }}
+        echo ::add-mask::$JANITOR_SA_B64
+        JANITOR_SA=$(echo $JANITOR_SA_B64 | base64 --decode)
+        echo ::add-mask::$JANITOR_SA
+        echo $JANITOR_SA > config/janitor-client-sa.json
+
         WSM_SA_B64=${{ inputs.wsm-sa-b64 }}
         echo ::add-mask::$WSM_SA_B64
         WSM_SA=$(echo $WSM_SA_B64 | base64 --decode)
