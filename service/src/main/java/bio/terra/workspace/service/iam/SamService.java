@@ -89,15 +89,13 @@ public class SamService {
   private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
   private final FeatureConfiguration features;
-  private final AzureConfiguration azureConfiguration;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, FeatureConfiguration features, AzureConfiguration azureConfiguration, SamUserFactory samUserFactory) {
+  public SamService(SamConfiguration samConfig, FeatureConfiguration features, SamUserFactory samUserFactory) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.features = features;
-    this.azureConfiguration = azureConfiguration;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -162,6 +160,7 @@ public class SamService {
       if (features.isAzureControlPlaneEnabled())
       {
         TokenCredential credential = new DefaultAzureCredentialBuilder().build();
+        // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid, profile, and email by default in authorization and token requests.
         AccessToken token = credential.getToken(new TokenRequestContext().addScopes("https://graph.microsoft.com/.default")).block();
         return token.getToken();
       }

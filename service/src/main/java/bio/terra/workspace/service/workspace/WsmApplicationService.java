@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration;
 import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration.App;
 import bio.terra.workspace.db.ApplicationDao;
@@ -46,6 +47,7 @@ public class WsmApplicationService {
   private final ApplicationDao applicationDao;
   private final JobService jobService;
   private final WsmApplicationConfiguration wsmApplicationConfiguration;
+  private final FeatureConfiguration features;
 
   // -- Testing Support --
   // Unlike most code, the configuration code runs at startup time and does not have any output
@@ -60,10 +62,12 @@ public class WsmApplicationService {
   public WsmApplicationService(
       ApplicationDao applicationDao,
       JobService jobService,
-      WsmApplicationConfiguration wsmApplicationConfiguration) {
+      WsmApplicationConfiguration wsmApplicationConfiguration,
+      FeatureConfiguration features) {
     this.applicationDao = applicationDao;
     this.jobService = jobService;
     this.wsmApplicationConfiguration = wsmApplicationConfiguration;
+    this.features = features;
   }
 
   // -- REST API Methods -- //
@@ -263,7 +267,7 @@ public class WsmApplicationService {
       }
 
       WsmApplicationState state = WsmApplicationState.fromString(config.getState());
-      if (!EmailValidator.getInstance(false, true).isValid(config.getServiceAccount())) {
+      if (!EmailValidator.getInstance(false, true).isValid(config.getServiceAccount()) && !features.isAzureControlPlaneEnabled()) {
         logError("Invalid application configuration: service account is not a valid email address");
         return Optional.empty();
       }

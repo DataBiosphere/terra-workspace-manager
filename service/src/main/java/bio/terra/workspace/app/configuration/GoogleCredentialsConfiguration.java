@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 public class GoogleCredentialsConfiguration {
   @Bean
-  @Profile("!unit-test")
+  @Profile("default")
   public GoogleCredentials getGoogleCredentials() {
     try {
       GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
@@ -32,6 +32,12 @@ public class GoogleCredentialsConfiguration {
   @Bean
   @Profile("unit-test")
   public GoogleCredentials getFakeGoogleCredentials() {
+    return GoogleCredentials.newBuilder().build();
+  }
+
+  @Bean
+  @Profile("azure")
+  public GoogleCredentials getFakeGoogleCredentials2() {
     return GoogleCredentials.newBuilder().build();
   }
 }

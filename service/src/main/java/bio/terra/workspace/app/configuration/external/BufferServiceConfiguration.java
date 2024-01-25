@@ -1,11 +1,19 @@
 package bio.terra.workspace.app.configuration.external;
 
-import com.google.auth.oauth2.AccessToken;
+import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.iam.SamUserFactory;
+import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
+import com.azure.core.credential.AccessToken;
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.credential.TokenRequestContext;
+import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.collect.ImmutableList;
 import java.io.FileInputStream;
 import java.io.IOException;
+import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -22,8 +30,15 @@ public class BufferServiceConfiguration {
   private String poolId;
   private String clientCredentialFilePath;
 
+  private final FeatureConfiguration features;
+
   private static final ImmutableList<String> BUFFER_SCOPES =
       ImmutableList.of("openid", "email", "profile");
+
+  @Autowired
+  public BufferServiceConfiguration(FeatureConfiguration features) {
+    this.features = features;
+  }
 
   public boolean getEnabled() {
     return enabled;
@@ -58,11 +73,23 @@ public class BufferServiceConfiguration {
   }
 
   public String getAccessToken() throws IOException {
-    try (FileInputStream fileInputStream = new FileInputStream(clientCredentialFilePath)) {
-      GoogleCredentials credentials =
-          ServiceAccountCredentials.fromStream(fileInputStream).createScoped(BUFFER_SCOPES);
-      AccessToken token = credentials.refreshAccessToken();
-      return token.getTokenValue();
+    try {
+      if (features.isAzureControlPlaneEnabled())
+      {
+        TokenCredential credential = new DefaultAzureCredentialBuilder().build();
+        // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid, profile, and email by default in authorization and token requests.
+        AccessToken token = credential.getToken(new TokenRequestContext().addScopes("https://graph.microsoft.com/.default")).block();
+        return token.getToken();
+      }
+      else
+      {
+        GoogleCredentials creds =
+                GoogleCredentials.getApplicationDefault().createScoped(BUFFER_SCOPES);
+        creds.refreshIfExpired();
+        return creds.getAccessToken().getTokenValue();
+      }
+    } catch (IOException e) {
+      throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
     }
   }
 }
