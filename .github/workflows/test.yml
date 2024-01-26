@@ -166,6 +166,8 @@ jobs:
         echo ::add-mask::$VAULT_TOKEN    
         echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
 
+    # TODO migrate to write-credentials once we have a way to get the
+    # managed app publisher credentials
     - name: Write config
       if: matrix.gradleTask != 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
       id: config
