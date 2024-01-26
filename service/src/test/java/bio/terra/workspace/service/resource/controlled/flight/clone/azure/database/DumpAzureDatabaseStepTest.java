@@ -24,6 +24,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -70,6 +71,8 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
               creationParameters, workspaceId, null)
           .build();
   private final String mockEncryptionKey = "mock-encryption-key-123";
+  private final ControlledResourceFields mockDestinationResource = ControlledResourceFixtures.makeDefaultControlledResourceFields(
+  mockDestinationWorkspaceId);
 
   @Test
   void testSuccess() throws InterruptedException {
@@ -91,7 +94,7 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         .pgDumpDatabase(
             eq(mockAzureCloudContext),
             eq(databaseResource.getWorkspaceId()),
-            eq("dump-db-%s".formatted(databaseResource.getResourceId())),
+            eq("dump-db-%s-%s".formatted(databaseResource.getDatabaseName(), mockDestinationResource.getResourceId())),
             eq(databaseResource.getDatabaseName()),
             eq(databaseServerName),
             eq(databaseUserName),
@@ -128,9 +131,7 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
             ControlledAzureStorageContainerResource.class))
         .thenReturn(
             ControlledAzureStorageContainerResource.builder()
-                .common(
-                    ControlledResourceFixtures.makeDefaultControlledResourceFields(
-                        mockDestinationWorkspaceId))
+                .common(mockDestinationResource)
                 .storageContainerName("sc-%s".formatted(mockDestinationWorkspaceId.toString()))
                 .build());
     when(mockWorkingMap.get(
