@@ -21,11 +21,13 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.text.SimpleDateFormat;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DumpAzureDatabaseStep implements Step {
   private static final Logger logger = LoggerFactory.getLogger(DumpAzureDatabaseStep.class);
+  private static final Integer MAX_RESOURCE_NAME_LENGTH = 63;
 
   private final ControlledAzureDatabaseResource sourceDatabase;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
@@ -124,8 +126,10 @@ public class DumpAzureDatabaseStep implements Step {
     this.azureDatabaseUtilsRunner.pgDumpDatabase(
         sourceAzureContext,
         sourceDatabase.getWorkspaceId(),
-        "dump-db-%s-%s"
-            .formatted(sourceDatabase.getDatabaseName(), destinationContainer.getResourceId()),
+        StringUtils.truncate(
+            "dump-db-%s-%s"
+                .formatted(sourceDatabase.getDatabaseName(), destinationContainer.getResourceId()),
+            MAX_RESOURCE_NAME_LENGTH),
         sourceDatabase.getDatabaseName(),
         dbServerName,
         adminDbUserName,
