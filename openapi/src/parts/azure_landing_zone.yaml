@@ -436,6 +436,9 @@ components:
             A version of the landing zone. If not set the most recent will be used.
             If two versions available - 'v1' and 'v2' then 'v2' will be selected.
           type: string
+        region:
+          description: The region where the landing zone is deployed.
+          type: string
         createdDate:
           description: |
             A string containing date and time of Landing Zone creation.
