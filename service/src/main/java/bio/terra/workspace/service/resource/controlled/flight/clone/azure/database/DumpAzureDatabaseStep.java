@@ -124,7 +124,8 @@ public class DumpAzureDatabaseStep implements Step {
     this.azureDatabaseUtilsRunner.pgDumpDatabase(
         sourceAzureContext,
         sourceDatabase.getWorkspaceId(),
-        "dump-db-%s-%s".formatted(sourceDatabase.getDatabaseName(), destinationContainer.getResourceId()),
+        "dump-db-%s-%s"
+            .formatted(sourceDatabase.getDatabaseName(), destinationContainer.getResourceId()),
         sourceDatabase.getDatabaseName(),
         dbServerName,
         adminDbUserName,

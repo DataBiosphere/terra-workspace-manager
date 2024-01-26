@@ -71,8 +71,8 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
               creationParameters, workspaceId, null)
           .build();
   private final String mockEncryptionKey = "mock-encryption-key-123";
-  private final ControlledResourceFields mockDestinationResource = ControlledResourceFixtures.makeDefaultControlledResourceFields(
-  mockDestinationWorkspaceId);
+  private final ControlledResourceFields mockDestinationResource =
+      ControlledResourceFixtures.makeDefaultControlledResourceFields(mockDestinationWorkspaceId);
 
   @Test
   void testSuccess() throws InterruptedException {
@@ -94,7 +94,11 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         .pgDumpDatabase(
             eq(mockAzureCloudContext),
             eq(databaseResource.getWorkspaceId()),
-            eq("dump-db-%s-%s".formatted(databaseResource.getDatabaseName(), mockDestinationResource.getResourceId())),
+            eq(
+                "dump-db-%s-%s"
+                    .formatted(
+                        databaseResource.getDatabaseName(),
+                        mockDestinationResource.getResourceId())),
             eq(databaseResource.getDatabaseName()),
             eq(databaseServerName),
             eq(databaseUserName),
