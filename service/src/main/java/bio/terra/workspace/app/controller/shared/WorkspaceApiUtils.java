@@ -4,7 +4,6 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -102,10 +101,7 @@ public class WorkspaceApiUtils {
     if (policyInputs == null) {
       return null;
     }
-    if (!features.isTpsEnabled()) {
-      throw new FeatureNotSupportedException(
-          "TPS is not enabled on this instance of Workspace Manager, do not specify the policy field of a CreateWorkspace request.");
-    }
+
     return TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(policyInputs);
   }
 

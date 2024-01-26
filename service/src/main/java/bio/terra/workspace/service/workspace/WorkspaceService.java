@@ -59,7 +59,6 @@ import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.common.base.Preconditions;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -362,16 +361,15 @@ public class WorkspaceService {
   private WorkspaceDescription makeWorkspaceDescription(
       AuthenticatedUserRequest userRequest, DbWorkspaceDescription dbWorkspaceDescription) {
     TpsPaoGetResult workspacePao = null;
-    if (features.isTpsEnabled()) {
-      workspacePao =
-          Rethrow.onInterrupted(
-              () ->
-                  tpsApiDispatch.getOrCreatePao(
-                      dbWorkspaceDescription.getWorkspace().workspaceId(),
-                      TpsComponent.WSM,
-                      TpsObjectType.WORKSPACE),
-              "getOrCreatePao");
-    }
+    workspacePao =
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.getOrCreatePao(
+                    dbWorkspaceDescription.getWorkspace().workspaceId(),
+                    TpsComponent.WSM,
+                    TpsObjectType.WORKSPACE),
+            "getOrCreatePao");
+
     return new WorkspaceDescription(
         dbWorkspaceDescription.getWorkspace(),
         getHighestRole(dbWorkspaceDescription.getWorkspace().workspaceId(), userRequest),
@@ -524,22 +522,17 @@ public class WorkspaceService {
         workspaceDao.getWorkspaceDescriptionMapFromIdList(
             accessibleWorkspaces.keySet(), offset, limit);
 
-    Map<UUID, TpsPaoGetResult> paoMap;
-    if (features.isTpsEnabled()) {
-      var workspacePaos =
-          Rethrow.onInterrupted(
-              () ->
-                  tpsApiDispatch.listPaos(
-                      dbWorkspaceDescriptions.values().stream()
-                          .map(d -> d.getWorkspace().workspaceId())
-                          .toList()),
-              "listPaos");
-      paoMap =
-          workspacePaos.stream()
-              .collect(Collectors.toMap(TpsPaoGetResult::getObjectId, Function.identity()));
-    } else {
-      paoMap = new HashMap<>();
-    }
+    var workspacePaos =
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.listPaos(
+                    dbWorkspaceDescriptions.values().stream()
+                        .map(d -> d.getWorkspace().workspaceId())
+                        .toList()),
+            "listPaos");
+    Map<UUID, TpsPaoGetResult> paoMap =
+        workspacePaos.stream()
+            .collect(Collectors.toMap(TpsPaoGetResult::getObjectId, Function.identity()));
 
     // Join the DAO workspace descriptions with the Sam info to generate a list of
     // workspace descriptions

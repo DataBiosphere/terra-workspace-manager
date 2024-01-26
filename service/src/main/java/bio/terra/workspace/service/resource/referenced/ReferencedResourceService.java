@@ -161,9 +161,6 @@ public class ReferencedResourceService {
             "Clone referenced resource %s; id %s; name %s",
             sourceReferencedResource.getResourceType(), destinationResourceId, name);
 
-    // If TPS is enabled, then we want to merge policies when cloning a bucket
-    boolean mergePolicies = features.isTpsEnabled();
-
     final JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -177,7 +174,7 @@ public class ReferencedResourceService {
                 destinationWorkspaceId)
             .addParameter(ResourceKeys.RESOURCE, sourceReferencedResource)
             .addParameter(ResourceKeys.DESTINATION_RESOURCE, destinationResource)
-            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, true)
             .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
             .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest)
             .addParameter(ResourceKeys.RESOURCE_STATE_RULE, features.getStateRule());

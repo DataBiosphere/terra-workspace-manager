@@ -57,12 +57,10 @@ public class CreateWorkspaceAuthzStep implements Step {
     // resource or create a new one, this is considered successful.
     if (!canReadExistingWorkspace(workspace.getWorkspaceId())) {
       List<String> authDomains = List.of();
-      if (features.isTpsEnabled()) {
-        // Don't depend on the PAO being configured.
-        TpsPaoGetResult pao = tpsApiDispatch.getPao(workspace.workspaceId());
-        if (pao != null) {
-          authDomains = TpsUtilities.getGroupConstraintsFromInputs(pao.getEffectiveAttributes());
-        }
+      // Don't depend on the PAO being configured.
+      TpsPaoGetResult pao = tpsApiDispatch.getPao(workspace.workspaceId());
+      if (pao != null) {
+        authDomains = TpsUtilities.getGroupConstraintsFromInputs(pao.getEffectiveAttributes());
       }
       samService.createWorkspaceWithDefaults(
           userRequest, workspace.getWorkspaceId(), authDomains, projectOwnerGroupId);

@@ -303,7 +303,6 @@ public class WdsContractVerificationTest extends BaseUnitTestMocks {
 
   @State("policies allowing snapshot reference creation")
   public void allowSnapshotReferenceCreation() throws InterruptedException {
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(true);
     var policyUpdateSuccessful = new TpsPaoUpdateResult().updateApplied(true);
     when(mockTpsApiDispatch()
             .linkPao(
@@ -320,7 +319,6 @@ public class WdsContractVerificationTest extends BaseUnitTestMocks {
 
   @State("policies preventing snapshot reference creation")
   public void preventSnapshotReferenceCreation() throws InterruptedException {
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(true);
     var policiesConflicting =
         new TpsPaoUpdateResult()
             .updateApplied(false)

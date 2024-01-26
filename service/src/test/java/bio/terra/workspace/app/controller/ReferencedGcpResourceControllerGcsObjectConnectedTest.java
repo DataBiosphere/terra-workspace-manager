@@ -358,12 +358,6 @@ public class ReferencedGcpResourceControllerGcsObjectConnectedTest extends BaseC
   // workspace policy
   @Test
   void clone_policiesMerged() throws Exception {
-    logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
-    // Don't run the test if TPS is disabled
-    if (!features.isTpsEnabled()) {
-      return;
-    }
-
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
 
     // Clean up policies from previous runs, if any exist

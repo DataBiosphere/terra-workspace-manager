@@ -521,16 +521,14 @@ public class ReferencedGcpResourceController extends ControllerBase
             .build();
 
     var linkPoliciesResults =
-        features.isTpsEnabled()
-            ? workspaceService.linkPolicies(
-                uuid,
-                new TpsPaoDescription()
-                    .objectId(UUID.fromString(resource.getSnapshotId()))
-                    .component(TpsComponent.TDR)
-                    .objectType(TpsObjectType.SNAPSHOT),
-                TpsUpdateMode.FAIL_ON_CONFLICT,
-                userRequest)
-            : null;
+        workspaceService.linkPolicies(
+            uuid,
+            new TpsPaoDescription()
+                .objectId(UUID.fromString(resource.getSnapshotId()))
+                .component(TpsComponent.TDR)
+                .objectType(TpsObjectType.SNAPSHOT),
+            TpsUpdateMode.FAIL_ON_CONFLICT,
+            userRequest);
 
     // note, if createReferenceResource below fails, policy changes made above will remain
     // suggest using stairway for cleanup

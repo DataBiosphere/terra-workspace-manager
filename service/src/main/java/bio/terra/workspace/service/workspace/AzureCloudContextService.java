@@ -71,16 +71,14 @@ public class AzureCloudContextService implements CloudContextService {
       UUID workspaceUuid,
       SpendProfile spendProfile,
       AuthenticatedUserRequest userRequest) {
-    if (featureConfiguration.isTpsEnabled()) {
-      flight.addStep(
-          new ValidateLandingZoneAgainstPolicyStep(
-              appContext.getLandingZoneApiDispatch(),
-              userRequest,
-              appContext.getTpsApiDispatch(),
-              workspaceUuid,
-              workspaceService,
-              policyValidator));
-    }
+    flight.addStep(
+        new ValidateLandingZoneAgainstPolicyStep(
+            appContext.getLandingZoneApiDispatch(),
+            userRequest,
+            appContext.getTpsApiDispatch(),
+            workspaceUuid,
+            workspaceService,
+            policyValidator));
 
     // validate the MRG
     flight.addStep(

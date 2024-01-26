@@ -345,7 +345,6 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             userRequest, workspaceUuid, SamWorkspaceAction.OWN);
     workspaceService.validateWorkspaceState(workspace);
 
-    features.tpsEnabledCheck();
     TpsPolicyInputs adds = TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAddAttributes());
     TpsPolicyInputs removes =
         TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getRemoveAttributes());

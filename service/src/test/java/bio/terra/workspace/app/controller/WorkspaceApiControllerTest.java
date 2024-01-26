@@ -138,7 +138,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
     when(mockSamService().isAuthorized(any(), eq(SamConstants.SamResource.WORKSPACE), any(), any()))
         .thenReturn(true);
 
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(true);
     // We don't need to mock tpsCheck() because Mockito will already do nothing by default.
   }
 
@@ -153,16 +152,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         /* stageModel= */ null,
         /* policies= */ null,
         HttpStatus.SC_BAD_REQUEST);
-  }
-
-  @Test
-  public void createWorkspace_policyRejectedIfTpsDisabled_throws501() throws Exception {
-    // Disable TPS feature flag for this test only
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
-
-    ApiErrorReport errorReport =
-        createRawlsWorkspaceWithPolicyExpectError(HttpStatus.SC_NOT_IMPLEMENTED);
-    assertTrue(errorReport.getMessage().contains("enabled"));
   }
 
   @Test
@@ -296,9 +285,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
   @Test
   public void cloneWorkspace() throws Exception {
-    // Disable TPS feature flag for this test
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
-
     UUID workspaceId = mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST).getId();
     ApiWorkspaceDescription sourceWorkspace =
         mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspaceId);
@@ -422,17 +408,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   }
 
   @Test
-  public void getWorkspace_tpsDisabled_excludesPolicy() throws Exception {
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
-    ApiCreatedWorkspace workspace =
-        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
-
-    ApiWorkspaceDescription gotWorkspace =
-        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
-    assertEquals(0, gotWorkspace.getPolicies().size());
-  }
-
-  @Test
   public void listWorkspace_includesPolicy() throws Exception {
     // No need to actually pass policy inputs because TPS is mocked.
     ApiCreatedWorkspace workspace =
@@ -490,23 +465,6 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .get();
     assertEquals(0, gotNoPolicyWorkspace.getPolicies().size());
     assertTrue(gotNoPolicyWorkspace.getMissingAuthDomains().isEmpty());
-  }
-
-  @Test
-  public void listWorkspace_tpsDisabled_excludesPolicy() throws Exception {
-    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
-    ApiCreatedWorkspace workspace =
-        mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
-    when(mockSamService().listWorkspaceIdsAndHighestRoles(any(), any()))
-        .thenReturn(
-            ImmutableMap.of(
-                workspace.getId(),
-                new AccessibleWorkspace(
-                    workspace.getId(), WsmIamRole.OWNER, Collections.emptyList())));
-
-    ApiWorkspaceDescription gotWorkspace =
-        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
-    assertEquals(0, gotWorkspace.getPolicies().size());
   }
 
   @Test

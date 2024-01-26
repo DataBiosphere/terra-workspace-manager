@@ -16,7 +16,6 @@ public class FeatureConfiguration {
 
   private boolean azureEnabled;
   private boolean alpha1Enabled;
-  private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
   private boolean temporaryGrantEnabled;
   private WsmResourceStateRule stateRule;
@@ -35,14 +34,6 @@ public class FeatureConfiguration {
 
   public void setAlpha1Enabled(boolean alpha1Enabled) {
     this.alpha1Enabled = alpha1Enabled;
-  }
-
-  public boolean isTpsEnabled() {
-    return tpsEnabled;
-  }
-
-  public void setTpsEnabled(boolean tpsEnabled) {
-    this.tpsEnabled = tpsEnabled;
   }
 
   public boolean isBpmGcpEnabled() {
@@ -82,12 +73,6 @@ public class FeatureConfiguration {
     }
   }
 
-  public void tpsEnabledCheck() {
-    if (!isTpsEnabled()) {
-      throw new FeatureNotSupportedException("Terra Policy Service is not enabled");
-    }
-  }
-
   /**
    * Write the feature settings into the log
    *
@@ -96,7 +81,6 @@ public class FeatureConfiguration {
   public void logFeatures() {
     logger.info("Feature: azure-enabled: {}", isAzureEnabled());
     logger.info("Feature: alpha1-enabled: {}", isAlpha1Enabled());
-    logger.info("Feature: tps-enabled: {}", isTpsEnabled());
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());
     logger.info("Feature: temporary-grant-enabled: {}", isTemporaryGrantEnabled());
     logger.info("Feature: state-rule: {}", getStateRule());

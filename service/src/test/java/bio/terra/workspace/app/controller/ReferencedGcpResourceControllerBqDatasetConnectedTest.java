@@ -398,12 +398,6 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
   // workspace policy
   @Test
   void clone_policiesMerged() throws Exception {
-    logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
-    // Don't run the test if TPS is disabled
-    if (!features.isTpsEnabled()) {
-      return;
-    }
-
     // Clean up policies from previous runs, if any exist
     mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId);
     mockWorkspaceV1Api.deletePolicies(userAccessUtils.defaultUserAuthRequest(), workspaceId2);

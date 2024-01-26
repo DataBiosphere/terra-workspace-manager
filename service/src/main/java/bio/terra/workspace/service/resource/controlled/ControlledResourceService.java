@@ -139,13 +139,11 @@ public class ControlledResourceService {
             "Create controlled resource %s; id %s; name %s",
             resource.getResourceType(), resource.getResourceId(), resource.getName());
 
-    if (features.isTpsEnabled()) {
-      ResourceValidationUtils.validateRegionAgainstPolicy(
-          tpsApiDispatch,
-          resource.getWorkspaceId(),
-          resource.getRegion(),
-          resource.getResourceType().getCloudPlatform());
-    }
+    ResourceValidationUtils.validateRegionAgainstPolicy(
+        tpsApiDispatch,
+        resource.getWorkspaceId(),
+        resource.getRegion(),
+        resource.getResourceType().getCloudPlatform());
 
     return jobService
         .newJob()
@@ -316,9 +314,6 @@ public class ControlledResourceService {
             sourceBucketResource.getResourceId(),
             sourceBucketResource.getName());
 
-    // If TPS is enabled, then we want to merge policies when cloning a bucket
-    boolean mergePolicies = features.isTpsEnabled();
-
     JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -335,7 +330,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.DESTINATION_BUCKET_NAME, destinationBucketName)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
-            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, true)
             .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
     return jobBuilder.submit();
   }
@@ -375,9 +370,6 @@ public class ControlledResourceService {
             sourceDatasetResource.getResourceId(),
             sourceDatasetResource.getName());
 
-    // If TPS is enabled, then we want to merge policies when cloning a bucket
-    boolean mergePolicies = features.isTpsEnabled();
-
     JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -396,7 +388,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ControlledResourceKeys.LOCATION, destinationLocation)
             .addParameter(ControlledResourceKeys.DESTINATION_DATASET_NAME, destinationDatasetName)
-            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, true)
             .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions);
     return jobBuilder.submit();
   }
@@ -546,9 +538,6 @@ public class ControlledResourceService {
             sourceContainer.getResourceId(),
             sourceContainer.getName());
 
-    // If TPS is enabled, then we want to merge policies when cloning a container
-    boolean mergePolicies = features.isTpsEnabled();
-
     final JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -565,7 +554,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(
                 ControlledResourceKeys.DESTINATION_CONTAINER_NAME, destinationContainerName)
-            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, true)
             .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
             .addParameter(ControlledResourceKeys.PREFIXES_TO_CLONE, prefixesToClone);
     return jobBuilder.submit();
@@ -639,9 +628,6 @@ public class ControlledResourceService {
             "Clone controlled flex resource id %s; name %s",
             sourceFlexResource.getResourceId(), sourceFlexResource.getName());
 
-    // If TPS is enabled, then we want to merge policies when cloning a flex resource.
-    boolean mergePolicies = features.isTpsEnabled();
-
     final JobBuilder jobBuilder =
         jobService
             .newJob()
@@ -657,7 +643,7 @@ public class ControlledResourceService {
             .addParameter(ResourceKeys.RESOURCE_DESCRIPTION, destinationDescription)
             .addParameter(ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
             .addParameter(ResourceKeys.RESOURCE, sourceFlexResource)
-            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, mergePolicies)
+            .addParameter(WorkspaceFlightMapKeys.MERGE_POLICIES, true)
             .addParameter(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
 
     return jobBuilder.submitAndWait(ControlledFlexibleResource.class);

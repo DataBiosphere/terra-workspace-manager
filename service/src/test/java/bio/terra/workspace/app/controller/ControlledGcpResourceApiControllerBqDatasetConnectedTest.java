@@ -673,11 +673,6 @@ public class ControlledGcpResourceApiControllerBqDatasetConnectedTest extends Ba
   // workspace policy
   @Test
   void clone_policiesMerged() throws Exception {
-    logger.info("features.isTpsEnabled(): %s".formatted(features.isTpsEnabled()));
-    // Don't run the test if TPS is disabled
-    if (!features.isTpsEnabled()) {
-      return;
-    }
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUser().getAuthenticatedRequest();
 
     // Clean up policies from previous runs, if any exist

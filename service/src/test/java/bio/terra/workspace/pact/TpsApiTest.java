@@ -107,7 +107,6 @@ public class TpsApiTest {
     when(tpsConfig.getAccessToken()).thenReturn("dummyToken");
     when(tpsConfig.getBasePath()).thenReturn(mockServer.getUrl());
     var featureConfig = new FeatureConfiguration();
-    featureConfig.setTpsEnabled(true);
     dispatch = new TpsApiDispatch(featureConfig, tpsConfig, OpenTelemetry.noop());
   }
 
