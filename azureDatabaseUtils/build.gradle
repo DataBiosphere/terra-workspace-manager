@@ -1,7 +1,7 @@
 // Project Plugins
 plugins {
     id 'terra-workspace-manager.java-conventions'
-    id "com.github.ben-manes.versions" version "0.50.0"
+    id "com.github.ben-manes.versions" version "0.51.0"
     id "com.google.cloud.tools.jib" version "3.4.0"
     id "de.undercouch.download" version "5.5.0"
     id "org.springframework.boot"
