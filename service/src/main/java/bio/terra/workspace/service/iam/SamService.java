@@ -91,7 +91,11 @@ public class SamService {
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, FeatureConfiguration features, SamUserFactory samUserFactory, OpenTelemetry openTelemetry) {
+  public SamService(
+      SamConfiguration samConfig,
+      FeatureConfiguration features,
+      SamUserFactory samUserFactory,
+      OpenTelemetry openTelemetry) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.features = features;
