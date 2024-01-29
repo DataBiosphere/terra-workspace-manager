@@ -439,6 +439,7 @@ components:
         region:
           description: The region where the landing zone is deployed.
           type: string
+          nullable: true
         createdDate:
           description: |
             A string containing date and time of Landing Zone creation.
