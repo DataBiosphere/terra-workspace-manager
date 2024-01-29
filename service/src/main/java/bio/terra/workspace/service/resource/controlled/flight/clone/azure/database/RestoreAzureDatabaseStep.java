@@ -21,8 +21,10 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 
 public class RestoreAzureDatabaseStep implements Step {
+  private static final Integer MAX_RESOURCE_NAME_LENGTH = 63;
 
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;
@@ -106,7 +108,11 @@ public class RestoreAzureDatabaseStep implements Step {
     this.azureDatabaseUtilsRunner.pgRestoreDatabase(
         workingMap.get(AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
         destinationWorkspaceId,
-        "restore-db-" + destinationDatabase.getResourceId(),
+        StringUtils.truncate(
+            "restore-db-%s-%s"
+                .formatted(
+                    destinationDatabase.getDatabaseName(), destinationDatabase.getResourceId()),
+            MAX_RESOURCE_NAME_LENGTH),
         destinationDatabase.getDatabaseName(),
         dbServerName,
         adminDbUserName,

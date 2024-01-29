@@ -29,6 +29,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -74,7 +75,11 @@ class RestoreAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
         .pgRestoreDatabase(
             mockAzureCloudContext,
             databaseResource.getWorkspaceId(),
-            "restore-db-%s".formatted(databaseResource.getResourceId()),
+            StringUtils.truncate(
+                "restore-db-%s-%s"
+                    .formatted(
+                        databaseResource.getDatabaseName(), databaseResource.getResourceId()),
+                63),
             databaseResource.getDatabaseName(),
             databaseServerName,
             databaseUserName,
