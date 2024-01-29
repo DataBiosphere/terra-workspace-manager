@@ -313,9 +313,3 @@ otel:
         service:
           name: ${spring.application.name}
           version: ${version.gitTag:unknown}
-
-terra:
-  common:
-    retry:
-      transaction:
-        slow-retry-max-attempts:
