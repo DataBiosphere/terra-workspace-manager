@@ -4,9 +4,9 @@ tasks.jibDockerBuild.dependsOn(extractProfilerAgent)
 tasks.jibBuildTar.dependsOn(extractProfilerAgent)
 tasks.spotlessJava.dependsOn(generateSwaggerCodeServer)
 
-// Don't run any spotless or spotbugs tasks unless we have actual source file changes. The best
+// Don't run any spotless tasks unless we have actual source file changes. The best
 // way to determine that is to rely on the compileJava determination.
-final TASKS_ONLY_IF_COMPILE_JAVA = [spotlessApply, spotlessJava, spotlessJavaApply, spotlessCheck, spotbugsMain]
+final TASKS_ONLY_IF_COMPILE_JAVA = [spotlessApply, spotlessJava, spotlessJavaApply, spotlessCheck]
 for (task in TASKS_ONLY_IF_COMPILE_JAVA) {
   // Run every time the inputs to compilation change
   task.dependsOn(compileJava.inputs.files)
@@ -14,10 +14,5 @@ for (task in TASKS_ONLY_IF_COMPILE_JAVA) {
   task.mustRunAfter(compileJava)
 }
 
-spotbugsTest.dependsOn(compileTestJava.inputs.files)
-spotbugsTest.mustRunAfter(compileTestJava)
-spotbugsTest.configure {
-  onlyIf { compileTestJava.didWork }
-}
 // Explicit dep to avoid accidental dep deprecation warning.
 tasks.processResources.dependsOn(generateVersionProperties)

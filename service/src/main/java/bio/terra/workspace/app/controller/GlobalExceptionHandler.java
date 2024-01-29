@@ -2,6 +2,7 @@ package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.generated.model.ApiErrorReport;
+import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -54,6 +55,14 @@ public class GlobalExceptionHandler {
         new ApiErrorReport()
             .message(validationErrorMessage)
             .statusCode(HttpStatus.BAD_REQUEST.value());
+    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ApiErrorReport> constraintViolationExceptionHandler(
+      ConstraintViolationException ex) {
+    ApiErrorReport errorReport =
+        new ApiErrorReport().message(ex.getMessage()).statusCode(HttpStatus.BAD_REQUEST.value());
     return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
   }
 

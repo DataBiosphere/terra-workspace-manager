@@ -9,7 +9,6 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResourceC
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.workspace.exceptions.CloudPlatformNotImplementedException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -39,26 +38,6 @@ public final class ControllerValidationUtils {
    */
   public static final Pattern USER_FACING_ID_VALIDATION_PATTERN =
       Pattern.compile("^[a-z0-9][-_a-z0-9]{2,62}$");
-
-  /**
-   * Utility to validate limit/offset parameters used in pagination.
-   *
-   * <p>This throws ValidationExceptions if invalid offset or limit values are provided. This only
-   * asserts that offset is at least 0 and limit is at least 1. More specific validation can be
-   * added for individual endpoints.
-   */
-  public static void validatePaginationParams(int offset, int limit) {
-    List<String> errors = new ArrayList<>();
-    if (offset < 0) {
-      errors.add("offset must be greater than or equal to 0.");
-    }
-    if (limit < 1) {
-      errors.add("limit must be greater than or equal to 1.");
-    }
-    if (!errors.isEmpty()) {
-      throw new ValidationException("Invalid pagination parameters.", errors);
-    }
-  }
 
   /**
    * Validate that a user-provided string matches the format of an email address.

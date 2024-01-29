@@ -92,8 +92,8 @@ public class RetrieveDataTransferMetadataStep implements Step {
     String bucketName =
         FlightUtils.getInputParameterOrWorkingValue(
             flightContext,
-            /*inputKey=*/ ControlledResourceKeys.DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST,
-            /*workingKey=*/ ControlledResourceKeys.DESTINATION_BUCKET_NAME,
+            /* inputKey= */ ControlledResourceKeys.DESTINATION_BUCKET_NAME_FOR_SIGNED_URL_LIST,
+            /* workingKey= */ ControlledResourceKeys.DESTINATION_BUCKET_NAME,
             String.class);
     return new StorageTransferInput(
         workspaceUuid, projectId, bucketName, DESTINATION_BUCKET_ROLE_NAMES);

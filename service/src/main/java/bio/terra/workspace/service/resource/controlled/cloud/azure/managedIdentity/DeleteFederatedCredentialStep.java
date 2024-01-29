@@ -19,12 +19,17 @@ public class DeleteFederatedCredentialStep implements Step {
   public final String k8sNamespace;
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
+  private final MissingIdentityBehavior missingIdentityBehavior;
 
   public DeleteFederatedCredentialStep(
-      String k8sNamespace, AzureConfiguration azureConfig, CrlService crlService) {
+      String k8sNamespace,
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      MissingIdentityBehavior missingIdentityBehavior) {
     this.k8sNamespace = k8sNamespace;
     this.azureConfig = azureConfig;
     this.crlService = crlService;
+    this.missingIdentityBehavior = missingIdentityBehavior;
   }
 
   @Override
@@ -34,6 +39,13 @@ public class DeleteFederatedCredentialStep implements Step {
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
+
+    // guard against the managed identity not existing from a previous deletion
+    if (!GetManagedIdentityStep.managedIdentityExistsInFlightWorkingMap(context)
+        && missingIdentityBehavior == MissingIdentityBehavior.ALLOW_MISSING) {
+      logger.info("Managed identity not found, but allowed to be missing");
+      return StepResult.getStepResultSuccess();
+    }
 
     try {
       String uamiName = GetManagedIdentityStep.getManagedIdentityName(context);

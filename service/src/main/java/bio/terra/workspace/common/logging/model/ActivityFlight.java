@@ -5,6 +5,8 @@ import bio.terra.workspace.service.admin.flights.cloudcontexts.gcp.SyncGcpIamRol
 import bio.terra.workspace.service.folder.flights.DeleteFolderFlight;
 import bio.terra.workspace.service.grant.flight.RevokeTemporaryGrantFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.container.CloneControlledAzureStorageContainerResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.database.CloneControlledAzureDatabaseResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.managedIdentity.CloneControlledAzureManagedIdentityResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.CloneControlledGcsBucketResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.bucket.SignedUrlListDataTransferFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.dataset.CloneControlledGcpBigQueryDatasetResourceFlight;
@@ -42,11 +44,11 @@ public enum ActivityFlight {
   CLOUD_CONTEXT_CREATE_FLIGHT(
       CreateCloudContextFlight.class.getName(),
       ActivityLogChangedTarget.CLOUD_CONTEXT,
-      /*logInFlight=*/ true),
+      /* logInFlight= */ true),
   CLOUD_CONTEXT_DELETE_FLIGHT(
       DeleteCloudContextFlight.class.getName(),
       ActivityLogChangedTarget.CLOUD_CONTEXT,
-      /*logInFlight=*/ true),
+      /* logInFlight= */ true),
   DELETE_CLOUD_CONTEXT_RESOURCE_FLIGHT(
       DeleteCloudContextResourceFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
 
@@ -56,17 +58,17 @@ public enum ActivityFlight {
   CONTROLLED_RESOURCE_CREATE_FLIGHT(
       CreateControlledResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE,
-      /*logInFlight=*/ true),
+      /* logInFlight= */ true),
   CONTROLLED_RESOURCE_DELETE_FLIGHT(
       DeleteControlledResourcesFlight.class.getName(), ActivityLogChangedTarget.RESOURCE),
   RESOURCE_UPDATE_FLIGHT(
       UpdateResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE,
-      /*logInFlight=*/ true),
+      /* logInFlight= */ true),
   CLONE_REFERENCED_RESOURCE_FLIGHT(
       CloneReferencedResourceFlight.class.getName(),
       ActivityLogChangedTarget.RESOURCE,
-      /*logInFlight=*/ true),
+      /* logInFlight= */ true),
   CLONE_FLEX_RESOURCE_FLIGHT(
       CloneControlledFlexibleResourceFlight.class.getName(),
       ActivityLogChangedTarget.CONTROLLED_FLEXIBLE_RESOURCE),
@@ -101,7 +103,13 @@ public enum ActivityFlight {
   // AZURE
   CONTROLLED_AZURE_STORAGE_CONTAINER_CLONE_FLIGHT(
       CloneControlledAzureStorageContainerResourceFlight.class.getName(),
-      ActivityLogChangedTarget.CONTROLLED_AZURE_STORAGE_CONTAINER);
+      ActivityLogChangedTarget.CONTROLLED_AZURE_STORAGE_CONTAINER),
+  CONTROLLED_AZURE_MANAGED_IDENTITY_CLONE_FLIGHT(
+      CloneControlledAzureManagedIdentityResourceFlight.class.getName(),
+      ActivityLogChangedTarget.CONTROLLED_AZURE_MANAGED_IDENTITY),
+  CONTROLLED_AZURE_DATABASE_CLONE_FLIGHT(
+      CloneControlledAzureDatabaseResourceFlight.class.getName(),
+      ActivityLogChangedTarget.CONTROLLED_AZURE_DATABASE);
 
   private final String flightClassName;
   private final ActivityLogChangedTarget changedTarget;

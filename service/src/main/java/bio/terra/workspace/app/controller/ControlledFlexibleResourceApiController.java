@@ -31,10 +31,9 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,10 +79,10 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     this.wsmResourceService = wsmResourceService;
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledFlexibleResource> createFlexibleResource(
-      UUID workspaceUuid, @Valid ApiCreateControlledFlexibleResourceRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledFlexibleResourceRequestBody body) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace =
         workspaceService.validateMcWorkspaceAndAction(
@@ -126,12 +125,10 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiFlexibleResource> updateFlexibleResource(
-      UUID workspaceUuid,
-      UUID resourceUuid,
-      @Valid ApiUpdateControlledFlexibleResourceRequestBody body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiUpdateControlledFlexibleResourceRequestBody body) {
     logger.info(
         "Updating flexible resource; resourceId {} workspaceId {}", resourceUuid, workspaceUuid);
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -168,7 +165,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     return new ResponseEntity<>(updatedResource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteFlexibleResource(UUID workspaceUuid, UUID resourceUuid) {
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -187,7 +184,7 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiFlexibleResource> getFlexibleResource(
       UUID workspaceUuid, UUID resourceUuid) {
@@ -200,12 +197,10 @@ public class ControlledFlexibleResourceApiController extends ControlledResourceC
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiCloneControlledFlexibleResourceResult> cloneFlexibleResource(
-      UUID workspaceUuid,
-      UUID resourceUuid,
-      @Valid ApiCloneControlledFlexibleResourceRequest body) {
+      UUID workspaceUuid, UUID resourceUuid, ApiCloneControlledFlexibleResourceRequest body) {
     logger.info(
         "Cloning flex resource resourceId {} workspaceUuid {}", resourceUuid, workspaceUuid);
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();

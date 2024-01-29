@@ -5,8 +5,8 @@ import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiOperationState;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
+import jakarta.servlet.http.HttpServletRequest;
 import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 
 public class ControllerUtils {

@@ -379,41 +379,6 @@ public class CreateAzureVmStepTest extends BaseAzureUnitTest {
   }
 
   @Test
-  void createVm_VmExtensionProvisioningError() throws InterruptedException {
-    ApiAzureVmCreationParameters creationParameters =
-        ControlledAzureResourceFixtures.getAzureVmCreationParameters();
-
-    FlightMap creationParametersFlightMap = new FlightMap();
-    creationParametersFlightMap.put(ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    creationParametersFlightMap.makeImmutable();
-    when(mockFlightContext.getInputParameters()).thenReturn(creationParametersFlightMap);
-
-    var createAzureVmStep =
-        new CreateAzureVmStep(
-            mockAzureConfig,
-            mockCrlService,
-            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
-            mockResourceDao);
-
-    // throw a vm extension provisioning exception
-    // azure sets the HTTP status code to 200 -- we want to make sure to set that here
-    // so we don't trigger the generic 4xx retry logic
-    var mockResponse = mock(HttpResponse.class);
-    when(mockResponse.getStatusCode()).thenReturn(200);
-    var vmExtensionException =
-        new ManagementException(
-            "error",
-            mockResponse,
-            new ManagementError(
-                AzureManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR, "VM error"));
-    when(mockVmStage12.create(any(Context.class))).thenThrow(vmExtensionException);
-
-    StepResult stepResult = createAzureVmStep.doStep(mockFlightContext);
-
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-  }
-
-  @Test
   void createVm_ResourceNotFound() throws InterruptedException {
     ApiAzureVmCreationParameters creationParameters =
         ControlledAzureResourceFixtures.getAzureVmCreationParameters();

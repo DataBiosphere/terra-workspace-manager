@@ -11,6 +11,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
+import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -44,6 +45,8 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
             .storageContainerName(UUID.randomUUID().toString())
             .build();
 
+    UUID destinationWorkspaceId = UUID.randomUUID();
+
     FlightMap inputs = new FlightMap();
     inputs.put(WorkspaceFlightMapKeys.ResourceKeys.RESOURCE, resource);
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
@@ -51,7 +54,12 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
     inputs.put(
         WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_RESOURCE_ID, UUID.randomUUID());
     inputs.put(
-        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID, UUID.randomUUID());
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_CONTAINER_NAME,
+        "clone-%s-%s"
+            .formatted(destinationWorkspaceId.toString(), resource.getStorageContainerName()));
+    inputs.put(
+        WorkspaceFlightMapKeys.ControlledResourceKeys.DESTINATION_WORKSPACE_ID,
+        destinationWorkspaceId);
 
     var result =
         StairwayTestUtils.blockUntilFlightCompletes(
@@ -65,7 +73,7 @@ public class CloneControlledAzureStorageContainerResourceFlightTest extends Base
         result
             .getResultMap()
             .get()
-            .get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureStorageContainer.class);
+            .get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
 
     assertEquals(resultContainer.effectiveCloningInstructions(), CloningInstructions.COPY_NOTHING);
   }

@@ -26,7 +26,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -71,7 +71,7 @@ public class ReferencedResourceService {
     this.stageService = stageService;
   }
 
-  @Traced
+  @WithSpan
   public ReferencedResource createReferenceResource(
       ReferencedResource resource, AuthenticatedUserRequest userRequest) {
     resourceDao.createReferencedResource(resource);
@@ -84,7 +84,7 @@ public class ReferencedResourceService {
     return getReferenceResource(resource.getWorkspaceId(), resource.getResourceId());
   }
 
-  @Traced
+  @WithSpan
   public ReferencedResource createReferenceResourceForClone(ReferencedResource resourceToClone) {
     resourceDao.createReferencedResource(resourceToClone);
     return getReferenceResource(resourceToClone.getWorkspaceId(), resourceToClone.getResourceId());
@@ -98,7 +98,7 @@ public class ReferencedResourceService {
    * @param resourceId resource to delete
    * @param resourceType wsm resource type that the to-be-deleted resource should have
    */
-  @Traced
+  @WithSpan
   public void deleteReferenceResourceForResourceType(
       UUID workspaceUuid,
       UUID resourceId,
@@ -115,17 +115,17 @@ public class ReferencedResourceService {
     }
   }
 
-  @Traced
+  @WithSpan
   public ReferencedResource getReferenceResource(UUID workspaceId, UUID resourceId) {
     return resourceDao.getResource(workspaceId, resourceId).castToReferencedResource();
   }
 
-  @Traced
+  @WithSpan
   public ReferencedResource getReferenceResourceByName(UUID workspaceUuid, String name) {
     return resourceDao.getResourceByName(workspaceUuid, name).castToReferencedResource();
   }
 
-  @Traced
+  @WithSpan
   public boolean checkAccess(
       UUID workspaceUuid, UUID resourceId, AuthenticatedUserRequest userRequest) {
     ReferencedResource referencedResource =
@@ -133,7 +133,7 @@ public class ReferencedResourceService {
     return referencedResource.checkAccess(beanBag, userRequest);
   }
 
-  @Traced
+  @WithSpan
   public ReferencedResource cloneReferencedResource(
       ReferencedResource sourceReferencedResource,
       UUID destinationWorkspaceId,
@@ -208,7 +208,7 @@ public class ReferencedResourceService {
    * @param action the action to authorize against the resource
    * @return validated resource
    */
-  @Traced
+  @WithSpan
   public ReferencedResource validateReferencedResourceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, UUID resourceId, String action) {
     workspaceService.validateWorkspaceAndAction(userRequest, workspaceUuid, action);

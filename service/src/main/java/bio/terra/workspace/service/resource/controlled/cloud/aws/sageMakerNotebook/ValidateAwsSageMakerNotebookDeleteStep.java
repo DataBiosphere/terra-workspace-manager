@@ -48,8 +48,7 @@ public class ValidateAwsSageMakerNotebookDeleteStep implements Step {
           AwsUtils.getSageMakerNotebookStatus(credentialsProvider, resource);
 
       switch (notebookStatus) {
-        case STOPPED, FAILED, DELETING -> {
-        } // can delete
+        case STOPPED, FAILED, DELETING -> {} // can delete
         default -> { // all other cases
           // TODO(TERRA-560) Store this as a Validation exception in Step result
           logger.error(

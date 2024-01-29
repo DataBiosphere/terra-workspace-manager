@@ -291,7 +291,7 @@ public class ResourceDaoTest extends BaseUnitTest {
     resourceDao.createResourceFailure(
         initialBucket,
         UUID.randomUUID().toString(),
-        /*exception=*/ null,
+        /* exception= */ null,
         WsmResourceStateRule.DELETE_ON_FAILURE);
     ControlledGcsBucketResource retrievedBucket =
         resourceDao

@@ -116,8 +116,8 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
         sourceResourceName,
         RESOURCE_DESCRIPTION,
         sourceBucketName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
+        /* expectedLastUpdatedBy= */ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiGcpGcsBucketResource gotResource =
@@ -186,7 +186,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
             sourceResource.getMetadata().getResourceId(),
             newName,
             newDescription,
-            /*newBucketName=*/ null,
+            /* newBucketName= */ null,
             newCloningInstruction);
 
     // Update the sourceResource to the updated one as all the tests are sharing
@@ -230,11 +230,11 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
     mockGcpApi.cloneReferencedGcsBucketAndExpect(
         userAccessUtils.secondUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_FORBIDDEN);
   }
 
@@ -253,11 +253,11 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
 
     mockGcpApi.cloneReferencedGcsBucketAndExpect(
         userAccessUtils.secondUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_FORBIDDEN);
 
     mockWorkspaceV1Api.removeRole(
@@ -288,11 +288,11 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     ApiGcpGcsBucketResource clonedResource =
         mockGcpApi.cloneReferencedGcsBucket(
             userAccessUtils.secondUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
-            /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId2,
+            /* sourceWorkspaceId= */ workspaceId,
+            /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+            /* destWorkspaceId= */ workspaceId2,
             ApiCloningInstructionsEnum.REFERENCE,
-            /*destResourceName=*/ null);
+            /* destResourceName= */ null);
 
     assertClonedGcsBucket(
         clonedResource,
@@ -300,7 +300,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
         workspaceId2,
         sourceResourceName,
         sourceBucketName,
-        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getSecondUserEmail(),
         userAccessUtils.secondUserAuthRequest());
     mockWorkspaceV1Api.removeRole(
         userAccessUtils.defaultUserAuthRequest(),
@@ -325,9 +325,9 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     ApiGcpGcsBucketResource clonedResource =
         mockGcpApi.cloneReferencedGcsBucket(
             userRequest,
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId,
+            /* destWorkspaceId= */ workspaceId,
             ApiCloningInstructionsEnum.NOTHING,
             destResourceName);
 
@@ -345,9 +345,9 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     ApiGcpGcsBucketResource clonedResource =
         mockGcpApi.cloneReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId,
+            /* destWorkspaceId= */ workspaceId,
             ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
@@ -358,7 +358,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
         workspaceId,
         destResourceName,
         sourceBucketName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
@@ -377,9 +377,9 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     ApiGcpGcsBucketResource clonedResource =
         mockGcpApi.cloneReferencedGcsBucket(
             userAccessUtils.defaultUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId2,
+            /* destWorkspaceId= */ workspaceId2,
             ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
@@ -390,7 +390,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
         workspaceId2,
         destResourceName,
         sourceBucketName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
@@ -415,21 +415,21 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /* policiesToRemove= */ null);
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
+        /* policiesToRemove= */ null);
 
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     mockGcpApi.cloneReferencedGcsBucket(
         userAccessUtils.defaultUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
+        /* sourceWorkspaceId= */ workspaceId,
         sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
         destResourceName);
 
@@ -464,7 +464,7 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
         expectedWorkspaceId,
         expectedResourceName,
         expectedDescription,
-        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        /* expectedResourceLineage= */ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);
 
@@ -489,8 +489,8 @@ public class ReferencedGcpResourceControllerGcsBucketConnectedTest extends BaseC
         expectedWorkspaceId,
         expectedResourceName,
         RESOURCE_DESCRIPTION,
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,
         StewardshipType.REFERENCED,
         cloneUserRequest);

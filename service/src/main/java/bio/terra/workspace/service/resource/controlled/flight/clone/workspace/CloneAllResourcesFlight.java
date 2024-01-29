@@ -106,8 +106,35 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
           }
-            // CONTROLLED_AZURE_MANAGED_IDENTITY, CONTROLLED_AZURE_DATABASE, CONTROLLED_AZURE_DISK
-            // CONTROLLED_AZURE_VM, CONTROLLED_AZURE_BATCH_POOL: not supported / implemented
+
+          case CONTROLLED_AZURE_MANAGED_IDENTITY -> {
+            addStep(
+                new LaunchCloneControlledAzureManagedIdentityResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY),
+                    resourceCloneInputs.getFlightId(),
+                    resourceCloneInputs.getDestinationResourceId()));
+            addStep(
+                new AwaitCloneControlledAzureManagedIdentityResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY),
+                    resourceCloneInputs.getFlightId()),
+                RetryRules.cloudLongRunning());
+          }
+
+          case CONTROLLED_AZURE_DATABASE -> {
+            addStep(
+                new LaunchCloneControlledAzureDatabaseResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE),
+                    resourceCloneInputs.getFlightId(),
+                    resourceCloneInputs.getDestinationResourceId()));
+            addStep(
+                new AwaitCloneControlledAzureDatabaseResourceFlightStep(
+                    resource.castByEnum(WsmResourceType.CONTROLLED_AZURE_DATABASE),
+                    resourceCloneInputs.getFlightId()),
+                RetryRules.shortDatabase());
+          }
+
+            // CONTROLLED_AZURE_DISK, CONTROLLED_AZURE_VM, CONTROLLED_AZURE_BATCH_POOL: not
+            // supported / implemented
 
             // AWS
             // TODO(BENCH-694): support clone CONTROLLED_AWS_S3_STORAGE_FOLDER
@@ -130,10 +157,10 @@ public class CloneAllResourcesFlight extends Flight {
           }
 
           default ->
-          // Can't throw in a flight constructor
-          logger.error(
-              "Unsupported controlled resource type {}",
-              resourceCloneInputs.getResource().getResourceType());
+              // Can't throw in a flight constructor
+              logger.error(
+                  "Unsupported controlled resource type {}",
+                  resourceCloneInputs.getResource().getResourceType());
         }
         break;
 

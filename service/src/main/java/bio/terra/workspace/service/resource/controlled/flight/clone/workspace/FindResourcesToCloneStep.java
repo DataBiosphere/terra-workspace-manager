@@ -28,6 +28,13 @@ import org.slf4j.LoggerFactory;
  * (cloneable) resource and possibly the flightID.
  */
 public class FindResourcesToCloneStep implements Step {
+  private static final List<StewardshipType> stewardshipCloneOrder =
+      List.of(StewardshipType.REFERENCED, StewardshipType.CONTROLLED);
+  private static final List<WsmResourceType> resourceCloneOrder =
+      List.of(
+          WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER,
+          WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY,
+          WsmResourceType.CONTROLLED_AZURE_DATABASE);
 
   private static final Logger logger = LoggerFactory.getLogger(FindResourcesToCloneStep.class);
   private final ResourceDao resourceDao;
@@ -66,16 +73,19 @@ public class FindResourcesToCloneStep implements Step {
             new ResourceCloneInputs(
                 resource,
                 context.getStairway().createFlightId(),
-                /*destinationResourceId=*/ UUID.randomUUID(),
+                /* destinationResourceId= */ UUID.randomUUID(),
                 folderId != null ? UUID.fromString(folderIdMap.get(folderId)) : null));
       }
 
     } while (batch.size() == limit);
 
-    // sort the resources by stewardship type reversed, so reference types go first
+    // sort the resources first by stewardship type then resource type
     result.sort(
         Comparator.comparing(
-            r -> r.getResource().getStewardshipType().toString(), Comparator.reverseOrder()));
+            r ->
+                stewardshipCloneOrder.indexOf(r.getResource().getStewardshipType())
+                        * resourceCloneOrder.size()
+                    + resourceCloneOrder.indexOf(r.getResource().getResourceType())));
     logger.info(
         "Will clone resources with stewardship types {}",
         result.stream()
@@ -94,12 +104,17 @@ public class FindResourcesToCloneStep implements Step {
   }
 
   private static boolean isCloneable(WsmResource resource) {
+    WsmResourceType wsmResourceType = resource.getResourceType();
+
+    boolean isCloneableResourceType =
+        WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE == wsmResourceType
+            || WsmResourceType.CONTROLLED_GCP_GCS_BUCKET == wsmResourceType
+            || WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET == wsmResourceType
+            || WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER == wsmResourceType
+            || WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY == wsmResourceType
+            || WsmResourceType.CONTROLLED_AZURE_DATABASE == wsmResourceType;
+
     return StewardshipType.REFERENCED == resource.getStewardshipType()
-        || (StewardshipType.CONTROLLED == resource.getStewardshipType()
-            && (WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE == resource.getResourceType()
-                || WsmResourceType.CONTROLLED_GCP_GCS_BUCKET == resource.getResourceType()
-                || WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET == resource.getResourceType()
-                || WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER
-                    == resource.getResourceType()));
+        || (StewardshipType.CONTROLLED == resource.getStewardshipType() && isCloneableResourceType);
   }
 }

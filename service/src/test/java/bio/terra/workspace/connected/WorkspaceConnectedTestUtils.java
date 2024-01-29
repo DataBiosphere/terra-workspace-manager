@@ -28,6 +28,7 @@ public class WorkspaceConnectedTestUtils {
   private @Autowired CrlService crlService;
   private @Autowired SpendProfileService spendProfileService;
   private @Autowired FeatureConfiguration features;
+
   /**
    * Creates a workspace with a GCP cloud context.
    *

@@ -88,13 +88,14 @@ public class WorkspaceDeleteFlight extends Flight {
         WorkspaceStage.valueOf(
             parameters.get(WorkspaceFlightMapKeys.WORKSPACE_STAGE, String.class));
 
+    if (context.getFeatureConfiguration().isTpsEnabled()) {
+      addStep(
+          new DeleteWorkspacePoliciesStep(context.getTpsApiDispatch(), request, workspaceId),
+          retryRule);
+    }
+
     switch (stage) {
       case MC_WORKSPACE:
-        if (context.getFeatureConfiguration().isTpsEnabled()) {
-          addStep(
-              new DeleteWorkspacePoliciesStep(context.getTpsApiDispatch(), request, workspaceId),
-              retryRule);
-        }
         addStep(
             new DeleteWorkspaceAuthzStep(context.getSamService(), request, workspaceId), retryRule);
         break;

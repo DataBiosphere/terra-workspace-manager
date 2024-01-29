@@ -152,7 +152,7 @@ class CreateGcpContextFlightTest extends BaseConnectedTest {
 
     FlightMap inputs =
         WorkspaceFixtures.createCloudContextInputs(
-            workspaceUuid, userRequest, CloudPlatform.GCP, /*spendProfile=*/ null);
+            workspaceUuid, userRequest, CloudPlatform.GCP, /* spendProfile= */ null);
 
     assertThrows(
         MakeFlightException.class,

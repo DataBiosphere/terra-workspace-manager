@@ -77,7 +77,7 @@ public class NotebookUtils {
     var commonParameters =
         makeControlledResourceCommonFields(
             resourceName,
-            /*privateUser=*/ null,
+            /* privateUser= */ null,
             CloningInstructionsEnum.NOTHING,
             ManagedBy.USER,
             AccessScope.PRIVATE_ACCESS);

@@ -11,6 +11,7 @@ import bio.terra.workspace.common.utils.MakeFlightIdsStep;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.LinkSpendProfilePolicyAttributesStep;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
 import bio.terra.workspace.service.spendprofile.SpendProfile;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -51,14 +52,23 @@ public class CreateWorkspaceV2Flight extends Flight {
         new CreateWorkspaceStartStep(workspace, appContext.getWorkspaceDao(), wsmResourceStateRule),
         dbRetryRule);
 
+    if (appContext.getFeatureConfiguration().isTpsEnabled()) {
+      addStep(
+          new CreateWorkspacePoliciesStep(
+              workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
+          serviceRetryRule);
+    }
+
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspace.getWorkspaceStage()) {
       case MC_WORKSPACE -> {
         if (appContext.getFeatureConfiguration().isTpsEnabled()) {
           addStep(
-              new CreateWorkspacePoliciesStep(
-                  workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
+              new LinkSpendProfilePolicyAttributesStep(
+                  workspace.workspaceId(),
+                  workspace.spendProfileId(),
+                  appContext.getTpsApiDispatch()),
               serviceRetryRule);
         }
         addStep(
@@ -71,11 +81,13 @@ public class CreateWorkspaceV2Flight extends Flight {
                 projectOwnerGroupId),
             serviceRetryRule);
       }
-      case RAWLS_WORKSPACE -> addStep(
-          new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
-          serviceRetryRule);
-      default -> throw new InternalLogicException(
-          "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
+      case RAWLS_WORKSPACE ->
+          addStep(
+              new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
+              serviceRetryRule);
+      default ->
+          throw new InternalLogicException(
+              "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
     }
 
     // If we have a cloud context to create, add the step to run that flight

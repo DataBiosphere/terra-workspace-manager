@@ -59,7 +59,9 @@ public class PolicyValidator {
     }
   }
 
-  /** @return validation errors */
+  /**
+   * @return validation errors
+   */
   public List<String> validateWorkspaceConformsToRegionPolicy(
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var validationErrors = new ArrayList<String>();
@@ -85,7 +87,9 @@ public class PolicyValidator {
     return validationErrors;
   }
 
-  /** @return validation errors */
+  /**
+   * @return validation errors
+   */
   public List<String> validateWorkspaceConformsToProtectedDataPolicy(
       Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var validationErrors = new ArrayList<String>();

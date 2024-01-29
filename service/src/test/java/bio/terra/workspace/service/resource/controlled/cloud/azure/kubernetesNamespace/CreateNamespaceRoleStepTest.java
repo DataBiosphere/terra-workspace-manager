@@ -18,6 +18,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.database.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.List;
@@ -342,7 +343,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
 
               return ControlledAzureResourceFixtures
                   .makeSharedControlledAzureDatabaseResourceBuilder(
-                      dbCreationParameters, workspaceId)
+                      dbCreationParameters, workspaceId, CloningInstructions.COPY_NOTHING)
                   .build();
             })
         .limit(count)

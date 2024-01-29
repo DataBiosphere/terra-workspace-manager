@@ -29,11 +29,11 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,7 +70,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     this.folderService = folderService;
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiFolder> createFolder(
       UUID workspaceUuid, ApiCreateFolderRequestBody body) {
@@ -90,7 +90,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
                 body.getParentFolderId(),
                 convertApiPropertyToMap(body.getProperties()),
                 samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
-                /*createdDate=*/ null));
+                /* createdDate= */ null));
     workspaceActivityLogService.writeActivity(
         userRequest,
         workspaceUuid,
@@ -102,7 +102,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
         HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiFolder> updateFolder(
       UUID workspaceUuid, UUID folderId, ApiUpdateFolderRequestBody body) {
@@ -129,7 +129,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(buildFolder(folder, workspaceUuid), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiFolder> getFolder(UUID workspaceUuid, UUID folderId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -140,7 +140,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(buildFolder(folder, workspaceUuid), HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiFolderList> listFolders(UUID workspaceUuid) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -155,7 +155,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiJobResult> deleteFolderAsync(UUID workspaceUuid, UUID folderId) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -173,7 +173,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<ApiJobResult> getDeleteFolderResult(
       UUID workspaceUuid, UUID folderId, String jobId) {
@@ -183,7 +183,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> updateFolderProperties(
       UUID workspaceUuid, UUID folderUuid, List<ApiProperty> properties) {
@@ -206,7 +206,7 @@ public class FolderApiController extends ControllerBase implements FolderApi {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
-  @Traced
+  @WithSpan
   @Override
   public ResponseEntity<Void> deleteFolderProperties(
       UUID workspaceUuid, UUID folderUuid, List<String> propertyKeys) {

@@ -10,7 +10,7 @@ import bio.terra.workspace.db.model.DbWorkspaceActivityLog;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -74,7 +74,7 @@ public class WorkspaceActivityLogDao {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  @Traced
+  @WithSpan
   @WriteTransaction
   public void writeActivity(UUID workspaceId, DbWorkspaceActivityLog dbWorkspaceActivityLog) {
     logger.info(
@@ -114,7 +114,7 @@ public class WorkspaceActivityLogDao {
     }
   }
 
-  @Traced
+  @WithSpan
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(UUID workspaceId) {
     final String sql =
@@ -136,7 +136,7 @@ public class WorkspaceActivityLogDao {
   }
 
   /** Get the last update details of a given change subject in a given workspace. */
-  @Traced
+  @WithSpan
   @ReadTransaction
   public Optional<ActivityLogChangeDetails> getLastUpdatedDetails(
       UUID workspaceId, String changeSubjectId) {
@@ -164,7 +164,7 @@ public class WorkspaceActivityLogDao {
    * @param workspaceIdList list of workspace ids
    * @return list of last update activity log details
    */
-  @Traced
+  @WithSpan
   @ReadTransaction
   public List<ActivityLogChangeDetails> getLastUpdatedDetailsForList(Set<UUID> workspaceIdList) {
     if (workspaceIdList.isEmpty()) {

@@ -65,10 +65,10 @@ public class CloneAllFoldersStep implements Step {
               sourceFolder.description(),
               // Parent folder ID is different in dest and source, and parent folder might not have
               // been created yet. Skip setting now; will set below.
-              /*parentFolderId=*/ null,
+              /* parentFolderId= */ null,
               sourceFolder.properties(),
               samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
-              /*createdDate=*/ null));
+              /* createdDate= */ null));
       folderIdMap.put(sourceFolder.id().toString(), destinationFolderId.toString());
     }
     // Update the cloned folders' parent folder id
@@ -77,10 +77,10 @@ public class CloneAllFoldersStep implements Step {
         folderDao.updateFolder(
             destinationWorkspaceId,
             UUID.fromString(folderIdMap.get(sourceFolder.id().toString())),
-            /*displayName=*/ null,
-            /*description=*/ null,
+            /* displayName= */ null,
+            /* description= */ null,
             UUID.fromString(folderIdMap.get(sourceFolder.parentFolderId().toString())),
-            /*updateParent=*/ true);
+            /* updateParent= */ true);
       }
     }
 

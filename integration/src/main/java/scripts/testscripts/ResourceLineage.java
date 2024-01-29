@@ -72,7 +72,7 @@ public class ResourceLineage extends WorkspaceAllocateTestScriptBase {
             controlledGcpResourceApi,
             getWorkspaceId(),
             appendRandomNumber("resource_lineage_bq_dataset"),
-            /*datasetId=*/ null,
+            /* datasetId= */ null,
             CloningInstructionsEnum.DEFINITION);
     controlledBqDatasetWorkspace1ResourceId = controlledBqDataset.getMetadata().getResourceId();
 

@@ -28,9 +28,9 @@ import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsExc
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -108,8 +108,7 @@ public class WorkspaceV2Api {
       spendProfileId = spendProfile.id();
     }
 
-    TpsPolicyInputs policies =
-        workspaceApiUtils.validateAndConvertPolicies(body.getPolicies(), body.getStage());
+    TpsPolicyInputs policies = workspaceApiUtils.validateAndConvertPolicies(body.getPolicies());
     WorkspaceStage workspaceStage = WorkspaceApiUtils.getStageFromApiStage(body.getStage());
     // WSM requires a userFacingId. Create one, if it is not provided.
     String userFacingId =
@@ -134,6 +133,7 @@ public class WorkspaceV2Api {
         body.getApplicationIds(),
         cloudPlatform,
         spendProfile,
+        body.getProjectOwnerGroupId(),
         jobId,
         userRequest);
 

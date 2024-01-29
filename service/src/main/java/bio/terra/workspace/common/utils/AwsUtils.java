@@ -18,7 +18,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolder
 import bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNotebook.ControlledAwsSageMakerNotebookResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -159,7 +159,7 @@ public class AwsUtils {
    * Helper function to build {@link AssumeRoleWithWebIdentityRequest} objects for {@link
    * AwsCredentialsProvider} refresh operations, adding relevant logging.
    */
-  @Traced
+  @WithSpan
   private static AssumeRoleWithWebIdentityRequest createRefreshRequest(
       Arn roleArn, Duration duration, String jwtAudience) {
     String idToken = GcpUtils.getWsmSaJwt(jwtAudience);
@@ -885,8 +885,9 @@ public class AwsUtils {
             case IN_SERVICE -> sageMakerWaiter.waitUntilNotebookInstanceInService(describeRequest);
             case STOPPED -> sageMakerWaiter.waitUntilNotebookInstanceStopped(describeRequest);
             case DELETING -> sageMakerWaiter.waitUntilNotebookInstanceDeleted(describeRequest);
-            default -> throw new BadRequestException(
-                "Can only wait for notebook InService, Stopped or Deleting");
+            default ->
+                throw new BadRequestException(
+                    "Can only wait for notebook InService, Stopped or Deleting");
           };
 
       ResponseOrException<DescribeNotebookInstanceResponse> responseOrException =
@@ -910,7 +911,7 @@ public class AwsUtils {
   }
 
   public static void checkException(SdkException ex, String altMessage) {
-    checkException(ex, altMessage, /*ignoreNotFound= */ false);
+    checkException(ex, altMessage, /* ignoreNotFound= */ false);
   }
 
   /**

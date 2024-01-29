@@ -15,18 +15,14 @@ import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiResourceQuota;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class LandingZoneApiController implements LandingZonesApi {
@@ -47,7 +43,7 @@ public class LandingZoneApiController implements LandingZonesApi {
 
   @Override
   public ResponseEntity<ApiCreateLandingZoneResult> createAzureLandingZone(
-      @RequestBody ApiCreateAzureLandingZoneRequestBody body) {
+      ApiCreateAzureLandingZoneRequestBody body) {
     String resultEndpoint =
         String.format(
             "%s/%s/%s", request.getServletPath(), "create-result", body.getJobControl().getId());
@@ -74,7 +70,7 @@ public class LandingZoneApiController implements LandingZonesApi {
 
   @Override
   public ResponseEntity<ApiAzureLandingZoneResourcesList> listAzureLandingZoneResources(
-      @PathVariable("landingZoneId") UUID landingZoneId) {
+      UUID landingZoneId) {
     ApiAzureLandingZoneResourcesList result =
         landingZoneApiDispatch.listAzureLandingZoneResources(
             bearerTokenFactory.from(request), landingZoneId);
@@ -83,8 +79,7 @@ public class LandingZoneApiController implements LandingZonesApi {
 
   @Override
   public ResponseEntity<ApiDeleteAzureLandingZoneResult> deleteAzureLandingZone(
-      @PathVariable("landingZoneId") UUID landingZoneId,
-      @RequestBody ApiDeleteAzureLandingZoneRequestBody body) {
+      UUID landingZoneId, ApiDeleteAzureLandingZoneRequestBody body) {
     String resultEndpoint =
         String.format(
             "%s/%s/%s", request.getServletPath(), "delete-result", body.getJobControl().getId());
@@ -104,16 +99,14 @@ public class LandingZoneApiController implements LandingZonesApi {
   }
 
   @Override
-  public ResponseEntity<ApiAzureLandingZone> getAzureLandingZone(
-      @PathVariable("landingZoneId") UUID landingZoneId) {
+  public ResponseEntity<ApiAzureLandingZone> getAzureLandingZone(UUID landingZoneId) {
     ApiAzureLandingZone result =
         landingZoneApiDispatch.getAzureLandingZone(bearerTokenFactory.from(request), landingZoneId);
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
   @Override
-  public ResponseEntity<ApiAzureLandingZoneList> listAzureLandingZones(
-      @Valid @RequestParam(value = "billingProfileId", required = false) UUID billingProfileId) {
+  public ResponseEntity<ApiAzureLandingZoneList> listAzureLandingZones(UUID billingProfileId) {
     ApiAzureLandingZoneList result =
         landingZoneApiDispatch.listAzureLandingZones(
             bearerTokenFactory.from(request), billingProfileId);
@@ -122,8 +115,7 @@ public class LandingZoneApiController implements LandingZonesApi {
 
   @Override
   public ResponseEntity<ApiResourceQuota> getResourceQuotaResult(
-      @PathVariable("landingZoneId") UUID landingZoneId,
-      @Valid @RequestParam(value = "azureResourceId", required = true) String azureResourceId) {
+      UUID landingZoneId, String azureResourceId) {
 
     ApiResourceQuota result =
         landingZoneApiDispatch.getResourceQuota(

@@ -79,6 +79,7 @@ public class CompleteTransferOperationStep implements Step {
   public StepResult undoStep(FlightContext flightContext) throws InterruptedException {
     return StepResult.getStepResultSuccess();
   }
+
   /**
    * Poll for completion of the named transfer operation and return the result.
    *

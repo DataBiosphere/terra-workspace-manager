@@ -32,7 +32,6 @@ import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleAction;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.LifecycleCondition;
 import com.google.cloud.storage.BucketInfo.LifecycleRule.SetStorageClassLifecycleAction;
 import com.google.cloud.storage.StorageClass;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +39,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
-@SuppressFBWarnings(value = "RV_RETURN_VALUE_IGNORED", justification = "storageCow is mocked.")
 public class UpdateGcsBucketStepTest extends BaseUnitTest {
   private static final String PROJECT_ID = "my-gcp-project";
 

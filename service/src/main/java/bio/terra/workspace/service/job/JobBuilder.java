@@ -16,7 +16,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
@@ -130,11 +130,11 @@ public class JobBuilder {
    * @param resultClass Class of the job's result
    * @return Result of the finished job.
    */
-  @Traced
+  @WithSpan
   public <T> T submitAndWait(Class<T> resultClass) {
     populateInputParams();
     return jobService.submitAndWait(
-        flightClass, jobParameterMap, resultClass, /*typeReference=*/ null, jobId);
+        flightClass, jobParameterMap, resultClass, /* typeReference= */ null, jobId);
   }
 
   /**
@@ -143,11 +143,11 @@ public class JobBuilder {
    * @param typeReference Class of the job's result
    * @return Result of the finished job.
    */
-  @Traced
+  @WithSpan
   public <T> T submitAndWait(TypeReference<T> typeReference) {
     populateInputParams();
     return jobService.submitAndWait(
-        flightClass, jobParameterMap, /*resultClass=*/ null, typeReference, jobId);
+        flightClass, jobParameterMap, /* resultClass= */ null, typeReference, jobId);
   }
 
   /**
@@ -155,11 +155,11 @@ public class JobBuilder {
    *
    * @return Result of the finished job.
    */
-  @Traced
+  @WithSpan
   public <T> T submitAndWait() {
     populateInputParams();
     return jobService.submitAndWait(
-        flightClass, jobParameterMap, /*resultClass=*/ null, /*typeReference=*/ null, jobId);
+        flightClass, jobParameterMap, /* resultClass= */ null, /* typeReference= */ null, jobId);
   }
 
   // Check the inputs, supply defaults and finalize the input parameter map
@@ -181,7 +181,7 @@ public class JobBuilder {
     addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
     addParameter(
         MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
-        MonitoringHook.serializeCurrentTracingContext());
+        MonitoringHook.serializeCurrentTracingContext(jobService.getOpenTelemetry()));
 
     // Convert any other members that were set into parameters. However, if they were
     // explicitly added with addParameter during construction, we do not overwrite them.

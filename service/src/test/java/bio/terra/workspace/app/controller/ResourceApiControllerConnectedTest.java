@@ -125,7 +125,7 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     public void updateResourceProperties_resourceDoesNotExist_throws404() throws Exception {
       updateResourcePropertiesExpectCode(
           workspaceId,
-          /*resourceId=*/ UUID.randomUUID(),
+          /* resourceId= */ UUID.randomUUID(),
           Map.of("foo1", "bar1"),
           HttpStatus.SC_NOT_FOUND);
     }
@@ -200,7 +200,10 @@ public class ResourceApiControllerConnectedTest extends BaseConnectedTest {
     @Test
     public void deleteResourceProperties_resourceDoesNotExist_throws404() throws Exception {
       deleteResourcePropertiesExpectCode(
-          workspaceId, /*resourceId=*/ UUID.randomUUID(), List.of("foo"), HttpStatus.SC_NOT_FOUND);
+          workspaceId,
+          /* resourceId= */ UUID.randomUUID(),
+          List.of("foo"),
+          HttpStatus.SC_NOT_FOUND);
     }
 
     @Test

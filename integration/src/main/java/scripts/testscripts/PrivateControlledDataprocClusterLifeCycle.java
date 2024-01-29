@@ -32,7 +32,6 @@ import com.google.api.services.dataproc.Dataproc;
 import com.google.api.services.dataproc.model.Cluster;
 import com.google.api.services.dataproc.model.StartClusterRequest;
 import com.google.api.services.dataproc.model.StopClusterRequest;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -74,7 +73,6 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
   }
 
   @Override
-  @SuppressFBWarnings(value = "DLS_DEAD_LOCAL_STORE")
   protected void doUserJourney(TestUserSpecification testUser, WorkspaceApi workspaceApi)
       throws Exception {
     ClientTestUtils.grantRole(workspaceApi, getWorkspaceId(), otherWorkspaceUser, IamRole.WRITER);
@@ -91,7 +89,7 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
             getWorkspaceId(),
             clusterId,
             /* region= */ null,
-            /*startupScriptUrl=*/ null,
+            /* startupScriptUrl= */ null,
             resourceUserApi);
 
     UUID resourceId = creationResult.getDataprocCluster().getMetadata().getResourceId();
@@ -324,9 +322,9 @@ public class PrivateControlledDataprocClusterLifeCycle extends WorkspaceAllocate
     CreatedControlledGcpDataprocClusterResult resourceWithoutClusterId =
         DataprocUtils.createPrivateDataprocCluster(
             getWorkspaceId(),
-            /*clusterId=*/ null,
-            /*location=*/ null,
-            /*startupScriptUrl=*/ null,
+            /* clusterId= */ null,
+            /* location= */ null,
+            /* startupScriptUrl= */ null,
             resourceUserApi);
     assertNotNull(resourceWithoutClusterId.getDataprocCluster().getAttributes().getClusterId());
     UUID resourceId = resourceWithoutClusterId.getDataprocCluster().getMetadata().getResourceId();

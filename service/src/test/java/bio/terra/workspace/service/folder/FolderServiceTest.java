@@ -235,7 +235,7 @@ public class FolderServiceTest extends BaseConnectedTest {
     // Create everything else in parallel with the notebook
     controlledResourceService.createControlledResourceSync(
         controlledBucket2InFooFoo,
-        /*privateResourceIamRole=*/ null,
+        /* privateResourceIamRole= */ null,
         userAccessUtils.secondUserAuthRequest(),
         ControlledGcpResourceFixtures.getGoogleBucketCreationParameters());
 

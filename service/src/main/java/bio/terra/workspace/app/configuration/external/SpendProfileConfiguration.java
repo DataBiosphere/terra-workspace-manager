@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 public class SpendProfileConfiguration {
   /** The Spend Profiles known to Workspace Manager. */
   private List<SpendProfileModel> spendProfiles = new ArrayList<>();
+
   /** URL of the billing profile manager instance */
   private String basePath;
 

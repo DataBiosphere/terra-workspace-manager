@@ -94,6 +94,7 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
   public boolean getAllowAccessForAllWorkspaceUsers() {
     return allowAccessForAllWorkspaceUsers;
   }
+
   // -- getters not included in serialization --
 
   @Override

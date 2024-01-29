@@ -98,8 +98,8 @@ public class GcpUtils {
       String errorMessage = operation.getOperationAdapter().getError().getMessage();
       switch (code) {
           // 400
-        case INVALID_ARGUMENT, OUT_OF_RANGE, FAILED_PRECONDITION -> throw new BadRequestException(
-            errorMessage);
+        case INVALID_ARGUMENT, OUT_OF_RANGE, FAILED_PRECONDITION ->
+            throw new BadRequestException(errorMessage);
           // 401
         case UNAUTHENTICATED -> throw new UnauthorizedException(errorMessage);
           // 403 - This includes the "CPU quota limit exceeded" error for AI notebooks.
@@ -108,10 +108,11 @@ public class GcpUtils {
         case ALREADY_EXISTS, ABORTED -> throw new ConflictException(errorMessage);
           // 429
         case RESOURCE_EXHAUSTED -> throw new BadRequestException(errorMessage);
-        default -> throw new RetryException(
-            String.format(
-                "Error polling operation. name [%s] message [%s]",
-                operation.getOperationAdapter().getName(), errorMessage));
+        default ->
+            throw new RetryException(
+                String.format(
+                    "Error polling operation. name [%s] message [%s]",
+                    operation.getOperationAdapter().getName(), errorMessage));
       }
     }
   }

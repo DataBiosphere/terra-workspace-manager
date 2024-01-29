@@ -8,6 +8,7 @@ import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.generated.model.ApiAzureDatabaseAttributes;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                creationParameters, workspaceId)
+                creationParameters, workspaceId, CloningInstructions.COPY_NOTHING)
             .build();
 
     var apiResource = databaseResource.toApiResource();
@@ -67,7 +68,7 @@ public class ControlledAzureDatabaseResourceTest extends BaseMockitoStrictStubbi
 
     var databaseResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                creationParameters, workspaceId)
+                creationParameters, workspaceId, CloningInstructions.COPY_NOTHING)
             .build();
 
     var json = databaseResource.attributesToJson();

@@ -60,9 +60,9 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
     List<WorkspaceDescription> workspaces =
         firstUserApi
             .listWorkspaces(
-                /*offset=*/ 0,
-                /*limit=*/ MAX_USER_WORKSPACES,
-                /*minimumHighestRole=*/ IamRole.READER)
+                /* offset= */ 0,
+                /* limit= */ MAX_USER_WORKSPACES,
+                /* minimumHighestRole= */ IamRole.READER)
             .getWorkspaces();
     // Assert both workspaces are returned.
     List<UUID> workspaceIds =
@@ -84,20 +84,22 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
     callResults.addAll(
         firstUserApi
             .listWorkspaces(
-                /*offset=*/ 0, /*limit=*/ pageSize, /*minimumHighestRole=*/ IamRole.READER)
+                /* offset= */ 0, /* limit= */ pageSize, /* minimumHighestRole= */ IamRole.READER)
             .getWorkspaces());
     callResults.addAll(
         firstUserApi
             .listWorkspaces(
-                /*offset=*/ pageSize, /*limit=*/ pageSize, /*minimumHighestRole=*/ IamRole.READER)
+                /* offset= */ pageSize,
+                /* limit= */ pageSize,
+                /* minimumHighestRole= */ IamRole.READER)
             .getWorkspaces());
     // pageSize may not be divisible by 3, so cover all remaining workspaces here instead.
     callResults.addAll(
         firstUserApi
             .listWorkspaces(
-                /*offset=*/ pageSize * 2,
-                /*limit=*/ (MAX_USER_WORKSPACES - 2 * pageSize),
-                /*minimumHighestRole=*/ IamRole.READER)
+                /* offset= */ pageSize * 2,
+                /* limit= */ (MAX_USER_WORKSPACES - 2 * pageSize),
+                /* minimumHighestRole= */ IamRole.READER)
             .getWorkspaces());
     List<UUID> callResultIdList =
         callResults.stream().map(WorkspaceDescription::getId).collect(Collectors.toList());
@@ -106,7 +108,7 @@ public class ListWorkspaces extends WorkspaceAllocateTestScriptBase {
     // Validate second user only sees second workspace.
     WorkspaceDescriptionList secondUserResult =
         secondUserApi.listWorkspaces(
-            0, MAX_USER_WORKSPACES, /*minimumHighestRole=*/ IamRole.READER);
+            0, MAX_USER_WORKSPACES, /* minimumHighestRole= */ IamRole.READER);
     List<UUID> secondCallResults =
         secondUserResult.getWorkspaces().stream()
             .map(WorkspaceDescription::getId)

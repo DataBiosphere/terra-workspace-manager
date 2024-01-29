@@ -116,19 +116,25 @@ public class CrlService {
     }
   }
 
-  /** @return CRL {@link AIPlatformNotebooksCow} which wraps Google AI Platform Notebooks API */
+  /**
+   * @return CRL {@link AIPlatformNotebooksCow} which wraps Google AI Platform Notebooks API
+   */
   public AIPlatformNotebooksCow getAIPlatformNotebooksCow() {
     assertCrlInUse();
     return crlNotebooksCow;
   }
 
-  /** @return CRL {@link DataprocCow} which wraps Google Dataproc API */
+  /**
+   * @return CRL {@link DataprocCow} which wraps Google Dataproc API
+   */
   public DataprocCow getDataprocCow() {
     assertCrlInUse();
     return crlDataprocCow;
   }
 
-  /** @return CRL {@link CloudResourceManagerCow} which wraps Google Cloud Resource Manager API */
+  /**
+   * @return CRL {@link CloudResourceManagerCow} which wraps Google Cloud Resource Manager API
+   */
   public CloudResourceManagerCow getCloudResourceManagerCow() {
     assertCrlInUse();
     return crlResourceManagerCow;
@@ -152,7 +158,9 @@ public class CrlService {
     return crlIamCow;
   }
 
-  /** @return CRL {@link IamCow} which wraps Google IAM API using user credentials. */
+  /**
+   * @return CRL {@link IamCow} which wraps Google IAM API using user credentials.
+   */
   @VisibleForTesting
   public IamCow getIamCow(AuthenticatedUserRequest userRequest) {
     assertCrlInUse();
@@ -280,7 +288,9 @@ public class CrlService {
         .authenticate(azureCreds, azureProfile);
   }
 
-  /** @return CRL {@link BigQueryCow} which wraps Google BigQuery API */
+  /**
+   * @return CRL {@link BigQueryCow} which wraps Google BigQuery API
+   */
   public BigQueryCow createBigQueryCow(AuthenticatedUserRequest userRequest) {
     assertCrlInUse();
     try {
@@ -311,6 +321,7 @@ public class CrlService {
       throw new CrlInternalException("Error creating naked BigQuery client.");
     }
   }
+
   /**
    * @return CRL {@link BigQueryCow} which wraps Google BigQuery API using the WSM service account's
    *     credentials.

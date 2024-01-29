@@ -37,8 +37,7 @@ import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
 import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -55,9 +54,6 @@ import software.amazon.awssdk.regions.Region;
  * This service provides methods for managing AWS cloud context. These methods do not perform any
  * access control and operate directly against the {@link WorkspaceDao}
  */
-@SuppressFBWarnings(
-    value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
-    justification = "Enable both injection and static lookup")
 @Component
 public class AwsCloudContextService implements CloudContextService {
   private final AwsConfiguration awsConfiguration;
@@ -177,7 +173,7 @@ public class AwsCloudContextService implements CloudContextService {
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional {@link AwsCloudContext}
    */
-  @Traced
+  @WithSpan
   public Optional<AwsCloudContext> getAwsCloudContext(UUID workspaceUuid) {
     return workspaceDao
         .getCloudContext(workspaceUuid, CloudPlatform.AWS)
@@ -233,7 +229,7 @@ public class AwsCloudContextService implements CloudContextService {
             metadata.getEnvironmentAlias(),
             securityGroupId),
         new CloudContextCommonFields(
-            spendProfileId, WsmResourceState.CREATING, flightId, /*error=*/ null));
+            spendProfileId, WsmResourceState.CREATING, flightId, /* error= */ null));
   }
 
   /**

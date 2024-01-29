@@ -146,7 +146,7 @@ public class AzureTestUtils {
             azureTestConfiguration.getSubscriptionId(),
             azureTestConfiguration.getManagedResourceGroupId()),
         new CloudContextCommonFields(
-            getSpendProfileId(), WsmResourceState.READY, /*flightId=*/ null, /*error=*/ null));
+            getSpendProfileId(), WsmResourceState.READY, /* flightId= */ null, /* error= */ null));
   }
 
   public SpendProfileId getSpendProfileId() {

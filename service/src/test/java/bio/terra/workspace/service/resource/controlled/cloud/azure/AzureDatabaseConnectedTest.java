@@ -28,6 +28,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.database.Cont
 import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace.ControlledAzureKubernetesNamespaceResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
@@ -363,7 +364,7 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
 
     var dbResource =
         ControlledAzureResourceFixtures.makeSharedControlledAzureDatabaseResourceBuilder(
-                dbCreationParameters, workspaceUuid)
+                dbCreationParameters, workspaceUuid, CloningInstructions.COPY_NOTHING)
             .build();
 
     azureUtils.createResource(

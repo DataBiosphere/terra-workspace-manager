@@ -1,8 +1,17 @@
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
 plugins {
     id 'terra-workspace-manager.library-conventions'
-
+    id "io.spring.dependency-management"
     id "org.hidetake.swagger.generator" version "2.19.2"
 }
+
+dependencyManagement {
+    imports {
+        mavenBom(SpringBootPlugin.BOM_COORDINATES)
+    }
+}
+
 def includeDir = "$projectDir/gradle"
 apply(from: "$includeDir/dependencies.gradle")
 apply(from: "$includeDir/openapi.gradle")
@@ -12,6 +21,3 @@ apply(from: "$includeDir/taskDependencies.gradle")
 // TODO: remove this as part PF-1540
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
-
-
-

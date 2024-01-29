@@ -25,6 +25,7 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import io.opentelemetry.api.OpenTelemetry;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,7 +108,7 @@ public class TpsApiTest {
     when(tpsConfig.getBasePath()).thenReturn(mockServer.getUrl());
     var featureConfig = new FeatureConfiguration();
     featureConfig.setTpsEnabled(true);
-    dispatch = new TpsApiDispatch(featureConfig, tpsConfig);
+    dispatch = new TpsApiDispatch(featureConfig, tpsConfig, OpenTelemetry.noop());
   }
 
   @Pact(consumer = "workspacemanager", provider = "tps")

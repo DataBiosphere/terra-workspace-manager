@@ -152,8 +152,8 @@ public class ResourceValidationUtils {
   public static void validateRegionAgainstPolicy(
       TpsApiDispatch tpsApiDispatch, UUID workspaceUuid, String region, CloudPlatform platform) {
     switch (platform) {
-      case GCP -> validateRegion(
-          tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(region), platform);
+      case GCP ->
+          validateRegion(tpsApiDispatch, workspaceUuid, GcpUtils.parseRegion(region), platform);
       case AZURE, AWS -> validateRegion(tpsApiDispatch, workspaceUuid, region, platform);
       case ANY -> {
         // Flexible resources are not stored on the cloud. Thus, they have no region policies.
@@ -161,7 +161,9 @@ public class ResourceValidationUtils {
     }
   }
 
-  /** @return policy violation error messages */
+  /**
+   * @return policy violation error messages
+   */
   public static List<String> validateExistingResourceRegions(
       UUID workspaceId,
       List<String> validRegions,

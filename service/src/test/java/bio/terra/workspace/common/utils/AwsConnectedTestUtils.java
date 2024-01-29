@@ -48,7 +48,7 @@ public class AwsConnectedTestUtils {
         new CloudContextCommonFields(
             WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
             WsmResourceState.READY,
-            /*flightId=*/ null,
-            /*error=*/ null));
+            /* flightId= */ null,
+            /* error= */ null));
   }
 }
