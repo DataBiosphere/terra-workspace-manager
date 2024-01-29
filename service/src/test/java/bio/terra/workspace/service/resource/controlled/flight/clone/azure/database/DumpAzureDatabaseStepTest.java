@@ -32,6 +32,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -95,10 +96,12 @@ class DumpAzureDatabaseStepTest extends BaseMockitoStrictStubbingTest {
             eq(mockAzureCloudContext),
             eq(databaseResource.getWorkspaceId()),
             eq(
-                "dump-db-%s-%s"
-                    .formatted(
-                        databaseResource.getDatabaseName(),
-                        mockDestinationResource.getResourceId())),
+                StringUtils.truncate(
+                    "dump-db-%s-%s"
+                        .formatted(
+                            databaseResource.getDatabaseName(),
+                            mockDestinationResource.getResourceId()),
+                    63)),
             eq(databaseResource.getDatabaseName()),
             eq(databaseServerName),
             eq(databaseUserName),
