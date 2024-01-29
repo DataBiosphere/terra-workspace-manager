@@ -76,7 +76,7 @@ jobs:
         event-name: ${{ github.event_name }}
     - name: Bump the tag to a new version
       if: steps.skiptest.outputs.is-bump == 'no'
-      uses: databiosphere/github-actions/actions/bumper@bumper-0.1.0
+      uses: databiosphere/github-actions/actions/bumper@bumper-0.3.0
       id: tag
       env:
         DEFAULT_BUMP: patch
@@ -108,6 +108,13 @@ jobs:
     - name: "Publish to Artifactory"
       if: steps.skiptest.outputs.is-bump == 'no'
       run: ./gradlew :client:artifactoryPublish --scan
+      env:
+        ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+        ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
+    - name: "Publish to Artifactory (javax)"
+      if: steps.skiptest.outputs.is-bump == 'no'
+      run: ./gradlew :client-javax:artifactoryPublish --scan
       env:
         ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
         ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}

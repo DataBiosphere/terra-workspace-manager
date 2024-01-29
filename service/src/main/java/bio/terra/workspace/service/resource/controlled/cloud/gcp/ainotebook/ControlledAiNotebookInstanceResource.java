@@ -47,6 +47,7 @@ public class ControlledAiNotebookInstanceResource extends ControlledResource {
 
   /** The Notebook instance metadata key used to control proxy mode. */
   protected static final String PROXY_MODE_METADATA_KEY = "proxy-mode";
+
   /**
    * When notebook has a custom image, disable root access and requires user to log in as Jupyter.
    * <a

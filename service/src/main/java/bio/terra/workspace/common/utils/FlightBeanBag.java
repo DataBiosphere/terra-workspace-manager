@@ -22,6 +22,7 @@ import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageAccessService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.LandingZoneBatchAccountFinder;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
@@ -53,6 +54,7 @@ public class FlightBeanBag {
   private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
   private final AzureConfiguration azureConfig;
+  private final AzureStorageAccessService azureStorageAccessService;
   private final AwsCloudContextService awsCloudContextService;
   private final AwsConfiguration awsConfig;
   private final BucketCloneRolesService bucketCloneRolesService;
@@ -93,6 +95,7 @@ public class FlightBeanBag {
       GcpCloudContextService gcpCloudContextService,
       AzureCloudContextService azureCloudContextService,
       AzureConfiguration azureConfig,
+      AzureStorageAccessService azureStorageAccessService,
       AwsCloudContextService awsCloudContextService,
       AwsConfiguration awsConfig,
       BucketCloneRolesService bucketCloneRolesService,
@@ -129,6 +132,7 @@ public class FlightBeanBag {
     this.gcpCloudContextService = gcpCloudContextService;
     this.azureCloudContextService = azureCloudContextService;
     this.azureConfig = azureConfig;
+    this.azureStorageAccessService = azureStorageAccessService;
     this.awsCloudContextService = awsCloudContextService;
     this.awsConfig = awsConfig;
     this.bucketCloneRolesService = bucketCloneRolesService;
@@ -181,6 +185,10 @@ public class FlightBeanBag {
 
   public AzureConfiguration getAzureConfig() {
     return azureConfig;
+  }
+
+  public AzureStorageAccessService getAzureStorageAccessService() {
+    return azureStorageAccessService;
   }
 
   public AwsCloudContextService getAwsCloudContextService() {

@@ -55,6 +55,7 @@ public class BqDatasetUtils {
 
   public static final String BQ_EMPLOYEE_TABLE_NAME = "employee";
   public static final String BQ_RESULT_TABLE_NAME = "results";
+
   /**
    * Calls WSM to create a referenced BigQuery dataset in the specified workspace.
    *

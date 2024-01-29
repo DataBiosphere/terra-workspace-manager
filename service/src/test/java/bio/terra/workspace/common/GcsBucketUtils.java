@@ -168,10 +168,10 @@ public class GcsBucketUtils {
     int numFiles =
         RetryUtils.getWithRetryOnException(
             () -> countFiles(storageCow, bucketName),
-            /*totalDuration=*/ Duration.ofMinutes(5),
-            /*initialSleep=*/ Duration.ofSeconds(5),
-            /*factorIncrease=*/ 1.0,
-            /*sleepDurationMax=*/ Duration.ofSeconds(30),
+            /* totalDuration= */ Duration.ofMinutes(5),
+            /* initialSleep= */ Duration.ofSeconds(5),
+            /* factorIncrease= */ 1.0,
+            /* sleepDurationMax= */ Duration.ofSeconds(30),
             null);
     assertEquals(0, numFiles);
   }

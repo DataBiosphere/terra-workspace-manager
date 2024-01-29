@@ -11,30 +11,19 @@ plugins {
 dependencies {
     ext {
         apacheMath = '3.6.1'
-        findbugsAnnotations = "3.0.1"
-        guava = "29.0-jre"
-        jackson = "2.10.2"
-        jersey = "2.32"
-        kubernetesClient = "18.0.0"
-        logback = "1.2.3"
-        slf4j = "1.7.25"
+        guava = "33.0.0-jre"
+        jackson = "2.16.1"
+        jersey = "3.1.5"
+        kubernetesClient = "19.0.0"
+        logback = "1.4.14"
+        slf4j = "2.0.11"
         hamcrest = "2.2"
-        jUnit = "5.7.0"
+        jUnit = "5.10.1"
 
-        googleApi = "1.32.1"
-        googleContainer = "v1-rev93-1.25.0"
-        googleIam = "v1-rev20220526-1.32.1"
-        googleNotebook = "v1-rev20220716-1.32.1"
-        googleDataproc = "v1-rev20210812-1.32.1"
-
-        datarepoClient = "1.0.155-SNAPSHOT"
         testRunnerVersion = "0.2.0-SNAPSHOT"
-        samClient = "0.1-fd8ee25"
-        tclClient = "0.0.94-SNAPSHOT"
     }
     implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
     implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
-    compileOnly "com.google.code.findbugs:annotations:${findbugsAnnotations}"
     implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson}"
     implementation "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
@@ -45,40 +34,34 @@ dependencies {
 
     // Google dependencies
     constraints {
-        implementation 'com.google.guava:guava:30.1.1-jre'
+        implementation 'com.google.guava:guava:33.0.0-jre'
         implementation 'org.json:json:20231013' // security vulnerability
     }
-    implementation platform('com.google.cloud:libraries-bom:26.0.0')
-    implementation "com.google.api-client:google-api-client:${googleApi}"
-    implementation "com.google.apis:google-api-services-container:${googleContainer}"
-    implementation "com.google.apis:google-api-services-iam:${googleIam}"
-    implementation "com.google.apis:google-api-services-notebooks:${googleNotebook}"
-    implementation "com.google.apis:google-api-services-dataproc:${googleDataproc}"
+    implementation platform('com.google.cloud:libraries-bom:26.30.0')
+    implementation "com.google.api-client:google-api-client:2.2.0"
+    implementation "com.google.apis:google-api-services-container:v1-rev20231122-2.0.0"
+    implementation "com.google.apis:google-api-services-iam:v1-rev20230914-2.0.0"
+    implementation "com.google.apis:google-api-services-notebooks:v1-rev20231019-2.0.0"
+    implementation "com.google.apis:google-api-services-dataproc:v1-rev20240103-2.0.0"
     implementation "com.google.auth:google-auth-library-oauth2-http"
     implementation "com.google.cloud:google-cloud-bigquery"
     implementation "com.google.cloud:google-cloud-storage"
 
     // Data Repo client library
-    implementation "bio.terra:datarepo-client:${datarepoClient}"
+    implementation "bio.terra:datarepo-jakarta-client:1.557.0-SNAPSHOT"
     implementation gradle.librarySwaggerAnnotations
 
     // Workspace Manager client library
     implementation project(":client")
 
     // Sam client library
-    implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:${samClient}"
+    implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:0.1-2cd8969"
 
     // Terra Test Runner Library
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 
     // Use Terra Common Library on client side to retry direct Sam calls
-    implementation("bio.terra:terra-common-lib:${tclClient}") {
+    implementation("bio.terra:terra-common-lib:0.1.7-SNAPSHOT") {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
-
-
-    // Spotbugs dependency
-    // For SpotBugs annotations (still FindBugs annotations)
-    compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}"
-    spotbugs "com.github.spotbugs:spotbugs:${spotbugs.toolVersion.get()}"
 }

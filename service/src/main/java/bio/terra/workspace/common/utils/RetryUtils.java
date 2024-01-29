@@ -142,6 +142,7 @@ public class RetryUtils {
     }
     return result;
   }
+
   /**
    * Default version of getWithRetry. It retries all evaluated predicate failures and uses the
    * default total duration and sleep duration.

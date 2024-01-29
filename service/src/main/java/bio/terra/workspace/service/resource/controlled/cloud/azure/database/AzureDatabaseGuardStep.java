@@ -78,7 +78,7 @@ public class AzureDatabaseGuardStep implements Step {
           new DuplicateResourceException(
               String.format(
                   "An Azure Database with name %s already exists in resource group %s",
-                  azureCloudContext.getAzureResourceGroupId(), resource.getDatabaseName())));
+                  resource.getDatabaseName(), azureCloudContext.getAzureResourceGroupId())));
     } catch (ManagementException e) {
       if (e.getResponse().getStatusCode() == HttpStatus.NOT_FOUND.value()) {
         return StepResult.getStepResultSuccess();

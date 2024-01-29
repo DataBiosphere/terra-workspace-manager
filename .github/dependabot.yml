@@ -1,0 +1,31 @@
+version: 2
+updates:
+  # Enable version updates for Gradle
+  - package-ecosystem: "gradle"
+    directory: "/"
+    open-pull-requests-limit: 10
+    groups:
+      minor-patch-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "spotless-plugin-gradle" # likely to require reformatting of code
+        update-types:
+          - "minor"
+          - "patch"
+    schedule:
+      interval: "weekly"
+      time: "06:00"
+      timezone: "America/New_York"
+    target-branch: "main"
+    reviewers:
+      - "@DataBiosphere/broadworkspaces"
+    labels:
+      - "dependency"
+      - "gradle"
+    commit-message:
+      prefix: "[WOR-1448]"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-gradle-plugin"
+      - dependency-name: "com.google.apis:google-api-services-iam"
+      - dependency-name: "com.google.apis:google-api-services-notebooks"

@@ -34,8 +34,7 @@ import bio.terra.workspace.service.workspace.model.CloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.OperationType;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,9 +47,6 @@ import org.springframework.stereotype.Component;
  * do not perform any access control and operate directly against the {@link
  * bio.terra.workspace.db.WorkspaceDao}
  */
-@SuppressFBWarnings(
-    value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD",
-    justification = "Enable both injection and static lookup")
 @Component
 public class GcpCloudContextService implements CloudContextService {
   private static GcpCloudContextService theService;
@@ -179,7 +175,7 @@ public class GcpCloudContextService implements CloudContextService {
    * @param workspaceUuid workspace identifier of the cloud context
    * @return optional GCP cloud context
    */
-  @Traced
+  @WithSpan
   public Optional<GcpCloudContext> getGcpCloudContext(UUID workspaceUuid) {
     return workspaceDao
         .getCloudContext(workspaceUuid, CloudPlatform.GCP)

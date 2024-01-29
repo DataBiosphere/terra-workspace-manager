@@ -72,6 +72,12 @@ management:
     web:
       exposure:
         include: "prometheus"
+  metrics:
+    distribution:
+      # Used to publish a histogram suitable for computing aggregable (across dimensions) percentile
+      # latency approximations in Prometheus (by using histogram_quantile)
+      # For more information: https://micrometer.io/docs/concepts#_histograms_and_percentiles
+      percentiles-histogram[http.server.requests]: true
 
 workspace:
   datarepo.instances:
@@ -158,7 +164,7 @@ workspace:
     sas-token-start-time-minutes-offset: 15
     sas-token-expiry-time-minutes-offset: 60
     sas-token-expiry-time-maximum-minutes-offset: 1440
-    azure-monitor-linux-agent-version: "1.22"
+    azure-monitor-linux-agent-version: "1.28"
     cors-allowed-origins:
     protected-data-landing-zone-defs: ["ProtectedDataResourcesFactory"]
     azure-database-util-image: "us.gcr.io/broad-dsp-gcr-public/azure-database-utils:${version.gitHash}"
@@ -179,8 +185,10 @@ terra.common:
     completed-flight-retention: 90d
 
   tracing:
-    stackdriverExportEnabled: ${env.tracing.exportEnabled}
-    samplingRate: ${env.tracing.samplingRate}
+    samplingRatio: ${env.tracing.samplingRate}
+  google:
+    tracing:
+      enabled: ${env.tracing.exportEnabled}
 
 #Terra Landing Zone Service configuration
 landingzone:
@@ -230,6 +238,23 @@ landingzone:
       - SentinelHealth
       - StorageBlobLogs
       - Syslog
+  regions:
+    default-parameters:
+      eastus:
+        AKS_MACHINE_TYPE: "Standard_D4as_v5"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v5"
+      southcentralus:
+        AKS_MACHINE_TYPE: "Standard_D4as_v4"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v4"
+      centralus:
+        AKS_MACHINE_TYPE: "Standard_D4as_v4"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v4"
+      westus2:
+        AKS_MACHINE_TYPE: "Standard_D4as_v5"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v4"
+      southafricanorth:
+        AKS_MACHINE_TYPE: "Standard_D4as_v4"
+        POSTGRES_SERVER_SKU: "Standard_D2ds_v5"
 
 
 # Feature flags
@@ -278,3 +303,13 @@ reference:
       - dev.azure.com
       - ssh.dev.azure.com
 
+otel:
+  sdk:
+    disabled: false # set to true to disable all open telemetry features
+
+  springboot:
+    resource:
+      attributes:
+        service:
+          name: ${spring.application.name}
+          version: ${version.gitTag:unknown}

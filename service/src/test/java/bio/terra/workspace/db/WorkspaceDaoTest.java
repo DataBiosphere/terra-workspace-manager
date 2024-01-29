@@ -277,8 +277,8 @@ class WorkspaceDaoTest extends BaseUnitTest {
     // which created the workspace.
     workspaceDao.createWorkspaceFailure(
         workspaceUuid,
-        /*flightId=*/ UUID.randomUUID().toString(),
-        /*exception=*/ null,
+        /* flightId= */ UUID.randomUUID().toString(),
+        /* exception= */ null,
         WsmResourceStateRule.DELETE_ON_FAILURE);
     Workspace workspaceAfterDelete = workspaceDao.getWorkspace(workspaceUuid);
     assertEquals(workspace, workspaceAfterDelete);
@@ -430,7 +430,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
       // Error deserializes from getWorkspaceDescriptionMapFromIdList
       Map<UUID, DbWorkspaceDescription> descriptionMap =
           workspaceDao.getWorkspaceDescriptionMapFromIdList(
-              Set.of(workspaceUuid), /*offset=*/ 0, /*limit=*/ 100);
+              Set.of(workspaceUuid), /* offset= */ 0, /* limit= */ 100);
       GcpCloudContext secondBrokenGcpContext =
           descriptionMap.get(workspaceUuid).getGcpCloudContext();
       assertThat(
@@ -452,7 +452,7 @@ class WorkspaceDaoTest extends BaseUnitTest {
           workspaceUuid,
           CloudPlatform.GCP,
           UUID.randomUUID().toString(),
-          /*exception=*/ null,
+          /* exception= */ null,
           WsmResourceStateRule.DELETE_ON_FAILURE);
       assertTrue(workspaceDao.getCloudContext(workspaceUuid, CloudPlatform.GCP).isPresent());
     }
@@ -467,7 +467,10 @@ class WorkspaceDaoTest extends BaseUnitTest {
         new GcpCloudContextFields(
             PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
         new CloudContextCommonFields(
-            DEFAULT_SPEND_PROFILE_ID, WsmResourceState.READY, /*flightId=*/ null, /*error=*/ null));
+            DEFAULT_SPEND_PROFILE_ID,
+            WsmResourceState.READY,
+            /* flightId= */ null,
+            /* error= */ null));
   }
 
   private void checkCloudContext(Optional<GcpCloudContext> optionalContext) {

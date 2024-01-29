@@ -10,10 +10,13 @@ import org.springframework.context.annotation.Configuration;
 public class JobConfiguration {
   /** Number of threads to keep available */
   private int maxThreads;
+
   /** Timeout in seconds */
   private int timeoutSeconds;
+
   /** Polling interval in seconds */
   private int pollingIntervalSeconds;
+
   /** For identifying the application to SAM */
   private String resourceId;
 

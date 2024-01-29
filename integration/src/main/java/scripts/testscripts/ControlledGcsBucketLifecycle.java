@@ -223,8 +223,8 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
                     resourceApi,
                     resourceId,
                     invalidName,
-                    /*updatedDescription=*/ null,
-                    /*updateParameters=*/ null));
+                    /* updatedDescription= */ null,
+                    /* updateParameters= */ null));
     assertEquals(HttpStatusCodes.STATUS_CODE_BAD_REQUEST, invalidUpdateEx.getCode());
 
     // Make sure the bucket parameters are updated
@@ -328,7 +328,7 @@ public class ControlledGcsBucketLifecycle extends GcpWorkspaceCloneTestScriptBas
     var commonParameters =
         CommonResourceFieldsUtil.makeControlledResourceCommonFields(
             resourceName,
-            /*privateUser=*/ null,
+            /* privateUser= */ null,
             CloningInstructionsEnum.NOTHING,
             ManagedBy.USER,
             AccessScope.SHARED_ACCESS);

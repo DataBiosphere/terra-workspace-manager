@@ -127,8 +127,8 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         sourceResource.getMetadata().getDescription(),
         projectId,
         sourceDatasetName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
-        /*expectedLastUpdatedBy=*/ userAccessUtils.getDefaultUserEmail());
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
+        /* expectedLastUpdatedBy= */ userAccessUtils.getDefaultUserEmail());
 
     // Assert resource returned by get
     ApiGcpBigQueryDatasetResource gotResource =
@@ -211,11 +211,11 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
   public void clone_requesterNoReadAccessOnSourceWorkspace_throws403() throws Exception {
     mockGcpApi.cloneReferencedBqDatasetAndExpect(
         userAccessUtils.secondUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_FORBIDDEN);
   }
 
@@ -234,11 +234,11 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
 
     mockGcpApi.cloneReferencedBqDatasetAndExpect(
         userAccessUtils.secondUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
-        /*destResourceName=*/ null,
+        /* destResourceName= */ null,
         HttpStatus.SC_FORBIDDEN);
 
     mockWorkspaceV1Api.removeRole(
@@ -269,11 +269,11 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
     ApiGcpBigQueryDatasetResource clonedResource =
         mockGcpApi.cloneReferencedBqDataset(
             userAccessUtils.secondUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
-            /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId2,
+            /* sourceWorkspaceId= */ workspaceId,
+            /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
+            /* destWorkspaceId= */ workspaceId2,
             ApiCloningInstructionsEnum.REFERENCE,
-            /*destResourceName=*/ null);
+            /* destResourceName= */ null);
 
     assertClonedBqDataset(
         clonedResource,
@@ -284,7 +284,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         sourceResource.getMetadata().getDescription(),
         projectId,
         sourceDatasetName,
-        /*expectedCreatedBy=*/ userAccessUtils.getSecondUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getSecondUserEmail(),
         userAccessUtils.secondUserAuthRequest());
 
     mockWorkspaceV1Api.removeRole(
@@ -311,9 +311,9 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
     ApiGcpBigQueryDatasetResource clonedResource =
         mockGcpApi.cloneReferencedBqDataset(
             userRequest,
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId,
+            /* destWorkspaceId= */ workspaceId,
             ApiCloningInstructionsEnum.NOTHING,
             destResourceName);
 
@@ -331,9 +331,9 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
     ApiGcpBigQueryDatasetResource clonedResource =
         mockGcpApi.cloneReferencedBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId,
+            /* destWorkspaceId= */ workspaceId,
             ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
@@ -347,7 +347,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         sourceResource.getMetadata().getDescription(),
         projectId,
         sourceDatasetName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
@@ -366,9 +366,9 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
     ApiGcpBigQueryDatasetResource clonedResource =
         mockGcpApi.cloneReferencedBqDataset(
             userAccessUtils.defaultUserAuthRequest(),
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             sourceResource.getMetadata().getResourceId(),
-            /*destWorkspaceId=*/ workspaceId2,
+            /* destWorkspaceId= */ workspaceId2,
             ApiCloningInstructionsEnum.REFERENCE,
             destResourceName);
 
@@ -382,7 +382,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         sourceResource.getMetadata().getDescription(),
         projectId,
         sourceDatasetName,
-        /*expectedCreatedBy=*/ userAccessUtils.getDefaultUserEmail(),
+        /* expectedCreatedBy= */ userAccessUtils.getDefaultUserEmail(),
         userAccessUtils.defaultUserAuthRequest());
 
     // Assert resource returned by get
@@ -412,21 +412,21 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_IOWA),
+        /* policiesToRemove= */ null);
     mockWorkspaceV1Api.updatePolicies(
         userAccessUtils.defaultUserAuthRequest(),
         workspaceId2,
-        /*policiesToAdd=*/ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
-        /*policiesToRemove=*/ null);
+        /* policiesToAdd= */ ImmutableList.of(PolicyFixtures.REGION_POLICY_USA),
+        /* policiesToRemove= */ null);
 
     // Clone resource
     String destResourceName = TestUtils.appendRandomNumber("dest-resource-name");
     mockGcpApi.cloneReferencedBqDataset(
         userAccessUtils.defaultUserAuthRequest(),
-        /*sourceWorkspaceId=*/ workspaceId,
+        /* sourceWorkspaceId= */ workspaceId,
         sourceResource.getMetadata().getResourceId(),
-        /*destWorkspaceId=*/ workspaceId2,
+        /* destWorkspaceId= */ workspaceId2,
         ApiCloningInstructionsEnum.REFERENCE,
         destResourceName);
 
@@ -462,7 +462,7 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         expectedWorkspaceId,
         expectedResourceName,
         expectedDescription,
-        /*expectedResourceLineage=*/ new ApiResourceLineage(),
+        /* expectedResourceLineage= */ new ApiResourceLineage(),
         expectedCreatedBy,
         expectedLastUpdatedBy);
 
@@ -491,8 +491,8 @@ public class ReferencedGcpResourceControllerBqDatasetConnectedTest extends BaseC
         expectedWorkspaceId,
         expectedResourceName,
         expectedResourceDescription,
-        /*sourceWorkspaceId=*/ workspaceId,
-        /*sourceResourceId=*/ sourceResource.getMetadata().getResourceId(),
+        /* sourceWorkspaceId= */ workspaceId,
+        /* sourceResourceId= */ sourceResource.getMetadata().getResourceId(),
         expectedCreatedBy,
         StewardshipType.REFERENCED,
         cloneUserRequest);

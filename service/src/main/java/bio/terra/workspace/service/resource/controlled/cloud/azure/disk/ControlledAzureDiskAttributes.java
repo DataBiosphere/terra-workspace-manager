@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ControlledAzureDiskAttributes {
   private final String diskName;
   private final String region;
+
   /** size is in GB */
   private final int size;
 

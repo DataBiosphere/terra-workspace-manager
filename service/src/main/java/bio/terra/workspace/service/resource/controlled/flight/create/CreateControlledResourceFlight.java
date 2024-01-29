@@ -75,15 +75,19 @@ public class CreateControlledResourceFlight extends Flight {
     // Get the cloud context and store it in the working map
     UUID workspaceUuid = resource.getWorkspaceId();
     switch (resource.getResourceType().getCloudPlatform()) {
-      case GCP -> addStep(
-          new GetGcpCloudContextStep(workspaceUuid, flightBeanBag.getGcpCloudContextService()),
-          dbRetryRule);
-      case AZURE -> addStep(
-          new GetAzureCloudContextStep(workspaceUuid, flightBeanBag.getAzureCloudContextService()),
-          dbRetryRule);
-      case AWS -> addStep(
-          new GetAwsCloudContextStep(workspaceUuid, flightBeanBag.getAwsCloudContextService()),
-          dbRetryRule);
+      case GCP ->
+          addStep(
+              new GetGcpCloudContextStep(workspaceUuid, flightBeanBag.getGcpCloudContextService()),
+              dbRetryRule);
+      case AZURE ->
+          addStep(
+              new GetAzureCloudContextStep(
+                  workspaceUuid, flightBeanBag.getAzureCloudContextService()),
+              dbRetryRule);
+      case AWS ->
+          addStep(
+              new GetAwsCloudContextStep(workspaceUuid, flightBeanBag.getAwsCloudContextService()),
+              dbRetryRule);
     }
 
     // Tell the resource to make its specific steps

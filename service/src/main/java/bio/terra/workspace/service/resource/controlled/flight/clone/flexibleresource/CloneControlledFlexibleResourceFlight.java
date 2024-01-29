@@ -103,7 +103,7 @@ public class CloneControlledFlexibleResourceFlight extends Flight {
           new ValidateWorkspaceAgainstPolicyStep(
               destinationWorkspaceId,
               sourceFlexResource.getResourceType().getCloudPlatform(),
-              /*destinationLocation=*/ null,
+              /* destinationLocation= */ null,
               resolvedCloningInstructions,
               userRequest,
               flightBeanBag.getResourceDao(),

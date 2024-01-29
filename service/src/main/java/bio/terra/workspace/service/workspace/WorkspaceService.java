@@ -58,13 +58,15 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import com.google.common.base.Preconditions;
-import io.opencensus.contrib.spring.aop.Traced;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,7 +122,7 @@ public class WorkspaceService {
   }
 
   /** Create a workspace with the specified parameters. Returns workspaceID of the new workspace. */
-  @Traced
+  @WithSpan
   public UUID createWorkspace(
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
@@ -131,13 +133,13 @@ public class WorkspaceService {
         workspace,
         policies,
         applications,
-        /*sourceWorkspaceUuid=*/ null,
+        /* sourceWorkspaceUuid= */ null,
         CloningInstructions.COPY_NOTHING,
         projectOwnerGroupId,
         userRequest);
   }
 
-  @Traced
+  @WithSpan
   public UUID createWorkspaceForClone(
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
@@ -156,13 +158,14 @@ public class WorkspaceService {
         userRequest);
   }
 
-  @Traced
+  @WithSpan
   public void createWorkspaceV2(
       Workspace workspace,
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
       @Nullable CloudPlatform cloudPlatform,
       @Nullable SpendProfile spendProfile,
+      @Nullable String projectOwnerGroupId,
       String jobId,
       AuthenticatedUserRequest userRequest) {
 
@@ -185,7 +188,8 @@ public class WorkspaceService {
             .addParameter(
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
-            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications);
+            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications)
+            .addParameter(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, projectOwnerGroupId);
 
     // Add the cloud context params if we are making a cloud context
     // We mint a flight id here, so it is reliably constant for the inner cloud context flight
@@ -278,7 +282,7 @@ public class WorkspaceService {
    * @param action the action to authorize against the workspace
    * @return the workspace, if it exists and the user is permitted to perform the specified action.
    */
-  @Traced
+  @WithSpan
   public Workspace validateWorkspaceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
     logWorkspaceAction(userRequest, workspaceUuid.toString(), action);
@@ -295,7 +299,7 @@ public class WorkspaceService {
    * @param action the action to authorize against the workspace
    * @return the workspace description
    */
-  @Traced
+  @WithSpan
   public WorkspaceDescription validateWorkspaceAndActionReturningDescription(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
     logWorkspaceAction(userRequest, workspaceUuid.toString(), action);
@@ -313,7 +317,7 @@ public class WorkspaceService {
    * @param action the action to authorize against the workspace
    * @return the workspace description
    */
-  @Traced
+  @WithSpan
   public WorkspaceDescription validateWorkspaceAndActionReturningDescription(
       AuthenticatedUserRequest userRequest, String userFacingId, String action) {
     logWorkspaceAction(userRequest, userFacingId, action);
@@ -328,7 +332,7 @@ public class WorkspaceService {
    * which additionally throws StageDisabledException if this is not an MC_WORKSPACE stage
    * workspace.
    */
-  @Traced
+  @WithSpan
   public Workspace validateMcWorkspaceAndAction(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, String action) {
     Workspace workspace = validateWorkspaceAndAction(userRequest, workspaceUuid, action);
@@ -380,7 +384,7 @@ public class WorkspaceService {
         workspacePao);
   }
 
-  @Traced
+  @WithSpan
   public void validateWorkspaceState(UUID workspaceUuid) {
     Workspace workspace = workspaceDao.getWorkspace(workspaceUuid);
     validateWorkspaceState(workspace);
@@ -487,7 +491,7 @@ public class WorkspaceService {
    *
    * @return The source Workspace object.
    */
-  @Traced
+  @WithSpan
   public Workspace validateCloneReferenceAction(
       AuthenticatedUserRequest userRequest, UUID sourceWorkspaceId, UUID destinationWorkspaceId) {
     Workspace sourceWorkspace =
@@ -504,7 +508,7 @@ public class WorkspaceService {
    * @param offset The number of items to skip before starting to collect the result set.
    * @param limit The maximum number of items to return.
    */
-  @Traced
+  @WithSpan
   public List<WorkspaceDescription> getWorkspaceDescriptions(
       AuthenticatedUserRequest userRequest, int offset, int limit, WsmIamRole minimumHighestRole) {
 
@@ -520,20 +524,21 @@ public class WorkspaceService {
         workspaceDao.getWorkspaceDescriptionMapFromIdList(
             accessibleWorkspaces.keySet(), offset, limit);
 
-    // TODO: PF-2710(part 2): make a batch getOrCreatePao in TPS and use it here
-    Map<UUID, TpsPaoGetResult> paoMap = new HashMap<>();
+    Map<UUID, TpsPaoGetResult> paoMap;
     if (features.isTpsEnabled()) {
-      for (DbWorkspaceDescription dbWorkspaceDescription : dbWorkspaceDescriptions.values()) {
-        TpsPaoGetResult workspacePao =
-            Rethrow.onInterrupted(
-                () ->
-                    tpsApiDispatch.getOrCreatePao(
-                        dbWorkspaceDescription.getWorkspace().workspaceId(),
-                        TpsComponent.WSM,
-                        TpsObjectType.WORKSPACE),
-                "getOrCreatePao");
-        paoMap.put(dbWorkspaceDescription.getWorkspace().workspaceId(), workspacePao);
-      }
+      var workspacePaos =
+          Rethrow.onInterrupted(
+              () ->
+                  tpsApiDispatch.listPaos(
+                      dbWorkspaceDescriptions.values().stream()
+                          .map(d -> d.getWorkspace().workspaceId())
+                          .toList()),
+              "listPaos");
+      paoMap =
+          workspacePaos.stream()
+              .collect(Collectors.toMap(TpsPaoGetResult::getObjectId, Function.identity()));
+    } else {
+      paoMap = new HashMap<>();
     }
 
     // Join the DAO workspace descriptions with the Sam info to generate a list of
@@ -559,12 +564,12 @@ public class WorkspaceService {
   }
 
   /** Retrieves an existing workspace by ID */
-  @Traced
+  @WithSpan
   public Workspace getWorkspace(UUID uuid) {
     return workspaceDao.getWorkspace(uuid);
   }
 
-  @Traced
+  @WithSpan
   public WsmIamRole getHighestRole(UUID uuid, AuthenticatedUserRequest userRequest) {
     logger.info("getHighestRole - userRequest: {}\nuserFacingId: {}", userRequest, uuid.toString());
     List<WsmIamRole> requesterRoles =
@@ -588,7 +593,7 @@ public class WorkspaceService {
    * @param description description to change - may be null
    * @return workspace description
    */
-  @Traced
+  @WithSpan
   public WorkspaceDescription updateWorkspace(
       UUID workspaceUuid,
       @Nullable String userFacingId,
@@ -614,7 +619,7 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param properties list of keys in properties
    */
-  @Traced
+  @WithSpan
   public void updateWorkspaceProperties(
       UUID workspaceUuid, Map<String, String> properties, AuthenticatedUserRequest userRequest) {
     workspaceDao.updateWorkspaceProperties(workspaceUuid, properties);
@@ -627,7 +632,7 @@ public class WorkspaceService {
   }
 
   /** Delete an existing workspace by ID. */
-  @Traced
+  @WithSpan
   public void deleteWorkspace(Workspace workspace, AuthenticatedUserRequest userRequest) {
     JobBuilder deleteJob =
         buildDeleteWorkspaceJob(workspace, userRequest, UUID.randomUUID().toString(), null);
@@ -635,7 +640,7 @@ public class WorkspaceService {
   }
 
   /** Async delete of an existing workspace */
-  @Traced
+  @WithSpan
   public void deleteWorkspaceAsync(
       Workspace workspace,
       AuthenticatedUserRequest userRequest,
@@ -668,7 +673,7 @@ public class WorkspaceService {
    * @param workspaceUuid workspace of interest
    * @param propertyKeys list of keys in properties
    */
-  @Traced
+  @WithSpan
   public void deleteWorkspaceProperties(
       UUID workspaceUuid, List<String> propertyKeys, AuthenticatedUserRequest userRequest) {
     workspaceDao.deleteWorkspaceProperties(workspaceUuid, propertyKeys);
@@ -680,7 +685,7 @@ public class WorkspaceService {
         ActivityLogChangedTarget.WORKSPACE);
   }
 
-  @Traced
+  @WithSpan
   public String cloneWorkspace(
       Workspace sourceWorkspace,
       AuthenticatedUserRequest userRequest,
@@ -741,7 +746,7 @@ public class WorkspaceService {
    * @param userRequest user auth
    * @param resultPath result path for async responses
    */
-  @Traced
+  @WithSpan
   public void createCloudContext(
       Workspace workspace,
       CloudPlatform cloudPlatform,
@@ -767,7 +772,7 @@ public class WorkspaceService {
   }
 
   /** Delete a cloud context for the workspace. */
-  @Traced
+  @WithSpan
   public void deleteCloudContext(
       Workspace workspace, CloudPlatform cloudPlatform, AuthenticatedUserRequest userRequest) {
     var jobBuilder =
@@ -776,7 +781,7 @@ public class WorkspaceService {
     jobBuilder.submitAndWait();
   }
 
-  @Traced
+  @WithSpan
   public void deleteCloudContextAsync(
       Workspace workspace,
       CloudPlatform cloudPlatform,
@@ -823,7 +828,7 @@ public class WorkspaceService {
    * @param executingUserRequest User credentials to authenticate this removal. Must belong to a
    *     workspace owner, and likely do not belong to {@code userEmail}.
    */
-  @Traced
+  @WithSpan
   public void removeWorkspaceRoleFromUser(
       Workspace workspace,
       WsmIamRole role,
@@ -846,7 +851,18 @@ public class WorkspaceService {
         .submitAndWait();
   }
 
-  @Traced
+  /**
+   * Links the policies from the source object (workspace, snapshot, etc.) to the policies of the
+   * target workspace. If the source object contains a group constraint, the groups will be added to
+   * the workspace's authorization domain.
+   *
+   * @param workspaceId Target workspace ID
+   * @param sourcePaoId PAO object to link policies from
+   * @param tpsUpdateMode DRY_RUN or FAIL_ON_CONFLICT
+   * @param userRequest Authenticated user request
+   * @return The updated PAO for the workspace
+   */
+  @WithSpan
   public TpsPaoUpdateResult linkPolicies(
       UUID workspaceId,
       TpsPaoDescription sourcePaoId,
@@ -857,14 +873,17 @@ public class WorkspaceService {
         workspaceId,
         sourcePaoId.getObjectId(),
         userRequest.getEmail());
+    TpsPaoGetResult paoBeforeUpdate =
+        Rethrow.onInterrupted(
+            () ->
+                tpsApiDispatch.getOrCreatePao(
+                    workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
+            "getOrCreatePao");
 
     Rethrow.onInterrupted(
         () ->
             tpsApiDispatch.getOrCreatePao(
                 sourcePaoId.getObjectId(), sourcePaoId.getComponent(), sourcePaoId.getObjectType()),
-        "getOrCreatePao");
-    Rethrow.onInterrupted(
-        () -> tpsApiDispatch.getOrCreatePao(workspaceId, TpsComponent.WSM, TpsObjectType.WORKSPACE),
         "getOrCreatePao");
 
     TpsPaoUpdateResult dryRun =
@@ -908,11 +927,14 @@ public class WorkspaceService {
             sourcePaoId.getObjectId(),
             userRequest.getEmail());
       }
+
+      patchWorkspaceAuthDomain(workspaceId, userRequest, paoBeforeUpdate, dryRun);
+
       return updateResult;
     }
   }
 
-  @Traced
+  @WithSpan
   public TpsPaoUpdateResult updatePolicy(
       UUID workspaceUuid,
       TpsPolicyInputs addAttributes,
@@ -966,23 +988,31 @@ public class WorkspaceService {
             userRequest.getEmail());
       }
 
-      HashSet<String> addedGroups =
-          TpsUtilities.getAddedGroups(paoBeforeUpdate, dryRun.getResultingPao());
-      if (!addedGroups.isEmpty()) {
-        logger.info(
-            "Group policies have changed, adding additional groups to auth domain in Sam for workspace {}",
-            workspaceUuid);
-        Rethrow.onInterrupted(
-            () ->
-                samService.addGroupsToAuthDomain(
-                    userRequest,
-                    SamConstants.SamResource.WORKSPACE,
-                    workspaceUuid.toString(),
-                    addedGroups.stream().toList()),
-            "updateAuthDomains");
-      }
+      patchWorkspaceAuthDomain(workspaceUuid, userRequest, paoBeforeUpdate, dryRun);
 
       return result;
+    }
+  }
+
+  private void patchWorkspaceAuthDomain(
+      UUID workspaceUuid,
+      AuthenticatedUserRequest userRequest,
+      TpsPaoGetResult paoBeforeUpdate,
+      TpsPaoUpdateResult dryRun) {
+    HashSet<String> addedGroups =
+        TpsUtilities.getAddedGroups(paoBeforeUpdate, dryRun.getResultingPao());
+    if (!addedGroups.isEmpty()) {
+      logger.info(
+          "Group policies have changed, adding additional groups to auth domain in Sam for workspace {}",
+          workspaceUuid);
+      Rethrow.onInterrupted(
+          () ->
+              samService.addGroupsToAuthDomain(
+                  userRequest,
+                  SamConstants.SamResource.WORKSPACE,
+                  workspaceUuid.toString(),
+                  addedGroups.stream().toList()),
+          "updateAuthDomains");
     }
   }
 }

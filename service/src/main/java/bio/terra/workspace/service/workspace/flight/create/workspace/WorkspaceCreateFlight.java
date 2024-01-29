@@ -11,6 +11,7 @@ import bio.terra.workspace.common.utils.MakeFlightIdsStep;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.policy.flight.LinkSpendProfilePolicyAttributesStep;
 import bio.terra.workspace.service.policy.flight.MergePolicyAttributesStep;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
@@ -55,15 +56,24 @@ public class WorkspaceCreateFlight extends Flight {
         new CreateWorkspaceStartStep(workspace, appContext.getWorkspaceDao(), wsmResourceStateRule),
         dbRetryRule);
 
+    if (appContext.getFeatureConfiguration().isTpsEnabled()) {
+      addStep(
+          new CreateWorkspacePoliciesStep(
+              workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
+          serviceRetryRule);
+    }
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspace.getWorkspaceStage()) {
       case MC_WORKSPACE -> {
         if (appContext.getFeatureConfiguration().isTpsEnabled()) {
           addStep(
-              new CreateWorkspacePoliciesStep(
-                  workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
+              new LinkSpendProfilePolicyAttributesStep(
+                  workspace.workspaceId(),
+                  workspace.spendProfileId(),
+                  appContext.getTpsApiDispatch()),
               serviceRetryRule);
+
           // If we're cloning, we need to copy the policies from the source workspace.
           // This is here instead of in the CloneWorkspaceFlight because we need to do it before
           // we create the workspace in Sam in case there are auth domains.
@@ -88,11 +98,13 @@ public class WorkspaceCreateFlight extends Flight {
                 projectOwnerGroupId),
             serviceRetryRule);
       }
-      case RAWLS_WORKSPACE -> addStep(
-          new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
-          serviceRetryRule);
-      default -> throw new InternalLogicException(
-          "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
+      case RAWLS_WORKSPACE ->
+          addStep(
+              new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
+              serviceRetryRule);
+      default ->
+          throw new InternalLogicException(
+              "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
     }
     addStep(
         new CreateWorkspaceFinishStep(workspace.workspaceId(), appContext.getWorkspaceDao()),

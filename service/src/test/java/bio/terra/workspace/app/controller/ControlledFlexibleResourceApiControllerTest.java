@@ -100,7 +100,7 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     jsonData.put("nestedData", nestedObject);
 
     // Convert the object to a string.
-    String expectedInputJsonString = jsonData.toString(/*indentFactor=*/ 4);
+    String expectedInputJsonString = jsonData.toString(/* indentFactor= */ 4);
 
     // Encode the JSON string in base64.
     byte[] encodedJsonString = expectedInputJsonString.getBytes(StandardCharsets.UTF_8);
@@ -115,8 +115,8 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
         workspaceId,
         defaultName,
         RESOURCE_DESCRIPTION,
-        /*expectedCreatedBy=*/ USER_REQUEST.getEmail(),
-        /*expectedLastUpdatedBy=*/ USER_REQUEST.getEmail(),
+        /* expectedCreatedBy= */ USER_REQUEST.getEmail(),
+        /* expectedLastUpdatedBy= */ USER_REQUEST.getEmail(),
         defaultTypeNamespace,
         defaultType,
         expectedInputJsonString);
@@ -263,9 +263,9 @@ public class ControlledFlexibleResourceApiControllerTest extends BaseUnitTest {
     ApiFlexibleResource clonedFlexResource =
         mockFlexibleResourceApi.cloneFlexibleResourceAndWait(
             USER_REQUEST,
-            /*sourceWorkspaceId=*/ workspaceId,
+            /* sourceWorkspaceId= */ workspaceId,
             resourceId,
-            /*destWorkspaceId=*/ workspaceId,
+            /* destWorkspaceId= */ workspaceId,
             ApiCloningInstructionsEnum.NOTHING,
             destResourceName,
             null);

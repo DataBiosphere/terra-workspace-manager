@@ -34,7 +34,6 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -77,9 +76,6 @@ public class GcsBucketUtils {
                   .createdBefore(OffsetDateTime.parse("2007-01-03T00:00:00.00Z"))
                   .addMatchesStorageClassItem(GcpGcsBucketDefaultStorageClass.STANDARD));
 
-  @SuppressFBWarnings(
-      value = "MS_MUTABLE_COLLECTION",
-      justification = "list must not be immutable if deserialization is to work")
   public static final List<GcpGcsBucketLifecycleRule> BUCKET_LIFECYCLE_RULES =
       new ArrayList<>(List.of(BUCKET_LIFECYCLE_RULE_1, BUCKET_LIFECYCLE_RULE_2));
 
@@ -199,7 +195,7 @@ public class GcsBucketUtils {
         resourceApi,
         workspaceUuid,
         name,
-        /*bucketName=*/ null,
+        /* bucketName= */ null,
         AccessScope.PRIVATE_ACCESS,
         ManagedBy.APPLICATION,
         cloningInstructions,
@@ -265,7 +261,7 @@ public class GcsBucketUtils {
         resourceApi,
         workspaceUuid,
         name,
-        /*bucketName=*/ null,
+        /* bucketName= */ null,
         AccessScope.SHARED_ACCESS,
         ManagedBy.APPLICATION,
         cloningInstructions,
@@ -282,7 +278,7 @@ public class GcsBucketUtils {
         resourceApi,
         workspaceUuid,
         name,
-        /*bucketName=*/ null,
+        /* bucketName= */ null,
         AccessScope.SHARED_ACCESS,
         ManagedBy.USER,
         cloningInstructions,
@@ -299,7 +295,7 @@ public class GcsBucketUtils {
         resourceApi,
         workspaceUuid,
         name,
-        /*bucketName=*/ null,
+        /* bucketName= */ null,
         AccessScope.PRIVATE_ACCESS,
         ManagedBy.USER,
         cloningInstructions,

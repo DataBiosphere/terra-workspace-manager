@@ -37,8 +37,8 @@ public class StorageAccountKeyProviderUnitTest extends BaseAzureUnitTest {
             new CloudContextCommonFields(
                 new SpendProfileId("fake"),
                 WsmResourceState.READY,
-                /*flightId=*/ null,
-                /*error=*/ null));
+                /* flightId= */ null,
+                /* error= */ null));
     when(azureCloudContextService.getRequiredAzureCloudContext(any()))
         .thenReturn(azureCloudContext);
     when(crlService.getStorageManager(

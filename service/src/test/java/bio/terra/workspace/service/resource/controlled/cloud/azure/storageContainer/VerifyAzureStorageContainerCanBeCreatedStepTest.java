@@ -53,7 +53,7 @@ public class VerifyAzureStorageContainerCanBeCreatedStepTest extends BaseStorage
   private final ManagementException containerNotFoundException =
       new ManagementException(
           "Resource was not found.",
-          /*response=*/ null,
+          /* response= */ null,
           new ManagementError(
               AzureManagementExceptionUtils.CONTAINER_NOT_FOUND, "Container was not found."));
 

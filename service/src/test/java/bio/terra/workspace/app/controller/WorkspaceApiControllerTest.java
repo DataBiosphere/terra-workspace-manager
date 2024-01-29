@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -67,7 +68,6 @@ import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -146,21 +146,13 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
   public void createWorkspace_duplicateUuid_throws400() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     mockWorkspaceV1Api.createWorkspaceWithoutCloudContextExpectError(
-        USER_REQUEST, workspaceId, /*stageModel=*/ null, /*policies=*/ null, HttpStatus.SC_OK);
+        USER_REQUEST, workspaceId, /* stageModel= */ null, /* policies= */ null, HttpStatus.SC_OK);
     mockWorkspaceV1Api.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST,
         workspaceId,
-        /*stageModel=*/ null,
-        /*policies=*/ null,
+        /* stageModel= */ null,
+        /* policies= */ null,
         HttpStatus.SC_BAD_REQUEST);
-  }
-
-  @Test
-  public void createWorkspace_policyRejectedForRawlsWorkspace_throws400() throws Exception {
-    ApiErrorReport errorReport =
-        createRawlsWorkspaceWithPolicyExpectError(HttpStatus.SC_BAD_REQUEST);
-    assertTrue(
-        errorReport.getMessage().contains(ApiWorkspaceStageModel.RAWLS_WORKSPACE.toString()));
   }
 
   @Test
@@ -209,8 +201,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         newUserFacingId,
         newDisplayName,
         newDescription,
-        /*expectedCreatedByEmail=*/ USER_REQUEST.getEmail(),
-        /*expectedLastUpdatedByEmail=*/ USER_REQUEST.getEmail());
+        /* expectedCreatedByEmail= */ USER_REQUEST.getEmail(),
+        /* expectedLastUpdatedByEmail= */ USER_REQUEST.getEmail());
 
     // As second user, update only description
     String secondUserEmail = "foo@gmail.com";
@@ -221,8 +213,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         mockWorkspaceV1Api.updateWorkspace(
             USER_REQUEST,
             workspace.getId(),
-            /*newUserFacingId=*/ null,
-            /*newDisplayName=*/ null,
+            /* newUserFacingId= */ null,
+            /* newDisplayName= */ null,
             secondNewDescription);
 
     // Assert description is updated, while ufId and displayName are the same
@@ -231,8 +223,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
         newUserFacingId,
         newDisplayName,
         secondNewDescription,
-        /*expectedCreatedByEmail=*/ USER_REQUEST.getEmail(),
-        /*expectedLastUpdatedByEmail=*/ secondUserEmail);
+        /* expectedCreatedByEmail= */ USER_REQUEST.getEmail(),
+        /* expectedLastUpdatedByEmail= */ secondUserEmail);
 
     // Assert second updated workspace's dates, in relation to first updated workspace
     assertEquals(secondUpdatedWorkspace.getCreatedDate(), updatedWorkspace.getCreatedDate());
@@ -466,14 +458,8 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
             .objectId(workspace.getId())
             .sourcesObjectIds(Collections.emptyList());
     // Return a policy object for the first workspace
-    when(mockTpsApiDispatch().getPao(eq(workspace.getId()))).thenReturn(getPolicyResult);
-    when(mockTpsApiDispatch().getOrCreatePao(eq(workspace.getId()), any(), any()))
-        .thenReturn(getPolicyResult);
-    // Treat the second workspace like it was created before policy existed. It should receive an
-    // empty Pao.
-    TpsPaoGetResult emptyPao =
-        new TpsPaoGetResult().effectiveAttributes(new TpsPolicyInputs().inputs(new ArrayList<>()));
-    when(mockTpsApiDispatch().getPao(eq(noPolicyWorkspace.getId()))).thenReturn(emptyPao);
+    when(mockTpsApiDispatch().listPaos(argThat(l -> l.contains(workspace.getId()))))
+        .thenReturn(List.of(getPolicyResult));
 
     List<ApiWorkspaceDescription> workspaces = listWorkspaces();
 
@@ -595,7 +581,7 @@ public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService 
 
     return mockWorkspaceV1Api.createWorkspaceWithoutCloudContextExpectError(
         USER_REQUEST,
-        /*workspaceId=*/ UUID.randomUUID(),
+        /* workspaceId= */ UUID.randomUUID(),
         ApiWorkspaceStageModel.RAWLS_WORKSPACE,
         policyInputs,
         expectedCode);

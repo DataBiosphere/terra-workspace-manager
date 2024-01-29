@@ -82,7 +82,7 @@ public class SyncSamGroupsStep implements Step {
                 spendProfile.id(),
                 WsmResourceState.CREATING,
                 flightContext.getFlightId(),
-                /*error=*/ null));
+                /* error= */ null));
 
     workingMap.put(WorkspaceFlightMapKeys.CLOUD_CONTEXT, context);
 

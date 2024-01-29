@@ -52,18 +52,21 @@ public class StopAwsSageMakerNotebookStep implements Step {
           AwsUtils.waitForSageMakerNotebookStatus(
               credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
         }
-        case STOPPING -> AwsUtils.waitForSageMakerNotebookStatus(
-            credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
-        case DELETING -> throw new NotFoundException(
-            String.format(
-                "AWS SageMaker Notebook resource %s, being deleted.", resource.getResourceId()));
+        case STOPPING ->
+            AwsUtils.waitForSageMakerNotebookStatus(
+                credentialsProvider, resource, NotebookInstanceStatus.STOPPED);
+        case DELETING ->
+            throw new NotFoundException(
+                String.format(
+                    "AWS SageMaker Notebook resource %s, being deleted.",
+                    resource.getResourceId()));
 
-        case PENDING, UPDATING, UNKNOWN_TO_SDK_VERSION -> throw new ApiException(
-            String.format(
-                "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
-                resource.getResourceId(), notebookStatus));
-        case STOPPED, FAILED -> {
-        } // already stopped
+        case PENDING, UPDATING, UNKNOWN_TO_SDK_VERSION ->
+            throw new ApiException(
+                String.format(
+                    "Cannot stop AWS SageMaker Notebook resource %s, status %s.",
+                    resource.getResourceId(), notebookStatus));
+        case STOPPED, FAILED -> {} // already stopped
       }
 
     } catch (ApiException | UnauthorizedException | BadRequestException e) {
@@ -112,15 +115,16 @@ public class StopAwsSageMakerNotebookStep implements Step {
           AwsUtils.waitForSageMakerNotebookStatus(
               credentialsProvider, resource, NotebookInstanceStatus.IN_SERVICE);
         }
-        case PENDING, UPDATING -> AwsUtils.waitForSageMakerNotebookStatus(
-            credentialsProvider, resource, NotebookInstanceStatus.IN_SERVICE);
+        case PENDING, UPDATING ->
+            AwsUtils.waitForSageMakerNotebookStatus(
+                credentialsProvider, resource, NotebookInstanceStatus.IN_SERVICE);
 
-        case STOPPING, DELETING, UNKNOWN_TO_SDK_VERSION -> throw new ApiException(
-            String.format(
-                "Cannot start AWS SageMaker Notebook resource %s, status %s.",
-                resource.getResourceId(), notebookStatus));
-        case IN_SERVICE -> {
-        } // already started
+        case STOPPING, DELETING, UNKNOWN_TO_SDK_VERSION ->
+            throw new ApiException(
+                String.format(
+                    "Cannot start AWS SageMaker Notebook resource %s, status %s.",
+                    resource.getResourceId(), notebookStatus));
+        case IN_SERVICE -> {} // already started
       }
 
     } catch (ApiException | NotFoundException | UnauthorizedException | BadRequestException e) {

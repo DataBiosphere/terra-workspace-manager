@@ -436,7 +436,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
 
     Folder fooFolder =
         new Folder(
-            /*folderId=*/ UUID.randomUUID(),
+            /* folderId= */ UUID.randomUUID(),
             workspaceId,
             "foo",
             null,
@@ -473,7 +473,7 @@ public class WorkspaceActivityLogHookTest extends BaseUnitTest {
     Folder fooFolder =
         folderDao.createFolder(
             new Folder(
-                /*folderId=*/ UUID.randomUUID(),
+                /* folderId= */ UUID.randomUUID(),
                 workspaceId,
                 "foo",
                 null,

@@ -6,7 +6,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceCons
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceHandler;
 import com.google.common.base.Preconditions;
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 

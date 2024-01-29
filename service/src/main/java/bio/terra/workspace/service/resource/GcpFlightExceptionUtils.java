@@ -29,8 +29,8 @@ public class GcpFlightExceptionUtils {
   public static void handleGcpNonRetryableException(GoogleJsonResponseException e) {
     int statusCode = e.getStatusCode();
     switch (HttpStatus.valueOf(statusCode)) {
-      case BAD_REQUEST, NOT_FOUND, TOO_MANY_REQUESTS -> throw new BadRequestException(
-          e.getDetails().getMessage(), e);
+      case BAD_REQUEST, NOT_FOUND, TOO_MANY_REQUESTS ->
+          throw new BadRequestException(e.getDetails().getMessage(), e);
       case UNAUTHORIZED -> throw new UnauthorizedException(e.getDetails().getMessage(), e);
       case FORBIDDEN -> throw new ForbiddenException(e.getDetails().getMessage(), e);
     }

@@ -47,7 +47,7 @@ public class RetryRules {
 
   /** Use for short database operations which may fail due to transaction conflicts. */
   public static RetryRule shortDatabase() {
-    return new RetryRuleFixedInterval(/*intervalSeconds= */ 1, /* maxCount= */ 5);
+    return new RetryRuleFixedInterval(/* intervalSeconds= */ 1, /* maxCount= */ 5);
   }
 
   private static class LongSyncRetryRule implements RetryRule {

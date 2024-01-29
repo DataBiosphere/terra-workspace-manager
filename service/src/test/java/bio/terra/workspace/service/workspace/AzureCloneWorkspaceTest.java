@@ -6,13 +6,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseAzureConnectedTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.connected.UserAccessUtils;
-import bio.terra.workspace.generated.model.ApiAzureStorageContainerCreationParameters;
+import bio.terra.workspace.db.ResourceDao;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
-import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -39,7 +42,7 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
   @Autowired private WorkspaceService workspaceService;
   @Autowired private AzureCloudContextService azureCloudContextService;
   @Autowired private ControlledResourceService controlledResourceService;
-  @Autowired private WsmResourceService wsmResourceService;
+  @Autowired private ResourceDao resourceDao;
   @Autowired private UserAccessUtils userAccessUtils;
 
   private Workspace sourceWorkspace = null;
@@ -60,10 +63,8 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
         .ifPresent(workspace -> workspaceService.deleteWorkspace(workspace, userRequest));
   }
 
-  @Test
-  void cloneAzureWorkspaceWithContainer() {
-    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
-
+  ControlledAzureStorageContainerResource createSourceContainer(
+      AuthenticatedUserRequest userRequest) {
     UUID containerResourceId = UUID.randomUUID();
     String storageContainerName = ControlledAzureResourceFixtures.uniqueStorageContainerName();
     ControlledAzureStorageContainerResource containerResource =
@@ -90,6 +91,87 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
         new ApiAzureStorageContainerCreationParameters()
             .storageContainerName("storageContainerName"));
 
+    return containerResource;
+  }
+
+  ControlledAzureManagedIdentityResource createSourceManagedIdentity(
+      AuthenticatedUserRequest userRequest) {
+    String managedIdentityResourceName = "idfoobar";
+    String managedIdentityName = "id%s".formatted(UUID.randomUUID().toString());
+
+    ControlledAzureManagedIdentityResource managedIdentityResource =
+        ControlledAzureManagedIdentityResource.builder()
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                    .workspaceUuid(sourceWorkspace.workspaceId())
+                    .name(managedIdentityResourceName)
+                    .cloningInstructions(CloningInstructions.COPY_DEFINITION)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(DEFAULT_AZURE_RESOURCE_REGION)
+                    .build())
+            .managedIdentityName(managedIdentityName)
+            .build();
+
+    controlledResourceService.createControlledResourceSync(
+        managedIdentityResource,
+        ControlledResourceIamRole.OWNER,
+        userRequest,
+        new ApiAzureManagedIdentityCreationParameters().name(managedIdentityName));
+
+    return managedIdentityResource;
+  }
+
+  ControlledAzureDatabaseResource createSourceDatabase(
+      AuthenticatedUserRequest userRequest, ControlledAzureManagedIdentityResource owner)
+      throws InterruptedException {
+    String databaseResourceName = "dbfoobar";
+    String databaseName = "db%s".formatted(UUID.randomUUID().toString().replace('-', '_'));
+
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureDatabaseCreationParameters(databaseName, false)
+            .owner(owner.getWsmResourceFields().getName());
+
+    var databaseResource =
+        ControlledAzureDatabaseResource.builder()
+            .common(
+                ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
+                    .workspaceUuid(sourceWorkspace.workspaceId())
+                    .name(databaseResourceName)
+                    .cloningInstructions(CloningInstructions.COPY_RESOURCE)
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .region(DEFAULT_AZURE_RESOURCE_REGION)
+                    .build())
+            .databaseOwner(owner.getWsmResourceFields().getName())
+            .databaseName(databaseName)
+            .allowAccessForAllWorkspaceUsers(false)
+            .build();
+
+    controlledResourceService.createControlledResourceSync(
+        databaseResource, ControlledResourceIamRole.OWNER, userRequest, creationParameters);
+
+    return databaseResource;
+  }
+
+  void assertXofResourceY(int expectedNumber, WsmResourceFamily resourceType) {
+    assertEquals(
+        expectedNumber,
+        resourceDao
+            .enumerateResources(
+                destWorkspace.getWorkspaceId(), resourceType, StewardshipType.CONTROLLED, 0, 100)
+            .size());
+  }
+
+  @Test
+  void cloneAzureWorkspace() throws InterruptedException {
+    AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+
+    createSourceContainer(userRequest);
+    var sourceManagedIdentity = createSourceManagedIdentity(userRequest);
+    createSourceDatabase(userRequest, sourceManagedIdentity);
+
+    // Create destination workspace resource
     UUID destUUID = UUID.randomUUID();
 
     destWorkspace =
@@ -101,29 +183,23 @@ public class AzureCloneWorkspaceTest extends BaseAzureConnectedTest {
             .createdByEmail(userRequest.getEmail())
             .build();
 
+    // Clone into destination workspace
     String cloneJobId =
         workspaceService.cloneWorkspace(
             sourceWorkspace,
             userRequest,
-            /*location=*/ null,
-            /*additionalPolicies=*/ null,
+            /* location= */ null,
+            /* additionalPolicies= */ null,
             destWorkspace,
             azureTestUtils.getSpendProfile(),
-            /*projectOwnerGroupId=*/ null);
+            /* projectOwnerGroupId= */ null);
     jobService.waitForJob(cloneJobId);
 
     assertEquals(workspaceService.getWorkspace(destUUID), destWorkspace);
     assertTrue(
         azureCloudContextService.getAzureCloudContext(destWorkspace.getWorkspaceId()).isPresent());
-    assertEquals(
-        wsmResourceService
-            .enumerateResources(
-                destWorkspace.getWorkspaceId(),
-                WsmResourceFamily.AZURE_STORAGE_CONTAINER,
-                StewardshipType.CONTROLLED,
-                0,
-                100)
-            .size(),
-        1);
+    assertXofResourceY(1, WsmResourceFamily.AZURE_STORAGE_CONTAINER);
+    assertXofResourceY(1, WsmResourceFamily.AZURE_MANAGED_IDENTITY);
+    assertXofResourceY(1, WsmResourceFamily.AZURE_DATABASE);
   }
 }

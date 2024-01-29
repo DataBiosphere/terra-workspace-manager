@@ -40,7 +40,9 @@ public class StairwayTestUtils {
       FlightMap inputParameters,
       Duration timeout,
       FlightDebugInfo debugInfo)
-      throws DatabaseOperationException, StairwayExecutionException, InterruptedException,
+      throws DatabaseOperationException,
+          StairwayExecutionException,
+          InterruptedException,
           DuplicateFlightIdException {
     String flightId = stairway.createFlightId();
     // TODO(PF-1408): Remove/adjust this when all fixes are in

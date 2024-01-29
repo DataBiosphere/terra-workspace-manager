@@ -8,6 +8,7 @@ dependencies {
 
   // Deps whose versions are controlled by Spring
   implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
+  implementation group: "org.bouncycastle", name: "bc-fips", version: "1.0.2.4"
 
   // Test deps
   testImplementation('org.springframework.boot:spring-boot-starter-test')
@@ -19,5 +20,5 @@ dependencies {
   testImplementation "org.testcontainers:junit-jupiter:1.17.5"
   testImplementation "org.testcontainers:postgresql:1.17.5"
 
-  annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor", version: "2.6.6"
+  annotationProcessor group: "org.springframework.boot", name: "spring-boot-configuration-processor"
 }

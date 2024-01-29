@@ -1,5 +1,9 @@
 name: 'write-config'
-description: 'Collect the vault information used for testing'
+description: |
+  Collect the vault information used for testing.
+  *DEPRECATED*
+  We are favoring using GitHub secrets and injecting them into the config directory via the
+  write-credentials action rather than pulling directly from Vault.
 author: 'dd'
 inputs:
   vault-token:

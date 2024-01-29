@@ -170,14 +170,9 @@ public class CreateAzureVmStep implements Step {
               StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
         }
 
-        case AzureManagementExceptionUtils.VM_EXTENSION_PROVISIONING_ERROR -> {
-          logger.error("Error provisioning VM extension");
-          yield new StepResult(
-              StepStatus.STEP_RESULT_FAILURE_FATAL, new AzureManagementException(e));
-        }
-
-        default -> new StepResult(
-            AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
+        default ->
+            new StepResult(
+                AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
       };
     }
     return StepResult.getStepResultSuccess();
@@ -220,29 +215,6 @@ public class CreateAzureVmStep implements Step {
             .withTag("resourceId", resource.getResourceId().toString())
             .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
 
-    if (creationParameters.getCustomScriptExtension() != null) {
-      var customScriptExtension =
-          vmConfigurationFinalStep
-              .defineNewExtension(creationParameters.getCustomScriptExtension().getName())
-              .withPublisher(creationParameters.getCustomScriptExtension().getPublisher())
-              .withType(creationParameters.getCustomScriptExtension().getType())
-              .withVersion(creationParameters.getCustomScriptExtension().getVersion())
-              .withPublicSettings(
-                  AzureUtils.vmSettingsFrom(
-                      creationParameters.getCustomScriptExtension().getPublicSettings()))
-              .withProtectedSettings(
-                  AzureUtils.vmSettingsFrom(
-                      creationParameters.getCustomScriptExtension().getProtectedSettings()))
-              .withTags(
-                  AzureUtils.vmTagsFrom(creationParameters.getCustomScriptExtension().getTags()));
-
-      if (creationParameters.getCustomScriptExtension().isMinorVersionAutoUpgrade()) {
-        customScriptExtension.withMinorVersionAutoUpgrade();
-      } else {
-        customScriptExtension.withoutMinorVersionAutoUpgrade();
-      }
-      customScriptExtension.attach();
-    }
     return vmConfigurationFinalStep;
   }
 

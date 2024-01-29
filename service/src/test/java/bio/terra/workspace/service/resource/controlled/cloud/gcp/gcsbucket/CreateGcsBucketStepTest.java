@@ -80,7 +80,7 @@ public class CreateGcsBucketStepTest extends BaseUnitTest {
     GoogleJsonResponseException fakeNotFoundError =
         new GoogleJsonResponseException(
             new HttpResponseException.Builder(403, "fake not found error", new HttpHeaders()),
-            /*details=*/ null);
+            /* details= */ null);
     when(mockStorageBucketsGet.execute()).thenThrow(fakeNotFoundError);
   }
 

@@ -131,32 +131,35 @@ public class WorkspaceActivityLogHook implements StairwayHook {
     // Always log when the flight succeeded.
     if (context.getFlightStatus() == FlightStatus.SUCCESS) {
       switch (af.getActivityLogChangedTarget()) {
-        case WORKSPACE -> activityLogDao.writeActivity(
-            workspaceUuid,
-            new DbWorkspaceActivityLog(
-                userEmail,
-                subjectId,
-                operationType,
-                getClonedWorkspaceId(context, operationType, workspaceUuid).toString(),
-                af.getActivityLogChangedTarget()));
-        case FOLDER -> activityLogDao.writeActivity(
-            workspaceUuid,
-            new DbWorkspaceActivityLog(
-                userEmail,
-                subjectId,
-                operationType,
-                getRequired(context.getInputParameters(), FOLDER_ID, UUID.class).toString(),
-                af.getActivityLogChangedTarget()));
-        case USER -> activityLogDao.writeActivity(
-            workspaceUuid,
-            new DbWorkspaceActivityLog(
-                userEmail,
-                subjectId,
-                operationType,
-                getRequired(context.getInputParameters(), USER_TO_REMOVE, String.class),
-                af.getActivityLogChangedTarget()));
-        case APPLICATION -> logApplicationAbleFlight(
-            workspaceUuid, context, userEmail, subjectId, operationType);
+        case WORKSPACE ->
+            activityLogDao.writeActivity(
+                workspaceUuid,
+                new DbWorkspaceActivityLog(
+                    userEmail,
+                    subjectId,
+                    operationType,
+                    getClonedWorkspaceId(context, operationType, workspaceUuid).toString(),
+                    af.getActivityLogChangedTarget()));
+        case FOLDER ->
+            activityLogDao.writeActivity(
+                workspaceUuid,
+                new DbWorkspaceActivityLog(
+                    userEmail,
+                    subjectId,
+                    operationType,
+                    getRequired(context.getInputParameters(), FOLDER_ID, UUID.class).toString(),
+                    af.getActivityLogChangedTarget()));
+        case USER ->
+            activityLogDao.writeActivity(
+                workspaceUuid,
+                new DbWorkspaceActivityLog(
+                    userEmail,
+                    subjectId,
+                    operationType,
+                    getRequired(context.getInputParameters(), USER_TO_REMOVE, String.class),
+                    af.getActivityLogChangedTarget()));
+        case APPLICATION ->
+            logApplicationAbleFlight(workspaceUuid, context, userEmail, subjectId, operationType);
         default -> {
           if (af.isResourceFlight()) {
             logSuccessfulResourceFlight(

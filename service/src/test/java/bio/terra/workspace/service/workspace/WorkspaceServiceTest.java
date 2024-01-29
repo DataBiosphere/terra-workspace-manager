@@ -229,7 +229,7 @@ class WorkspaceServiceTest extends BaseUnitTestMockDataRepoService {
             workspaceService.validateWorkspaceAndActionReturningDescription(
                 USER_REQUEST,
                 userFacingId,
-                /*minimumHighestRoleFromRequest=*/ WsmIamRole.READER.toSamAction()));
+                /* minimumHighestRoleFromRequest= */ WsmIamRole.READER.toSamAction()));
   }
 
   @Test
@@ -394,7 +394,11 @@ class WorkspaceServiceTest extends BaseUnitTestMockDataRepoService {
 
     WorkspaceDescription secondUpdatedWorkspaceDescription =
         workspaceService.updateWorkspace(
-            workspaceUuid, /*userFacingId=*/ null, /*name=*/ null, otherDescription, USER_REQUEST);
+            workspaceUuid,
+            /* userFacingId= */ null,
+            /* name= */ null,
+            otherDescription,
+            USER_REQUEST);
     Workspace secondUpdatedWorkspace = secondUpdatedWorkspaceDescription.workspace();
     Optional<ActivityLogChangeDetails> secondUpdateChangeDetails =
         workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);
@@ -434,9 +438,9 @@ class WorkspaceServiceTest extends BaseUnitTestMockDataRepoService {
         () ->
             workspaceService.updateWorkspace(
                 workspaceUuid,
-                /*userFacingId=*/ null,
-                /*name=*/ null,
-                /*description=*/ null,
+                /* userFacingId= */ null,
+                /* name= */ null,
+                /* description= */ null,
                 USER_REQUEST));
     Optional<ActivityLogChangeDetails> failedUpdateDate =
         workspaceActivityLogDao.getLastUpdatedDetails(workspaceUuid);

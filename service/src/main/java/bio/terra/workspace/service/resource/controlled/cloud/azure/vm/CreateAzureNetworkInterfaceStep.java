@@ -103,8 +103,9 @@ public class CreateAzureNetworkInterfaceStep implements Step {
           yield StepResult.getStepResultSuccess();
         }
 
-        default -> new StepResult(
-            AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
+        default ->
+            new StepResult(
+                AzureManagementExceptionUtils.maybeRetryStatus(e), new AzureManagementException(e));
       };
     }
     return StepResult.getStepResultSuccess();

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 public class StairwayDatabaseConfiguration extends BaseDatabaseProperties {
   /** Passed to Stairway, true will run the migrate to upgrade the database */
   private boolean migrateUpgrade;
+
   /**
    * Passed to Stairway, true will drop any existing stairway data and purge the work queue.
    * Otherwise existing flights are recovered.

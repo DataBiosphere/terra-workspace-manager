@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -41,9 +40,6 @@ public class BeanConfig {
 
     /** Return the escape codes used for ASCII characters. */
     @Override
-    @SuppressFBWarnings(
-        value = "EI",
-        justification = "per base class documentation, callers may not modify returned value")
     public int[] getEscapeCodesForAscii() {
       return asciiEscapes;
     }
