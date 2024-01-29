@@ -53,7 +53,7 @@ integration test projects.
 
 ## Overview
 
- provides workspaces; contexts for holding the work of
+WSM provides workspaces; contexts for holding the work of
 individuals and teams. A _workspace_ has members that are granted some role on the
 workspace (OWNER, READER, WRITER). The members can create and manage _resources_ in the
 workspace. There are two types of resources:
