@@ -55,6 +55,9 @@ public class MdcHook implements StairwayHook {
 
   @Override
   public HookAction startStep(FlightContext flightContext) {
+    String serializedMdc = flightContext.getInputParameters().get(MDC_FLIGHT_MAP_KEY, String.class);
+    // Note that this destroys any previous context on this thread.
+    MDC.setContextMap(deserializeMdc(serializedMdc));
     logger.info(
         STEP_LOG_FORMAT,
         "startStep",
@@ -63,9 +66,6 @@ public class MdcHook implements StairwayHook {
         flightContext.getStepClassName(),
         flightContext.getStepIndex(),
         flightContext.getDirection().name());
-    String serializedMdc = flightContext.getInputParameters().get(MDC_FLIGHT_MAP_KEY, String.class);
-    // Note that this destroys any previous context on this thread.
-    MDC.setContextMap(deserializeMdc(serializedMdc));
     return HookAction.CONTINUE;
   }
 
@@ -130,7 +130,7 @@ public class MdcHook implements StairwayHook {
   }
 
   @Override
-  public HookAction stateTransition(FlightContext context) throws InterruptedException {
+  public HookAction stateTransition(FlightContext context) {
     logger.info(
         "Flight ID {} changed status to {}.", context.getFlightId(), context.getFlightStatus());
     return HookAction.CONTINUE;
