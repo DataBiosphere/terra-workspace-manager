@@ -51,8 +51,8 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Write config
-      id: config
+    - name: Write credentials
+      id: write-credentials
       uses: ./.github/actions/write-credentials
       with:
         user-delegated-sa-b64: ${{ secrets.USER_DELEGATED_SA_DEV }}
@@ -62,6 +62,22 @@ jobs:
         wsm-sa-b64: ${{ secrets.WSM_SA_DEV }}
         janitor-sa-b64: ${{ secrets.JANITOR_SA_DEV }}
         policy-client-sa-b64: ${{ secrets.POLICY_CLIENT_SA_DEV }}
+
+    # Turn on TPS for integration tests
+    # TODO remove this once WOR-1441 removes the tps-enabled feature flag
+    - name: Write config
+      id: write-config
+      run: |
+        cat << EOF > "config/local-properties.yml"
+        workspace:
+          policy:
+            base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
+          cli:
+            server-name: broad-dev
+        feature:
+          tps-enabled: true
+          temporary-grant-enabled: true
+        EOF
 
     - name: Launch local server
       uses: ./.github/actions/start-local-server
