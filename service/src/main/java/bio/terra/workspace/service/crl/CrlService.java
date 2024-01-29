@@ -1,5 +1,8 @@
 package bio.terra.workspace.service.crl;
 
+import static bio.terra.workspace.common.utils.AzureUtils.getAzureProfile;
+import static bio.terra.workspace.common.utils.AzureUtils.getManagedAppCredentials;
+
 import bio.terra.cloudres.azure.resourcemanager.common.ResourceManagerRequestData;
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
@@ -60,9 +63,6 @@ import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import static bio.terra.workspace.common.utils.AzureUtils.getAzureProfile;
-import static bio.terra.workspace.common.utils.AzureUtils.getManagedAppCredentials;
 
 @Component
 public class CrlService {

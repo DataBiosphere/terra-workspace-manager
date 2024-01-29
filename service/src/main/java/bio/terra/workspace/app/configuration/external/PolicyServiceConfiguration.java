@@ -6,11 +6,8 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.collect.ImmutableList;
-import java.io.FileInputStream;
 import java.io.IOException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -53,17 +50,19 @@ public class PolicyServiceConfiguration {
 
   public String getAccessToken() throws IOException {
     try {
-      if (features.isAzureControlPlaneEnabled())
-      {
+      if (features.isAzureControlPlaneEnabled()) {
         TokenCredential credential = new DefaultAzureCredentialBuilder().build();
-        // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid, profile, and email by default in authorization and token requests.
-        AccessToken token = credential.getToken(new TokenRequestContext().addScopes("https://graph.microsoft.com/.default")).block();
+        // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid,
+        // profile, and email by default in authorization and token requests.
+        AccessToken token =
+            credential
+                .getToken(
+                    new TokenRequestContext().addScopes("https://graph.microsoft.com/.default"))
+                .block();
         return token.getToken();
-      }
-      else
-      {
+      } else {
         GoogleCredentials creds =
-                GoogleCredentials.getApplicationDefault().createScoped(POLICY_SERVICE_ACCOUNT_SCOPES);
+            GoogleCredentials.getApplicationDefault().createScoped(POLICY_SERVICE_ACCOUNT_SCOPES);
         creds.refreshIfExpired();
         return creds.getAccessToken().getTokenValue();
       }

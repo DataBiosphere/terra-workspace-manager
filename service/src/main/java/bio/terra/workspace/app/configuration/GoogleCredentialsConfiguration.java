@@ -30,14 +30,8 @@ public class GoogleCredentialsConfiguration {
    * unit tests.
    */
   @Bean
-  @Profile("unit-test")
+  @Profile("unit-test & azure")
   public GoogleCredentials getFakeGoogleCredentials() {
-    return GoogleCredentials.newBuilder().build();
-  }
-
-  @Bean
-  @Profile("azure")
-  public GoogleCredentials getFakeGoogleCredentials2() {
     return GoogleCredentials.newBuilder().build();
   }
 }

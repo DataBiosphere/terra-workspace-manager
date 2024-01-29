@@ -10,7 +10,6 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
-import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
@@ -92,7 +91,8 @@ public class SamService {
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
-  public SamService(SamConfiguration samConfig, FeatureConfiguration features, SamUserFactory samUserFactory) {
+  public SamService(
+      SamConfiguration samConfig, FeatureConfiguration features, SamUserFactory samUserFactory) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.features = features;
@@ -157,17 +157,19 @@ public class SamService {
   @VisibleForTesting
   public String getWsmServiceAccountToken() {
     try {
-      if (features.isAzureControlPlaneEnabled())
-      {
+      if (features.isAzureControlPlaneEnabled()) {
         TokenCredential credential = new DefaultAzureCredentialBuilder().build();
-        // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid, profile, and email by default in authorization and token requests.
-        AccessToken token = credential.getToken(new TokenRequestContext().addScopes("https://graph.microsoft.com/.default")).block();
+        // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid,
+        // profile, and email by default in authorization and token requests.
+        AccessToken token =
+            credential
+                .getToken(
+                    new TokenRequestContext().addScopes("https://graph.microsoft.com/.default"))
+                .block();
         return token.getToken();
-      }
-      else
-      {
+      } else {
         GoogleCredentials creds =
-                GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
+            GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
         creds.refreshIfExpired();
         return creds.getAccessToken().getTokenValue();
       }

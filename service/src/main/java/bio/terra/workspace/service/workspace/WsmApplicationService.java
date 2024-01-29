@@ -267,7 +267,8 @@ public class WsmApplicationService {
       }
 
       WsmApplicationState state = WsmApplicationState.fromString(config.getState());
-      if (!EmailValidator.getInstance(false, true).isValid(config.getServiceAccount()) && !features.isAzureControlPlaneEnabled()) {
+      if (!EmailValidator.getInstance(false, true).isValid(config.getServiceAccount())
+          && !features.isAzureControlPlaneEnabled()) {
         logError("Invalid application configuration: service account is not a valid email address");
         return Optional.empty();
       }

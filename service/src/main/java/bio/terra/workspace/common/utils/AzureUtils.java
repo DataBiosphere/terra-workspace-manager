@@ -10,7 +10,6 @@ import com.azure.core.credential.TokenCredential;
 import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -108,16 +107,16 @@ public final class AzureUtils {
 
   public static TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
     return new ClientSecretCredentialBuilder()
-            .clientId(azureConfig.getManagedAppClientId())
-            .clientSecret(azureConfig.getManagedAppClientSecret())
-            .tenantId(azureConfig.getManagedAppTenantId())
-            .build();
+        .clientId(azureConfig.getManagedAppClientId())
+        .clientSecret(azureConfig.getManagedAppClientSecret())
+        .tenantId(azureConfig.getManagedAppTenantId())
+        .build();
   }
 
   public static AzureProfile getAzureProfile(AzureCloudContext azureCloudContext) {
     return new AzureProfile(
-            azureCloudContext.getAzureTenantId(),
-            azureCloudContext.getAzureSubscriptionId(),
-            AzureEnvironment.AZURE);
+        azureCloudContext.getAzureTenantId(),
+        azureCloudContext.getAzureSubscriptionId(),
+        AzureEnvironment.AZURE);
   }
 }
