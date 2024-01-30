@@ -25,7 +25,6 @@ on:
     - main
     paths-ignore:
     - 'README.md'
-    - '.github/**'
     - 'local-dev/**'
   workflow_dispatch:
     inputs:
