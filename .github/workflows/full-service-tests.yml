@@ -59,7 +59,6 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-      # These steps aren't needed for unit tests
     - name: Get Vault token
       id: vault-token-step
       env:
@@ -78,8 +77,6 @@ jobs:
       id: config
       uses: ./.github/actions/write-config
       with:
-        # Note that unit and connected tests run with local configuration regardless of
-        # the test-env specified on the workflow-dispatch input.
         target: local
         vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
 
