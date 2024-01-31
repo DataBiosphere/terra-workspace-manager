@@ -1,12 +1,14 @@
 package bio.terra.workspace.app.configuration.external;
 
 import bio.terra.common.exception.InternalServerErrorException;
-import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
 import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.collect.ImmutableList;
+import java.io.FileInputStream;
 import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -73,17 +75,18 @@ public class BufferServiceConfiguration {
         TokenCredential credential = new DefaultAzureCredentialBuilder().build();
         // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid,
         // profile, and email by default in authorization and token requests.
-        AccessToken token =
+        com.azure.core.credential.AccessToken token =
             credential
                 .getToken(
                     new TokenRequestContext().addScopes("https://graph.microsoft.com/.default"))
                 .block();
         return token.getToken();
       } else {
-        GoogleCredentials creds =
-            GoogleCredentials.getApplicationDefault().createScoped(BUFFER_SCOPES);
-        creds.refreshIfExpired();
-        return creds.getAccessToken().getTokenValue();
+        FileInputStream fileInputStream = new FileInputStream(clientCredentialFilePath);
+        GoogleCredentials credentials =
+            ServiceAccountCredentials.fromStream(fileInputStream).createScoped(BUFFER_SCOPES);
+        AccessToken token = credentials.refreshAccessToken();
+        return token.getTokenValue();
       }
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
