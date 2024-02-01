@@ -24,6 +24,24 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure Disk create job.
+      operationId: getCreateAzureDiskResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureDiskResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureDiskResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/{resourceId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -127,3 +145,24 @@ components:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskCreationParameters'
+
+    CreatedControlledAzureDiskResult:
+      description: Api result class for creating an Azure disk
+      type: object
+      properties:
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskResource'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
+        errorReport:
+          $ref: '#/components/schemas/ErrorReport'
+
+
+  responses:
+    CreateControlledAzureDiskResponse:
+      description: Response to create controlled Azure disk
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatedControlledAzureDiskResult'
+

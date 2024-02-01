@@ -253,7 +253,7 @@ components:
           $ref: '#/components/schemas/JobControl'
 
     CreatedControlledAzureVmResult:
-      description: Api result class for creating an azure vm
+      description: Api result class for creating an Azure vm
       type: object
       properties:
         azureVm:
