@@ -18,11 +18,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * A {@link StairwayHook} for propagating MDC context across steps using the input {@link
- * FlightMap}.
+ * A {@link StairwayHook} which does the following:
  *
- * <p>This allows steps to have the same MDC context as when their flight was created. Note that any
- * modifications to the MDC context within a step are not propagated to other steps.
+ * <li>Propagates flight-specific mapped diagnostic context (MDC) across a Stairway flight's thread(s) for the duration
+ *    of the flight.  This includes context provided by the caller in the input {@link FlightMap}, intended to store the
+ *    MDC from the calling thread to preserve context across the duration of a request.
+ * <li>Propagates step-specific MDC across a Stairway flight's thread(s) for the duration of each step.
+ * <li>Supplements logging at notable flight state transitions.
+ *
+ * <p><b>Note for developers:</b> Any modifications to the MDC directly within flight or step code may not have their
+ * intended effect and are not recommended (e.g. a flight may restart on a different thread due to failover-recovery).
  */
 @Component
 public class MdcHook implements StairwayHook {
@@ -31,8 +36,18 @@ public class MdcHook implements StairwayHook {
   private static final String STEP_LOG_FORMAT =
       "Operation: {}, flightClass: {}, flightId: {}, stepClass: {}, stepIndex: {}, direction: {}";
 
-  /** The key to use in {@link FlightMap} for storing the MDC context. */
+  /** The key to use in the input {@link FlightMap} for storing the MDC context. */
   public static final String MDC_FLIGHT_MAP_KEY = "mdcKey";
+  /** ID of the flight */
+  public static final String FLIGHT_ID_KEY = "flightId";
+  /** Class of the flight */
+  public static final String FLIGHT_CLASS_KEY = "flightClass";
+  /** Class of the flight step */
+  public static final String FLIGHT_STEP_CLASS_KEY = "flightStepClass";
+  /** Direction of the step (START, DO, SWITCH, or UNDO) */
+  public static final String FLIGHT_STEP_DIRECTION_KEY = "flightStepDirection";
+  /** The step's execution order */
+  public static final String FLIGHT_STEP_NUMBER_KEY = "flightStepNumber";
 
   private static final TypeReference<Map<String, String>> mapType = new TypeReference<>() {};
 
@@ -55,6 +70,7 @@ public class MdcHook implements StairwayHook {
 
   @Override
   public HookAction startStep(FlightContext flightContext) {
+    addStepContextToMdc(flightContext);
     logger.info(
         STEP_LOG_FORMAT,
         "startStep",
@@ -76,6 +92,7 @@ public class MdcHook implements StairwayHook {
         flightContext.getStepClassName(),
         flightContext.getStepIndex(),
         flightContext.getDirection().name());
+    removeStepContextFromMdc();
     return HookAction.CONTINUE;
   }
 
@@ -84,6 +101,7 @@ public class MdcHook implements StairwayHook {
     String serializedMdc = flightContext.getInputParameters().get(MDC_FLIGHT_MAP_KEY, String.class);
     // Note that this destroys any previous context on this thread.
     MDC.setContextMap(deserializeMdc(serializedMdc));
+    addFlightContextToMdc(flightContext);
     logger.info(
         FLIGHT_LOG_FORMAT,
         "startFlight",
@@ -134,5 +152,22 @@ public class MdcHook implements StairwayHook {
     logger.info(
         "Flight ID {} changed status to {}.", context.getFlightId(), context.getFlightStatus());
     return HookAction.CONTINUE;
+  }
+
+  private void addFlightContextToMdc(FlightContext context) {
+    MDC.put(FLIGHT_ID_KEY, context.getFlightId());
+    MDC.put(FLIGHT_CLASS_KEY, context.getFlightClassName());
+  }
+
+  private void addStepContextToMdc(FlightContext context) {
+    MDC.put(FLIGHT_STEP_CLASS_KEY, context.getStepClassName());
+    MDC.put(FLIGHT_STEP_DIRECTION_KEY, context.getDirection().toString());
+    MDC.put(FLIGHT_STEP_NUMBER_KEY, Integer.toString(context.getStepIndex()));
+  }
+
+  private void removeStepContextFromMdc() {
+    MDC.remove(FLIGHT_STEP_CLASS_KEY);
+    MDC.remove(FLIGHT_STEP_DIRECTION_KEY);
+    MDC.remove(FLIGHT_STEP_NUMBER_KEY);
   }
 }
