@@ -122,7 +122,6 @@ jobs:
       if: steps.skiptest.outputs.is-bump == 'no'
       uses: google-github-actions/auth@v1
       with:
-        version: '411.0.0'
         credentials_json: ${{ secrets.GCR_PUBLISH_KEY }}
     - name: Setup gcloud
       if: steps.skiptest.outputs.is-bump == 'no'

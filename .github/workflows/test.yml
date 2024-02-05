@@ -71,7 +71,6 @@ jobs:
       - name: Auth to Google
         uses: google-github-actions/auth@v1
         with:
-          version: '411.0.0'
           credentials_json: ${{ secrets.GCR_PUBLISH_KEY }}
 
       - name: Setup gcloud
