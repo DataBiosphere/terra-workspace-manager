@@ -10,7 +10,6 @@ import bio.terra.workspace.service.job.JobService;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.util.Map;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
