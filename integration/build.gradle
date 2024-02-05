@@ -18,7 +18,7 @@ dependencies {
         logback = "1.4.14"
         slf4j = "2.0.11"
         hamcrest = "2.2"
-        jUnit = "5.10.1"
+        jUnit = "5.10.2"
 
         testRunnerVersion = "0.2.0-SNAPSHOT"
     }
@@ -37,8 +37,8 @@ dependencies {
         implementation 'com.google.guava:guava:33.0.0-jre'
         implementation 'org.json:json:20231013' // security vulnerability
     }
-    implementation platform('com.google.cloud:libraries-bom:26.30.0')
-    implementation "com.google.api-client:google-api-client:2.2.0"
+    implementation platform('com.google.cloud:libraries-bom:26.31.0')
+    implementation "com.google.api-client:google-api-client:2.3.0"
     implementation "com.google.apis:google-api-services-container:v1-rev20240116-2.0.0"
     implementation "com.google.apis:google-api-services-iam:v1-rev20230914-2.0.0"
     implementation "com.google.apis:google-api-services-notebooks:v1-rev20231019-2.0.0"

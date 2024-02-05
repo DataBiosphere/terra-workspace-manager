@@ -4,7 +4,7 @@ plugins {
 
     // For JShell support
     // https://gitlab.com/barfuin/gradle-taskinfo
-    id 'org.barfuin.gradle.taskinfo' version '2.1.0'
+    id 'org.barfuin.gradle.taskinfo' version '2.2.0'
     id 'com.github.mrsarm.jshell.plugin' version '1.2.1'
 }
 
