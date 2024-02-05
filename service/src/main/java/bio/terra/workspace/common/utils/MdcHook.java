@@ -102,7 +102,7 @@ public class MdcHook implements StairwayHook {
         flightContext.getStepClassName(),
         flightContext.getStepIndex(),
         flightContext.getDirection().name());
-    removeStepContextFromMdc();
+    removeStepContextFromMdc(flightContext);
     return HookAction.CONTINUE;
   }
 
@@ -169,15 +169,18 @@ public class MdcHook implements StairwayHook {
     MDC.put(FLIGHT_CLASS_KEY, context.getFlightClassName());
   }
 
-  private void addStepContextToMdc(FlightContext context) {
-    MDC.put(FLIGHT_STEP_CLASS_KEY, context.getStepClassName());
-    MDC.put(FLIGHT_STEP_DIRECTION_KEY, context.getDirection().toString());
-    MDC.put(FLIGHT_STEP_NUMBER_KEY, Integer.toString(context.getStepIndex()));
+  private Map<String, String> stepContext(FlightContext context) {
+    return Map.of(
+        FLIGHT_STEP_CLASS_KEY, context.getStepClassName(),
+        FLIGHT_STEP_DIRECTION_KEY, context.getDirection().toString(),
+        FLIGHT_STEP_NUMBER_KEY, Integer.toString(context.getStepIndex()));
   }
 
-  private void removeStepContextFromMdc() {
-    MDC.remove(FLIGHT_STEP_CLASS_KEY);
-    MDC.remove(FLIGHT_STEP_DIRECTION_KEY);
-    MDC.remove(FLIGHT_STEP_NUMBER_KEY);
+  private void addStepContextToMdc(FlightContext context) {
+    stepContext(context).forEach(MDC::put);
+  }
+
+  private void removeStepContextFromMdc(FlightContext context) {
+    stepContext(context).keySet().forEach(MDC::remove);
   }
 }

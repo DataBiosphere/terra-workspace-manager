@@ -1,8 +1,8 @@
 package bio.terra.workspace.common.utils;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.stairway.*;
 import bio.terra.workspace.common.BaseUnitTest;
@@ -10,6 +10,7 @@ import bio.terra.workspace.service.job.JobService;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
