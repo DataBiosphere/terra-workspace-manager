@@ -148,7 +148,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledAzureDiskResult> getCreateAzureDiskResult(
-          UUID workspaceUuid, String jobId) {
+      UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -159,7 +159,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   private ApiCreatedControlledAzureDiskResult fetchCreateControlledAzureDiskResult(String jobId) {
     final JobApiUtils.AsyncJobResult<ControlledAzureDiskResource> jobResult =
-            jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureDiskResource.class);
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureDiskResource.class);
 
     ApiAzureDiskResource apiResource = null;
     if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
@@ -167,9 +167,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       apiResource = resource.toApiResource();
     }
     return new ApiCreatedControlledAzureDiskResult()
-            .jobReport(jobResult.getJobReport())
-            .errorReport(jobResult.getApiErrorReport())
-            .azureDisk(apiResource);
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport())
+        .azureDisk(apiResource);
   }
 
   @WithSpan
