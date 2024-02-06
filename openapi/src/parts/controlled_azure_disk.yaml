@@ -18,7 +18,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatedControlledAzureDisk'
+                $ref: '#/components/schemas/CreatedControlledAzureDiskResult'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -125,17 +125,6 @@ components:
           description: |
             A valid size in GB integer representation
           type: integer
-
-    CreatedControlledAzureDisk:
-      description: Response payload for requesting a new Azure disk
-      type: object
-      properties:
-        resourceId:
-          description: UUID of a newly-created resource.
-          type: string
-          format: uuid
-        azureDisk:
-          $ref: '#/components/schemas/AzureDiskResource'
 
     CreateControlledAzureDiskRequestBody:
       description: Payload for requesting a new controlled Azure Disk resource.
