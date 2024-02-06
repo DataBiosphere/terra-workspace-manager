@@ -145,6 +145,8 @@ components:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskCreationParameters'
+        jobReport:
+          $ref: '#/components/schemas/JobReport'
 
     CreatedControlledAzureDiskResult:
       description: Api result class for creating an Azure disk
