@@ -58,7 +58,7 @@ dependencies {
   implementation "com.google.cloud.opentelemetry:exporter-trace:${gcpOpenTelemetryExporterVersion}"
   implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
 
-  dependabot
+
   // Get stairway via TCL
   implementation("bio.terra:terra-common-lib:0.1.9-SNAPSHOT")
   // sam is not semantically versioned so force the version here
