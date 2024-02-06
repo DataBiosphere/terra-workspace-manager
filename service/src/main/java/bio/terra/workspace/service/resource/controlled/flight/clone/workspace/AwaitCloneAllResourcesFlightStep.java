@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
@@ -35,6 +34,8 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
 
   public AwaitCloneAllResourcesFlightStep() {}
 
+  private static final int AWAIT_CLONE_RESOURCES_POLL_SECONDS = 720;
+
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntries(
@@ -56,7 +57,10 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
       FlightState subflightState =
           context
               .getStairway()
-              .waitForFlight(cloneAllResourcesFlightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
+              .waitForFlight(
+                  cloneAllResourcesFlightId,
+                  AWAIT_CLONE_RESOURCES_POLL_SECONDS,
+                  FLIGHT_POLL_CYCLES);
       if (FlightStatus.SUCCESS != subflightState.getFlightStatus()) {
         // no point in retrying the await step
         return new StepResult(
