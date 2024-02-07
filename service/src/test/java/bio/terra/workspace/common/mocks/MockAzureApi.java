@@ -11,9 +11,13 @@ public class MockAzureApi {
   public static final String CONTROLLED_AZURE_DISK_PATH_FORMAT =
       CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT + "/%s";
 
+  public static final String CREATE_CONTROLLED_AZURE_DISK_V2_PATH_FORMAT =
+      "/api/workspaces/v2/%s/resources/controlled/azure/disks";
+
   // VM
   public static final String CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/vm";
+
   public static final String CONTROLLED_AZURE_VM_PATH_FORMAT =
       CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT + "/%s";
 
