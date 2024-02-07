@@ -106,8 +106,49 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @WithSpan
   @Override
-  public ResponseEntity<ApiCreatedControlledAzureDiskResult> createAzureDisk(
+  public ResponseEntity<ApiCreatedControlledAzureDisk> createAzureDisk(
       UUID workspaceUuid, ApiCreateControlledAzureDiskRequestBody body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            landingZoneApiDispatch.getLandingZoneRegion(
+                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_DISK);
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
+
+    ControlledAzureDiskResource resource =
+        ControlledAzureDiskResource.builder()
+            .common(commonFields)
+            .diskName(body.getAzureDisk().getName())
+            .size(body.getAzureDisk().getSize())
+            .build();
+
+    // TODO: make createDisk call async once we have things working e2e
+    final ControlledAzureDiskResource createdDisk =
+        controlledResourceService
+            .createControlledResourceSync(
+                resource, commonFields.getIamRole(), userRequest, body.getAzureDisk())
+            .castByEnum(WsmResourceType.CONTROLLED_AZURE_DISK);
+
+    var response =
+        new ApiCreatedControlledAzureDisk()
+            .resourceId(createdDisk.getResourceId())
+            .azureDisk(createdDisk.toApiResource());
+    return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @WithSpan
+  @Override
+  public ResponseEntity<ApiCreateControlledAzureResourceResult> createAzureDiskV2(
+      UUID workspaceUuid, ApiCreateControlledAzureDiskRequestV2Body body) {
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
@@ -140,20 +181,21 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             body.getJobControl(),
             getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
 
-    final ApiCreatedControlledAzureDiskResult result = fetchCreateControlledAzureDiskResult(jobId);
+    final ApiCreateControlledAzureResourceResult result =
+        fetchCreateControlledAzureResourceResult(jobId);
 
     return new ResponseEntity<>(result, HttpStatus.OK);
   }
 
   @WithSpan
   @Override
-  public ResponseEntity<ApiCreatedControlledAzureDiskResult> getCreateAzureDiskResult(
+  public ResponseEntity<ApiCreateControlledAzureResourceResult> getCreateAzureDiskResult(
       UUID workspaceUuid, String jobId) {
     features.azureEnabledCheck();
 
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
-    ApiCreatedControlledAzureDiskResult result = fetchCreateControlledAzureDiskResult(jobId);
+    ApiCreateControlledAzureResourceResult result = fetchCreateControlledAzureResourceResult(jobId);
     return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
@@ -499,19 +541,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .azureVm(apiResource);
   }
 
-  private ApiCreatedControlledAzureDiskResult fetchCreateControlledAzureDiskResult(String jobId) {
+  private ApiCreateControlledAzureResourceResult fetchCreateControlledAzureResourceResult(
+      String jobId) {
     final JobApiUtils.AsyncJobResult<ControlledAzureDiskResource> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureDiskResource.class);
 
-    ApiAzureDiskResource apiResource = null;
-    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
-      ControlledAzureDiskResource resource = jobResult.getResult();
-      apiResource = resource.toApiResource();
-    }
-    return new ApiCreatedControlledAzureDiskResult()
+    return new ApiCreateControlledAzureResourceResult()
         .jobReport(jobResult.getJobReport())
-        .errorReport(jobResult.getApiErrorReport())
-        .azureDisk(apiResource);
+        .errorReport(jobResult.getApiErrorReport());
   }
 
   @WithSpan

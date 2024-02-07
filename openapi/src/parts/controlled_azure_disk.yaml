@@ -18,13 +18,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreatedControlledAzureDiskResult'
+                $ref: '#/components/schemas/CreatedControlledAzureDisk'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/create-result/{jobId}:
+  /api/workspaces/v2/{workspaceId}/resources/controlled/azure/disks:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Create a new controlled Azure Disk
+      operationId: createAzureDiskV2
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureDiskRequestV2Body'
+      responses:
+        '200':
+          description: Response to create controlled Azure disk
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateControlledAzureResourceResult'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/{workspaceId}/resources/controlled/azure/disks/create-result/{jobId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
       - $ref: '#/components/parameters/JobId'
@@ -34,9 +59,9 @@ paths:
       tags: [ ControlledAzureResource ]
       responses:
         '200':
-          $ref: '#/components/responses/CreateControlledAzureDiskResponse'
+          $ref: '#/components/responses/CreateControlledAzureResourceResponse'
         '202':
-          $ref: '#/components/responses/CreateControlledAzureDiskResponse'
+          $ref: '#/components/responses/CreateControlledAzureResourceResponse'
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '500':
@@ -126,7 +151,27 @@ components:
             A valid size in GB integer representation
           type: integer
 
+    CreatedControlledAzureDisk:
+      description: Response payload for requesting a new Azure disk
+      type: object
+      properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskResource'
+
     CreateControlledAzureDiskRequestBody:
+      description: Payload for requesting a new controlled Azure Disk resource.
+      type: object
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskCreationParameters'
+
+    CreateControlledAzureDiskRequestV2Body:
       description: Payload for requesting a new controlled Azure Disk resource.
       type: object
       properties:
@@ -136,24 +181,3 @@ components:
           $ref: '#/components/schemas/AzureDiskCreationParameters'
         jobControl:
           $ref: '#/components/schemas/JobControl'
-
-    CreatedControlledAzureDiskResult:
-      description: Api result class for creating an Azure disk
-      type: object
-      properties:
-        azureDisk:
-          $ref: '#/components/schemas/AzureDiskResource'
-        jobReport:
-          $ref: '#/components/schemas/JobReport'
-        errorReport:
-          $ref: '#/components/schemas/ErrorReport'
-
-
-  responses:
-    CreateControlledAzureDiskResponse:
-      description: Response to create controlled Azure disk
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CreatedControlledAzureDiskResult'
-

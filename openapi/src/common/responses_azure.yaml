@@ -9,3 +9,10 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/DeleteControlledAzureResourceResult'
+
+    CreateControlledAzureResourceResponse:
+      description: Response Payload for creating an Azure controlled resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateControlledAzureResourceResult'
