@@ -81,6 +81,10 @@ public class StepInvocationHandler implements InvocationHandler, Step {
    * the working map. Otherwise, use the input as is.
    */
   private Object[] getInputs(FlightContext context) {
+    if (args == null) {
+      return null;
+    }
+
     Object[] inputs = new Object[args.length];
     for (int i = 0; i < args.length; i++) {
       if (Proxy.isProxyClass(args[i].getClass()) && Proxy.getInvocationHandler(args[i]) instanceof StepResultInvocationHandler) {
