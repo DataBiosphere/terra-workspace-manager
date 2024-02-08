@@ -170,6 +170,9 @@ public class ControlledAzureDiskResource extends ControlledResource {
       throw new MissingRequiredFieldException(
           "Missing required region field for ControlledAzureDisk.");
     }
+    if (!(getSize() > 0)) {
+      throw new InconsistentFieldsException("Disk size must be a positive non-zero integer.");
+    }
     AzureResourceValidationUtils.validateAzureDiskName(getDiskName());
   }
 

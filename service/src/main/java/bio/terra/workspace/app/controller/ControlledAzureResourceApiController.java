@@ -131,7 +131,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .size(body.getAzureDisk().getSize())
             .build();
 
-    // TODO: make createDisk call async once we have things working e2e
     final ControlledAzureDiskResource createdDisk =
         controlledResourceService
             .createControlledResourceSync(
@@ -152,6 +151,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,

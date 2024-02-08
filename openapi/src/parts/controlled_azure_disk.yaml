@@ -28,7 +28,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Create a new controlled Azure Disk
+      summary: Asynchronously create a new controlled Azure Disk
       operationId: createAzureDiskV2
       tags: [ ControlledAzureResource ]
       requestBody:
@@ -174,6 +174,7 @@ components:
     CreateControlledAzureDiskRequestV2Body:
       description: Payload for requesting a new controlled Azure Disk resource.
       type: object
+      required: [ common, azureDisk, jobControl ]
       properties:
         common:
           $ref: '#/components/schemas/ControlledResourceCommonFields'

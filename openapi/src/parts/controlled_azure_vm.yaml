@@ -3,7 +3,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Asynchronoulsy create a new controlled Azure VM
+      summary: Asynchronously create a new controlled Azure VM
       operationId: createAzureVm
       tags: [ ControlledAzureResource ]
       requestBody:

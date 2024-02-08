@@ -2,7 +2,6 @@ package bio.terra.workspace.app.controller;
 
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.mocks.MockAzureApi.*;
-import static bio.terra.workspace.common.mocks.MockMvcUtils.*;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.addJsonContentType;
@@ -20,6 +19,7 @@ import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import com.azure.core.management.Region;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
@@ -74,10 +74,9 @@ public class ControlledAzureResourceApiControllerAzureDiskTest extends BaseAzure
             .azureDisk(params)
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
 
-    when(getMockJobApiUtils()
-            .retrieveAsyncJobResult(any(), eq(ApiCreateControlledAzureResourceResult.class)))
+    when(getMockJobApiUtils().retrieveAsyncJobResult(any(), eq(ControlledAzureDiskResource.class)))
         .thenReturn(
-            new JobApiUtils.AsyncJobResult<ApiCreateControlledAzureResourceResult>()
+            new JobApiUtils.AsyncJobResult<ControlledAzureDiskResource>()
                 .jobReport(new ApiJobReport().status(ApiJobReport.StatusEnum.SUCCEEDED)));
 
     setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
