@@ -1,8 +1,5 @@
 package bio.terra.workspace.service.crl;
 
-import static bio.terra.workspace.common.utils.AzureUtils.getAzureProfile;
-import static bio.terra.workspace.common.utils.AzureUtils.getManagedAppCredentials;
-
 import bio.terra.cloudres.azure.resourcemanager.common.ResourceManagerRequestData;
 import bio.terra.cloudres.common.ClientConfig;
 import bio.terra.cloudres.common.cleanup.CleanupConfig;
@@ -26,7 +23,11 @@ import bio.terra.workspace.service.crl.exception.CrlSecurityException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.credential.TokenCredential;
 import com.azure.core.http.policy.UserAgentPolicy;
+import com.azure.core.management.AzureEnvironment;
+import com.azure.core.management.profile.AzureProfile;
+import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.batch.BatchManager;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.containerservice.ContainerServiceManager;
@@ -560,6 +561,23 @@ public class CrlService {
               .build());
     }
     return builder.build();
+  }
+
+  //  Azure Support
+
+  private TokenCredential getManagedAppCredentials(AzureConfiguration azureConfig) {
+    return new ClientSecretCredentialBuilder()
+        .clientId(azureConfig.getManagedAppClientId())
+        .clientSecret(azureConfig.getManagedAppClientSecret())
+        .tenantId(azureConfig.getManagedAppTenantId())
+        .build();
+  }
+
+  private AzureProfile getAzureProfile(AzureCloudContext azureCloudContext) {
+    return new AzureProfile(
+        azureCloudContext.getAzureTenantId(),
+        azureCloudContext.getAzureSubscriptionId(),
+        AzureEnvironment.AZURE);
   }
 
   @VisibleForTesting
