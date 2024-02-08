@@ -1,9 +1,6 @@
 package bio.terra.workspace.app.configuration.external;
 
 import bio.terra.common.exception.InternalServerErrorException;
-import com.azure.core.credential.TokenCredential;
-import com.azure.core.credential.TokenRequestContext;
-import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -72,15 +69,7 @@ public class BufferServiceConfiguration {
   public String getAccessToken() throws IOException {
     try {
       if (features.isAzureControlPlaneEnabled()) {
-        TokenCredential credential = new DefaultAzureCredentialBuilder().build();
-        // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid,
-        // profile, and email by default in authorization and token requests.
-        com.azure.core.credential.AccessToken token =
-            credential
-                .getToken(
-                    new TokenRequestContext().addScopes("https://graph.microsoft.com/.default"))
-                .block();
-        return token.getToken();
+        throw new InternalServerErrorException("BufferService is not compatible with azure control plane enabled.");
       } else {
         FileInputStream fileInputStream = new FileInputStream(clientCredentialFilePath);
         GoogleCredentials credentials =
