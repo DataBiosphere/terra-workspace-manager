@@ -69,7 +69,8 @@ public class BufferServiceConfiguration {
   public String getAccessToken() throws IOException {
     try {
       if (features.isAzureControlPlaneEnabled()) {
-        throw new InternalServerErrorException("BufferService is not compatible with azure control plane enabled.");
+        throw new InternalServerErrorException(
+            "BufferService is not compatible with azure control plane enabled.");
       } else {
         FileInputStream fileInputStream = new FileInputStream(clientCredentialFilePath);
         GoogleCredentials credentials =

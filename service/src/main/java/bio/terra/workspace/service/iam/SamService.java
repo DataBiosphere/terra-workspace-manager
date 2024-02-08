@@ -13,6 +13,7 @@ import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.AuthUtils;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
@@ -22,11 +23,6 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
-import com.azure.core.credential.AccessToken;
-import com.azure.core.credential.TokenCredential;
-import com.azure.core.credential.TokenRequestContext;
-import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -159,22 +155,7 @@ public class SamService {
 
   public String getWsmServiceAccountToken() {
     try {
-      if (features.isAzureControlPlaneEnabled()) {
-        TokenCredential credential = new DefaultAzureCredentialBuilder().build();
-        // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid,
-        // profile, and email by default in authorization and token requests.
-        AccessToken token =
-            credential
-                .getToken(
-                    new TokenRequestContext().addScopes("https://graph.microsoft.com/.default"))
-                .block();
-        return token.getToken();
-      } else {
-        GoogleCredentials creds =
-            GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
-        creds.refreshIfExpired();
-        return creds.getAccessToken().getTokenValue();
-      }
+      return AuthUtils.GetAccessToken(features.isAzureControlPlaneEnabled(), SAM_OAUTH_SCOPES);
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
     }

@@ -1,14 +1,8 @@
 package bio.terra.workspace.app.configuration.external;
 
 import bio.terra.common.exception.InternalServerErrorException;
-import com.azure.core.credential.TokenCredential;
-import com.azure.core.credential.TokenRequestContext;
-import com.azure.identity.DefaultAzureCredentialBuilder;
-import com.google.auth.oauth2.AccessToken;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
+import bio.terra.workspace.common.utils.AuthUtils;
 import com.google.common.collect.ImmutableList;
-import java.io.FileInputStream;
 import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -52,24 +46,8 @@ public class PolicyServiceConfiguration {
 
   public String getAccessToken() throws IOException {
     try {
-      if (features.isAzureControlPlaneEnabled()) {
-        TokenCredential credential = new DefaultAzureCredentialBuilder().build();
-        // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid,
-        // profile, and email by default in authorization and token requests.
-        com.azure.core.credential.AccessToken token =
-            credential
-                .getToken(
-                    new TokenRequestContext().addScopes("https://graph.microsoft.com/.default"))
-                .block();
-        return token.getToken();
-      } else {
-        FileInputStream fileInputStream = new FileInputStream(clientCredentialFilePath);
-        GoogleCredentials credentials =
-            ServiceAccountCredentials.fromStream(fileInputStream)
-                .createScoped(POLICY_SERVICE_ACCOUNT_SCOPES);
-        AccessToken token = credentials.refreshAccessToken();
-        return token.getTokenValue();
-      }
+      return AuthUtils.GetAccessToken(
+          features.isAzureControlPlaneEnabled(), POLICY_SERVICE_ACCOUNT_SCOPES);
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
     }
