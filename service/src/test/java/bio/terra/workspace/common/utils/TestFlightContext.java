@@ -12,7 +12,9 @@ public class TestFlightContext implements FlightContext {
   private String flightId = TestUtils.appendRandomNumber("flightId");
   private String flightClassName = TestUtils.appendRandomNumber("flightClassName");
   private FlightMap inputParameters = new FlightMap();
+  private FlightMap workingMap = new FlightMap();
   private int stepIndex = 0;
+  private FlightStatus flightStatus = FlightStatus.QUEUED;
   private Direction direction = Direction.DO;
   private String stepClassName = TestUtils.appendRandomNumber("stepClassName");
 
@@ -53,7 +55,7 @@ public class TestFlightContext implements FlightContext {
 
   @Override
   public FlightMap getWorkingMap() {
-    return null;
+    return workingMap;
   }
 
   @Override
@@ -68,7 +70,12 @@ public class TestFlightContext implements FlightContext {
 
   @Override
   public FlightStatus getFlightStatus() {
-    return null;
+    return flightStatus;
+  }
+
+  public TestFlightContext flightStatus(FlightStatus flightStatus) {
+    this.flightStatus = flightStatus;
+    return this;
   }
 
   @Override
