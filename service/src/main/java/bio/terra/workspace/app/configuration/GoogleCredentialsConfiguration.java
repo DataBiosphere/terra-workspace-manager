@@ -34,4 +34,10 @@ public class GoogleCredentialsConfiguration {
   public GoogleCredentials getFakeGoogleCredentials() {
     return GoogleCredentials.newBuilder().build();
   }
+
+  @Bean
+  @Profile("azure")
+  public GoogleCredentials getFakeGoogleCredentialsAzure() {
+    return GoogleCredentials.newBuilder().build();
+  }
 }

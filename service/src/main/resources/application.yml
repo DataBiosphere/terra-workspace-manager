@@ -276,6 +276,8 @@ landingzone:
 feature:
   # azure-enabled - Controls inclusion of Azure support in WSM
   azure-enabled: true
+  # azure-control-plane - Whether this service is expected to run on Azure.
+  azure-control-plane-enabled: false
   # alpha1-enabled - Controls support of the Alpha1 experimental API and service
   alpha1-enabled: false
   # tps-enabled - Controls whether Terra Policy Service is called. It is always built into WSM

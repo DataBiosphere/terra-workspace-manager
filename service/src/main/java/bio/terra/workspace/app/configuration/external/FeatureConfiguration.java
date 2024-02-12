@@ -15,6 +15,7 @@ public class FeatureConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(FeatureConfiguration.class);
 
   private boolean azureEnabled;
+  private boolean azureControlPlaneEnabled;
   private boolean alpha1Enabled;
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
@@ -27,6 +28,14 @@ public class FeatureConfiguration {
 
   public void setAzureEnabled(boolean azureEnabled) {
     this.azureEnabled = azureEnabled;
+  }
+
+  public boolean isAzureControlPlaneEnabled() {
+    return azureControlPlaneEnabled;
+  }
+
+  public void setAzureControlPlaneEnabled(boolean azureControlPlaneEnabled) {
+    this.azureControlPlaneEnabled = azureControlPlaneEnabled;
   }
 
   public boolean isAlpha1Enabled() {
@@ -95,6 +104,7 @@ public class FeatureConfiguration {
    */
   public void logFeatures() {
     logger.info("Feature: azure-enabled: {}", isAzureEnabled());
+    logger.info("Feature: azure-enabled: {}", isAzureControlPlaneEnabled());
     logger.info("Feature: alpha1-enabled: {}", isAlpha1Enabled());
     logger.info("Feature: tps-enabled: {}", isTpsEnabled());
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());

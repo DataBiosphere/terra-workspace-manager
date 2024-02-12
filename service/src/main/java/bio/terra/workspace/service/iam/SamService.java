@@ -10,8 +10,10 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
+import bio.terra.workspace.common.utils.AuthUtils;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
@@ -21,7 +23,6 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -82,13 +83,18 @@ public class SamService {
   private final SamConfiguration samConfig;
   private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
+  private final FeatureConfiguration features;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
   public SamService(
-      SamConfiguration samConfig, SamUserFactory samUserFactory, OpenTelemetry openTelemetry) {
+      SamConfiguration samConfig,
+      FeatureConfiguration features,
+      SamUserFactory samUserFactory,
+      OpenTelemetry openTelemetry) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
+    this.features = features;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -149,10 +155,8 @@ public class SamService {
 
   public String getWsmServiceAccountToken() {
     try {
-      GoogleCredentials creds =
-          GoogleCredentials.getApplicationDefault().createScoped(SAM_OAUTH_SCOPES);
-      creds.refreshIfExpired();
-      return creds.getAccessToken().getTokenValue();
+      return AuthUtils.getAccessToken(
+          features.isAzureControlPlaneEnabled(), SAM_OAUTH_SCOPES, null);
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
     }
