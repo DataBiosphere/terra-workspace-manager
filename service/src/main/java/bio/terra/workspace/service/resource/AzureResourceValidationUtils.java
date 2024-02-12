@@ -107,9 +107,9 @@ public class AzureResourceValidationUtils {
 
   // Azure Batch pool
 
-  /** Batch Pool id must be -64 characters, using letters, numbers, dashes, and underscores */
+  /** Batch Pool id must be 1-64 characters, using letters, numbers, dashes, and underscores */
   private static final Pattern AZURE_BATCH_POOL_ID_VALIDATION_PATTERN =
-      Pattern.compile("^[-_a-zA-Z0-9]{0,63}$");
+      Pattern.compile("^[-_a-zA-Z0-9]{1,64}$");
 
   private static final int AZURE_MAX_BATCH_POOL_DISPLAY_NAME = 1024;
 
