@@ -125,11 +125,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     ControlledAzureDiskResource resource =
-        ControlledAzureDiskResource.builder()
-            .common(commonFields)
-            .diskName(body.getAzureDisk().getName())
-            .size(body.getAzureDisk().getSize())
-            .build();
+        buildControlledAzureDiskResource(body.getAzureDisk(), commonFields);
 
     final ControlledAzureDiskResource createdDisk =
         controlledResourceService
@@ -166,11 +162,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     ControlledAzureDiskResource resource =
-        ControlledAzureDiskResource.builder()
-            .common(commonFields)
-            .diskName(body.getAzureDisk().getName())
-            .size(body.getAzureDisk().getSize())
-            .build();
+        buildControlledAzureDiskResource(body.getAzureDisk(), commonFields);
 
     final String jobId =
         controlledResourceService.createControlledResourceAsync(
@@ -334,6 +326,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(creationParameters.getDiskId())
+        .build();
+  }
+
+  @VisibleForTesting
+  ControlledAzureDiskResource buildControlledAzureDiskResource(
+      ApiAzureDiskCreationParameters creationParameters, ControlledResourceFields commonFields) {
+    return ControlledAzureDiskResource.builder()
+        .common(commonFields)
+        .diskName(creationParameters.getName())
+        .size(creationParameters.getSize())
         .build();
   }
 

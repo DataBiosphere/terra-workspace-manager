@@ -20,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiJobControl;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.azure.core.management.Region;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
@@ -75,9 +76,20 @@ public class ControlledAzureResourceApiControllerAzureDiskTest extends BaseAzure
             .azureDisk(params)
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
 
+    ControlledAzureDiskResource resource =
+        controller.buildControlledAzureDiskResource(
+            diskRequestV2Body.getAzureDisk(),
+            controller.toCommonFields(
+                workspaceId,
+                commonFields,
+                Region.US_SOUTH_CENTRAL.name(),
+                USER_REQUEST,
+                WsmResourceType.CONTROLLED_AZURE_VM));
+
     when(getMockJobApiUtils().retrieveAsyncJobResult(any(), eq(ControlledAzureDiskResource.class)))
         .thenReturn(
             new JobApiUtils.AsyncJobResult<ControlledAzureDiskResource>()
+                .result(resource)
                 .jobReport(new ApiJobReport().status(ApiJobReport.StatusEnum.SUCCEEDED)));
 
     setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);

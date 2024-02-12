@@ -565,4 +565,11 @@ public class ResourceValidationUtilsTest extends BaseUnitTest {
 
     assertEquals(1, result.size());
   }
+
+  @Test
+  void validateAzureDiskName_invalid() {
+    assertThrows(
+        InvalidReferenceException.class,
+        () -> AzureResourceValidationUtils.validateAzureDiskName("$invalidDiskName$"));
+  }
 }
