@@ -35,7 +35,7 @@ dependencies {
     // Google dependencies
     constraints {
         implementation 'com.google.guava:guava:33.0.0-jre'
-        implementation 'org.json:json:20231013' // security vulnerability
+        implementation 'org.json:json:20240205' // security vulnerability
     }
     implementation platform('com.google.cloud:libraries-bom:26.31.0')
     implementation "com.google.api-client:google-api-client:2.3.0"
