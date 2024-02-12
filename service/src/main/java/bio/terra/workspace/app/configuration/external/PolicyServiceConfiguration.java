@@ -47,7 +47,9 @@ public class PolicyServiceConfiguration {
   public String getAccessToken() throws IOException {
     try {
       return AuthUtils.GetAccessToken(
-          features.isAzureControlPlaneEnabled(), POLICY_SERVICE_ACCOUNT_SCOPES);
+          features.isAzureControlPlaneEnabled(),
+          POLICY_SERVICE_ACCOUNT_SCOPES,
+          clientCredentialFilePath);
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
     }

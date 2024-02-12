@@ -5,12 +5,15 @@ import com.azure.core.credential.TokenRequestContext;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
 
 /** Helper to reduce duplicated access token retrieval code. */
 public class AuthUtils {
-  public static String GetAccessToken(boolean isAzureControlPlaneEnabled, Collection<String> scopes)
+  public static String GetAccessToken(
+      boolean isAzureControlPlaneEnabled, Collection<String> scopes, String credentialsPath)
       throws IOException {
     if (isAzureControlPlaneEnabled) {
       TokenCredential credential = new DefaultAzureCredentialBuilder().build();
@@ -22,7 +25,14 @@ public class AuthUtils {
               .block();
       return token.getToken();
     } else {
-      GoogleCredentials creds = GoogleCredentials.getApplicationDefault().createScoped(scopes);
+      GoogleCredentials creds = null;
+      if (credentialsPath == null || credentialsPath.length() == 0) {
+        creds = GoogleCredentials.getApplicationDefault().createScoped(scopes);
+      } else {
+        FileInputStream fileInputStream = new FileInputStream(credentialsPath);
+        creds = ServiceAccountCredentials.fromStream(fileInputStream).createScoped(scopes);
+      }
+
       creds.refreshIfExpired();
       AccessToken token = creds.refreshAccessToken();
       return token.getTokenValue();
