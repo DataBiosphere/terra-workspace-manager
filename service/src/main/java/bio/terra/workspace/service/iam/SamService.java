@@ -155,7 +155,7 @@ public class SamService {
 
   public String getWsmServiceAccountToken() {
     try {
-      return AuthUtils.GetAccessToken(
+      return AuthUtils.getAccessToken(
           features.isAzureControlPlaneEnabled(), SAM_OAUTH_SCOPES, null);
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);

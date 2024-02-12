@@ -12,7 +12,7 @@ import java.util.Collection;
 
 /** Helper to reduce duplicated access token retrieval code. */
 public class AuthUtils {
-  public static String GetAccessToken(
+  public static String getAccessToken(
       boolean isAzureControlPlaneEnabled, Collection<String> scopes, String credentialsPath)
       throws IOException {
     if (isAzureControlPlaneEnabled) {

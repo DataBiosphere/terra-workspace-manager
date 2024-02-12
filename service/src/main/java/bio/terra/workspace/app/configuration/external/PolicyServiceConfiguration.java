@@ -46,7 +46,7 @@ public class PolicyServiceConfiguration {
 
   public String getAccessToken() throws IOException {
     try {
-      return AuthUtils.GetAccessToken(
+      return AuthUtils.getAccessToken(
           features.isAzureControlPlaneEnabled(),
           POLICY_SERVICE_ACCOUNT_SCOPES,
           clientCredentialFilePath);
