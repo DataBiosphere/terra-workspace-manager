@@ -21,6 +21,10 @@ components:
     CreateControlledAzureResourceResult:
       type: object
       properties:
+        resourceId:
+          description: UUID of a newly-created resource.
+          type: string
+          format: uuid
         jobReport:
           $ref: '#/components/schemas/JobReport'
         errorReport:
