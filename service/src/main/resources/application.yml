@@ -258,9 +258,6 @@ landingzone:
       uaenorth:
         AKS_MACHINE_TYPE: "Standard_D4as_v5"
         POSTGRES_SERVER_SKU: "Standard_D2ds_v5"
-      uaecentral:
-        AKS_MACHINE_TYPE: "Standard_D4as_v5"
-        POSTGRES_SERVER_SKU: "Standard_D2ds_v5"
 
 
 # Feature flags
