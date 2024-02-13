@@ -26,7 +26,7 @@ import org.springframework.context.ApplicationContext;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-public class StartupInitializerTest extends BaseMockitoStrictStubbingTest {
+public class StartupInitializerTest {
 
   @Mock private ApplicationContext context;
   @Mock private DataSourceManager dataSourceManager;
