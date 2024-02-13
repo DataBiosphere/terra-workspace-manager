@@ -3,7 +3,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
-      summary: Asynchronoulsy create a new controlled Azure VM
+      summary: Asynchronously create a new controlled Azure VM
       operationId: createAzureVm
       tags: [ ControlledAzureResource ]
       requestBody:
@@ -253,7 +253,7 @@ components:
           $ref: '#/components/schemas/JobControl'
 
     CreatedControlledAzureVmResult:
-      description: Api result class for creating an azure vm
+      description: Api result class for creating an Azure vm
       type: object
       properties:
         azureVm:

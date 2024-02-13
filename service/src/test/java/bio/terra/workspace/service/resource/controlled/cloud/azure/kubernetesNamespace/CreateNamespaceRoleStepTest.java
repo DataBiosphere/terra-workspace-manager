@@ -179,7 +179,7 @@ public class CreateNamespaceRoleStepTest extends BaseMockitoStrictStubbingTest {
   void testGetDatabaseResourceNotADatabase() {
     var workspaceId = UUID.randomUUID();
     var owner = UUID.randomUUID().toString();
-    var notADatabase = ControlledAzureResourceFixtures.getAzureDisk("notadatabase", "us", 0);
+    var notADatabase = ControlledAzureResourceFixtures.getAzureDisk("notadatabase", "us", 1);
 
     var creationParameters =
         ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(

@@ -24,6 +24,49 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/workspaces/v2/{workspaceId}/resources/controlled/azure/disks:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      summary: Asynchronously create a new controlled Azure Disk
+      operationId: createAzureDiskV2
+      tags: [ ControlledAzureResource ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateControlledAzureDiskRequestV2Body'
+      responses:
+        '200':
+          description: Response to create controlled Azure disk
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateControlledAzureResourceResult'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/workspaces/v2/{workspaceId}/resources/controlled/azure/disks/create-result/{jobId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/JobId'
+    get:
+      summary: Retrieve information about an Azure Disk create job.
+      operationId: getCreateAzureDiskResult
+      tags: [ ControlledAzureResource ]
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateControlledAzureResourceResponse'
+        '202':
+          $ref: '#/components/responses/CreateControlledAzureResourceResponse'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/workspaces/v1/{workspaceId}/resources/controlled/azure/disks/{resourceId}:
     parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -127,3 +170,15 @@ components:
           $ref: '#/components/schemas/ControlledResourceCommonFields'
         azureDisk:
           $ref: '#/components/schemas/AzureDiskCreationParameters'
+
+    CreateControlledAzureDiskRequestV2Body:
+      description: Payload for requesting a new controlled Azure Disk resource.
+      type: object
+      required: [ common, azureDisk, jobControl ]
+      properties:
+        common:
+          $ref: '#/components/schemas/ControlledResourceCommonFields'
+        azureDisk:
+          $ref: '#/components/schemas/AzureDiskCreationParameters'
+        jobControl:
+          $ref: '#/components/schemas/JobControl'

@@ -128,7 +128,7 @@ public class PolicyValidatorTest extends BaseUnitTest {
     ControlledAzureStorageContainerResource azureResource =
         ControlledAzureResourceFixtures.getAzureStorageContainer("test");
     ControlledAzureDiskResource azureResourceWrongRegion =
-        ControlledAzureResourceFixtures.getAzureDisk("test", "wrongRegion", 0);
+        ControlledAzureResourceFixtures.getAzureDisk("test", "wrongRegion", 1);
     ControlledGcsBucketResource gcpResource =
         ControlledGcpResourceFixtures.getBucketResource("test");
 

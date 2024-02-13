@@ -15,36 +15,7 @@ import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.common.utils.ControllerValidationUtils;
 import bio.terra.workspace.generated.controller.ControlledAzureResourceApi;
-import bio.terra.workspace.generated.model.ApiAzureDatabaseResource;
-import bio.terra.workspace.generated.model.ApiAzureDiskResource;
-import bio.terra.workspace.generated.model.ApiAzureKubernetesNamespaceResource;
-import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
-import bio.terra.workspace.generated.model.ApiAzureManagedIdentityResource;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
-import bio.terra.workspace.generated.model.ApiAzureVmResource;
-import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerRequest;
-import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerResult;
-import bio.terra.workspace.generated.model.ApiClonedControlledAzureStorageContainer;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureDatabaseRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureKubernetesNamespaceRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureManagedIdentityRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContainerRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
-import bio.terra.workspace.generated.model.ApiCreatedAzureStorageContainerSasToken;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureBatchPool;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDatabaseResult;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureDisk;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureKubernetesNamespaceResult;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureManagedIdentity;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureStorageContainer;
-import bio.terra.workspace.generated.model.ApiCreatedControlledAzureVmResult;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceRequest;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceResult;
-import bio.terra.workspace.generated.model.ApiJobControl;
-import bio.terra.workspace.generated.model.ApiJobReport;
-import bio.terra.workspace.generated.model.ApiResourceQuota;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.features.FeatureService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequestFactory;
@@ -154,13 +125,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     ControlledAzureDiskResource resource =
-        ControlledAzureDiskResource.builder()
-            .common(commonFields)
-            .diskName(body.getAzureDisk().getName())
-            .size(body.getAzureDisk().getSize())
-            .build();
+        buildControlledAzureDiskResource(body.getAzureDisk(), commonFields);
 
-    // TODO: make createDisk call async once we have things working e2e
     final ControlledAzureDiskResource createdDisk =
         controlledResourceService
             .createControlledResourceSync(
@@ -172,6 +138,57 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .resourceId(createdDisk.getResourceId())
             .azureDisk(createdDisk.toApiResource());
     return new ResponseEntity<>(response, HttpStatus.OK);
+  }
+
+  @WithSpan
+  @Override
+  public ResponseEntity<ApiCreateControlledAzureResourceResult> createAzureDiskV2(
+      UUID workspaceUuid, ApiCreateControlledAzureDiskRequestV2Body body) {
+    features.azureEnabledCheck();
+
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    ControlledResourceFields commonFields =
+        toCommonFields(
+            workspaceUuid,
+            body.getCommon(),
+            landingZoneApiDispatch.getLandingZoneRegion(
+                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            userRequest,
+            WsmResourceType.CONTROLLED_AZURE_DISK);
+    Workspace workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
+
+    ControlledAzureDiskResource resource =
+        buildControlledAzureDiskResource(body.getAzureDisk(), commonFields);
+
+    final String jobId =
+        controlledResourceService.createControlledResourceAsync(
+            resource,
+            commonFields.getIamRole(),
+            userRequest,
+            body.getAzureDisk(),
+            body.getJobControl(),
+            getAsyncResultEndpoint(body.getJobControl().getId(), "create-result"));
+
+    final ApiCreateControlledAzureResourceResult result =
+        fetchCreateControlledAzureDiskResult(jobId);
+
+    return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  @WithSpan
+  @Override
+  public ResponseEntity<ApiCreateControlledAzureResourceResult> getCreateAzureDiskResult(
+      UUID workspaceUuid, String jobId) {
+    features.azureEnabledCheck();
+
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceUuid);
+    ApiCreateControlledAzureResourceResult result = fetchCreateControlledAzureDiskResult(jobId);
+    return new ResponseEntity<>(result, getAsyncResponseCode(result.getJobReport()));
   }
 
   @WithSpan
@@ -309,6 +326,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(creationParameters.getDiskId())
+        .build();
+  }
+
+  @VisibleForTesting
+  ControlledAzureDiskResource buildControlledAzureDiskResource(
+      ApiAzureDiskCreationParameters creationParameters, ControlledResourceFields commonFields) {
+    return ControlledAzureDiskResource.builder()
+        .common(commonFields)
+        .diskName(creationParameters.getName())
+        .size(creationParameters.getSize())
         .build();
   }
 
@@ -514,6 +541,22 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .azureVm(apiResource);
+  }
+
+  private ApiCreateControlledAzureResourceResult fetchCreateControlledAzureDiskResult(
+      String jobId) {
+    final JobApiUtils.AsyncJobResult<ControlledAzureDiskResource> jobResult =
+        jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureDiskResource.class);
+
+    ControlledAzureDiskResource resource = null;
+    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
+      resource = jobResult.getResult();
+    }
+
+    return new ApiCreateControlledAzureResourceResult()
+        .resourceId(resource.getResourceId())
+        .jobReport(jobResult.getJobReport())
+        .errorReport(jobResult.getApiErrorReport());
   }
 
   @WithSpan
