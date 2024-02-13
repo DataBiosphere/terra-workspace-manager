@@ -3,8 +3,9 @@ package bio.terra.workspace.common.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import bio.terra.stairway.*;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.stairway.Direction;
+import bio.terra.stairway.FlightMap;
+import bio.terra.workspace.common.annotations.Unit;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
@@ -12,13 +13,19 @@ import java.util.Map;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-class MdcHookTest extends BaseUnitTest {
+@Unit
+@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = {MdcHook.class, ObjectMapper.class})
+class MdcHookTest {
   @Autowired private MdcHook mdcHook;
   @Autowired private ObjectMapper objectMapper;
 
