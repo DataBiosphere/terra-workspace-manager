@@ -3,7 +3,7 @@ package bio.terra.workspace.service.workspace;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.common.BaseTest;
+import bio.terra.workspace.common.BaseSpringBootTest;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplicationState;
@@ -19,7 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 @Disabled
 @Tag("unit")
 @ActiveProfiles({"unit-test", "configuration-test"})
-public class ApplicationConfigurationTest extends BaseTest {
+public class ApplicationConfigurationTest extends BaseSpringBootTest {
 
   @Autowired ApplicationDao appDao;
 

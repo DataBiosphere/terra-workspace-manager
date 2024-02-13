@@ -655,6 +655,21 @@ The unit tests are written using JUnit. The implementations are in
 `src/test/java/bio/terra/workspace/`.
 Some unit tests depend on the availability of a running Postgresql server.
 
+Here are common annotations that may be used when setting up a unit test suite:
+- `@BaseTest` - custom annotation to set active profiles used for all tests (including human-readable logging)
+- `@Unit` - custom annotation to set tags and active profiles used for all unit tests
+- `@ExtendWith(MockitoExtension.class)` - extension to use mocks in tests with strict stubbing by default
+- `@SpringBootTest(classes = {ClassToLoad.class, ...})` - annotation to run Spring Boot tests, limiting the ApplicationContext to the component classes under test
+
+Historically, we have used `@SpringBootTest` to load a full ApplicationContext for our application to use in testing.
+But overusing this initialization when we only need to facilitate pure unit tests, mocking, and/or a small subset of
+context configuration leads to long-running test suites and disincentivizes writing unit-testable code.
+
+When adding new unit tests, consider the narrowest required slice of initialization.  If the code you are testing is
+difficult to unit test, it would likely benefit from modification.
+
+#### Spring Boot Tests
+
 Every combination of `@MockBean` creates a distinct Spring application context. Each context holds several
 database connection pools: (WSM db, WSM Stairway db, and any amalgam connection pools). We have run out of
 database connections due to cached application contexts.
@@ -665,9 +680,9 @@ specified in these bases. That helps us control the number of unique combination
 
 The test base classes can be found in `src/test/java/bio/terra/workspace/common/`.
 
-The current inheritance for unit test base classes looks like this:
-- `BaseTest` - the base class for unit and connected tests
-  - `BaseUnitTestMocks` - the base set of mocks shared by all unit tests
+The current inheritance for Spring Boot unit test base classes looks like this:
+- `BaseSpringBootTest` - the base class for Spring Boot unit and connected tests
+  - `BaseUnitTestMocks` - the base set of mocks shared by all Spring Boot unit tests
     - `BaseUnitTest` - enables the right test tags and profiles for unit testing
       - `BaseUnitTestMockDataRepoService` - adds one more mock; used in one unit test
       - `BaseUnitTestMockGcpCloudContextService` - adds one more mock; used by several tests
