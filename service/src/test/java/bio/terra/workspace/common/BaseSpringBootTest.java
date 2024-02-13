@@ -22,4 +22,4 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 // Configure MockMvc not to print additional debugging information. Otherwise, this will print out
 // request headers including test user access tokens, which should not be written to test output.
 @AutoConfigureMockMvc(print = MockMvcPrint.NONE)
-public class BaseSpringBootTest {}
+public abstract class BaseSpringBootTest {}

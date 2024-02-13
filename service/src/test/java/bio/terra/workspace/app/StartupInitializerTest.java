@@ -13,7 +13,6 @@ import bio.terra.landingzone.library.configuration.LandingZoneDatabaseConfigurat
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.common.annotations.Unit;
-import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.service.job.StairwayInitializerService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import javax.sql.DataSource;
@@ -26,7 +25,7 @@ import org.springframework.context.ApplicationContext;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-public class StartupInitializerTest {
+class StartupInitializerTest {
 
   @Mock private ApplicationContext context;
   @Mock private DataSourceManager dataSourceManager;

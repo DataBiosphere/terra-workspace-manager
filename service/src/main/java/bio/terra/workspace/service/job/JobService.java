@@ -15,7 +15,6 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
-import bio.terra.workspace.common.logging.WorkspaceActivityLogHook;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.MdcHook;
@@ -60,7 +59,6 @@ public class JobService {
   private static final Duration METADATA_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
 
   private final MdcHook mdcHook;
-  private final WorkspaceActivityLogHook workspaceActivityLogHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -70,12 +68,10 @@ public class JobService {
   @Autowired
   public JobService(
       MdcHook mdcHook,
-      WorkspaceActivityLogHook workspaceActivityLogHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       OpenTelemetry openTelemetry) {
     this.mdcHook = mdcHook;
-    this.workspaceActivityLogHook = workspaceActivityLogHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.openTelemetry = openTelemetry;

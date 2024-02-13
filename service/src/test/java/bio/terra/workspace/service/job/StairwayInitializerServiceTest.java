@@ -27,7 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-public class StairwayInitializerServiceTest {
+class StairwayInitializerServiceTest {
 
   @Mock private DataSourceManager dataSourceManager;
   @Mock private StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
