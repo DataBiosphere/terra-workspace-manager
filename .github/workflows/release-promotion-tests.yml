@@ -78,7 +78,7 @@ jobs:
           #
           curl --fail \
             -H 'Authorization: Bearer ${{ steps.auth.outputs.id_token }}' \
-            "${SHERLOCK_URL}/api/v2/chart-releases?environment=${ENV}" \
+            "${SHERLOCK_URL}/api/chart-releases/v3?environment=${ENV}" \
             > /tmp/.chart-releases.json
 
           #
