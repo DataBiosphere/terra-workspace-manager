@@ -42,9 +42,9 @@ jobs:
       # until testrunner can be configured to talk to it.
       #
 
-      # Set up workload-identity so we can auth to Sherlock
+      # Set up auth to Sherlock
       - name: "Authenticate to GCP"
-        id: 'auth'
+        id: 'iap_auth'
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
@@ -54,6 +54,11 @@ jobs:
           id_token_include_email: true
           create_credentials_file: false
           export_environment_variables: false
+      - name: "Generate GHA OIDC Token"
+        id: 'gha_auth'
+        uses: actions/github-script@v7
+        with:
+          script: core.setOutput('id_token', await core.getIDToken())
 
       # Generate versions file
       - name: terra-helmfile-shim
@@ -77,7 +82,8 @@ jobs:
           # call the chart-releases endpoint to get a list of chart-releases in the target env
           #
           curl --fail \
-            -H 'Authorization: Bearer ${{ steps.auth.outputs.id_token }}' \
+            -H 'Authorization: Bearer ${{ steps.iap_auth.outputs.id_token }}' \
+            -H 'X-GHA-OIDC-JWT: ${{ steps.gha_auth.outputs.id_token }}' \
             "${SHERLOCK_URL}/api/chart-releases/v3?environment=${ENV}" \
             > /tmp/.chart-releases.json
 
