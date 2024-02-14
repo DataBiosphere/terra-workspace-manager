@@ -85,7 +85,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
       ApiStewardshipType stewardship) {
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     workspaceService.validateWorkspaceAndAction(
-        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+        userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ_RESOURCES);
 
     List<WsmResource> wsmResources =
         resourceService.enumerateResources(
