@@ -114,11 +114,11 @@ public class Alpha1ApiController implements Alpha1Api {
   @Override
   public ResponseEntity<ApiEnumerateJobsResult> enumerateJobs(
       UUID workspaceUuid,
+      String name,
       Integer limit,
       String pageToken,
       ApiResourceType resource,
       ApiStewardshipType stewardship,
-      String name,
       ApiJobStateFilter jobState) {
     // Make sure Alpha1 is enabled
     features.alpha1EnabledCheck();

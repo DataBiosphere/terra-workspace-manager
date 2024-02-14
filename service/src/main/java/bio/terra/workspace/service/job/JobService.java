@@ -444,7 +444,8 @@ public class JobService {
       }
       flightBeanBag
           .getWorkspaceService()
-          .validateWorkspaceAndAction(userRequest, workspaceUuid, SamWorkspaceAction.READ_JOB_RESULT);
+          .validateWorkspaceAndAction(
+              userRequest, workspaceUuid, SamWorkspaceAction.READ_JOB_RESULT);
     } catch (DatabaseOperationException | InterruptedException ex) {
       throw new InternalStairwayException("Stairway exception looking up the job", ex);
     } catch (FlightNotFoundException ex) {

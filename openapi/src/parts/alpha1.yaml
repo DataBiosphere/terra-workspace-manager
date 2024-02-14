@@ -174,14 +174,6 @@ components:
       schema:
         $ref: '#/components/schemas/JobStateFilter'
 
-    ResourceName:
-      name: name
-      in: query
-      description: A name used to identify an object in the workspace manager
-      required: false
-      schema:
-        $ref: '#/components/schemas/Name'
-
   responses:
     LoadUrlListResponse:
       description: Response to start a storage data transfer from a url list to a gcs bucket

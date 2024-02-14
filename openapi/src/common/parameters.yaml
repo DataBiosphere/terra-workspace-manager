@@ -68,6 +68,14 @@ components:
         minimum: 0
         default: 0
 
+    ResourceName:
+      name: resourceName
+      in: path
+      description: A name used to identify a resource in a workspace
+      required: true
+      schema:
+        type: string
+
     ResourceId:
       name: resourceId
       in: path

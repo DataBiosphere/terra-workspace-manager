@@ -22,6 +22,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -45,6 +46,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
   private final WsmResourceService resourceService;
   private final WorkspaceService workspaceService;
   private final ReferencedResourceService referencedResourceService;
+  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
   @Autowired
   public ResourceApiController(
@@ -57,7 +59,8 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
       JobApiUtils jobApiUtils,
       WsmResourceService resourceService,
       WorkspaceService workspaceService,
-      ReferencedResourceService referencedResourceService) {
+      ReferencedResourceService referencedResourceService,
+      ControlledResourceMetadataManager controlledResourceMetadataManager) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -69,6 +72,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
     this.referencedResourceService = referencedResourceService;
+    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
   @WithSpan
@@ -96,6 +100,23 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
 
     var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
     return new ResponseEntity<>(apiResourceList, HttpStatus.OK);
+  }
+
+  @WithSpan
+  @Override
+  public ResponseEntity<ApiResourceDescription> getResourceByName(
+      UUID workspaceUuid, String resourceName) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    WsmResource wsmResource = resourceService.getResourceByName(workspaceUuid, resourceName);
+    controlledResourceMetadataManager.validateControlledResourceAndAction(
+        userRequest,
+        workspaceUuid,
+        wsmResource.getResourceId(),
+        SamConstants.SamWorkspaceAction.READ);
+
+    ApiResourceDescription apiResourceDescription = this.makeApiResourceDescription(wsmResource);
+    return new ResponseEntity<>(apiResourceDescription, HttpStatus.OK);
   }
 
   @WithSpan
