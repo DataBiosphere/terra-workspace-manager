@@ -23,6 +23,7 @@ public class SamConstants {
     public static final String OWN = "own";
     public static final String DELETE = "delete";
     public static final String READ_IAM = "read_policies";
+    public static final String READ_JOB_RESULT = "read_job_result";
     public static final String CREATE_CONTROLLED_USER_SHARED = "create_controlled_user_shared";
     public static final String CREATE_CONTROLLED_USER_PRIVATE = "create_controlled_user_private";
     public static final String CREATE_CONTROLLED_APPLICATION_SHARED =
