@@ -1109,34 +1109,4 @@ public class WorkspaceDao {
 
     return jdbcTemplate.query(sql, params, WORKSPACE_USER_PAIR_ROW_MAPPER);
   }
-
-  /**
-   * Temporary backfill of cloud context spend profile from workspace spend profile
-   *
-   * <p>TODO: PF-2763 remove this backfill.
-   */
-  @WriteTransaction
-  public void backfillCloudContextSpendProfile() {
-    String sql =
-        """
-        UPDATE cloud_context SET spend_profile =
-         (SELECT spend_profile FROM workspace WHERE workspace_id = cloud_context.workspace_id)
-        WHERE cloud_context.spend_profile IS NULL
-        """;
-    jdbcTemplate.update(sql, new MapSqlParameterSource());
-  }
-
-  /**
-   * Temporary backfill of workspace state
-   *
-   * <p>TODO: PF-2782 remove this backfill.
-   */
-  @WriteTransaction
-  public void backfillWorkspaceState() {
-    String sql =
-        """
-        UPDATE workspace SET state = 'READY' WHERE state IS NULL AND flight_id IS NULL
-        """;
-    jdbcTemplate.update(sql, new MapSqlParameterSource());
-  }
 }
