@@ -17,8 +17,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 
 @Tag("azureUnit")
-public class CloneControlledAzureManagedIdentityResourceFlightTest
-    extends BaseSpringBootAzureUnitTest {
+public class CloneControlledAzureManagedIdentityResourceFlightTest extends BaseSpringBootAzureUnitTest {
 
   @Mock private FlightBeanBag flightBeanBag;
   @Mock private AuthenticatedUserRequest userRequest;

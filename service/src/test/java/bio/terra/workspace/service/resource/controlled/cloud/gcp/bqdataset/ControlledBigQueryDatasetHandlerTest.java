@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseSpringBootUnitTest;
+
 import java.util.UUID;
 import liquibase.repackaged.org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Test;

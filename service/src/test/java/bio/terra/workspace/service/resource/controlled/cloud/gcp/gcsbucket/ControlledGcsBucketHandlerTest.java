@@ -20,8 +20,7 @@ import org.springframework.test.annotation.DirtiesContext;
 //  of mocks. Doing @DirtiesContext forces a new application context and it is built
 //  properly. See the ticket for more details.
 @DirtiesContext(classMode = BEFORE_CLASS)
-public class ControlledGcsBucketHandlerTest
-    extends BaseSpringBootUnitTestMockGcpCloudContextService {
+public class ControlledGcsBucketHandlerTest extends BaseSpringBootUnitTestMockGcpCloudContextService {
   private static final UUID fakeWorkspaceId = UUID.randomUUID();
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 

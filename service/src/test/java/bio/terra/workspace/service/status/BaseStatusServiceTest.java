@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.StatusCheckConfiguration;
 import bio.terra.workspace.common.BaseSpringBootUnitTest;
+
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
