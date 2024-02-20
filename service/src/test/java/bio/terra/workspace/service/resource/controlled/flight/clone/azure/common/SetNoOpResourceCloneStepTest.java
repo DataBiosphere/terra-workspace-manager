@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("azureUnit")
-class SetNoOpResourceCloneStepTest extends BaseAzureUnitTest {
+class SetNoOpResourceCloneStepTest extends BaseSpringBootAzureUnitTest {
 
   @Test
   void setNoOpResourceClone_doStep() throws InterruptedException {

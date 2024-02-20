@@ -6,6 +6,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
+// TODO: ticket removal.
 public abstract class BaseMockitoStrictStubbingTest {
   protected MockitoSession mockito;
 

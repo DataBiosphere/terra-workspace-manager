@@ -10,7 +10,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 /*
  * Mock beans used by (or not conflicting with) all Spring Boot unit tests
  */
-public class BaseUnitTestMocks extends BaseSpringBootTest {
+public class BaseSpringBootUnitTestMocks extends BaseSpringBootTest {
   @MockBean private CrlService mockCrlService;
   @MockBean private FeatureConfiguration mockFeatureConfiguration;
   @MockBean private FeatureService mockFeatureService;

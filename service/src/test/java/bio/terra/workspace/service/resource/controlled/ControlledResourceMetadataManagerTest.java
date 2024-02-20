@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import bio.terra.common.exception.ForbiddenException;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ApplicationDao;
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class ControlledResourceMetadataManagerTest extends BaseUnitTest {
+public class ControlledResourceMetadataManagerTest extends BaseSpringBootUnitTest {
 
   @MockBean AuthenticatedUserRequest userRequest;
 

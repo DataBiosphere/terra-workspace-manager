@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.manag
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.stairway.FlightMap;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 
 @Tag("azureUnit")
-public class CloneControlledAzureManagedIdentityResourceFlightTest extends BaseAzureUnitTest {
+public class CloneControlledAzureManagedIdentityResourceFlightTest extends BaseSpringBootAzureUnitTest {
 
   @Mock private FlightBeanBag flightBeanBag;
   @Mock private AuthenticatedUserRequest userRequest;

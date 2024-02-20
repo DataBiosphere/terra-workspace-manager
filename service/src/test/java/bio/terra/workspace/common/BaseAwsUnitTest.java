@@ -20,7 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 @Tag("aws-unit")
 @TestInstance(Lifecycle.PER_CLASS)
 @ActiveProfiles({"aws-unit-test", "unit-test"})
-public class BaseAwsUnitTest extends BaseUnitTestMocks {
+public class BaseAwsUnitTest extends BaseSpringBootUnitTestMocks {
 
   @BeforeAll
   public void init() throws Exception {

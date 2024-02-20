@@ -15,7 +15,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -50,7 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-public class AzureResourceStateFailureTest extends BaseUnitTest {
+public class AzureResourceStateFailureTest extends BaseSpringBootUnitTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private MockMvcUtils mockMvcUtils;

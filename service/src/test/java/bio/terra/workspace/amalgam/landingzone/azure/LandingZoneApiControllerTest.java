@@ -22,7 +22,7 @@ import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneDefiniti
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResourcesByPurpose;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
 import bio.terra.workspace.common.fixtures.AzureLandingZoneFixtures;
 import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
@@ -45,7 +45,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-public class LandingZoneApiControllerTest extends BaseAzureUnitTest {
+public class LandingZoneApiControllerTest extends BaseSpringBootAzureUnitTest {
   private static final String AZURE_LANDING_ZONE_PATH = "/api/landingzones/v1/azure";
   private static final String GET_CREATE_AZURE_LANDING_ZONE_RESULT =
       "/api/landingzones/v1/azure/create-result";

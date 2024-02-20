@@ -2,7 +2,7 @@ package bio.terra.workspace.service.workspace;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.exception.ResourceStateConflictException;
@@ -11,7 +11,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class WorkspaceStateUnitTest extends BaseUnitTest {
+public class WorkspaceStateUnitTest extends BaseSpringBootUnitTest {
   @Autowired private WorkspaceDao workspaceDao;
 
   @Test

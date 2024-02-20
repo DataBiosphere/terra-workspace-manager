@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration.App;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.service.workspace.WsmApplicationService.WsmDbApplication;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
@@ -24,7 +24,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
 @Disabled("Until we get the postgres connection leaks addressed")
-public class ApplicationUnitTest extends BaseUnitTest {
+public class ApplicationUnitTest extends BaseSpringBootUnitTest {
 
   @Autowired WsmApplicationService appService;
   @Autowired ApplicationDao appDao;

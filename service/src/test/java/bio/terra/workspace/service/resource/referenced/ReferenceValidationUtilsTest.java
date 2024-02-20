@@ -2,13 +2,13 @@ package bio.terra.workspace.service.resource.referenced;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.service.resource.GcpResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import org.junit.jupiter.api.Test;
 
-public class ReferenceValidationUtilsTest extends BaseUnitTest {
+public class ReferenceValidationUtilsTest extends BaseSpringBootUnitTest {
 
   @Test
   public void testInvalidCharInBucketName() {

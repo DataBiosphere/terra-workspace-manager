@@ -12,7 +12,7 @@ import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.FlightState;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.generated.model.ApiJobReport;
@@ -34,7 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
-class JobServiceTest extends BaseUnitTest {
+class JobServiceTest extends BaseSpringBootUnitTest {
   private final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest()
           .subjectId("StairwayUnit")

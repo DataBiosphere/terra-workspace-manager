@@ -29,7 +29,7 @@ import bio.terra.common.sam.exception.SamInternalServerErrorException;
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.WsmApplicationConfiguration;
-import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
+import bio.terra.workspace.common.BaseSpringBootUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
@@ -87,7 +87,7 @@ import org.springframework.test.web.servlet.MockMvc;
 // Use application configuration profile in addition to the standard unit test profile
 // inherited from the base class.
 @ActiveProfiles({"app-test"})
-class WorkspaceServiceTest extends BaseUnitTestMockDataRepoService {
+class WorkspaceServiceTest extends BaseSpringBootUnitTestMockDataRepoService {
   @Autowired private MockMvc mockMvc;
   @Autowired private JobService jobService;
   @Autowired private ObjectMapper objectMapper;

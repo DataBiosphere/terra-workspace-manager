@@ -12,7 +12,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class CopyAzureStorageContainerDefinitionStepTest extends BaseAzureUnitTest {
+public class CopyAzureStorageContainerDefinitionStepTest extends BaseSpringBootAzureUnitTest {
 
   private UUID workspaceId;
   private FlightContext flightContext;

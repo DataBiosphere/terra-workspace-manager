@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.controller.shared.PropertiesUtils;
-import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
+import bio.terra.workspace.common.BaseSpringBootUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.mocks.MockMvcUtils;
@@ -44,7 +44,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /** ControlledGcpResourceApiController unit tests. */
 @Tag("unit")
-public class ControlledGcpResourceApiControllerTest extends BaseUnitTestMockGcpCloudContextService {
+public class ControlledGcpResourceApiControllerTest extends BaseSpringBootUnitTestMockGcpCloudContextService {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;

@@ -4,11 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.app.configuration.external.StatusCheckConfiguration;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
+
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
-public class BaseStatusServiceTest extends BaseUnitTest {
+public class BaseStatusServiceTest extends BaseSpringBootUnitTest {
 
   private static final int STALENESS = 7;
   private static final StatusCheckConfiguration configuration = new StatusCheckConfiguration();
