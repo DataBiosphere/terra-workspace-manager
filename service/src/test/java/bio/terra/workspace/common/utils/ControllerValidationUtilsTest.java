@@ -3,10 +3,10 @@ package bio.terra.workspace.common.utils;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.ValidationException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import org.junit.jupiter.api.Test;
 
-public class ControllerValidationUtilsTest extends BaseSpringBootUnitTest {
+public class ControllerValidationUtilsTest extends BaseUnitTest {
 
   @Test
   void validatingANullIpAddress() {

@@ -3,13 +3,13 @@ package bio.terra.workspace.db;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CronjobDaoTest extends BaseSpringBootUnitTest {
+public class CronjobDaoTest extends BaseUnitTest {
   @Autowired CronjobDao cronjobDao;
 
   @Test

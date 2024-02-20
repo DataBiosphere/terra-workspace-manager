@@ -10,7 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import bio.terra.cloudres.google.cloudresourcemanager.CloudResourceManagerCow;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.ForbiddenException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.db.model.DbCloudContext;
@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class GcpCloudContextUnitTest extends BaseSpringBootUnitTest {
+public class GcpCloudContextUnitTest extends BaseUnitTest {
   private static final String GCP_PROJECT_ID = "terra-wsm-t-clean-berry-5152";
   private static final String POLICY_OWNER = "policy-owner";
   private static final String POLICY_WRITER = "policy-writer";

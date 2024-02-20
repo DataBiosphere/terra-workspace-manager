@@ -8,11 +8,11 @@ import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdatase
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetUpdateParameters;
 import org.junit.jupiter.api.Test;
 
-public class BigQueryApiConversionsTest extends BaseSpringBootUnitTest {
+public class BigQueryApiConversionsTest extends BaseUnitTest {
   @Test
   public void testToUpdateParameters() {
     ApiGcpBigQueryDatasetUpdateParameters updateParameters1 =

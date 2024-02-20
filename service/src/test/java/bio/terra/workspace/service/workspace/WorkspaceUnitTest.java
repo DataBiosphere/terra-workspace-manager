@@ -24,7 +24,7 @@ import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
 import bio.terra.policy.model.TpsUpdateMode;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
 import bio.terra.workspace.db.StateDao;
@@ -44,7 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class WorkspaceUnitTest extends BaseSpringBootUnitTest {
+public class WorkspaceUnitTest extends BaseUnitTest {
   @MockBean private WorkspaceDao mockWorkspaceDao;
   @MockBean private PolicyValidator mockPolicyValidator;
   @MockBean private WorkspaceActivityLogService mockWorkspaceActivityLogService;

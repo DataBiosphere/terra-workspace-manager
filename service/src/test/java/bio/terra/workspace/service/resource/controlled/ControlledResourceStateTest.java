@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightDebugInfo;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseSpringBootUnitTestMockGcpCloudContextService;
+import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class ControlledResourceStateTest extends BaseSpringBootUnitTestMockGcpCloudContextService {
+public class ControlledResourceStateTest extends BaseUnitTestMockGcpCloudContextService {
   @Autowired JobService jobService;
   @Autowired ControlledResourceService controlledResourceService;
   @Autowired WorkspaceDao workspaceDao;

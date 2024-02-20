@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import bio.terra.common.exception.ValidationException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.datarepo.DataRepoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class DataRepoServiceTest extends BaseSpringBootUnitTest {
+class DataRepoServiceTest extends BaseUnitTest {
 
   @Autowired private DataRepoService dataRepoService;
 

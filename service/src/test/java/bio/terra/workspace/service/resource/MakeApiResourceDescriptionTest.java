@@ -6,7 +6,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.app.controller.ResourceApiController;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
@@ -40,7 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 // TODO: most assertEquals() assertions are backwards
 
-public class MakeApiResourceDescriptionTest extends BaseSpringBootUnitTest {
+public class MakeApiResourceDescriptionTest extends BaseUnitTest {
   @Autowired ResourceApiController resourceController;
 
   private UUID workspaceUuid;

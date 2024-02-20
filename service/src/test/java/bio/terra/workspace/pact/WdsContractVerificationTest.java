@@ -23,7 +23,7 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.policy.model.TpsPaoConflict;
 import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsUpdateMode;
-import bio.terra.workspace.common.BaseSpringBootUnitTestMocks;
+import bio.terra.workspace.common.BaseUnitTestMocks;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceActivityLogDao;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -78,7 +78,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @Tag("pact-verification")
 @Provider("workspacemanager") // should match the terra chart name
 @PactBroker(enablePendingPacts = "true", providerTags = "main")
-public class WdsContractVerificationTest extends BaseSpringBootUnitTestMocks {
+public class WdsContractVerificationTest extends BaseUnitTestMocks {
   // a randomly generated UUID that spans multiple stateful contract calls
   private static final UUID STORAGE_CONTAINER_RESOURCE_ID = UUID.randomUUID();
   private static final String CONSUMER_BRANCH = System.getenv("CONSUMER_BRANCH");

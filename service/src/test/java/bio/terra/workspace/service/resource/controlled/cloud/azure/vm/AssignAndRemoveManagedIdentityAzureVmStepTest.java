@@ -13,7 +13,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -35,7 +35,7 @@ import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("unit")
-public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseSpringBootAzureUnitTest {
+public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureUnitTest {
   private static final String STUB_STRING_RETURN = "stubbed-return";
   private static final String STUB_STRING_PET_MANAGED_IDENTITY = "stubbed-petManagedIdentity";
   private static final String STUB_STRING_OTHER_MANAGED_IDENTITY = "stubbed-otherManagedIdentity";

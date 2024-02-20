@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbResource;
@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-public class ResourceLineageUtilsTest extends BaseSpringBootUnitTest {
+public class ResourceLineageUtilsTest extends BaseUnitTest {
 
   @Test
   public void constructResourceNullLineage_resourceLineageEmptyArray() {

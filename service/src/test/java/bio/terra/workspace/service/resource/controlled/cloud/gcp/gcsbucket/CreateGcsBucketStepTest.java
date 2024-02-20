@@ -23,7 +23,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketCreationParameters;
@@ -50,7 +50,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
-public class CreateGcsBucketStepTest extends BaseSpringBootUnitTest {
+public class CreateGcsBucketStepTest extends BaseUnitTest {
 
   @Mock private FlightContext mockFlightContext;
   @Mock private CrlService mockCrlService;

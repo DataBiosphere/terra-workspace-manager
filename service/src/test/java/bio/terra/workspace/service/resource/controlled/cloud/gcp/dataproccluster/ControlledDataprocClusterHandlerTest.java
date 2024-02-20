@@ -3,13 +3,12 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluste
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
-
+import bio.terra.workspace.common.BaseUnitTest;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
-public class ControlledDataprocClusterHandlerTest extends BaseSpringBootUnitTest {
+public class ControlledDataprocClusterHandlerTest extends BaseUnitTest {
 
   @Test
   public void generateClusterId() {

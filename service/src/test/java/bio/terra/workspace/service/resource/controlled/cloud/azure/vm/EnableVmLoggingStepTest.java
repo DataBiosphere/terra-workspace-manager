@@ -11,7 +11,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 
-class EnableVmLoggingStepTest extends BaseSpringBootAzureUnitTest {
+class EnableVmLoggingStepTest extends BaseAzureUnitTest {
 
   /* these are all used in the constructor to EnableVmLoggingStep */
   @Mock private AzureConfiguration azureConfig;

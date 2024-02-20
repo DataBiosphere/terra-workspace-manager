@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.retry.transaction.TransactionRetryProperties;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.CannotSerializeTransactionException;
 
-public class DbRetryTest extends BaseSpringBootUnitTest {
+public class DbRetryTest extends BaseUnitTest {
 
   @Autowired FakeDao fakeDao;
   @Autowired TransactionRetryProperties retryProperties;

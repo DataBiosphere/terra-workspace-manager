@@ -12,7 +12,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCustomScriptExtension;
 import com.azure.core.management.exception.ManagementError;
@@ -30,7 +30,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-public class VmExtensionHelperTest extends BaseSpringBootAzureUnitTest {
+public class VmExtensionHelperTest extends BaseAzureUnitTest {
 
   @Mock ComputeManager computeManager;
   @Mock VirtualMachines virtualMachines;

@@ -4,7 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceGuestAccelerator;
 import bio.terra.workspace.service.resource.controlled.exception.ReservedMetadataKeyException;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
-public class CreateGceInstanceStepTest extends BaseSpringBootUnitTest {
+public class CreateGceInstanceStepTest extends BaseUnitTest {
 
   private static final List<String> SA_SCOPES =
       ImmutableList.of(

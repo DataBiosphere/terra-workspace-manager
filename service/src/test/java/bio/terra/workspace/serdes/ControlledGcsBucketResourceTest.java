@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.stairway.StairwayMapper;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 /** Test Stairway serialization of the ControlledGcsBucketResource class */
-public class ControlledGcsBucketResourceTest extends BaseSpringBootUnitTest {
+public class ControlledGcsBucketResourceTest extends BaseUnitTest {
 
   @Test
   public void testValidateThrows() {

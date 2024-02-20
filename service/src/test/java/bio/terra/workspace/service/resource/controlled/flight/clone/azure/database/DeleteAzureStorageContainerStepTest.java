@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 @Tag("azure-unit")
-class DeleteAzureStorageContainerStepTest extends BaseSpringBootAzureUnitTest {
+class DeleteAzureStorageContainerStepTest extends BaseAzureUnitTest {
 
   private UUID resourceId;
   private String resourceName;

@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.db.exception.DuplicateFolderDisplayNameException;
 import bio.terra.workspace.db.exception.DuplicateFolderIdException;
 import bio.terra.workspace.db.exception.FolderNotFoundException;
@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class FolderDaoTest extends BaseSpringBootUnitTest {
+public class FolderDaoTest extends BaseUnitTest {
 
   @Autowired FolderDao folderDao;
   @Autowired WorkspaceDao workspaceDao;

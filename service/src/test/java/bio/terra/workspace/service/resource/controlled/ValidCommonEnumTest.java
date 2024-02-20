@@ -6,14 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.common.exception.SerializationException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiAccessScope;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import org.junit.jupiter.api.Test;
 
-public class ValidCommonEnumTest extends BaseSpringBootUnitTest {
+public class ValidCommonEnumTest extends BaseUnitTest {
 
   @Test
   public void accessScopeValidityTest() {

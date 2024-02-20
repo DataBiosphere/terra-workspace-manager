@@ -19,7 +19,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
@@ -29,7 +29,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class LinkSpendProfilePolicyAttributesStepTest extends BaseSpringBootUnitTest {
+public class LinkSpendProfilePolicyAttributesStepTest extends BaseUnitTest {
   @Mock private TpsApiDispatch tpsApiDispatch;
   @Mock private FlightContext flightContext;
 

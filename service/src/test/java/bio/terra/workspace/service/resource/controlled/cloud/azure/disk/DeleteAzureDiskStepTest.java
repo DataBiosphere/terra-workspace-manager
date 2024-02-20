@@ -14,7 +14,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -29,7 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
-class DeleteAzureDiskStepTest extends BaseSpringBootAzureUnitTest {
+class DeleteAzureDiskStepTest extends BaseAzureUnitTest {
   private static final String resourceIdFormat =
       "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/disks/%s";
   private static final String SUBSCRIPTION_ID = "subId";

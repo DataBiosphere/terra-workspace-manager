@@ -4,7 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterInstanceGroupConfig;
 import bio.terra.workspace.generated.model.ApiGcpDataprocClusterLifecycleConfig;
@@ -16,7 +16,7 @@ import java.util.Map;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 
-public class CreateDataprocClusterStepTest extends BaseSpringBootUnitTest {
+public class CreateDataprocClusterStepTest extends BaseUnitTest {
 
   private static final String SERVICE_ACCOUNT = "test-pet-sa@my-project.iam.gserviceaccount.com";
   private static final List<String> SA_SCOPES =

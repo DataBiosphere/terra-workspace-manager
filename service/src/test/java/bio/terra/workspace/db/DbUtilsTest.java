@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
-public class DbUtilsTest extends BaseSpringBootUnitTest {
+public class DbUtilsTest extends BaseUnitTest {
 
   @Test
   void setColumnsClause_withValidParams() {

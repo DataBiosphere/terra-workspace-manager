@@ -2,12 +2,12 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import org.junit.jupiter.api.Test;
 
-public class CustomGcpIamRoleTest extends BaseSpringBootUnitTest {
+public class CustomGcpIamRoleTest extends BaseUnitTest {
 
   /**
    * GCP custom IAM role names are defined individually for each GCP project at project creation

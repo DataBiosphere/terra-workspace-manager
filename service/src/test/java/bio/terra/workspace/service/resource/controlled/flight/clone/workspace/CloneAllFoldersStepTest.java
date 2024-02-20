@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
 import bio.terra.workspace.db.FolderDao;
@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CloneAllFoldersStepTest extends BaseSpringBootUnitTest {
+public class CloneAllFoldersStepTest extends BaseUnitTest {
 
   @Mock private FlightContext mockFlightContext;
   @Autowired private WorkspaceDao workspaceDao;

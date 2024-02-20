@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.stairway.*;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -24,7 +24,7 @@ import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 
 @Tag("azureUnit")
-public class CloneControlledAzureResourceFlightTest extends BaseSpringBootAzureUnitTest {
+public class CloneControlledAzureResourceFlightTest extends BaseAzureUnitTest {
 
   @Mock private FlightBeanBag flightBeanBag;
   @Mock private AuthenticatedUserRequest userRequest;

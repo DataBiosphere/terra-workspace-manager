@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightStatus;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.exception.UnknownFlightClassNameException;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -62,7 +62,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class WorkspaceActivityLogHookTest extends BaseSpringBootUnitTest {
+public class WorkspaceActivityLogHookTest extends BaseUnitTest {
   private static final UserStatusInfo USER_STATUS_INFO =
       new UserStatusInfo()
           .userEmail(USER_REQUEST.getEmail())

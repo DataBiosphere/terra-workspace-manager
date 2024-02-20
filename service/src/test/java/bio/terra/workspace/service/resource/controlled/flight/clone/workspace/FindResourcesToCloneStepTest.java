@@ -13,7 +13,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.Stairway;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -28,7 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class FindResourcesToCloneStepTest extends BaseSpringBootUnitTest {
+public class FindResourcesToCloneStepTest extends BaseUnitTest {
 
   private static final String FLIGHT_ID = "asdfjkl-qwerty";
   @Mock private ResourceDao mockResourceDao;

@@ -6,14 +6,14 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.google.api.services.common.OperationCow;
 import bio.terra.common.exception.ForbiddenException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import com.google.api.services.notebooks.v1.model.Operation;
 import com.google.rpc.Code;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class GcpUtilsTest extends BaseSpringBootUnitTest {
+public class GcpUtilsTest extends BaseUnitTest {
 
   public static final String DEFAULT_GCP_RESOURCE_REGION = "us-central1";
 

@@ -6,14 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import bio.terra.policy.model.TpsPolicyExplanation;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyPair;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.generated.model.ApiWsmPolicyExplanation;
 import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-public class TpsApiConversionUtilsTest extends BaseSpringBootUnitTest {
+public class TpsApiConversionUtilsTest extends BaseUnitTest {
 
   @Test
   public void convertExplanation() {

@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseSpringBootAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
 @Tag("azureUnit")
-class SetCloneFlightResponseStepTest extends BaseSpringBootAzureUnitTest {
+class SetCloneFlightResponseStepTest extends BaseAzureUnitTest {
 
   @Test
   void setCloneFlightResponse_doStep() throws InterruptedException {

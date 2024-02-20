@@ -7,7 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
-import bio.terra.workspace.common.BaseSpringBootUnitTestMockGcpCloudContextService;
+import bio.terra.workspace.common.BaseUnitTestMockGcpCloudContextService;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook.ControlledAiNotebookHandler;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
@@ -20,7 +20,7 @@ import org.springframework.test.annotation.DirtiesContext;
 //  of mocks. Doing @DirtiesContext forces a new application context and it is built
 //  properly. See the ticket for more details.
 @DirtiesContext(classMode = BEFORE_CLASS)
-public class ControlledGcsBucketHandlerTest extends BaseSpringBootUnitTestMockGcpCloudContextService {
+public class ControlledGcsBucketHandlerTest extends BaseUnitTestMockGcpCloudContextService {
   private static final UUID fakeWorkspaceId = UUID.randomUUID();
   private static final String FAKE_PROJECT_ID = "fakeprojectid";
 

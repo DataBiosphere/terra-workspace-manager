@@ -9,7 +9,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.BaseUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.WorkspaceUnitTestUtils;
@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class StoreControlledResourceMetadataStepTest extends BaseSpringBootUnitTest {
+public class StoreControlledResourceMetadataStepTest extends BaseUnitTest {
   @Autowired private WorkspaceDao workspaceDao;
   @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private ResourceDao resourceDao;
