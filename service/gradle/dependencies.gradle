@@ -10,7 +10,6 @@ dependencies {
   // Google dependencies
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
-    implementation 'org.json:json:20231013' // security vulnerability
   }
   implementation platform('com.google.cloud:libraries-bom:26.27.0')
 
@@ -62,7 +61,7 @@ dependencies {
   // Get stairway via TCL
   implementation("bio.terra:terra-common-lib:0.1.9-SNAPSHOT")
   // sam is not semantically versioned so force the version here
-  implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-5a5bf28"
+  implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-73bc2d1"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
 
   // Cloud Resource Library
