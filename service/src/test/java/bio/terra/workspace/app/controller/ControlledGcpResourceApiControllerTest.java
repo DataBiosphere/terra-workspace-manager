@@ -44,7 +44,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /** ControlledGcpResourceApiController unit tests. */
 @Tag("unit")
-public class ControlledGcpResourceApiControllerTest extends BaseSpringBootUnitTestMockGcpCloudContextService {
+public class ControlledGcpResourceApiControllerTest
+    extends BaseSpringBootUnitTestMockGcpCloudContextService {
   @Autowired MockMvc mockMvc;
   @Autowired MockMvcUtils mockMvcUtils;
   @Autowired MockWorkspaceV1Api mockWorkspaceV1Api;
