@@ -1,9 +1,7 @@
 package bio.terra.workspace.service.job;
 
-import bio.terra.common.db.DataSourceInitializer;
 import bio.terra.common.exception.ServiceUnavailableException;
 import bio.terra.common.logging.LoggingUtils;
-import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightDebugInfo;
@@ -13,14 +11,10 @@ import bio.terra.stairway.FlightFilterOp;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.Stairway;
-import bio.terra.stairway.StairwayMapper;
 import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.DuplicateFlightIdException;
 import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
-import bio.terra.workspace.app.configuration.external.JobConfiguration;
-import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
-import bio.terra.workspace.common.logging.WorkspaceActivityLogHook;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.common.utils.MdcHook;
@@ -34,7 +28,6 @@ import bio.terra.workspace.service.job.exception.JobNotFoundException;
 import bio.terra.workspace.service.job.exception.JobResponseException;
 import bio.terra.workspace.service.job.model.EnumeratedJob;
 import bio.terra.workspace.service.job.model.EnumeratedJobs;
-import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -42,9 +35,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.JobStateFilter;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
-import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
@@ -68,34 +58,22 @@ public class JobService {
   private static final int METADATA_ROW_WAIT_SECONDS = 1;
   private static final Duration METADATA_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
 
-  private final JobConfiguration jobConfig;
-  private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
   private final MdcHook mdcHook;
-  private final WorkspaceActivityLogHook workspaceActivityLogHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
-  private final ObjectMapper objectMapper;
   private final OpenTelemetry openTelemetry;
   private FlightDebugInfo flightDebugInfo;
 
   @Autowired
   public JobService(
-      JobConfiguration jobConfig,
-      StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
       MdcHook mdcHook,
-      WorkspaceActivityLogHook workspaceActivityLogHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
-      ObjectMapper objectMapper,
       OpenTelemetry openTelemetry) {
-    this.jobConfig = jobConfig;
-    this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.mdcHook = mdcHook;
-    this.workspaceActivityLogHook = workspaceActivityLogHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
-    this.objectMapper = objectMapper;
     this.openTelemetry = openTelemetry;
   }
 
@@ -154,55 +132,6 @@ public class JobService {
       FlightUtils.waitForJobFlightCompletion(stairwayComponent.get(), jobId);
     } catch (Exception ex) {
       throw new InternalStairwayException(ex);
-    }
-  }
-
-  /**
-   * This method is called from StartupInitializer as part of the sequence of migrating databases
-   * and recovering any jobs; i.e., Stairway flights. It is moved here so that JobService
-   * encapsulates all of the Stairway interaction.
-   */
-  public void initialize() {
-    configureMapper();
-    stairwayComponent.initialize(
-        stairwayComponent
-            .newStairwayOptionsBuilder()
-            .dataSource(DataSourceInitializer.initializeDataSource(stairwayDatabaseConfiguration))
-            .context(flightBeanBag)
-            .addHook(mdcHook)
-            .addHook(new MonitoringHook(openTelemetry))
-            .addHook(workspaceActivityLogHook)
-            .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
-  }
-
-  /**
-   * This is currently a hack, because Stairway does not provide a way to pass in the mapper. It
-   * does expose its own mapper for testing, so we use that public API to add the introspector that
-   * we need.
-   *
-   * <p>TODO: PF-2505 When that Stairway feature is done we should create and set our own object
-   * mapper in Stairway.
-   */
-  @VisibleForTesting
-  public static void configureMapper() {
-    StairwayMapper.getObjectMapper().setAnnotationIntrospector(new IgnoreInheritedIntrospector());
-  }
-
-  /**
-   * Jackson does not see @JsonIgnore annotations from super classes. That means any getter in a
-   * super class gets serialized by default. We do not want that behavior, so we add this
-   * introspector to the ObjectMapper to force ignore everything from the resource super classes.
-   *
-   * <p>We do not need to ignore ReferencedResource class because it does not add any fields to
-   * those coming from WsmResource class.
-   */
-  private static class IgnoreInheritedIntrospector extends JacksonAnnotationIntrospector {
-    @Override
-    public boolean hasIgnoreMarker(AnnotatedMember m) {
-      boolean ignore =
-          (m.getDeclaringClass() == WsmResource.class)
-              || (m.getDeclaringClass() == ControlledResource.class);
-      return ignore || super.hasIgnoreMarker(m);
     }
   }
 

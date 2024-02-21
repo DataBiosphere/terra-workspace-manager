@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
  * using the public API.
  */
 @ActiveProfiles("connected-test")
-public class BaseConnectedTest extends BaseTest {
+public class BaseConnectedTest extends BaseSpringBootTest {
 
   public static final String BUFFER_SERVICE_DISABLED_ENVS_REG_EX = "dev|alpha|staging|prod";
 

@@ -8,9 +8,9 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 /*
- * Mock beans used by (or not conflicting with) all unit tests
+ * Mock beans used by (or not conflicting with) all Spring Boot unit tests
  */
-public class BaseUnitTestMocks extends BaseTest {
+public class BaseUnitTestMocks extends BaseSpringBootTest {
   @MockBean private CrlService mockCrlService;
   @MockBean private FeatureConfiguration mockFeatureConfiguration;
   @MockBean private FeatureService mockFeatureService;

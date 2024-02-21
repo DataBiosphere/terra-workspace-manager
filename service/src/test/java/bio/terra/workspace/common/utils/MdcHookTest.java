@@ -2,245 +2,149 @@ package bio.terra.workspace.common.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.stairway.*;
-import bio.terra.workspace.common.BaseUnitTest;
-import bio.terra.workspace.service.job.JobService;
-import com.google.common.collect.ImmutableMap;
-import java.time.Duration;
+import bio.terra.stairway.Direction;
+import bio.terra.stairway.FlightMap;
+import bio.terra.workspace.common.annotations.Unit;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-class MdcHookTest extends BaseUnitTest {
+@Unit
+@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = {MdcHook.class, ObjectMapper.class})
+class MdcHookTest {
   @Autowired private MdcHook mdcHook;
-  @Autowired private JobService jobService;
+  @Autowired private ObjectMapper objectMapper;
 
   private static final Map<String, String> FOO_BAR = Map.of("foo", "bar");
-  private Stairway stairway;
-  private String flightId;
-  private FlightMap flightMap;
+
+  private static final String FLIGHT_ID = TestUtils.appendRandomNumber("flightId");
+  private static final String FLIGHT_CLASS = TestUtils.appendRandomNumber("flightClass");
+  private static final Map<String, String> FLIGHT_MDC =
+      Map.of(MdcHook.FLIGHT_ID_KEY, FLIGHT_ID, MdcHook.FLIGHT_CLASS_KEY, FLIGHT_CLASS);
+  private static final int STEP_INDEX = 2;
+  private static final Direction STEP_DIRECTION = Direction.DO;
+  private static final String STEP_CLASS = TestUtils.appendRandomNumber("stepClass");
+  private static final Map<String, String> STEP_MDC =
+      Map.of(
+          MdcHook.FLIGHT_STEP_NUMBER_KEY,
+          Integer.toString(STEP_INDEX),
+          MdcHook.FLIGHT_STEP_DIRECTION_KEY,
+          STEP_DIRECTION.toString(),
+          MdcHook.FLIGHT_STEP_CLASS_KEY,
+          STEP_CLASS);
+
+  private FlightMap inputParameters;
+  private TestFlightContext flightContext;
 
   @BeforeEach
   void beforeEach() {
     MDC.clear();
-    stairway = jobService.getStairway();
-    flightId = stairway.createFlightId();
-    flightMap = new FlightMap();
-    flightMap.put(MdcHook.FLIGHT_ID_KEY, flightId);
+    inputParameters = new FlightMap();
+    flightContext =
+        new TestFlightContext()
+            .flightId(FLIGHT_ID)
+            .flightClassName(FLIGHT_CLASS)
+            .inputParameters(inputParameters)
+            .stepIndex(STEP_INDEX)
+            .direction(STEP_DIRECTION)
+            .stepClassName(STEP_CLASS);
   }
 
-  @Test
-  void inputContextPropagated_Do() throws Exception {
-    MDC.setContextMap(FOO_BAR);
-    flightMap.put(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
+  static Stream<Arguments> startFlight() {
+    var parentFlight = new TestFlightContext();
+    return Stream.of(
+        // No request context
+        Arguments.of(Map.of(), null, false),
+        // Request context
+        Arguments.of(FOO_BAR, null, false),
+        // Request context and flight is a subflight
+        Arguments.of(FOO_BAR, parentFlight, false),
+        // Request context, flight is a subflight, and thread has existing context
+        Arguments.of(FOO_BAR, parentFlight, true));
+  }
 
+  @ParameterizedTest
+  @MethodSource
+  void startFlight(
+      @NotNull Map<String, String> requestContext,
+      TestFlightContext parentFlight,
+      boolean leftoverMdc)
+      throws JsonProcessingException {
+    var inputMapContext = new HashMap<>(requestContext);
+    if (parentFlight != null) {
+      inputMapContext.putAll(mdcHook.flightContextForMdc(parentFlight));
+      inputMapContext.putAll(mdcHook.stepContextForMdc(parentFlight));
+    }
+    if (leftoverMdc) {
+      MDC.put("leftover", "thread-context");
+    }
+
+    inputParameters.put(
+        MdcHook.MDC_FLIGHT_MAP_KEY, objectMapper.writeValueAsString(inputMapContext));
+
+    mdcHook.startFlight(flightContext);
+
+    var expectedMdc = new HashMap<>(requestContext);
+    expectedMdc.putAll(FLIGHT_MDC);
     assertEquals(
-        FlightStatus.SUCCESS,
-        submitAndWait(MdcFooBarTestFlight.class).getFlightStatus(),
-        "Input context, flight context, and step context propagated");
-    assertEquals(
-        FOO_BAR, MDC.getCopyOfContextMap(), "Calling thread's context is preserved after flight");
+        expectedMdc, MDC.getCopyOfContextMap(), "Input map's context with new flight context");
   }
 
-  @Test
-  void inputContextPropagated_Undo() throws Exception {
-    MDC.setContextMap(FOO_BAR);
-    flightMap.put(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
-
-    // Use a flight that always errors to check the MDC context on undo.
-    // CheckMDC passes on do & undo, otherwise the flight would end with FlightStatus.FATAL. The
-    // ErrorStep causes the undo to happen and the flight to end as ERROR.
-    var flightState = submitAndWait(MdcFooBarUndoTestFlight.class);
-    assertEquals(
-        FlightStatus.ERROR,
-        flightState.getFlightStatus(),
-        "Flight fails but all steps can be walked back");
-    var maybeFlightException = flightState.getException();
-    assertTrue(maybeFlightException.isPresent());
-    assertEquals(
-        ErrorStep.EXPECTED_EXCEPTION.getMessage(),
-        maybeFlightException.get().getMessage(),
-        "Flight fails due to ErrorStep");
-    assertEquals(
-        FOO_BAR, MDC.getCopyOfContextMap(), "Calling thread's context is preserved after flight");
+  static Stream<Map<String, String>> requestContext() {
+    return Stream.of(Map.of(), FOO_BAR);
   }
 
-  @Test
-  void emptyInputContextOk() throws Exception {
-    flightMap.put(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
+  @ParameterizedTest
+  @MethodSource("requestContext")
+  void startStep(@NotNull Map<String, String> requestContext) {
+    var initialMdc = new HashMap<>(requestContext);
+    initialMdc.putAll(FLIGHT_MDC);
+    MDC.setContextMap(initialMdc);
 
-    assertEquals(
-        FlightStatus.SUCCESS,
-        submitAndWait(MdcNoInputContextTestFlight.class).getFlightStatus(),
-        "Flight succeeds when empty input context provided");
-    assertNull(MDC.getCopyOfContextMap(), "Calling thread's context is preserved after flight");
+    mdcHook.startStep(flightContext);
+
+    var expectedMdc = new HashMap<>(initialMdc);
+    expectedMdc.putAll(STEP_MDC);
+    assertEquals(expectedMdc, MDC.getCopyOfContextMap(), "Initial context with new step context");
   }
 
-  @Test
-  void inputParametersNotSetOk() throws Exception {
-    assertEquals(
-        FlightStatus.SUCCESS,
-        submitAndWait(MdcNoInputContextTestFlight.class).getFlightStatus(),
-        "Flight succeeds when no input context provided");
-    assertNull(MDC.getCopyOfContextMap(), "Calling thread's context is preserved after flight");
+  @ParameterizedTest
+  @MethodSource("requestContext")
+  void endStep(@NotNull Map<String, String> requestContext) {
+    var initialMdc = new HashMap<>(requestContext);
+    initialMdc.putAll(FLIGHT_MDC);
+    initialMdc.putAll(STEP_MDC);
+    MDC.setContextMap(initialMdc);
+
+    mdcHook.endStep(flightContext);
+
+    var expectedMdc = new HashMap<>(requestContext);
+    expectedMdc.putAll(FLIGHT_MDC);
+    assertEquals(expectedMdc, MDC.getCopyOfContextMap(), "Initial context without step context");
   }
 
-  /** Test that the CheckMdc Step will fail the flight as expected by the rest of the tests. */
-  @Test
-  void testCheckMdc() throws Exception {
-    // Don't set the MDC_FLIGHT_MAP_KEY on the input FlightMap, but expect "foo": "bar"
-    // The CheckMdc step will fail during do & undo, causing a FATAL flight failure.
-    assertEquals(
-        FlightStatus.FATAL,
-        submitAndWait(MdcFooBarTestFlight.class).getFlightStatus(),
-        "Flight fails fatally without expected input context");
-    assertNull(MDC.getCopyOfContextMap(), "calling thread's context is preserved after flight");
-  }
+  @ParameterizedTest
+  @MethodSource("requestContext")
+  void endFlight(@NotNull Map<String, String> requestContext) {
+    var initialMdc = new HashMap<>(requestContext);
+    initialMdc.putAll(FLIGHT_MDC);
+    MDC.setContextMap(initialMdc);
 
-  /** Flight to check that "foo": "bar" is in the MDC context. */
-  public static class MdcFooBarTestFlight extends Flight {
-    public MdcFooBarTestFlight(FlightMap inputParameters, Object applicationContext) {
-      super(inputParameters, applicationContext);
-      var expectedFlightContext =
-          ImmutableMap.<String, String>builder()
-              .putAll(FOO_BAR)
-              .put(MdcHook.FLIGHT_ID_KEY, inputParameters.get(MdcHook.FLIGHT_ID_KEY, String.class))
-              .put(MdcHook.FLIGHT_CLASS_KEY, getClass().getName())
-              .build();
-      addStep(new CheckMdc(expectedFlightContext, 0, Direction.SWITCH));
-    }
-  }
-
-  /** Flight to check that "foo": "bar" is in the MDC context with an error step. */
-  public static class MdcFooBarUndoTestFlight extends Flight {
-    public MdcFooBarUndoTestFlight(FlightMap inputParameters, Object applicationContext) {
-      super(inputParameters, applicationContext);
-      var expectedFlightContext =
-          ImmutableMap.<String, String>builder()
-              .putAll(FOO_BAR)
-              .put(MdcHook.FLIGHT_ID_KEY, inputParameters.get(MdcHook.FLIGHT_ID_KEY, String.class))
-              .put(MdcHook.FLIGHT_CLASS_KEY, getClass().getName())
-              .build();
-      addStep(new CheckMdc(expectedFlightContext, 0, Direction.UNDO));
-      addStep(new ErrorStep(expectedFlightContext, 1, Direction.SWITCH));
-    }
-  }
-
-  /**
-   * Flight to check Stairway MDC context modifications when no initial context was provided as a
-   * flight input.
-   */
-  public static class MdcNoInputContextTestFlight extends Flight {
-    public MdcNoInputContextTestFlight(FlightMap inputParameters, Object applicationContext) {
-      super(inputParameters, applicationContext);
-      var expectedFlightContext =
-          ImmutableMap.<String, String>builder()
-              .put(MdcHook.FLIGHT_ID_KEY, inputParameters.get(MdcHook.FLIGHT_ID_KEY, String.class))
-              .put(MdcHook.FLIGHT_CLASS_KEY, getClass().getName())
-              .build();
-      addStep(new CheckMdc(expectedFlightContext, 0, Direction.SWITCH));
-    }
-  }
-
-  /** A step that asserts the MDC context is what's expected on do and undo. */
-  public static class CheckMdc extends MdcAssertionStep {
-
-    public CheckMdc(
-        Map<String, String> expectedFlightContext,
-        Integer expectedStepNumber,
-        Direction expectedUndoDirection) {
-      super(expectedFlightContext, expectedStepNumber, expectedUndoDirection);
-    }
-
-    @Override
-    public StepResult doStep(FlightContext flightContext) {
-      assertMatchesExpectedContext(Direction.DO);
-      return StepResult.getStepResultSuccess();
-    }
-
-    @Override
-    public StepResult undoStep(FlightContext flightContext) {
-      assertMatchesExpectedContext(expectedUndoDirection);
-      return StepResult.getStepResultSuccess();
-    }
-  }
-
-  /** A {@link Step} that always fails in a non-retryable way. */
-  public static class ErrorStep extends MdcAssertionStep {
-
-    public static final Exception EXPECTED_EXCEPTION =
-        new RuntimeException("Expected exception on ErrorStep.doStep");
-
-    public ErrorStep(
-        Map<String, String> expectedFlightContext,
-        Integer expectedStepNumber,
-        Direction expectedUndoDirection) {
-      super(expectedFlightContext, expectedStepNumber, expectedUndoDirection);
-    }
-
-    @Override
-    public StepResult doStep(FlightContext flightContext) {
-      assertMatchesExpectedContext(Direction.DO);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, EXPECTED_EXCEPTION);
-    }
-
-    @Override
-    public StepResult undoStep(FlightContext flightContext) {
-      assertMatchesExpectedContext(expectedUndoDirection);
-      return StepResult.getStepResultSuccess();
-    }
-  }
-
-  private abstract static class MdcAssertionStep implements Step {
-    private final Map<String, String> expectedContextBase;
-    final Direction expectedUndoDirection;
-
-    MdcAssertionStep(
-        Map<String, String> expectedFlightContext,
-        Integer expectedStepNumber,
-        Direction expectedUndoDirection) {
-      this.expectedContextBase =
-          ImmutableMap.<String, String>builder()
-              .putAll(expectedFlightContext)
-              .put(MdcHook.FLIGHT_STEP_CLASS_KEY, getClass().getName())
-              .put(MdcHook.FLIGHT_STEP_NUMBER_KEY, expectedStepNumber.toString())
-              .build();
-      this.expectedUndoDirection = expectedUndoDirection;
-    }
-
-    void assertMatchesExpectedContext(Direction flightStepDirection) {
-      try {
-        var expectedContext =
-            ImmutableMap.<String, String>builder()
-                .putAll(expectedContextBase)
-                .put(MdcHook.FLIGHT_STEP_DIRECTION_KEY, flightStepDirection.name())
-                .build();
-        assertEquals(expectedContext, MDC.getCopyOfContextMap());
-      } catch (AssertionError error) {
-        // Rethrow an AssertionError as an Exception so that Stairway can handle it
-        throw new RuntimeException(error);
-      }
-    }
-  }
-
-  /**
-   * Submits the flight and polls every 100 ms for its completion, up to 3 seconds.
-   *
-   * @param flightClass to submit with flightId and flightMap instance variables
-   * @return FlightState of the completed flight
-   */
-  private FlightState submitAndWait(Class<? extends Flight> flightClass) throws Exception {
-    stairway.submit(flightId, flightClass, flightMap);
-    return FlightUtils.waitForFlightCompletion(
-        stairway,
-        flightId,
-        Duration.ofSeconds(3),
-        Duration.ofMillis(100),
-        0,
-        Duration.ofMillis(100));
+    mdcHook.endFlight(flightContext);
+    assertNull(MDC.getCopyOfContextMap(), "Context cleared when flight ends");
   }
 }
