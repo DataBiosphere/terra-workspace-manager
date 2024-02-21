@@ -30,7 +30,7 @@ import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
-import bio.terra.workspace.common.BaseUnitTestMockDataRepoService;
+import bio.terra.workspace.common.BaseSpringBootUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -93,7 +93,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * of supporting the TPS REST API from within the WSM REST API and allowing the TPS objects to be
  * used in the WSM API.
  */
-public class WorkspaceApiControllerTest extends BaseUnitTestMockDataRepoService {
+public class WorkspaceApiControllerTest extends BaseSpringBootUnitTestMockDataRepoService {
   /** A fake group-constraint policy for a workspace. */
   private static final TpsPolicyInput TPS_GROUP_POLICY =
       new TpsPolicyInput()

@@ -14,7 +14,7 @@ import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -48,7 +48,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class AzureStorageAccessServiceUnitTest extends BaseAzureUnitTest {
+public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTest {
   private final UUID landingZoneId = UUID.randomUUID();
   private final OffsetDateTime startTime = OffsetDateTime.now().minusMinutes(15);
   private final OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(60);

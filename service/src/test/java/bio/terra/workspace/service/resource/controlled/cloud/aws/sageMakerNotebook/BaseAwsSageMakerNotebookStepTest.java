@@ -12,7 +12,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.CliConfiguration;
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AwsTestUtils;
@@ -30,7 +30,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import software.amazon.awssdk.services.sagemaker.SageMakerClient;
 import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 
-public abstract class BaseAwsSageMakerNotebookStepTest extends BaseAwsUnitTest {
+public abstract class BaseAwsSageMakerNotebookStepTest extends BaseAwsSpringBootUnitTest {
 
   @MockBean protected FlightContext mockFlightContext;
   @MockBean protected AwsCloudContextService mockAwsCloudContextService;

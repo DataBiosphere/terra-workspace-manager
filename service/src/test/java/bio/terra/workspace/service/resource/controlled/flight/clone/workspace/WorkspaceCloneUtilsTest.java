@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
@@ -31,7 +31,7 @@ import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
-public class WorkspaceCloneUtilsTest extends BaseUnitTest {
+public class WorkspaceCloneUtilsTest extends BaseSpringBootUnitTest {
   private static final UUID WORKSPACE_ID = UUID.randomUUID();
   private static final UUID DESTINATION_WORKSPACE_ID = UUID.randomUUID();
   private static final UUID DESTINATION_RESOURCE_ID = UUID.randomUUID();

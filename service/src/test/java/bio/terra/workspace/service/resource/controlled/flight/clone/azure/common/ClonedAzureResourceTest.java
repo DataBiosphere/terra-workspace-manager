@@ -3,7 +3,7 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.azure.commo
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("azureUnit")
-public class ClonedAzureResourceTest extends BaseAzureUnitTest {
+public class ClonedAzureResourceTest extends BaseAzureSpringBootUnitTest {
 
   static UUID sourceWorkspaceId = UUID.randomUUID();
   static UUID sourceResourceId = UUID.randomUUID();

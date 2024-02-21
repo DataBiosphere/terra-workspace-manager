@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.S3EnvironmentDiscovery;
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.common.exception.StaleConfigurationException;
 import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
@@ -49,7 +49,7 @@ import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.regions.Region;
 
-public class AwsCloudContextUnitTest extends BaseAwsUnitTest {
+public class AwsCloudContextUnitTest extends BaseAwsSpringBootUnitTest {
 
   @Autowired private AwsCloudContextService awsCloudContextService;
   @Mock private S3EnvironmentDiscovery mockEnvironmentDiscovery;

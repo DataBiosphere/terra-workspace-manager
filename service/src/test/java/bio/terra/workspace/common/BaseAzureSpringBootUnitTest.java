@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Tag;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
-/** Base class for Azure unit tests: not connected to Azure */
+/** Base class for Azure Spring Boot unit tests: not connected to Azure */
 @Tag("azure-unit")
 @ActiveProfiles({"azure-unit-test", "unit-test"})
 public class BaseAzureSpringBootUnitTest extends BaseSpringBootUnitTestMocks {

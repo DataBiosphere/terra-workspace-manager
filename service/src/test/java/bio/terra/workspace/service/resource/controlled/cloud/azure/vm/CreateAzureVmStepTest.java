@@ -14,7 +14,7 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.AzureUtils;
@@ -59,7 +59,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
-public class CreateAzureVmStepTest extends BaseAzureUnitTest {
+public class CreateAzureVmStepTest extends BaseAzureSpringBootUnitTest {
 
   private static final String STUB_STRING_RETURN = "stubbed-return";
   private static final String STUB_DISK_NAME = "stub-disk-name";

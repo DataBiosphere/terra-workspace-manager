@@ -9,7 +9,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @Tag("azureUnit")
-class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureUnitTest {
+class CopyAzureControlledDatabaseDefinitionStepTest extends BaseAzureSpringBootUnitTest {
   @MockBean private ResourceDao mockResourceDao;
   private UUID workspaceId;
   private FlightContext flightContext;

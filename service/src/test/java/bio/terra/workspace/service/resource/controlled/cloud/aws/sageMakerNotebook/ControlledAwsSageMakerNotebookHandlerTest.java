@@ -3,12 +3,12 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.sageMakerNoteb
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import liquibase.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
-public class ControlledAwsSageMakerNotebookHandlerTest extends BaseAwsUnitTest {
+public class ControlledAwsSageMakerNotebookHandlerTest extends BaseAwsSpringBootUnitTest {
 
   @Test
   void generateFolderNameTest() {

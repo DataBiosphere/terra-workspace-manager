@@ -6,12 +6,12 @@ import static liquibase.repackaged.org.apache.commons.text.CharacterPredicates.L
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import java.util.UUID;
 import liquibase.repackaged.org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Test;
 
-public class ControlledBigQueryDatasetHandlerTest extends BaseUnitTest {
+public class ControlledBigQueryDatasetHandlerTest extends BaseSpringBootUnitTest {
   @Test
   public void generateDatasetName() {
     String datasetName = "yuhuyoyo";
