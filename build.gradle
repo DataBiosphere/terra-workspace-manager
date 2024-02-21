@@ -1,6 +1,6 @@
 plugins {
     id 'maven-publish'
-    id 'com.jfrog.artifactory' version '5.1.14'
+    id 'com.jfrog.artifactory' version '5.2.0'
 
     // For JShell support
     // https://gitlab.com/barfuin/gradle-taskinfo
