@@ -25,7 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 /** Base class for Azure unit tests: not connected to Azure */
 @Tag("azure-unit")
 @ActiveProfiles({"azure-unit-test", "unit-test"})
-public class BaseAzureUnitTest extends BaseUnitTestMocks {
+public class BaseAzureSpringBootUnitTest extends BaseSpringBootUnitTestMocks {
   @MockBean private AzureStorageAccessService mockAzureStorageAccessService;
   @MockBean private JobApiUtils mockJobApiUtils;
   @MockBean private LandingZoneService mockLandingZoneService;

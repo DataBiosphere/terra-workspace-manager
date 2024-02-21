@@ -682,11 +682,11 @@ The test base classes can be found in `src/test/java/bio/terra/workspace/common/
 
 The current inheritance for Spring Boot unit test base classes looks like this:
 - `BaseSpringBootTest` - the base class for Spring Boot unit and connected tests
-  - `BaseUnitTestMocks` - the base set of mocks shared by all Spring Boot unit tests
-    - `BaseUnitTest` - enables the right test tags and profiles for unit testing
-      - `BaseUnitTestMockDataRepoService` - adds one more mock; used in one unit test
-      - `BaseUnitTestMockGcpCloudContextService` - adds one more mock; used by several tests
-    - `BaseAzureUnitTest` - adds mocks shared by azure unit tests and enables the right test tags and profiles
+  - `BaseSpringBootUnitTestMocks` - the base set of mocks shared by all Spring Boot unit tests
+    - `BaseSpringBootUnitTest` - enables the right test tags and profiles for Spring Boot unit tests
+      - `BaseSpringBootUnitTestMockDataRepoService` - adds one more mock; used by several tests
+      - `BaseSpringBootUnitTestMockGcpCloudContextService` - adds one more mock; used by several tests
+    - `BaseAzureSpringBootUnitTest` - adds mocks shared by azure Spring Boot unit tests and enables the right test tags and profiles
 
 We keep the Azure tests separated from the general tests, because the Azure feature is not live in all environments.
 Those tests will not successfully run in those environments.
