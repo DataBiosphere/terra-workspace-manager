@@ -2,12 +2,12 @@ package bio.terra.workspace.service.resource.controlled.cloud.aws.s3StorageFolde
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import liquibase.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
-public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsUnitTest {
+public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsSpringBootUnitTest {
 
   @Test
   void generateFolderNameTest() {

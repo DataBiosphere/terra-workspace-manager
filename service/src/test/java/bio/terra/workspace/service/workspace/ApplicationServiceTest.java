@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.ApplicationDao;
 import bio.terra.workspace.db.DbSerDes;
@@ -47,7 +47,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.MethodMode;
 
-public class ApplicationServiceTest extends BaseUnitTest {
+public class ApplicationServiceTest extends BaseSpringBootUnitTest {
   private static final String LEO_ID = "4BD1D59D-5827-4375-A41D-BBC65919F269";
   private static final String CARMEN_ID = "Carmen";
   private static final String NORM_ID = "normal";

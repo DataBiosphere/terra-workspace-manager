@@ -149,33 +149,49 @@ jobs:
       if: steps.skiptest.outputs.is-bump == 'no'
       run: chmod +x gradlew
 
-    # These steps aren't needed for unit tests
-    - name: Get Vault token
-      if: matrix.gradleTask != 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
-      id: vault-token-step
-      env:
-        VAULT_ADDR: https://clotho.broadinstitute.org:8200
-      run: |
-        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault write -field token \
-            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-        echo ::add-mask::$VAULT_TOKEN    
-        echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
-
-    # TODO migrate to write-credentials once we have a way to get the
-    # managed app publisher credentials
     - name: Write config
-      if: matrix.gradleTask != 'unitTest' && steps.skiptest.outputs.is-bump == 'no'
       id: config
-      uses: ./.github/actions/write-config
+      uses: ./.github/actions/write-credentials
       with:
-        # Note that unit and connected tests run with local configuration regardless of
-        # the test-env specified on the workflow-dispatch input.
-        target: local
-        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+        user-delegated-sa-b64: ${{ secrets.USER_DELEGATED_SA_DEV }}
+        buffer-client-sa-b64: ${{ secrets.BUFFER_CLIENT_SA_DEV }}
+        testrunner-sa-b64: ${{ secrets.TESTRUNNER_SA_DEV }}
+        testrunner-k8s-sa-b64: ${{ secrets.TESTRUNNER_K8S_SA_DEV }}
+        wsm-sa-b64: ${{ secrets.WSM_SA_DEV }}
+        janitor-sa-b64: ${{ secrets.JANITOR_SA_DEV }}
+        policy-client-sa-b64: ${{ secrets.POLICY_CLIENT_SA_DEV }}
+
+    - name: Store az creds
+      id: store-az-creds
+      run: |
+        WSM_AZURE_PUBLISHER_CLIENT_ID=${{ secrets.WSM_AZURE_PUBLISHER_CLIENT_ID }}
+        echo ::add-mask::$WSM_AZURE_PUBLISHER_CLIENT_ID
+        WSM_AZURE_PUBLISHER_CLIENT_SECRET_ID=${{ secrets.WSM_AZURE_PUBLISHER_CLIENT_SECRET_ID }}
+        echo ::add-mask::$WSM_AZURE_PUBLISHER_CLIENT_SECRET_ID
+        WSM_AZURE_PUBLISHER_TENANT_ID=${{ secrets.WSM_AZURE_PUBLISHER_TENANT_ID }}
+        echo ::add-mask::$WSM_AZURE_PUBLISHER_TENANT_ID
+
+        echo wsm-azure-publisher-client-id=$WSM_AZURE_PUBLISHER_CLIENT_ID >> ${GITHUB_OUTPUT}
+        echo wsm-azure-publisher-client-secret-id=$WSM_AZURE_PUBLISHER_CLIENT_SECRET_ID >> ${GITHUB_OUTPUT}
+        echo wsm-azure-publisher-tenant-id=$WSM_AZURE_PUBLISHER_TENANT_ID >> ${GITHUB_OUTPUT}
+
+    - name: Write config
+      id: write-config
+      run: |
+        cat << EOF > "config/local-properties.yml"
+        workspace:
+          policy:
+            base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
+          cli:
+            server-name: broad-dev
+          azure:
+            managed-app-client-id: "${{ steps.store-az-creds.outputs.wsm-azure-publisher-client-id }}"
+            managed-app-client-secret: "${{ steps.store-az-creds.outputs.wsm-azure-publisher-client-secret-id }}"
+            managed-app-tenant-id: "${{ steps.store-az-creds.outputs.wsm-azure-publisher-tenant-id }}"
+        feature:
+          tps-enabled: true
+          temporary-grant-enabled: true
+        EOF
 
       # Run tests
     - name: Run tests

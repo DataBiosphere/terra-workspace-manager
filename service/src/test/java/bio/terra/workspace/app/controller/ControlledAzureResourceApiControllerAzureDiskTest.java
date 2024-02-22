@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
@@ -32,7 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-public class ControlledAzureResourceApiControllerAzureDiskTest extends BaseAzureUnitTest {
+public class ControlledAzureResourceApiControllerAzureDiskTest extends BaseAzureSpringBootUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
   @Autowired ControlledAzureResourceApiController controller;

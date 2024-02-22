@@ -3,10 +3,10 @@ package bio.terra.workspace.common.utils;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.ValidationException;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import org.junit.jupiter.api.Test;
 
-public class AzureUtilsTest extends BaseAzureUnitTest {
+public class AzureUtilsTest extends BaseAzureSpringBootUnitTest {
 
   @Test
   void validatingValidSasExpirationDurations() {

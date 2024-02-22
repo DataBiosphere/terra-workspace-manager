@@ -16,7 +16,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.DbUpdater;
@@ -35,7 +35,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-public class UpdateBigQueryDatasetStepTest extends BaseUnitTest {
+public class UpdateBigQueryDatasetStepTest extends BaseSpringBootUnitTest {
   private static final String PROJECT_ID = "my-gcp-project";
   private static final String DATASET_ID = "my-ds-id";
 

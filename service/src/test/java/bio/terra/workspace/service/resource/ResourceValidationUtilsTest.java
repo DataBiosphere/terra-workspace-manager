@@ -11,7 +11,7 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.exception.FieldSizeExceededException;
@@ -39,7 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-public class ResourceValidationUtilsTest extends BaseUnitTest {
+public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
   private static final String MAX_VALID_STRING =
       "012345678901234567890123456789012345678901234567890123456789012";

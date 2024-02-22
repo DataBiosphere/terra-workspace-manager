@@ -4,7 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.in;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * These tests assert architectural design invariants about the workspace role hierarchy. These are
  * not expected to change.
  */
-public class CloudSyncRoleMappingTest extends BaseUnitTest {
+public class CloudSyncRoleMappingTest extends BaseSpringBootUnitTest {
 
   @Autowired GcpCloudSyncRoleMapping gcpCloudSyncRoleMapping;
 

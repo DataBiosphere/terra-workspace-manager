@@ -8,13 +8,13 @@ import bio.terra.common.exception.ValidationException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureUnitTest {
+public class VerifyControlledResourceDoesNotExistStepTest extends BaseAzureSpringBootUnitTest {
 
   @Test
   void doStep_resourceDoesNotExist() throws InterruptedException {

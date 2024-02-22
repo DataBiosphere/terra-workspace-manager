@@ -10,14 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import org.junit.jupiter.api.Test;
 
-public class ControlledAwsSageMakerNotebookResourceTest extends BaseAwsUnitTest {
+public class ControlledAwsSageMakerNotebookResourceTest extends BaseAwsSpringBootUnitTest {
 
   @Test
   void validateResourceTest() {

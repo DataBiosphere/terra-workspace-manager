@@ -8,6 +8,7 @@ import bio.terra.workspace.common.exception.MDCHandlingException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -111,7 +112,10 @@ public class MdcHook implements StairwayHook {
     String serializedMdc = flightContext.getInputParameters().get(MDC_FLIGHT_MAP_KEY, String.class);
     // Note that this destroys any previous context on this thread.
     MDC.setContextMap(deserializeMdc(serializedMdc));
+    // If the serializedMdc itself contains flight and step context from a parent flight, this will
+    // be overridden below:
     addFlightContextToMdc(flightContext);
+    removeStepContextFromMdc(flightContext);
     logger.info(
         FLIGHT_LOG_FORMAT,
         "startFlight",
@@ -164,12 +168,19 @@ public class MdcHook implements StairwayHook {
     return HookAction.CONTINUE;
   }
 
-  private void addFlightContextToMdc(FlightContext context) {
-    MDC.put(FLIGHT_ID_KEY, context.getFlightId());
-    MDC.put(FLIGHT_CLASS_KEY, context.getFlightClassName());
+  @VisibleForTesting
+  Map<String, String> flightContextForMdc(FlightContext context) {
+    return Map.of(
+        FLIGHT_ID_KEY, context.getFlightId(),
+        FLIGHT_CLASS_KEY, context.getFlightClassName());
   }
 
-  private Map<String, String> stepContext(FlightContext context) {
+  private void addFlightContextToMdc(FlightContext context) {
+    flightContextForMdc(context).forEach(MDC::put);
+  }
+
+  @VisibleForTesting
+  Map<String, String> stepContextForMdc(FlightContext context) {
     return Map.of(
         FLIGHT_STEP_CLASS_KEY, context.getStepClassName(),
         FLIGHT_STEP_DIRECTION_KEY, context.getDirection().toString(),
@@ -177,10 +188,10 @@ public class MdcHook implements StairwayHook {
   }
 
   private void addStepContextToMdc(FlightContext context) {
-    stepContext(context).forEach(MDC::put);
+    stepContextForMdc(context).forEach(MDC::put);
   }
 
   private void removeStepContextFromMdc(FlightContext context) {
-    stepContext(context).keySet().forEach(MDC::remove);
+    stepContextForMdc(context).keySet().forEach(MDC::remove);
   }
 }

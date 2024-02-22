@@ -24,7 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 /** Base class for AWS connected tests: connected to AWS */
 @TestInstance(Lifecycle.PER_CLASS)
 @ActiveProfiles({"aws-connected-test", "connected-test"})
-public class BaseAwsConnectedTest extends BaseTest {
+public class BaseAwsConnectedTest extends BaseSpringBootTest {
   protected static final ApiCloudPlatform apiCloudPlatform = ApiCloudPlatform.AWS;
 
   @Autowired protected AwsCloudContextService awsCloudContextService;

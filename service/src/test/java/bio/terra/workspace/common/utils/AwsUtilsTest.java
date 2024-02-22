@@ -24,7 +24,7 @@ import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.generated.model.ApiAwsCredentialAccessScope;
@@ -66,7 +66,7 @@ import software.amazon.awssdk.services.sagemaker.model.StopNotebookInstanceReque
 import software.amazon.awssdk.services.sagemaker.waiters.SageMakerWaiter;
 import software.amazon.awssdk.services.sts.model.Tag;
 
-public class AwsUtilsTest extends BaseAwsUnitTest {
+public class AwsUtilsTest extends BaseAwsSpringBootUnitTest {
 
   @Mock private S3Client mockS3Client;
   @Mock private SageMakerClient mockSageMakerClient;

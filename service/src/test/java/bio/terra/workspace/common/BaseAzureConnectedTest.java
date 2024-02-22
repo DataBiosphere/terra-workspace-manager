@@ -20,7 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 /** Base class for Azure connected tests: connected to Azure */
 @ActiveProfiles({"azure-test", "connected-test"})
-public class BaseAzureConnectedTest extends BaseTest {
+public class BaseAzureConnectedTest extends BaseSpringBootTest {
 
   @MockBean private SpendProfileService mockSpendProfileService;
 

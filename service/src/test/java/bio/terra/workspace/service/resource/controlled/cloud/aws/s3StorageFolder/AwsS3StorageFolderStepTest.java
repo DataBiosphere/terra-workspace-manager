@@ -23,7 +23,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.utils.AwsTestUtils;
@@ -47,7 +47,7 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
-public class AwsS3StorageFolderStepTest extends BaseAwsUnitTest {
+public class AwsS3StorageFolderStepTest extends BaseAwsSpringBootUnitTest {
 
   @MockBean private FlightContext mockFlightContext;
   @MockBean private AwsCloudContextService mockAwsCloudContextService;

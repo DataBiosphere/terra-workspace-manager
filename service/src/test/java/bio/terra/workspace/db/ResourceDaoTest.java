@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -54,7 +54,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class ResourceDaoTest extends BaseUnitTest {
+public class ResourceDaoTest extends BaseSpringBootUnitTest {
   @Autowired ResourceDao resourceDao;
   @Autowired WorkspaceDao workspaceDao;
   @Autowired GcpCloudContextService gcpCloudContextService;

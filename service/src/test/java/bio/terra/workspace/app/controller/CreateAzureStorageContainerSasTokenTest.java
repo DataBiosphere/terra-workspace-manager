@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureSasBundle;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
 import java.util.UUID;
@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-public class CreateAzureStorageContainerSasTokenTest extends BaseAzureUnitTest {
+public class CreateAzureStorageContainerSasTokenTest extends BaseAzureSpringBootUnitTest {
   @Autowired MockMvc mockMvc;
   @Autowired AzureConfiguration azureConfiguration;
 
