@@ -11,7 +11,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import bio.terra.aws.resource.discovery.EnvironmentDiscovery;
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.utils.AwsTestUtils;
 import bio.terra.workspace.common.utils.AwsUtils;
@@ -29,7 +29,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class AwsWorkspaceV2UnitTest extends BaseAwsUnitTest {
+public class AwsWorkspaceV2UnitTest extends BaseAwsSpringBootUnitTest {
 
   @Autowired JobService jobService;
   @Autowired private AwsCloudContextService awsCloudContextService;

@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseAzureUnitTest;
+import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -24,7 +24,7 @@ import com.azure.resourcemanager.msi.MsiManager;
 import java.util.UUID;
 import org.mockito.Mock;
 
-public class BaseBatchPoolTest extends BaseAzureUnitTest {
+public class BaseBatchPoolTest extends BaseAzureSpringBootUnitTest {
   public static final UUID BATCH_POOL_ID = UUID.randomUUID();
   public static final String BATCH_POOL_VM_SIZE = "Standard_D2s_v3";
   public static final String BATCH_POOL_DISPLAY_NAME = "batchPoolDisplayName";

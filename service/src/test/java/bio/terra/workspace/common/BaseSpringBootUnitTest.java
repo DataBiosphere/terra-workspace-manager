@@ -7,4 +7,4 @@ import bio.terra.workspace.common.annotations.Unit;
  * & others cloud-agnostic WSM component unit tests
  */
 @Unit
-public class BaseUnitTest extends BaseUnitTestMocks {}
+public class BaseSpringBootUnitTest extends BaseSpringBootUnitTestMocks {}

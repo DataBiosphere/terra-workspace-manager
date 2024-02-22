@@ -7,14 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.stairway.FlightMap;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.generated.model.ApiGcpGceInstanceResource;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import org.junit.jupiter.api.Test;
 
-public class ControlledGceInstanceResourceTest extends BaseUnitTest {
+public class ControlledGceInstanceResourceTest extends BaseSpringBootUnitTest {
   @Test
   public void validateOk() {
     // will throw if anything is amiss.

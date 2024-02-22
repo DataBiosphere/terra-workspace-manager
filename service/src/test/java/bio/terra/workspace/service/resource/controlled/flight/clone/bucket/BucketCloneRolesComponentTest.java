@@ -15,14 +15,14 @@ import static org.mockito.Mockito.when;
 
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightMap;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
-public class BucketCloneRolesComponentTest extends BaseUnitTest {
+public class BucketCloneRolesComponentTest extends BaseSpringBootUnitTest {
 
   @Mock private StorageCow mockStorageCow;
   @Mock private CrlService mockCrlService;

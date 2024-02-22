@@ -20,7 +20,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
@@ -39,7 +39,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
-public class UpdateGcsBucketStepTest extends BaseUnitTest {
+public class UpdateGcsBucketStepTest extends BaseSpringBootUnitTest {
   private static final String PROJECT_ID = "my-gcp-project";
 
   private UpdateGcsBucketStep updateGcsBucketStep;

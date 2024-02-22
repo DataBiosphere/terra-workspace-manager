@@ -2,12 +2,12 @@ package bio.terra.workspace.service.resource;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import org.junit.jupiter.api.Test;
 
-public class AwsResourceValidationUtilsTest extends BaseAwsUnitTest {
+public class AwsResourceValidationUtilsTest extends BaseAwsSpringBootUnitTest {
 
   @Test
   public void awsS3StorageFolderNameTest() {

@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolApplicationPackageReference;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolAutoScaleSettings;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolAutoUserScope;
@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-public class MapperUtilsTest extends BaseUnitTest {
+public class MapperUtilsTest extends BaseSpringBootUnitTest {
 
   @Test
   public void testNullableListOfUserAssignedIdentities() {

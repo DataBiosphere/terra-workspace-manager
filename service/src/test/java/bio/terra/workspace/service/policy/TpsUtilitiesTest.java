@@ -8,12 +8,12 @@ import bio.terra.policy.model.TpsPaoGetResult;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-public class TpsUtilitiesTest extends BaseUnitTest {
+public class TpsUtilitiesTest extends BaseSpringBootUnitTest {
 
   @Test
   void testGetGroupConstraintsFromInputs() {

@@ -7,13 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.workspace.common.BaseAwsUnitTest;
+import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAwsResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import org.junit.jupiter.api.Test;
 
-public class ControlledAwsS3StorageFolderResourceTest extends BaseAwsUnitTest {
+public class ControlledAwsS3StorageFolderResourceTest extends BaseAwsSpringBootUnitTest {
 
   @Test
   void validateResourceTest() {

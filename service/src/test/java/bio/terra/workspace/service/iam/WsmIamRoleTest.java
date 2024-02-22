@@ -2,11 +2,11 @@ package bio.terra.workspace.service.iam;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import bio.terra.workspace.common.BaseUnitTest;
+import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import org.junit.jupiter.api.Test;
 
-public class WsmIamRoleTest extends BaseUnitTest {
+public class WsmIamRoleTest extends BaseSpringBootUnitTest {
 
   /**
    * This test looks trivial, but it enforces that WsmIamRole.fromSam must handle unknown values
