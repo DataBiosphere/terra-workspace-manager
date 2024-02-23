@@ -795,7 +795,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Override
   public ResponseEntity<ApiDeleteControlledAzureResourceResult> getDeleteAzureDatabaseResult(
-          UUID workspaceId, String jobId) {
+      UUID workspaceId, String jobId) {
     features.azureEnabledCheck();
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     jobService.verifyUserAccess(jobId, userRequest, workspaceId);
