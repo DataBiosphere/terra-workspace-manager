@@ -3,7 +3,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket;
 import bio.terra.cloudres.google.storage.BucketCow;
 import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.utils.FlightUtils;

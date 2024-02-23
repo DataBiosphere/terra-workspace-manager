@@ -24,7 +24,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.gcp.RetrieveNetwork
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.UpdateInstanceResourceLocationAttributesStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.flight.update.UpdateControlledResourceRegionStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -39,7 +38,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -191,7 +189,8 @@ public class ControlledGceInstanceResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+  public List<DeleteControlledResourceStep> getDeleteSteps(
+      FlightMap inputParameters, FlightBeanBag flightBeanBag) {
     return List.of(new DeleteGceInstanceStep(this, flightBeanBag.getCrlService()));
   }
 

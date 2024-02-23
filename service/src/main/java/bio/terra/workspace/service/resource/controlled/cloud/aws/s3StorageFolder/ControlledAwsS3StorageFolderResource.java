@@ -17,7 +17,6 @@ import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.*;
 import bio.terra.workspace.service.resource.flight.UpdateResourceFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -27,7 +26,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -134,10 +132,11 @@ public class ControlledAwsS3StorageFolderResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+  public List<DeleteControlledResourceStep> getDeleteSteps(
+      FlightMap inputParameters, FlightBeanBag flightBeanBag) {
     return List.of(
-        new DeleteAwsS3StorageFolderStep(this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService())
-    );
+        new DeleteAwsS3StorageFolderStep(
+            this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService()));
   }
 
   /** {@inheritDoc} */

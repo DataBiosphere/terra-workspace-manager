@@ -16,7 +16,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
@@ -28,7 +27,6 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -121,11 +119,10 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         cloudRetry);
   }
 
-
-
   /** {@inheritDoc} */
   @Override
-  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+  public List<DeleteControlledResourceStep> getDeleteSteps(
+      FlightMap inputParameters, FlightBeanBag flightBeanBag) {
     return List.of(
         new DeleteAzureStorageContainerStep(
             flightBeanBag.getAzureConfig(),
@@ -134,8 +131,7 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
             flightBeanBag.getLandingZoneApiDispatch(),
             flightBeanBag.getSamService(),
             this,
-            flightBeanBag.getWorkspaceService())
-    );
+            flightBeanBag.getWorkspaceService()));
   }
 
   // Azure resources currently do not implement updating.

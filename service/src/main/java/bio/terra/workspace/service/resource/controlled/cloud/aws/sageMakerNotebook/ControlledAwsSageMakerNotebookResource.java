@@ -18,7 +18,6 @@ import bio.terra.workspace.service.resource.AwsResourceValidationUtils;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -32,7 +31,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -137,15 +135,21 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+  public List<DeleteControlledResourceStep> getDeleteSteps(
+      FlightMap inputParameters, FlightBeanBag flightBeanBag) {
     var steps = new ArrayList<DeleteControlledResourceStep>();
 
-    boolean forceDelete = Boolean.TRUE.equals(inputParameters.get(ControlledResourceKeys.FORCE_DELETE, Boolean.class));
+    boolean forceDelete =
+        Boolean.TRUE.equals(
+            inputParameters.get(ControlledResourceKeys.FORCE_DELETE, Boolean.class));
     // Notebooks must be stopped before deletion. If requested, stop instance before delete attempt
     if (forceDelete) {
       steps.add(
           new StopAwsSageMakerNotebookStep(
-              this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService(), true));
+              this,
+              flightBeanBag.getAwsCloudContextService(),
+              flightBeanBag.getSamService(),
+              true));
     } else {
       steps.add(
           new ValidateAwsSageMakerNotebookDeleteStep(
@@ -154,7 +158,7 @@ public class ControlledAwsSageMakerNotebookResource extends ControlledResource {
 
     steps.add(
         new DeleteAwsSageMakerNotebookStep(
-            this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService()) );
+            this, flightBeanBag.getAwsCloudContextService(), flightBeanBag.getSamService()));
     return steps;
   }
 
