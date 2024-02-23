@@ -16,6 +16,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
@@ -27,6 +28,7 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -124,11 +126,8 @@ public class ControlledAzureDiskResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public List<DeleteControlledResourceStep> getDeleteSteps(
-      FlightMap inputParameters, FlightBeanBag flightBeanBag) {
-    return List.of(
-        new DeleteAzureDiskStep(
-            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this));
+  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+    return List.of(new DeleteAzureDiskStep(flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this));
   }
 
   // Azure resources currently do not implement updating.

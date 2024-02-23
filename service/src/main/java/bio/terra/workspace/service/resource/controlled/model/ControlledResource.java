@@ -15,6 +15,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
@@ -139,8 +140,8 @@ public abstract class ControlledResource extends WsmResource {
    * @param inputParameters the input parameters to the delete flight
    * @param flightBeanBag bean bag for finding Spring singletons
    */
-  public abstract List<DeleteControlledResourceStep> getDeleteSteps(
-      FlightMap inputParameters, FlightBeanBag flightBeanBag);
+  public abstract List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag);
+
 
   /**
    * The RemoveNativeAccessToPrivateResourcesFlight calls this method to populate the

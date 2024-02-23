@@ -1,11 +1,14 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.DeleteAzureManagedIdentityStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
