@@ -7,6 +7,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -19,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * A step for deleting a controlled BigQuery dataset resource. This will delete a dataset even if it
  * has tables or data present.
  */
-public class DeleteBigQueryDatasetStep implements Step {
+public class DeleteBigQueryDatasetStep implements DeleteControlledResourceStep {
 
   private final ControlledBigQueryDatasetResource resource;
   private final CrlService crlService;

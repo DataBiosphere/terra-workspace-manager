@@ -12,6 +12,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -25,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A step for deleting a controlled Azure Storage Con resource. */
-public class DeleteAzureStorageContainerStep implements Step {
+public class DeleteAzureStorageContainerStep extends DeleteAzureControlledResourceStep {
   private static final Logger logger =
       LoggerFactory.getLogger(DeleteAzureStorageContainerStep.class);
   private final AzureConfiguration azureConfig;

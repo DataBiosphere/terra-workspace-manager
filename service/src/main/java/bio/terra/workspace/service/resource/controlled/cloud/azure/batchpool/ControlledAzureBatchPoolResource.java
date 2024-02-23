@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool;
 
 import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
 import bio.terra.workspace.db.DbSerDes;
@@ -12,6 +13,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -196,14 +198,12 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
   }
 
   @Override
-  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    flight.addStep(
-        new DeleteAzureBatchPoolStep(
-            flightBeanBag.getAzureConfig(),
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getLandingZoneBatchAccountFinder(),
-            this),
-        RetryRules.cloud());
+  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+    return List.of(new DeleteAzureBatchPoolStep(
+        flightBeanBag.getAzureConfig(),
+        flightBeanBag.getCrlService(),
+        flightBeanBag.getLandingZoneBatchAccountFinder(),
+        this));
   }
 
   // Azure resources currently do not implement updating.

@@ -9,6 +9,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.exception.BucketDeleteTimeoutException;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import com.google.cloud.storage.BucketInfo;
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 // TODO: when Stairway implements timed waits, we can use those and not sit on a thread sleeping
 //  for three days.
-public class DeleteGcsBucketStep implements Step {
+public class DeleteGcsBucketStep implements DeleteControlledResourceStep {
   private static final int MAX_DELETE_TRIES = 72; // 3 days
   private final CrlService crlService;
   private final ControlledGcsBucketResource resource;

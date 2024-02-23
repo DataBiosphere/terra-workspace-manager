@@ -12,6 +12,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
-public class StopAwsSageMakerNotebookStep implements Step {
+public class StopAwsSageMakerNotebookStep implements DeleteControlledResourceStep {
   private static final Logger logger = LoggerFactory.getLogger(StopAwsSageMakerNotebookStep.class);
 
   private final ControlledAwsSageMakerNotebookResource resource;

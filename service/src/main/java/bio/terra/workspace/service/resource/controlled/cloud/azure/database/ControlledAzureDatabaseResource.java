@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.database;
 
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
@@ -15,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -159,17 +161,15 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    flight.addStep(
-        new DeleteAzureDatabaseStep(
-            flightBeanBag.getAzureConfig(),
-            flightBeanBag.getCrlService(),
-            this,
-            flightBeanBag.getLandingZoneApiDispatch(),
-            flightBeanBag.getSamService(),
-            flightBeanBag.getWorkspaceService(),
-            getWorkspaceId()),
-        RetryRules.cloud());
+  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+    return List.of(new DeleteAzureDatabaseStep(
+        flightBeanBag.getAzureConfig(),
+        flightBeanBag.getCrlService(),
+        this,
+        flightBeanBag.getLandingZoneApiDispatch(),
+        flightBeanBag.getSamService(),
+        flightBeanBag.getWorkspaceService(),
+        getWorkspaceId()));
   }
 
   // Azure resources currently do not implement updating.

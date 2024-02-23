@@ -6,13 +6,14 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteAzureNetworkInterfaceStep implements Step {
+public class DeleteAzureNetworkInterfaceStep extends DeleteAzureControlledResourceStep {
   private static final Logger logger =
       LoggerFactory.getLogger(CreateAzureNetworkInterfaceStep.class);
 

@@ -8,6 +8,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.compute.model.Operation;
 import java.io.IOException;
@@ -18,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A step for deleting a controlled gce instance. */
-public class DeleteGceInstanceStep implements Step {
+public class DeleteGceInstanceStep implements DeleteControlledResourceStep {
   private final Logger logger = LoggerFactory.getLogger(DeleteGceInstanceStep.class);
 
   private final ControlledGceInstanceResource resource;

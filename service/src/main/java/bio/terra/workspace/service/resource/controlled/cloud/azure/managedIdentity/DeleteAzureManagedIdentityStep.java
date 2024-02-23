@@ -6,6 +6,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * A step for deleting a controlled Azure Managed Identity resource. This step uses the following
  * process to actually delete the Azure Managed Identity.
  */
-public class DeleteAzureManagedIdentityStep implements Step {
+public class DeleteAzureManagedIdentityStep extends DeleteAzureControlledResourceStep {
   private static final Logger logger =
       LoggerFactory.getLogger(DeleteAzureManagedIdentityStep.class);
   private final AzureConfiguration azureConfig;

@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.dataproccluste
 import bio.terra.cloudres.google.dataproc.ClusterName;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.RetryRules;
@@ -19,6 +20,7 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.GrantPetUsagePermissionStep;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.RetrieveNetworkNameStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -33,6 +35,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+
+import java.util.List;
 import java.util.Optional;
 
 /** A {@link ControlledResource} for a Google Dataproc clusters */
@@ -168,9 +172,8 @@ public class ControlledDataprocClusterResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    flight.addStep(
-        new DeleteDataprocClusterStep(this, flightBeanBag.getCrlService()), RetryRules.cloud());
+  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+    return List.of(new DeleteDataprocClusterStep(this, flightBeanBag.getCrlService()));
   }
 
   @Override
