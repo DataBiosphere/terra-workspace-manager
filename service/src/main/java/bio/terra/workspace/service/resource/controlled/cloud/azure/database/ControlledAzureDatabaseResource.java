@@ -17,7 +17,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -161,15 +160,17 @@ public class ControlledAzureDatabaseResource extends ControlledResource {
 
   /** {@inheritDoc} */
   @Override
-  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
-    return List.of(new DeleteAzureDatabaseStep(
-        flightBeanBag.getAzureConfig(),
-        flightBeanBag.getCrlService(),
-        this,
-        flightBeanBag.getLandingZoneApiDispatch(),
-        flightBeanBag.getSamService(),
-        flightBeanBag.getWorkspaceService(),
-        getWorkspaceId()));
+  public List<DeleteControlledResourceStep> getDeleteSteps(
+      FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+    return List.of(
+        new DeleteAzureDatabaseStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            this,
+            flightBeanBag.getLandingZoneApiDispatch(),
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWorkspaceService(),
+            getWorkspaceId()));
   }
 
   // Azure resources currently do not implement updating.

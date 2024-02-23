@@ -14,7 +14,6 @@ import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
@@ -198,12 +197,14 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
   }
 
   @Override
-  public List<DeleteControlledResourceStep> getDeleteSteps(FlightMap inputParameters, FlightBeanBag flightBeanBag) {
-    return List.of(new DeleteAzureBatchPoolStep(
-        flightBeanBag.getAzureConfig(),
-        flightBeanBag.getCrlService(),
-        flightBeanBag.getLandingZoneBatchAccountFinder(),
-        this));
+  public List<DeleteControlledResourceStep> getDeleteSteps(
+      FlightMap inputParameters, FlightBeanBag flightBeanBag) {
+    return List.of(
+        new DeleteAzureBatchPoolStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getLandingZoneBatchAccountFinder(),
+            this));
   }
 
   // Azure resources currently do not implement updating.
