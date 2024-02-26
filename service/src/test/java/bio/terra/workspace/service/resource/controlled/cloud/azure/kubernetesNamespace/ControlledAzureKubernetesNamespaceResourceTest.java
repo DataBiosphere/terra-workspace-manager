@@ -149,7 +149,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
             List.of(
                 KubernetesNamespaceGuardStep.class,
                 CreateKubernetesNamespaceStep.class,
-                GetWorkspaceManagedIdentityStep.class,
+                GetWorkspaceManagedIdentityForDeleteStep.class,
                 GetFederatedIdentityStep.class,
                 CreateFederatedIdentityStep.class)));
   }
@@ -213,7 +213,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
         equalTo(
             List.of(
                 DeleteKubernetesNamespaceStep.class,
-                GetPetManagedIdentityStep.class,
+                GetPetManagedIdentityForDeleteStep.class,
                 DeleteFederatedCredentialStep.class)));
   }
 
@@ -233,7 +233,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
         equalTo(
             List.of(
                 DeleteKubernetesNamespaceStep.class,
-                GetWorkspaceManagedIdentityStep.class,
+                GetWorkspaceManagedIdentityForDeleteStep.class,
                 DeleteFederatedCredentialStep.class)));
   }
 
@@ -253,7 +253,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
         equalTo(
             List.of(
                 DeleteKubernetesNamespaceStep.class,
-                GetWorkspaceManagedIdentityStep.class,
+                GetWorkspaceManagedIdentityForDeleteStep.class,
                 DeleteFederatedCredentialStep.class,
                 DeleteNamespaceRoleStep.class)));
   }
