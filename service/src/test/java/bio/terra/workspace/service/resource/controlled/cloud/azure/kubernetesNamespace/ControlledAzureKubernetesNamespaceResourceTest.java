@@ -149,7 +149,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
             List.of(
                 KubernetesNamespaceGuardStep.class,
                 CreateKubernetesNamespaceStep.class,
-                GetWorkspaceManagedIdentityForDeleteStep.class,
+                GetWorkspaceManagedIdentityStep.class,
                 GetFederatedIdentityStep.class,
                 CreateFederatedIdentityStep.class)));
   }
