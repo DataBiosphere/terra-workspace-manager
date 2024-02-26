@@ -10,7 +10,6 @@ import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteContr
  * TODO: figure out if this needs functionality from DeleteControlledAzureResourceStep (TBD,
  * WOR-787), and adjust as needed
  */
-// FIXME: I think the name difference could cause issues if we interrupt a flight on upgrade
 public class GetPetManagedIdentityForDeleteStep extends GetPetManagedIdentityStep
     implements DeleteControlledResourceStep {
 
