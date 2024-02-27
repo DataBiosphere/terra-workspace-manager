@@ -3,7 +3,7 @@ dependencies {
   // Azure dependencies
   implementation 'com.azure:azure-identity:1.9.1'
   implementation 'com.azure:azure-identity-extensions:1.1.4'
-  implementation 'org.postgresql:postgresql:42.6.0'
+  implementation 'org.postgresql:postgresql:42.7.2'
   implementation 'com.azure:azure-storage-blob:12.23.0'
 
   // Deps whose versions are controlled by Spring

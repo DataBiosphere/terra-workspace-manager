@@ -80,7 +80,7 @@ dependencies {
   implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
   implementation group: "org.liquibase", name: "liquibase-core", version: "4.8.0"
   implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
-  runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.3.7"
+  runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.7.2"
 
   // Deps whose versions are controlled by Spring
   implementation group: "jakarta.validation", name: "jakarta.validation-api"
