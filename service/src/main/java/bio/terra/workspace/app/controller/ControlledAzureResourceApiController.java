@@ -339,6 +339,19 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .build();
   }
 
+  @VisibleForTesting
+  ControlledAzureDatabaseResource buildControlledAzureDatabaseResource(
+      ApiAzureDatabaseCreationParameters creationParameters,
+      ControlledResourceFields commonFields) {
+    return ControlledAzureDatabaseResource.builder()
+        .common(commonFields)
+        .databaseOwner(
+            maybeLookupName(commonFields.getWorkspaceId(), creationParameters.getOwner()))
+        .databaseName(creationParameters.getName())
+        .allowAccessForAllWorkspaceUsers(creationParameters.isAllowAccessForAllWorkspaceUsers())
+        .build();
+  }
+
   @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledAzureVmResult> getCreateAzureVmResult(
@@ -656,14 +669,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
     workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
 
-    var resource =
-        ControlledAzureDatabaseResource.builder()
-            .common(commonFields)
-            .databaseOwner(maybeLookupName(workspaceUuid, body.getAzureDatabase().getOwner()))
-            .databaseName(body.getAzureDatabase().getName())
-            .allowAccessForAllWorkspaceUsers(
-                body.getAzureDatabase().isAllowAccessForAllWorkspaceUsers())
-            .build();
+    ControlledAzureDatabaseResource resource =
+        buildControlledAzureDatabaseResource(body.getAzureDatabase(), commonFields);
 
     var jobId =
         controlledResourceService.createControlledResourceAsync(
@@ -791,6 +798,13 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .validateWorkspaceOrControlledResourceReadAccess(userRequest, workspaceId, resourceId)
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     return new ResponseEntity<>(resource.toApiResource(), HttpStatus.OK);
+  }
+
+  @WithSpan
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteAzureDatabaseAsync(
+      UUID workspaceUuid, UUID resourceUuid, ApiDeleteControlledAzureResourceRequest body) {
+    return deleteHelper(workspaceUuid, resourceUuid, body, "Azure Database");
   }
 
   @Override
