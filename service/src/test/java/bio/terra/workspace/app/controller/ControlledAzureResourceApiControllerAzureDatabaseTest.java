@@ -46,7 +46,7 @@ public class ControlledAzureResourceApiControllerAzureDatabaseTest
   }
 
   @Test
-  public void createAzureDatabaseWithNoParameters() throws Exception {
+  public void createAzureDatabase400WithNoParameters() throws Exception {
     UUID workspaceId = UUID.randomUUID();
     mockMvc
         .perform(
@@ -55,7 +55,7 @@ public class ControlledAzureResourceApiControllerAzureDatabaseTest
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .accept(MediaType.APPLICATION_JSON)
                     .characterEncoding("UTF-8")
-                    .content("{}"),
+                    .content(""),
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
   }
@@ -97,8 +97,6 @@ public class ControlledAzureResourceApiControllerAzureDatabaseTest
                 .result(resource)
                 .jobReport(new ApiJobReport().status(ApiJobReport.StatusEnum.SUCCEEDED)));
 
-    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
-
     mockMvc
         .perform(
             addJsonContentType(
@@ -121,12 +119,10 @@ public class ControlledAzureResourceApiControllerAzureDatabaseTest
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
 
     when(getMockJobApiUtils()
-            .retrieveAsyncJobResult(any(), eq(ApiDeleteControlledAzureResourceResult.class)))
+            .retrieveAsyncJobResult(any(), eq(Void.class)))
         .thenReturn(
-            new JobApiUtils.AsyncJobResult<ApiDeleteControlledAzureResourceResult>()
+            new JobApiUtils.AsyncJobResult<Void>()
                 .jobReport(new ApiJobReport().status(ApiJobReport.StatusEnum.SUCCEEDED)));
-
-    setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
 
     mockMvc
         .perform(
