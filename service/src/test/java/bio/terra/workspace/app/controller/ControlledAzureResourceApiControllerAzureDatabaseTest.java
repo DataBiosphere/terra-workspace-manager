@@ -118,8 +118,7 @@ public class ControlledAzureResourceApiControllerAzureDatabaseTest
         new ApiDeleteControlledAzureResourceRequest()
             .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
 
-    when(getMockJobApiUtils()
-            .retrieveAsyncJobResult(any(), eq(Void.class)))
+    when(getMockJobApiUtils().retrieveAsyncJobResult(any(), eq(Void.class)))
         .thenReturn(
             new JobApiUtils.AsyncJobResult<Void>()
                 .jobReport(new ApiJobReport().status(ApiJobReport.StatusEnum.SUCCEEDED)));
