@@ -41,7 +41,7 @@ public class DeleteAzureBatchPoolStep extends DeleteAzureControlledResourceStep 
   }
 
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+  public StepResult deleteResource(FlightContext context) throws RetryException {
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()

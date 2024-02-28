@@ -25,7 +25,7 @@ public class DeleteAzureVmStep extends DeleteAzureControlledResourceStep {
   }
 
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException {
+  public StepResult deleteResource(FlightContext context) {
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()

@@ -27,7 +27,7 @@ public class RemoveManagedIdentitiesAzureVmStep extends DeleteAzureControlledRes
   }
 
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+  public StepResult deleteResource(FlightContext context) {
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()

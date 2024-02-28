@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNa
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -30,7 +31,7 @@ public class DeleteNamespaceRoleStep extends DeleteAzureControlledResourceStep {
   }
 
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException {
+  public StepResult deleteResource(FlightContext context) throws InterruptedException {
     logger.info("Deleting namespace role for namespace {}", resource.getKubernetesNamespace());
     azureDatabaseUtilsRunner.deleteNamespaceRole(
         context
