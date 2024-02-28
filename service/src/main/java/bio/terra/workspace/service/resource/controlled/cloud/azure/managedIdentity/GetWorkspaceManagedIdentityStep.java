@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
@@ -19,10 +18,11 @@ import java.util.UUID;
  * ALLOW_MISSING, the step will succeed. This helps in deletion scenarios when the managed identity
  * may have already been deleted out of band but consuming flights want to proceed.
  *
- * This implements the marker interface DeleteControlledResourceStep,
- * in order to indicate that it is also used when deleting the resource
+ * <p>This implements the marker interface DeleteControlledResourceStep, in order to indicate that
+ * it is also used when deleting the resource
  */
-public class GetWorkspaceManagedIdentityStep implements DeleteControlledResourceStep, GetManagedIdentityStep {
+public class GetWorkspaceManagedIdentityStep
+    implements DeleteControlledResourceStep, GetManagedIdentityStep {
   private final UUID workspaceId;
   private final String managedIdentityName;
   private final MissingIdentityBehavior missingIdentityBehavior;

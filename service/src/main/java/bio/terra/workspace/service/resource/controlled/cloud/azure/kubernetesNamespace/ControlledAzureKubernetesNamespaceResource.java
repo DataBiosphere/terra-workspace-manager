@@ -206,7 +206,8 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     }
   }
 
-  // DeleteControlledResourceStep is just a marker interface indicating the step is used in the delete process
+  // DeleteControlledResourceStep is just a marker interface indicating the step is used in the
+  // delete process
   // there's no reason it can't also be used when creating, until we need delete specific behavior
   @NotNull
   private DeleteControlledResourceStep getGetManagedIdentityStep(
