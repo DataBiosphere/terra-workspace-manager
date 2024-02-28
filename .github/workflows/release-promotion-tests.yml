@@ -140,25 +140,17 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Get Vault token
-        id: vault-token-step
-        env:
-          VAULT_ADDR: https://clotho.broadinstitute.org:8200
+      - id: setup-env-var-names
+        name: 'Setup env var names'
         run: |
-          VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-            -e "VAULT_ADDR=${VAULT_ADDR}" \
-            vault:1.1.0 \
-            vault write -field token \
-              auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-              secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-          echo ::add-mask::$VAULT_TOKEN    
-          echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
+          echo "USER_DELEGATED_SA_VAR=USER_DELEGATED_SA_${{ steps.set-env-step.outputs.test-env }}" >> ${GITHUB_OUTPUT}
+        shell: bash
 
-      - name: Write configuration
-        uses: ./.github/actions/write-config
+      - name: Write config
+        id: config
+        uses: ./.github/actions/write-credentials
         with:
-          target: ${{ steps.set-env-step.outputs.test-env }}
-          vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+          user-delegated-sa-b64: ${{ secrets[steps.setup-env-var-names.outputs.USER_DELEGATED_SA_VAR] }}
 
       - name: Run the integration test suite
         id: integration-test
@@ -168,31 +160,31 @@ jobs:
           test-server: ${{ steps.set-config-files-step.outputs.test-server }}
           test: ${{ steps.set-config-files-step.outputs.test }}
 
-      - name: "Notify QA Slack"
-        if: always() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
-        uses: broadinstitute/action-slack@v3.8.0
-        # see https://github.com/broadinstitute/action-slack
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        with:
-          status: ${{ job.status }}
-          channel: "#dsde-qa"
-          username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
-          author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} integrationTest"
-          fields: repo,job,workflow,commit,eventName,author,took
+#      - name: "Notify QA Slack"
+#        if: always() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
+#        uses: broadinstitute/action-slack@v3.8.0
+#        # see https://github.com/broadinstitute/action-slack
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#        with:
+#          status: ${{ job.status }}
+#          channel: "#dsde-qa"
+#          username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
+#          author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} integrationTest"
+#          fields: repo,job,workflow,commit,eventName,author,took
 
-      - name: "Notify Workspaces test failure Slack"
-        if: failure()
-        uses: broadinstitute/action-slack@v3.8.0
-        # see https://github.com/broadinstitute/action-slack
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        with:
-          status: ${{ job.status }}
-          channel: "#dsp-workspaces-test-alerts"
-          username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
-          author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} integrationTest"
-          fields: repo,job,workflow,commit,eventName,author,took
+#      - name: "Notify Workspaces test failure Slack"
+#        if: failure()
+#        uses: broadinstitute/action-slack@v3.8.0
+#        # see https://github.com/broadinstitute/action-slack
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#        with:
+#          status: ${{ job.status }}
+#          channel: "#dsp-workspaces-test-alerts"
+#          username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
+#          author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} integrationTest"
+#          fields: repo,job,workflow,commit,eventName,author,took
 
       - name: Archive WSM and TestRunner logs
         id: archive_logs
