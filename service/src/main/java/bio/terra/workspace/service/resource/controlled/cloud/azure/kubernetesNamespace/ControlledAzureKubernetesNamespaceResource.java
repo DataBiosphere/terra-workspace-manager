@@ -206,8 +206,10 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     }
   }
 
+  // DeleteControlledResourceStep is just a marker interface indicating the step is used in the delete process
+  // there's no reason it can't also be used when creating, until we need delete specific behavior
   @NotNull
-  private Step getGetManagedIdentityStep(
+  private DeleteControlledResourceStep getGetManagedIdentityStep(
       FlightBeanBag flightBeanBag, MissingIdentityBehavior missingIdentityBehavior) {
     return switch (getAccessScope()) {
       case ACCESS_SCOPE_SHARED ->
@@ -222,36 +224,6 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
 
       case ACCESS_SCOPE_PRIVATE ->
           new GetPetManagedIdentityStep(
-              flightBeanBag.getAzureConfig(),
-              flightBeanBag.getCrlService(),
-              flightBeanBag.getSamService(),
-              getAssignedUser().orElseThrow());
-    };
-  }
-
-  /**
-   * TODO: when implementing the
-   *
-   * @param flightBeanBag
-   * @param missingIdentityBehavior
-   * @return
-   */
-  @NotNull
-  private DeleteControlledResourceStep getGetManagedIdentityForDeleteStep(
-      FlightBeanBag flightBeanBag, MissingIdentityBehavior missingIdentityBehavior) {
-    return switch (getAccessScope()) {
-      case ACCESS_SCOPE_SHARED ->
-          new GetWorkspaceManagedIdentityForDeleteStep(
-              getWorkspaceId(),
-              getManagedIdentity(),
-              missingIdentityBehavior,
-              new ManagedIdentityHelper(
-                  flightBeanBag.getResourceDao(),
-                  flightBeanBag.getCrlService(),
-                  flightBeanBag.getAzureConfig()));
-
-      case ACCESS_SCOPE_PRIVATE ->
-          new GetPetManagedIdentityForDeleteStep(
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
               flightBeanBag.getSamService(),
@@ -308,7 +280,7 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
       FlightBeanBag flightBeanBag) {
     if (requiresFederatedCredentials()) {
       return List.of(
-          getGetManagedIdentityForDeleteStep(flightBeanBag, MissingIdentityBehavior.ALLOW_MISSING),
+          getGetManagedIdentityStep(flightBeanBag, MissingIdentityBehavior.ALLOW_MISSING),
           new DeleteFederatedCredentialStep(
               getKubernetesNamespace(),
               flightBeanBag.getAzureConfig(),
