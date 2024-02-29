@@ -46,19 +46,18 @@ public class DeleteAzureDiskStep extends DeleteAzureControlledResourceStep {
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
             resource.getDiskName());
-    try {
-      logger.info("Attempting to delete disk " + azureResourceId);
 
-      computeManager.disks().deleteById(azureResourceId);
-      return StepResult.getStepResultSuccess();
-    } catch (Exception ex) {
-      logger.info("Attempt to delete Azure disk failed on this try: " + azureResourceId, ex);
-      if (ex instanceof ManagementException e && isDiskAttachedToVmError(e)) {
-        // we don't need to retry in this case since disk could not be deleted
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
-      }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
+    computeManager.disks().deleteById(azureResourceId);
+    return StepResult.getStepResultSuccess();
+  }
+
+  @Override
+  protected StepResult handleResourceDeleteException(Exception e, FlightContext context) {
+    if (e instanceof ManagementException ex && isDiskAttachedToVmError(ex)) {
+      // we don't need to retry in this case since disk could not be deleted
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
     }
+    return super.handleResourceDeleteException(e, context);
   }
 
   @Override
