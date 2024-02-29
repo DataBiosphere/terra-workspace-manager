@@ -5,6 +5,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class MockAzureApi {
 
+  // Databases
+  public static final String CREATE_CONTROLLED_AZURE_DATABASE_PATH_FORMAT =
+      "/api/workspaces/v1/%s/resources/controlled/azure/databases";
+
+  public static final String CONTROLLED_AZURE_DATABASE_PATH_FORMAT =
+      CREATE_CONTROLLED_AZURE_DATABASE_PATH_FORMAT + "/%s";
+
   // Disks
   public static final String CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT =
       "/api/workspaces/v1/%s/resources/controlled/azure/disks";
