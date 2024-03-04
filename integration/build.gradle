@@ -48,7 +48,7 @@ dependencies {
     implementation "com.google.cloud:google-cloud-storage"
 
     // Data Repo client library
-    implementation "bio.terra:datarepo-jakarta-client:1.557.0-SNAPSHOT"
+    implementation "bio.terra:datarepo-client:2.13.0-SNAPSHOT"
     implementation gradle.librarySwaggerAnnotations
 
     // Workspace Manager client library
