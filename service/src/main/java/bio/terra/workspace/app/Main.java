@@ -26,8 +26,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
       "bio.terra.common.migrate",
       // Scan for db components and configs
       "bio.terra.common.db",
-      // Scan for flagsmith service
-      "bio.terra.common.flagsmith",
       // Scan for iam token handling
       "bio.terra.common.iam",
       // Transaction management and DB retry configuration
