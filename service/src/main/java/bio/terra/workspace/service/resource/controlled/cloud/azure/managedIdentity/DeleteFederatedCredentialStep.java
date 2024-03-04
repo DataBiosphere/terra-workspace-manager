@@ -2,17 +2,13 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdent
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.management.exception.ManagementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 
 public class DeleteFederatedCredentialStep extends DeleteAzureControlledResourceStep {
   private static final Logger logger = LoggerFactory.getLogger(DeleteFederatedCredentialStep.class);
@@ -47,23 +43,14 @@ public class DeleteFederatedCredentialStep extends DeleteAzureControlledResource
       return StepResult.getStepResultSuccess();
     }
 
-    try {
-      String uamiName = GetManagedIdentityStep.getManagedIdentityName(context);
-      msiManager
-          .identities()
-          .manager()
-          .serviceClient()
-          .getFederatedIdentityCredentials()
-          .delete(azureCloudContext.getAzureResourceGroupId(), uamiName, k8sNamespace);
-      return StepResult.getStepResultSuccess();
-    } catch (ManagementException e) {
-      if (AzureManagementExceptionUtils.getHttpStatus(e).stream()
-          .anyMatch(HttpStatus.NOT_FOUND::equals)) {
-        logger.info("Federated identity already gone");
-        return StepResult.getStepResultSuccess();
-      }
-      return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(e), e);
-    }
+    String uamiName = GetManagedIdentityStep.getManagedIdentityName(context);
+    msiManager
+        .identities()
+        .manager()
+        .serviceClient()
+        .getFederatedIdentityCredentials()
+        .delete(azureCloudContext.getAzureResourceGroupId(), uamiName, k8sNamespace);
+    return StepResult.getStepResultSuccess();
   }
 
   @Override

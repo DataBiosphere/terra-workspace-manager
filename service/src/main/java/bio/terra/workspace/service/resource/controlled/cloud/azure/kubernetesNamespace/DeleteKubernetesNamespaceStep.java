@@ -34,7 +34,8 @@ public class DeleteKubernetesNamespaceStep extends DeleteAzureControlledResource
   }
 
   @Override
-  public StepResult deleteResource(FlightContext context) throws InterruptedException, RetryException {
+  public StepResult deleteResource(FlightContext context)
+      throws InterruptedException, RetryException {
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()

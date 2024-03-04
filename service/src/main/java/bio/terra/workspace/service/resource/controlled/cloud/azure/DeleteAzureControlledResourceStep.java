@@ -35,28 +35,33 @@ public abstract class DeleteAzureControlledResourceStep implements DeleteControl
    */
   protected StepResult handleResourceDeleteException(Exception e, FlightContext context) {
 
-    // We had to have had access to create these in the first place
-    // so not being able to access them means they are gone or moved
     if (e instanceof ManagementException ex) {
-      // FIXME: ex.getValue can fail if the management exception does not have a management error
-      if (missingResourceManagementCodes.contains(ex.getValue().getCode())) {
-
-        return StepResult.getStepResultSuccess();
-      }
       if (AzureManagementExceptionUtils.getHttpStatus(ex).stream()
           .anyMatch(HttpStatus.NOT_FOUND::equals)) {
         return StepResult.getStepResultSuccess();
       }
-      // var statusCode = ex.getResponse().getStatusCode();
       // the 403 can happen if the resource is moved or the subscription is gone
-      // if (statusCode == 404 || statusCode == 403) {
-      // return StepResult.getStepResultSuccess();
-      // }
-      // return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
+      // We had to have had access to create these in the first place
+      // so not being able to access them means they are gone or moved
+      if (AzureManagementExceptionUtils.getHttpStatus(ex).stream()
+          .anyMatch(HttpStatus.FORBIDDEN::equals)) {
+        return StepResult.getStepResultSuccess();
+      }
+      // FIXME: ex.getValue can fail if the management exception does not have a management error
+      try {
+        if (missingResourceManagementCodes.contains(ex.getValue().getCode())) {
+          return StepResult.getStepResultSuccess();
+        }
+      } catch (RuntimeException r) {
+        // ex.getValue can fail if the management exception does not have a management error
+      }
+
+      // retry any other non-4xx errors
       return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(ex), ex);
     }
-    // TODO: should this be a fatal failure? (existing seems to me skewed towards
-    // STEP_RESULT_FAILURE_RETRY)
+    // TODO: should this be a fatal failure?
+    //    existing behavior seems to me skewed towards retry,
+    //    but it's probably a good time to consider a general strategy
     return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
   }
 }

@@ -71,7 +71,6 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
         new DeleteAzureStorageContainerStep(
             mockAzureConfig,
             mockCrlService,
-            mockResourceDao,
             mockLandingZoneApiDispatch,
             mockSamService,
             storageContainerResource,

@@ -61,6 +61,9 @@ public final class AzureVmHelper {
           .deleteByResourceGroup(azureCloudContext.getAzureResourceGroupId(), networkInterfaceName);
     } catch (ManagementException e) {
       // Stairway steps may run multiple times, so we may already have deleted this resource.
+      // For delete steps, this exception handling exists in DeleteAzureControlledResourceStep
+      // But this is also used in the undo part of CreateAzureNetworkInterfaceStep, so it's being
+      // left intact
       if (AzureManagementExceptionUtils.isExceptionCode(
           e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(

@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 @Tag("unit")
 public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTest {
@@ -42,29 +43,32 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
   @Mock WorkspaceService workspaceService;
   @Mock LandingZoneApiDispatch landingZoneApiDispatch;
   @Mock ControlledAzureDatabaseResource resource;
-  @Mock AzureCloudContext azureCloudContext;
   @Mock PostgreSqlManager postgresManager;
   @Mock Databases databases;
 
+  @Mock AzureCloudContext azureCloudContext;
   @Mock FlightMap workingMap;
   @Mock FlightContext context;
 
   @BeforeEach
   void localSetup() {
-    // since strict stubbing is enabled, we don't want to do much here,
-    // but it's probably safe to say all the tests will need the flight context to return the
-    // working map
-    when(context.getWorkingMap()).thenReturn(workingMap);
+    Mockito.lenient().when(context.getWorkingMap()).thenReturn(workingMap);
+    Mockito.lenient().when(postgresManager.databases()).thenReturn(databases);
+    Mockito.lenient()
+        .when(
+            workingMap.get(
+                WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+                AzureCloudContext.class))
+        .thenReturn(azureCloudContext);
+    Mockito.lenient()
+        .when(crlService.getPostgreSqlManager(azureCloudContext, azureConfig))
+        .thenReturn(postgresManager);
   }
 
   @Test
   void deletingDatabaseHappyPath() throws Exception {
     var resourceGroupId = "test-resource-group-id";
     when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
-    when(workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-            AzureCloudContext.class))
-        .thenReturn(azureCloudContext);
     var landingZoneId = UUID.randomUUID();
     var workspaceId = UUID.randomUUID();
     var workspace = mock(Workspace.class);
@@ -83,9 +87,6 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
     when(deployedDatabase.getResourceId())
         .thenReturn("id-prefix/%s".formatted(deployedDatabaseName));
 
-    when(crlService.getPostgreSqlManager(azureCloudContext, azureConfig))
-        .thenReturn(postgresManager);
-    when(postgresManager.databases()).thenReturn(databases);
     doNothing().when(databases).delete(resourceGroupId, deployedDatabaseName, resourceDBName);
 
     var step =
@@ -104,10 +105,6 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
   void noResourceFoundReturnsSuccess() throws Exception {
     var resourceGroupId = "test-resource-group-id";
     when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
-    when(workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-            AzureCloudContext.class))
-        .thenReturn(azureCloudContext);
     var landingZoneId = UUID.randomUUID();
     var workspaceId = UUID.randomUUID();
     var workspace = mock(Workspace.class);
@@ -125,10 +122,6 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
 
     when(deployedDatabase.getResourceId())
         .thenReturn("id-prefix/%s".formatted(deployedDatabaseName));
-
-    when(crlService.getPostgreSqlManager(azureCloudContext, azureConfig))
-        .thenReturn(postgresManager);
-    when(postgresManager.databases()).thenReturn(databases);
 
     var response = mock(HttpResponse.class);
     when(response.getStatusCode()).thenReturn(404);
@@ -156,10 +149,6 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
   void unknownExceptionRetries() throws Exception {
     var resourceGroupId = "test-resource-group-id";
     when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
-    when(workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-            AzureCloudContext.class))
-        .thenReturn(azureCloudContext);
     var landingZoneId = UUID.randomUUID();
     var workspaceId = UUID.randomUUID();
     var workspace = mock(Workspace.class);
@@ -177,10 +166,6 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
 
     when(deployedDatabase.getResourceId())
         .thenReturn("id-prefix/%s".formatted(deployedDatabaseName));
-
-    when(crlService.getPostgreSqlManager(azureCloudContext, azureConfig))
-        .thenReturn(postgresManager);
-    when(postgresManager.databases()).thenReturn(databases);
 
     var response = mock(HttpResponse.class);
     when(response.getStatusCode()).thenReturn(500);
@@ -208,10 +193,6 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
   void resourceMovedSubscriptionsReturnsSuccess() throws Exception {
     var resourceGroupId = "test-resource-group-id";
     when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
-    when(workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-            AzureCloudContext.class))
-        .thenReturn(azureCloudContext);
     var landingZoneId = UUID.randomUUID();
     var workspaceId = UUID.randomUUID();
     var workspace = mock(Workspace.class);
@@ -229,10 +210,6 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
 
     when(deployedDatabase.getResourceId())
         .thenReturn("id-prefix/%s".formatted(deployedDatabaseName));
-
-    when(crlService.getPostgreSqlManager(azureCloudContext, azureConfig))
-        .thenReturn(postgresManager);
-    when(postgresManager.databases()).thenReturn(databases);
 
     var response = mock(HttpResponse.class);
     when(response.getStatusCode()).thenReturn(401);
