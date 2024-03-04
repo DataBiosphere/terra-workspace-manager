@@ -39,7 +39,7 @@ dependencies {
     }
     implementation platform('com.google.cloud:libraries-bom:26.33.0')
     implementation "com.google.api-client:google-api-client:2.3.0"
-    implementation "com.google.apis:google-api-services-container:v1-rev20240206-2.0.0"
+    implementation "com.google.apis:google-api-services-container:v1-rev20240214-2.0.0"
     implementation "com.google.apis:google-api-services-iam:v1-rev20230914-2.0.0"
     implementation "com.google.apis:google-api-services-notebooks:v1-rev20231019-2.0.0"
     implementation "com.google.apis:google-api-services-dataproc:v1-rev20240209-2.0.0"
