@@ -1,14 +1,10 @@
-# This workflow will build a Java project with Gradle
+# This workflow will build a Java project with Gradle on promotion of WSM to the terra staging environment
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
 
 name: Release Promotion Tests
 
 on:
-  workflow_dispatch:
-    inputs:
-      testEnv:
-        description: 'Environment in which tests should be run. Currently runs on alpha and staging'
-        required: true
+  workflow_dispatch: {}
 
 jobs:
   release-promotion-tests:
@@ -32,7 +28,7 @@ jobs:
             echo ::error ::${{ github.event_name }} not supported for this workflow
             exit 1
           fi
-          echo test-env=$ENV >> $GITHUB_OUTPUT
+          echo test-env=staging >> $GITHUB_OUTPUT
 
       #
       #
@@ -65,7 +61,7 @@ jobs:
         run: |
           set -exo pipefail
           
-          ENV="${{ steps.set-env-step.outputs.test-env }}"
+          ENV="staging"
           SHERLOCK_URL="https://sherlock.dsp-devops.broadinstitute.org"
 
           OLD_TERRA_HELMFILE_DIR="integration/terra-helmfile"
@@ -106,19 +102,9 @@ jobs:
       - name: Set config files
         id: set-config-files-step
         run: |
-          if ${{ steps.set-env-step.outputs.test-env == 'dev' }}; then
-            TEST_SERVER=workspace-dev.json
-            TEST=suites/dev/FullIntegration.json
-          elif ${{ steps.set-env-step.outputs.test-env == 'alpha' }}; then
-            TEST_SERVER=workspace-alpha.json
-            TEST=suites/alpha/FullIntegration.json
-          elif ${{ steps.set-env-step.outputs.test-env == 'staging' }}; then
-            TEST_SERVER=workspace-staging.json
-            TEST=suites/staging/FullIntegration.json
-          else
-            echo ::error ::${{ steps.set-env-step.outputs.test-env }} environment not supported for this workflow
-            exit 1
-          fi
+          TEST_SERVER=workspace-staging.json
+          TEST=suites/staging/FullIntegration.json
+        
           echo test-server=$TEST_SERVER >> $GITHUB_OUTPUT
           echo test=$TEST >> $GITHUB_OUTPUT
 
@@ -140,17 +126,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - id: setup-env-var-names
-        name: 'Setup env var names'
-        run: |
-          echo "USER_DELEGATED_SA_VAR=USER_DELEGATED_SA_${{ steps.set-env-step.outputs.test-env }}" >> ${GITHUB_OUTPUT}
-        shell: bash
-
       - name: Write config
         id: config
         uses: ./.github/actions/write-credentials
         with:
-          user-delegated-sa-b64: ${{ secrets[steps.setup-env-var-names.outputs.USER_DELEGATED_SA_VAR] }}
+          user-delegated-sa-b64: ${{ secrets.USER_DELEGATED_SA_STAGING }}
 
       - name: Run the integration test suite
         id: integration-test
