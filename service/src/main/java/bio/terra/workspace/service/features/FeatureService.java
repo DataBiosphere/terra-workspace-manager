@@ -11,8 +11,6 @@ public class FeatureService {
   // list of features
   public static final String AWS_ENABLED = "vwb__aws_enabled";
   public static final String AWS_APPLICATIONS_ENABLED = "vwb__aws_applications_enabled";
-  public static final String WSM_STACKDRIVER_EXPORTER_ENABLED =
-      "terra__wsm_stackdriver_exporter_enabled";
   private final FlagsmithService flagsmithService;
 
   @Autowired
