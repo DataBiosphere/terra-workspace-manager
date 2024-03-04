@@ -89,14 +89,8 @@ public class DeleteAzureStorageContainerStep extends DeleteAzureControlledResour
                     landingZoneId)));
       }
     } catch (LandingZoneNotFoundException lzne) { // Thrown by landingZoneApiDispatch
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new LandingZoneNotFoundException(
-              String.format(
-                  "Landing zone associated with the Azure cloud context not found. TenantId='%s', SubscriptionId='%s', ResourceGroupId='%s'",
-                  azureCloudContext.getAzureTenantId(),
-                  azureCloudContext.getAzureSubscriptionId(),
-                  azureCloudContext.getAzureResourceGroupId())));
+      // If the landing zone is not present, it's probably because it was removed directly
+      return StepResult.getStepResultSuccess();
     }
   }
 
