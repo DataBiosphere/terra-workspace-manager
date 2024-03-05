@@ -546,8 +546,6 @@ components:
         Request body for cloning an entire workspace. Cloning instructions
         are taken from individual resources.
       type: object
-      required:
-        - spendProfile
       properties:
         destinationWorkspaceId:
           description: |

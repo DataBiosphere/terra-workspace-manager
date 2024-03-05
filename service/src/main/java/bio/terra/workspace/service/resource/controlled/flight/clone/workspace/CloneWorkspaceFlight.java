@@ -48,8 +48,7 @@ public class CloneWorkspaceFlight extends Flight {
             WorkspaceFlightMapKeys.ControlledResourceKeys.SOURCE_WORKSPACE_ID,
             UUID.class);
     var spendProfile =
-        FlightUtils.getRequired(
-            inputParameters, WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
+        inputParameters.get(WorkspaceFlightMapKeys.SPEND_PROFILE, SpendProfile.class);
 
     addStep(
         new CloneAllFoldersStep(flightBeanBag.getSamService(), flightBeanBag.getFolderDao()),
