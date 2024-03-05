@@ -45,16 +45,8 @@ public class DeleteAzureManagedIdentityStep extends DeleteAzureControlledResourc
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
             resource.getManagedIdentityName());
-    try {
-      logger.info("Attempting to delete managed identity " + azureResourceId);
-
       msiManager.identities().deleteById(azureResourceId);
       return StepResult.getStepResultSuccess();
-    } catch (Exception ex) {
-      logger.info(
-          "Attempt to delete Azure managed identity failed on this try: " + azureResourceId, ex);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
-    }
   }
 
   @Override

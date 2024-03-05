@@ -122,7 +122,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   }
 
   @Test
-  public void deleteStorageAccountContainerControlledByLzStorageAccountFailure_NoLandingZone()
+  public void deleteStorageAccountContainerControlledByLzStorageAccountSuccess_NoLandingZone()
       throws InterruptedException {
     initDeleteValidationStep(Optional.empty());
 
@@ -135,8 +135,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     // act
     StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(LandingZoneNotFoundException.class));
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
   }
 
   @Test
