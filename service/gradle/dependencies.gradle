@@ -42,24 +42,24 @@ dependencies {
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2"
 
   // OpenTelemetry utilities for various HTTP clients
-  var openTelemetryVersion = '1.32.0'
+  var openTelemetryVersion = '1.34.1'
+  var openTelemetryInstrumentationVersion = '2.0.0'
   implementation "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
   implementation "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}"
-  implementation "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
   implementation "io.opentelemetry:opentelemetry-sdk-metrics:${openTelemetryVersion}"
   implementation "io.opentelemetry:opentelemetry-exporter-logging:${openTelemetryVersion}"
-  implementation "io.opentelemetry.semconv:opentelemetry-semconv:1.21.0-alpha"
-  implementation "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0:${openTelemetryVersion}-alpha"
-  implementation "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:${openTelemetryVersion}"
-  implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot:${openTelemetryVersion}-alpha"
+  implementation "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0:${openTelemetryInstrumentationVersion}-alpha"
+  implementation "io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:${openTelemetryInstrumentationVersion}"
+  implementation "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:${openTelemetryInstrumentationVersion}"
+  implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot:${openTelemetryInstrumentationVersion}-alpha"
 
-  var gcpOpenTelemetryExporterVersion = '0.25.2'
+  // Google cloud open telemetry exporters
+  var gcpOpenTelemetryExporterVersion = '0.27.0'
   implementation "com.google.cloud.opentelemetry:exporter-trace:${gcpOpenTelemetryExporterVersion}"
   implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
 
-
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.1.9-SNAPSHOT")
+  implementation("bio.terra:terra-common-lib:1.0.9-SNAPSHOT")
   // sam is not semantically versioned so force the version here
   implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-73bc2d1"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
