@@ -194,7 +194,7 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
 
     when(mockKubernetesClientProvider.createCoreApiClient(
             any(AzureCloudContext.class), any(UUID.class)))
-        .thenReturn(mockCoreV1Api);
+        .thenReturn(Optional.of(mockCoreV1Api));
 
     when(mockCoreV1Api.createNamespacedPod(any(), podCaptor.capture(), any(), any(), any(), any()))
         .thenReturn(new V1Pod());

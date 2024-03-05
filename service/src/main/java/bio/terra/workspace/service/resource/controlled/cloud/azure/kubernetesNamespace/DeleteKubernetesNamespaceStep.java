@@ -43,16 +43,22 @@ public class DeleteKubernetesNamespaceStep extends DeleteAzureControlledResource
 
     var coreApiClient =
         kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
+    // If there is no coreApiClient, it's because LZS didn't return the appropriate resource
+    // this happens when the resource or landing zone is already gone
+    if (coreApiClient.isEmpty()) {
+      return StepResult.getStepResultSuccess();
+    }
 
     try {
       logger.info("Deleting namespace {}", resource.getKubernetesNamespace());
-      coreApiClient.deleteNamespace(
-          resource.getKubernetesNamespace(), null, null, null, null, null, null);
+      coreApiClient
+          .get()
+          .deleteNamespace(resource.getKubernetesNamespace(), null, null, null, null, null, null);
     } catch (ApiException e) {
       return kubernetesClientProvider.stepResultFromException(e, HttpStatus.NOT_FOUND);
     }
 
-    waitForDeletion(coreApiClient);
+    waitForDeletion(coreApiClient.get());
 
     return StepResult.getStepResultSuccess();
   }

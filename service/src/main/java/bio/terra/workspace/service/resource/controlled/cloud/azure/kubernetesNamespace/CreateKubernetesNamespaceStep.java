@@ -40,7 +40,10 @@ public class CreateKubernetesNamespaceStep implements Step {
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-    var clusterResource = kubernetesClientProvider.getClusterResource(workspaceId);
+    var clusterResource =
+        kubernetesClientProvider
+            .getClusterResource(workspaceId)
+            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
 
     // Record namespace for cleanup in Janitor
     crlService.recordAzureCleanup(
@@ -76,7 +79,9 @@ public class CreateKubernetesNamespaceStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
     var coreApiClient =
-        kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
+        kubernetesClientProvider
+            .createCoreApiClient(azureCloudContext, workspaceId)
+            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
 
     try {
       coreApiClient.deleteNamespace(

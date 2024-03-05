@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * There is another class with the same name in
- * bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer
- * This one is only used in cloning.
+ * bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer This one is only
+ * used in cloning.
  */
 public class DeleteAzureStorageContainerStep implements Step {
   private static final Logger logger =
