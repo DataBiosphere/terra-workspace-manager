@@ -3,12 +3,12 @@ package bio.terra.workspace.service.resource.controlled.cloud.gcp.ainotebook;
 import bio.terra.cloudres.google.notebooks.AIPlatformNotebooksCow;
 import bio.terra.cloudres.google.notebooks.InstanceName;
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.notebooks.v1.model.Operation;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A step for deleting a controlled AI Platform notebook instance. */
-public class DeleteAiNotebookInstanceStep implements Step {
+public class DeleteAiNotebookInstanceStep implements DeleteControlledResourceStep {
   private final Logger logger = LoggerFactory.getLogger(DeleteAiNotebookInstanceStep.class);
 
   private final ControlledAiNotebookInstanceResource resource;

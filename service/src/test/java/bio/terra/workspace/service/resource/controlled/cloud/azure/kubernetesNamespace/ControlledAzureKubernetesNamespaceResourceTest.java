@@ -4,15 +4,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 
+import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.generated.model.ApiAzureKubernetesNamespaceAttributes;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.DeleteFederatedCredentialStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.*;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.controlled.model.StepRetryRulePair;
@@ -190,7 +187,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
                 creationParameters, UUID.randomUUID())
             .build();
 
-    var steps = resource.getDeleteSteps(mockFlightBeanBag);
+    var steps = resource.getDeleteSteps(new FlightMap(), mockFlightBeanBag);
     assertThat(
         steps.stream().map(Object::getClass).toList(),
         equalTo(List.of(DeleteKubernetesNamespaceStep.class)));
@@ -210,7 +207,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
                 PrivateResourceState.ACTIVE)
             .build();
 
-    var steps = resource.getDeleteSteps(mockFlightBeanBag);
+    var steps = resource.getDeleteSteps(new FlightMap(), mockFlightBeanBag);
     assertThat(
         steps.stream().map(Object::getClass).toList(),
         equalTo(
@@ -230,7 +227,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
                 creationParameters, UUID.randomUUID())
             .build();
 
-    var steps = resource.getDeleteSteps(mockFlightBeanBag);
+    var steps = resource.getDeleteSteps(new FlightMap(), mockFlightBeanBag);
     assertThat(
         steps.stream().map(Object::getClass).toList(),
         equalTo(
@@ -250,7 +247,7 @@ public class ControlledAzureKubernetesNamespaceResourceTest extends BaseMockitoS
                 creationParameters, UUID.randomUUID())
             .build();
 
-    var steps = resource.getDeleteSteps(mockFlightBeanBag);
+    var steps = resource.getDeleteSteps(new FlightMap(), mockFlightBeanBag);
     assertThat(
         steps.stream().map(Object::getClass).toList(),
         equalTo(

@@ -1,11 +1,11 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  * A step for deleting a controlled Azure Disk resource. This step uses the following process to
  * actually delete the Azure Disk.
  */
-public class DeleteAzureDiskStep implements Step {
+public class DeleteAzureDiskStep extends DeleteAzureControlledResourceStep {
   private static final Logger logger = LoggerFactory.getLogger(DeleteAzureDiskStep.class);
   private static final String DISK_ATTACHED_TO_VM_PARTIAL_ERROR_MSG = "is attached to VM";
   private static final String DISK_COULD_NOT_BE_DELETED_ERROR_CODE = "OperationNotAllowed";

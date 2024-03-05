@@ -4,20 +4,20 @@ import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.AwsUtils;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.workspace.AwsCloudContextService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
 
-public class ValidateAwsSageMakerNotebookDeleteStep implements Step {
+public class ValidateAwsSageMakerNotebookDeleteStep implements DeleteControlledResourceStep {
   private static final Logger logger =
       LoggerFactory.getLogger(ValidateAwsSageMakerNotebookDeleteStep.class);
 

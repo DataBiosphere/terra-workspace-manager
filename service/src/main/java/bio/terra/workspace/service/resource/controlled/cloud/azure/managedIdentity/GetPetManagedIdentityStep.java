@@ -1,19 +1,25 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 
-/** Gets an Azure Managed Identity for a user's pet. */
-public class GetPetManagedIdentityStep implements Step, GetManagedIdentityStep {
+/**
+ * Gets an Azure Managed Identity for a user's pet.
+ *
+ * <p>This implements the marker interface DeleteControlledResourceStep, in order to indicate that
+ * it is also used when deleting the resource.
+ */
+public class GetPetManagedIdentityStep
+    implements DeleteControlledResourceStep, GetManagedIdentityStep {
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final SamService samService;

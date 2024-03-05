@@ -1,8 +1,8 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace;
 
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.AzureDatabaseUtilsRunner;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -10,7 +10,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteNamespaceRoleStep implements Step {
+public class DeleteNamespaceRoleStep extends DeleteAzureControlledResourceStep {
   private static final Logger logger = LoggerFactory.getLogger(DeleteNamespaceRoleStep.class);
   private final UUID workspaceId;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;

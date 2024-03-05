@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNa
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import bio.terra.stairway.Step;
 import bio.terra.workspace.common.utils.FlightBeanBag;
@@ -16,16 +17,10 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.CreateFederatedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.DeleteFederatedCredentialStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetWorkspaceManagedIdentityStep;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ManagedIdentityHelper;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.MissingIdentityBehavior;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.*;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.create.GetAzureCloudContextStep;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourcesFlight;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
@@ -39,10 +34,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 
@@ -214,8 +206,11 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     }
   }
 
+  // DeleteControlledResourceStep is just a marker interface indicating the step is used in the
+  // delete process
+  // there's no reason it can't also be used when creating, until we need delete specific behavior
   @NotNull
-  private Step getGetManagedIdentityStep(
+  private DeleteControlledResourceStep getGetManagedIdentityStep(
       FlightBeanBag flightBeanBag, MissingIdentityBehavior missingIdentityBehavior) {
     return switch (getAccessScope()) {
       case ACCESS_SCOPE_SHARED ->
@@ -242,14 +237,8 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
   }
 
   @Override
-  public void addDeleteSteps(DeleteControlledResourcesFlight flight, FlightBeanBag flightBeanBag) {
-    RetryRule cloudRetry = RetryRules.cloud();
-
-    getDeleteSteps(flightBeanBag).forEach(step -> flight.addStep(step, cloudRetry));
-  }
-
-  @VisibleForTesting
-  List<Step> getDeleteSteps(FlightBeanBag flightBeanBag) {
+  public List<DeleteControlledResourceStep> getDeleteSteps(
+      FlightMap inputParams, FlightBeanBag flightBeanBag) {
     /*
     Flight plan:
     > delete the kubernetes namespace and wait for it to be deleted
@@ -260,7 +249,7 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     if databases are provided:
     > delete namespace role
     */
-    final List<Step> deleteKubernetesNamespaceSteps =
+    final List<DeleteControlledResourceStep> deleteKubernetesNamespaceSteps =
         List.of(
             new DeleteKubernetesNamespaceStep(
                 getWorkspaceId(), flightBeanBag.getKubernetesClientProvider(), this));
@@ -273,7 +262,8 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
         .toList();
   }
 
-  private List<Step> getDatabaseAccessDeleteSteps(FlightBeanBag flightBeanBag) {
+  private List<DeleteControlledResourceStep> getDatabaseAccessDeleteSteps(
+      FlightBeanBag flightBeanBag) {
     if (requiresDatabases()) {
       return List.of(
           new DeleteNamespaceRoleStep(
@@ -287,7 +277,8 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
     return getDatabases() != null && !getDatabases().isEmpty();
   }
 
-  private List<Step> getFederatedCredentialsDeleteSteps(FlightBeanBag flightBeanBag) {
+  private List<DeleteControlledResourceStep> getFederatedCredentialsDeleteSteps(
+      FlightBeanBag flightBeanBag) {
     if (requiresFederatedCredentials()) {
       return List.of(
           getGetManagedIdentityStep(flightBeanBag, MissingIdentityBehavior.ALLOW_MISSING),

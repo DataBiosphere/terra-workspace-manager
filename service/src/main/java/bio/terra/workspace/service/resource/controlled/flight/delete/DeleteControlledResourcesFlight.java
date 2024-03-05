@@ -89,7 +89,9 @@ public class DeleteControlledResourcesFlight extends Flight {
 
     // Delete the cloud resource. This has unique logic for each resource type. Depending on the
     // specifics of the resource type, this step may require the flight to run asynchronously.
-    resource.addDeleteSteps(this, flightBeanBag);
+    resource
+        .getDeleteSteps(getInputParameters(), flightBeanBag)
+        .forEach(step -> addStep(step, cloudRetry));
 
     // Delete the Sam resource. That will make the object inaccessible.
     addStep(

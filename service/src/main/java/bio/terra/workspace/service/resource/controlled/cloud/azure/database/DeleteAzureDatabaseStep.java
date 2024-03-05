@@ -4,13 +4,13 @@ import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureU
 
 import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
-import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
  * A step for deleting a controlled Azure Database resource. This step uses the following process to
  * actually delete the Azure Database.
  */
-public class DeleteAzureDatabaseStep implements Step {
+public class DeleteAzureDatabaseStep extends DeleteAzureControlledResourceStep {
   private static final Logger logger = LoggerFactory.getLogger(DeleteAzureDatabaseStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
