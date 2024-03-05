@@ -369,11 +369,7 @@ public class WorkspaceApiControllerTest extends BaseSpringBootUnitTestMockDataRe
 
     ApiCloneWorkspaceResult cloneWorkspace =
         mockWorkspaceV1Api.cloneWorkspace(
-            USER_REQUEST,
-            sourceWorkspaceId,
-            DEFAULT_SPEND_PROFILE_NAME,
-            null,
-            destinationWorkspaceId);
+            USER_REQUEST, sourceWorkspaceId, null, null, destinationWorkspaceId);
 
     List<ApiResourceCloneDetails> cloneDetails = cloneWorkspace.getWorkspace().getResources();
     assertEquals(3, cloneDetails.size());
