@@ -17,7 +17,6 @@ import bio.terra.stairway.exception.FlightNotFoundException;
 import bio.terra.stairway.exception.StairwayException;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.model.SamConstants.SamWorkspaceAction;
 import bio.terra.workspace.service.job.exception.DuplicateJobIdException;
@@ -58,7 +57,6 @@ public class JobService {
   private static final int METADATA_ROW_WAIT_SECONDS = 1;
   private static final Duration METADATA_ROW_MAX_WAIT_TIME = Duration.ofSeconds(28);
 
-  private final MdcHook mdcHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
   private final Logger logger = LoggerFactory.getLogger(JobService.class);
@@ -67,11 +65,9 @@ public class JobService {
 
   @Autowired
   public JobService(
-      MdcHook mdcHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       OpenTelemetry openTelemetry) {
-    this.mdcHook = mdcHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
     this.openTelemetry = openTelemetry;
@@ -79,7 +75,7 @@ public class JobService {
 
   // Fully fluent style of JobBuilder
   public JobBuilder newJob() {
-    return new JobBuilder(this, stairwayComponent, mdcHook);
+    return new JobBuilder(this, stairwayComponent);
   }
 
   public OpenTelemetry getOpenTelemetry() {

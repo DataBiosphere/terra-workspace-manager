@@ -5,7 +5,7 @@ import javax.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
 /**
- * TODO: fully remove FeatureService.  AWS features are always disabled.
+ * TODO: fully remove FeatureService. AWS features are always disabled.
  * https://broadworkbench.atlassian.net/browse/WOR-1559
  */
 @Component
