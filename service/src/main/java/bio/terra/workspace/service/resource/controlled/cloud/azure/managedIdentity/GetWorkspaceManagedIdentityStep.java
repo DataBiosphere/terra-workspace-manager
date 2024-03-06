@@ -11,6 +11,7 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
 /**
  * Gets an Azure Managed Identity that exists in a workspace. Failure behavior is configured via the
@@ -47,30 +48,35 @@ public class GetWorkspaceManagedIdentityStep
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
-    var maybeManagedIdentityResource =
-        managedIdentityHelper.getManagedIdentityResource(workspaceId, managedIdentityName);
-    if (maybeManagedIdentityResource.isEmpty()
-        && missingIdentityBehavior == MissingIdentityBehavior.ALLOW_MISSING) {
-      return StepResult.getStepResultSuccess();
-    } else if (maybeManagedIdentityResource.isEmpty()) {
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new ResourceNotFoundException(
-              String.format(
-                  "Could not find managed identity %s in workspace %s",
-                  managedIdentityName, workspaceId)));
-    }
-
-    var managedIdentityResource = maybeManagedIdentityResource.get();
-    var uamiName = managedIdentityResource.getManagedIdentityName();
-
     try {
-      var uami = managedIdentityHelper.getIdentity(azureCloudContext, uamiName);
-      putManagedIdentityInContext(context, uami);
-
-      return StepResult.getStepResultSuccess();
+      var uami =
+          managedIdentityHelper.getManagedIdentity(
+              azureCloudContext, workspaceId, managedIdentityName);
+      if (uami.isPresent()) {
+        putManagedIdentityInContext(context, uami.get());
+        return StepResult.getStepResultSuccess();
+      } else if (missingIdentityBehavior == MissingIdentityBehavior.ALLOW_MISSING) {
+        return StepResult.getStepResultSuccess();
+      } else {
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL,
+            new ResourceNotFoundException(
+                String.format(
+                    "Could not find managed identity %s in workspace %s",
+                    managedIdentityName, workspaceId)));
+      }
     } catch (ManagementException e) {
-      return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(e), e);
+      var is4xxError =
+          AzureManagementExceptionUtils.getHttpStatus(e)
+              .map(HttpStatus::is4xxClientError)
+              .orElse(false);
+      if (is4xxError && missingIdentityBehavior == MissingIdentityBehavior.ALLOW_MISSING) {
+        return StepResult.getStepResultSuccess();
+      } else if (is4xxError) {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      } else {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      }
     }
   }
 

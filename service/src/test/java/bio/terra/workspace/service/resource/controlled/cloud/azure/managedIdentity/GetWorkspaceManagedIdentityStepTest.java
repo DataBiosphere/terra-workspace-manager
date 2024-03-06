@@ -16,6 +16,7 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.http.HttpResponse;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.msi.models.Identity;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -46,12 +47,9 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
     when(mockIdentity.name()).thenReturn(UUID.randomUUID().toString());
     when(mockIdentity.principalId()).thenReturn(UUID.randomUUID().toString());
     when(mockIdentity.clientId()).thenReturn(UUID.randomUUID().toString());
-    when(managedIdentityHelper.getManagedIdentityResource(workspaceId, identityResource.getName()))
-        .thenReturn(java.util.Optional.of(identityResource));
-    when(managedIdentityHelper.getIdentity(
-            mockAzureCloudContext, identityResource.getManagedIdentityName()))
-        .thenReturn(mockIdentity);
-
+    when(managedIdentityHelper.getManagedIdentity(
+            mockAzureCloudContext, workspaceId, identityResource.getName()))
+        .thenReturn(Optional.of(mockIdentity));
     var step =
         new GetWorkspaceManagedIdentityStep(
             workspaceId,
@@ -138,10 +136,8 @@ public class GetWorkspaceManagedIdentityStepTest extends BaseMockitoStrictStubbi
     createMockFlightContext();
 
     when(mockHttpResponse.getStatusCode()).thenReturn(httpStatus.value());
-    when(managedIdentityHelper.getManagedIdentityResource(workspaceId, identityResource.getName()))
-        .thenReturn(java.util.Optional.of(identityResource));
-    when(managedIdentityHelper.getIdentity(
-            mockAzureCloudContext, identityResource.getManagedIdentityName()))
+    when(managedIdentityHelper.getManagedIdentity(
+            mockAzureCloudContext, workspaceId, identityResource.getName()))
         .thenThrow(new ManagementException(httpStatus.name(), mockHttpResponse));
 
     var step =

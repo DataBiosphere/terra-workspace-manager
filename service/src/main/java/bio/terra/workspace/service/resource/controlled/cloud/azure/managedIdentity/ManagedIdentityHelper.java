@@ -22,6 +22,13 @@ public class ManagedIdentityHelper {
     this.azureConfiguration = azureConfiguration;
   }
 
+  public Optional<Identity> getManagedIdentity(
+      AzureCloudContext cloudContext, UUID workspaceId, String managedIdentityName) {
+    var resource = getManagedIdentityResource(workspaceId, managedIdentityName);
+    var uamiName = resource.map(r -> r.getManagedIdentityName());
+    return uamiName.map(name -> getIdentity(cloudContext, name));
+  }
+
   public Optional<ControlledAzureManagedIdentityResource> getManagedIdentityResource(
       UUID workspaceId, String managedIdentityName) {
     try {
