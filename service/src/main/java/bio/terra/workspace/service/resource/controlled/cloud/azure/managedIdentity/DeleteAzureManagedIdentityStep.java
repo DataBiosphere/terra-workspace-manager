@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdent
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
@@ -45,8 +44,8 @@ public class DeleteAzureManagedIdentityStep extends DeleteAzureControlledResourc
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
             resource.getManagedIdentityName());
-      msiManager.identities().deleteById(azureResourceId);
-      return StepResult.getStepResultSuccess();
+    msiManager.identities().deleteById(azureResourceId);
+    return StepResult.getStepResultSuccess();
   }
 
   @Override
