@@ -61,20 +61,23 @@ public class DeleteAzureDatabaseStep extends DeleteAzureControlledResourceStep {
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
     var databaseResource =
-        landingZoneApiDispatch
-            .getSharedDatabase(bearerToken, landingZoneId)
-            .orElseThrow(() -> new RuntimeException("No shared database found"));
+        landingZoneApiDispatch.getSharedDatabase(bearerToken, landingZoneId);
+
+    if (databaseResource.isEmpty()) {
+      return StepResult.getStepResultSuccess();
+    }
+
     logger.info(
         "Attempting to delete database {} in server {} of resource group {}",
         resource.getDatabaseName(),
-        getResourceName(databaseResource),
+        getResourceName(databaseResource.get()),
         azureCloudContext.getAzureResourceGroupId());
 
     postgresManager
         .databases()
         .delete(
             azureCloudContext.getAzureResourceGroupId(),
-            getResourceName(databaseResource),
+            getResourceName(databaseResource.get()),
             resource.getDatabaseName());
     return StepResult.getStepResultSuccess();
   }
