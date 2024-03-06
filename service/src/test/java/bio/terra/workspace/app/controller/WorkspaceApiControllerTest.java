@@ -336,6 +336,11 @@ public class WorkspaceApiControllerTest extends BaseSpringBootUnitTestMockDataRe
 
     when(mockTpsApiDispatch().linkPao(any(), any(), any()))
         .thenReturn(new TpsPaoUpdateResult().resultingPao(emptyWorkspacePao()).updateApplied(true));
+    when(mockTpsApiDispatch().mergePao(any(), any(), any()))
+        .thenReturn(new TpsPaoUpdateResult().resultingPao(emptyWorkspacePao()).updateApplied(true));
+    when(mockTpsApiDispatch()
+            .getOrCreatePao(any(), eq(TpsComponent.WSM), eq(TpsObjectType.WORKSPACE)))
+        .thenReturn(emptyWorkspacePao());
 
     // Create some data repo references
     ApiDataRepoSnapshotResource snap1 =
