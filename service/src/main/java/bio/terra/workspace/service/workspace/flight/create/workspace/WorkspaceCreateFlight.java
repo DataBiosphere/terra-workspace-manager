@@ -98,10 +98,23 @@ public class WorkspaceCreateFlight extends Flight {
                 projectOwnerGroupId),
             serviceRetryRule);
       }
-      case RAWLS_WORKSPACE ->
-          addStep(
-              new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
-              serviceRetryRule);
+      case RAWLS_WORKSPACE -> {
+        if (appContext.getFeatureConfiguration().isTpsEnabled()) {
+          if (cloningInstructions != CloningInstructions.COPY_NOTHING) {
+            addStep(
+                new MergePolicyAttributesStep(
+                    sourceWorkspaceUuid,
+                    workspace.workspaceId(),
+                    cloningInstructions,
+                    appContext.getTpsApiDispatch()),
+                serviceRetryRule);
+          }
+        }
+
+        addStep(
+            new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),
+            serviceRetryRule);
+      }
       default ->
           throw new InternalLogicException(
               "Unknown workspace stage during creation: " + workspace.getWorkspaceStage().name());
