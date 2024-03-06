@@ -4,14 +4,12 @@ import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
-import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -81,12 +79,7 @@ public class DeleteAzureStorageContainerStep extends DeleteAzureControlledResour
                 resource.getStorageContainerName());
         return StepResult.getStepResultSuccess();
       } else {
-        return new StepResult(
-            StepStatus.STEP_RESULT_FAILURE_FATAL,
-            new ResourceNotFoundException(
-                String.format(
-                    "Shared storage account not found in landing zone. Landing zone ID='%s'.",
-                    landingZoneId)));
+        return StepResult.getStepResultSuccess(); // storage account is gone, so no container to delete
       }
     } catch (LandingZoneNotFoundException lzne) { // Thrown by landingZoneApiDispatch
       // If the landing zone is not present, it's probably because it was removed directly

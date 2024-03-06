@@ -140,7 +140,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
 
   @Test
   public void
-      deleteStorageAccountContainerControlledByLzStorageAccountFailure_NoSharedStorageAccount()
+      deleteStorageAccountContainerControlledByLzStorageAccountSuccess_NoSharedStorageAccount()
           throws InterruptedException {
     UUID landingZoneId = UUID.randomUUID();
     initDeleteValidationStep(Optional.empty());
@@ -154,7 +154,6 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     // act
     StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
   }
 }
