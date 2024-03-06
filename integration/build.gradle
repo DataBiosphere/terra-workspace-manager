@@ -15,7 +15,7 @@ dependencies {
         jackson = "2.16.1"
         jersey = "3.1.5"
         kubernetesClient = "20.0.0-legacy"
-        logback = "1.5.0"
+        logback = "1.5.2"
         slf4j = "2.0.12"
         hamcrest = "2.2"
         jUnit = "5.10.2"
