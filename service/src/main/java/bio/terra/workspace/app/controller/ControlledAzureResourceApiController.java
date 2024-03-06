@@ -156,10 +156,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
                 userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DISK);
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
-    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
 
     ControlledAzureDiskResource resource =
         buildControlledAzureDiskResource(body.getAzureDisk(), commonFields);
@@ -561,13 +560,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final JobApiUtils.AsyncJobResult<ControlledAzureDiskResource> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureDiskResource.class);
 
-    ControlledAzureDiskResource resource = null;
-    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
-      resource = jobResult.getResult();
-    }
-
     return new ApiCreateControlledAzureResourceResult()
-        .resourceId(resource.getResourceId())
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());
   }
