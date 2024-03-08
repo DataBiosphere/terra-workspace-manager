@@ -42,7 +42,7 @@ public class DeleteNamespaceRoleStep extends DeleteAzureControlledResourceStep {
           resource.getKubernetesServiceAccount());
     } catch (IllegalStateException e) {
       // no shared database means no role to delete
-      if(e.getMessage().contains("No shared database found")) {
+      if (e.getMessage().contains("No shared database found")) {
         return StepResult.getStepResultSuccess();
       }
     }

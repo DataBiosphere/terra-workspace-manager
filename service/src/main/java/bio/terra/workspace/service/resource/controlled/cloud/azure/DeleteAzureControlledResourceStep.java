@@ -36,18 +36,18 @@ public abstract class DeleteAzureControlledResourceStep implements DeleteControl
   protected StepResult handleResourceDeleteException(Exception e, FlightContext context) {
 
     if (e instanceof ManagementException ex) {
-      if (AzureManagementExceptionUtils.getHttpStatus(ex).stream()
-          .anyMatch(HttpStatus.NOT_FOUND::equals)) {
-        return StepResult.getStepResultSuccess();
-      }
       // the 403 can happen if the resource is moved or the subscription is gone
       // We had to have had access to create these in the first place
-      // so not being able to access them means they are gone or moved
+      // so not being able to access them means they are gone or moved,
+      // or something else has happened out of band that is out of the realm of what we can
+      // realistically support
       if (AzureManagementExceptionUtils.getHttpStatus(ex).stream()
-          .anyMatch(HttpStatus.FORBIDDEN::equals)) {
+          .anyMatch(
+              status ->
+                  HttpStatus.NOT_FOUND.equals(status) || HttpStatus.FORBIDDEN.equals(status))) {
         return StepResult.getStepResultSuccess();
       }
-      // FIXME: ex.getValue can fail if the management exception does not have a management error
+
       try {
         if (missingResourceManagementCodes.contains(ex.getValue().getCode())) {
           return StepResult.getStepResultSuccess();
@@ -59,9 +59,6 @@ public abstract class DeleteAzureControlledResourceStep implements DeleteControl
       // retry any other non-4xx errors
       return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(ex), ex);
     }
-    // TODO: should this be a fatal failure?
-    //    existing behavior seems to me skewed towards retry,
-    //    but it's probably a good time to consider a general strategy
     return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
   }
 }

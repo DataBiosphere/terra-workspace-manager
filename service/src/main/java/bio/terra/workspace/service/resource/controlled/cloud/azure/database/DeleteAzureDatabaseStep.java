@@ -60,8 +60,7 @@ public class DeleteAzureDatabaseStep extends DeleteAzureControlledResourceStep {
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
-    var databaseResource =
-        landingZoneApiDispatch.getSharedDatabase(bearerToken, landingZoneId);
+    var databaseResource = landingZoneApiDispatch.getSharedDatabase(bearerToken, landingZoneId);
 
     if (databaseResource.isEmpty()) {
       return StepResult.getStepResultSuccess();

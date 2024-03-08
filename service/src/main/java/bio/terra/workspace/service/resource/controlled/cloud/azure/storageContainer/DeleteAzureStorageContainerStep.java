@@ -79,7 +79,8 @@ public class DeleteAzureStorageContainerStep extends DeleteAzureControlledResour
                 resource.getStorageContainerName());
         return StepResult.getStepResultSuccess();
       } else {
-        return StepResult.getStepResultSuccess(); // storage account is gone, so no container to delete
+        return StepResult
+            .getStepResultSuccess(); // storage account is gone, so no container to delete
       }
     } catch (LandingZoneNotFoundException lzne) { // Thrown by landingZoneApiDispatch
       // If the landing zone is not present, it's probably because it was removed directly
