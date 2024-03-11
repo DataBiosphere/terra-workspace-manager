@@ -548,11 +548,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final JobApiUtils.AsyncJobResult<ControlledAzureDiskResource> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureDiskResource.class);
 
-    ControlledAzureDiskResource resource = null;
-    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
-      resource = jobResult.getResult();
-    }
-
     return new ApiCreateControlledAzureResourceResult()
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());
