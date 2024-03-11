@@ -88,7 +88,7 @@ public class ControlledAzureResourceApiControllerAzureDatabaseTest
                 commonFields,
                 Region.US_SOUTH_CENTRAL.name(),
                 USER_REQUEST,
-                WsmResourceType.CONTROLLED_AZURE_VM));
+                WsmResourceType.CONTROLLED_AZURE_DATABASE));
 
     when(getMockJobApiUtils()
             .retrieveAsyncJobResult(any(), eq(ControlledAzureDatabaseResource.class)))
