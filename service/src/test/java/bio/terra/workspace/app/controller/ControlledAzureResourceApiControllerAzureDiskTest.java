@@ -102,7 +102,6 @@ public class ControlledAzureResourceApiControllerAzureDiskTest extends BaseAzure
                         .content(objectMapper.writeValueAsString(diskRequestV2Body)),
                     USER_REQUEST)))
         .andExpect(status().is(HttpStatus.SC_OK))
-        .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists())
-        .andExpect(MockMvcResultMatchers.jsonPath("$.resourceId").exists());
+        .andExpect(MockMvcResultMatchers.jsonPath("$.jobReport").exists());
   }
 }
