@@ -554,7 +554,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     }
 
     return new ApiCreateControlledAzureResourceResult()
-        .resourceId(resource.getResourceId())
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());
   }
