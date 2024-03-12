@@ -62,12 +62,9 @@ public abstract class DeleteAzureControlledResourceStep implements DeleteControl
         return StepResult.getStepResultSuccess();
       }
 
-      try {
-        if (missingResourceManagementCodes.contains(ex.getValue().getCode())) {
-          return StepResult.getStepResultSuccess();
-        }
-      } catch (RuntimeException r) {
-        // ex.getValue can fail if the management exception does not have a management error
+      if (ex.getValue() != null
+          && missingResourceManagementCodes.contains(ex.getValue().getCode())) {
+        return StepResult.getStepResultSuccess();
       }
 
       // retry any other non-4xx errors

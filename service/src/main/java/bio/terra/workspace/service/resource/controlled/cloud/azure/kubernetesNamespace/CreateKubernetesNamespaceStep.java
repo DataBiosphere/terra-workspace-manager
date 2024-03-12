@@ -7,6 +7,7 @@ import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -14,6 +15,7 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import java.util.MissingResourceException;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 
@@ -43,7 +45,12 @@ public class CreateKubernetesNamespaceStep implements Step {
     var clusterResource =
         kubernetesClientProvider
             .getClusterResource(workspaceId)
-            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
+            .orElseThrow(
+                () ->
+                    new MissingResourceException(
+                        "No shared cluster found for workspace",
+                        ApiAzureLandingZoneDeployedResource.class.getSimpleName(),
+                        workspaceId.toString()));
 
     // Record namespace for cleanup in Janitor
     crlService.recordAzureCleanup(
@@ -81,7 +88,12 @@ public class CreateKubernetesNamespaceStep implements Step {
     var coreApiClient =
         kubernetesClientProvider
             .createCoreApiClient(azureCloudContext, workspaceId)
-            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
+            .orElseThrow(
+                () ->
+                    new MissingResourceException(
+                        "No shared cluster found for workspace",
+                        ApiAzureLandingZoneDeployedResource.class.getSimpleName(),
+                        workspaceId.toString()));
 
     try {
       coreApiClient.deleteNamespace(
