@@ -1,5 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.vm;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
@@ -26,11 +31,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.verify;
-
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
 public class CreateAzureNetworkInterfaceStepUnitTest {
@@ -44,12 +44,8 @@ public class CreateAzureNetworkInterfaceStepUnitTest {
   @Mock LandingZoneApiDispatch landingZoneApiDispatch;
   @Mock NetworkManager networkManager;
 
-
-
   @BeforeEach
-  void setup() {
-
-  }
+  void setup() {}
 
   @Test
   void undo_HappyPath() throws Exception {
@@ -57,11 +53,13 @@ public class CreateAzureNetworkInterfaceStepUnitTest {
     var resourceGroupId = "test-resource-group-id";
     when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
     FlightMap workingMap = mock();
-    when(workingMap.get(WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-        AzureCloudContext.class)).thenReturn(azureCloudContext);
+    when(workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+            AzureCloudContext.class))
+        .thenReturn(azureCloudContext);
     var resourceName = "test-vm-name";
-    //when(resource.getVmName()).thenReturn(resourceName);
-    var networkInterfaceName =  String.format("nic-%s", resourceName);
+    // when(resource.getVmName()).thenReturn(resourceName);
+    var networkInterfaceName = String.format("nic-%s", resourceName);
     when(workingMap.get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class))
         .thenReturn(networkInterfaceName);
 
@@ -69,26 +67,29 @@ public class CreateAzureNetworkInterfaceStepUnitTest {
 
     when(context.getWorkingMap()).thenReturn(workingMap);
     ComputeManager computeManager = mock();
-    when(crlService.getComputeManager(azureCloudContext, azureConfiguration)).thenReturn(computeManager);
+    when(crlService.getComputeManager(azureCloudContext, azureConfiguration))
+        .thenReturn(computeManager);
     when(computeManager.networkManager()).thenReturn(networkManager);
     NetworkInterfaces networkInterfaces = mock();
     when(networkManager.networkInterfaces()).thenReturn(networkInterfaces);
 
-    doNothing().when(networkInterfaces).deleteByResourceGroup(resourceGroupId, networkInterfaceName);
+    doNothing()
+        .when(networkInterfaces)
+        .deleteByResourceGroup(resourceGroupId, networkInterfaceName);
 
-    var step = new CreateAzureNetworkInterfaceStep(
-        azureConfiguration,
-        crlService,
-        resource,
-        resourceDao,
-        landingZoneApiDispatch,
-        samService,
-        mockWorkspaceService);
+    var step =
+        new CreateAzureNetworkInterfaceStep(
+            azureConfiguration,
+            crlService,
+            resource,
+            resourceDao,
+            landingZoneApiDispatch,
+            samService,
+            mockWorkspaceService);
     assertThat(step.undoStep(context), equalTo(StepResult.getStepResultSuccess()));
 
     verify(networkInterfaces).deleteByResourceGroup(resourceGroupId, networkInterfaceName);
   }
-
 
   @Test
   void undo_SucceedsWhenResourceNotFound() throws Exception {
@@ -96,11 +97,13 @@ public class CreateAzureNetworkInterfaceStepUnitTest {
     var resourceGroupId = "test-resource-group-id";
     when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
     FlightMap workingMap = mock();
-    when(workingMap.get(WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-        AzureCloudContext.class)).thenReturn(azureCloudContext);
+    when(workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+            AzureCloudContext.class))
+        .thenReturn(azureCloudContext);
     var resourceName = "test-vm-name";
-    //when(resource.getVmName()).thenReturn(resourceName);
-    var networkInterfaceName =  String.format("nic-%s", resourceName);
+    // when(resource.getVmName()).thenReturn(resourceName);
+    var networkInterfaceName = String.format("nic-%s", resourceName);
     when(workingMap.get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class))
         .thenReturn(networkInterfaceName);
 
@@ -108,7 +111,8 @@ public class CreateAzureNetworkInterfaceStepUnitTest {
 
     when(context.getWorkingMap()).thenReturn(workingMap);
     ComputeManager computeManager = mock();
-    when(crlService.getComputeManager(azureCloudContext, azureConfiguration)).thenReturn(computeManager);
+    when(crlService.getComputeManager(azureCloudContext, azureConfiguration))
+        .thenReturn(computeManager);
     when(computeManager.networkManager()).thenReturn(networkManager);
     NetworkInterfaces networkInterfaces = mock();
     when(networkManager.networkInterfaces()).thenReturn(networkInterfaces);
@@ -118,21 +122,23 @@ public class CreateAzureNetworkInterfaceStepUnitTest {
     var exception =
         new ManagementException(AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, response, error);
 
-    doThrow(exception).when(networkInterfaces).deleteByResourceGroup(resourceGroupId, networkInterfaceName);
+    doThrow(exception)
+        .when(networkInterfaces)
+        .deleteByResourceGroup(resourceGroupId, networkInterfaceName);
 
-    var step = new CreateAzureNetworkInterfaceStep(
-        azureConfiguration,
-        crlService,
-        resource,
-        resourceDao,
-        landingZoneApiDispatch,
-        samService,
-        mockWorkspaceService);
+    var step =
+        new CreateAzureNetworkInterfaceStep(
+            azureConfiguration,
+            crlService,
+            resource,
+            resourceDao,
+            landingZoneApiDispatch,
+            samService,
+            mockWorkspaceService);
     assertThat(step.undoStep(context), equalTo(StepResult.getStepResultSuccess()));
 
     verify(networkInterfaces).deleteByResourceGroup(resourceGroupId, networkInterfaceName);
   }
-
 
   @Test
   void undo_RetriesWhenNetworkIsReserved() throws Exception {
@@ -140,11 +146,13 @@ public class CreateAzureNetworkInterfaceStepUnitTest {
     var resourceGroupId = "test-resource-group-id";
     when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
     FlightMap workingMap = mock();
-    when(workingMap.get(WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-        AzureCloudContext.class)).thenReturn(azureCloudContext);
+    when(workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+            AzureCloudContext.class))
+        .thenReturn(azureCloudContext);
     var resourceName = "test-vm-name";
-    //when(resource.getVmName()).thenReturn(resourceName);
-    var networkInterfaceName =  String.format("nic-%s", resourceName);
+    // when(resource.getVmName()).thenReturn(resourceName);
+    var networkInterfaceName = String.format("nic-%s", resourceName);
     when(workingMap.get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class))
         .thenReturn(networkInterfaceName);
 
@@ -152,31 +160,35 @@ public class CreateAzureNetworkInterfaceStepUnitTest {
 
     when(context.getWorkingMap()).thenReturn(workingMap);
     ComputeManager computeManager = mock();
-    when(crlService.getComputeManager(azureCloudContext, azureConfiguration)).thenReturn(computeManager);
+    when(crlService.getComputeManager(azureCloudContext, azureConfiguration))
+        .thenReturn(computeManager);
     when(computeManager.networkManager()).thenReturn(networkManager);
     NetworkInterfaces networkInterfaces = mock();
     when(networkManager.networkInterfaces()).thenReturn(networkInterfaces);
 
     var response = mock(HttpResponse.class);
-    var error = new ManagementError(AzureManagementExceptionUtils.NIC_RESERVED_FOR_ANOTHER_VM, "NotFound");
+    var error =
+        new ManagementError(AzureManagementExceptionUtils.NIC_RESERVED_FOR_ANOTHER_VM, "NotFound");
     var exception =
-        new ManagementException(AzureManagementExceptionUtils.NIC_RESERVED_FOR_ANOTHER_VM, response, error);
+        new ManagementException(
+            AzureManagementExceptionUtils.NIC_RESERVED_FOR_ANOTHER_VM, response, error);
 
-    doThrow(exception).when(networkInterfaces).deleteByResourceGroup(resourceGroupId, networkInterfaceName);
+    doThrow(exception)
+        .when(networkInterfaces)
+        .deleteByResourceGroup(resourceGroupId, networkInterfaceName);
 
-
-
-    var step = new CreateAzureNetworkInterfaceStep(
-        azureConfiguration,
-        crlService,
-        resource,
-        resourceDao,
-        landingZoneApiDispatch,
-        samService,
-        mockWorkspaceService);
-    assertThat(step.undoStep(context).getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_RETRY));
+    var step =
+        new CreateAzureNetworkInterfaceStep(
+            azureConfiguration,
+            crlService,
+            resource,
+            resourceDao,
+            landingZoneApiDispatch,
+            samService,
+            mockWorkspaceService);
+    assertThat(
+        step.undoStep(context).getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_RETRY));
 
     verify(networkInterfaces).deleteByResourceGroup(resourceGroupId, networkInterfaceName);
-
   }
 }
