@@ -12,7 +12,6 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
-import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
@@ -28,14 +27,15 @@ import com.azure.resourcemanager.postgresqlflexibleserver.models.Databases;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @Tag("unit")
-public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTest {
+@ExtendWith(MockitoExtension.class)
+public class DeleteAzureDatabaseStepUnitTest {
 
   @Mock AzureConfiguration azureConfig;
   @Mock CrlService crlService;
@@ -51,17 +51,14 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
   @Mock FlightContext context;
 
   @BeforeEach
-  void localSetup() {
-    Mockito.lenient().when(context.getWorkingMap()).thenReturn(workingMap);
-    Mockito.lenient().when(postgresManager.databases()).thenReturn(databases);
-    Mockito.lenient()
-        .when(
-            workingMap.get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-                AzureCloudContext.class))
+  void setup() {
+    when(context.getWorkingMap()).thenReturn(workingMap);
+    when(postgresManager.databases()).thenReturn(databases);
+    when(workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+            AzureCloudContext.class))
         .thenReturn(azureCloudContext);
-    Mockito.lenient()
-        .when(crlService.getPostgreSqlManager(azureCloudContext, azureConfig))
+    when(crlService.getPostgreSqlManager(azureCloudContext, azureConfig))
         .thenReturn(postgresManager);
   }
 
@@ -188,7 +185,6 @@ public class DeleteAzureDatabaseStepUnitTest extends BaseMockitoStrictStubbingTe
     assertThat(step.doStep(context).getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_RETRY));
   }
 
-  @Disabled
   @Test
   void resourceMovedSubscriptionsReturnsSuccess() throws Exception {
     var resourceGroupId = "test-resource-group-id";

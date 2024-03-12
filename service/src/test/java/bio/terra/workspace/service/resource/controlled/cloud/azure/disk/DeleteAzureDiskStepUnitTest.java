@@ -11,7 +11,6 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
-import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -23,10 +22,13 @@ import com.azure.resourcemanager.compute.models.Disks;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @Tag("unit")
-public class DeleteAzureDiskStepUnitTest extends BaseMockitoStrictStubbingTest {
+@ExtendWith(MockitoExtension.class)
+public class DeleteAzureDiskStepUnitTest {
 
   @Mock AzureConfiguration azureConfig;
   @Mock CrlService crlService;
@@ -38,28 +40,29 @@ public class DeleteAzureDiskStepUnitTest extends BaseMockitoStrictStubbingTest {
   @Mock FlightMap workingMap;
   @Mock FlightContext context;
 
-  @BeforeEach
-  void localSetup() {
-    // since strict stubbing is enabled, we don't want to do much here,
-    // but it's probably safe to say all the tests will need the flight context to return the
-    // working map
-    when(context.getWorkingMap()).thenReturn(workingMap);
-  }
+  static final String diskName = "disk-name";
+  static final String subscriptionId = "test-sub-id";
+  static final String resourceGroupId = "test-resource-group-id";
 
-  // this test doesn't necessarily have a lot of value in itself,
-  // but it helps ensure we've set up our mocks correctly for other tests
-  @Test
-  void deletingAzureDiskHappyPath() throws Exception {
-    when(resource.getDiskName()).thenReturn("disk-name");
-    when(azureCloudContext.getAzureSubscriptionId()).thenReturn("test-sub-id");
-    when(azureCloudContext.getAzureResourceGroupId()).thenReturn("test-resource-group-id");
+  @BeforeEach
+  void setup() {
+    when(context.getWorkingMap()).thenReturn(workingMap);
+
+    when(resource.getDiskName()).thenReturn(diskName);
+    when(azureCloudContext.getAzureSubscriptionId()).thenReturn(subscriptionId);
+    when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
     when(workingMap.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
             AzureCloudContext.class))
         .thenReturn(azureCloudContext);
     when(computeManager.disks()).thenReturn(disks);
     when(crlService.getComputeManager(azureCloudContext, azureConfig)).thenReturn(computeManager);
+  }
 
+  // this test doesn't necessarily have a lot of value in itself,
+  // but it helps ensure we've set up our mocks correctly for other tests
+  @Test
+  void deletingAzureDiskHappyPath() throws Exception {
     var step = new DeleteAzureDiskStep(azureConfig, crlService, resource);
 
     assertThat(step.doStep(context), equalTo(StepResult.getStepResultSuccess()));
@@ -68,16 +71,6 @@ public class DeleteAzureDiskStepUnitTest extends BaseMockitoStrictStubbingTest {
 
   @Test
   void noResourceFoundReturnsSuccess() throws Exception {
-    when(resource.getDiskName()).thenReturn("disk-name");
-    when(azureCloudContext.getAzureSubscriptionId()).thenReturn("test-sub-id");
-    when(azureCloudContext.getAzureResourceGroupId()).thenReturn("test-resource-group-id");
-    when(workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-            AzureCloudContext.class))
-        .thenReturn(azureCloudContext);
-    when(computeManager.disks()).thenReturn(disks);
-    when(crlService.getComputeManager(azureCloudContext, azureConfig)).thenReturn(computeManager);
-
     var response = mock(HttpResponse.class);
     when(response.getStatusCode()).thenReturn(404);
     var error = new ManagementError("NotFound", AzureManagementExceptionUtils.RESOURCE_NOT_FOUND);
@@ -92,16 +85,6 @@ public class DeleteAzureDiskStepUnitTest extends BaseMockitoStrictStubbingTest {
 
   @Test
   void diskAttachedToVMFails() throws Exception {
-    when(resource.getDiskName()).thenReturn("disk-name");
-    when(azureCloudContext.getAzureSubscriptionId()).thenReturn("test-sub-id");
-    when(azureCloudContext.getAzureResourceGroupId()).thenReturn("test-resource-group-id");
-    when(workingMap.get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-            AzureCloudContext.class))
-        .thenReturn(azureCloudContext);
-    when(computeManager.disks()).thenReturn(disks);
-    when(crlService.getComputeManager(azureCloudContext, azureConfig)).thenReturn(computeManager);
-
     var response = mock(HttpResponse.class);
     var error = new ManagementError("OperationNotAllowed", "Disk is attached to VM");
     var exception =

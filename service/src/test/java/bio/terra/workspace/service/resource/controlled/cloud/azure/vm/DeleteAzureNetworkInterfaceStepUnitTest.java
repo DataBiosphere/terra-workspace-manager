@@ -9,7 +9,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
-import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -22,11 +21,13 @@ import com.azure.resourcemanager.network.models.NetworkInterfaces;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @Tag("unit")
-public class DeleteAzureNetworkInterfaceStepUnitTest extends BaseMockitoStrictStubbingTest {
+@ExtendWith(MockitoExtension.class)
+public class DeleteAzureNetworkInterfaceStepUnitTest {
 
   @Mock private AzureConfiguration azureConfiguration;
   @Mock private CrlService crlService;
@@ -43,18 +44,15 @@ public class DeleteAzureNetworkInterfaceStepUnitTest extends BaseMockitoStrictSt
 
   @BeforeEach
   void localSetup() {
-    Mockito.lenient().when(context.getWorkingMap()).thenReturn(workingMap);
-    Mockito.lenient()
-        .when(
-            workingMap.get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-                AzureCloudContext.class))
+    when(context.getWorkingMap()).thenReturn(workingMap);
+    when(workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+            AzureCloudContext.class))
         .thenReturn(azureCloudContext);
-    Mockito.lenient()
-        .when(crlService.getComputeManager(azureCloudContext, azureConfiguration))
+    when(crlService.getComputeManager(azureCloudContext, azureConfiguration))
         .thenReturn(computeManager);
-    Mockito.lenient().when(computeManager.networkManager()).thenReturn(networkManager);
-    Mockito.lenient().when(networkManager.networkInterfaces()).thenReturn(networkInterfaces);
+    when(computeManager.networkManager()).thenReturn(networkManager);
+    when(networkManager.networkInterfaces()).thenReturn(networkInterfaces);
   }
 
   @Test
