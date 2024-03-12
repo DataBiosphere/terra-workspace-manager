@@ -10,12 +10,17 @@ import java.util.Arrays;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 
+/**
+ * Common base class for deleting Azure resources.
+ * Wraps the Azure resource deletion logic with handling for common exceptions.
+ */
 public abstract class DeleteAzureControlledResourceStep implements DeleteControlledResourceStep {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
     try {
       return deleteResource(context);
+    // explicitly exclude InterruptedException from the handling below
     } catch (InterruptedException e) {
       throw e;
     } catch (Exception e) {
@@ -23,6 +28,10 @@ public abstract class DeleteAzureControlledResourceStep implements DeleteControl
     }
   }
 
+  /**
+   * Method that should preform the actual resource deletion.
+   * The logic here is wrapped with the common exception handling for Azure resources provided in `handleResourceDeleteException`.
+   */
   protected abstract StepResult deleteResource(FlightContext context) throws InterruptedException;
 
   protected static final List<String> missingResourceManagementCodes =
@@ -30,6 +39,10 @@ public abstract class DeleteAzureControlledResourceStep implements DeleteControl
           "SubscriptionNotFound", "InvalidAuthenticationTokenTenant", "AuthorizationFailed");
 
   /**
+   * Provides default exception handling for deleting Azure resources.
+   * Handles common error codes that happen when resources or the underlying resources
+   * (such as the MRG or subscription) are missing or previously deleted.
+   * Specific steps may override this to provide their own or additional exception handling.
    * @param context the flight context, included so downstream implementations can access any
    *     parameters they need.
    */

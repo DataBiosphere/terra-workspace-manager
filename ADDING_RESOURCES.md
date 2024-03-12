@@ -148,4 +148,7 @@ for more details.
 
 ### Azure Specifics
 
+When deleting an Azure resource, `DeleteAzureControlledResourceStep.java` contains a base class for the deletion steps
+that contains handling for common errors that happen when deleting Azure resources. 
+
 **TBS**
