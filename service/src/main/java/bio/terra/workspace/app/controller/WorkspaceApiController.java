@@ -620,23 +620,20 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           samService.getUserEmailFromSamAndRethrowOnInterrupt(getAuthenticatedInfo()));
     }
 
-    // TODO: PF-2694 REST API part
-    //  When we make the REST API changes, the spend profile will come with the source cloud context
-    //  and we will take it from there. Only if missing, will we take it from the workspace. For
-    //  this part, we do the retrieval and permission check using the workspace spend profile.
-    Optional<SpendProfileId> spendProfileIdOptional =
-        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
+    // Use the requested spend profile if present. If not present, use the source workspace's
+    // spend profile. If source workspace also has no spend profile, the clone operation will
+    // proceed and the destination workspace will have no spend profile.
+    SpendProfileId workspaceSpendProfileId = sourceWorkspace.getSpendProfileId().orElse(null);
     SpendProfileId spendProfileId =
-        spendProfileIdOptional.orElse(
-            sourceWorkspace
-                .getSpendProfileId()
-                .orElseThrow(
-                    () ->
-                        MissingSpendProfileException.forWorkspace(sourceWorkspace.workspaceId())));
-
-    SpendProfile spendProfile =
-        spendProfileService.authorizeLinking(
-            spendProfileId, features.isBpmGcpEnabled(), petRequest);
+        Optional.ofNullable(body.getSpendProfile())
+            .map(SpendProfileId::new)
+            .orElse(workspaceSpendProfileId);
+    SpendProfile spendProfile = null;
+    if (spendProfileId != null) {
+      spendProfile =
+          spendProfileService.authorizeLinking(
+              spendProfileId, features.isBpmGcpEnabled(), petRequest);
+    }
 
     // Accept a target workspace id if one is provided. This allows Rawls to specify an
     // existing workspace id. WSM then creates the WSMspace supporting the Rawls workspace.
