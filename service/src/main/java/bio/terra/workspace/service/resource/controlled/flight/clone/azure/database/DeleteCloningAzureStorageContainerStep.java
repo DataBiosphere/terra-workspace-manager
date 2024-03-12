@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Delete the storage container used in cloning. General storage container deletion is done in
- * bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.DeleteCloningAzureStorageContainerStep
+ * bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.DeleteAzureStorageContainerStep
  */
 public class DeleteCloningAzureStorageContainerStep implements Step {
   private static final Logger logger =

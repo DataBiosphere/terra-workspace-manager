@@ -63,7 +63,10 @@ public class DeleteAzureStorageContainerStep extends DeleteAzureControlledResour
               bearerToken, workspaceService.getWorkspace(resource.getWorkspaceId()));
       Optional<ApiAzureLandingZoneDeployedResource> sharedStorageAccount =
           landingZoneApiDispatch.getSharedStorageAccount(bearerToken, landingZoneId);
-      if (sharedStorageAccount.isPresent()) {
+      if (sharedStorageAccount.isEmpty()) {
+        // storage account is gone, so no container to delete
+        return StepResult.getStepResultSuccess();
+      } else {
         StorageAccount storageAccount =
             manager.storageAccounts().getById(sharedStorageAccount.get().getResourceId());
         var storageAccountName = storageAccount.name();
@@ -78,12 +81,12 @@ public class DeleteAzureStorageContainerStep extends DeleteAzureControlledResour
                 storageAccountName,
                 resource.getStorageContainerName());
         return StepResult.getStepResultSuccess();
-      } else {
-        return StepResult
-            .getStepResultSuccess(); // storage account is gone, so no container to delete
       }
     } catch (LandingZoneNotFoundException lzne) { // Thrown by landingZoneApiDispatch
       // If the landing zone is not present, it's probably because it was removed directly
+      logger.debug(
+          "Unable to delete storage container from workspace {}, because no landing zone was found in LZS",
+          resource.getWorkspaceId());
       return StepResult.getStepResultSuccess();
     }
   }
