@@ -620,21 +620,20 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
           samService.getUserEmailFromSamAndRethrowOnInterrupt(getAuthenticatedInfo()));
     }
 
-    // TODO: PF-2694 REST API part
-    //  When we make the REST API changes, the spend profile will come with the source cloud context
-    //  and we will take it from there. Only if missing, will we take it from the workspace. For
-    //  this part, we do the retrieval and permission check using the workspace spend profile.
-    Optional<SpendProfileId> spendProfileIdOptional =
-        Optional.ofNullable(body.getSpendProfile()).map(SpendProfileId::new);
-
-    if (spendProfileIdOptional.isEmpty()) {
-      spendProfileIdOptional = sourceWorkspace.getSpendProfileId();
+    // Use the requested spend profile if present. If not present, use the source workspace's
+    // spend profile. If source workspace also has no spend profile, the clone operation will
+    // proceed and the destination workspace will have no spend profile.
+    SpendProfileId workspaceSpendProfileId = sourceWorkspace.getSpendProfileId().orElse(null);
+    SpendProfileId spendProfileId =
+        Optional.ofNullable(body.getSpendProfile())
+            .map(SpendProfileId::new)
+            .orElse(workspaceSpendProfileId);
+    SpendProfile spendProfile = null;
+    if (spendProfileId != null) {
+      spendProfile =
+          spendProfileService.authorizeLinking(
+              spendProfileId, features.isBpmGcpEnabled(), petRequest);
     }
-    Optional<SpendProfile> spendProfileOptional =
-        spendProfileIdOptional.map(
-            spendProfileId ->
-                spendProfileService.authorizeLinking(
-                    spendProfileId, features.isBpmGcpEnabled(), petRequest));
 
     // Accept a target workspace id if one is provided. This allows Rawls to specify an
     // existing workspace id. WSM then creates the WSMspace supporting the Rawls workspace.
@@ -656,18 +655,17 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     // Construct the target workspace object from the inputs
     // Policies are cloned in the flight instead of here so that they get cleaned appropriately if
     // the flight fails.
-    Workspace.Builder destinationWorkspaceBuilder =
+    Workspace destinationWorkspace =
         Workspace.builder()
             .workspaceId(destinationWorkspaceId)
             .userFacingId(destinationUserFacingId)
+            .spendProfileId(spendProfileId)
             .workspaceStage(sourceWorkspace.getWorkspaceStage())
             .displayName(Optional.ofNullable(body.getDisplayName()).orElse(generatedDisplayName))
             .description(body.getDescription())
             .properties(sourceWorkspace.getProperties())
-            .createdByEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(petRequest));
-
-    spendProfileIdOptional.map(destinationWorkspaceBuilder::spendProfileId);
-    Workspace destinationWorkspace = destinationWorkspaceBuilder.build();
+            .createdByEmail(samService.getUserEmailFromSamAndRethrowOnInterrupt(petRequest))
+            .build();
 
     String jobId =
         workspaceService.cloneWorkspace(
@@ -676,7 +674,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             body.getLocation(),
             TpsApiConversionUtils.tpsFromApiTpsPolicyInputs(body.getAdditionalPolicies()),
             destinationWorkspace,
-            spendProfileOptional.orElse(null),
+            spendProfile,
             body.getProjectOwnerGroupId());
 
     ApiCloneWorkspaceResult result = fetchCloneWorkspaceResult(jobId);

@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -30,6 +31,7 @@ import bio.terra.policy.model.TpsPaoUpdateResult;
 import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.policy.model.TpsPolicyPair;
+import bio.terra.policy.model.TpsUpdateMode;
 import bio.terra.workspace.common.BaseSpringBootUnitTestMockDataRepoService;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
@@ -395,6 +397,9 @@ public class WorkspaceApiControllerTest extends BaseSpringBootUnitTestMockDataRe
         assertNotNull(cloneDetail.getDestinationResourceId());
       }
     }
+
+    verify(mockTpsApiDispatch())
+        .mergePao(sourceWorkspaceId, destinationWorkspaceId, TpsUpdateMode.FAIL_ON_CONFLICT);
   }
 
   @Test
