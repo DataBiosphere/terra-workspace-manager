@@ -8,18 +8,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * There is another class with the same name in
- * bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer This one is only
- * used in cloning.
+ * Delete the storage container used in cloning. General storage container deletion is done in
+ * bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.DeleteCloningAzureStorageContainerStep
  */
-public class DeleteAzureStorageContainerStep implements Step {
+public class DeleteCloningAzureStorageContainerStep implements Step {
   private static final Logger logger =
-      LoggerFactory.getLogger(DeleteAzureStorageContainerStep.class);
+      LoggerFactory.getLogger(DeleteCloningAzureStorageContainerStep.class);
   private final ControlledResourceService controlledResourceService;
   private final String storageContainerName;
   private final UUID resourceId;
 
-  public DeleteAzureStorageContainerStep(
+  public DeleteCloningAzureStorageContainerStep(
       String storageContainerName,
       UUID resourceId,
       ControlledResourceService controlledResourceService) {

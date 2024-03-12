@@ -93,7 +93,7 @@ public class CloneControlledAzureDatabaseResourceFlight extends CloneControlledA
                 flightBeanBag.getAzureDatabaseUtilsRunner()),
             RetryRules.cloud()),
         new StepRetryRulePair(
-            new DeleteAzureStorageContainerStep(
+            new DeleteCloningAzureStorageContainerStep(
                 storageContainerName,
                 destinationContainerId,
                 flightBeanBag.getControlledResourceService()),
