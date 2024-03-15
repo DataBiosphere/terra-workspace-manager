@@ -32,7 +32,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 @Tag("unit")
 public class DeleteAzureStorageContainerStepUnitTest extends BaseMockitoStrictStubbingTest {
@@ -55,18 +54,14 @@ public class DeleteAzureStorageContainerStepUnitTest extends BaseMockitoStrictSt
 
   @BeforeEach
   void localSetup() {
-    Mockito.lenient().when(context.getWorkingMap()).thenReturn(workingMap);
-    Mockito.lenient()
-        .when(
-            workingMap.get(
-                WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-                AzureCloudContext.class))
+    when(context.getWorkingMap()).thenReturn(workingMap);
+    when(workingMap.get(
+            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+            AzureCloudContext.class))
         .thenReturn(azureCloudContext);
-    Mockito.lenient()
-        .when(crlService.getStorageManager(azureCloudContext, azureConfig))
-        .thenReturn(storageManager);
-    Mockito.lenient().when(storageManager.storageAccounts()).thenReturn(storageAccounts);
-    Mockito.lenient().when(storageManager.blobContainers()).thenReturn(blobContainers);
+    when(crlService.getStorageManager(azureCloudContext, azureConfig)).thenReturn(storageManager);
+    when(storageManager.storageAccounts()).thenReturn(storageAccounts);
+    when(storageManager.blobContainers()).thenReturn(blobContainers);
   }
 
   @Test

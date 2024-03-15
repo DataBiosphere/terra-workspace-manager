@@ -42,6 +42,10 @@ public class DeleteAzureNetworkInterfaceStepUnitTest {
   @Mock FlightMap workingMap;
   @Mock FlightContext context;
 
+  static final String vmName = "test-vm-name";
+  static final String networkInterfaceName = String.format("nic-%s", vmName);
+  static final String resourceGroupId = "test-resource-group-id";
+
   @BeforeEach
   void localSetup() {
     when(context.getWorkingMap()).thenReturn(workingMap);
@@ -53,67 +57,51 @@ public class DeleteAzureNetworkInterfaceStepUnitTest {
         .thenReturn(computeManager);
     when(computeManager.networkManager()).thenReturn(networkManager);
     when(networkManager.networkInterfaces()).thenReturn(networkInterfaces);
+    when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
+    when(resource.getVmName()).thenReturn(vmName);
   }
 
   @Test
   void happyPathDeletingNetworkInterface() throws Exception {
-    var vmName = "test-vm-name";
-    var networkInterfaceName = String.format("nic-%s", vmName);
-    var resourceGroupId = "test-resource-group-id";
-    when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
-    when(resource.getVmName()).thenReturn(vmName);
     doNothing()
         .when(networkInterfaces)
         .deleteByResourceGroup(resourceGroupId, networkInterfaceName);
 
     var step = new DeleteAzureNetworkInterfaceStep(azureConfiguration, crlService, resource);
+
     assertThat(step.doStep(context), equalTo(StepResult.getStepResultSuccess()));
     verify(networkInterfaces).deleteByResourceGroup(resourceGroupId, networkInterfaceName);
   }
 
   @Test
   void stepSucceedsWhenResourceIsAlreadyGone() throws Exception {
-    var vmName = "test-vm-name";
-    var networkInterfaceName = String.format("nic-%s", vmName);
-    var resourceGroupId = "test-resource-group-id";
-    when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
-    when(resource.getVmName()).thenReturn(vmName);
-
     var response = mock(HttpResponse.class);
     when(response.getStatusCode()).thenReturn(404);
     var error = new ManagementError(AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, "NotFound");
     var exception =
         new ManagementException(AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, response, error);
-
     doThrow(exception)
         .when(networkInterfaces)
         .deleteByResourceGroup(resourceGroupId, networkInterfaceName);
 
     var step = new DeleteAzureNetworkInterfaceStep(azureConfiguration, crlService, resource);
-    assertThat(step.doStep(context), equalTo(StepResult.getStepResultSuccess()));
 
+    assertThat(step.doStep(context), equalTo(StepResult.getStepResultSuccess()));
     verify(networkInterfaces).deleteByResourceGroup(resourceGroupId, networkInterfaceName);
   }
 
   @Test
   void stepSucceedsWhenSubscriptionIsGone() throws Exception {
-    var vmName = "test-vm-name";
-    var networkInterfaceName = String.format("nic-%s", vmName);
-    var resourceGroupId = "test-resource-group-id";
-    when(azureCloudContext.getAzureResourceGroupId()).thenReturn(resourceGroupId);
-    when(resource.getVmName()).thenReturn(vmName);
-
     var response = mock(HttpResponse.class);
     var error = new ManagementError("SubscriptionNotFound", "NotFound");
     var exception = new ManagementException("SubscriptionNotFound", response, error);
-
     doThrow(exception)
         .when(networkInterfaces)
         .deleteByResourceGroup(resourceGroupId, networkInterfaceName);
 
     var step = new DeleteAzureNetworkInterfaceStep(azureConfiguration, crlService, resource);
-    assertThat(step.doStep(context), equalTo(StepResult.getStepResultSuccess()));
 
+    assertThat(step.doStep(context), equalTo(StepResult.getStepResultSuccess()));
     verify(networkInterfaces).deleteByResourceGroup(resourceGroupId, networkInterfaceName);
   }
 }
