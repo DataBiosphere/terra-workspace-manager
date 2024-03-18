@@ -17,6 +17,7 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Namespace;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,7 @@ public class KubernetesNamespaceGuardStepTest extends BaseMockitoStrictStubbingT
             .build();
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
-        .thenReturn(mockCoreV1Api);
+        .thenReturn(Optional.of(mockCoreV1Api));
     when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace(), null))
         .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "not found"));
     when(mockKubernetesClientProvider.stepResultFromException(any(), any())).thenCallRealMethod();
@@ -69,7 +70,7 @@ public class KubernetesNamespaceGuardStepTest extends BaseMockitoStrictStubbingT
             .build();
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
-        .thenReturn(mockCoreV1Api);
+        .thenReturn(Optional.of(mockCoreV1Api));
     when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace(), null))
         .thenReturn(new V1Namespace());
 

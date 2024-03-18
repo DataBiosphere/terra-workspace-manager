@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdent
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
@@ -32,7 +31,7 @@ public class DeleteAzureManagedIdentityStep extends DeleteAzureControlledResourc
   }
 
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException {
+  public StepResult deleteResource(FlightContext context) {
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
@@ -45,16 +44,8 @@ public class DeleteAzureManagedIdentityStep extends DeleteAzureControlledResourc
             azureCloudContext.getAzureSubscriptionId(),
             azureCloudContext.getAzureResourceGroupId(),
             resource.getManagedIdentityName());
-    try {
-      logger.info("Attempting to delete managed identity " + azureResourceId);
-
-      msiManager.identities().deleteById(azureResourceId);
-      return StepResult.getStepResultSuccess();
-    } catch (Exception ex) {
-      logger.info(
-          "Attempt to delete Azure managed identity failed on this try: " + azureResourceId, ex);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
-    }
+    msiManager.identities().deleteById(azureResourceId);
+    return StepResult.getStepResultSuccess();
   }
 
   @Override

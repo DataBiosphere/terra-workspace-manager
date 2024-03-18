@@ -35,7 +35,9 @@ public class KubernetesNamespaceGuardStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
 
     var coreApiClient =
-        kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
+        kubernetesClientProvider
+            .createCoreApiClient(azureCloudContext, workspaceId)
+            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
 
     try {
       var existing = coreApiClient.readNamespace(resource.getKubernetesNamespace(), null);

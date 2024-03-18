@@ -388,7 +388,10 @@ public class AzureDatabaseUtilsRunner {
       Map<String, String> secretStringData,
       String namespace)
       throws InterruptedException {
-    var aksApi = kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
+    var aksApi =
+        kubernetesClientProvider
+            .createCoreApiClient(azureCloudContext, workspaceId)
+            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
 
     // strip underscores to avoid violating azure's naming conventions for pods
     var safePodName = podDefinition.getMetadata().getName();

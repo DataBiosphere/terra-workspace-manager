@@ -23,6 +23,7 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -56,7 +57,7 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
     when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn("sub");
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn("rg");
     when(mockKubernetesClientProvider.getClusterResource(workspaceId))
-        .thenReturn(aksClusterResource);
+        .thenReturn(Optional.of(aksClusterResource));
     when(mockKubernetesClientProvider.createCoreApiClient(
             mockAzureCloudContext, aksClusterResource))
         .thenReturn(mockCoreV1Api);
@@ -105,7 +106,7 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
     when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn("sub");
     when(mockAzureCloudContext.getAzureResourceGroupId()).thenReturn("rg");
     when(mockKubernetesClientProvider.getClusterResource(workspaceId))
-        .thenReturn(aksClusterResource);
+        .thenReturn(Optional.of(aksClusterResource));
     when(mockKubernetesClientProvider.createCoreApiClient(
             mockAzureCloudContext, aksClusterResource))
         .thenReturn(mockCoreV1Api);
@@ -149,7 +150,7 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
             .build();
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
-        .thenReturn(mockCoreV1Api);
+        .thenReturn(Optional.of(mockCoreV1Api));
 
     var result =
         new CreateKubernetesNamespaceStep(
@@ -175,7 +176,7 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
             .build();
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
-        .thenReturn(mockCoreV1Api);
+        .thenReturn(Optional.of(mockCoreV1Api));
     when(mockCoreV1Api.deleteNamespace(
             resource.getKubernetesNamespace(), null, null, null, null, null, null))
         .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "message"));

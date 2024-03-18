@@ -51,7 +51,10 @@ public class GetFederatedIdentityStep implements Step {
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
 
-    var aksApi = kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
+    var aksApi =
+        kubernetesClientProvider
+            .createCoreApiClient(azureCloudContext, workspaceId)
+            .orElseThrow(() -> new RuntimeException("No shared cluster found"));
 
     final boolean k8sServiceAccountExists =
         k8sServiceAccountExists(GetManagedIdentityStep.getManagedIdentityName(context), aksApi);

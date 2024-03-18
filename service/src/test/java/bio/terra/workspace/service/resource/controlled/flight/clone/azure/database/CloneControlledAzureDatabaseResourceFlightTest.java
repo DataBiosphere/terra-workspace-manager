@@ -75,7 +75,7 @@ class CloneControlledAzureDatabaseResourceFlightTest extends BaseAzureSpringBoot
             CreateDbDumpEncryptionKeyStep.class,
             DumpAzureDatabaseStep.class,
             RestoreAzureDatabaseStep.class,
-            DeleteAzureStorageContainerStep.class),
+            DeleteCloningAzureStorageContainerStep.class),
         copyResourceSteps.stream()
             .map(pair -> pair.step().getClass())
             .collect(Collectors.toList()));

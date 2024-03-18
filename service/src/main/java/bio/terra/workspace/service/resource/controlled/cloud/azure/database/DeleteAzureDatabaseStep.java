@@ -5,7 +5,6 @@ import static bio.terra.workspace.service.resource.controlled.cloud.azure.AzureU
 import bio.terra.common.iam.BearerToken;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
@@ -50,7 +49,7 @@ public class DeleteAzureDatabaseStep extends DeleteAzureControlledResourceStep {
   }
 
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException {
+  public StepResult deleteResource(FlightContext context) {
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
@@ -61,34 +60,25 @@ public class DeleteAzureDatabaseStep extends DeleteAzureControlledResourceStep {
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
-    var databaseResource =
-        landingZoneApiDispatch
-            .getSharedDatabase(bearerToken, landingZoneId)
-            .orElseThrow(() -> new RuntimeException("No shared database found"));
-    try {
-      logger.info(
-          "Attempting to delete database {} in server {} of resource group {}",
-          resource.getDatabaseName(),
-          getResourceName(databaseResource),
-          azureCloudContext.getAzureResourceGroupId());
+    var databaseResource = landingZoneApiDispatch.getSharedDatabase(bearerToken, landingZoneId);
 
-      postgresManager
-          .databases()
-          .delete(
-              azureCloudContext.getAzureResourceGroupId(),
-              getResourceName(databaseResource),
-              resource.getDatabaseName());
+    if (databaseResource.isEmpty()) {
       return StepResult.getStepResultSuccess();
-    } catch (Exception ex) {
-      logger.info(
-          "Attempt to delete database %s in server %s of resource group %s on this try"
-              .formatted(
-                  resource.getDatabaseName(),
-                  getResourceName(databaseResource),
-                  azureCloudContext.getAzureResourceGroupId()),
-          ex);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
+
+    logger.info(
+        "Attempting to delete database {} in server {} of resource group {}",
+        resource.getDatabaseName(),
+        getResourceName(databaseResource.get()),
+        azureCloudContext.getAzureResourceGroupId());
+
+    postgresManager
+        .databases()
+        .delete(
+            azureCloudContext.getAzureResourceGroupId(),
+            getResourceName(databaseResource.get()),
+            resource.getDatabaseName());
+    return StepResult.getStepResultSuccess();
   }
 
   @Override

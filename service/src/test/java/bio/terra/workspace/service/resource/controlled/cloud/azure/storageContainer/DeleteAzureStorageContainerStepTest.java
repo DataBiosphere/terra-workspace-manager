@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.storageConta
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -24,7 +23,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storage.BaseStorageStepTest;
-import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.azure.resourcemanager.storage.models.BlobContainers;
@@ -71,7 +69,6 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
         new DeleteAzureStorageContainerStep(
             mockAzureConfig,
             mockCrlService,
-            mockResourceDao,
             mockLandingZoneApiDispatch,
             mockSamService,
             storageContainerResource,
@@ -123,7 +120,7 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
   }
 
   @Test
-  public void deleteStorageAccountContainerControlledByLzStorageAccountFailure_NoLandingZone()
+  public void deleteStorageAccountContainerControlledByLzStorageAccountSuccess_NoLandingZone()
       throws InterruptedException {
     initDeleteValidationStep(Optional.empty());
 
@@ -136,13 +133,12 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     // act
     StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(LandingZoneNotFoundException.class));
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
   }
 
   @Test
   public void
-      deleteStorageAccountContainerControlledByLzStorageAccountFailure_NoSharedStorageAccount()
+      deleteStorageAccountContainerControlledByLzStorageAccountSuccess_NoSharedStorageAccount()
           throws InterruptedException {
     UUID landingZoneId = UUID.randomUUID();
     initDeleteValidationStep(Optional.empty());
@@ -156,7 +152,6 @@ public class DeleteAzureStorageContainerStepTest extends BaseStorageStepTest {
     // act
     StepResult stepResult = deleteAzureStorageContainerStep.doStep(mockFlightContext);
 
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertThat(stepResult.getException().get(), instanceOf(ResourceNotFoundException.class));
+    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
   }
 }

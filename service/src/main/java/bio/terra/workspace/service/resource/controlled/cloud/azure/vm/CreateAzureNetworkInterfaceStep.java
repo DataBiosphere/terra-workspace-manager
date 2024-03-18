@@ -8,6 +8,7 @@ import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpo
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
@@ -156,9 +157,24 @@ public class CreateAzureNetworkInterfaceStep implements Step {
                 .getWorkingMap()
                 .get(AzureVmHelper.WORKING_MAP_NETWORK_INTERFACE_KEY, String.class));
 
-    return networkInterfaceName
-        .map(name -> AzureVmHelper.deleteNetworkInterface(azureCloudContext, computeManager, name))
-        .orElse(StepResult.getStepResultSuccess());
+    try {
+      return networkInterfaceName
+          .map(
+              name -> AzureVmHelper.deleteNetworkInterface(azureCloudContext, computeManager, name))
+          .orElse(StepResult.getStepResultSuccess());
+    } catch (ManagementException e) {
+      // Stairway steps may run multiple times, so we may already have deleted this resource.
+      if (AzureManagementExceptionUtils.isExceptionCode(
+          e, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+        logger.info(
+            "Azure Network Interface {} in managed resource group {} already deleted",
+            networkInterfaceName,
+            azureCloudContext.getAzureResourceGroupId());
+        return StepResult.getStepResultSuccess();
+      } else {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+      }
+    }
   }
 
   private NetworkInterface createNetworkInterface(

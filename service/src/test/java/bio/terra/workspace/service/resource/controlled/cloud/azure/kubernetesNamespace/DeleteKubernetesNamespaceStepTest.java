@@ -15,13 +15,14 @@ import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.http.HttpStatus;
 
-@Tag("azure-unit")
+@Tag("unit")
 public class DeleteKubernetesNamespaceStepTest extends BaseMockitoStrictStubbingTest {
   @Mock private AzureCloudContext mockAzureCloudContext;
   @Mock private FlightMap mockWorkingMap;
@@ -42,9 +43,31 @@ public class DeleteKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
             .build();
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
-        .thenReturn(mockCoreV1Api);
+        .thenReturn(Optional.of(mockCoreV1Api));
     when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace(), null))
         .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "Not found"));
+
+    var result =
+        new DeleteKubernetesNamespaceStep(workspaceId, mockKubernetesClientProvider, resource)
+            .doStep(createMockFlightContext());
+
+    assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
+  }
+
+  @Test
+  void testNoClientApiClientAvailable() throws Exception {
+    var workspaceId = UUID.randomUUID();
+    var creationParameters =
+        ControlledAzureResourceFixtures.getAzureKubernetesNamespaceCreationParameters(
+            null, List.of());
+
+    var resource =
+        ControlledAzureResourceFixtures.makeSharedControlledAzureKubernetesNamespaceResourceBuilder(
+                creationParameters, workspaceId)
+            .build();
+
+    when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
+        .thenReturn(Optional.empty());
 
     var result =
         new DeleteKubernetesNamespaceStep(workspaceId, mockKubernetesClientProvider, resource)
