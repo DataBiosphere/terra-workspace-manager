@@ -11,7 +11,7 @@ dependencies {
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
   }
-  implementation platform('com.google.cloud:libraries-bom:26.27.0')
+  implementation platform('com.google.cloud:libraries-bom:26.33.0')
 
   implementation 'com.google.cloud:google-cloud-bigquery'
   implementation 'com.google.cloud:google-cloud-bigquerydatatransfer'
