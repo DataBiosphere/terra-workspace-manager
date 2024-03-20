@@ -29,6 +29,7 @@ public class DeleteKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
   @Mock private FlightContext mockFlightContext;
   @Mock private KubernetesClientProvider mockKubernetesClientProvider;
   @Mock private CoreV1Api mockCoreV1Api;
+  @Mock private CoreV1Api.APIreadNamespaceRequest mockReadNamespaceRequest;
 
   @Test
   void testDoStepSuccess() throws Exception {
@@ -44,7 +45,9 @@ public class DeleteKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
         .thenReturn(Optional.of(mockCoreV1Api));
-    when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace(), null))
+    when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace()))
+        .thenReturn(mockReadNamespaceRequest);
+    when(mockReadNamespaceRequest.execute())
         .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "Not found"));
 
     var result =
