@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNa
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.FlightContext;
@@ -29,6 +30,7 @@ public class DeleteKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
   @Mock private FlightContext mockFlightContext;
   @Mock private KubernetesClientProvider mockKubernetesClientProvider;
   @Mock private CoreV1Api mockCoreV1Api;
+  @Mock private CoreV1Api.APIdeleteNamespaceRequest mockDeleteNamespaceRequest;
   @Mock private CoreV1Api.APIreadNamespaceRequest mockReadNamespaceRequest;
 
   @Test
@@ -45,6 +47,7 @@ public class DeleteKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
         .thenReturn(Optional.of(mockCoreV1Api));
+    when(mockCoreV1Api.deleteNamespace(resource.getKubernetesNamespace())).thenReturn(mockDeleteNamespaceRequest);
     when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace()))
         .thenReturn(mockReadNamespaceRequest);
     when(mockReadNamespaceRequest.execute())
@@ -54,6 +57,7 @@ public class DeleteKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
         new DeleteKubernetesNamespaceStep(workspaceId, mockKubernetesClientProvider, resource)
             .doStep(createMockFlightContext());
 
+    verify(mockDeleteNamespaceRequest).execute();
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
   }
 
