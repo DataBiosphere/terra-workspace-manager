@@ -4,6 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertA
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesDeleteRequestBody;
 import static bio.terra.workspace.common.utils.ControllerValidationUtils.validatePropertiesUpdateRequestBody;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.generated.controller.ResourceApi;
@@ -22,6 +23,7 @@ import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.WsmResourceService;
+import bio.terra.workspace.service.resource.controlled.ControlledResourceMetadataManager;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import bio.terra.workspace.service.resource.model.WsmResourceFamily;
@@ -45,6 +47,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
   private final WsmResourceService resourceService;
   private final WorkspaceService workspaceService;
   private final ReferencedResourceService referencedResourceService;
+  private final ControlledResourceMetadataManager controlledResourceMetadataManager;
 
   @Autowired
   public ResourceApiController(
@@ -57,7 +60,8 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
       JobApiUtils jobApiUtils,
       WsmResourceService resourceService,
       WorkspaceService workspaceService,
-      ReferencedResourceService referencedResourceService) {
+      ReferencedResourceService referencedResourceService,
+      ControlledResourceMetadataManager controlledResourceMetadataManager) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -69,6 +73,7 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
     this.resourceService = resourceService;
     this.workspaceService = workspaceService;
     this.referencedResourceService = referencedResourceService;
+    this.controlledResourceMetadataManager = controlledResourceMetadataManager;
   }
 
   @WithSpan
@@ -109,6 +114,54 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
 
     ApiResourceDescription apiResourceDescription = this.makeApiResourceDescription(wsmResource);
     return new ResponseEntity<>(apiResourceDescription, HttpStatus.OK);
+  }
+
+  @WithSpan
+  @Override
+  public ResponseEntity<ApiResourceDescription> getResourceByName(
+      UUID workspaceUuid, String resourceName) {
+    AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+
+    WsmResource wsmResource =
+        validateWorkspaceOrResourceReadAccess(userRequest, workspaceUuid, resourceName);
+
+    ApiResourceDescription apiResourceDescription = this.makeApiResourceDescription(wsmResource);
+    return new ResponseEntity<>(apiResourceDescription, HttpStatus.OK);
+  }
+
+  private WsmResource validateWorkspaceOrResourceReadAccess(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, String resourceName) {
+    String readAction = SamConstants.SamControlledResourceActions.READ_ACTION;
+
+    try {
+      workspaceService.validateWorkspaceAndAction(userRequest, workspaceUuid, readAction);
+      return resourceService.getResourceByName(workspaceUuid, resourceName);
+    } catch (ForbiddenException workspaceException) {
+      WsmResource resource = resourceService.getResourceByName(workspaceUuid, resourceName);
+      switch (resource.getStewardshipType()) {
+        case CONTROLLED -> {
+          try {
+            return controlledResourceMetadataManager.validateControlledResourceAndAction(
+                userRequest, workspaceUuid, resource.getResourceId(), readAction);
+          } catch (ForbiddenException resourceException) {
+            // if no access, throw original exception to avoid leaking information on resource
+            throw workspaceException;
+          }
+        }
+        case REFERENCED -> {
+          var hasAccess =
+              referencedResourceService.checkAccess(
+                  workspaceUuid, resource.getResourceId(), userRequest);
+          if (hasAccess) {
+            return resource;
+          } else {
+            // if no access, throw original exception to avoid leaking information on resource
+            throw workspaceException;
+          }
+        }
+        default -> throw workspaceException;
+      }
+    }
   }
 
   @WithSpan

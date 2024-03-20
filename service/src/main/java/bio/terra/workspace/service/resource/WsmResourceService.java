@@ -45,6 +45,10 @@ public class WsmResourceService {
     return resourceDao.getResource(workspaceUuid, resourceUuid);
   }
 
+  public WsmResource getResourceByName(UUID workspaceUuid, String resourceName) {
+    return resourceDao.getResourceByName(workspaceUuid, resourceName);
+  }
+
   public void updateResource(
       AuthenticatedUserRequest userRequest,
       WsmResource resource,
