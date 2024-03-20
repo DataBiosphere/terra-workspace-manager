@@ -87,7 +87,8 @@ class DeleteAzureStorageContainerStepTest extends BaseAzureSpringBootUnitTest {
     workingMap.put(ControlledResourceKeys.AZURE_STORAGE_CONTAINER, createdContainer);
 
     var step =
-        new DeleteAzureStorageContainerStep(resourceName, resourceId, controlledResourceService);
+        new DeleteCloningAzureStorageContainerStep(
+            resourceName, resourceId, controlledResourceService);
 
     var result = step.doStep(flightContext);
 
@@ -99,7 +100,8 @@ class DeleteAzureStorageContainerStepTest extends BaseAzureSpringBootUnitTest {
   @Test
   void undoStep_doesNothing() throws InterruptedException {
     var step =
-        new DeleteAzureStorageContainerStep("sc-name", resourceId, controlledResourceService);
+        new DeleteCloningAzureStorageContainerStep(
+            "sc-name", resourceId, controlledResourceService);
 
     var result = step.undoStep(flightContext);
 

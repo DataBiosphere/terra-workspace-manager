@@ -61,43 +61,43 @@ public class WorkspaceCreateFlight extends Flight {
           new CreateWorkspacePoliciesStep(
               workspace, policyInputs, appContext.getTpsApiDispatch(), userRequest),
           serviceRetryRule);
+
+      if (workspace.spendProfileId() != null) {
+        addStep(
+            new LinkSpendProfilePolicyAttributesStep(
+                workspace.workspaceId(),
+                workspace.spendProfileId(),
+                appContext.getTpsApiDispatch()),
+            serviceRetryRule);
+      }
+
+      // If we're cloning, we need to copy the policies from the source workspace.
+      // This is here instead of in the CloneWorkspaceFlight because we need to do it before
+      // we create the workspace in Sam in case there are auth domains.
+      // COPY_NOTHING is used when not cloning
+      if (cloningInstructions != CloningInstructions.COPY_NOTHING) {
+        addStep(
+            new MergePolicyAttributesStep(
+                sourceWorkspaceUuid,
+                workspace.workspaceId(),
+                cloningInstructions,
+                appContext.getTpsApiDispatch()),
+            serviceRetryRule);
+      }
     }
     // Workspace authz is handled differently depending on whether WSM owns the underlying Sam
     // resource or not, as indicated by the workspace stage enum.
     switch (workspace.getWorkspaceStage()) {
-      case MC_WORKSPACE -> {
-        if (appContext.getFeatureConfiguration().isTpsEnabled()) {
+      case MC_WORKSPACE ->
           addStep(
-              new LinkSpendProfilePolicyAttributesStep(
-                  workspace.workspaceId(),
-                  workspace.spendProfileId(),
-                  appContext.getTpsApiDispatch()),
+              new CreateWorkspaceAuthzStep(
+                  workspace,
+                  appContext.getSamService(),
+                  appContext.getTpsApiDispatch(),
+                  appContext.getFeatureConfiguration(),
+                  userRequest,
+                  projectOwnerGroupId),
               serviceRetryRule);
-
-          // If we're cloning, we need to copy the policies from the source workspace.
-          // This is here instead of in the CloneWorkspaceFlight because we need to do it before
-          // we create the workspace in Sam in case there are auth domains.
-          // COPY_NOTHING is used when not cloning
-          if (cloningInstructions != CloningInstructions.COPY_NOTHING) {
-            addStep(
-                new MergePolicyAttributesStep(
-                    sourceWorkspaceUuid,
-                    workspace.workspaceId(),
-                    cloningInstructions,
-                    appContext.getTpsApiDispatch()),
-                serviceRetryRule);
-          }
-        }
-        addStep(
-            new CreateWorkspaceAuthzStep(
-                workspace,
-                appContext.getSamService(),
-                appContext.getTpsApiDispatch(),
-                appContext.getFeatureConfiguration(),
-                userRequest,
-                projectOwnerGroupId),
-            serviceRetryRule);
-      }
       case RAWLS_WORKSPACE ->
           addStep(
               new CheckSamWorkspaceAuthzStep(workspace, appContext.getSamService(), userRequest),

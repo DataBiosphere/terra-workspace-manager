@@ -180,6 +180,11 @@ public class TpsApiDispatch {
   }
 
   @WithSpan
+  /**
+   * Despite the documentation in TpsApi and the naming of the parameters, mergePao will try to
+   * merge the workspaceUuid Pao into the sourceObjectId Pao. This means any policies on the
+   * workspaceUuid Pao will be transferred to the sourceObjectId Pao depending on the updateMode.
+   */
   public TpsPaoUpdateResult mergePao(
       UUID workspaceUuid, UUID sourceObjectId, TpsUpdateMode updateMode)
       throws InterruptedException {

@@ -34,7 +34,8 @@ public class DeleteKubernetesNamespaceStep extends DeleteAzureControlledResource
   }
 
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+  public StepResult deleteResource(FlightContext context)
+      throws InterruptedException, RetryException {
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
@@ -42,16 +43,26 @@ public class DeleteKubernetesNamespaceStep extends DeleteAzureControlledResource
 
     var coreApiClient =
         kubernetesClientProvider.createCoreApiClient(azureCloudContext, workspaceId);
+    // If there is no coreApiClient, it's because LZS didn't return the appropriate resource
+    // this happens when the resource or landing zone is already gone
+    if (coreApiClient.isEmpty()) {
+      logger.debug(
+          "No api client available from  LZS to delete kubernetes namespace {} from workspace {}.",
+          resource.getKubernetesNamespace(),
+          workspaceId);
+      return StepResult.getStepResultSuccess();
+    }
 
     try {
-      logger.info("Deleting namespace {}", resource.getKubernetesNamespace());
-      coreApiClient.deleteNamespace(
-          resource.getKubernetesNamespace(), null, null, null, null, null, null);
+      logger.debug("Deleting namespace {}", resource.getKubernetesNamespace());
+      coreApiClient
+          .get()
+          .deleteNamespace(resource.getKubernetesNamespace(), null, null, null, null, null, null);
     } catch (ApiException e) {
       return kubernetesClientProvider.stepResultFromException(e, HttpStatus.NOT_FOUND);
     }
 
-    waitForDeletion(coreApiClient);
+    waitForDeletion(coreApiClient.get());
 
     return StepResult.getStepResultSuccess();
   }

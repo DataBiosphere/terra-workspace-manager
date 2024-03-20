@@ -11,11 +11,11 @@ plugins {
 dependencies {
     ext {
         apacheMath = '3.6.1'
-        guava = "33.0.0-jre"
-        jackson = "2.16.1"
+        guava = "33.1.0-jre"
+        jackson = "2.17.0"
         jersey = "3.1.5"
-        kubernetesClient = "20.0.0-legacy"
-        logback = "1.5.2"
+        kubernetesClient = "20.0.1"
+        logback = "1.5.3"
         slf4j = "2.0.12"
         hamcrest = "2.2"
         jUnit = "5.10.2"
@@ -34,15 +34,15 @@ dependencies {
 
     // Google dependencies
     constraints {
-        implementation 'com.google.guava:guava:33.0.0-jre'
-        implementation 'org.json:json:20231013' // security vulnerability
+        implementation 'com.google.guava:guava:33.1.0-jre'
+        implementation 'org.json:json:20240303' // security vulnerability
     }
-    implementation platform('com.google.cloud:libraries-bom:26.33.0')
-    implementation "com.google.api-client:google-api-client:2.3.0"
+    implementation platform('com.google.cloud:libraries-bom:26.34.0')
+    implementation "com.google.api-client:google-api-client:2.4.0"
     implementation "com.google.apis:google-api-services-container:v1-rev20240214-2.0.0"
     implementation "com.google.apis:google-api-services-iam:v1-rev20230914-2.0.0"
     implementation "com.google.apis:google-api-services-notebooks:v1-rev20231019-2.0.0"
-    implementation "com.google.apis:google-api-services-dataproc:v1-rev20240222-2.0.0"
+    implementation "com.google.apis:google-api-services-dataproc:v1-rev20240303-2.0.0"
     implementation "com.google.auth:google-auth-library-oauth2-http"
     implementation "com.google.cloud:google-cloud-bigquery"
     implementation "com.google.cloud:google-cloud-storage"

@@ -30,15 +30,22 @@ public class DeleteNamespaceRoleStep extends DeleteAzureControlledResourceStep {
   }
 
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException {
+  public StepResult deleteResource(FlightContext context) throws InterruptedException {
     logger.info("Deleting namespace role for namespace {}", resource.getKubernetesNamespace());
-    azureDatabaseUtilsRunner.deleteNamespaceRole(
-        context
-            .getWorkingMap()
-            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
-        workspaceId,
-        getDeletePodName(),
-        resource.getKubernetesServiceAccount());
+    try {
+      azureDatabaseUtilsRunner.deleteNamespaceRole(
+          context
+              .getWorkingMap()
+              .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class),
+          workspaceId,
+          getDeletePodName(),
+          resource.getKubernetesServiceAccount());
+    } catch (IllegalStateException e) {
+      // no shared database means no role to delete
+      if (e.getMessage().contains("No shared database found")) {
+        return StepResult.getStepResultSuccess();
+      }
+    }
     return StepResult.getStepResultSuccess();
   }
 

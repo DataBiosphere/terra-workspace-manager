@@ -127,7 +127,6 @@ public class ControlledAzureStorageContainerResource extends ControlledResource 
         new DeleteAzureStorageContainerStep(
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
-            flightBeanBag.getResourceDao(),
             flightBeanBag.getLandingZoneApiDispatch(),
             flightBeanBag.getSamService(),
             this,

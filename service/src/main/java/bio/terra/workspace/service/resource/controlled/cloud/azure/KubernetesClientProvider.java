@@ -54,9 +54,11 @@ public class KubernetesClientProvider {
     this.workspaceService = workspaceService;
   }
 
-  @NotNull
-  public CoreV1Api createCoreApiClient(AzureCloudContext azureCloudContext, UUID workspaceId) {
-    return createCoreApiClient(azureCloudContext, getClusterResource(workspaceId));
+  /** Returns Optional<CoreV1Api> because the result of getClusterResource() is an optional */
+  public Optional<CoreV1Api> createCoreApiClient(
+      AzureCloudContext azureCloudContext, UUID workspaceId) {
+    return getClusterResource(workspaceId)
+        .map(resource -> createCoreApiClient(azureCloudContext, resource));
   }
 
   @NotNull
@@ -145,13 +147,11 @@ public class KubernetesClientProvider {
         .orElseGet(StepResult::getStepResultSuccess);
   }
 
-  public ApiAzureLandingZoneDeployedResource getClusterResource(UUID workspaceId) {
+  public Optional<ApiAzureLandingZoneDeployedResource> getClusterResource(UUID workspaceId) {
     var bearerToken = new BearerToken(samService.getWsmServiceAccountToken());
     UUID landingZoneId =
         landingZoneApiDispatch.getLandingZoneId(
             bearerToken, workspaceService.getWorkspace(workspaceId));
-    return landingZoneApiDispatch
-        .getSharedKubernetesCluster(bearerToken, landingZoneId)
-        .orElseThrow(() -> new RuntimeException("No shared cluster found"));
+    return landingZoneApiDispatch.getSharedKubernetesCluster(bearerToken, landingZoneId);
   }
 }

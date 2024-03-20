@@ -546,8 +546,6 @@ components:
         Request body for cloning an entire workspace. Cloning instructions
         are taken from individual resources.
       type: object
-      required:
-        - spendProfile
       properties:
         destinationWorkspaceId:
           description: |
@@ -563,7 +561,9 @@ components:
           description: A description of the cloned workspace
           type: string
         spendProfile:
-          description: ID of provided spend profile
+          description: >-
+            ID of provided spend profile. If not present, source workspace spend profile will be used. 
+            If source workspace spend profile is also not present, destination workspace will have no spend profile
           type: string
         location:
           description: >-

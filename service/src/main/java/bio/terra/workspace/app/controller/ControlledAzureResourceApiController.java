@@ -156,10 +156,9 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
                 userRequest, workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DISK);
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
-    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
+    workspaceService.validateMcWorkspaceAndAction(
+        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
+    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
 
     ControlledAzureDiskResource resource =
         buildControlledAzureDiskResource(body.getAzureDisk(), commonFields);
@@ -261,10 +260,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     ControlledAzureStorageContainerResource resource =
-        ControlledAzureStorageContainerResource.builder()
-            .common(commonFields)
-            .storageContainerName(body.getAzureStorageContainer().getStorageContainerName())
-            .build();
+        buildControlledAzureStorageContainerResource(body.getAzureStorageContainer(), commonFields);
 
     final ControlledAzureStorageContainerResource createdStorageContainer =
         controlledResourceService
@@ -349,6 +345,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             maybeLookupName(commonFields.getWorkspaceId(), creationParameters.getOwner()))
         .databaseName(creationParameters.getName())
         .allowAccessForAllWorkspaceUsers(creationParameters.isAllowAccessForAllWorkspaceUsers())
+        .build();
+  }
+
+  @VisibleForTesting
+  ControlledAzureStorageContainerResource buildControlledAzureStorageContainerResource(
+      ApiAzureStorageContainerCreationParameters creationParameters,
+      ControlledResourceFields commonFields) {
+    return ControlledAzureStorageContainerResource.builder()
+        .common(commonFields)
+        .storageContainerName(creationParameters.getStorageContainerName())
         .build();
   }
 
@@ -561,13 +567,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final JobApiUtils.AsyncJobResult<ControlledAzureDiskResource> jobResult =
         jobApiUtils.retrieveAsyncJobResult(jobId, ControlledAzureDiskResource.class);
 
-    ControlledAzureDiskResource resource = null;
-    if (jobResult.getJobReport().getStatus().equals(ApiJobReport.StatusEnum.SUCCEEDED)) {
-      resource = jobResult.getResult();
-    }
-
     return new ApiCreateControlledAzureResourceResult()
-        .resourceId(resource.getResourceId())
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport());
   }
@@ -648,6 +648,15 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .jobReport(jobResult.getJobReport())
         .errorReport(jobResult.getApiErrorReport())
         .container(containerResult);
+  }
+
+  @Override
+  public ResponseEntity<ApiDeleteControlledAzureResourceResult>
+      getDeleteAzureStorageContainerResult(UUID workspaceId, String jobId) {
+    features.azureEnabledCheck();
+    final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    jobService.verifyUserAccess(jobId, userRequest, workspaceId);
+    return getJobDeleteResult(jobId);
   }
 
   @WithSpan

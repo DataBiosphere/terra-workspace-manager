@@ -111,7 +111,8 @@ public class CreateAzureStorageContainerStep implements Step {
 
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // N.B. this method is called directly by DeleteAzureStorageContainerStep's `doStep` method.
+    // N.B. this method is called directly by DeleteCloningAzureStorageContainerStep's `doStep`
+    // method.
     var userRequest =
         context
             .getInputParameters()
