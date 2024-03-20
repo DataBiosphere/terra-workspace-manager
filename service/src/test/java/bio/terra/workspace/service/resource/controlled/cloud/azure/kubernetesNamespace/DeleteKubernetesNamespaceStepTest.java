@@ -47,7 +47,8 @@ public class DeleteKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
         .thenReturn(Optional.of(mockCoreV1Api));
-    when(mockCoreV1Api.deleteNamespace(resource.getKubernetesNamespace())).thenReturn(mockDeleteNamespaceRequest);
+    when(mockCoreV1Api.deleteNamespace(resource.getKubernetesNamespace()))
+        .thenReturn(mockDeleteNamespaceRequest);
     when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace()))
         .thenReturn(mockReadNamespaceRequest);
     when(mockReadNamespaceRequest.execute())
