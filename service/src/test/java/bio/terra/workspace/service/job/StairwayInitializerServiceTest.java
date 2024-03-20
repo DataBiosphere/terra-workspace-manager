@@ -15,7 +15,7 @@ import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfigurat
 import bio.terra.workspace.common.annotations.Unit;
 import bio.terra.workspace.common.logging.WorkspaceActivityLogHook;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.MdcHook;
+import bio.terra.workspace.common.utils.StairwayLoggingHook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.api.OpenTelemetry;
 import javax.sql.DataSource;
@@ -31,7 +31,7 @@ class StairwayInitializerServiceTest {
 
   @Mock private DataSourceManager dataSourceManager;
   @Mock private StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
-  @Mock private MdcHook mdcHook;
+  @Mock private StairwayLoggingHook stairwayLoggingHook;
   @Mock private WorkspaceActivityLogHook workspaceActivityLogHook;
   @Mock private StairwayComponent stairwayComponent;
   @Mock private FlightBeanBag flightBeanBag;
@@ -43,7 +43,7 @@ class StairwayInitializerServiceTest {
         new StairwayInitializerService(
             dataSourceManager,
             stairwayDatabaseConfiguration,
-            mdcHook,
+            stairwayLoggingHook,
             workspaceActivityLogHook,
             stairwayComponent,
             flightBeanBag,
@@ -72,9 +72,12 @@ class StairwayInitializerServiceTest {
         stairwayOptionsBuilder.getContext(),
         is(flightBeanBag));
     assertThat(
-        "Stairway is initialized with MDC, monitoring, and activity log hooks",
+        "Stairway is initialized with logging, monitoring, and activity log hooks",
         stairwayOptionsBuilder.getHooks(),
-        contains(is(mdcHook), instanceOf(MonitoringHook.class), is(workspaceActivityLogHook)));
+        contains(
+            is(stairwayLoggingHook),
+            instanceOf(MonitoringHook.class),
+            is(workspaceActivityLogHook)));
     assertThat(
         "Stairway is initialized with exception serializer",
         stairwayOptionsBuilder.getExceptionSerializer(),

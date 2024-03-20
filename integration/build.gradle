@@ -61,7 +61,7 @@ dependencies {
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 
     // Use Terra Common Library on client side to retry direct Sam calls
-    implementation("bio.terra:terra-common-lib:0.1.7-SNAPSHOT") {
+    implementation("bio.terra:terra-common-lib:1.0.9-SNAPSHOT") {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
 }

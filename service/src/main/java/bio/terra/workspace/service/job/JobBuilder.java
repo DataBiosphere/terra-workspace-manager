@@ -5,7 +5,6 @@ import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
-import bio.terra.workspace.common.utils.MdcHook;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.exception.InvalidJobIdException;
 import bio.terra.workspace.service.job.exception.InvalidJobParameterException;
@@ -23,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 public class JobBuilder {
   private final JobService jobService;
   private final StairwayComponent stairwayComponent;
-  private final MdcHook mdcHook;
   private final FlightMap jobParameterMap;
   private Class<? extends Flight> flightClass;
   @Nullable private String jobId;
@@ -39,10 +37,9 @@ public class JobBuilder {
   @Nullable private StewardshipType stewardshipType;
   @Nullable private OperationType operationType;
 
-  public JobBuilder(JobService jobService, StairwayComponent stairwayComponent, MdcHook mdcHook) {
+  public JobBuilder(JobService jobService, StairwayComponent stairwayComponent) {
     this.jobService = jobService;
     this.stairwayComponent = stairwayComponent;
-    this.mdcHook = mdcHook;
     this.jobParameterMap = new FlightMap();
   }
 
@@ -177,8 +174,7 @@ public class JobBuilder {
       jobId = stairwayComponent.get().createFlightId();
     }
 
-    // Always add the MDC logging and tracing span parameters for the mdc hook
-    addParameter(MdcHook.MDC_FLIGHT_MAP_KEY, mdcHook.getSerializedCurrentContext());
+    // Always add the tracing span parameters
     addParameter(
         MonitoringHook.SUBMISSION_SPAN_CONTEXT_MAP_KEY,
         MonitoringHook.serializeCurrentTracingContext(jobService.getOpenTelemetry()));

@@ -4,6 +4,8 @@
 // https://docs.spring.io/spring-boot/docs/current/reference/html/dependency-versions.html#appendix.dependency-versions.properties
 project.ext {
   set("snakeyaml.version", "1.33")
+  // opentelemetry-bom must have version >= 1.34.1 for compatibility with terra-common-lib 1.0.9:
+  set("opentelemetry.version", "1.36.0")
 }
 // Library Dependencies, Versions, etc.
 dependencies {
@@ -11,7 +13,7 @@ dependencies {
   constraints {
     implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
   }
-  implementation platform('com.google.cloud:libraries-bom:26.27.0')
+  implementation platform('com.google.cloud:libraries-bom:26.34.0')
 
   implementation 'com.google.cloud:google-cloud-bigquery'
   implementation 'com.google.cloud:google-cloud-bigquerydatatransfer'
@@ -41,25 +43,14 @@ dependencies {
   // hk2 is required to use datarepo client, but not correctly exposed by the client
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2"
 
-  // OpenTelemetry utilities for various HTTP clients
-  var openTelemetryVersion = '1.32.0'
-  implementation "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
-  implementation "io.opentelemetry:opentelemetry-sdk:${openTelemetryVersion}"
-  implementation "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
-  implementation "io.opentelemetry:opentelemetry-sdk-metrics:${openTelemetryVersion}"
-  implementation "io.opentelemetry:opentelemetry-exporter-logging:${openTelemetryVersion}"
-  implementation "io.opentelemetry.semconv:opentelemetry-semconv:1.21.0-alpha"
-  implementation "io.opentelemetry.instrumentation:opentelemetry-spring-webmvc-6.0:${openTelemetryVersion}-alpha"
-  implementation "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:${openTelemetryVersion}"
-  implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot:${openTelemetryVersion}-alpha"
-
-  var gcpOpenTelemetryExporterVersion = '0.25.2'
-  implementation "com.google.cloud.opentelemetry:exporter-trace:${gcpOpenTelemetryExporterVersion}"
-  implementation "com.google.cloud.opentelemetry:exporter-metrics:${gcpOpenTelemetryExporterVersion}"
-
+  // OpenTelemetry
+  // Versioned by Spring Boot Dependency Manager via opentelemetry-bom:
+  implementation 'io.opentelemetry:opentelemetry-api'
+  // Needed for @WithSpan annotations:
+  implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.2.0'
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:0.1.9-SNAPSHOT")
+  implementation("bio.terra:terra-common-lib:1.0.9-SNAPSHOT")
   // sam is not semantically versioned so force the version here
   implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-73bc2d1"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
