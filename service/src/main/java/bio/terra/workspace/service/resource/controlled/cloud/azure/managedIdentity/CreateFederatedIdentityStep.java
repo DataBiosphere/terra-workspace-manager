@@ -23,6 +23,7 @@ import com.azure.resourcemanager.msi.fluent.models.FederatedIdentityCredentialIn
 import com.google.common.annotations.VisibleForTesting;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1DeleteOptions;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import java.util.List;
@@ -160,7 +161,10 @@ public class CreateFederatedIdentityStep implements Step {
   }
 
   private void deleteK8sServiceAccount(CoreV1Api aksApi, String k8sNamespace) throws ApiException {
-    aksApi.deleteNamespacedServiceAccount(ksaName, k8sNamespace).execute();
+    aksApi
+        .deleteNamespacedServiceAccount(ksaName, k8sNamespace)
+        .body(new V1DeleteOptions())
+        .execute();
   }
 
   private void createOrUpdateFederatedCredentials(
