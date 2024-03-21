@@ -1,9 +1,9 @@
 plugins {
     id 'terra-workspace-manager.java-conventions'
-    id 'org.springframework.boot'
-    id 'io.spring.dependency-management'
+
     // Apply the application plugin to add support for building a CLI application in Java
     id 'application'
+
     // Terra Test Runner Plugin.
     id 'bio.terra.test-runner-plugin' version '0.2.0-SNAPSHOT'
 }
@@ -64,4 +64,7 @@ dependencies {
     implementation("bio.terra:terra-common-lib:1.1.0-SNAPSHOT") {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
+    // Needed for TCL, but if we reorganize our dependencies so that the Spring Boot dependency manager
+    // is used, then we should be able to remove this (Spring Boot dependency manager pulls in opentelemetry-bom):
+    implementation 'io.opentelemetry:opentelemetry-api:1.36.0'
 }
