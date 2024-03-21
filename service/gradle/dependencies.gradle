@@ -88,7 +88,7 @@ dependencies {
   implementation group: "org.springframework.retry", name: "spring-retry"
   implementation group: "org.springframework.security", name: "spring-security-oauth2-jose"
 
-  implementation group: "io.kubernetes", name: "client-java", version: "18.0.0"
+  implementation group: "io.kubernetes", name: "client-java", version: "20.0.1"
 
   implementation group: "io.micrometer", name: "micrometer-registry-prometheus"
 
