@@ -1,9 +1,9 @@
 plugins {
     id 'terra-workspace-manager.java-conventions'
-
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
     // Apply the application plugin to add support for building a CLI application in Java
     id 'application'
-
     // Terra Test Runner Plugin.
     id 'bio.terra.test-runner-plugin' version '0.2.0-SNAPSHOT'
 }
@@ -61,7 +61,7 @@ dependencies {
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 
     // Use Terra Common Library on client side to retry direct Sam calls
-    implementation("bio.terra:terra-common-lib:1.0.9-SNAPSHOT") {
+    implementation("bio.terra:terra-common-lib:1.1.0-SNAPSHOT") {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
 }
