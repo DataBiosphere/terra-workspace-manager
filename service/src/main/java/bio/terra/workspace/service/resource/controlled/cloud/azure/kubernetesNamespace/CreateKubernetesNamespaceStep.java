@@ -66,9 +66,12 @@ public class CreateKubernetesNamespaceStep implements Step {
         kubernetesClientProvider.createCoreApiClient(azureCloudContext, clusterResource);
 
     try {
-      var namespace =
-          new V1Namespace().metadata(new V1ObjectMeta().name(resource.getKubernetesNamespace()));
-      coreApiClient.createNamespace(namespace).execute();
+      coreApiClient.createNamespace(
+          new V1Namespace().metadata(new V1ObjectMeta().name(resource.getKubernetesNamespace())),
+          null,
+          null,
+          null,
+          null);
     } catch (ApiException e) {
       return kubernetesClientProvider.stepResultFromException(e, HttpStatus.CONFLICT);
     }
@@ -93,7 +96,8 @@ public class CreateKubernetesNamespaceStep implements Step {
                         workspaceId.toString()));
 
     try {
-      coreApiClient.deleteNamespace(resource.getKubernetesNamespace()).execute();
+      coreApiClient.deleteNamespace(
+          resource.getKubernetesNamespace(), null, null, null, null, null, null);
     } catch (ApiException e) {
       return kubernetesClientProvider.stepResultFromException(e, HttpStatus.NOT_FOUND);
     }

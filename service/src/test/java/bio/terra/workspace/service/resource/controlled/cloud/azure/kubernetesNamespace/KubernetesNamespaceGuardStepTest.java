@@ -31,7 +31,6 @@ public class KubernetesNamespaceGuardStepTest extends BaseMockitoStrictStubbingT
   @Mock private FlightContext mockFlightContext;
   @Mock private KubernetesClientProvider mockKubernetesClientProvider;
   @Mock private CoreV1Api mockCoreV1Api;
-  @Mock private CoreV1Api.APIreadNamespaceRequest mockReadNamespaceRequest;
 
   @Test
   void testDoStepSuccess() throws InterruptedException, ApiException {
@@ -47,9 +46,7 @@ public class KubernetesNamespaceGuardStepTest extends BaseMockitoStrictStubbingT
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
         .thenReturn(Optional.of(mockCoreV1Api));
-    when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace()))
-        .thenReturn(mockReadNamespaceRequest);
-    when(mockReadNamespaceRequest.execute())
+    when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace(), null))
         .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "not found"));
     when(mockKubernetesClientProvider.stepResultFromException(any(), any())).thenCallRealMethod();
 
@@ -74,9 +71,8 @@ public class KubernetesNamespaceGuardStepTest extends BaseMockitoStrictStubbingT
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
         .thenReturn(Optional.of(mockCoreV1Api));
-    when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace()))
-        .thenReturn(mockReadNamespaceRequest);
-    when(mockReadNamespaceRequest.execute()).thenReturn(new V1Namespace());
+    when(mockCoreV1Api.readNamespace(resource.getKubernetesNamespace(), null))
+        .thenReturn(new V1Namespace());
 
     var result =
         new KubernetesNamespaceGuardStep(workspaceId, mockKubernetesClientProvider, resource)
