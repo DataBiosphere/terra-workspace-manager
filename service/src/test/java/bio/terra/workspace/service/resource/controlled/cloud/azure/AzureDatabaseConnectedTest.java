@@ -229,7 +229,9 @@ public class AzureDatabaseConnectedTest extends BaseAzureConnectedTest {
     var notFound =
         assertThrows(
             ApiException.class,
-            () -> apiClient.readNamespace(namespace.getKubernetesNamespace()).execute());
+            () -> {
+              apiClient.readNamespace(namespace.getKubernetesNamespace(), null);
+            });
     assertEquals(404, notFound.getCode());
 
     var managedIdentity =

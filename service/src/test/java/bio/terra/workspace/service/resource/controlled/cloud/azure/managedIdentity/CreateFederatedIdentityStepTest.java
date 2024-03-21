@@ -3,6 +3,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdent
 import static bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetFederatedIdentityStep.FEDERATED_IDENTITY_EXISTS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -55,11 +56,6 @@ public class CreateFederatedIdentityStepTest extends BaseMockitoStrictStubbingTe
           .build();
   @Mock private MsiManager mockMsiManager;
   @Mock private CoreV1Api mockCoreV1Api;
-
-  @Mock
-  private CoreV1Api.APIcreateNamespacedServiceAccountRequest
-      mockCreateNamespacedServiceAccountRequest;
-
   private final String oidcIssuer = UUID.randomUUID().toString();
   private final String uamiClientId = UUID.randomUUID().toString();
   @Mock private Identities mockIdentities;
@@ -76,9 +72,8 @@ public class CreateFederatedIdentityStepTest extends BaseMockitoStrictStubbingTe
     setupMocks();
 
     when(mockCoreV1Api.createNamespacedServiceAccount(
-            eq(k8sNamespace), serviceAccountCaptor.capture()))
-        .thenReturn(mockCreateNamespacedServiceAccountRequest);
-    when(mockCreateNamespacedServiceAccountRequest.execute()).thenReturn(null);
+            eq(k8sNamespace), serviceAccountCaptor.capture(), any(), any(), any(), any()))
+        .thenReturn(null);
 
     var step =
         new CreateFederatedIdentityStep(
@@ -161,9 +156,7 @@ public class CreateFederatedIdentityStepTest extends BaseMockitoStrictStubbingTe
     setupMocks();
 
     when(mockCoreV1Api.createNamespacedServiceAccount(
-            eq(k8sNamespace), serviceAccountCaptor.capture()))
-        .thenReturn(mockCreateNamespacedServiceAccountRequest);
-    when(mockCreateNamespacedServiceAccountRequest.execute())
+            eq(k8sNamespace), serviceAccountCaptor.capture(), any(), any(), any(), any()))
         .thenThrow(new ApiException(httpStatus.value(), httpStatus.name()));
 
     var step =

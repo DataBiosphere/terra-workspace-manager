@@ -157,14 +157,12 @@ public class CreateFederatedIdentityStep implements Step {
                     .name(ksaName)
                     .namespace(k8sNamespace));
 
-    aksApi.createNamespacedServiceAccount(k8sNamespace, k8sServiceAccount).execute();
+    aksApi.createNamespacedServiceAccount(k8sNamespace, k8sServiceAccount, null, null, null, null);
   }
 
   private void deleteK8sServiceAccount(CoreV1Api aksApi, String k8sNamespace) throws ApiException {
-    aksApi
-        .deleteNamespacedServiceAccount(ksaName, k8sNamespace)
-        .body(new V1DeleteOptions())
-        .execute();
+    aksApi.deleteNamespacedServiceAccount(
+        ksaName, k8sNamespace, null, null, null, null, null, new V1DeleteOptions());
   }
 
   private void createOrUpdateFederatedCredentials(

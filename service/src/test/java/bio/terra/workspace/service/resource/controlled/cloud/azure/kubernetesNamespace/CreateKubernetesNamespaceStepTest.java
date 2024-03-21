@@ -37,8 +37,6 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
   @Mock private FlightContext mockFlightContext;
   @Mock private KubernetesClientProvider mockKubernetesClientProvider;
   @Mock private CoreV1Api mockCoreV1Api;
-  @Mock private CoreV1Api.APIcreateNamespaceRequest mockCreateNamespaceRequest;
-  @Mock private CoreV1Api.APIdeleteNamespaceRequest mockDeleteNamespaceRequest;
   @Mock private CrlService mockCrlService;
 
   @Test
@@ -54,8 +52,6 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
             .build();
     var aksClusterResource =
         new ApiAzureLandingZoneDeployedResource().resourceId("path/to/aksCluster");
-    var namespace =
-        new V1Namespace().metadata(new V1ObjectMeta().name(resource.getKubernetesNamespace()));
 
     when(mockAzureCloudContext.getAzureTenantId()).thenReturn("tenant");
     when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn("sub");
@@ -65,7 +61,6 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
     when(mockKubernetesClientProvider.createCoreApiClient(
             mockAzureCloudContext, aksClusterResource))
         .thenReturn(mockCoreV1Api);
-    when(mockCoreV1Api.createNamespace(namespace)).thenReturn(mockCreateNamespaceRequest);
 
     var result =
         new CreateKubernetesNamespaceStep(
@@ -74,7 +69,13 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
 
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
 
-    verify(mockCreateNamespaceRequest).execute();
+    verify(mockCoreV1Api)
+        .createNamespace(
+            new V1Namespace().metadata(new V1ObjectMeta().name(resource.getKubernetesNamespace())),
+            null,
+            null,
+            null,
+            null);
 
     verify(mockCrlService)
         .recordAzureCleanup(
@@ -100,8 +101,6 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
             .build();
     var aksClusterResource =
         new ApiAzureLandingZoneDeployedResource().resourceId("path/to/aksCluster");
-    var namespace =
-        new V1Namespace().metadata(new V1ObjectMeta().name(resource.getKubernetesNamespace()));
 
     when(mockAzureCloudContext.getAzureTenantId()).thenReturn("tenant");
     when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn("sub");
@@ -111,8 +110,12 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
     when(mockKubernetesClientProvider.createCoreApiClient(
             mockAzureCloudContext, aksClusterResource))
         .thenReturn(mockCoreV1Api);
-    when(mockCoreV1Api.createNamespace(namespace)).thenReturn(mockCreateNamespaceRequest);
-    when(mockCreateNamespaceRequest.execute())
+    when(mockCoreV1Api.createNamespace(
+            new V1Namespace().metadata(new V1ObjectMeta().name(resource.getKubernetesNamespace())),
+            null,
+            null,
+            null,
+            null))
         .thenThrow(new ApiException(HttpStatus.CONFLICT.value(), "message"));
     when(mockKubernetesClientProvider.stepResultFromException(any(), any())).thenCallRealMethod();
 
@@ -148,8 +151,6 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
         .thenReturn(Optional.of(mockCoreV1Api));
-    when(mockCoreV1Api.deleteNamespace(resource.getKubernetesNamespace()))
-        .thenReturn(mockDeleteNamespaceRequest);
 
     var result =
         new CreateKubernetesNamespaceStep(
@@ -158,7 +159,8 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
 
     assertThat(result.getStepStatus(), equalTo(StepStatus.STEP_RESULT_SUCCESS));
 
-    verify(mockDeleteNamespaceRequest).execute();
+    verify(mockCoreV1Api)
+        .deleteNamespace(resource.getKubernetesNamespace(), null, null, null, null, null, null);
   }
 
   @Test
@@ -175,9 +177,8 @@ public class CreateKubernetesNamespaceStepTest extends BaseMockitoStrictStubbing
 
     when(mockKubernetesClientProvider.createCoreApiClient(mockAzureCloudContext, workspaceId))
         .thenReturn(Optional.of(mockCoreV1Api));
-    when(mockCoreV1Api.deleteNamespace(resource.getKubernetesNamespace()))
-        .thenReturn(mockDeleteNamespaceRequest);
-    when(mockDeleteNamespaceRequest.execute())
+    when(mockCoreV1Api.deleteNamespace(
+            resource.getKubernetesNamespace(), null, null, null, null, null, null))
         .thenThrow(new ApiException(HttpStatus.NOT_FOUND.value(), "message"));
     when(mockKubernetesClientProvider.stepResultFromException(any(), any()))
         .thenCallRealMethod()

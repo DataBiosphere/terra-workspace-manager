@@ -40,7 +40,7 @@ public class KubernetesNamespaceGuardStep implements Step {
             .orElseThrow(() -> new RuntimeException("No shared cluster found"));
 
     try {
-      var existing = coreApiClient.readNamespace(resource.getKubernetesNamespace()).execute();
+      var existing = coreApiClient.readNamespace(resource.getKubernetesNamespace(), null);
       if (existing != null) {
         return new StepResult(
             StepStatus.STEP_RESULT_FAILURE_FATAL,
