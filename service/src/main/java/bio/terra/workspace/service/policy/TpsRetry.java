@@ -7,6 +7,8 @@ import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
+
+import jakarta.ws.rs.ProcessingException;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,6 +102,9 @@ public class TpsRetry {
         } else {
           throw ex;
         }
+      } catch (ProcessingException ws) {
+        logger.info("TpsRetry: caught retry-able ProcessingException: ", ws);
+        sleepOrTimeoutBeforeRetrying(ws);
       }
     }
   }
@@ -130,10 +135,10 @@ public class TpsRetry {
    * 10, 20, 30, 30, 30... seconds.
    *
    * @param previousException The error Tps threw
-   * @throws ApiException InterruptedException
+   * @throws Exception
    */
-  private void sleepOrTimeoutBeforeRetrying(ApiException previousException)
-      throws ApiException, InterruptedException {
+  private void sleepOrTimeoutBeforeRetrying(Exception previousException)
+      throws Exception {
     if (operationTimeout.minus(retryDuration).isBefore(now())) {
       logger.error("TpsRetry: operation timed out after " + operationTimeout.toString());
       // If we timed out, throw the error from Tps that caused us to need to retry.
