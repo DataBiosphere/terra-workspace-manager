@@ -3,12 +3,11 @@ package bio.terra.workspace.service.policy;
 import static java.time.Instant.now;
 
 import bio.terra.policy.client.ApiException;
+import jakarta.ws.rs.ProcessingException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
-
-import jakarta.ws.rs.ProcessingException;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
