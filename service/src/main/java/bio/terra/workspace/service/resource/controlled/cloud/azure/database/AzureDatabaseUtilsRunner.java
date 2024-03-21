@@ -440,7 +440,7 @@ public class AzureDatabaseUtilsRunner {
 
       try {
         logger.info("Creating secret: {}", secretDefinition.getMetadata());
-        aksApi.createNamespacedSecret(namespace, secretDefinition, null, null, null, null);
+        aksApi.createNamespacedSecret(namespace, secretDefinition).execute();
       } catch (ApiException e) {
         var status = Optional.ofNullable(HttpStatus.resolve(e.getCode()));
         // If the secret already exists, assume this is a retry.
@@ -458,7 +458,7 @@ public class AzureDatabaseUtilsRunner {
       CoreV1Api aksApi, Map<String, String> secretStringData, String secretName, String namespace) {
     if (!secretStringData.isEmpty()) {
       try {
-        aksApi.deleteNamespacedSecret(secretName, namespace, null, null, null, null, null, null);
+        aksApi.deleteNamespacedSecret(secretName, namespace).execute();
       } catch (ApiException e) {
         logger.warn("Failed to delete azure database utils secret", e);
       }
@@ -467,7 +467,7 @@ public class AzureDatabaseUtilsRunner {
 
   private void deleteContainer(CoreV1Api aksApi, String podName, String namespace) {
     try {
-      aksApi.deleteNamespacedPod(podName, namespace, null, null, null, null, null, null);
+      aksApi.deleteNamespacedPod(podName, namespace).execute();
     } catch (ApiException e) {
       logger.warn("Failed to delete azure database utils pod", e);
     }
@@ -494,7 +494,7 @@ public class AzureDatabaseUtilsRunner {
       CoreV1Api aksApi, String podName, Integer tailLines, UUID workspaceId, String namespace) {
     var logContext = Map.of("workspaceId", workspaceId, "podName", podName);
     try {
-      var pod = aksApi.readNamespacedPod(podName, namespace, null);
+      var pod = aksApi.readNamespacedPod(podName, namespace).execute();
       logger.info("Pod final status: {}", pod.getStatus(), logContext);
 
       try (InputStream logs =
@@ -519,7 +519,7 @@ public class AzureDatabaseUtilsRunner {
   private Optional<String> getPodStatus(CoreV1Api aksApi, String podName, String namespace) {
     try {
       var status =
-          Optional.ofNullable(aksApi.readNamespacedPod(podName, namespace, null).getStatus())
+          Optional.ofNullable(aksApi.readNamespacedPod(podName, namespace).execute().getStatus())
               .map(V1PodStatus::getPhase);
       logger.info("Status = {} for azure database utils pod = {}", status, podName);
       return status;
@@ -540,7 +540,7 @@ public class AzureDatabaseUtilsRunner {
       throws ApiException {
     try {
       logger.info("Creating pod {}", podDefinition);
-      aksApi.createNamespacedPod(namespace, podDefinition, null, null, null, null);
+      aksApi.createNamespacedPod(namespace, podDefinition).execute();
     } catch (ApiException e) {
       var status = Optional.ofNullable(HttpStatus.resolve(e.getCode()));
       // If the pod already exists, assume this is a retry, monitor the already running pod
