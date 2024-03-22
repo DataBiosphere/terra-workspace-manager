@@ -79,6 +79,7 @@ public class AzureResourceStateFailureTest extends BaseSpringBootUnitTest {
                 .userSubjectId(USER_REQUEST.getSubjectId()));
     when(mockSamService().getUserEmailFromSamAndRethrowOnInterrupt(any()))
         .thenReturn(USER_REQUEST.getEmail());
+    when(mockSamService().getWsmServiceAccountToken()).thenReturn("fake");
     when(mockLandingZoneService.getLandingZonesByBillingProfile(any(), any()))
         .thenReturn(
             List.of(
