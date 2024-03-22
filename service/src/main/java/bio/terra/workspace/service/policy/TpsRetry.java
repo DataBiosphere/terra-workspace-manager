@@ -137,7 +137,7 @@ public class TpsRetry {
    * @throws E, InterruptedException
    */
   private <E extends Exception> void sleepOrTimeoutBeforeRetrying(E previousException)
-          throws E, InterruptedException {
+      throws E, InterruptedException {
     if (operationTimeout.minus(retryDuration).isBefore(now())) {
       logger.error("TpsRetry: operation timed out after " + operationTimeout);
       // If we timed out, throw the error from Tps that caused us to need to retry.
