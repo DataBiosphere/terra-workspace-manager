@@ -1,4 +1,4 @@
-package bio.terra.workspace.poc.flightGenerator;
+package bio.terra.workspace.common.flightGenerator;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -11,16 +11,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
- * This class is a proxy for a step method invocation. It is used to capture the method and arguments
- * of a step invocation and to add the step to the flight.
+ * This class is a proxy for a step method invocation. It is used to capture the method and
+ * arguments of a step invocation and to add the step to the flight.
  */
 public class StepInvocationHandler implements InvocationHandler, Step {
   private final int stepId;
   private final Object target;
   private final FlightGenerator flightGenerator;
   private Method method = null;
+  private Optional<Method> undoMethod = Optional.empty();
   private Object[] args;
 
   public StepInvocationHandler(FlightGenerator flightGenerator, Object target, int stepId) {
@@ -37,6 +39,7 @@ public class StepInvocationHandler implements InvocationHandler, Step {
    * This method is called when a method is invoked on the step proxy during instantiation of the
    * flight. It records the method and arguments, adds the step to the flight, and returns a proxy
    * for the return value.
+   *
    * @return a proxy for the return value of the method or null if the method returns void
    */
   @Override
@@ -53,24 +56,32 @@ public class StepInvocationHandler implements InvocationHandler, Step {
     this.flightGenerator.addStep(this);
     this.method = method;
     this.args = args;
+    this.undoMethod = findUndoMethod();
     if (method.getReturnType().equals(Void.TYPE)) {
       return null;
     } else {
-      return Proxy.newProxyInstance(getClass().getClassLoader(),
-          new Class[]{method.getReturnType()}, new StepResultInvocationHandler(stepId));
+      return Proxy.newProxyInstance(
+          getClass().getClassLoader(),
+          new Class[] {method.getReturnType()},
+          new StepResultInvocationHandler(stepId));
     }
   }
 
-  /**
-   * Do the step method invocation. If the method returns a value, store it in the working map.
-   */
+  /** Do the step method invocation. If the method returns a value, store it in the working map. */
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
       var inputs = getInputs(context);
       var results = this.method.invoke(this.target, inputs);
       storeOutputs(context, results);
-    } catch (IllegalAccessException | InvocationTargetException e) {
+    } catch (InvocationTargetException e) {
+      if (e.getTargetException() instanceof Exception) {
+        return new StepResult(
+            StepStatus.STEP_RESULT_FAILURE_FATAL, (Exception) e.getTargetException());
+      } else {
+        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      }
+    } catch (Exception e) {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
     }
     return StepResult.getStepResultSuccess();
@@ -87,9 +98,15 @@ public class StepInvocationHandler implements InvocationHandler, Step {
 
     Object[] inputs = new Object[args.length];
     for (int i = 0; i < args.length; i++) {
-      if (Proxy.isProxyClass(args[i].getClass()) && Proxy.getInvocationHandler(args[i]) instanceof StepResultInvocationHandler) {
-        var inputStepIndex = ((StepResultInvocationHandler) Proxy.getInvocationHandler(args[i])).stepIndex();
-        inputs[i] = FlightUtils.getRequired(context.getWorkingMap(), outputKey(inputStepIndex), method.getParameters()[i].getType());
+      if (Proxy.isProxyClass(args[i].getClass())
+          && Proxy.getInvocationHandler(args[i]) instanceof StepResultInvocationHandler) {
+        var inputStepIndex =
+            ((StepResultInvocationHandler) Proxy.getInvocationHandler(args[i])).stepIndex();
+        inputs[i] =
+            FlightUtils.getRequired(
+                context.getWorkingMap(),
+                outputKey(inputStepIndex),
+                method.getParameters()[i].getType());
       } else {
         inputs[i] = args[i];
       }
@@ -101,30 +118,40 @@ public class StepInvocationHandler implements InvocationHandler, Step {
     context.getWorkingMap().put(outputKey(stepId), results);
   }
 
-  /**
-   * Undo the step method invocation. If an undo method is found, invoke it.
-   */
+  /** Undo the step method invocation. If an undo method is found, invoke it. */
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
-    var undoMethod = findUndoMethod();
-    if (undoMethod == null) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, new RuntimeException("Undo method not found"));
-    }
-    try {
-      var inputs = getInputs(context);
-      undoMethod.invoke(this.target, inputs);
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
-    }
-    return StepResult.getStepResultSuccess();
+    return undoMethod
+        .map(
+            undo -> {
+              try {
+                var inputs = getInputs(context);
+                undo.invoke(this.target, inputs);
+              } catch (IllegalAccessException | InvocationTargetException e) {
+                return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+              }
+              return StepResult.getStepResultSuccess();
+            })
+        .orElseGet(StepResult::getStepResultSuccess);
   }
 
-  private Method findUndoMethod() {
-    var methodName = "undo_" + method.getName();
-    try {
-      return target.getClass().getMethod(methodName, method.getParameterTypes());
-    } catch (NoSuchMethodException e) {
-      return null;
+  private Optional<Method> findUndoMethod() {
+    var undoMethodAnnotation = method.getAnnotation(UndoMethod.class);
+    if (undoMethodAnnotation != null) {
+      try {
+        return Optional.of(
+            target.getClass().getMethod(undoMethodAnnotation.value(), method.getParameterTypes()));
+      } catch (NoSuchMethodException e) {
+        throw new IllegalStateException("Undo method not found", e);
+      }
+    } else {
+      if (method.getAnnotation(NoUndo.class) != null) {
+        return Optional.empty();
+      } else {
+        throw new IllegalStateException(
+            "Undo method not specified, either use @UndoMethod or @NoUndo annotation on method "
+                + method.toGenericString());
+      }
     }
   }
 }

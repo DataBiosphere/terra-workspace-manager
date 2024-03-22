@@ -1,4 +1,4 @@
-package bio.terra.workspace.poc;
+package bio.terra.workspace.common.flightGenerator;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 

@@ -1,4 +1,4 @@
-package bio.terra.workspace.poc;
+package bio.terra.workspace.common.flightGenerator;
 
 import java.util.ArrayList;
 import java.util.List;

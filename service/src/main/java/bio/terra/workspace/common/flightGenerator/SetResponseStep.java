@@ -1,4 +1,4 @@
-package bio.terra.workspace.poc.flightGenerator;
+package bio.terra.workspace.common.flightGenerator;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.Step;
@@ -15,7 +15,8 @@ public class SetResponseStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    var response = context.getWorkingMap().getRaw(StepInvocationHandler.outputKey(responseStepIndex));
+    var response =
+        context.getWorkingMap().getRaw(StepInvocationHandler.outputKey(responseStepIndex));
     context.getWorkingMap().putRaw(JobMapKeys.RESPONSE.getKeyName(), response);
     return StepResult.getStepResultSuccess();
   }

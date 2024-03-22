@@ -1,11 +1,10 @@
-package bio.terra.workspace.poc;
+package bio.terra.workspace.common.flightGenerator;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 public class TestResultImpl implements TestResult {
   private int x;
+
   public TestResultImpl() {
     this.x = 0;
   }
@@ -38,8 +37,6 @@ public class TestResultImpl implements TestResult {
 
   @Override
   public String toString() {
-    return "TestResultImpl{" +
-        "x=" + x +
-        '}';
+    return "TestResultImpl{" + "x=" + x + '}';
   }
 }
