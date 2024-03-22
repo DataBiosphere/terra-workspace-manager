@@ -51,6 +51,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +117,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             body.getCommon(),
             landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+                buildWsmSaUserRequest(), workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DISK);
     Workspace workspace =
@@ -153,7 +154,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             body.getCommon(),
             landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+                buildWsmSaUserRequest(), workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DISK);
     workspaceService.validateMcWorkspaceAndAction(
@@ -251,7 +252,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             body.getCommon(),
             landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+                buildWsmSaUserRequest(), workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
     Workspace workspace =
@@ -287,7 +288,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             body.getCommon(),
             landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+                buildWsmSaUserRequest(), workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_VM);
     Workspace workspace =
@@ -382,7 +383,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             body.getCommon(),
             landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+                buildWsmSaUserRequest(), workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
     Workspace workspace =
@@ -671,7 +672,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             body.getCommon(),
             landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+                buildWsmSaUserRequest(), workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DATABASE);
     workspaceService.validateMcWorkspaceAndAction(
@@ -732,7 +733,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceUuid,
             body.getCommon(),
             landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+                buildWsmSaUserRequest(), workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     workspaceService.validateMcWorkspaceAndAction(
@@ -837,7 +838,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             workspaceId,
             body.getCommon(),
             landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceId)),
+                buildWsmSaUserRequest(), workspaceService.getWorkspace(workspaceId)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DATABASE);
     workspaceService.validateMcWorkspaceAndAction(
@@ -981,5 +982,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     var result = landingZoneApiDispatch.listAzureLandingZoneResources(wsmToken, landingZoneId);
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  private AuthenticatedUserRequest buildWsmSaUserRequest() {
+    return new AuthenticatedUserRequest(
+        null, null, Optional.of(samService.getWsmServiceAccountToken()));
   }
 }
