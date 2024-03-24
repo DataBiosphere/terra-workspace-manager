@@ -2,6 +2,7 @@ package bio.terra.workspace.common.flightGenerator;
 
 import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.RetryRule;
 import java.lang.reflect.Proxy;
 
 public class FlightGenerator extends Flight {
@@ -56,10 +57,8 @@ public class FlightGenerator extends Flight {
   /**
    * Add a step to the flight. This is a callback from the StepInvocationHandler when a step
    * function is invoked.
-   *
-   * @param stepInvocationHandler
    */
-  void addStep(StepInvocationHandler stepInvocationHandler) {
-    super.addStep(stepInvocationHandler);
+  void addStep(StepInvocationHandler stepInvocationHandler, RetryRule retryRule) {
+    super.addStep(stepInvocationHandler, retryRule);
   }
 }

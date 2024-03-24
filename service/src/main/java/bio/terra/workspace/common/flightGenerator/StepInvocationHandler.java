@@ -1,17 +1,25 @@
 package bio.terra.workspace.common.flightGenerator;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleExponentialBackoff;
+import bio.terra.stairway.RetryRuleFixedInterval;
+import bio.terra.stairway.RetryRuleNone;
+import bio.terra.stairway.RetryRuleRandomBackoff;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This class is a proxy for a step method invocation. It is used to capture the method and
@@ -53,10 +61,11 @@ public class StepInvocationHandler implements InvocationHandler, Step {
       return method.invoke(this, args);
     }
 
-    this.flightGenerator.addStep(this);
     this.method = method;
     this.args = args;
     this.undoMethod = findUndoMethod();
+    this.flightGenerator.addStep(this, determineRetryRule(method));
+
     if (method.getReturnType().equals(Void.TYPE)) {
       return null;
     } else {
@@ -64,6 +73,34 @@ public class StepInvocationHandler implements InvocationHandler, Step {
           getClass().getClassLoader(),
           new Class[] {method.getReturnType()},
           new StepResultInvocationHandler(stepId));
+    }
+  }
+
+  private RetryRule determineRetryRule(Method stepMethod) {
+    var retryRules = Arrays.stream(stepMethod.getAnnotations()).flatMap(a -> annotationToRetryRule(a, true)).toList();
+    if (retryRules.size() == 1) {
+      return retryRules.get(0);
+    } else {
+      throw new InvalidRetryAnnotationException("1 and only 1 retry rule annotation is allowed on a step method. Found %d on %s".formatted(retryRules.size(), stepMethod.toGenericString()));
+    }
+  }
+
+  private Stream<RetryRule> annotationToRetryRule(Annotation annotation, boolean recurse) {
+    if (annotation instanceof FixedIntervalRetry retry) {
+      return Stream.of(new RetryRuleFixedInterval(retry.intervalSeconds(), retry.maxCount()));
+    } else if (annotation instanceof ExponentialBackoffRetry retry) {
+      return Stream.of(new RetryRuleExponentialBackoff(retry.initialIntervalSeconds(), retry.maxIntervalSeconds(), retry.maxOperationTimeSeconds()));
+    } else if (annotation instanceof RandomBackoffRetry retry) {
+      return Stream.of(new RetryRuleRandomBackoff(retry.operationIncrementMilliseconds(), retry.maxConcurrency(), retry.maxCount()));
+    } else if (annotation instanceof NoRetry) {
+      return Stream.of(RetryRuleNone.getRetryRuleNone());
+    } else {
+      if (recurse) {
+        return Arrays.stream(annotation.annotationType().getAnnotations())
+            .flatMap(a -> annotationToRetryRule(a, false));
+      } else {
+        return Stream.empty();
+      }
     }
   }
 
@@ -142,13 +179,13 @@ public class StepInvocationHandler implements InvocationHandler, Step {
         return Optional.of(
             target.getClass().getMethod(undoMethodAnnotation.value(), method.getParameterTypes()));
       } catch (NoSuchMethodException e) {
-        throw new IllegalStateException("Undo method not found", e);
+        throw new InvalidUndoAnnotationException("Undo method not found", e);
       }
     } else {
       if (method.getAnnotation(NoUndo.class) != null) {
         return Optional.empty();
       } else {
-        throw new IllegalStateException(
+        throw new InvalidUndoAnnotationException(
             "Undo method not specified, either use @UndoMethod or @NoUndo annotation on method "
                 + method.toGenericString());
       }

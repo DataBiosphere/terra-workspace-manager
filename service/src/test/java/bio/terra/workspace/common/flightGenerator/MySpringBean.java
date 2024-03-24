@@ -1,10 +1,10 @@
 package bio.terra.workspace.common.flightGenerator;
 
 public interface MySpringBean {
-  @NoUndo
+  @NoUndo @NoRetry
   void doSomething();
 
-  @UndoMethod("testUndo")
+  @UndoMethod("testUndo") @NoRetry
   void throwException();
 
   void testUndo();
