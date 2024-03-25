@@ -3,6 +3,7 @@ package bio.terra.workspace.service.policy;
 import static java.time.Instant.now;
 
 import bio.terra.policy.client.ApiException;
+import jakarta.ws.rs.ProcessingException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.time.Instant;
@@ -100,6 +101,9 @@ public class TpsRetry {
         } else {
           throw ex;
         }
+      } catch (ProcessingException ws) {
+        logger.info("TpsRetry: caught retry-able ProcessingException: ", ws);
+        sleepOrTimeoutBeforeRetrying(ws);
       }
     }
   }
@@ -130,12 +134,12 @@ public class TpsRetry {
    * 10, 20, 30, 30, 30... seconds.
    *
    * @param previousException The error Tps threw
-   * @throws ApiException InterruptedException
+   * @throws E, InterruptedException
    */
-  private void sleepOrTimeoutBeforeRetrying(ApiException previousException)
-      throws ApiException, InterruptedException {
+  private <E extends Exception> void sleepOrTimeoutBeforeRetrying(E previousException)
+      throws E, InterruptedException {
     if (operationTimeout.minus(retryDuration).isBefore(now())) {
-      logger.error("TpsRetry: operation timed out after " + operationTimeout.toString());
+      logger.error("TpsRetry: operation timed out after " + operationTimeout);
       // If we timed out, throw the error from Tps that caused us to need to retry.
       throw previousException;
     }
