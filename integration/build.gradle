@@ -1,5 +1,5 @@
 plugins {
-    id 'terra-workspace-manager.java-conventions'
+    id 'terra-workspace-manager.java-spring-conventions'
 
     // Apply the application plugin to add support for building a CLI application in Java
     id 'application'
@@ -9,59 +9,29 @@ plugins {
 }
 
 dependencies {
-    ext {
-        apacheMath = '3.6.1'
-        guava = "33.1.0-jre"
-        jackson = "2.17.0"
-        jersey = "3.1.5"
-        kubernetesClient = "20.0.1"
-        logback = "1.5.3"
-        slf4j = "2.0.12"
-        hamcrest = "2.2"
-        jUnit = "5.10.2"
-
-        testRunnerVersion = "0.2.0-SNAPSHOT"
-    }
-    implementation group: 'org.apache.commons', name: 'commons-math3', version: "${apacheMath}"
-    implementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "${jUnit}"
-    implementation group: 'com.google.guava', name: 'guava', version: "${guava}"
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jackson}"
-    implementation "org.glassfish.jersey.inject:jersey-hk2:${jersey}"
-    implementation "io.kubernetes:client-java:${kubernetesClient}"
-    implementation "ch.qos.logback:logback-classic:${logback}"
-    implementation "org.slf4j:slf4j-api:${slf4j}"
-    implementation "org.hamcrest:hamcrest:${hamcrest}"
-
-    // Google dependencies
-    constraints {
-        implementation 'com.google.guava:guava:33.1.0-jre'
-        implementation 'org.json:json:20240303' // security vulnerability
-    }
+    // Google dependencies versioned by bom
     implementation platform('com.google.cloud:libraries-bom:26.34.0')
-    implementation "com.google.api-client:google-api-client:2.4.0"
-    implementation "com.google.apis:google-api-services-container:v1-rev20240214-2.0.0"
-    implementation "com.google.apis:google-api-services-iam:v1-rev20230914-2.0.0"
-    implementation "com.google.apis:google-api-services-notebooks:v1-rev20231019-2.0.0"
-    implementation "com.google.apis:google-api-services-dataproc:v1-rev20240303-2.0.0"
-    implementation "com.google.auth:google-auth-library-oauth2-http"
+    implementation "com.google.api-client:google-api-client"
     implementation "com.google.cloud:google-cloud-bigquery"
     implementation "com.google.cloud:google-cloud-storage"
 
-    // Data Repo client library
-    implementation "bio.terra:datarepo-client:2.13.0-SNAPSHOT"
-    implementation gradle.librarySwaggerAnnotations
+    implementation "com.google.apis:google-api-services-iam:v1-rev20230914-2.0.0"
+    implementation "com.google.apis:google-api-services-notebooks:v1-rev20231019-2.0.0"
+    implementation "com.google.apis:google-api-services-dataproc:v1-rev20240303-2.0.0"
 
     // Workspace Manager client library
     implementation project(":client")
 
     // Sam client library
-    implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:0.1-2cd8969"
+    implementation "org.broadinstitute.dsde.workbench:sam-client_2.13:0.1-73bc2d1"
 
     // Terra Test Runner Library
-    implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
+    implementation 'bio.terra:terra-test-runner:0.2.0-SNAPSHOT'
 
     // Use Terra Common Library on client side to retry direct Sam calls
-    implementation("bio.terra:terra-common-lib:1.0.9-SNAPSHOT") {
+    implementation("bio.terra:terra-common-lib:1.1.1-SNAPSHOT") {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
+
+    implementation 'org.springframework.boot:spring-boot-starter-test'
 }

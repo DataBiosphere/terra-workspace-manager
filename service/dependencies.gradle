@@ -1,24 +1,11 @@
-// Transitive dependencies pulled in via Spring dependency management need to be
-// modified via dependency-management plugin settings. Otherwise, the plugin
-// will just clobber versions. See the list of modifiable versions here:
-// https://docs.spring.io/spring-boot/docs/current/reference/html/dependency-versions.html#appendix.dependency-versions.properties
-project.ext {
-  set("snakeyaml.version", "1.33")
-  // opentelemetry-bom must have version >= 1.34.1 for compatibility with terra-common-lib 1.0.9:
-  set("opentelemetry.version", "1.36.0")
-}
 // Library Dependencies, Versions, etc.
+// In order for Dependabot to update these dependencies, this file must live at the root of its project.
 dependencies {
-  // Google dependencies
-  constraints {
-    implementation 'com.google.guava:guava:31.1-jre' // "-jre" for Java 8 or higher
-  }
+  // Google dependencies versioned by bom
   implementation platform('com.google.cloud:libraries-bom:26.34.0')
-
   implementation 'com.google.cloud:google-cloud-bigquery'
   implementation 'com.google.cloud:google-cloud-bigquerydatatransfer'
-  implementation group: "com.google.auto.value", name: "auto-value-annotations"
-  implementation group: "com.google.guava", name:"guava"
+  implementation 'com.google.auto.value:auto-value-annotations'
 
   // Azure dependencies
   implementation 'com.azure:azure-storage-blob:12.21.1'
@@ -43,14 +30,11 @@ dependencies {
   // hk2 is required to use datarepo client, but not correctly exposed by the client
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2"
 
-  // OpenTelemetry
-  // Versioned by Spring Boot Dependency Manager via opentelemetry-bom:
-  implementation 'io.opentelemetry:opentelemetry-api'
-  // Needed for @WithSpan annotations:
+  // OpenTelemetry @WithSpan annotations:
   implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.2.0'
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:1.0.9-SNAPSHOT")
+  implementation("bio.terra:terra-common-lib:1.1.1-SNAPSHOT")
   // sam is not semantically versioned so force the version here
   implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-73bc2d1"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
@@ -59,19 +43,16 @@ dependencies {
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.30-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.305-SNAPSHOT')
+  implementation ('bio.terra:terra-landing-zone-service:0.0.314-SNAPSHOT')
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20230831-2.0.0'
   implementation group: "com.google.auth", name: "google-auth-library-oauth2-http"
 
   // Versioned direct deps
-  implementation group: "org.hashids", name: "hashids", version: "1.0.3"
   implementation group: "com.fasterxml.jackson.core", name: "jackson-core"
   implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
-  implementation group: "org.liquibase", name: "liquibase-core", version: "4.8.0"
   implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
-  runtimeOnly group: "org.postgresql", name: "postgresql", version: "42.7.2"
 
   // Deps whose versions are controlled by Spring
   implementation group: "jakarta.validation", name: "jakarta.validation-api"
@@ -80,17 +61,16 @@ dependencies {
   implementation group: "org.apache.commons", name: "commons-pool2"
   implementation group: "org.apache.logging.log4j", name: "log4j-api"
   implementation group: "org.apache.logging.log4j", name: "log4j-to-slf4j"
-  implementation group: "commons-validator", name: "commons-validator", version: "1.7"
   implementation group: "org.springframework.boot", name: "spring-boot-starter-data-jdbc"
   implementation group: "org.springframework.boot", name: "spring-boot-starter-web"
   implementation group: "org.springframework.boot", name: "spring-boot-starter-validation"
   implementation group: "org.springframework.boot", name: "spring-boot-starter-actuator"
   implementation group: "org.springframework.retry", name: "spring-retry"
   implementation group: "org.springframework.security", name: "spring-security-oauth2-jose"
-
-  implementation group: "io.kubernetes", name: "client-java", version: "20.0.1"
-
   implementation group: "io.micrometer", name: "micrometer-registry-prometheus"
+
+  implementation group: "commons-validator", name: "commons-validator", version: "1.7"
+  implementation group: "io.kubernetes", name: "client-java", version: "20.0.1"
 
   // OpenAPI (swagger) deps
   implementation gradle.librarySwaggerAnnotations
@@ -98,11 +78,7 @@ dependencies {
   runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
 
   // Test deps
-  testImplementation group: "io.vavr", name: "vavr", version: "0.10.3"
-  testImplementation('org.springframework.boot:spring-boot-starter-test') {
-    exclude group: 'com.vaadin.external.google', module: 'android-json'
-  }
-  testImplementation group: "org.hamcrest", name: "hamcrest", version: "2.2"
+  testImplementation 'org.springframework.boot:spring-boot-starter-test'
   // Allows us to mock final classes
   testImplementation 'org.mockito:mockito-inline:2.13.0'
 
