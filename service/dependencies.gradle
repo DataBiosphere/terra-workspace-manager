@@ -8,11 +8,11 @@ dependencies {
   implementation 'com.google.auto.value:auto-value-annotations'
 
   // Azure dependencies
-  implementation 'com.azure:azure-storage-blob:12.21.1'
-  implementation group: 'com.azure.resourcemanager', name: 'azure-resourcemanager-monitor', version: '2.31.0'
+  implementation 'com.azure:azure-storage-blob:12.25.3'
+  implementation 'com.azure.resourcemanager:azure-resourcemanager-monitor:2.37.0'
 
   // AWS dependencies
-  implementation platform('software.amazon.awssdk:bom:2.20.115')
+  implementation platform('software.amazon.awssdk:bom:2.25.17')
   implementation 'software.amazon.awssdk:arns'
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:ec2'
