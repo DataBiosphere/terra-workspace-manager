@@ -38,7 +38,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
-class DetachAzureDiskFromVmStepUnitTest {
+class DetachAzureDiskFromVmStepTest {
   final String vmId = "vmId";
   final int diskLun = 0; // disk's logical unit
 

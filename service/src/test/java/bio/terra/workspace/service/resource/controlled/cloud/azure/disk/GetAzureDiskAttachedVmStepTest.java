@@ -31,7 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
-class GetAzureDiskAttachedVmStepUnitTest {
+class GetAzureDiskAttachedVmStepTest {
   private static final String DISK_NAME = "dataDisk";
   private static final String AZURE_SUBSCRIPTION_ID = "subscriptionId";
   private static final String AZURE_RESOURCE_GROUP_ID = "resourceGroupId";
@@ -56,10 +56,9 @@ class GetAzureDiskAttachedVmStepUnitTest {
   }
 
   @Test
-  void doStep_Success() throws InterruptedException {
+  void doStep_VmIdentifierSaved() throws InterruptedException {
     final String vmId = "vmId";
     setupCommonMocks();
-    when(computeManagerMock.disks()).thenReturn(disksMock);
     when(disksMock.getById(anyString())).thenReturn(diskMock);
     when(diskMock.isAttachedToVirtualMachine()).thenReturn(true);
     when(diskMock.virtualMachineId()).thenReturn(vmId);
@@ -73,7 +72,6 @@ class GetAzureDiskAttachedVmStepUnitTest {
   @Test
   void doStep_DiskIsNotAttached() throws InterruptedException {
     setupCommonMocks();
-    when(computeManagerMock.disks()).thenReturn(disksMock);
     when(disksMock.getById(anyString())).thenReturn(diskMock);
     StepResult stepResult = getAzureDiskAttachedVmStep.doStep(flightContextMock);
 
@@ -84,7 +82,6 @@ class GetAzureDiskAttachedVmStepUnitTest {
   @Test
   void doStep_DiskIsNotFound() throws InterruptedException {
     setupCommonMocks();
-    when(computeManagerMock.disks()).thenReturn(disksMock);
     ManagementException resourceNotFoundExceptionMock =
         setupManagementExceptionMock("ResourceNotFound");
     when(disksMock.getById(anyString())).thenThrow(resourceNotFoundExceptionMock);
@@ -113,6 +110,7 @@ class GetAzureDiskAttachedVmStepUnitTest {
     when(flightContextMock.getWorkingMap()).thenReturn(flightWorkingMapMock);
     when(crlServiceMock.getComputeManager(azureCloudContextMock, azureConfigurationMock))
         .thenReturn(computeManagerMock);
+    when(computeManagerMock.disks()).thenReturn(disksMock);
   }
 
   private ManagementException setupManagementExceptionMock(String code) {

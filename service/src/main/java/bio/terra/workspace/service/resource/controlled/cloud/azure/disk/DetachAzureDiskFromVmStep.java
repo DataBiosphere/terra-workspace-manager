@@ -68,7 +68,8 @@ public class DetachAzureDiskFromVmStep extends DeleteAzureControlledResourceStep
       if (attachedDisk.isPresent()) {
         detachDisk(vm.get(), attachedDisk.get().getKey());
       } else {
-        // something strange has happened; let's retry
+        // this is unlikely event - disk is attached, but the vm doesn't
+        // have it in the list of attached disks; let's retry
         logger.warn(
             "Disk {} is attached, but not found in the list of attached disk for vm {}.",
             resource.getResourceId(),
@@ -83,7 +84,7 @@ public class DetachAzureDiskFromVmStep extends DeleteAzureControlledResourceStep
             resource.getResourceId(),
             resource.getWorkspaceId());
         return StepResult.getStepResultSuccess();
-      } // TODO: should we handle this exception??
+      }
       if (AzureManagementExceptionUtils.isExceptionCode(
           ex, AzureManagementExceptionUtils.OPERATION_NOT_ALLOWED)) {
         logger.error(

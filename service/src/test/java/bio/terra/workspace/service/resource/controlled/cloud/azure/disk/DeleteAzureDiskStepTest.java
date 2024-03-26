@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -14,22 +15,28 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
+import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.http.HttpResponse;
 import com.azure.core.management.exception.ManagementError;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.compute.models.Disks;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-class DeleteAzureDiskStepTest extends BaseAzureSpringBootUnitTest {
+@Tag("unit")
+@ExtendWith(MockitoExtension.class)
+class DeleteAzureDiskStepTest {
   private static final String resourceIdFormat =
       "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/disks/%s";
   private static final String SUBSCRIPTION_ID = "subId";
@@ -84,6 +91,20 @@ class DeleteAzureDiskStepTest extends BaseAzureSpringBootUnitTest {
   }
 
   @Test
+  void deleteDisk_noResourceFoundReturnsSuccess() throws Exception {
+    setupBaseMocks();
+    var response = mock(HttpResponse.class);
+    when(response.getStatusCode()).thenReturn(404);
+    var error = new ManagementError("NotFound", AzureManagementExceptionUtils.RESOURCE_NOT_FOUND);
+    var exception =
+            new ManagementException(AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, response, error);
+
+    doThrow(exception).when(mockDisks).deleteById(any());
+
+    assertThat(testStep.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
+  }
+
+  @Test
   void undoStep_diskIsAttachedToExistingVm() throws InterruptedException {
     setupExceptionMock();
     when(mockStepResult.getStepStatus()).thenReturn(StepStatus.STEP_RESULT_FAILURE_FATAL);
@@ -100,8 +121,6 @@ class DeleteAzureDiskStepTest extends BaseAzureSpringBootUnitTest {
     when(mockManagementError.getCode()).thenReturn("OperationNotAllowed");
     when(mockManagementError.getMessage()).thenReturn("Disk is attached to VM");
     when(mockManagementException.getValue()).thenReturn(mockManagementError);
-    when(mockManagementException.getSuppressed()).thenReturn(new Throwable[] {});
-    when(mockManagementException.getMessage()).thenReturn("Disk is attached to VM");
   }
 
   private void setupBaseMocks() {
