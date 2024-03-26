@@ -15,9 +15,10 @@ import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.exception.UnauthorizedException;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.utils.AwsUtils;
-import io.vavr.collection.List;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.sagemaker.model.NotebookInstanceStatus;
+
+import java.util.List;
 
 public class StopAwsSageMakerNotebookStepTest extends BaseAwsSageMakerNotebookStepTest {
 

@@ -26,11 +26,12 @@ import com.azure.core.util.BinaryData;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobItem;
-import io.vavr.collection.Stream;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -108,8 +109,8 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     assertCopyBlobs(prefixesToCopy, blobNames, blobNames);
   }
 
-  private static java.util.stream.Stream<Arguments> getPrefixesToCopyAllFiles() {
-    return java.util.stream.Stream.of(
+  private static Stream<Arguments> getPrefixesToCopyAllFiles() {
+    return Stream.of(
         Arguments.of(null, generateFilenames(6)),
         Arguments.of(List.of(), generateFilenames(3)),
         Arguments.of(List.of(""), generateFilenames(2)),
@@ -122,11 +123,11 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
     assertCopyBlobs(prefixesToCopy, allNames, copiedNames);
   }
 
-  private static java.util.stream.Stream<Arguments> getPrefixesToCopySomeFiles() {
+  private static Stream<Arguments> getPrefixesToCopySomeFiles() {
     var sixItems = generateFilenames(6);
     var folderWithThreeItems =
         new String[] {"folder/item1.txt", "folder/item2.txt", "folder/item3.txt"};
-    return java.util.stream.Stream.of(
+    return Stream.of(
         Arguments.of(
             List.of(" ", "/", "it-blob", "/it-blob"), generateFilenames(1), new String[] {}),
         Arguments.of(List.of("2", "5"), sixItems, new String[] {sixItems[2], sixItems[5]}),
@@ -187,8 +188,8 @@ public class BlobCopierConnectedTest extends BaseAzureConnectedTest {
   }
 
   private static String[] generateFilenames(int numberOfFiles) {
-    return Stream.range(0, numberOfFiles)
-        .map(idx -> idx + "/it-blob-" + UUID.randomUUID())
+    return IntStream.range(0, numberOfFiles)
+        .mapToObj(idx -> idx + "/it-blob-" + UUID.randomUUID())
         .collect(Collectors.toList())
         .toArray(new String[0]);
   }
