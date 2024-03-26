@@ -96,7 +96,7 @@ class GetAzureDiskAttachedVmStepUnitTest {
 
   @Test
   void undoStep_Success() throws InterruptedException {
-    //always return success
+    // always return success
     assertThat(
         getAzureDiskAttachedVmStep.undoStep(flightContextMock),
         equalTo(StepResult.getStepResultSuccess()));

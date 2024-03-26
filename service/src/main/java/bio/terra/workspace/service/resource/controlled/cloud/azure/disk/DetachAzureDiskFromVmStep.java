@@ -47,28 +47,32 @@ public class DetachAzureDiskFromVmStep extends DeleteAzureControlledResourceStep
       var disk = computeManager.disks().getById(diskResourceId);
       if (!disk.isAttachedToVirtualMachine()) {
         logger.info(
-                "Disk {} in workspace {} is not attached to vm.",
-                resource.getResourceId(),
-                resource.getWorkspaceId());
+            "Disk {} in workspace {} is not attached to vm.",
+            resource.getResourceId(),
+            resource.getWorkspaceId());
         return StepResult.getStepResultSuccess();
       }
       var vm = getVirtualMachine(computeManager, disk.virtualMachineId());
       if (vm.isEmpty()) {
-        //this is unlikely event - disk is attached, but the vm cannot be found; let's retry
-        logger.warn("Disk {} is attached to vm in workspace {}, but vm cannot be found. Retrying.",
-                resource.getResourceId(), resource.getWorkspaceId());
+        // this is unlikely event - disk is attached, but the vm cannot be found; let's retry
+        logger.warn(
+            "Disk {} is attached to vm in workspace {}, but vm cannot be found. Retrying.",
+            resource.getResourceId(),
+            resource.getWorkspaceId());
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
       }
       var attachedDisk =
-              vm.get().dataDisks().entrySet().stream()
-                      .filter(entry -> entry.getValue().name().equals(resource.getDiskName()))
-                      .findFirst();
+          vm.get().dataDisks().entrySet().stream()
+              .filter(entry -> entry.getValue().name().equals(resource.getDiskName()))
+              .findFirst();
       if (attachedDisk.isPresent()) {
         detachDisk(vm.get(), attachedDisk.get().getKey());
       } else {
-        //something strange has happened; let's retry
-        logger.warn("Disk {} is attached, but not found in the list of attached disk for vm {}.",
-                resource.getResourceId(), disk.virtualMachineId());
+        // something strange has happened; let's retry
+        logger.warn(
+            "Disk {} is attached, but not found in the list of attached disk for vm {}.",
+            resource.getResourceId(),
+            disk.virtualMachineId());
         return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
       }
     } catch (ManagementException ex) {
@@ -152,10 +156,10 @@ public class DetachAzureDiskFromVmStep extends DeleteAzureControlledResourceStep
       vm = computeManager.virtualMachines().getById(vmId);
     } catch (ManagementException ex) {
       if (AzureManagementExceptionUtils.isExceptionCode(
-              ex, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+          ex, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
         logger.info(
-                "Vm to which disk was attached does not exist in workspace {}.",
-                resource.getWorkspaceId());
+            "Vm to which disk was attached does not exist in workspace {}.",
+            resource.getWorkspaceId());
         return Optional.empty();
       }
       throw ex;
