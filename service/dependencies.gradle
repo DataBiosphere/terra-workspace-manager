@@ -8,7 +8,7 @@ dependencies {
   implementation 'com.google.auto.value:auto-value-annotations'
 
   // Azure dependencies
-  implementation 'com.azure:azure-storage-blob:12.21.1'
+  implementation 'com.azure:azure-storage-blob:12.25.3'
   implementation 'com.azure.resourcemanager:azure-resourcemanager-monitor:2.37.0'
 
   // AWS dependencies
@@ -78,7 +78,10 @@ dependencies {
   runtimeOnly group: "org.webjars.npm", name: "swagger-ui-dist", version: "3.37.2"
 
   // Test deps
-  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+  testImplementation('org.springframework.boot:spring-boot-starter-test') {
+    // Fixes warning about multiple occurrences of JSONObject on the classpath
+    exclude group: 'com.vaadin.external.google', module: 'android-json'
+  }
   // Allows us to mock final classes
   testImplementation 'org.mockito:mockito-inline:2.13.0'
 
