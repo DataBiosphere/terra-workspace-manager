@@ -42,6 +42,7 @@ public class ControlledAzureResourceApiControllerAzureDiskTest extends BaseAzure
     when(mockSamService()
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);
+    when(mockSamService().getWsmServiceAccountToken()).thenReturn("fake");
   }
 
   @Test

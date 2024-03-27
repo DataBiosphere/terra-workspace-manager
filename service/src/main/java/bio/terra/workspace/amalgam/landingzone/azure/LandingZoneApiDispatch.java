@@ -35,6 +35,7 @@ import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiResourceQuota;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.List;
 import java.util.Optional;
@@ -62,11 +63,13 @@ public class LandingZoneApiDispatch {
 
   private final LandingZoneService landingZoneService;
   private final FeatureConfiguration features;
+  private final SamService samService;
 
   public LandingZoneApiDispatch(
-      LandingZoneService landingZoneService, FeatureConfiguration features) {
+      LandingZoneService landingZoneService, FeatureConfiguration features, SamService samService) {
     this.landingZoneService = landingZoneService;
     this.features = features;
+    this.samService = samService;
   }
 
   public ApiCreateLandingZoneResult createAzureLandingZone(
@@ -335,11 +338,6 @@ public class LandingZoneApiDispatch {
     return toApiAzureLandingZone(landingZoneRecord);
   }
 
-  public String getAzureLandingZoneRegion(BearerToken bearerToken, UUID landingZoneId) {
-    features.azureEnabledCheck();
-    return landingZoneService.getLandingZoneRegion(bearerToken, landingZoneId);
-  }
-
   public ApiAzureLandingZoneList listAzureLandingZones(
       BearerToken bearerToken, UUID billingProfileId) {
     features.azureEnabledCheck();
@@ -416,16 +414,34 @@ public class LandingZoneApiDispatch {
         .findFirst();
   }
 
-  public String getLandingZoneRegion(AuthenticatedUserRequest userRequest, Workspace workspace) {
-    final BearerToken token = new BearerToken(userRequest.getRequiredToken());
-    var lzId = getLandingZoneId(token, workspace);
-    return getAzureLandingZoneRegion(token, lzId);
-  }
-
   public ApiAzureLandingZone getLandingZone(
       AuthenticatedUserRequest userRequest, Workspace workspace) {
     final BearerToken token = new BearerToken(userRequest.getRequiredToken());
     var lzId = getLandingZoneId(token, workspace);
     return getAzureLandingZone(token, lzId);
+  }
+
+  /**
+   * Fetches the region for a workspace from the parent landing zone.
+   *
+   * <p>NOTE: This uses the WSM SA administrative token to fetch region information. Callers should
+   * ensure the user is authed prior to calling this method
+   */
+  public String getLandingZoneRegionForWorkspaceUsingWsmToken(Workspace workspace) {
+    var token = new BearerToken(samService.getWsmServiceAccountToken());
+    var lzId = getLandingZoneId(token, workspace);
+    return getLandingZoneRegionUsingWsmToken(lzId);
+  }
+
+  /**
+   * Fetches the region for a landing zone
+   *
+   * <p>NOTE: This uses the WSM SA administrative token to fetch region information. Callers should
+   * ensure the user is authed prior to calling this method
+   */
+  public String getLandingZoneRegionUsingWsmToken(UUID landingZoneId) {
+    features.azureEnabledCheck();
+    var token = new BearerToken(samService.getWsmServiceAccountToken());
+    return landingZoneService.getLandingZoneRegion(token, landingZoneId);
   }
 }

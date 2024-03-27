@@ -74,7 +74,7 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
         .validateWorkspaceConformsToProtectedDataPolicy(any(), any(), any());
     doReturn(List.of(regionError))
         .when(mockPolicyValidator)
-        .validateWorkspaceConformsToRegionPolicy(any(), any(), any());
+        .validateWorkspaceConformsToRegionPolicy(any(), any());
     doReturn(List.of(groupError))
         .when(mockPolicyValidator)
         .validateWorkspaceConformsToGroupPolicy(any(), any(), any());
@@ -106,7 +106,7 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
         .thenReturn(List.of(gcpResource.getRegion()));
     when(mockResourceDao.listControlledResources(workspace.workspaceId(), CloudPlatform.GCP))
         .thenReturn(List.of(gcpResource));
-    when(mockLandingZoneApiDispatch.getLandingZoneRegion(userRequest, workspace))
+    when(mockLandingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace))
         .thenReturn(azureResource.getRegion());
     when(mockTpsApiDispatch().listValidRegionsForPao(any(), eq(CloudPlatform.AZURE)))
         .thenReturn(List.of(azureResource.getRegion()));
@@ -114,8 +114,7 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
         .thenReturn(List.of(azureResource));
 
     List<String> results =
-        policyValidator.validateWorkspaceConformsToRegionPolicy(
-            workspace, new TpsPaoGetResult(), userRequest);
+        policyValidator.validateWorkspaceConformsToRegionPolicy(workspace, new TpsPaoGetResult());
     assertTrue(results.isEmpty());
   }
 
@@ -138,7 +137,7 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
         .thenReturn(List.of(gcpResource.getRegion()));
     when(mockResourceDao.listControlledResources(workspace.workspaceId(), CloudPlatform.GCP))
         .thenReturn(List.of(gcpResource));
-    when(mockLandingZoneApiDispatch.getLandingZoneRegion(userRequest, workspace))
+    when(mockLandingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace))
         .thenReturn(azureResource.getRegion());
     when(mockTpsApiDispatch().listValidRegionsForPao(any(), eq(CloudPlatform.AZURE)))
         .thenReturn(List.of(azureResource.getRegion()));
@@ -146,8 +145,7 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
         .thenReturn(List.of(azureResource, azureResourceWrongRegion));
 
     List<String> results =
-        policyValidator.validateWorkspaceConformsToRegionPolicy(
-            workspace, new TpsPaoGetResult(), userRequest);
+        policyValidator.validateWorkspaceConformsToRegionPolicy(workspace, new TpsPaoGetResult());
     assertEquals(1, results.size());
   }
 
@@ -160,14 +158,13 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
 
     when(mockWorkspaceDao.listCloudPlatforms(workspace.workspaceId()))
         .thenReturn(List.of(CloudPlatform.AZURE));
-    when(mockLandingZoneApiDispatch.getLandingZoneRegion(userRequest, workspace))
+    when(mockLandingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace))
         .thenReturn("wrongRegion");
     when(mockTpsApiDispatch().listValidRegionsForPao(any(), eq(CloudPlatform.AZURE)))
         .thenReturn(List.of("rightRegion"));
 
     List<String> results =
-        policyValidator.validateWorkspaceConformsToRegionPolicy(
-            workspace, new TpsPaoGetResult(), userRequest);
+        policyValidator.validateWorkspaceConformsToRegionPolicy(workspace, new TpsPaoGetResult());
     assertEquals(1, results.size());
   }
 

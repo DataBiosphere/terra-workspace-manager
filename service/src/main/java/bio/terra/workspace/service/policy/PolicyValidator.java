@@ -47,8 +47,7 @@ public class PolicyValidator {
       return;
     }
 
-    validationErrors.addAll(
-        validateWorkspaceConformsToRegionPolicy(workspace, policies, userRequest));
+    validationErrors.addAll(validateWorkspaceConformsToRegionPolicy(workspace, policies));
     validationErrors.addAll(
         validateWorkspaceConformsToProtectedDataPolicy(workspace, policies, userRequest));
     validationErrors.addAll(
@@ -63,7 +62,7 @@ public class PolicyValidator {
    * @return validation errors
    */
   public List<String> validateWorkspaceConformsToRegionPolicy(
-      Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
+      Workspace workspace, TpsPaoGetResult policies) {
     var validationErrors = new ArrayList<String>();
     for (var cloudPlatform : workspaceDao.listCloudPlatforms(workspace.workspaceId())) {
       var validRegions =
@@ -76,7 +75,8 @@ public class PolicyValidator {
 
       if (cloudPlatform.equals(CloudPlatform.AZURE)) {
         // the landing zone in azure is region specific
-        var lzRegion = landingZoneApiDispatch.getLandingZoneRegion(userRequest, workspace);
+        var lzRegion =
+            landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace);
         if (validRegions.stream().noneMatch(r -> r.equalsIgnoreCase(lzRegion))) {
           validationErrors.add(
               "Workspace landing zone region %s is not one of %s"

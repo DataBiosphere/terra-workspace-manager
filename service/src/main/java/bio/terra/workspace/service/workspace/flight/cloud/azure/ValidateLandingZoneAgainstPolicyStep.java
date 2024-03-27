@@ -49,7 +49,7 @@ public class ValidateLandingZoneAgainstPolicyStep implements Step {
     ResourceValidationUtils.validateRegionAgainstPolicy(
         tpsApiDispatch,
         workspaceUuid,
-        landingZoneApiDispatch.getAzureLandingZoneRegion(bearerToken, landingZoneId),
+        landingZoneApiDispatch.getLandingZoneRegionUsingWsmToken(landingZoneId),
         CloudPlatform.AZURE);
 
     var policies = tpsApiDispatch.getPao(workspaceUuid);
