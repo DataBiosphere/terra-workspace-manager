@@ -8,7 +8,7 @@ dependencies {
   implementation 'com.google.auto.value:auto-value-annotations'
 
   // Azure dependencies
-  implementation 'com.azure:azure-storage-blob:12.25.3'
+  implementation 'com.azure:azure-storage-blob:12.21.1'
   implementation 'com.azure.resourcemanager:azure-resourcemanager-monitor:2.37.0'
 
   // AWS dependencies
