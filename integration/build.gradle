@@ -61,7 +61,10 @@ dependencies {
     implementation "bio.terra:terra-test-runner:${testRunnerVersion}"
 
     // Use Terra Common Library on client side to retry direct Sam calls
-    implementation("bio.terra:terra-common-lib:1.0.9-SNAPSHOT") {
+    implementation("bio.terra:terra-common-lib:1.1.0-SNAPSHOT") {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
+    // Needed for TCL, but if we reorganize our dependencies so that the Spring Boot dependency manager
+    // is used, then we should be able to remove this (Spring Boot dependency manager pulls in opentelemetry-bom):
+    implementation 'io.opentelemetry:opentelemetry-api:1.36.0'
 }

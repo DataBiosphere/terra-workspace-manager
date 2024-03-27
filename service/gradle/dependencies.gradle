@@ -43,14 +43,11 @@ dependencies {
   // hk2 is required to use datarepo client, but not correctly exposed by the client
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2"
 
-  // OpenTelemetry
-  // Versioned by Spring Boot Dependency Manager via opentelemetry-bom:
-  implementation 'io.opentelemetry:opentelemetry-api'
-  // Needed for @WithSpan annotations:
+  // OpenTelemetry @WithSpan annotations:
   implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.2.0'
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:1.0.9-SNAPSHOT")
+  implementation("bio.terra:terra-common-lib:1.1.0-SNAPSHOT")
   // sam is not semantically versioned so force the version here
   implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-73bc2d1"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
