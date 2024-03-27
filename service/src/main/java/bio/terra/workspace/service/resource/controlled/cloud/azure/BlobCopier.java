@@ -1,5 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import static bio.terra.workspace.common.utils.FlightUtils.SUBFLIGHT_TOTAL_DURATION;
 import static java.util.stream.Collectors.groupingBy;
 
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -10,7 +11,6 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobCopyInfo;
 import com.azure.storage.blob.models.BlobItem;
 import com.azure.storage.blob.options.BlobBeginCopyOptions;
-import java.time.Duration;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -20,8 +20,6 @@ public class BlobCopier {
   private final Logger logger = LoggerFactory.getLogger(BlobCopier.class);
   private final AzureStorageAccessService storageAccessService;
   private final AuthenticatedUserRequest userRequest;
-
-  public static final Duration MAX_BLOB_COPY_POLL_TIMEOUT = Duration.ofMinutes(60);
 
   public BlobCopier(
       AzureStorageAccessService storageAccessService, AuthenticatedUserRequest userRequest) {
@@ -77,7 +75,7 @@ public class BlobCopier {
         destStorageData.storageContainerResource().getResourceId(),
         destStorageData.storageContainerResource().getWorkspaceId());
     var pollResults =
-        blobPollers.map(blobPoller -> blobPoller.waitForCompletion(MAX_BLOB_COPY_POLL_TIMEOUT));
+        blobPollers.map(blobPoller -> blobPoller.waitForCompletion(SUBFLIGHT_TOTAL_DURATION));
     logger.info(
         "Finished copying blobs [source_container_id = {}, source_workspace_id = {}, destination_container_id = {}, destination_workspace_id={}]",
         sourceStorageData.storageContainerResource().getResourceId(),

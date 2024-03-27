@@ -1,12 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.FlightState;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -14,6 +11,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.StepResultWithFlightInfo;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
@@ -48,17 +46,21 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // wait for the flight
     try {
-      FlightState subflightState =
-          context.getStairway().waitForFlight(subflightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
+      StepResultWithFlightInfo subflightResult =
+          FlightUtils.waitForSubflightCompletionAndReturnFlightInfo(
+              context.getStairway(), subflightId);
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       WsmCloneResourceResult cloneResult =
-          WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
+          WorkspaceCloneUtils.flightStatusToCloneResult(
+              subflightResult.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
+      FlightMap resultMap = subflightResult.getFlightMap();
       var clonedDataset =
-          resultMap.get(
-              JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
+          resultMap != null
+              ? resultMap.get(
+                  JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class)
+              : null;
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());
@@ -69,8 +71,7 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
               .map(ApiGcpBigQueryDatasetResource::getMetadata)
               .map(ApiResourceMetadata::getResourceId)
               .orElse(null));
-      String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
-      cloneDetails.setErrorMessage(errorMessage);
+      cloneDetails.setErrorMessage(subflightResult.getFlightErrorMessage());
 
       cloneDetails.setName(resource.getName());
       cloneDetails.setDescription(resource.getDescription());
