@@ -17,6 +17,7 @@ public class AzureManagementExceptionUtils {
 
   public static final String RESOURCE_NOT_FOUND = "ResourceNotFound";
   public static final String CONTAINER_NOT_FOUND = "ContainerNotFound";
+  public static final String OPERATION_NOT_ALLOWED = "OperationNotAllowed";
   public static final String CONFLICT = "Conflict";
   public static final String SUBNETS_NOT_IN_SAME_VNET = "SubnetsNotInSameVnet";
   public static final String NIC_RESERVED_FOR_ANOTHER_VM = "NicReservedForAnotherVm";
