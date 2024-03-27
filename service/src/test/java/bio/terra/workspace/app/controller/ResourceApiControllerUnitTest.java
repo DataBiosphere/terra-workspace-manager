@@ -175,7 +175,7 @@ public class ResourceApiControllerUnitTest {
   }
 
   @Test
-  void getResourceByName_returnsReferencedResourceForNoWorkspaceAccessButHasResourceAccess() {
+  void getResourceByName_throwsOriginalWorkspaceExceptionReferencedResources() {
     var workspaceId = UUID.randomUUID();
     WsmResource resource = mock();
     var wsAccessException = new ForbiddenException("no workspace access");
@@ -185,42 +185,7 @@ public class ResourceApiControllerUnitTest {
             userRequest, workspaceId, SamConstants.SamControlledResourceActions.READ_ACTION);
     var resourceName = "test-resource-name";
     when(resourceService.getResourceByName(workspaceId, resourceName)).thenReturn(resource);
-    var resourceId = UUID.randomUUID();
-    when(resource.getResourceId()).thenReturn(resourceId);
     when(resource.getStewardshipType()).thenReturn(StewardshipType.REFERENCED);
-    when(referencedResourceService.checkAccess(workspaceId, resourceId, userRequest))
-        .thenReturn(true);
-    ApiResourceMetadata resourceMetadata = mock();
-    when(resource.toApiMetadata()).thenReturn(resourceMetadata);
-    ApiResourceAttributesUnion resourceAttributes = mock();
-    when(resource.toApiAttributesUnion()).thenReturn(resourceAttributes);
-
-    var api = getApiController();
-    var apiResponse = api.getResourceByName(workspaceId, resourceName);
-
-    assertEquals(HttpStatusCode.valueOf(200), apiResponse.getStatusCode());
-    var resourceDesciption = apiResponse.getBody();
-    assertEquals(resourceAttributes, resourceDesciption.getResourceAttributes());
-    assertEquals(resourceMetadata, resourceDesciption.getMetadata());
-    verify(referencedResourceService).checkAccess(workspaceId, resourceId, userRequest);
-  }
-
-  @Test
-  void getResourceByName_throwsOriginalWorkspaceExceptionForNoAccessToReferencedResource() {
-    var workspaceId = UUID.randomUUID();
-    WsmResource resource = mock();
-    var wsAccessException = new ForbiddenException("no workspace access");
-    doThrow(wsAccessException)
-        .when(workspaceService)
-        .validateWorkspaceAndAction(
-            userRequest, workspaceId, SamConstants.SamControlledResourceActions.READ_ACTION);
-    var resourceName = "test-resource-name";
-    when(resourceService.getResourceByName(workspaceId, resourceName)).thenReturn(resource);
-    var resourceId = UUID.randomUUID();
-    when(resource.getResourceId()).thenReturn(resourceId);
-    when(resource.getStewardshipType()).thenReturn(StewardshipType.REFERENCED);
-    when(referencedResourceService.checkAccess(workspaceId, resourceId, userRequest))
-        .thenReturn(false);
 
     var api = getApiController();
     var thrownException =
@@ -228,6 +193,5 @@ public class ResourceApiControllerUnitTest {
             ForbiddenException.class, () -> api.getResourceByName(workspaceId, resourceName));
 
     assertEquals(wsAccessException, thrownException);
-    verify(referencedResourceService).checkAccess(workspaceId, resourceId, userRequest);
   }
 }
