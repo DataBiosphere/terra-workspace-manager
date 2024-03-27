@@ -7,7 +7,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * been detached from a virtual machine, but we need to attach it back in corresponding 'undo'
  * operation.
  */
-public class GetAzureDiskAttachedVmStep extends DeleteAzureControlledResourceStep {
+public class GetAzureDiskAttachedVmStep implements DeleteControlledResourceStep {
 
   private static final Logger logger = LoggerFactory.getLogger(GetAzureDiskAttachedVmStep.class);
 
@@ -67,17 +67,6 @@ public class GetAzureDiskAttachedVmStep extends DeleteAzureControlledResourceSte
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     // nothing to undo here
-    return StepResult.getStepResultSuccess();
-  }
-
-  @Override
-  protected StepResult deleteResource(FlightContext context) throws InterruptedException {
-    /*
-    This step follows the contract for a step which deletes an Azure resource, but the implementation diverges from "standard".
-    The step implements additional functionality to detach data disk from a virtual machine. It doesn't actually
-    delete any azure resource. This implementation is just to follow the existing contract.
-    The main logic is in the doStep method and this method won't be invoked until overriden version of doStep exists.
-     */
     return StepResult.getStepResultSuccess();
   }
 }

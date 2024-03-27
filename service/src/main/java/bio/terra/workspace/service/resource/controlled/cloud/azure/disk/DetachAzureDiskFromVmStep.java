@@ -7,7 +7,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
+import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * functionality of detaching data disk from a virtual machine before disk deletion. It is not
  * possible to delete a disk without detaching it.
  */
-public class DetachAzureDiskFromVmStep extends DeleteAzureControlledResourceStep {
+public class DetachAzureDiskFromVmStep implements DeleteControlledResourceStep {
   private static final Logger logger = LoggerFactory.getLogger(DetachAzureDiskFromVmStep.class);
 
   private final CrlService crlService;
@@ -100,17 +100,6 @@ public class DetachAzureDiskFromVmStep extends DeleteAzureControlledResourceStep
       }
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
     }
-    return StepResult.getStepResultSuccess();
-  }
-
-  @Override
-  protected StepResult deleteResource(FlightContext context) throws InterruptedException {
-    /*
-    This step follows the contract for a step which deletes an Azure resource, but the implementation diverges from "standard".
-    The step implements additional functionality to detach data disk from a virtual machine. It doesn't actually
-    delete any azure resource. This implementation is just to follow the existing contract.
-    The main logic is in the doStep method and this method won't be invoked until overriden version of doStep exists.
-     */
     return StepResult.getStepResultSuccess();
   }
 
