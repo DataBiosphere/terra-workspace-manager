@@ -55,16 +55,7 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
 
       if (!subflightResult.isSuccess()) {
         // no point in retrying the await step
-        return new StepResult(
-            StepStatus.STEP_RESULT_FAILURE_FATAL,
-            subflightResult
-                .getStepException()
-                .orElseGet(
-                    () ->
-                        new RuntimeException(
-                            String.format(
-                                "Subflight had unexpected status %s. No exception for subflight found.",
-                                subflightResult.getStepStatus()))));
+        return subflightResult.getStepResult();
       }
 
       FlightMap subflightResultMap = subflightResult.getFlightMap();

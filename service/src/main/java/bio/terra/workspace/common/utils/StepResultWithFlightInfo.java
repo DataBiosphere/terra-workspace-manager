@@ -1,7 +1,6 @@
 package bio.terra.workspace.common.utils;
 
 import bio.terra.stairway.*;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 public class StepResultWithFlightInfo {
@@ -28,15 +27,6 @@ public class StepResultWithFlightInfo {
     return stepResult.isSuccess();
   }
 
-  /** Returns the overall status of the step. */
-  public StepStatus getStepStatus() {
-    return stepResult.getStepStatus();
-  }
-
-  public Optional<Exception> getStepException() {
-    return stepResult.getException();
-  }
-
   /** Returns the last status of the flight that was executed during the step. */
   public FlightStatus getFlightStatus() {
     if (flightState == null) {
@@ -49,7 +39,8 @@ public class StepResultWithFlightInfo {
   public String getFlightErrorMessage() {
     if (flightState == null) {
       return String.format(
-          "Subflight had unexpected status %s. No exception for subflight found.", getStepStatus());
+          "Subflight step result had unexpected status %s. No exception for subflight found.",
+          stepResult.getStepStatus());
     }
     return FlightUtils.getFlightErrorMessage(flightState);
   }
