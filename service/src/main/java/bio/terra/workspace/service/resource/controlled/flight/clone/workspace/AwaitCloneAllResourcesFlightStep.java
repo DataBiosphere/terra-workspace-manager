@@ -1,12 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.FlightState;
-import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -14,6 +11,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.StepResultWithFlightInfo;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -34,8 +32,6 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
 
   public AwaitCloneAllResourcesFlightStep() {}
 
-  private static final int AWAIT_CLONE_RESOURCES_POLL_CYCLES = 720;
-
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     validateRequiredEntries(
@@ -53,37 +49,35 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
     try {
-      //noinspection deprecation
-      FlightState subflightState =
-          context
-              .getStairway()
-              .waitForFlight(
-                  cloneAllResourcesFlightId,
-                  FLIGHT_POLL_SECONDS,
-                  AWAIT_CLONE_RESOURCES_POLL_CYCLES);
-      if (FlightStatus.SUCCESS != subflightState.getFlightStatus()) {
+      StepResultWithFlightInfo subflightResult =
+          FlightUtils.waitForSubflightCompletionAndReturnFlightInfo(
+              context.getStairway(), cloneAllResourcesFlightId);
+
+      if (!subflightResult.isSuccess()) {
         // no point in retrying the await step
         return new StepResult(
             StepStatus.STEP_RESULT_FAILURE_FATAL,
-            subflightState
-                .getException()
+            subflightResult
+                .getStepException()
                 .orElseGet(
                     () ->
                         new RuntimeException(
                             String.format(
                                 "Subflight had unexpected status %s. No exception for subflight found.",
-                                subflightState.getFlightStatus()))));
+                                subflightResult.getStepStatus()))));
       }
-      FlightMap subflightResultMap = FlightUtils.getResultMapRequired(subflightState);
+
+      FlightMap subflightResultMap = subflightResult.getFlightMap();
+      var clonedResource =
+          subflightResultMap != null
+              ? subflightResultMap.get(
+                  ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
+                  new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {})
+              : null;
       // Build the response object from the resource ID to details map. The map won't have been
       // instantiated if there are no resources in the workspace, so just use an empty map in that
       // case.
-      var resourceIdToDetails =
-          Optional.ofNullable(
-                  subflightResultMap.get(
-                      ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-                      new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {}))
-              .orElse(Collections.emptyMap());
+      var resourceIdToDetails = Optional.ofNullable(clonedResource).orElse(Collections.emptyMap());
       var apiClonedWorkspace = new ApiClonedWorkspace();
       apiClonedWorkspace.setDestinationWorkspaceId(destinationWorkspace.getWorkspaceId());
       var sourceWorkspaceId =

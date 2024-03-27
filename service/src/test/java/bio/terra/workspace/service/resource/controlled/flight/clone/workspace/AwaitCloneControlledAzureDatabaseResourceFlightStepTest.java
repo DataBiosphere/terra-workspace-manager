@@ -2,7 +2,6 @@ package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -66,8 +65,7 @@ public class AwaitCloneControlledAzureDatabaseResourceFlightStepTest
 
     when(mockFlightContext.getStairway()).thenReturn(mockStairway);
     when(mockFlightContext.getWorkingMap()).thenReturn(workingMap);
-    when(mockStairway.waitForFlight(eq(subFlightId.toString()), any(), any()))
-        .thenReturn(flightState);
+    when(mockStairway.getFlightState(eq(subFlightId.toString()))).thenReturn(flightState);
     when(mockResultFlightMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class))
         .thenReturn(clonedResource);
 

@@ -29,7 +29,7 @@ public final class FlightUtils {
   public static final int FLIGHT_POLL_CYCLES = 360;
 
   // Parameters for waiting for subflight completion
-  private static final Duration SUBFLIGHT_TOTAL_DURATION = Duration.ofHours(1);
+  public static final Duration SUBFLIGHT_TOTAL_DURATION = Duration.ofHours(1);
   private static final Duration SUBFLIGHT_INITIAL_SLEEP = Duration.ofSeconds(10);
   private static final double SUBFLIGHT_FACTOR_INCREASE = 0.7;
   private static final Duration SUBFLIGHT_MAX_SLEEP = Duration.ofMinutes(2);
@@ -220,6 +220,11 @@ public final class FlightUtils {
    */
   public static StepResult waitForSubflightCompletion(Stairway stairway, String flightId)
       throws InterruptedException {
+    return waitForSubflightCompletionAndReturnFlightInfo(stairway, flightId).getStepResult();
+  }
+
+  public static StepResultWithFlightInfo waitForSubflightCompletionAndReturnFlightInfo(
+      Stairway stairway, String flightId) throws InterruptedException {
     try {
       FlightState flightState =
           waitForFlightCompletion(
@@ -230,19 +235,22 @@ public final class FlightUtils {
               SUBFLIGHT_FACTOR_INCREASE,
               SUBFLIGHT_MAX_SLEEP);
       if (flightState.getFlightStatus() == FlightStatus.SUCCESS) {
-        return StepResult.getStepResultSuccess();
+        return new StepResultWithFlightInfo(flightState, StepResult.getStepResultSuccess());
       }
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          flightState
-              .getException()
-              .orElse(new RuntimeException("Flight failed with an empty exception")));
+      return new StepResultWithFlightInfo(
+          flightState,
+          new StepResult(
+              StepStatus.STEP_RESULT_FAILURE_FATAL,
+              flightState
+                  .getException()
+                  .orElse(new RuntimeException("Flight failed with an empty exception"))));
     } catch (InterruptedException ie) {
       // Propagate the interrupt
       Thread.currentThread().interrupt();
       throw ie;
     } catch (Exception e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      return new StepResultWithFlightInfo(
+          null, new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e));
     }
   }
 
