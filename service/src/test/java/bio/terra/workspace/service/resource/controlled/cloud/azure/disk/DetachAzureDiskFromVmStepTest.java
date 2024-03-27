@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -96,7 +95,7 @@ class DetachAzureDiskFromVmStepTest {
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_RETRY));
     verify(disksMock, times(1)).getById(any());
-    verify(virtualMachineUpdateMock, never()).withoutDataDisk(eq(diskLun));
+    verify(virtualMachineUpdateMock, never()).withoutDataDisk(diskLun);
     verify(virtualMachineUpdateMock, never()).apply();
   }
 
@@ -123,7 +122,7 @@ class DetachAzureDiskFromVmStepTest {
     StepResult stepResult = detachAzureDiskFromVmStep.doStep(flightContextMock);
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_RETRY));
-    verify(virtualMachineUpdateMock, never()).withoutDataDisk(eq(diskLun));
+    verify(virtualMachineUpdateMock, never()).withoutDataDisk(diskLun);
     verify(virtualMachineUpdateMock, never()).apply();
   }
 

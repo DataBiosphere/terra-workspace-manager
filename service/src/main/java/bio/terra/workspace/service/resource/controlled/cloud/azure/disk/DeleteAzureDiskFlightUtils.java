@@ -1,6 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.disk;
 
 import bio.terra.stairway.FlightContext;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 
@@ -13,11 +14,10 @@ public class DeleteAzureDiskFlightUtils {
   private DeleteAzureDiskFlightUtils() {}
 
   public static AzureCloudContext getAzureCloudContext(FlightContext context) {
-    return context
-        .getWorkingMap()
-        .get(
-            WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
-            AzureCloudContext.class);
+    return FlightUtils.getRequired(
+        context.getWorkingMap(),
+        WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
+        AzureCloudContext.class);
   }
 
   public static String getAzureDiskResourceId(

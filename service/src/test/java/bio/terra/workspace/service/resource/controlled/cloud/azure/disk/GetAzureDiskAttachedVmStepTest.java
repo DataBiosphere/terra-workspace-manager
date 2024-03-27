@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -65,8 +64,7 @@ class GetAzureDiskAttachedVmStepTest {
     StepResult stepResult = getAzureDiskAttachedVmStep.doStep(flightContextMock);
 
     assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
-    verify(flightWorkingMapMock, times(1))
-        .put(DeleteAzureDiskFlightUtils.DISK_ATTACHED_VM_ID_KEY, vmId);
+    verify(flightWorkingMapMock).put(DeleteAzureDiskFlightUtils.DISK_ATTACHED_VM_ID_KEY, vmId);
   }
 
   @Test
