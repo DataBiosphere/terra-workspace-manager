@@ -97,7 +97,7 @@ class DeleteAzureDiskStepTest {
     when(response.getStatusCode()).thenReturn(404);
     var error = new ManagementError("NotFound", AzureManagementExceptionUtils.RESOURCE_NOT_FOUND);
     var exception =
-            new ManagementException(AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, response, error);
+        new ManagementException(AzureManagementExceptionUtils.RESOURCE_NOT_FOUND, response, error);
 
     doThrow(exception).when(mockDisks).deleteById(any());
 
