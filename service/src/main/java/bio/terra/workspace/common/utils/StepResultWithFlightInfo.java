@@ -24,7 +24,8 @@ public class StepResultWithFlightInfo {
 
   /** Returns true if the step was successful. */
   public boolean isSuccess() {
-    return stepResult.isSuccess();
+    // See what failures we get in tests.
+    return !stepResult.isSuccess();
   }
 
   /** Returns the last status of the flight that was executed during the step. */
