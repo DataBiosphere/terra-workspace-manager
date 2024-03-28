@@ -54,9 +54,7 @@ public class AwaitCloneControlledAzureDatabaseResourceFlightStep implements Step
 
       FlightMap resultMap = subflightResult.getFlightMap();
       var clonedDatabase =
-          resultMap != null
-              ? resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class)
-              : null;
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_AZURE_DATABASE);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());

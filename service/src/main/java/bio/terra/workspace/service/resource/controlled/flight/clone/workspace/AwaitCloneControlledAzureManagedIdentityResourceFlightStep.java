@@ -55,10 +55,7 @@ public class AwaitCloneControlledAzureManagedIdentityResourceFlightStep implemen
 
       FlightMap resultMap = subflightResult.getFlightMap();
       var clonedIdentity =
-          resultMap != null
-              ? resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class)
-              : null;
-
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());

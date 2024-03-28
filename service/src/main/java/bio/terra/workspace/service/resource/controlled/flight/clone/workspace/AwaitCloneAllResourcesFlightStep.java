@@ -60,11 +60,9 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
 
       FlightMap subflightResultMap = subflightResult.getFlightMap();
       var clonedResource =
-          subflightResultMap != null
-              ? subflightResultMap.get(
-                  ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
-                  new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {})
-              : null;
+          subflightResultMap.get(
+              ControlledResourceKeys.RESOURCE_ID_TO_CLONE_RESULT,
+              new TypeReference<Map<UUID, WsmResourceCloneDetails>>() {});
       // Build the response object from the resource ID to details map. The map won't have been
       // instantiated if there are no resources in the workspace, so just use an empty map in that
       // case.

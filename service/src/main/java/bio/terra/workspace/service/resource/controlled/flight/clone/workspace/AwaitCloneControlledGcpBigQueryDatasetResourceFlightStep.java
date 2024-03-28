@@ -57,10 +57,8 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
 
       FlightMap resultMap = subflightResult.getFlightMap();
       var clonedDataset =
-          resultMap != null
-              ? resultMap.get(
-                  JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class)
-              : null;
+          resultMap.get(
+              JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());

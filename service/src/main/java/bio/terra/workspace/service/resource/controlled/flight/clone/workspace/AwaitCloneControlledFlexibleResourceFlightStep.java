@@ -67,9 +67,7 @@ public class AwaitCloneControlledFlexibleResourceFlightStep implements Step {
 
       FlightMap resultMap = subflightResult.getFlightMap();
       ControlledFlexibleResource clonedFlexResource =
-          resultMap != null
-              ? resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ControlledFlexibleResource.class)
-              : null;
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ControlledFlexibleResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_FLEXIBLE_RESOURCE);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());

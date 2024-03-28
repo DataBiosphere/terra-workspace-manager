@@ -56,9 +56,7 @@ public class AwaitCloneControlledAzureStorageContainerResourceFlightStep impleme
 
       FlightMap resultMap = subflightResult.getFlightMap();
       var clonedContainer =
-          resultMap != null
-              ? resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class)
-              : null;
+          resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
       cloneDetails.setResourceType(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
       cloneDetails.setCloningInstructions(resource.getCloningInstructions());

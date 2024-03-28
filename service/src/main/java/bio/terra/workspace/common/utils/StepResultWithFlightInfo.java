@@ -13,7 +13,7 @@ public class StepResultWithFlightInfo {
    * @param flightState may be null if the flight failed with a runtime exception
    * @param stepResult the result of the step
    */
-  public StepResultWithFlightInfo(FlightState flightState, StepResult stepResult) {
+  public StepResultWithFlightInfo(@Nullable FlightState flightState, StepResult stepResult) {
     this.flightState = flightState;
     this.stepResult = stepResult;
   }
@@ -45,12 +45,8 @@ public class StepResultWithFlightInfo {
     return FlightUtils.getFlightErrorMessage(flightState);
   }
 
-  /** Will be null if the flight failed in such a way that no map was saved. */
-  @Nullable
+  /** May be empty if flight failed. */
   public FlightMap getFlightMap() {
-    if (flightState == null) {
-      return null;
-    }
-    return FlightUtils.getResultMapRequired(flightState);
+    return flightState == null ? new FlightMap() : FlightUtils.getResultMapRequired(flightState);
   }
 }
