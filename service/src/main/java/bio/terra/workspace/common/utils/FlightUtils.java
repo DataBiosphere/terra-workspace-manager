@@ -284,9 +284,7 @@ public final class FlightUtils {
         "Testing flight {} completion; state is {}",
         flightState.getFlightId(),
         flightState.getFlightStatus());
-    return (flightState.getFlightStatus() == FlightStatus.ERROR
-        || flightState.getFlightStatus() == FlightStatus.FATAL
-        || flightState.getFlightStatus() == FlightStatus.SUCCESS);
+    return !flightState.isActive();
   }
 
   public static SamUser getRequiredSamUser(FlightMap inputParameters, SamService samService) {
