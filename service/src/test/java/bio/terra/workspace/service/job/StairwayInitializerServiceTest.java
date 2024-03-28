@@ -11,11 +11,11 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.db.DataSourceManager;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
+import bio.terra.common.stairway.StairwayLoggingHook;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.annotations.Unit;
 import bio.terra.workspace.common.logging.WorkspaceActivityLogHook;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.StairwayLoggingHook;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.api.OpenTelemetry;
 import javax.sql.DataSource;
@@ -31,7 +31,6 @@ class StairwayInitializerServiceTest {
 
   @Mock private DataSourceManager dataSourceManager;
   @Mock private StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
-  @Mock private StairwayLoggingHook stairwayLoggingHook;
   @Mock private WorkspaceActivityLogHook workspaceActivityLogHook;
   @Mock private StairwayComponent stairwayComponent;
   @Mock private FlightBeanBag flightBeanBag;
@@ -43,7 +42,6 @@ class StairwayInitializerServiceTest {
         new StairwayInitializerService(
             dataSourceManager,
             stairwayDatabaseConfiguration,
-            stairwayLoggingHook,
             workspaceActivityLogHook,
             stairwayComponent,
             flightBeanBag,
@@ -75,7 +73,7 @@ class StairwayInitializerServiceTest {
         "Stairway is initialized with logging, monitoring, and activity log hooks",
         stairwayOptionsBuilder.getHooks(),
         contains(
-            is(stairwayLoggingHook),
+            instanceOf(StairwayLoggingHook.class),
             instanceOf(MonitoringHook.class),
             is(workspaceActivityLogHook)));
     assertThat(

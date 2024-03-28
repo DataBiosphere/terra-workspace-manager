@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
-import liquibase.util.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
 public class ControlledAwsSageMakerNotebookHandlerTest extends BaseAwsSpringBootUnitTest {
@@ -45,7 +45,7 @@ public class ControlledAwsSageMakerNotebookHandlerTest extends BaseAwsSpringBoot
         ControlledAwsSageMakerNotebookHandler.getHandler()
             .generateCloudName(
                 workspaceUserFacingId,
-                StringUtil.repeat(
+                StringUtils.repeat(
                     "a", AwsResourceConstants.MAX_SAGEMAKER_NOTEBOOK_INSTANCE_NAME_LENGTH + 1))
             .length(),
         "resource name expected to be trimmed to max length");
@@ -57,7 +57,7 @@ public class ControlledAwsSageMakerNotebookHandlerTest extends BaseAwsSpringBoot
     assertFalse(
         ControlledAwsSageMakerNotebookHandler.getHandler()
             .generateCloudName(
-                workspaceUserFacingId + "-----", StringUtil.repeat("a", repeatLength))
+                workspaceUserFacingId + "-----", StringUtils.repeat("a", repeatLength))
             .endsWith("-"),
         "resource name expected not to have trailing dashes");
   }

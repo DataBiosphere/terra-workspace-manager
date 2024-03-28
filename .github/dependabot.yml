@@ -26,6 +26,5 @@ updates:
     commit-message:
       prefix: "[WOR-1448]"
     ignore:
-      - dependency-name: "org.springframework.boot:spring-boot-gradle-plugin"
       - dependency-name: "com.google.apis:google-api-services-iam"
       - dependency-name: "com.google.apis:google-api-services-notebooks"

@@ -1,14 +1,12 @@
 package bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset;
 
 import static bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetHandler.MAX_DATASET_NAME_LENGTH;
-import static liquibase.repackaged.org.apache.commons.text.CharacterPredicates.DIGITS;
-import static liquibase.repackaged.org.apache.commons.text.CharacterPredicates.LETTERS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import java.util.UUID;
-import liquibase.repackaged.org.apache.commons.text.RandomStringGenerator;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 
 public class ControlledBigQueryDatasetHandlerTest extends BaseSpringBootUnitTest {
@@ -50,13 +48,7 @@ public class ControlledBigQueryDatasetHandlerTest extends BaseSpringBootUnitTest
 
   @Test
   public void generateDatasetName_datasetNameTooLong_trim() {
-    RandomStringGenerator generator =
-        new RandomStringGenerator.Builder()
-            .withinRange('0', 'z')
-            .filteredBy(LETTERS, DIGITS)
-            .build();
-
-    String bucketName = generator.generate(2000);
+    String bucketName = RandomStringUtils.random(2000, true, true);
     String generateCloudName =
         ControlledBigQueryDatasetHandler.getHandler().generateCloudName((UUID) null, bucketName);
 

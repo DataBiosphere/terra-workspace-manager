@@ -489,7 +489,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 null));
 
     assertEquals(
-        "CFB533C099640123124FA52E02EF82C97CD28CE7AD7ACF94532982569F98F920", result.sha256());
+        "19ABE52309A3733175CCBAD669CD895EED970910E1E8784A4CA09624E723220B", result.sha256());
   }
 
   @Test

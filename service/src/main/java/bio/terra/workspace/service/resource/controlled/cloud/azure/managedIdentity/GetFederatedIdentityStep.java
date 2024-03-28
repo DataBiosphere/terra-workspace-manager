@@ -94,7 +94,7 @@ public class GetFederatedIdentityStep implements Step {
 
   private boolean k8sServiceAccountExists(String uamiName, CoreV1Api aksApi) {
     try {
-      return aksApi.readNamespacedServiceAccount(uamiName, k8sServiceAccountName, null) != null;
+      return aksApi.readNamespacedServiceAccount(uamiName, k8sServiceAccountName).execute() != null;
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.NOT_FOUND.value()) {
         return false;

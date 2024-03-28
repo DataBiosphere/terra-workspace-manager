@@ -1,0 +1,11 @@
+plugins {
+    // Apply the common convention plugin for shared build configuration between library and application projects.
+    id 'terra-workspace-manager.java-conventions'
+
+    id 'io.spring.dependency-management'
+    id 'org.springframework.boot'
+}
+
+// Spring Boot 3.2.3 pulls in opentelemetry-bom 1.31.0.
+// It must have version >= 1.34.1 for compatibility with terra-common-lib 1.0.9:
+ext['opentelemetry.version'] = '1.36.0'

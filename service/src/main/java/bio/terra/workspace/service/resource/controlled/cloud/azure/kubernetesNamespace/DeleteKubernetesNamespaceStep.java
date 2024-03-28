@@ -55,9 +55,7 @@ public class DeleteKubernetesNamespaceStep extends DeleteAzureControlledResource
 
     try {
       logger.debug("Deleting namespace {}", resource.getKubernetesNamespace());
-      coreApiClient
-          .get()
-          .deleteNamespace(resource.getKubernetesNamespace(), null, null, null, null, null, null);
+      coreApiClient.get().deleteNamespace(resource.getKubernetesNamespace()).execute();
     } catch (ApiException e) {
       return kubernetesClientProvider.stepResultFromException(e, HttpStatus.NOT_FOUND);
     }
@@ -92,7 +90,7 @@ public class DeleteKubernetesNamespaceStep extends DeleteAzureControlledResource
 
   private Optional<String> getNamespaceStatus(CoreV1Api coreApiClient) {
     try {
-      var namespace = coreApiClient.readNamespace(resource.getKubernetesNamespace(), null);
+      var namespace = coreApiClient.readNamespace(resource.getKubernetesNamespace()).execute();
       var phase = Optional.ofNullable(namespace.getStatus()).map(V1NamespaceStatus::getPhase);
       logger.info("Status = {} for azure namespace = {}", phase, resource.getKubernetesNamespace());
       return phase;

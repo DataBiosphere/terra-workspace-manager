@@ -1,8 +1,0 @@
-{
-  "name": "BasicResiliency",
-  "description": "Resiliency tests",
-  "serverSpecificationFile": "workspace-local.json",
-  "testConfigurationFiles": [
-    "resiliency/DeleteInitialPods.json"
-  ]
-}

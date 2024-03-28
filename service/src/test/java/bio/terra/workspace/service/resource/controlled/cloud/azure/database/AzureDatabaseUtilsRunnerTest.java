@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import bio.terra.stairway.exception.RetryException;
@@ -196,12 +197,16 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
             any(AzureCloudContext.class), any(UUID.class)))
         .thenReturn(Optional.of(mockCoreV1Api));
 
-    when(mockCoreV1Api.createNamespacedPod(any(), podCaptor.capture(), any(), any(), any(), any()))
-        .thenReturn(new V1Pod());
-    when(mockCoreV1Api.readNamespacedPod(eq(podName), any(), any()))
-        .thenReturn(new V1Pod().status(new V1PodStatus().phase(podPhase)));
-    when(mockCoreV1Api.deleteNamespacedPod(
-            eq(podName), any(), any(), any(), any(), any(), any(), any()))
-        .thenReturn(new V1Pod());
+    var createRequest = mock(CoreV1Api.APIcreateNamespacedPodRequest.class);
+    when(mockCoreV1Api.createNamespacedPod(any(), podCaptor.capture())).thenReturn(createRequest);
+    when(createRequest.execute()).thenReturn(new V1Pod());
+
+    var readRequest = mock(CoreV1Api.APIreadNamespacedPodRequest.class);
+    when(mockCoreV1Api.readNamespacedPod(eq(podName), any())).thenReturn(readRequest);
+    when(readRequest.execute()).thenReturn(new V1Pod().status(new V1PodStatus().phase(podPhase)));
+
+    var deleteRequest = mock(CoreV1Api.APIdeleteNamespacedPodRequest.class);
+    when(mockCoreV1Api.deleteNamespacedPod(eq(podName), any())).thenReturn(deleteRequest);
+    when(deleteRequest.execute()).thenReturn(new V1Pod());
   }
 }
