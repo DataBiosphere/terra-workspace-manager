@@ -193,6 +193,8 @@ class DetachAzureDiskFromVmStepTest {
 
   private void setupAzureMocksForUndoStep(boolean diskWasInitiallyAttached) {
     if (diskWasInitiallyAttached) {
+      when(virtualMachineUpdateMock.withExistingDataDisk(any()))
+          .thenReturn(virtualMachineUpdateMock);
       when(virtualMachineMock.update()).thenReturn(virtualMachineUpdateMock);
       when(computeManagerMock.virtualMachines()).thenReturn(virtualMachinesMock);
       when(virtualMachinesMock.getById(vmId)).thenReturn(virtualMachineMock);
