@@ -166,8 +166,7 @@ public class DetachAzureDiskFromVmStep implements DeleteControlledResourceStep {
 
   private void detachDisk(VirtualMachine vm, Integer lun) {
     var vmUpdate = vm.update();
-    vmUpdate.withoutDataDisk(lun);
-    vmUpdate.apply();
+    vmUpdate.withoutDataDisk(lun).apply();
     logger.info(
         "Disk {} in workspace {} has been detached from vm.",
         resource.getResourceId(),
@@ -176,8 +175,7 @@ public class DetachAzureDiskFromVmStep implements DeleteControlledResourceStep {
 
   private void attachDisk(VirtualMachine vm, Disk disk) {
     var vmUpdate = vm.update();
-    vmUpdate.withExistingDataDisk(disk);
-    vmUpdate.apply();
+    vmUpdate.withExistingDataDisk(disk).apply();
     logger.info(
         "Disk {} in workspace {} has been attached back to a vm.",
         resource.getResourceId(),
