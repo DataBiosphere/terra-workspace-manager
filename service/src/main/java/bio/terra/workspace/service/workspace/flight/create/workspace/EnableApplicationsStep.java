@@ -45,7 +45,8 @@ public class EnableApplicationsStep implements Step {
       return StepResult.getStepResultSuccess();
     } catch (DuplicateFlightIdException e) {
       // this happens on retry, just wait for the job
-      return FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId);
+      return FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId)
+          .convertToStepResult();
     }
   }
 

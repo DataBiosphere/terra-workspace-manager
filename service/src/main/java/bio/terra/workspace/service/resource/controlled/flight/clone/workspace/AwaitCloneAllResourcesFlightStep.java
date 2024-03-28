@@ -11,7 +11,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.StepResultWithFlightInfo;
+import bio.terra.workspace.common.utils.SubflightResult;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
 import bio.terra.workspace.service.job.JobMapKeys;
@@ -49,13 +49,12 @@ public class AwaitCloneAllResourcesFlightStep implements Step {
         context.getInputParameters().get(JobMapKeys.REQUEST.getKeyName(), Workspace.class);
 
     try {
-      StepResultWithFlightInfo subflightResult =
-          FlightUtils.waitForSubflightCompletionAndReturnFlightInfo(
-              context.getStairway(), cloneAllResourcesFlightId);
+      SubflightResult subflightResult =
+          FlightUtils.waitForSubflightCompletion(context.getStairway(), cloneAllResourcesFlightId);
 
       if (!subflightResult.isSuccess()) {
         // no point in retrying the await step
-        return subflightResult.getStepResult();
+        return subflightResult.convertToStepResult();
       }
 
       FlightMap subflightResultMap = subflightResult.getFlightMap();

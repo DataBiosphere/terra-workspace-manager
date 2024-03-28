@@ -11,7 +11,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.StepResultWithFlightInfo;
+import bio.terra.workspace.common.utils.SubflightResult;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -44,9 +44,8 @@ public class AwaitCloneControlledFlexibleResourceFlightStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     try {
-      StepResultWithFlightInfo subflightResult =
-          FlightUtils.waitForSubflightCompletionAndReturnFlightInfo(
-              flightContext.getStairway(), subFlightId);
+      SubflightResult subflightResult =
+          FlightUtils.waitForSubflightCompletion(flightContext.getStairway(), subFlightId);
 
       // Get the existing map, or create a new one.
       var resourceIdToResult =

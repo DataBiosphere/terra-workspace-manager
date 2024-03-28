@@ -68,7 +68,8 @@ public class RemoveNativeAccessToPrivateResourcesStep implements Step {
    */
   private static StepResult waitForSubFlight(String flightId, FlightContext context) {
     try {
-      return FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId);
+      return FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId)
+          .convertToStepResult();
     } catch (InterruptedException e) {
       // this method is called in a lambda, which doesn't allow checked exceptions. So we wrap
       // InterruptedException in a RuntimeException and unwrap later.
@@ -83,7 +84,9 @@ public class RemoveNativeAccessToPrivateResourcesStep implements Step {
   private static Stream<ResourceRolePair> getSuccessfullyRevoked(
       String flightId, ResourceRolePair resourceRolePair, FlightContext context) {
     try {
-      var result = FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId);
+      var result =
+          FlightUtils.waitForSubflightCompletion(context.getStairway(), flightId)
+              .convertToStepResult();
       if (result.isSuccess()) {
         return Stream.of(resourceRolePair);
       } else {

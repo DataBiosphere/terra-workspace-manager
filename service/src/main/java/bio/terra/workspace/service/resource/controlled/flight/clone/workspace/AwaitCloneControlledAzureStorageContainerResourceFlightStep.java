@@ -11,7 +11,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.StepResultWithFlightInfo;
+import bio.terra.workspace.common.utils.SubflightResult;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
@@ -44,9 +44,8 @@ public class AwaitCloneControlledAzureStorageContainerResourceFlightStep impleme
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
-      StepResultWithFlightInfo subflightResult =
-          FlightUtils.waitForSubflightCompletionAndReturnFlightInfo(
-              context.getStairway(), subflightId);
+      SubflightResult subflightResult =
+          FlightUtils.waitForSubflightCompletion(context.getStairway(), subflightId);
 
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       WsmCloneResourceResult cloneResult =

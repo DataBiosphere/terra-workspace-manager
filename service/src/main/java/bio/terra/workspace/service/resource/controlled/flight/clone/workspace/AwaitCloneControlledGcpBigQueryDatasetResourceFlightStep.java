@@ -11,7 +11,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
-import bio.terra.workspace.common.utils.StepResultWithFlightInfo;
+import bio.terra.workspace.common.utils.SubflightResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
@@ -46,9 +46,8 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // wait for the flight
     try {
-      StepResultWithFlightInfo subflightResult =
-          FlightUtils.waitForSubflightCompletionAndReturnFlightInfo(
-              context.getStairway(), subflightId);
+      SubflightResult subflightResult =
+          FlightUtils.waitForSubflightCompletion(context.getStairway(), subflightId);
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       WsmCloneResourceResult cloneResult =
           WorkspaceCloneUtils.flightStatusToCloneResult(
