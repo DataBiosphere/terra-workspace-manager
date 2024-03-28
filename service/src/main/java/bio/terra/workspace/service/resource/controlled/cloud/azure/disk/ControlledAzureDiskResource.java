@@ -127,6 +127,10 @@ public class ControlledAzureDiskResource extends ControlledResource {
   public List<DeleteControlledResourceStep> getDeleteSteps(
       FlightMap inputParameters, FlightBeanBag flightBeanBag) {
     return List.of(
+        new GetAzureDiskAttachedVmStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
+        new DetachAzureDiskFromVmStep(
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         new DeleteAzureDiskStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this));
   }
