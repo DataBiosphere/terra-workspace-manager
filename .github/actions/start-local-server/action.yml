@@ -27,7 +27,7 @@ runs:
         # Give it some time before starting to poll.
         sleep 10
         started=1
-        for i in `seq 1 120`;
+        for i in `seq 1 240`;
         do
           echo "try server connect $i"
           if echo > /dev/tcp/localhost/8080
