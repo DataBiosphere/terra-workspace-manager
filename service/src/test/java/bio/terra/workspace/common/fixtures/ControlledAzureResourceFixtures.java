@@ -54,7 +54,7 @@ import java.util.UUID;
 public class ControlledAzureResourceFixtures {
 
   public static final String AZURE_NAME_PREFIX = "az";
-  public static final String DEFAULT_AZURE_RESOURCE_REGION = Region.US_EAST2.name();
+  public static final String DEFAULT_AZURE_RESOURCE_REGION = Region.US_SOUTH_CENTRAL.name();
   private static final String AZURE_UAMI_NAME_PREFIX = "uami";
   private static final String AZURE_DATABASE_NAME_PREFIX = "db";
   private static final String AZURE_KUBERNETES_NAMESPACE_PREFIX = "k8s";
