@@ -33,29 +33,25 @@ public interface ApplicationAbleSupport {
     }
   }
 
-  /** if application did not already have the role, add it. */
   @NoRetry
-  @UndoMethod("undoUpdateIamStep")
-  void updateIamStep(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceUuid,
-      AbleEnum ableEnum,
-      ApplicationInfo applicationInfo)
-      throws InterruptedException;
-
-  /** if application did not already have the role, remove it */
-  void undoUpdateIamStep(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceUuid,
-      AbleEnum ableEnum,
-      ApplicationInfo applicationInfo)
+  @UndoMethod("revokeApplicationIam")
+  void grantApplicationIam(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, ApplicationInfo applicationInfo)
       throws InterruptedException;
 
   @NoRetry
-  @UndoMethod("undoUpdateDatabaseStep")
-  ApplicationAbleResult updateDatabaseStep(
-      UUID workspaceUuid, String applicationId, AbleEnum ableEnum, ApplicationInfo applicationInfo);
+  @UndoMethod("grantApplicationIam")
+  void revokeApplicationIam(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, ApplicationInfo applicationInfo)
+      throws InterruptedException;
 
-  void undoUpdateDatabaseStep(
-      UUID workspaceUuid, String applicationId, AbleEnum ableEnum, ApplicationInfo applicationInfo);
+  @NoRetry
+  @UndoMethod("disableWorkspaceApplication")
+  ApplicationAbleResult enableWorkspaceApplication(
+      UUID workspaceUuid, ApplicationInfo applicationInfo);
+
+  @NoRetry
+  @UndoMethod("enableWorkspaceApplication")
+  ApplicationAbleResult disableWorkspaceApplication(
+      UUID workspaceUuid, ApplicationInfo applicationInfo);
 }

@@ -6,7 +6,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
-import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
 
@@ -35,28 +34,28 @@ public class ApplicationAbleSupportImpl implements ApplicationAbleSupport {
 
     return new ApplicationInfoImpl(
         application,
-        computeCorrectState(ableEnum, isApplicationEnabled(workspaceUuid, applicationId)),
-        computeCorrectState(ableEnum, enabledInSam));
+        isStateCorrect(ableEnum, isApplicationEnabled(workspaceUuid, applicationId)),
+        isStateCorrect(ableEnum, enabledInSam));
   }
 
   @Override
-  public void updateIamStep(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceUuid,
-      AbleEnum ableEnum,
-      ApplicationInfo applicationInfo)
+  public void grantApplicationIam(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, ApplicationInfo applicationInfo)
       throws InterruptedException {
-    if (applicationInfo.samAlreadyCorrect()) {
-      return;
-    }
-
-    if (ableEnum == AbleEnum.ENABLE) {
+    if (!applicationInfo.samAlreadyCorrect()) {
       samService.grantWorkspaceRole(
           workspaceUuid,
           userRequest,
           WsmIamRole.APPLICATION,
           applicationInfo.application().getServiceAccount());
-    } else {
+    }
+  }
+
+  @Override
+  public void revokeApplicationIam(
+      AuthenticatedUserRequest userRequest, UUID workspaceUuid, ApplicationInfo applicationInfo)
+      throws InterruptedException {
+    if (!applicationInfo.samAlreadyCorrect()) {
       samService.removeWorkspaceRole(
           workspaceUuid,
           userRequest,
@@ -66,40 +65,27 @@ public class ApplicationAbleSupportImpl implements ApplicationAbleSupport {
   }
 
   @Override
-  public void undoUpdateIamStep(
-      AuthenticatedUserRequest userRequest,
-      UUID workspaceUuid,
-      AbleEnum ableEnum,
-      ApplicationInfo applicationInfo)
-      throws InterruptedException {
-    updateIamStep(userRequest, workspaceUuid, ableEnum.toggle(), applicationInfo);
-  }
-
-  @Override
-  public ApplicationAbleResult updateDatabaseStep(
-      UUID workspaceUuid,
-      String applicationId,
-      AbleEnum ableEnum,
-      ApplicationInfo applicationInfo) {
+  public ApplicationAbleResult enableWorkspaceApplication(
+      UUID workspaceUuid, ApplicationInfo applicationInfo) {
     if (applicationInfo.applicationAlreadyCorrect()) {
       return null;
-    }
-    WsmWorkspaceApplication wsmApp;
-    if (ableEnum == AbleEnum.ENABLE) {
-      wsmApp = applicationDao.enableWorkspaceApplication(workspaceUuid, applicationId);
     } else {
-      wsmApp = applicationDao.disableWorkspaceApplication(workspaceUuid, applicationId);
+      return new ApplicationAbleResultImpl(
+          applicationDao.enableWorkspaceApplication(
+              workspaceUuid, applicationInfo.application().getApplicationId()));
     }
-    return new ApplicationAbleResultImpl(wsmApp);
   }
 
   @Override
-  public void undoUpdateDatabaseStep(
-      UUID workspaceUuid,
-      String applicationId,
-      AbleEnum ableEnum,
-      ApplicationInfo applicationInfo) {
-    updateDatabaseStep(workspaceUuid, applicationId, ableEnum.toggle(), applicationInfo);
+  public ApplicationAbleResult disableWorkspaceApplication(
+      UUID workspaceUuid, ApplicationInfo applicationInfo) {
+    if (applicationInfo.applicationAlreadyCorrect()) {
+      return null;
+    } else {
+      return new ApplicationAbleResultImpl(
+          applicationDao.enableWorkspaceApplication(
+              workspaceUuid, applicationInfo.application().getApplicationId()));
+    }
   }
 
   private boolean isApplicationEnabled(UUID workspaceUuid, String applicationId) {
@@ -110,10 +96,7 @@ public class ApplicationAbleSupportImpl implements ApplicationAbleSupport {
     }
   }
 
-  private boolean computeCorrectState(AbleEnum ableEnum, boolean isEnabled) {
-    if (ableEnum == AbleEnum.ENABLE) {
-      return isEnabled;
-    }
-    return !isEnabled;
+  private boolean isStateCorrect(AbleEnum ableEnum, boolean isEnabled) {
+    return (ableEnum == AbleEnum.ENABLE) == isEnabled;
   }
 }

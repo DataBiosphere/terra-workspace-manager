@@ -49,12 +49,23 @@ public class ApplicationAbleFlightV2 extends FlightGenerator {
 
         createStep(applicationAbleSupport).checkApplicationState(applicationInfo, ableEnum);
 
-        createStep(applicationAbleSupport)
-            .updateIamStep(userRequest, workspaceUuid, ableEnum, applicationInfo);
-
         var results =
-            createStep(applicationAbleSupport)
-                .updateDatabaseStep(workspaceUuid, applicationId, ableEnum, applicationInfo);
+            switch (ableEnum) {
+              case ENABLE -> {
+                createStep(applicationAbleSupport)
+                    .grantApplicationIam(userRequest, workspaceUuid, applicationInfo);
+
+                yield createStep(applicationAbleSupport)
+                    .enableWorkspaceApplication(workspaceUuid, applicationInfo);
+              }
+              case DISABLE -> {
+                createStep(applicationAbleSupport)
+                    .revokeApplicationIam(userRequest, workspaceUuid, applicationInfo);
+
+                yield createStep(applicationAbleSupport)
+                    .disableWorkspaceApplication(workspaceUuid, applicationInfo);
+              }
+            };
 
         setResponse(results.application());
       }
