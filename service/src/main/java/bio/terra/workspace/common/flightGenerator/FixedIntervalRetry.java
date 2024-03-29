@@ -9,5 +9,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD})
 public @interface FixedIntervalRetry {
   int intervalSeconds();
+
   int maxCount();
 }

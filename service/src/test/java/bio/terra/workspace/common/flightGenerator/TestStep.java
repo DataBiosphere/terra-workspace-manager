@@ -3,16 +3,19 @@ package bio.terra.workspace.common.flightGenerator;
 import java.util.List;
 
 public interface TestStep {
-  @NoUndo @NoRetry
+  @NoUndo
+  @NoRetry
   TestResult increment(TestResult result);
 
-  @NoUndo @NoRetry
+  @NoUndo
+  @NoRetry
   List<TestResult> incrementBoth(TestResult result, TestResult result2);
 
   @NoRetry
   default void missingUndo() {}
 
-  @UndoMethod("doesNotExists") @NoRetry
+  @UndoMethod("doesNotExists")
+  @NoRetry
   default void undoDoesNotExist() {}
 
   @NoUndo
@@ -20,7 +23,10 @@ public interface TestStep {
   default void fixedRetryMethod() {}
 
   @NoUndo
-  @ExponentialBackoffRetry(initialIntervalSeconds = 1, maxIntervalSeconds = 1, maxOperationTimeSeconds = 1)
+  @ExponentialBackoffRetry(
+      initialIntervalSeconds = 1,
+      maxIntervalSeconds = 1,
+      maxOperationTimeSeconds = 1)
   default void exponentialRetryMethod() {}
 
   @NoUndo

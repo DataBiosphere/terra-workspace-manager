@@ -19,7 +19,6 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * This class is a proxy for a step method invocation. It is used to capture the method and
@@ -77,11 +76,16 @@ public class StepInvocationHandler implements InvocationHandler, Step {
   }
 
   private RetryRule determineRetryRule(Method stepMethod) {
-    var retryRules = Arrays.stream(stepMethod.getAnnotations()).flatMap(a -> annotationToRetryRule(a, true)).toList();
+    var retryRules =
+        Arrays.stream(stepMethod.getAnnotations())
+            .flatMap(a -> annotationToRetryRule(a, true))
+            .toList();
     if (retryRules.size() == 1) {
       return retryRules.get(0);
     } else {
-      throw new InvalidRetryAnnotationException("1 and only 1 retry rule annotation is allowed on a step method. Found %d on %s".formatted(retryRules.size(), stepMethod.toGenericString()));
+      throw new InvalidRetryAnnotationException(
+          "1 and only 1 retry rule annotation is allowed on a step method. Found %d on %s"
+              .formatted(retryRules.size(), stepMethod.toGenericString()));
     }
   }
 
@@ -89,9 +93,15 @@ public class StepInvocationHandler implements InvocationHandler, Step {
     if (annotation instanceof FixedIntervalRetry retry) {
       return Stream.of(new RetryRuleFixedInterval(retry.intervalSeconds(), retry.maxCount()));
     } else if (annotation instanceof ExponentialBackoffRetry retry) {
-      return Stream.of(new RetryRuleExponentialBackoff(retry.initialIntervalSeconds(), retry.maxIntervalSeconds(), retry.maxOperationTimeSeconds()));
+      return Stream.of(
+          new RetryRuleExponentialBackoff(
+              retry.initialIntervalSeconds(),
+              retry.maxIntervalSeconds(),
+              retry.maxOperationTimeSeconds()));
     } else if (annotation instanceof RandomBackoffRetry retry) {
-      return Stream.of(new RetryRuleRandomBackoff(retry.operationIncrementMilliseconds(), retry.maxConcurrency(), retry.maxCount()));
+      return Stream.of(
+          new RetryRuleRandomBackoff(
+              retry.operationIncrementMilliseconds(), retry.maxConcurrency(), retry.maxCount()));
     } else if (annotation instanceof NoRetry) {
       return Stream.of(RetryRuleNone.getRetryRuleNone());
     } else {
@@ -112,7 +122,9 @@ public class StepInvocationHandler implements InvocationHandler, Step {
       var results = this.method.invoke(this.target, inputs);
       storeOutputs(context, results);
     } catch (InvocationTargetException e) {
-      if (e.getTargetException() instanceof Exception) {
+      if (e.getTargetException() instanceof InterruptedException) {
+        throw (InterruptedException) e.getTargetException();
+      } else if (e.getTargetException() instanceof Exception) {
         return new StepResult(
             StepStatus.STEP_RESULT_FAILURE_FATAL, (Exception) e.getTargetException());
       } else {

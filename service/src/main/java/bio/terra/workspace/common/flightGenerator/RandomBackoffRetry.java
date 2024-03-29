@@ -9,6 +9,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD})
 public @interface RandomBackoffRetry {
   long operationIncrementMilliseconds();
+
   int maxConcurrency();
+
   int maxCount();
 }

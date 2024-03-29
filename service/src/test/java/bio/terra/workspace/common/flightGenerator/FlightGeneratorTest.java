@@ -76,8 +76,7 @@ public class FlightGeneratorTest extends BaseSpringBootUnitTest {
   @Test
   void testMissingUndo() {
     assertThrows(
-        InvalidUndoAnnotationException.class,
-        setupStepProxyWithMockFlightGenerator()::missingUndo);
+        InvalidUndoAnnotationException.class, setupStepProxyWithMockFlightGenerator()::missingUndo);
   }
 
   @Test
@@ -133,8 +132,8 @@ public class FlightGeneratorTest extends BaseSpringBootUnitTest {
 
   private TestStep setupStepProxyWithMockFlightGenerator() {
     var invocationHandler = new StepInvocationHandler(mockFlightGenerator, new TestStepImpl(), 0);
-    return (TestStep) Proxy.newProxyInstance(
-        getClass().getClassLoader(), new Class[] { TestStep.class }, invocationHandler);
+    return (TestStep)
+        Proxy.newProxyInstance(
+            getClass().getClassLoader(), new Class[] {TestStep.class}, invocationHandler);
   }
-
 }
