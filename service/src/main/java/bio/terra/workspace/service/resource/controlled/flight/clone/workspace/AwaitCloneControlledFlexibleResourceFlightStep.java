@@ -1,5 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_FACTOR_INCREASE;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_INITIAL_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_MAX_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_TOTAL_DURATION;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
@@ -45,7 +49,13 @@ public class AwaitCloneControlledFlexibleResourceFlightStep implements Step {
       throws InterruptedException, RetryException {
     try {
       SubflightResult subflightResult =
-          FlightUtils.waitForSubflightCompletion(flightContext.getStairway(), subFlightId);
+          FlightUtils.waitForSubflightCompletion(
+              flightContext.getStairway(),
+              subFlightId,
+              CLONE_SUBFLIGHT_TOTAL_DURATION,
+              CLONE_SUBFLIGHT_INITIAL_SLEEP,
+              CLONE_SUBFLIGHT_FACTOR_INCREASE,
+              CLONE_SUBFLIGHT_MAX_SLEEP);
 
       // Get the existing map, or create a new one.
       var resourceIdToResult =

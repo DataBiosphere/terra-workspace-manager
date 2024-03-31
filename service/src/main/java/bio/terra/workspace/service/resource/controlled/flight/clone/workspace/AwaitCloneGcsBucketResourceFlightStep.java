@@ -1,5 +1,9 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_FACTOR_INCREASE;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_INITIAL_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_MAX_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_TOTAL_DURATION;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
@@ -44,7 +48,13 @@ public class AwaitCloneGcsBucketResourceFlightStep implements Step {
     // wait for the flight
     try {
       SubflightResult subflightResult =
-          FlightUtils.waitForSubflightCompletion(context.getStairway(), subflightId);
+          FlightUtils.waitForSubflightCompletion(
+              context.getStairway(),
+              subflightId,
+              CLONE_SUBFLIGHT_TOTAL_DURATION,
+              CLONE_SUBFLIGHT_INITIAL_SLEEP,
+              CLONE_SUBFLIGHT_FACTOR_INCREASE,
+              CLONE_SUBFLIGHT_MAX_SLEEP);
       FlightStatus subflightStatus = subflightResult.getFlightStatus();
       WsmCloneResourceResult cloneResult =
           WorkspaceCloneUtils.flightStatusToCloneResult(subflightStatus, resource);

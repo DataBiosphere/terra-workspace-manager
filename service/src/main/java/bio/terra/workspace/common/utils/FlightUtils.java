@@ -12,7 +12,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -25,10 +24,15 @@ public final class FlightUtils {
   private static final Logger logger = LoggerFactory.getLogger(FlightUtils.class);
 
   // Parameters for waiting for subflight completion
-  public static final Duration SUBFLIGHT_TOTAL_DURATION = Duration.ofHours(1);
+  private static final Duration SUBFLIGHT_TOTAL_DURATION = Duration.ofHours(1);
   private static final Duration SUBFLIGHT_INITIAL_SLEEP = Duration.ofSeconds(10);
   private static final double SUBFLIGHT_FACTOR_INCREASE = 0.7;
   private static final Duration SUBFLIGHT_MAX_SLEEP = Duration.ofMinutes(2);
+
+  public static final Duration CLONE_SUBFLIGHT_TOTAL_DURATION = Duration.ofMinutes(30);
+  public static final Duration CLONE_SUBFLIGHT_INITIAL_SLEEP = Duration.ofSeconds(1);
+  public static final double CLONE_SUBFLIGHT_FACTOR_INCREASE = 0.0; // fixed wait time
+  public static final Duration CLONE_SUBFLIGHT_MAX_SLEEP = Duration.ofSeconds(1);
 
   // Parameters for waiting for JobService flight completion
   private static final Duration JOB_TOTAL_DURATION = Duration.ofHours(1);
@@ -217,22 +221,26 @@ public final class FlightUtils {
   public static SubflightResult waitForSubflightCompletion(Stairway stairway, String flightId)
       throws InterruptedException {
     return waitForSubflightCompletion(
-        stairway, flightId, SUBFLIGHT_INITIAL_SLEEP, SUBFLIGHT_TOTAL_DURATION);
+        stairway,
+        flightId,
+        SUBFLIGHT_TOTAL_DURATION,
+        SUBFLIGHT_INITIAL_SLEEP,
+        SUBFLIGHT_FACTOR_INCREASE,
+        SUBFLIGHT_MAX_SLEEP);
   }
 
-  @VisibleForTesting
   public static SubflightResult waitForSubflightCompletion(
-      Stairway stairway, String flightId, Duration initialSleep, Duration totalDuration)
+      Stairway stairway,
+      String flightId,
+      Duration totalDuration,
+      Duration initialSleep,
+      double factorIncrease,
+      Duration maxSleep)
       throws InterruptedException {
     try {
       FlightState flightState =
           waitForFlightCompletion(
-              stairway,
-              flightId,
-              totalDuration,
-              initialSleep,
-              SUBFLIGHT_FACTOR_INCREASE,
-              SUBFLIGHT_MAX_SLEEP);
+              stairway, flightId, totalDuration, initialSleep, factorIncrease, maxSleep);
       return new SubflightResult(flightState);
     } catch (InterruptedException ie) {
       // Propagate the interrupt

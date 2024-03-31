@@ -61,7 +61,12 @@ public class FlightUtilsTest extends BaseMockitoStrictStubbingTest {
 
     SubflightResult result =
         FlightUtils.waitForSubflightCompletion(
-            mockStairway, subFlightId.toString(), Duration.ofMillis(200), Duration.ofSeconds(5));
+            mockStairway,
+            subFlightId.toString(),
+            Duration.ofSeconds(5),
+            Duration.ofMillis(200),
+            0,
+            Duration.ofMillis(200));
 
     assertThat(result.isSuccess(), equalTo(true));
     assertThat(result.getFlightStatus(), equalTo(FlightStatus.SUCCESS));

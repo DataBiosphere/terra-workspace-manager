@@ -42,7 +42,13 @@ public class AwaitCloneControlledAzureDatabaseResourceFlightStep implements Step
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
       SubflightResult subflightResult =
-          FlightUtils.waitForSubflightCompletion(context.getStairway(), subflightId);
+          FlightUtils.waitForSubflightCompletion(
+              context.getStairway(),
+              subflightId,
+              CLONE_SUBFLIGHT_TOTAL_DURATION,
+              CLONE_SUBFLIGHT_INITIAL_SLEEP,
+              CLONE_SUBFLIGHT_FACTOR_INCREASE,
+              CLONE_SUBFLIGHT_MAX_SLEEP);
 
       // generate cloneDetails
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();

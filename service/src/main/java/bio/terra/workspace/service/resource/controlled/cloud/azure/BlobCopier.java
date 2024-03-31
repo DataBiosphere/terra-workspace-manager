@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
-import static bio.terra.workspace.common.utils.FlightUtils.SUBFLIGHT_TOTAL_DURATION;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_TOTAL_DURATION;
 import static java.util.stream.Collectors.groupingBy;
 
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -75,7 +75,7 @@ public class BlobCopier {
         destStorageData.storageContainerResource().getResourceId(),
         destStorageData.storageContainerResource().getWorkspaceId());
     var pollResults =
-        blobPollers.map(blobPoller -> blobPoller.waitForCompletion(SUBFLIGHT_TOTAL_DURATION));
+        blobPollers.map(blobPoller -> blobPoller.waitForCompletion(CLONE_SUBFLIGHT_TOTAL_DURATION));
     logger.info(
         "Finished copying blobs [source_container_id = {}, source_workspace_id = {}, destination_container_id = {}, destination_workspace_id={}]",
         sourceStorageData.storageContainerResource().getResourceId(),
