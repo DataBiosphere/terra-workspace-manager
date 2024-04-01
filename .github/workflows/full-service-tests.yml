@@ -31,6 +31,9 @@ jobs:
     steps:
     - name: Checkout current code
       uses: actions/checkout@v3
+      with:
+        # fetch full history for sonar
+        fetch-depth: 0
 
     - name: Set env
       id: set-env-step
