@@ -4,11 +4,13 @@ import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER
 import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
@@ -42,6 +44,30 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);
     when(mockSamService().getWsmServiceAccountToken()).thenReturn("fake");
+  }
+
+  @Test
+  void createBatchPool403OnAuthzFailure() throws Exception {
+    var batchPoolRequest =
+        new ApiCreateControlledAzureBatchPoolRequestBody()
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi())
+            .azureBatchPool(
+                ControlledAzureResourceFixtures.createAzureBatchPoolWithRequiredParameters());
+
+    UUID workspaceId = UUID.randomUUID();
+    when(mockWorkspaceService().validateMcWorkspaceAndAction(any(), any(UUID.class), anyString()))
+        .thenThrow(new ForbiddenException("forbidden"));
+
+    mockMvc
+        .perform(
+            MockMvcUtils.addAuth(
+                post(String.format(CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(batchPoolRequest)),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }
 
   @Test
