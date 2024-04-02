@@ -1,12 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_FACTOR_INCREASE;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_INITIAL_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_MAX_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_TOTAL_DURATION;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.FlightState;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -14,6 +15,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.SubflightResult;
 import bio.terra.workspace.generated.model.ApiClonedControlledGcpBigQueryDataset;
 import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetResource;
 import bio.terra.workspace.generated.model.ApiResourceMetadata;
@@ -48,14 +50,21 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     // wait for the flight
     try {
-      FlightState subflightState =
-          context.getStairway().waitForFlight(subflightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
+      SubflightResult subflightResult =
+          FlightUtils.waitForSubflightCompletion(
+              context.getStairway(),
+              subflightId,
+              CLONE_SUBFLIGHT_TOTAL_DURATION,
+              CLONE_SUBFLIGHT_INITIAL_SLEEP,
+              CLONE_SUBFLIGHT_FACTOR_INCREASE,
+              CLONE_SUBFLIGHT_MAX_SLEEP);
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       WsmCloneResourceResult cloneResult =
-          WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
+          WorkspaceCloneUtils.flightStatusToCloneResult(
+              subflightResult.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
+      FlightMap resultMap = subflightResult.getFlightMap();
       var clonedDataset =
           resultMap.get(
               JobMapKeys.RESPONSE.getKeyName(), ApiClonedControlledGcpBigQueryDataset.class);
@@ -69,8 +78,7 @@ public class AwaitCloneControlledGcpBigQueryDatasetResourceFlightStep implements
               .map(ApiGcpBigQueryDatasetResource::getMetadata)
               .map(ApiResourceMetadata::getResourceId)
               .orElse(null));
-      String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
-      cloneDetails.setErrorMessage(errorMessage);
+      cloneDetails.setErrorMessage(subflightResult.getFlightErrorMessage());
 
       cloneDetails.setName(resource.getName());
       cloneDetails.setDescription(resource.getDescription());

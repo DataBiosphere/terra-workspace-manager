@@ -6,8 +6,6 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
 import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
-import bio.terra.stairway.StepResult;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
@@ -25,14 +23,16 @@ import org.springframework.http.HttpStatus;
 public final class FlightUtils {
   private static final Logger logger = LoggerFactory.getLogger(FlightUtils.class);
 
-  public static final int FLIGHT_POLL_SECONDS = 1;
-  public static final int FLIGHT_POLL_CYCLES = 360;
-
   // Parameters for waiting for subflight completion
   private static final Duration SUBFLIGHT_TOTAL_DURATION = Duration.ofHours(1);
   private static final Duration SUBFLIGHT_INITIAL_SLEEP = Duration.ofSeconds(10);
   private static final double SUBFLIGHT_FACTOR_INCREASE = 0.7;
   private static final Duration SUBFLIGHT_MAX_SLEEP = Duration.ofMinutes(2);
+
+  public static final Duration CLONE_SUBFLIGHT_TOTAL_DURATION = Duration.ofMinutes(30);
+  public static final Duration CLONE_SUBFLIGHT_INITIAL_SLEEP = Duration.ofSeconds(1);
+  public static final double CLONE_SUBFLIGHT_FACTOR_INCREASE = 0.0; // fixed wait time
+  public static final Duration CLONE_SUBFLIGHT_MAX_SLEEP = Duration.ofSeconds(1);
 
   // Parameters for waiting for JobService flight completion
   private static final Duration JOB_TOTAL_DURATION = Duration.ofHours(1);
@@ -211,38 +211,43 @@ public final class FlightUtils {
 
   /**
    * Utility method to wait for a subflight to complete. It is intended to be used in steps that
-   * launch and then wait for flights. The StepReturn reflects the success or failure of the
-   * subflight.
+   * launch and then wait for flights. The `SubflightResult` return object reflects the success or
+   * failure of the subflight.
    *
    * @param stairway stairway instance
    * @param flightId flight id to wait for
-   * @return StepResult
+   * @return SubflightResult
    */
-  public static StepResult waitForSubflightCompletion(Stairway stairway, String flightId)
+  public static SubflightResult waitForSubflightCompletion(Stairway stairway, String flightId)
+      throws InterruptedException {
+    return waitForSubflightCompletion(
+        stairway,
+        flightId,
+        SUBFLIGHT_TOTAL_DURATION,
+        SUBFLIGHT_INITIAL_SLEEP,
+        SUBFLIGHT_FACTOR_INCREASE,
+        SUBFLIGHT_MAX_SLEEP);
+  }
+
+  public static SubflightResult waitForSubflightCompletion(
+      Stairway stairway,
+      String flightId,
+      Duration totalDuration,
+      Duration initialSleep,
+      double factorIncrease,
+      Duration maxSleep)
       throws InterruptedException {
     try {
       FlightState flightState =
           waitForFlightCompletion(
-              stairway,
-              flightId,
-              SUBFLIGHT_TOTAL_DURATION,
-              SUBFLIGHT_INITIAL_SLEEP,
-              SUBFLIGHT_FACTOR_INCREASE,
-              SUBFLIGHT_MAX_SLEEP);
-      if (flightState.getFlightStatus() == FlightStatus.SUCCESS) {
-        return StepResult.getStepResultSuccess();
-      }
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          flightState
-              .getException()
-              .orElse(new RuntimeException("Flight failed with an empty exception")));
+              stairway, flightId, totalDuration, initialSleep, factorIncrease, maxSleep);
+      return new SubflightResult(flightState);
     } catch (InterruptedException ie) {
       // Propagate the interrupt
       Thread.currentThread().interrupt();
       throw ie;
     } catch (Exception e) {
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
+      return new SubflightResult(e);
     }
   }
 
@@ -276,6 +281,7 @@ public final class FlightUtils {
         "Testing flight {} completion; state is {}",
         flightState.getFlightId(),
         flightState.getFlightStatus());
+    // TODO: replace with call to flightState.isActive after TCL/Stairway is updated.
     return (flightState.getFlightStatus() == FlightStatus.ERROR
         || flightState.getFlightStatus() == FlightStatus.FATAL
         || flightState.getFlightStatus() == FlightStatus.SUCCESS);

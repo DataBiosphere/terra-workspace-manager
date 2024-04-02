@@ -1,10 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_FACTOR_INCREASE;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_INITIAL_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_MAX_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_TOTAL_DURATION;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.FlightState;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -12,8 +15,8 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.SubflightResult;
 import bio.terra.workspace.service.job.JobMapKeys;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.BlobCopier;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.ControlledAzureManagedIdentityResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -45,17 +48,21 @@ public class AwaitCloneControlledAzureManagedIdentityResourceFlightStep implemen
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
-      FlightState subflightState =
-          context
-              .getStairway()
-              .waitForFlight(
-                  subflightId, 1, ((int) BlobCopier.MAX_BLOB_COPY_POLL_TIMEOUT.toSeconds()));
+      SubflightResult subflightResult =
+          FlightUtils.waitForSubflightCompletion(
+              context.getStairway(),
+              subflightId,
+              CLONE_SUBFLIGHT_TOTAL_DURATION,
+              CLONE_SUBFLIGHT_INITIAL_SLEEP,
+              CLONE_SUBFLIGHT_FACTOR_INCREASE,
+              CLONE_SUBFLIGHT_MAX_SLEEP);
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       WsmCloneResourceResult cloneResult =
-          WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
+          WorkspaceCloneUtils.flightStatusToCloneResult(
+              subflightResult.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
+      FlightMap resultMap = subflightResult.getFlightMap();
       var clonedIdentity =
           resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
@@ -67,8 +74,7 @@ public class AwaitCloneControlledAzureManagedIdentityResourceFlightStep implemen
               .map(ClonedAzureResource::resource)
               .map(ControlledResource::getResourceId)
               .orElse(null));
-      String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
-      cloneDetails.setErrorMessage(errorMessage);
+      cloneDetails.setErrorMessage(subflightResult.getFlightErrorMessage());
 
       cloneDetails.setName(resource.getName());
       cloneDetails.setDescription(resource.getDescription());

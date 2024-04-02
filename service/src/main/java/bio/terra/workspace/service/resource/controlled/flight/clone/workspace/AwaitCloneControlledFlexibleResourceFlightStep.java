@@ -1,12 +1,13 @@
 package bio.terra.workspace.service.resource.controlled.flight.clone.workspace;
 
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_CYCLES;
-import static bio.terra.workspace.common.utils.FlightUtils.FLIGHT_POLL_SECONDS;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_FACTOR_INCREASE;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_INITIAL_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_MAX_SLEEP;
+import static bio.terra.workspace.common.utils.FlightUtils.CLONE_SUBFLIGHT_TOTAL_DURATION;
 import static bio.terra.workspace.common.utils.FlightUtils.validateRequiredEntries;
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
-import bio.terra.stairway.FlightState;
 import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
@@ -14,6 +15,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.SubflightResult;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.any.flexibleresource.ControlledFlexibleResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -46,10 +48,15 @@ public class AwaitCloneControlledFlexibleResourceFlightStep implements Step {
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
     try {
-      FlightState subFlightState =
-          flightContext
-              .getStairway()
-              .waitForFlight(subFlightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
+      SubflightResult subflightResult =
+          FlightUtils.waitForSubflightCompletion(
+              flightContext.getStairway(),
+              subFlightId,
+              CLONE_SUBFLIGHT_TOTAL_DURATION,
+              CLONE_SUBFLIGHT_INITIAL_SLEEP,
+              CLONE_SUBFLIGHT_FACTOR_INCREASE,
+              CLONE_SUBFLIGHT_MAX_SLEEP);
+
       // Get the existing map, or create a new one.
       var resourceIdToResult =
           Optional.ofNullable(
@@ -63,10 +70,11 @@ public class AwaitCloneControlledFlexibleResourceFlightStep implements Step {
       // Generate the cloneDetails.
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       WsmCloneResourceResult cloneResult =
-          WorkspaceCloneUtils.flightStatusToCloneResult(subFlightState.getFlightStatus(), resource);
+          WorkspaceCloneUtils.flightStatusToCloneResult(
+              subflightResult.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      FlightMap resultMap = FlightUtils.getResultMapRequired(subFlightState);
+      FlightMap resultMap = subflightResult.getFlightMap();
       ControlledFlexibleResource clonedFlexResource =
           resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ControlledFlexibleResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
@@ -77,8 +85,7 @@ public class AwaitCloneControlledFlexibleResourceFlightStep implements Step {
           Optional.ofNullable(clonedFlexResource)
               .map(ControlledFlexibleResource::getResourceId)
               .orElse(null));
-      String errorMessage = FlightUtils.getFlightErrorMessage(subFlightState);
-      cloneDetails.setErrorMessage(errorMessage);
+      cloneDetails.setErrorMessage(subflightResult.getFlightErrorMessage());
 
       cloneDetails.setName(resource.getName());
       cloneDetails.setDescription(resource.getDescription());

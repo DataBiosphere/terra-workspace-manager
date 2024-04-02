@@ -7,6 +7,7 @@ import bio.terra.stairway.exception.DatabaseOperationException;
 import bio.terra.stairway.exception.FlightWaitTimedOutException;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.common.utils.FlightUtils;
+import bio.terra.workspace.common.utils.SubflightResult;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
@@ -40,16 +41,23 @@ public class AwaitCloneControlledAzureDatabaseResourceFlightStep implements Step
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     try {
-      FlightState subflightState =
-          context.getStairway().waitForFlight(subflightId, FLIGHT_POLL_SECONDS, FLIGHT_POLL_CYCLES);
+      SubflightResult subflightResult =
+          FlightUtils.waitForSubflightCompletion(
+              context.getStairway(),
+              subflightId,
+              CLONE_SUBFLIGHT_TOTAL_DURATION,
+              CLONE_SUBFLIGHT_INITIAL_SLEEP,
+              CLONE_SUBFLIGHT_FACTOR_INCREASE,
+              CLONE_SUBFLIGHT_MAX_SLEEP);
 
       // generate cloneDetails
       WsmResourceCloneDetails cloneDetails = new WsmResourceCloneDetails();
       WsmCloneResourceResult cloneResult =
-          WorkspaceCloneUtils.flightStatusToCloneResult(subflightState.getFlightStatus(), resource);
+          WorkspaceCloneUtils.flightStatusToCloneResult(
+              subflightResult.getFlightStatus(), resource);
       cloneDetails.setResult(cloneResult);
 
-      FlightMap resultMap = FlightUtils.getResultMapRequired(subflightState);
+      FlightMap resultMap = subflightResult.getFlightMap();
       var clonedDatabase =
           resultMap.get(JobMapKeys.RESPONSE.getKeyName(), ClonedAzureResource.class);
       cloneDetails.setStewardshipType(StewardshipType.CONTROLLED);
@@ -61,8 +69,7 @@ public class AwaitCloneControlledAzureDatabaseResourceFlightStep implements Step
               .map(ClonedAzureResource::resource)
               .map(ControlledResource::getResourceId)
               .orElse(null));
-      String errorMessage = FlightUtils.getFlightErrorMessage(subflightState);
-      cloneDetails.setErrorMessage(errorMessage);
+      cloneDetails.setErrorMessage(subflightResult.getFlightErrorMessage());
 
       cloneDetails.setName(resource.getName());
       cloneDetails.setDescription(resource.getDescription());

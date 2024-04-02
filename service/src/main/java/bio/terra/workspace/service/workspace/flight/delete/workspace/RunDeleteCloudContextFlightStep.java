@@ -55,7 +55,7 @@ public class RunDeleteCloudContextFlightStep implements Step {
       // We will see duplicate id on a retry. Quietly continue.
     }
 
-    return FlightUtils.waitForSubflightCompletion(stairway, flightId);
+    return FlightUtils.waitForSubflightCompletion(stairway, flightId).convertToStepResult();
   }
 
   @Override
