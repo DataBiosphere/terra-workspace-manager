@@ -67,7 +67,7 @@ public class ApplicationAbleFlightV2 extends FlightGenerator {
               }
             };
 
-        setResponse(results, ApplicationAbleResult.class, ApplicationAbleResult::application);
+        setResponse(results, ApplicationAbleResult.class, ApplicationAbleResult::getApplication);
       }
     } catch (InterruptedException e) {
       // This should not happen because is not actually running the steps yet

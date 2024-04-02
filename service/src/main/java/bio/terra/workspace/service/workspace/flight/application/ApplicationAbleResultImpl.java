@@ -16,7 +16,7 @@ public class ApplicationAbleResultImpl implements ApplicationAbleResult {
   }
 
   @Override
-  public WsmWorkspaceApplication application() {
+  public WsmWorkspaceApplication getApplication() {
     return application;
   }
 

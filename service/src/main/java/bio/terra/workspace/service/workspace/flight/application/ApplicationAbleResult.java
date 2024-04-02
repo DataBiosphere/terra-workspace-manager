@@ -5,5 +5,5 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(as = ApplicationAbleResultImpl.class)
 public interface ApplicationAbleResult {
-  WsmWorkspaceApplication application();
+  WsmWorkspaceApplication getApplication();
 }
