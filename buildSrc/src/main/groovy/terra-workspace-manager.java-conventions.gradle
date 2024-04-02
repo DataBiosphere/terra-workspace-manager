@@ -4,6 +4,7 @@ plugins {
     id 'java'
     id 'jacoco'
     id 'com.diffplug.spotless'
+    id 'com.srcclr.gradle'
 }
 
 def useMavenLocal = false
@@ -71,4 +72,8 @@ if (hasProperty("buildScan")) {
         termsOfServiceUrl = "https://gradle.com/terms-of-service"
         termsOfServiceAgree = "yes"
     }
+}
+
+srcclr {
+    scope = "runtimeClasspath"
 }

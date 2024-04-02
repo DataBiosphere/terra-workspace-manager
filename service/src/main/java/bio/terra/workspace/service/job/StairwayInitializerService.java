@@ -3,11 +3,11 @@ package bio.terra.workspace.service.job;
 import bio.terra.common.db.DataSourceManager;
 import bio.terra.common.stairway.MonitoringHook;
 import bio.terra.common.stairway.StairwayComponent;
+import bio.terra.common.stairway.StairwayLoggingHook;
 import bio.terra.stairway.StairwayMapper;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.logging.WorkspaceActivityLogHook;
 import bio.terra.workspace.common.utils.FlightBeanBag;
-import bio.terra.workspace.common.utils.StairwayLoggingHook;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +22,6 @@ public class StairwayInitializerService {
 
   private final DataSourceManager dataSourceManager;
   private final StairwayDatabaseConfiguration stairwayDatabaseConfiguration;
-  private final StairwayLoggingHook stairwayLoggingHook;
   private final WorkspaceActivityLogHook workspaceActivityLogHook;
   private final StairwayComponent stairwayComponent;
   private final FlightBeanBag flightBeanBag;
@@ -33,7 +32,6 @@ public class StairwayInitializerService {
   public StairwayInitializerService(
       DataSourceManager dataSourceManager,
       StairwayDatabaseConfiguration stairwayDatabaseConfiguration,
-      StairwayLoggingHook stairwayLoggingHook,
       WorkspaceActivityLogHook workspaceActivityLogHook,
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
@@ -41,7 +39,6 @@ public class StairwayInitializerService {
       OpenTelemetry openTelemetry) {
     this.dataSourceManager = dataSourceManager;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
-    this.stairwayLoggingHook = stairwayLoggingHook;
     this.workspaceActivityLogHook = workspaceActivityLogHook;
     this.stairwayComponent = stairwayComponent;
     this.flightBeanBag = flightBeanBag;
@@ -60,7 +57,7 @@ public class StairwayInitializerService {
             .newStairwayOptionsBuilder()
             .dataSource(dataSourceManager.initializeDataSource(stairwayDatabaseConfiguration))
             .context(flightBeanBag)
-            .addHook(stairwayLoggingHook)
+            .addHook(new StairwayLoggingHook())
             .addHook(new MonitoringHook(openTelemetry))
             .addHook(workspaceActivityLogHook)
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));

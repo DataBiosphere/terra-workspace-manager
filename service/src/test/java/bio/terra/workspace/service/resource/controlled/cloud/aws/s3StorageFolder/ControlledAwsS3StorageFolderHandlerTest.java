@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import bio.terra.workspace.common.BaseAwsSpringBootUnitTest;
 import bio.terra.workspace.service.resource.controlled.cloud.aws.AwsResourceConstants;
-import liquibase.util.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
 public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsSpringBootUnitTest {
@@ -38,7 +38,7 @@ public class ControlledAwsS3StorageFolderHandlerTest extends BaseAwsSpringBootUn
         ControlledAwsS3StorageFolderHandler.getHandler()
             .generateCloudName(
                 workspaceUserFacingId,
-                StringUtil.repeat("a", AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH + 1))
+                StringUtils.repeat("a", AwsResourceConstants.MAX_S3_STORAGE_FOLDER_NAME_LENGTH + 1))
             .length(),
         "resource name expected to be trimmed to max length");
   }
