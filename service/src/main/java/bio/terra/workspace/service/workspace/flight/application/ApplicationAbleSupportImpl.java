@@ -42,12 +42,12 @@ public class ApplicationAbleSupportImpl implements ApplicationAbleSupport {
   public void grantApplicationIam(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, ApplicationInfo applicationInfo)
       throws InterruptedException {
-    if (!applicationInfo.samAlreadyCorrect()) {
+    if (!applicationInfo.isSamAlreadyCorrect()) {
       samService.grantWorkspaceRole(
           workspaceUuid,
           userRequest,
           WsmIamRole.APPLICATION,
-          applicationInfo.application().getServiceAccount());
+          applicationInfo.getApplication().getServiceAccount());
     }
   }
 
@@ -55,36 +55,36 @@ public class ApplicationAbleSupportImpl implements ApplicationAbleSupport {
   public void revokeApplicationIam(
       AuthenticatedUserRequest userRequest, UUID workspaceUuid, ApplicationInfo applicationInfo)
       throws InterruptedException {
-    if (!applicationInfo.samAlreadyCorrect()) {
+    if (!applicationInfo.isSamAlreadyCorrect()) {
       samService.removeWorkspaceRole(
           workspaceUuid,
           userRequest,
           WsmIamRole.APPLICATION,
-          applicationInfo.application().getServiceAccount());
+          applicationInfo.getApplication().getServiceAccount());
     }
   }
 
   @Override
   public ApplicationAbleResult enableWorkspaceApplication(
       UUID workspaceUuid, ApplicationInfo applicationInfo) {
-    if (applicationInfo.applicationAlreadyCorrect()) {
+    if (applicationInfo.isApplicationAlreadyCorrect()) {
       return null;
     } else {
       return new ApplicationAbleResultImpl(
           applicationDao.enableWorkspaceApplication(
-              workspaceUuid, applicationInfo.application().getApplicationId()));
+              workspaceUuid, applicationInfo.getApplication().getApplicationId()));
     }
   }
 
   @Override
   public ApplicationAbleResult disableWorkspaceApplication(
       UUID workspaceUuid, ApplicationInfo applicationInfo) {
-    if (applicationInfo.applicationAlreadyCorrect()) {
+    if (applicationInfo.isApplicationAlreadyCorrect()) {
       return null;
     } else {
       return new ApplicationAbleResultImpl(
-          applicationDao.enableWorkspaceApplication(
-              workspaceUuid, applicationInfo.application().getApplicationId()));
+          applicationDao.disableWorkspaceApplication(
+              workspaceUuid, applicationInfo.getApplication().getApplicationId()));
     }
   }
 

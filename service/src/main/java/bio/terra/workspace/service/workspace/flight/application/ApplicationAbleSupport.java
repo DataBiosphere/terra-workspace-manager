@@ -25,10 +25,10 @@ public interface ApplicationAbleSupport {
   default void checkApplicationState(ApplicationInfo applicationInfo, AbleEnum ableEnum) {
     // For enable, we require that the application be in the operating state
     if (ableEnum == AbleEnum.ENABLE
-        && applicationInfo.application().getState() != WsmApplicationState.OPERATING) {
+        && applicationInfo.getApplication().getState() != WsmApplicationState.OPERATING) {
       throw new InvalidApplicationStateException(
           "Applications is "
-              + applicationInfo.application().getState().toApi()
+              + applicationInfo.getApplication().getState().toApi()
               + " and cannot be enabled");
     }
   }

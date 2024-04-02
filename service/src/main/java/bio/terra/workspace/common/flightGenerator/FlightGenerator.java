@@ -4,6 +4,7 @@ import bio.terra.stairway.Flight;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.RetryRule;
 import java.lang.reflect.Proxy;
+import java.util.function.Function;
 
 public class FlightGenerator extends Flight {
 
@@ -49,6 +50,17 @@ public class FlightGenerator extends Flight {
       var responseStepIndex =
           ((StepResultInvocationHandler) Proxy.getInvocationHandler(response)).stepIndex();
       addStep(new SetResponseStep(responseStepIndex));
+    } else {
+      throw new IllegalArgumentException("Response must be a step");
+    }
+  }
+
+  protected <T, R> void setResponse(T response, Class<T> clazz, Function<T, R> getter) {
+    if (Proxy.isProxyClass(response.getClass())
+        && Proxy.getInvocationHandler(response) instanceof StepResultInvocationHandler) {
+      var responseStepIndex =
+          ((StepResultInvocationHandler) Proxy.getInvocationHandler(response)).stepIndex();
+      addStep(new SetTypedResponseStep<>(responseStepIndex, getter, clazz));
     } else {
       throw new IllegalArgumentException("Response must be a step");
     }
