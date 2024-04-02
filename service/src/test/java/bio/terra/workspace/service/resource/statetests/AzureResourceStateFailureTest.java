@@ -71,6 +71,7 @@ public class AzureResourceStateFailureTest extends BaseSpringBootUnitTest {
     stateTestUtils = new StateTestUtils(mockMvc, mockMvcUtils, mockWorkspaceV1Api);
 
     // Everything is authorized!
+    when(mockSamService().getWsmServiceAccountToken()).thenReturn("fake");
     when(mockSamService().isAuthorized(any(), any(), any(), any())).thenReturn(true);
     when(mockSamService().getUserStatusInfo(any()))
         .thenReturn(

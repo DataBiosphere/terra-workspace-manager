@@ -69,8 +69,7 @@ class CreateAzureContextFlightTest extends BaseAzureConnectedTest {
     var landingZoneId = UUID.randomUUID();
     when(landingZoneApiDispatchMock.getLandingZoneId(Mockito.any(), Mockito.any()))
         .thenReturn(landingZoneId);
-    when(landingZoneApiDispatchMock.getAzureLandingZoneRegion(
-            Mockito.any(), Mockito.eq(landingZoneId)))
+    when(landingZoneApiDispatchMock.getLandingZoneRegionUsingWsmToken(landingZoneId))
         .thenReturn(landingZoneRegion.name());
   }
 

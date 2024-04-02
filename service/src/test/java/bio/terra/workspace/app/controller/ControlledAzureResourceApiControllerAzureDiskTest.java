@@ -6,14 +6,17 @@ import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.addJsonContentType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -42,6 +45,31 @@ public class ControlledAzureResourceApiControllerAzureDiskTest extends BaseAzure
     when(mockSamService()
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);
+    when(mockSamService().getWsmServiceAccountToken()).thenReturn("fake");
+  }
+
+  @Test
+  void createAzureDisk403OnAuthzFailure() throws Exception {
+    ApiCreateControlledAzureDiskRequestV2Body diskRequestV2Body =
+        new ApiCreateControlledAzureDiskRequestV2Body()
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi())
+            .azureDisk(new ApiAzureDiskCreationParameters().name("disk1").size(100))
+            .jobControl(new ApiJobControl().id(UUID.randomUUID().toString()));
+
+    UUID workspaceId = UUID.randomUUID();
+    when(mockWorkspaceService().validateMcWorkspaceAndAction(any(), any(UUID.class), anyString()))
+        .thenThrow(new ForbiddenException("forbidden"));
+
+    mockMvc
+        .perform(
+            MockMvcUtils.addAuth(
+                post(String.format(CREATE_CONTROLLED_AZURE_DISK_V2_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(diskRequestV2Body)),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }
 
   @Test

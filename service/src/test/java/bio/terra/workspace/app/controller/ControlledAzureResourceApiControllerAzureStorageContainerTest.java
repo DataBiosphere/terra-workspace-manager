@@ -6,14 +6,17 @@ import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.addJsonContentType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.ForbiddenException;
 import bio.terra.workspace.app.controller.shared.JobApiUtils;
 import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledResourceFixtures;
+import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.generated.model.ApiControlledResourceCommonFields;
 import bio.terra.workspace.generated.model.ApiJobControl;
@@ -45,6 +48,30 @@ public class ControlledAzureResourceApiControllerAzureStorageContainerTest
     when(mockSamService()
             .getUserEmailFromSamAndRethrowOnInterrupt(any(AuthenticatedUserRequest.class)))
         .thenReturn(DEFAULT_USER_EMAIL);
+    when(mockSamService().getWsmServiceAccountToken()).thenReturn("fake");
+  }
+
+  @Test
+  void createAzureStorageContainer403OnAuthzFailure() throws Exception {
+    ApiCreateControlledAzureStorageContainerRequestBody containerRequest =
+        new ApiCreateControlledAzureStorageContainerRequestBody()
+            .common(ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi());
+
+    UUID workspaceId = UUID.randomUUID();
+    when(mockWorkspaceService().validateMcWorkspaceAndAction(any(), any(UUID.class), anyString()))
+        .thenThrow(new ForbiddenException("forbidden"));
+
+    mockMvc
+        .perform(
+            MockMvcUtils.addAuth(
+                post(String.format(
+                        CREATE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT, workspaceId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8")
+                    .content(objectMapper.writeValueAsString(containerRequest)),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_FORBIDDEN));
   }
 
   @Test

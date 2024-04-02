@@ -1,6 +1,7 @@
 package bio.terra.workspace.common;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
@@ -63,7 +64,7 @@ public class BaseAzureSpringBootUnitTest extends BaseSpringBootUnitTestMocks {
   }
 
   public void setupMockLandingZoneRegion(Region region) {
-    when(mockWorkspaceService().getWorkspace(any()))
+    when(mockWorkspaceService().validateMcWorkspaceAndAction(any(), any(), anyString()))
         .thenReturn(
             WorkspaceFixtures.createDefaultMcWorkspace(
                 new SpendProfileId(UUID.randomUUID().toString())));

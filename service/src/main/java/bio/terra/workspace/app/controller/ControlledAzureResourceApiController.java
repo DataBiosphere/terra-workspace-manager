@@ -39,7 +39,9 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdenti
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.vm.ControlledAzureVmResource;
 import bio.terra.workspace.service.resource.controlled.flight.clone.azure.common.ClonedAzureResource;
+import bio.terra.workspace.service.resource.controlled.model.AccessScopeType;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceFields;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -110,19 +112,19 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, ApiCreateControlledAzureDiskRequestBody body) {
     features.azureEnabledCheck();
 
+    // validate workspace access
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
+
+    // create the resource
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DISK);
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
-    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     ControlledAzureDiskResource resource =
         buildControlledAzureDiskResource(body.getAzureDisk(), commonFields);
@@ -146,19 +148,19 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, ApiCreateControlledAzureDiskRequestV2Body body) {
     features.azureEnabledCheck();
 
+    // validate workspace access
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
 
+    // create the resource
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DISK);
-    workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
-    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
 
     ControlledAzureDiskResource resource =
         buildControlledAzureDiskResource(body.getAzureDisk(), commonFields);
@@ -245,19 +247,19 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, ApiCreateControlledAzureStorageContainerRequestBody body) {
     features.azureEnabledCheck();
 
+    // validate the workspace and user access
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
+
+    // create the resource
     final ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
-    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     ControlledAzureStorageContainerResource resource =
         buildControlledAzureStorageContainerResource(body.getAzureStorageContainer(), commonFields);
@@ -282,18 +284,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
+
     final ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_VM);
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
-    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     AzureResourceValidationUtils.validate(body.getAzureVm());
     ControlledAzureVmResource resource =
@@ -376,19 +376,18 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       UUID workspaceUuid, ApiCreateControlledAzureBatchPoolRequestBody body) {
     features.azureEnabledCheck();
 
+    // validate the workspace and user access
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
+
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_BATCH_POOL);
-    Workspace workspace =
-        workspaceService.validateMcWorkspaceAndAction(
-            userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
-    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     ControlledAzureBatchPoolResource resource =
         ControlledAzureBatchPoolResource.builder()
@@ -666,17 +665,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
+
     final ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DATABASE);
-    workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceUuid, ControllerValidationUtils.samCreateAction(commonFields));
-    workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE);
 
     ControlledAzureDatabaseResource resource =
         buildControlledAzureDatabaseResource(body.getAzureDatabase(), commonFields);
@@ -731,8 +729,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         toCommonFields(
             workspaceUuid,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceUuid)),
+            landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(
+                workspaceService.getWorkspace(workspaceUuid)),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_MANAGED_IDENTITY);
     workspaceService.validateMcWorkspaceAndAction(
@@ -832,17 +830,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     features.azureEnabledCheck();
 
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
+    var workspace =
+        validateWorkspaceResourceCreationPermissions(userRequest, workspaceId, body.getCommon());
+
     final ControlledResourceFields commonFields =
         toCommonFields(
             workspaceId,
             body.getCommon(),
-            landingZoneApiDispatch.getLandingZoneRegion(
-                userRequest, workspaceService.getWorkspace(workspaceId)),
+            landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace),
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_DATABASE);
-    workspaceService.validateMcWorkspaceAndAction(
-        userRequest, workspaceId, ControllerValidationUtils.samCreateAction(commonFields));
-    workspaceService.validateWorkspaceAndContextState(workspaceId, CloudPlatform.AZURE);
 
     // append the workspace id to ensure the namespace is unique across all workspaces in the LZ
     var kubernetesNamespace =
@@ -981,5 +978,20 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     var result = landingZoneApiDispatch.listAzureLandingZoneResources(wsmToken, landingZoneId);
     return new ResponseEntity<>(result, HttpStatus.OK);
+  }
+
+  private Workspace validateWorkspaceResourceCreationPermissions(
+      AuthenticatedUserRequest userRequest,
+      UUID workpaceUUID,
+      ApiControlledResourceCommonFields commonFields) {
+    var workspace =
+        workspaceService.validateMcWorkspaceAndAction(
+            userRequest,
+            workpaceUUID,
+            ControllerValidationUtils.samCreateAction(
+                AccessScopeType.fromApi(commonFields.getAccessScope()),
+                ManagedByType.fromApi(commonFields.getManagedBy())));
+    workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
+    return workspace;
   }
 }
