@@ -4,7 +4,6 @@ import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.FlightState;
-import bio.terra.stairway.FlightStatus;
 import bio.terra.stairway.Stairway;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
@@ -281,10 +280,7 @@ public final class FlightUtils {
         "Testing flight {} completion; state is {}",
         flightState.getFlightId(),
         flightState.getFlightStatus());
-    // TODO: replace with call to flightState.isActive after TCL/Stairway is updated.
-    return (flightState.getFlightStatus() == FlightStatus.ERROR
-        || flightState.getFlightStatus() == FlightStatus.FATAL
-        || flightState.getFlightStatus() == FlightStatus.SUCCESS);
+    return !flightState.isActive();
   }
 
   public static SamUser getRequiredSamUser(FlightMap inputParameters, SamService samService) {
