@@ -153,18 +153,18 @@ jobs:
           author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} integrationTest"
           fields: repo,job,workflow,commit,eventName,author,took
 
-#      - name: "Notify Workspaces test failure Slack"
-#        if: failure()
-#        uses: broadinstitute/action-slack@v3.8.0
-#        # see https://github.com/broadinstitute/action-slack
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        with:
-#          status: ${{ job.status }}
-#          channel: "#dsp-workspaces-test-alerts"
-#          username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
-#          author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} integrationTest"
-#          fields: repo,job,workflow,commit,eventName,author,took
+      - name: "Notify Workspaces test failure Slack"
+        if: failure()
+        uses: broadinstitute/action-slack@v3.8.0
+        # see https://github.com/broadinstitute/action-slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          status: ${{ job.status }}
+          channel: "#dsp-workspaces-test-alerts"
+          username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
+          author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} integrationTest"
+          fields: repo,job,workflow,commit,eventName,author,took
 
       - name: Archive WSM and TestRunner logs
         id: archive_logs
