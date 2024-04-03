@@ -103,7 +103,7 @@ public class ControlledAzureResourceFixtures {
 
   // Azure Storage
 
-  public static final String TEST_AZURE_STORAGE_ACCOUNT_NAME = "teststgacctdonotdelete";
+  public static final String TEST_AZURE_STORAGE_ACCOUNT_NAME = "lz94022eeac7bd7669ffe835";
   public static final String STORAGE_CONTAINER_PREFIX = "my-container";
 
   public static String uniqueStorageAccountName() {
