@@ -93,32 +93,32 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#    - name: "Notify QA Slack"
-#      if: always() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
-#      uses: broadinstitute/action-slack@v3.8.0
-#      # see https://github.com/broadinstitute/action-slack
-#      env:
-#        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        MATRIX_CONTEXT: ${{ toJson(matrix) }}
-#      with:
-#        status: ${{ job.status }}
-#        channel: "#dsde-qa"
-#        username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
-#        author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} ${{ matrix.gradleTask }}"
-#        fields: repo,job,workflow,commit,eventName,author,took
-#
-#    - name: "Notify WSM Slack"
-#      # post to WSM Slack when a run fails
-#      if: failure()
-#      uses: broadinstitute/action-slack@v3.8.0
-#      # see https://github.com/broadinstitute/action-slack
-#      env:
-#        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-#        MATRIX_CONTEXT: ${{ toJson(matrix) }}
-#      with:
-#        status: ${{ job.status }}
-#        channel: "#dsp-workspaces-test-alerts"
-#        username: "WSM full service test branch"
-#        author_name: "${{ matrix.gradleTask }}"
-#        icon_emoji: ":bangbang:"
-#        fields: job, commit
+    - name: "Notify QA Slack"
+      if: always() && (steps.set-env-step.outputs.test-env == 'alpha' || steps.set-env-step.outputs.test-env == 'staging')
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#dsde-qa"
+        username: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} tests"
+        author_name: "Workspace Manager ${{ steps.set-env-step.outputs.test-env }} ${{ matrix.gradleTask }}"
+        fields: repo,job,workflow,commit,eventName,author,took
+
+    - name: "Notify WSM Slack"
+      # post to WSM Slack when a run fails
+      if: failure()
+      uses: broadinstitute/action-slack@v3.8.0
+      # see https://github.com/broadinstitute/action-slack
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        MATRIX_CONTEXT: ${{ toJson(matrix) }}
+      with:
+        status: ${{ job.status }}
+        channel: "#dsp-workspaces-test-alerts"
+        username: "WSM full service test branch"
+        author_name: "${{ matrix.gradleTask }}"
+        icon_emoji: ":bangbang:"
+        fields: job, commit
