@@ -33,6 +33,7 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.PolicyValidator;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.TpsUtilities;
+import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneCreateCloudContextFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -716,6 +717,21 @@ public class WorkspaceService {
         cloningInstructions,
         userRequest);
 
+    // Create the cloud context synchronously so that we can display a shell workspace.
+    jobService
+        .newJob()
+        .description(
+            String.format(
+                "Creating cloud context for clone workspace: name: '%s' id: '%s'  ",
+                sourceWorkspace.getDisplayName().orElse(""), workspaceUuid))
+        .flightClass(CloneCreateCloudContextFlight.class)
+        .userRequest(userRequest)
+        .request(destinationWorkspace)
+        .operationType(OperationType.CLONE)
+        .addParameter(SOURCE_WORKSPACE_ID, sourceWorkspace.getWorkspaceId())
+        .addParameter(SPEND_PROFILE, spendProfile)
+        .submitAndWait();
+
     // Remaining steps are an async flight.
     return jobService
         .newJob()
@@ -732,7 +748,6 @@ public class WorkspaceService {
         .addParameter(
             SOURCE_WORKSPACE_ID, sourceWorkspace.getWorkspaceId()) // TODO: remove this duplication
         .addParameter(ControlledResourceKeys.LOCATION, location)
-        .addParameter(SPEND_PROFILE, spendProfile)
         .submit();
   }
 
