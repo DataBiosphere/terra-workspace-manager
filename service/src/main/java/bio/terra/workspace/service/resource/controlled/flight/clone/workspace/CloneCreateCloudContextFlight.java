@@ -100,6 +100,8 @@ public class CloneCreateCloudContextFlight extends Flight {
     var spendProfileService = flightBeanBag.getSpendProfileService();
     var features = flightBeanBag.getFeatureConfiguration();
     return spendProfileService.authorizeLinking(
+        // Note that `isBpmGcpEnabled` is a misnomer: it is not specific to GCP.
+        // This flag should be removed, as we also run with BPM enabled at this point.
         cloudContext.getCommonFields().spendProfileId(), features.isBpmGcpEnabled(), userRequest);
   }
 }
