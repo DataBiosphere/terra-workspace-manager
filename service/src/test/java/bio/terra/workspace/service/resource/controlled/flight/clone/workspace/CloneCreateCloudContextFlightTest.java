@@ -55,13 +55,13 @@ public class CloneCreateCloudContextFlightTest extends BaseMockitoStrictStubbing
   }
 
   @Test
-  public void testCreateFlightWithNoSourceCloudContext() {
+  void testCreateFlightWithNoSourceCloudContext() {
     assertExpectedSteps(new ArrayList<>(List.of(CreateCloudContextIdsForFutureStepsStep.class)));
   }
 
   @Test
-  public void testCreateFlightWithSourceGCPCloudContext() {
-    when(gcpCloudContextService.getGcpCloudContext(eq(sourceWorkspaceId)))
+  void testCreateFlightWithSourceGCPCloudContext() {
+    when(gcpCloudContextService.getGcpCloudContext(sourceWorkspaceId))
         .thenReturn(Optional.of(gcpCloudContext));
     assertExpectedSteps(
         new ArrayList<>(
@@ -72,8 +72,8 @@ public class CloneCreateCloudContextFlightTest extends BaseMockitoStrictStubbing
   }
 
   @Test
-  public void testCreateFlightWithSourceAzureCloudContext() {
-    when(azureCloudContextService.getAzureCloudContext(eq(sourceWorkspaceId)))
+  void testCreateFlightWithSourceAzureCloudContext() {
+    when(azureCloudContextService.getAzureCloudContext(sourceWorkspaceId))
         .thenReturn(Optional.of(azureCloudContext));
     assertExpectedSteps(
         new ArrayList<>(
@@ -84,13 +84,13 @@ public class CloneCreateCloudContextFlightTest extends BaseMockitoStrictStubbing
   }
 
   @Test
-  public void testUsesSourceSpendProfileIfNoDestinationSpendProfile() {
+  void testUsesSourceSpendProfileIfNoDestinationSpendProfile() {
     when(flightBeanBag.getSpendProfileService()).thenReturn(spendProfileService);
     FeatureConfiguration config = new FeatureConfiguration();
     // This is a misnomer... it is not specific to GCP (and in reality, always on).
     config.setBpmGcpEnabled(true);
     when(flightBeanBag.getFeatureConfiguration()).thenReturn(config);
-    when(azureCloudContextService.getAzureCloudContext(eq(sourceWorkspaceId)))
+    when(azureCloudContextService.getAzureCloudContext(sourceWorkspaceId))
         .thenReturn(Optional.of(azureCloudContext));
 
     FlightMap inputs = new FlightMap();

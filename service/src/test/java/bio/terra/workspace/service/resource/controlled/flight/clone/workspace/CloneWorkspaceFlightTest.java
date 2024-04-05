@@ -22,7 +22,7 @@ public class CloneWorkspaceFlightTest extends BaseMockitoStrictStubbingTest {
   @Mock private AuthenticatedUserRequest userRequest;
 
   @Test
-  public void testCreateFlightSteps() {
+  void testCreateFlightSteps() {
     var expectedSteps =
         new ArrayList<>(
             List.of(
