@@ -7,12 +7,6 @@ on:
   schedule:
     - cron: '0 8 * * *' # Run nightly at 3AM ET
 
-  workflow_dispatch:
-    inputs:
-      testEnv:
-        description: 'Environment in which tests should be run. Regardless of how this is set, the tests run against a local Postgres and development Sam'
-        required: true
-
 jobs:
   test-job:
     runs-on: ubuntu-latest
@@ -35,59 +29,47 @@ jobs:
         # fetch full history for sonar
         fetch-depth: 0
 
-    - name: Set env
-      id: set-env-step
-      run: |
-        ENV=local
-        if ${{ github.event_name == 'workflow_dispatch' }}; then
-          ENV=${{ github.event.inputs.testEnv }}
-        fi
-        echo test-env=$ENV >> $GITHUB_OUTPUT
-
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
         distribution: 'temurin'
         java-version: 17
 
-    - name: Cache Gradle packages
-      uses: actions/cache@v3
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    - name: Write credentials
+      id: write-credentials
+      uses: ./.github/actions/write-credentials
       with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}-${{ hashFiles('**/*.gradle') }}
-        restore-keys: v1-${{ runner.os }}-gradle-${{ hashfiles('**/gradle-wrapper.properties') }}
+        user-delegated-sa-b64: ${{ secrets.USER_DELEGATED_SA_DEV }}
+        buffer-client-sa-b64: ${{ secrets.BUFFER_CLIENT_SA_DEV }}
+        testrunner-sa-b64: ${{ secrets.TESTRUNNER_SA_DEV }}
+        testrunner-k8s-sa-b64: ${{ secrets.TESTRUNNER_K8S_SA_DEV }}
+        wsm-sa-b64: ${{ secrets.WSM_SA_DEV }}
+        janitor-sa-b64: ${{ secrets.JANITOR_SA_DEV }}
+        policy-client-sa-b64: ${{ secrets.POLICY_CLIENT_SA_DEV }}
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-
-    - name: Get Vault token
-      id: vault-token-step
-      env:
-        VAULT_ADDR: https://clotho.broadinstitute.org:8200
-      run: |
-        VAULT_TOKEN=$(docker run --rm --cap-add IPC_LOCK \
-          -e "VAULT_ADDR=${VAULT_ADDR}" \
-          vault:1.1.0 \
-          vault write -field token \
-            auth/approle/login role_id=${{ secrets.VAULT_APPROLE_ROLE_ID }} \
-            secret_id=${{ secrets.VAULT_APPROLE_SECRET_ID }})
-        echo ::add-mask::$VAULT_TOKEN    
-        echo vault-token=$VAULT_TOKEN >> $GITHUB_OUTPUT
-
+      # Turn on TPS for integration tests
     - name: Write config
-      id: config
-      uses: ./.github/actions/write-config
-      with:
-        target: local
-        vault-token: ${{ steps.vault-token-step.outputs.vault-token }}
+      id: write-config
+      run: |
+        cat << EOF > "config/local-properties.yml"
+        workspace:
+          policy:
+            base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
+          cli:
+            server-name: broad-dev
+        feature:
+          tps-enabled: true
+          temporary-grant-enabled: true
+        EOF
 
       # Run tests
     - name: Run tests
       env:
         PRINT_STANDARD_STREAMS: please
-        TEST_ENV: ${{ steps.set-env-step.outputs.test-env }}
+        TEST_ENV: local
       run: ./gradlew :service:${{ matrix.gradleTask }} --scan
 
     - name: SonarQube scan
