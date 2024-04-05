@@ -6,6 +6,8 @@ name: Full Connected Service Tests
 on:
   schedule:
     - cron: '0 8 * * *' # Run nightly at 3AM ET
+  workflow_dispatch: {}
+
 
 jobs:
   test-job:
