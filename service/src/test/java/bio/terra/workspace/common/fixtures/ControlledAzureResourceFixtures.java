@@ -107,6 +107,7 @@ public class ControlledAzureResourceFixtures {
   public static final String STORAGE_CONTAINER_PREFIX = "my-container";
 
   public static String uniqueStorageAccountName() {
+    // IGNORE
     return UUID.randomUUID().toString().toLowerCase().replace("-", "").substring(0, 23);
   }
 
