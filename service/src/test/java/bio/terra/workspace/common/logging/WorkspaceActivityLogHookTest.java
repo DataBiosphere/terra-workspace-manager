@@ -45,7 +45,7 @@ import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ResourceKeys;
-import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
+import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceV2Flight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -86,7 +86,7 @@ public class WorkspaceActivityLogHookTest extends BaseSpringBootUnitTest {
     assertTrue(emptyChangeDetails.isEmpty());
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CREATE);
-    hook.endFlight(buildSuccessfulFlightContext(WorkspaceCreateFlight.class, inputParams));
+    hook.endFlight(buildSuccessfulFlightContext(CreateWorkspaceV2Flight.class, inputParams));
     ActivityLogChangeDetails changeDetails =
         activityLogDao.getLastUpdatedDetails(workspaceUuid).get();
     assertEquals(
@@ -208,7 +208,7 @@ public class WorkspaceActivityLogHookTest extends BaseSpringBootUnitTest {
 
     FlightMap inputParams = buildInputParams(workspaceUuid, OperationType.CREATE);
 
-    hook.endFlight(buildFailedFlightContext(WorkspaceCreateFlight.class, inputParams));
+    hook.endFlight(buildFailedFlightContext(CreateWorkspaceV2Flight.class, inputParams));
 
     var changeDetailsAfterFailedFlight = activityLogDao.getLastUpdatedDetails(workspaceUuid);
     assertTrue(changeDetailsAfterFailedFlight.isEmpty());

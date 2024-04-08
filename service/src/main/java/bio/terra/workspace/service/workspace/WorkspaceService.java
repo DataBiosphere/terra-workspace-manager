@@ -33,7 +33,6 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.PolicyValidator;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.TpsUtilities;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneCreateCloudContextFlight;
 import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneWorkspaceFlight;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
@@ -47,7 +46,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.flight.cloud.gcp.RemoveUserFromWorkspaceFlight;
 import bio.terra.workspace.service.workspace.flight.create.cloudcontext.CreateCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.create.workspace.CreateWorkspaceV2Flight;
-import bio.terra.workspace.service.workspace.flight.create.workspace.WorkspaceCreateFlight;
 import bio.terra.workspace.service.workspace.flight.delete.cloudcontext.DeleteCloudContextFlight;
 import bio.terra.workspace.service.workspace.flight.delete.workspace.WorkspaceDeleteFlight;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
@@ -134,9 +132,11 @@ public class WorkspaceService {
         workspace,
         policies,
         applications,
-        /* sourceWorkspaceUuid= */ null,
-        CloningInstructions.COPY_NOTHING,
+        /* sourceWorkspaceUuid= */ null, // Only used for cloning
+        CloningInstructions.COPY_NOTHING, // Only used for cloning
         projectOwnerGroupId,
+        null, // Used for CloudContext creation (not supported for the v1 creation API)
+        null, // Used for CloudContext creation (not supported for the v1 creation API)
         userRequest);
   }
 
@@ -146,9 +146,22 @@ public class WorkspaceService {
       @Nullable TpsPolicyInputs policies,
       @Nullable List<String> applications,
       @Nullable String projectOwnerGroupId,
+      @Nullable SpendProfile spendProfile,
       UUID sourceWorkspaceId,
       CloningInstructions cloningInstructions,
       AuthenticatedUserRequest userRequest) {
+
+    // If there is a cloud platform associated with the source workspace, get it here.
+    Optional<DbCloudContext> optionalAzureCloudContext =
+        workspaceDao.getCloudContext(sourceWorkspaceId, CloudPlatform.AZURE);
+    Optional<DbCloudContext> optionalGcpCloudContext =
+        workspaceDao.getCloudContext(sourceWorkspaceId, CloudPlatform.GCP);
+    CloudPlatform cloudPlatform = null;
+    if (optionalAzureCloudContext.isPresent()) {
+      cloudPlatform = CloudPlatform.AZURE;
+    } else if (optionalGcpCloudContext.isPresent()) {
+      cloudPlatform = CloudPlatform.GCP;
+    }
     return createWorkspaceWorker(
         workspace,
         policies,
@@ -156,6 +169,8 @@ public class WorkspaceService {
         sourceWorkspaceId,
         cloningInstructions,
         projectOwnerGroupId,
+        spendProfile,
+        cloudPlatform,
         userRequest);
   }
 
@@ -172,9 +187,39 @@ public class WorkspaceService {
 
     UUID workspaceUuid = workspace.getWorkspaceId();
     JobBuilder createJob =
+        getCreateWorkspaceV2JobBuilder(
+                workspace,
+                policies,
+                applications,
+                workspaceUuid,
+                null, // Only used for cloning
+                CloningInstructions.COPY_NOTHING, // Only used for cloning
+                projectOwnerGroupId,
+                spendProfile,
+                cloudPlatform,
+                userRequest)
+            .jobId(jobId);
+    createJob.submit();
+
+    // Wait for the metadata row to show up or the flight to fail
+    jobService.waitForMetadataOrJob(
+        jobId, () -> Optional.ofNullable(workspaceDao.getDbWorkspace(workspaceUuid)).isPresent());
+  }
+
+  private JobBuilder getCreateWorkspaceV2JobBuilder(
+      Workspace workspace,
+      @Nullable TpsPolicyInputs policies,
+      @Nullable List<String> applications,
+      UUID workspaceUuid,
+      @Nullable UUID sourceWorkspaceUuid,
+      CloningInstructions cloningInstructions,
+      @Nullable String projectOwnerGroupId,
+      @Nullable SpendProfile spendProfile,
+      @Nullable CloudPlatform cloudPlatform,
+      AuthenticatedUserRequest userRequest) {
+    JobBuilder createJob =
         jobService
             .newJob()
-            .jobId(jobId)
             .description(
                 String.format(
                     "Create workspace name: '%s' id: '%s' and %s cloud context",
@@ -190,7 +235,10 @@ public class WorkspaceService {
                 WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
             .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
             .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications)
-            .addParameter(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, projectOwnerGroupId);
+            .addParameter(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, projectOwnerGroupId)
+            .addParameter(
+                WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
+            .addParameter(SOURCE_WORKSPACE_ID, sourceWorkspaceUuid);
 
     // Add the cloud context params if we are making a cloud context
     // We mint a flight id here, so it is reliably constant for the inner cloud context flight
@@ -201,12 +249,7 @@ public class WorkspaceService {
           .addParameter(
               WorkspaceFlightMapKeys.CREATE_CLOUD_CONTEXT_FLIGHT_ID, UUID.randomUUID().toString());
     }
-
-    createJob.submit();
-
-    // Wait for the metadata row to show up or the flight to fail
-    jobService.waitForMetadataOrJob(
-        jobId, () -> Optional.ofNullable(workspaceDao.getDbWorkspace(workspaceUuid)).isPresent());
+    return createJob;
   }
 
   /**
@@ -222,6 +265,8 @@ public class WorkspaceService {
    *     a clone
    * @param projectOwnerGroupId nullable Sam resource group ID which allows the group to be added as
    *     project owner on the workspace
+   * @param spendProfile spend profile to use if creating a cloud context
+   * @param cloudPlatform cloud platform of the context to create
    * @param userRequest identity of the creator
    * @return id of the new workspace
    */
@@ -232,36 +277,23 @@ public class WorkspaceService {
       @Nullable UUID sourceWorkspaceUuid,
       CloningInstructions cloningInstructions,
       @Nullable String projectOwnerGroupId,
+      @Nullable SpendProfile spendProfile,
+      @Nullable CloudPlatform cloudPlatform,
       AuthenticatedUserRequest userRequest) {
 
-    String workspaceUuid = workspace.getWorkspaceId().toString();
+    UUID workspaceUuid = workspace.getWorkspaceId();
     JobBuilder createJob =
-        jobService
-            .newJob()
-            .description(
-                String.format(
-                    "Create workspace: name: '%s' id: '%s'  ",
-                    workspace.getDisplayName().orElse(""), workspaceUuid))
-            .flightClass(WorkspaceCreateFlight.class)
-            .request(workspace)
-            .userRequest(userRequest)
-            .workspaceId(workspaceUuid)
-            .operationType(OperationType.CREATE)
-            .addParameter(
-                WorkspaceFlightMapKeys.WORKSPACE_STAGE, workspace.getWorkspaceStage().name())
-            .addParameter(WorkspaceFlightMapKeys.POLICIES, policies)
-            .addParameter(WorkspaceFlightMapKeys.APPLICATION_IDS, applications)
-            .addParameter(
-                WorkspaceFlightMapKeys.ResourceKeys.CLONING_INSTRUCTIONS, cloningInstructions)
-            .addParameter(SOURCE_WORKSPACE_ID, sourceWorkspaceUuid)
-            .addParameter(WorkspaceFlightMapKeys.PROJECT_OWNER_GROUP_ID, projectOwnerGroupId);
-
-    workspace
-        .getSpendProfileId()
-        .ifPresent(
-            spendProfileId ->
-                createJob.addParameter(
-                    WorkspaceFlightMapKeys.SPEND_PROFILE_ID, spendProfileId.getId()));
+        getCreateWorkspaceV2JobBuilder(
+            workspace,
+            policies,
+            applications,
+            workspaceUuid,
+            sourceWorkspaceUuid,
+            cloningInstructions,
+            projectOwnerGroupId,
+            spendProfile,
+            cloudPlatform,
+            userRequest);
     return createJob.submitAndWait(UUID.class);
   }
 
@@ -713,24 +745,10 @@ public class WorkspaceService {
         additionalPolicies,
         applicationIds,
         projectOwnerGroupId,
+        spendProfile,
         workspaceUuid,
         cloningInstructions,
         userRequest);
-
-    // Create the cloud context synchronously so that we can display a shell workspace.
-    jobService
-        .newJob()
-        .description(
-            String.format(
-                "Creating cloud context for clone workspace: name: '%s' id: '%s'  ",
-                sourceWorkspace.getDisplayName().orElse(""), workspaceUuid))
-        .flightClass(CloneCreateCloudContextFlight.class)
-        .userRequest(userRequest)
-        .request(destinationWorkspace)
-        .operationType(OperationType.CLONE)
-        .addParameter(SOURCE_WORKSPACE_ID, sourceWorkspace.getWorkspaceId())
-        .addParameter(SPEND_PROFILE, spendProfile)
-        .submitAndWait();
 
     // Remaining steps are an async flight.
     return jobService
