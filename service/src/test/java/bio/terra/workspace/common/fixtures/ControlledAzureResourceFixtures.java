@@ -54,7 +54,7 @@ import java.util.UUID;
 public class ControlledAzureResourceFixtures {
 
   public static final String AZURE_NAME_PREFIX = "az";
-  public static final String DEFAULT_AZURE_RESOURCE_REGION = Region.US_EAST2.name();
+  public static final String DEFAULT_AZURE_RESOURCE_REGION = Region.US_SOUTH_CENTRAL.name();
   private static final String AZURE_UAMI_NAME_PREFIX = "uami";
   private static final String AZURE_DATABASE_NAME_PREFIX = "db";
   private static final String AZURE_KUBERNETES_NAMESPACE_PREFIX = "k8s";
@@ -103,7 +103,7 @@ public class ControlledAzureResourceFixtures {
 
   // Azure Storage
 
-  public static final String TEST_AZURE_STORAGE_ACCOUNT_NAME = "teststgacctdonotdelete";
+  public static final String TEST_AZURE_STORAGE_ACCOUNT_NAME = "lz94022eeac7bd7669ffe835";
   public static final String STORAGE_CONTAINER_PREFIX = "my-container";
 
   public static String uniqueStorageAccountName() {
