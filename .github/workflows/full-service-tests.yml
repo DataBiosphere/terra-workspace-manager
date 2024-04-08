@@ -7,6 +7,7 @@ on:
   schedule:
     - cron: '0 8 * * *' # Run nightly at 3AM ET
 
+  workflow_dispatch: {}
 jobs:
   test-job:
     runs-on: ubuntu-latest
@@ -50,7 +51,21 @@ jobs:
         janitor-sa-b64: ${{ secrets.JANITOR_SA_DEV }}
         policy-client-sa-b64: ${{ secrets.POLICY_CLIENT_SA_DEV }}
 
-      # Turn on TPS for integration tests
+    - name: Store az creds
+      id: store-az-creds
+      run: |
+        WSM_AZURE_PUBLISHER_CLIENT_ID=${{ secrets.WSM_AZURE_PUBLISHER_CLIENT_ID }}
+        echo ::add-mask::$WSM_AZURE_PUBLISHER_CLIENT_ID
+        WSM_AZURE_PUBLISHER_CLIENT_SECRET_ID=${{ secrets.WSM_AZURE_PUBLISHER_CLIENT_SECRET_ID }}
+        echo ::add-mask::$WSM_AZURE_PUBLISHER_CLIENT_SECRET_ID
+        WSM_AZURE_PUBLISHER_TENANT_ID=${{ secrets.WSM_AZURE_PUBLISHER_TENANT_ID }}
+        echo ::add-mask::$WSM_AZURE_PUBLISHER_TENANT_ID
+
+        echo wsm-azure-publisher-client-id=$WSM_AZURE_PUBLISHER_CLIENT_ID >> ${GITHUB_OUTPUT}
+        echo wsm-azure-publisher-client-secret-id=$WSM_AZURE_PUBLISHER_CLIENT_SECRET_ID >> ${GITHUB_OUTPUT}
+        echo wsm-azure-publisher-tenant-id=$WSM_AZURE_PUBLISHER_TENANT_ID >> ${GITHUB_OUTPUT}
+
+    # Turn on TPS and store AZ credentials for connected tests
     - name: Write config
       id: write-config
       run: |
@@ -60,6 +75,10 @@ jobs:
             base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
           cli:
             server-name: broad-dev
+          azure:
+            managed-app-client-id: "${{ steps.store-az-creds.outputs.wsm-azure-publisher-client-id }}"
+            managed-app-client-secret: "${{ steps.store-az-creds.outputs.wsm-azure-publisher-client-secret-id }}"
+            managed-app-tenant-id: "${{ steps.store-az-creds.outputs.wsm-azure-publisher-tenant-id }}"
         feature:
           tps-enabled: true
           temporary-grant-enabled: true
