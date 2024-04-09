@@ -109,11 +109,12 @@ public class PolicyValidator {
     return validationErrors;
   }
 
-
-  public List<String> validateRequiredPoliciesForDataTracking(TpsPaoGetResult policies){
+  public List<String> validateRequiredPoliciesForDataTracking(TpsPaoGetResult policies) {
     var validationErrors = new ArrayList<String>();
-    var hasTrackedDataPolicy = TpsUtilities.containsDataTrackingPolicy(policies.getEffectiveAttributes());
-    var hasProtectedDataPolicy = TpsUtilities.containsProtectedDataPolicy(policies.getEffectiveAttributes());
+    var hasTrackedDataPolicy =
+        TpsUtilities.containsDataTrackingPolicy(policies.getEffectiveAttributes());
+    var hasProtectedDataPolicy =
+        TpsUtilities.containsProtectedDataPolicy(policies.getEffectiveAttributes());
     if (hasTrackedDataPolicy && !hasProtectedDataPolicy) {
       validationErrors.add("Data tracking requires a protected data policy");
     }

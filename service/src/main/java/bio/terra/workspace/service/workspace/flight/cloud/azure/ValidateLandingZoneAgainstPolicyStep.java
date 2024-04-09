@@ -15,6 +15,7 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
+import java.util.ArrayList;
 import java.util.UUID;
 
 public class ValidateLandingZoneAgainstPolicyStep implements Step {
@@ -53,13 +54,17 @@ public class ValidateLandingZoneAgainstPolicyStep implements Step {
         CloudPlatform.AZURE);
 
     var policies = tpsApiDispatch.getPao(workspaceUuid);
+
+    var validationErrors = new ArrayList<String>();
     if (TpsUtilities.containsProtectedDataPolicy(policies.getEffectiveAttributes())) {
       var landingZone = landingZoneApiDispatch.getAzureLandingZone(bearerToken, landingZoneId);
-      var validationErrors = policyValidator.validateLandingZoneSupportsProtectedData(landingZone);
-      if (!validationErrors.isEmpty()) {
-        return new StepResult(
-            StepStatus.STEP_RESULT_FAILURE_FATAL, new PolicyConflictException(validationErrors));
-      }
+      validationErrors.addAll(
+          policyValidator.validateLandingZoneSupportsProtectedData(landingZone));
+    }
+    validationErrors.addAll(policyValidator.validateRequiredPoliciesForDataTracking(policies));
+    if (!validationErrors.isEmpty()) {
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL, new PolicyConflictException(validationErrors));
     }
 
     return StepResult.getStepResultSuccess();

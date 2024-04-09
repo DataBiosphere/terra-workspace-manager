@@ -35,13 +35,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 
 @Unit
 @ExtendWith(MockitoExtension.class)
@@ -56,13 +54,13 @@ public class PolicyValidatorTest {
 
   @BeforeEach
   void setup() {
-    policyValidator = new PolicyValidator(
-        mockTpsApiDispatch,
-        mockLandingZoneApiDispatch,
-        mockAzureConfiguration,
-        mockResourceDao,
-        mockWorkspaceDao
-    );
+    policyValidator =
+        new PolicyValidator(
+            mockTpsApiDispatch,
+            mockLandingZoneApiDispatch,
+            mockAzureConfiguration,
+            mockResourceDao,
+            mockWorkspaceDao);
   }
 
   private static final AuthenticatedUserRequest userRequest =
@@ -276,39 +274,35 @@ public class PolicyValidatorTest {
   }
 
   @Test
-  void validateRequiredPoliciesForDataTracking_noErrorsWhenNoPolicy(){
+  void validateRequiredPoliciesForDataTracking_noErrorsWhenNoPolicy() {
     TpsPaoGetResult emptyPolicies = createPao();
-    PolicyValidator policyValidator = new PolicyValidator(mock(),mock(),mock(),mock(),mock());
     var errors = policyValidator.validateRequiredPoliciesForDataTracking(emptyPolicies);
     assertTrue(errors.isEmpty());
   }
-  
 
   @Test
-  void validateRequiredPoliciesForDataTracking_noErrorsWhenTrackedDataAndProtectedDataPolicies(){
-    TpsPaoGetResult policies = createPao(
+  void validateRequiredPoliciesForDataTracking_noErrorsWhenTrackedDataAndProtectedDataPolicies() {
+    TpsPaoGetResult policies =
+        createPao(
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME),
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
-                .name(TpsUtilities.DATA_TRACKING_POLICY_NAME)
-            );
-
-    PolicyValidator policyValidator = new PolicyValidator(mock(),mock(),mock(),mock(),mock());
+                .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
     var errors = policyValidator.validateRequiredPoliciesForDataTracking(policies);
     assertTrue(errors.isEmpty());
   }
 
   @Test
-  void validateRequiredPoliciesForDataTracking_reportsErrorForTrackingPolicyWithoutProtectedData(){
+  void validateRequiredPoliciesForDataTracking_reportsErrorForTrackingPolicyWithoutProtectedData() {
     TpsPaoGetResult trackedDataPolicy =
         createPao(
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
 
-    PolicyValidator policyValidator = new PolicyValidator(mock(),mock(),mock(),mock(),mock());
+    PolicyValidator policyValidator = new PolicyValidator(mock(), mock(), mock(), mock(), mock());
     var errors = policyValidator.validateRequiredPoliciesForDataTracking(trackedDataPolicy);
     assertEquals(1, errors.size());
   }
