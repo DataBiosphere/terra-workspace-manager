@@ -6,9 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
@@ -17,7 +15,7 @@ import bio.terra.policy.model.TpsPolicyInput;
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.BaseSpringBootUnitTest;
+import bio.terra.workspace.common.annotations.Unit;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
@@ -37,17 +35,33 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-public class PolicyValidatorTest extends BaseSpringBootUnitTest {
-  @Autowired private PolicyValidator policyValidator;
+@Unit
+@ExtendWith(MockitoExtension.class)
+public class PolicyValidatorTest {
 
-  @MockBean private ResourceDao mockResourceDao;
-  @MockBean private LandingZoneApiDispatch mockLandingZoneApiDispatch;
-  @MockBean private WorkspaceDao mockWorkspaceDao;
-  @MockBean private AzureConfiguration mockAzureConfiguration;
+  @Mock private ResourceDao mockResourceDao;
+  @Mock private LandingZoneApiDispatch mockLandingZoneApiDispatch;
+  @Mock private WorkspaceDao mockWorkspaceDao;
+  @Mock private AzureConfiguration mockAzureConfiguration;
+  @Mock private TpsApiDispatch mockTpsApiDispatch;
+  private PolicyValidator policyValidator;
+
+  @BeforeEach
+  void setup() {
+    policyValidator =
+        new PolicyValidator(
+            mockTpsApiDispatch,
+            mockLandingZoneApiDispatch,
+            mockAzureConfiguration,
+            mockResourceDao,
+            mockWorkspaceDao);
+  }
 
   private static final AuthenticatedUserRequest userRequest =
       new AuthenticatedUserRequest("email", "id", Optional.of("token"));
@@ -102,13 +116,13 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
 
     when(mockWorkspaceDao.listCloudPlatforms(workspace.workspaceId()))
         .thenReturn(List.of(CloudPlatform.AZURE, CloudPlatform.GCP));
-    when(mockTpsApiDispatch().listValidRegionsForPao(any(), eq(CloudPlatform.GCP)))
+    when(mockTpsApiDispatch.listValidRegionsForPao(any(), eq(CloudPlatform.GCP)))
         .thenReturn(List.of(gcpResource.getRegion()));
     when(mockResourceDao.listControlledResources(workspace.workspaceId(), CloudPlatform.GCP))
         .thenReturn(List.of(gcpResource));
     when(mockLandingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace))
         .thenReturn(azureResource.getRegion());
-    when(mockTpsApiDispatch().listValidRegionsForPao(any(), eq(CloudPlatform.AZURE)))
+    when(mockTpsApiDispatch.listValidRegionsForPao(any(), eq(CloudPlatform.AZURE)))
         .thenReturn(List.of(azureResource.getRegion()));
     when(mockResourceDao.listControlledResources(workspace.workspaceId(), CloudPlatform.AZURE))
         .thenReturn(List.of(azureResource));
@@ -133,13 +147,13 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
 
     when(mockWorkspaceDao.listCloudPlatforms(workspace.workspaceId()))
         .thenReturn(List.of(CloudPlatform.AZURE, CloudPlatform.GCP));
-    when(mockTpsApiDispatch().listValidRegionsForPao(any(), eq(CloudPlatform.GCP)))
+    when(mockTpsApiDispatch.listValidRegionsForPao(any(), eq(CloudPlatform.GCP)))
         .thenReturn(List.of(gcpResource.getRegion()));
     when(mockResourceDao.listControlledResources(workspace.workspaceId(), CloudPlatform.GCP))
         .thenReturn(List.of(gcpResource));
     when(mockLandingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace))
         .thenReturn(azureResource.getRegion());
-    when(mockTpsApiDispatch().listValidRegionsForPao(any(), eq(CloudPlatform.AZURE)))
+    when(mockTpsApiDispatch.listValidRegionsForPao(any(), eq(CloudPlatform.AZURE)))
         .thenReturn(List.of(azureResource.getRegion()));
     when(mockResourceDao.listControlledResources(workspace.workspaceId(), CloudPlatform.AZURE))
         .thenReturn(List.of(azureResource, azureResourceWrongRegion));
@@ -160,7 +174,7 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
         .thenReturn(List.of(CloudPlatform.AZURE));
     when(mockLandingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace))
         .thenReturn("wrongRegion");
-    when(mockTpsApiDispatch().listValidRegionsForPao(any(), eq(CloudPlatform.AZURE)))
+    when(mockTpsApiDispatch.listValidRegionsForPao(any(), eq(CloudPlatform.AZURE)))
         .thenReturn(List.of("rightRegion"));
 
     List<String> results =
@@ -257,6 +271,40 @@ public class PolicyValidatorTest extends BaseSpringBootUnitTest {
         policyValidator.validateWorkspaceConformsToProtectedDataPolicy(
             workspace, protectedDataPolicy, userRequest);
     assertTrue(results.isEmpty());
+  }
+
+  @Test
+  void validateRequiredPoliciesForDataTracking_noErrorsWhenNoPolicy() {
+    TpsPaoGetResult emptyPolicies = createPao();
+    var errors = policyValidator.validateRequiredPoliciesForDataTracking(emptyPolicies);
+    assertTrue(errors.isEmpty());
+  }
+
+  @Test
+  void validateRequiredPoliciesForDataTracking_noErrorsWhenTrackedDataAndProtectedDataPolicies() {
+    TpsPaoGetResult policies =
+        createPao(
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME),
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
+    var errors = policyValidator.validateRequiredPoliciesForDataTracking(policies);
+    assertTrue(errors.isEmpty());
+  }
+
+  @Test
+  void validateRequiredPoliciesForDataTracking_reportsErrorForTrackingPolicyWithoutProtectedData() {
+    TpsPaoGetResult trackedDataPolicy =
+        createPao(
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
+
+    PolicyValidator policyValidator = new PolicyValidator(mock(), mock(), mock(), mock(), mock());
+    var errors = policyValidator.validateRequiredPoliciesForDataTracking(trackedDataPolicy);
+    assertEquals(1, errors.size());
   }
 
   private static TpsPaoGetResult createPao(TpsPolicyInput... inputs) {

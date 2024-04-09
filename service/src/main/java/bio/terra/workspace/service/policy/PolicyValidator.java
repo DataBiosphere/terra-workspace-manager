@@ -52,6 +52,7 @@ public class PolicyValidator {
         validateWorkspaceConformsToProtectedDataPolicy(workspace, policies, userRequest));
     validationErrors.addAll(
         validateWorkspaceConformsToGroupPolicy(workspace, policies, userRequest));
+    validationErrors.addAll(validateRequiredPoliciesForDataTracking(policies));
 
     if (!validationErrors.isEmpty()) {
       throw new PolicyConflictException(validationErrors);
@@ -104,6 +105,18 @@ public class PolicyValidator {
           default -> validationErrors.add("Protected data policy only supported on Azure");
         }
       }
+    }
+    return validationErrors;
+  }
+
+  public List<String> validateRequiredPoliciesForDataTracking(TpsPaoGetResult policies) {
+    var validationErrors = new ArrayList<String>();
+    var hasTrackedDataPolicy =
+        TpsUtilities.containsDataTrackingPolicy(policies.getEffectiveAttributes());
+    var hasProtectedDataPolicy =
+        TpsUtilities.containsProtectedDataPolicy(policies.getEffectiveAttributes());
+    if (hasTrackedDataPolicy && !hasProtectedDataPolicy) {
+      validationErrors.add("Data tracking requires a protected data policy");
     }
     return validationErrors;
   }

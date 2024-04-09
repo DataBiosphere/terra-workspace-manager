@@ -11,6 +11,7 @@ public class TpsUtilities {
   public static final String GROUP_CONSTRAINT = "group-constraint";
   public static final String GROUP_KEY = "group";
   public static final String PROTECTED_DATA_POLICY_NAME = "protected-data";
+  public static final String DATA_TRACKING_POLICY_NAME = "data-tracking";
 
   public static List<String> getGroupConstraintsFromInputs(TpsPolicyInputs inputs) {
     List<String> result = new ArrayList<>();
@@ -80,5 +81,14 @@ public class TpsUtilities {
             input ->
                 input.getNamespace().equals(TERRA_NAMESPACE)
                     && input.getName().equals(PROTECTED_DATA_POLICY_NAME));
+  }
+
+  public static boolean containsDataTrackingPolicy(TpsPolicyInputs inputs) {
+    if (inputs == null) return false;
+    return inputs.getInputs().stream()
+        .anyMatch(
+            input ->
+                input.getNamespace().equals(TERRA_NAMESPACE)
+                    && input.getName().equals(DATA_TRACKING_POLICY_NAME));
   }
 }
