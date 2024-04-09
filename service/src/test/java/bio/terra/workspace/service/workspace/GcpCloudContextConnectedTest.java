@@ -8,7 +8,6 @@ import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -16,10 +15,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import bio.terra.stairway.FlightDebugInfo;
-import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.common.BaseConnectedTest;
-import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
-import bio.terra.workspace.common.fixtures.ReferenceResourceFixtures;
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.common.logging.model.ActivityLogChangeDetails;
 import bio.terra.workspace.common.logging.model.ActivityLogChangedTarget;
@@ -29,12 +25,9 @@ import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.connected.WorkspaceConnectedTestUtils;
 import bio.terra.workspace.db.FolderDao;
-import bio.terra.workspace.db.ResourceDao;
-import bio.terra.workspace.db.exception.WorkspaceNotFoundException;
 import bio.terra.workspace.generated.model.ApiCloneResourceResult;
 import bio.terra.workspace.generated.model.ApiClonedWorkspace;
 import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiGcpBigQueryDatasetCreationParameters;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketDefaultStorageClass;
 import bio.terra.workspace.generated.model.ApiGcpGcsBucketResource;
 import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
@@ -45,32 +38,17 @@ import bio.terra.workspace.service.folder.model.Folder;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.job.JobService.JobResultOrException;
-import bio.terra.workspace.service.job.exception.InvalidResultStateException;
 import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
-import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
-import bio.terra.workspace.service.resource.controlled.cloud.gcp.bqdataset.ControlledBigQueryDatasetResource;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCloneAllResourcesFlightStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.AwaitCreateCloudContextFlightStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.CloneAllFoldersStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.FindResourcesToCloneStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCloneAllResourcesFlightStep;
-import bio.terra.workspace.service.resource.controlled.flight.clone.workspace.LaunchCreateCloudContextFlightStep;
-import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
-import bio.terra.workspace.service.resource.model.WsmResourceType;
-import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
-import bio.terra.workspace.service.resource.referenced.cloud.gcp.bqdataset.ReferencedBigQueryDatasetResource;
 import bio.terra.workspace.service.spendprofile.SpendConnectedTestUtils;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
@@ -97,15 +75,12 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
   @MockBean private DataRepoService mockDataRepoService;
 
   @Autowired private MockMvc mockMvc;
-  @Autowired private ControlledResourceService controlledResourceService;
   @Autowired private FolderDao folderDao;
   @Autowired private GcpCloudContextService gcpCloudContextService;
   @Autowired private JobService jobService;
   @Autowired private MockWorkspaceV1Api mockWorkspaceV1Api;
   @Autowired private MockGcpApi mockGcpApi;
   @Autowired private ObjectMapper objectMapper;
-  @Autowired private ReferencedResourceService referenceResourceService;
-  @Autowired private ResourceDao resourceDao;
   @Autowired private SpendConnectedTestUtils spendUtils;
   @Autowired private UserAccessUtils userAccessUtils;
   @Autowired private WorkspaceService workspaceService;
@@ -330,115 +305,5 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
         folderDao
             .listFoldersInWorkspace(destinationWorkspace.getWorkspaceId())
             .contains(sourceFolder));
-  }
-
-  @Test
-  @Disabled("PF-2259 - this test needs rewriting")
-  // TODO(PF-2259): This test is not testing the undo of CloneGcpWorkspaceFlight. It is
-  //  testing the undo of WorkspaceCreateFlight. It needs to be rewritten.
-  public void cloneGcpWorkspaceUndoSteps() {
-    Workspace sourceWorkspace = workspaceService.getWorkspace(workspaceId);
-    // Enable an application
-    appService.enableWorkspaceApplication(
-        userAccessUtils.defaultUserAuthRequest(), sourceWorkspace, TEST_WSM_APP);
-
-    // Create a folder
-    folderDao.createFolder(
-        new Folder(
-            FOLDER_ID,
-            workspaceId,
-            FOLDER_NAME,
-            /* description= */ null,
-            /* parentFolderId= */ null,
-            /* properties= */ Map.of(),
-            "foo@gmail.com",
-            null));
-
-    // Create a referenced resource
-    ReferencedBigQueryDatasetResource datasetReference =
-        referenceResourceService
-            .createReferenceResource(
-                ReferenceResourceFixtures.makeReferencedBqDatasetResource(
-                    sourceWorkspace.getWorkspaceId(), "my-project", "fake_dataset"),
-                userAccessUtils.defaultUserAuthRequest())
-            .castByEnum(WsmResourceType.REFERENCED_GCP_BIG_QUERY_DATASET);
-    ApiGcpBigQueryDatasetCreationParameters creationParameters =
-        new ApiGcpBigQueryDatasetCreationParameters()
-            .datasetId("my_awesome_dataset")
-            .location("us-central1");
-    ControlledBigQueryDatasetResource resource =
-        ControlledGcpResourceFixtures.makeDefaultControlledBqDatasetBuilder(
-                sourceWorkspace.getWorkspaceId())
-            .projectId(projectId)
-            .datasetName("my_awesome_dataset")
-            .build();
-
-    // Create a controlled resource
-    ControlledBigQueryDatasetResource createdDataset =
-        controlledResourceService
-            .createControlledResourceSync(
-                resource, null, userAccessUtils.defaultUserAuthRequest(), creationParameters)
-            .castByEnum(WsmResourceType.CONTROLLED_GCP_BIG_QUERY_DATASET);
-
-    workspaceId2 = UUID.randomUUID();
-    Workspace destinationWorkspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(workspaceId2)
-            .userFacingId("dest-user-facing-id")
-            .displayName("Destination Workspace")
-            .description("Copied from source")
-            .spendProfileId(DEFAULT_SPEND_PROFILE_ID)
-            .build();
-
-    String destinationLocation = "us-east1";
-    // Retry undo steps once and fail at the end of the flight.
-    Map<String, StepStatus> retrySteps = new HashMap<>();
-    retrySteps.put(CloneAllFoldersStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(FindResourcesToCloneStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        LaunchCreateCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        AwaitCreateCloudContextFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        LaunchCloneAllResourcesFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    retrySteps.put(
-        AwaitCloneAllResourcesFlightStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_RETRY);
-    // TODO(PF-2259): Since the test is actually setting debug for the create workspace flight
-    //  lastStepFailure(true) will always cause a dismal failure.
-    FlightDebugInfo debugInfo =
-        FlightDebugInfo.newBuilder().undoStepFailures(retrySteps).lastStepFailure(true).build();
-
-    jobService.setFlightDebugInfoForTest(debugInfo);
-
-    assertThrows(
-        InvalidResultStateException.class,
-        () ->
-            workspaceService.cloneWorkspace(
-                sourceWorkspace,
-                userAccessUtils.defaultUserAuthRequest(),
-                destinationLocation,
-                /* additionalPolicies= */ null,
-                destinationWorkspace,
-                spendUtils.defaultGcpSpendProfile(),
-                /* projectOwnerGroupId= */ null));
-    assertThrows(
-        WorkspaceNotFoundException.class,
-        () -> workspaceService.getWorkspace(destinationWorkspace.getWorkspaceId()));
-
-    // Destination Workspace should not have a GCP context
-    assertTrue(
-        gcpCloudContextService.getGcpCloudContext(destinationWorkspace.getWorkspaceId()).isEmpty());
-
-    // Destination workspace should not have folder
-    assertTrue(folderDao.listFoldersInWorkspace(destinationWorkspace.getWorkspaceId()).isEmpty());
-    assertThrows(
-        ResourceNotFoundException.class,
-        () ->
-            resourceDao.getResource(
-                destinationWorkspace.getWorkspaceId(), createdDataset.getResourceId()));
-    assertThrows(
-        ResourceNotFoundException.class,
-        () ->
-            resourceDao.getResource(
-                destinationWorkspace.getWorkspaceId(), datasetReference.getResourceId()));
   }
 }

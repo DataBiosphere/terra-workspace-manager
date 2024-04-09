@@ -19,20 +19,12 @@ public class CreateIdsForFutureStepsStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     FlightMap workingMap = context.getWorkingMap();
     workingMap.put(
-        ControlledResourceKeys.CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID,
-        context.getStairway().createFlightId());
-    workingMap.put(
-        ControlledResourceKeys.CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID,
-        context.getStairway().createFlightId());
-    workingMap.put(
         ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID, context.getStairway().createFlightId());
     workingMap.put(
         ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID,
         context.getStairway().createFlightId());
     validateRequiredEntries(
         workingMap,
-        ControlledResourceKeys.CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID,
-        ControlledResourceKeys.CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID,
         ControlledResourceKeys.WORKSPACE_CREATE_FLIGHT_ID,
         ControlledResourceKeys.CLONE_ALL_RESOURCES_FLIGHT_ID);
     return StepResult.getStepResultSuccess();
