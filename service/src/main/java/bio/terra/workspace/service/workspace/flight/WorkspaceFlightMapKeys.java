@@ -106,18 +106,13 @@ public final class WorkspaceFlightMapKeys {
 
     // GCP
     public static final String GCP_CLOUD_CONTEXT = "gcpCloudContext";
-    public static final String CREATE_GCP_CLOUD_CONTEXT_FLIGHT_ID = "createGcpCloudContextFlightId";
 
     // Azure
     public static final String AZURE_CLOUD_CONTEXT = "azureCloudContext";
-    public static final String CREATE_AZURE_CLOUD_CONTEXT_FLIGHT_ID =
-        "createAzureCloudContextFlightId";
     public static final String AZURE_STORAGE_CONTAINER = "azureStorageContainer";
 
     // AWS
     public static final String AWS_CLOUD_CONTEXT = "awsCloudContext";
-    public static final String AWS_APPLICATION_SECURITY_GROUP = "awsApplicationSecurityGroup";
-    public static final String AWS_ENVIRONMENT_USER_ROLE_ARN = "awsEnvironmentUserRoleArn";
     public static final String AWS_ENVIRONMENT_NOTEBOOK_ROLE_ARN = "awsEnvironmentNotebookRoleArn";
     public static final String AWS_LANDING_ZONE_KMS_KEY_ARN = "awsLandingZoneKmsKeyArn";
     public static final String AWS_LANDING_ZONE_NOTEBOOK_LIFECYCLE_CONFIG_ARN =
