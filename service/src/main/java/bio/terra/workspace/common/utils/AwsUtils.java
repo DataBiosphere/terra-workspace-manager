@@ -74,6 +74,7 @@ import software.amazon.awssdk.services.sts.model.Credentials;
 import software.amazon.awssdk.services.sts.model.Tag;
 
 public class AwsUtils {
+  // IGNORE
   private static final Logger logger = LoggerFactory.getLogger(AwsUtils.class);
 
   private static final int MAX_ROLE_SESSION_NAME_LENGTH = 64;
