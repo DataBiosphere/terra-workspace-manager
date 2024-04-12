@@ -52,7 +52,6 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import com.azure.core.management.Region;
-import com.google.common.collect.ImmutableMap;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
@@ -288,11 +287,7 @@ public class WdsContractVerificationTest extends BaseSpringBootUnitTestMocks {
                                     .workspaceUuid(workspaceUuid)
                                     .name("snapshotName")
                                     .cloningInstructions(CloningInstructions.COPY_REFERENCE)
-                                    .properties(
-                                        new ImmutableMap.Builder<String, String>()
-                                            .put("key", "purpose")
-                                            .put("value", "policy")
-                                            .build())
+                                    .properties(Map.of("purpose", "policy"))
                                     .createdByEmail("snapshot.creator@e.mail")
                                     .build())
                             .build())
