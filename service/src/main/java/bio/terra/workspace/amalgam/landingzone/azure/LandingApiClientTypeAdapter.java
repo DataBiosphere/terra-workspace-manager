@@ -12,11 +12,18 @@ import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
+import bio.terra.lz.futureservice.model.AzureLandingZone;
+import bio.terra.lz.futureservice.model.AzureLandingZoneResourcesList;
+import bio.terra.lz.futureservice.model.AzureLandingZoneResourcesPurposeGroup;
+import bio.terra.lz.futureservice.model.AzureLandingZoneResult;
 import bio.terra.lz.futureservice.model.CreateLandingZoneResult;
+import bio.terra.lz.futureservice.model.DeleteAzureLandingZoneJobResult;
+import bio.terra.lz.futureservice.model.DeleteAzureLandingZoneResult;
 import bio.terra.workspace.common.utils.MapperUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDetails;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
@@ -25,6 +32,7 @@ import bio.terra.workspace.generated.model.ApiResourceQuota;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Utilities for transforming from internal landing zone library types to externally facing API
@@ -44,7 +52,12 @@ public class LandingApiClientTypeAdapter {
   }
 
   public ApiCreateLandingZoneResult toApiCreateLandingZoneResult(CreateLandingZoneResult result) {
-    return null;
+    return new ApiCreateLandingZoneResult()
+        .landingZoneId(result.getLandingZoneId())
+        .version(result.getVersion())
+        .jobReport(MapperUtils.JobReportMapper.fromLandingZoneApi(result.getJobReport()))
+        .errorReport(MapperUtils.ErrorReportMapper.fromLandingZoneApi(result.getErrorReport()))
+        .definition(result.getDefinition());
   }
 
   public ApiAzureLandingZone toApiAzureLandingZone(LandingZone landingZone) {
@@ -63,6 +76,14 @@ public class LandingApiClientTypeAdapter {
         .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
         .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
         .landingZoneId(jobResult.getResult().landingZoneId());
+  }
+
+  public ApiDeleteAzureLandingZoneResult toApiDeleteAzureLandingZoneResult(
+      DeleteAzureLandingZoneResult result) {
+    return new ApiDeleteAzureLandingZoneResult()
+        .jobReport(MapperUtils.JobReportMapper.fromLandingZoneApi(result.getJobReport()))
+        .errorReport(MapperUtils.ErrorReportMapper.fromLandingZoneApi(result.getErrorReport()))
+        .landingZoneId(result.getLandingZoneId());
   }
 
   public ApiAzureLandingZoneDeployedResource toApiAzureLandingZoneDeployedResource(
@@ -102,6 +123,24 @@ public class LandingApiClientTypeAdapter {
     return apiJobResult;
   }
 
+  public ApiDeleteAzureLandingZoneJobResult toApiDeleteAzureLandingZoneJobResult(
+      DeleteAzureLandingZoneJobResult result) {
+    var apiJobResult =
+        new ApiDeleteAzureLandingZoneJobResult()
+            .jobReport(MapperUtils.JobReportMapper.fromLandingZoneApi(result.getJobReport()))
+            .errorReport(MapperUtils.ErrorReportMapper.fromLandingZoneApi(result.getErrorReport()));
+
+    if (result
+        .getJobReport()
+        .getStatus()
+        .equals(bio.terra.lz.futureservice.model.JobReport.StatusEnum.SUCCEEDED)) {
+      apiJobResult.landingZoneId(result.getLandingZoneId());
+      apiJobResult.resources(result.getResources());
+    }
+
+    return apiJobResult;
+  }
+
   public ApiResourceQuota toApiResourceQuota(UUID landingZoneId, ResourceQuota resourceQuota) {
     return new ApiResourceQuota()
         .landingZoneId(landingZoneId)
@@ -136,5 +175,53 @@ public class LandingApiClientTypeAdapter {
         .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
         .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
         .landingZone(azureLandingZone);
+  }
+
+  public ApiAzureLandingZoneResult toApiAzureLandingZoneResult(AzureLandingZoneResult result) {
+    ApiAzureLandingZoneDetails azureLandingZone = null;
+    if (result
+        .getJobReport()
+        .getStatus()
+        .equals(bio.terra.lz.futureservice.model.JobReport.StatusEnum.SUCCEEDED)) {
+      azureLandingZone =
+          Optional.ofNullable(result.getLandingZone())
+              .map(
+                  lz ->
+                      new ApiAzureLandingZoneDetails()
+                          .id(lz.getId())
+                          .resources(
+                              lz.getResources().stream()
+                                  .map(
+                                      resource ->
+                                          new ApiAzureLandingZoneDeployedResource()
+                                              .region(resource.getRegion())
+                                              .resourceType(resource.getResourceType())
+                                              .resourceId(resource.getResourceId()))
+                                  .toList()))
+              .orElse(null);
+    }
+    return new ApiAzureLandingZoneResult()
+        .jobReport(MapperUtils.JobReportMapper.fromLandingZoneApi(result.getJobReport()))
+        .errorReport(MapperUtils.ErrorReportMapper.fromLandingZoneApi(result.getErrorReport()))
+        .landingZone(azureLandingZone);
+  }
+
+  public ApiAzureLandingZone toApiAzureLandingZone(AzureLandingZone result) {
+    throw new RuntimeException("todo");
+  }
+
+  public ApiAzureLandingZoneResourcesList toApiResourcesList(
+      AzureLandingZoneResourcesList response) {
+    throw new RuntimeException("todo");
+  }
+
+  public ApiAzureLandingZoneResourcesList toApiResourcesList(
+      Stream<AzureLandingZoneResourcesPurposeGroup> filtered) {
+    throw new RuntimeException("todo");
+  }
+
+  public ApiResourceQuota toApiResourceQuota(
+      UUID landingZoneId, bio.terra.lz.futureservice.model.ResourceQuota response) {
+    throw new RuntimeException("todo");
   }
 }

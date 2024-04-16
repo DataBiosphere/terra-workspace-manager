@@ -1,18 +1,13 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
 import bio.terra.common.iam.BearerToken;
-import bio.terra.landingzone.job.LandingZoneJobService;
-import bio.terra.landingzone.job.model.JobReport;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
-import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
-import bio.terra.workspace.common.utils.MapperUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
-import bio.terra.workspace.generated.model.ApiAzureLandingZoneDetails;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
@@ -27,7 +22,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -162,34 +156,6 @@ public class LandingZoneApiDispatch {
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose) {
     features.azureEnabledCheck();
     return amalgamated.listResourcesMatchingPurpose(bearerToken, landingZoneId, resourcePurpose);
-  }
-
-  private ApiAzureLandingZoneResult toApiAzureLandingZoneResult(
-      LandingZoneJobService.AsyncJobResult<DeployedLandingZone> jobResult) {
-    ApiAzureLandingZoneDetails azureLandingZone = null;
-    if (jobResult.getJobReport().getStatus().equals(JobReport.StatusEnum.SUCCEEDED)) {
-      azureLandingZone =
-          Optional.ofNullable(jobResult.getResult())
-              .map(
-                  lz ->
-                      new ApiAzureLandingZoneDetails()
-                          .id(lz.id())
-                          .resources(
-                              lz.deployedResources().stream()
-                                  .map(
-                                      resource ->
-                                          new ApiAzureLandingZoneDeployedResource()
-                                              .region(resource.region())
-                                              .resourceType(resource.resourceType())
-                                              .resourceId(resource.resourceId()))
-                                  .collect(Collectors.toList())))
-              .orElse(null);
-    }
-
-    return new ApiAzureLandingZoneResult()
-        .jobReport(MapperUtils.JobReportMapper.from(jobResult.getJobReport()))
-        .errorReport(MapperUtils.ErrorReportMapper.from(jobResult.getApiErrorReport()))
-        .landingZone(azureLandingZone);
   }
 
   public UUID getLandingZoneId(BearerToken token, Workspace workspace) {

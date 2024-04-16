@@ -21,7 +21,6 @@ import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiResourceQuota;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +29,6 @@ import org.springframework.stereotype.Component;
  * directly to the landing zone library rather than via an HTTP API. NOTE: This is a legacy class
  * intended to ease the transition to the newer HTTP LZS service.
  */
-@Deprecated
 @Component
 public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneService {
 
@@ -103,7 +101,7 @@ public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneServic
     ApiAzureLandingZoneList result = new ApiAzureLandingZoneList();
     List<LandingZone> landingZones =
         landingZoneService.getLandingZonesByBillingProfile(bearerToken, billingProfileId);
-    if (landingZones.size() > 0) {
+    if (!landingZones.isEmpty()) {
       // The enforced logic is 1:1 relation between Billing Profile and a Landing Zone.
       // The landing zone service returns one record in the list if landing zone exists
       // for a given billing profile.
@@ -124,10 +122,7 @@ public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneServic
   public ApiAzureLandingZoneList listLandingZones(BearerToken bearerToken) {
     List<LandingZone> landingZones = landingZoneService.listLandingZones(bearerToken);
     return new ApiAzureLandingZoneList()
-        .landingzones(
-            landingZones.stream()
-                .map(typeAdapter::toApiAzureLandingZone)
-                .collect(Collectors.toList()));
+        .landingzones(landingZones.stream().map(typeAdapter::toApiAzureLandingZone).toList());
   }
 
   @Override
@@ -148,7 +143,7 @@ public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneServic
                             .name(t.name())
                             .description(t.description())
                             .version(t.version()))
-                .collect(Collectors.toList()));
+                .toList());
   }
 
   @Override
