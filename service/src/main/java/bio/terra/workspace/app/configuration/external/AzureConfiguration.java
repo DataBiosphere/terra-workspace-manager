@@ -21,6 +21,7 @@ public class AzureConfiguration {
   private List<String> protectedDataLandingZoneDefs;
   private String azureDatabaseUtilImage;
   private Integer azureDatabaseUtilLogsTailLines;
+  private String authTokenScope;
 
   public String getManagedAppClientId() {
     return managedAppClientId;
@@ -109,5 +110,11 @@ public class AzureConfiguration {
 
   public void setAzureDatabaseUtilLogsTailLines(Integer azureDatabaseUtilLogsTailLines) {
     this.azureDatabaseUtilLogsTailLines = azureDatabaseUtilLogsTailLines;
+  }
+
+  public String getAuthTokenScope() { return authTokenScope; }
+
+  public void setAuthTokenScope(String authTokenScope) {
+    this.authTokenScope = authTokenScope;
   }
 }

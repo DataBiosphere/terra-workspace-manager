@@ -13,7 +13,7 @@ import java.util.Collection;
 /** Helper to reduce duplicated access token retrieval code. */
 public class AuthUtils {
   public static String getAccessToken(
-      boolean isAzureControlPlaneEnabled, Collection<String> scopes, String credentialsPath)
+      boolean isAzureControlPlaneEnabled, Collection<String> gcpScopes, Collection<String> azureScopes, String credentialsPath)
       throws IOException {
     if (isAzureControlPlaneEnabled) {
       TokenCredential credential = new DefaultAzureCredentialBuilder().build();
@@ -21,16 +21,16 @@ public class AuthUtils {
       // profile, and email by default in authorization and token requests.
       com.azure.core.credential.AccessToken token =
           credential
-              .getToken(new TokenRequestContext().addScopes("https://graph.microsoft.com/.default"))
+              .getToken(new TokenRequestContext().addScopes(azureScopes.toArray(new String[azureScopes.size()])))
               .block();
       return token.getToken();
     } else {
       GoogleCredentials creds = null;
       if (credentialsPath == null || credentialsPath.length() == 0) {
-        creds = GoogleCredentials.getApplicationDefault().createScoped(scopes);
+        creds = GoogleCredentials.getApplicationDefault().createScoped(gcpScopes);
       } else {
         FileInputStream fileInputStream = new FileInputStream(credentialsPath);
-        creds = ServiceAccountCredentials.fromStream(fileInputStream).createScoped(scopes);
+        creds = ServiceAccountCredentials.fromStream(fileInputStream).createScoped(gcpScopes);
       }
 
       creds.refreshIfExpired();

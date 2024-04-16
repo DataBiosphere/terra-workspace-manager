@@ -10,6 +10,7 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
@@ -30,13 +31,7 @@ import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import okhttp3.OkHttpClient;
@@ -84,17 +79,20 @@ public class SamService {
   private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
   private final FeatureConfiguration features;
+  private final AzureConfiguration azureConfiguration;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
   public SamService(
       SamConfiguration samConfig,
       FeatureConfiguration features,
+      AzureConfiguration azureConfiguration,
       SamUserFactory samUserFactory,
       OpenTelemetry openTelemetry) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.features = features;
+    this.azureConfiguration = azureConfiguration;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -156,7 +154,7 @@ public class SamService {
   public String getWsmServiceAccountToken() {
     try {
       return AuthUtils.getAccessToken(
-          features.isAzureControlPlaneEnabled(), SAM_OAUTH_SCOPES, null);
+          features.isAzureControlPlaneEnabled(), SAM_OAUTH_SCOPES, Arrays.asList(azureConfiguration.getAuthTokenScope()), null);
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
     }
