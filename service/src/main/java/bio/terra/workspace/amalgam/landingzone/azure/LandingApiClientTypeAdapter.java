@@ -12,6 +12,7 @@ import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
+import bio.terra.lz.futureservice.model.CreateLandingZoneResult;
 import bio.terra.workspace.common.utils.MapperUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
@@ -40,6 +41,10 @@ public class LandingApiClientTypeAdapter {
         .landingZoneId(jobResult.getResult().landingZoneId())
         .definition(jobResult.getResult().definition())
         .version(jobResult.getResult().version());
+  }
+
+  public ApiCreateLandingZoneResult toApiCreateLandingZoneResult(CreateLandingZoneResult result) {
+    return null;
   }
 
   public ApiAzureLandingZone toApiAzureLandingZone(LandingZone landingZone) {

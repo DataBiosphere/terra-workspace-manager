@@ -31,7 +31,7 @@ public interface WorkspaceLandingZoneService {
       String version,
       List<ApiAzureLandingZoneParameter> parameters,
       UUID billingProfileId,
-      String asyncResultEndpoint);
+      String asyncResultEndpoint) throws InterruptedException;
 
   ApiDeleteAzureLandingZoneResult startLandingZoneDeletionJob(
       BearerToken bearerToken, String jobId, UUID landingZoneId, String resultEndpoint);
