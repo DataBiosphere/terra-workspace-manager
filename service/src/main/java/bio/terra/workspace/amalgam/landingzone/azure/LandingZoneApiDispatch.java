@@ -98,7 +98,7 @@ public class LandingZoneApiDispatch {
                             "A Landing Zone already exists in the requested billing profile");
                       }),
           "listLandingZonesByBillingProfile");
-    } catch (bio.terra.landingzone.db.exception.LandingZoneNotFoundException ex) {
+    } catch (bio.terra.landingzone.db.exception.LandingZoneNotFoundException | LandingZoneServiceNotFoundException ex) {
       logger.info("The billing profile does not have a landing zone. ", ex);
     }
   }

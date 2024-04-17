@@ -29,9 +29,13 @@ import jakarta.ws.rs.client.Client;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 public class HttpLandingZoneService implements WorkspaceLandingZoneService {
+  private static final Logger logger = LoggerFactory.getLogger(HttpLandingZoneService.class);
+
   private final Client commonHttpClient;
   private final LandingZoneServiceConfiguration config;
   private final LandingApiClientTypeAdapter typeAdapter;
@@ -42,6 +46,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
         new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
     this.config = config;
     this.typeAdapter = new LandingApiClientTypeAdapter();
+    logger.info("LZS base path = {}", config.getBasePath());
   }
 
   @Override
