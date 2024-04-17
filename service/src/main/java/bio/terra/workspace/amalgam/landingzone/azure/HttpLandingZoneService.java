@@ -10,6 +10,7 @@ import bio.terra.lz.futureservice.client.ApiException;
 import bio.terra.lz.futureservice.model.CreateAzureLandingZoneRequestBody;
 import bio.terra.lz.futureservice.model.DeleteAzureLandingZoneRequestBody;
 import bio.terra.lz.futureservice.model.JobControl;
+import bio.terra.workspace.app.configuration.external.LandingZoneServiceConfiguration;
 import bio.terra.workspace.common.utils.MapperUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinition;
@@ -32,13 +33,14 @@ import org.springframework.http.HttpStatus;
 
 public class HttpLandingZoneService implements WorkspaceLandingZoneService {
   private final Client commonHttpClient;
+  private final LandingZoneServiceConfiguration config;
   private final LandingApiClientTypeAdapter typeAdapter;
 
-  public HttpLandingZoneService(OpenTelemetry openTelemetry) {
+  public HttpLandingZoneService(
+      OpenTelemetry openTelemetry, LandingZoneServiceConfiguration config) {
     this.commonHttpClient =
-        new bio.terra.profile.client.ApiClient()
-            .getHttpClient()
-            .register(new JakartaTracingFilter(openTelemetry));
+        new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
+    this.config = config;
     this.typeAdapter = new LandingApiClientTypeAdapter();
   }
 
@@ -239,7 +241,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
   private ApiClient getApiClient(String accessToken) {
     ApiClient apiClient = new ApiClient().setHttpClient(commonHttpClient);
     apiClient.setAccessToken(accessToken);
-    apiClient.setBasePath("todo");
+    apiClient.setBasePath(config.getBasePath());
     return apiClient;
   }
 
