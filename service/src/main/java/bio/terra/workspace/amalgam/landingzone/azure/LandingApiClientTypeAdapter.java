@@ -54,7 +54,8 @@ public class LandingApiClientTypeAdapter {
         .version(jobResult.getResult().version());
   }
 
-  public ApiCreateLandingZoneResult toApiCreateLandingZoneResult(CreateLandingZoneResult result) {
+  public ApiCreateLandingZoneResult toApiCreateLandingZoneResultFromApiClient(
+      CreateLandingZoneResult result) {
     return new ApiCreateLandingZoneResult()
         .landingZoneId(result.getLandingZoneId())
         .version(result.getVersion())
@@ -63,7 +64,7 @@ public class LandingApiClientTypeAdapter {
         .definition(result.getDefinition());
   }
 
-  public ApiAzureLandingZone toApiAzureLandingZone(LandingZone landingZone) {
+  public ApiAzureLandingZone toApiAzureLandingZoneFromApiClient(LandingZone landingZone) {
     return new ApiAzureLandingZone()
         .billingProfileId(landingZone.billingProfileId())
         .landingZoneId(landingZone.landingZoneId())
@@ -81,7 +82,7 @@ public class LandingApiClientTypeAdapter {
         .landingZoneId(jobResult.getResult().landingZoneId());
   }
 
-  public ApiDeleteAzureLandingZoneResult toApiDeleteAzureLandingZoneResult(
+  public ApiDeleteAzureLandingZoneResult toApiDeleteAzureLandingZoneResultFromApiClient(
       DeleteAzureLandingZoneResult result) {
     return new ApiDeleteAzureLandingZoneResult()
         .jobReport(MapperUtils.JobReportMapper.fromLandingZoneApi(result.getJobReport()))
@@ -126,7 +127,7 @@ public class LandingApiClientTypeAdapter {
     return apiJobResult;
   }
 
-  public ApiDeleteAzureLandingZoneJobResult toApiDeleteAzureLandingZoneJobResult(
+  public ApiDeleteAzureLandingZoneJobResult toApiDeleteAzureLandingZoneJobResultFromApiClient(
       DeleteAzureLandingZoneJobResult result) {
     var apiJobResult =
         new ApiDeleteAzureLandingZoneJobResult()
@@ -152,7 +153,7 @@ public class LandingApiClientTypeAdapter {
         .quotaValues(resourceQuota.quota());
   }
 
-  public ApiResourceQuota toApiResourceQuota(
+  public ApiResourceQuota toApiResourceQuotaFromApiClient(
       UUID landingZoneId, bio.terra.lz.futureservice.model.ResourceQuota response) {
     return new ApiResourceQuota()
         .landingZoneId(landingZoneId)
@@ -190,7 +191,8 @@ public class LandingApiClientTypeAdapter {
         .landingZone(azureLandingZone);
   }
 
-  public ApiAzureLandingZoneResult toApiAzureLandingZoneResult(AzureLandingZoneResult result) {
+  public ApiAzureLandingZoneResult toApiAzureLandingZoneResultFromApiClient(
+      AzureLandingZoneResult result) {
     ApiAzureLandingZoneDetails azureLandingZone = null;
     if (result
         .getJobReport()
@@ -243,6 +245,7 @@ public class LandingApiClientTypeAdapter {
                                 .map(
                                     resource ->
                                         new ApiAzureLandingZoneDeployedResource()
+                                            .resourceName(resource.getResourceName())
                                             .resourceId(resource.getResourceId())
                                             .resourceType(resource.getResourceType())
                                             .resourceParentId(resource.getResourceParentId())
@@ -254,8 +257,27 @@ public class LandingApiClientTypeAdapter {
     return new ApiAzureLandingZoneResourcesList().resources(transformed).id(response.getId());
   }
 
-  public ApiAzureLandingZoneResourcesList toApiResourcesList(
-      List<AzureLandingZoneResourcesPurposeGroup> filtered) {
-    throw new RuntimeException("todo");
+  public ApiAzureLandingZoneResourcesList toApiResourcesListFromApiClient(
+      List<AzureLandingZoneResourcesPurposeGroup> filtered, UUID landingZoneId) {
+    var transformed =
+        filtered.stream()
+            .map(
+                resourcesByPurpose ->
+                    new ApiAzureLandingZoneResourcesPurposeGroup()
+                        .purpose(resourcesByPurpose.getPurpose())
+                        .deployedResources(
+                            resourcesByPurpose.getDeployedResources().stream()
+                                .map(
+                                    resource ->
+                                        new ApiAzureLandingZoneDeployedResource()
+                                            .resourceName(resource.getResourceName())
+                                            .resourceId(resource.getResourceId())
+                                            .resourceType(resource.getResourceType())
+                                            .resourceParentId(resource.getResourceParentId())
+                                            .region(resource.getRegion())
+                                            .tags(resource.getTags()))
+                                .toList()))
+            .toList();
+    return new ApiAzureLandingZoneResourcesList().id(landingZoneId).resources(transformed);
   }
 }

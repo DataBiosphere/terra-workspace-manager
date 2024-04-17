@@ -61,7 +61,7 @@ class LandingApiClientTypeAdapterTest {
   }
 
   @Test
-  void testToApiCreateLandingZoneResult() {
+  void toApiCreateLandingZoneResultFromApiClient() {
     LandingApiClientTypeAdapter adapter = new LandingApiClientTypeAdapter();
 
     var input =
@@ -72,7 +72,7 @@ class LandingApiClientTypeAdapterTest {
             .jobReport(lzApiJobReport())
             .errorReport(lzApiErrorReport());
 
-    var result = adapter.toApiCreateLandingZoneResult(input);
+    var result = adapter.toApiCreateLandingZoneResultFromApiClient(input);
 
     assertThat(result.getLandingZoneId(), equalTo(input.getLandingZoneId()));
     assertThat(result.getDefinition(), equalTo("definition"));
@@ -92,7 +92,7 @@ class LandingApiClientTypeAdapterTest {
             "US",
             new Date().toInstant().atOffset(ZoneOffset.UTC));
 
-    var result = new LandingApiClientTypeAdapter().toApiAzureLandingZone(input);
+    var result = new LandingApiClientTypeAdapter().toApiAzureLandingZoneFromApiClient(input);
 
     assertThat(result.getLandingZoneId(), equalTo(input.landingZoneId()));
     assertThat(result.getDefinition(), equalTo("definition"));
@@ -117,14 +117,15 @@ class LandingApiClientTypeAdapterTest {
   }
 
   @Test
-  void testToApiDeleteAzureLandingZoneResult() {
+  void toApiDeleteAzureLandingZoneResultFromApiClient() {
     var input =
         new DeleteAzureLandingZoneResult()
             .landingZoneId(UUID.randomUUID())
             .jobReport(lzApiJobReport())
             .errorReport(lzApiErrorReport());
 
-    var result = new LandingApiClientTypeAdapter().toApiDeleteAzureLandingZoneResult(input);
+    var result =
+        new LandingApiClientTypeAdapter().toApiDeleteAzureLandingZoneResultFromApiClient(input);
 
     assertThat(result.getLandingZoneId(), equalTo(input.getLandingZoneId()));
     assertJobReport(input.getJobReport(), result.getJobReport());
@@ -213,7 +214,7 @@ class LandingApiClientTypeAdapterTest {
   }
 
   @Test
-  void testToApiDeleteAzureLandingZoneJobResult() {
+  void toApiDeleteAzureLandingZoneJobResultFromApiClient() {
     var input =
         new DeleteAzureLandingZoneJobResult()
             .jobReport(lzApiJobReport())
@@ -221,7 +222,8 @@ class LandingApiClientTypeAdapterTest {
             .landingZoneId(UUID.randomUUID())
             .resources(List.of("resource1", "resource2"));
 
-    var result = new LandingApiClientTypeAdapter().toApiDeleteAzureLandingZoneJobResult(input);
+    var result =
+        new LandingApiClientTypeAdapter().toApiDeleteAzureLandingZoneJobResultFromApiClient(input);
 
     assertJobReport(input.getJobReport(), result.getJobReport());
     assertErrorReport(input.getErrorReport(), result.getErrorReport());
@@ -239,7 +241,8 @@ class LandingApiClientTypeAdapterTest {
             .quotaValues(Map.of("foo", "a", "bar", "b"));
 
     var result =
-        new LandingApiClientTypeAdapter().toApiResourceQuota(input.getLandingZoneId(), input);
+        new LandingApiClientTypeAdapter()
+            .toApiResourceQuotaFromApiClient(input.getLandingZoneId(), input);
 
     assertThat(result.getLandingZoneId(), equalTo(input.getLandingZoneId()));
     assertThat(result.getResourceType(), equalTo(input.getResourceType()));
@@ -248,7 +251,7 @@ class LandingApiClientTypeAdapterTest {
   }
 
   @Test
-  void testToApiResourceQuota() {
+  void toApiResourceQuotaFromApiClient() {
     var lzId = UUID.randomUUID();
     var input =
         new bio.terra.landingzone.library.landingzones.management.quotas.ResourceQuota(
@@ -298,7 +301,7 @@ class LandingApiClientTypeAdapterTest {
   }
 
   @Test
-  void testToApiAzureLandingZoneResult() {
+  void toApiAzureLandingZoneResultFromApiClient() {
     var resources =
         List.of(
             new AzureLandingZoneDeployedResource()
@@ -312,7 +315,7 @@ class LandingApiClientTypeAdapterTest {
             .jobReport(lzApiJobReport())
             .landingZone(new AzureLandingZoneDetails().id(UUID.randomUUID()).resources(resources));
 
-    var result = new LandingApiClientTypeAdapter().toApiAzureLandingZoneResult(input);
+    var result = new LandingApiClientTypeAdapter().toApiAzureLandingZoneResultFromApiClient(input);
     assertErrorReport(input.getErrorReport(), result.getErrorReport());
     assertJobReport(input.getJobReport(), result.getJobReport());
     assertThat(input.getLandingZone().getId(), equalTo(result.getLandingZone().getId()));
@@ -331,7 +334,7 @@ class LandingApiClientTypeAdapterTest {
   }
 
   @Test
-  void testToApiAzureLandingZone() {
+  void toApiAzureLandingZoneFromApiClient() {
     var input =
         new AzureLandingZone()
             .landingZoneId(UUID.randomUUID())
@@ -360,20 +363,84 @@ class LandingApiClientTypeAdapterTest {
                         .deployedResources(
                             List.of(
                                 new AzureLandingZoneDeployedResource()
-                                    .resourceType("resource_type")))));
+                                    .resourceName("resource_name")
+                                    .resourceParentId("parent_id")
+                                    .region("eastus")
+                                    .tags(Map.of("key", "value"))
+                                    .resourceType("resource_type"))),
+                    new AzureLandingZoneResourcesPurposeGroup()
+                        .purpose("purpose2")
+                        .deployedResources(
+                            List.of(
+                                new AzureLandingZoneDeployedResource()
+                                    .resourceName("resource_name2")
+                                    .resourceParentId("parent_id2")
+                                    .region("eastus2")
+                                    .tags(Map.of("key2", "value2"))
+                                    .resourceType("resource_type2"),
+                                new AzureLandingZoneDeployedResource()
+                                    .resourceName("resource_name3")
+                                    .resourceParentId("parent_id3")
+                                    .region("eastus3")
+                                    .tags(Map.of("key3", "value3"))
+                                    .resourceType("resource_type3")))));
 
     var result = new LandingApiClientTypeAdapter().toApiResourcesList(input);
+
+    assertThat(result.getResources().size(), equalTo(2));
+    assertThat(result.getResources().get(1).getDeployedResources().size(), equalTo(2));
 
     var resultDeployedResources = result.getResources().get(0);
     var inputDeployedResources = input.getResources().get(0).getDeployedResources();
 
     assertThat(
-        resultDeployedResources.getDeployedResources().get(0),
+        resultDeployedResources.getDeployedResources().get(0).getResourceName(),
         equalTo(inputDeployedResources.get(0).getResourceName()));
   }
 
   @Test
-  void testToApiResourcesList() {}
+  void toApiResourcesListFromApiClient() {
+    var input =
+        List.of(
+            new AzureLandingZoneResourcesPurposeGroup()
+                .purpose("purpose1")
+                .deployedResources(
+                    List.of(
+                        new AzureLandingZoneDeployedResource()
+                            .resourceName("resource_name")
+                            .resourceParentId("parent_id")
+                            .region("eastus")
+                            .tags(Map.of("key", "value"))
+                            .resourceType("resource_type"))),
+            new AzureLandingZoneResourcesPurposeGroup()
+                .purpose("purpose2")
+                .deployedResources(
+                    List.of(
+                        new AzureLandingZoneDeployedResource()
+                            .resourceName("resource_name2")
+                            .resourceParentId("parent_id2")
+                            .region("eastus2")
+                            .tags(Map.of("key2", "value2"))
+                            .resourceType("resource_type2"),
+                        new AzureLandingZoneDeployedResource()
+                            .resourceName("resource_name3")
+                            .resourceParentId("parent_id3")
+                            .region("eastus3")
+                            .tags(Map.of("key3", "value3"))
+                            .resourceType("resource_type3"))));
+
+    var result =
+        new LandingApiClientTypeAdapter().toApiResourcesListFromApiClient(input, UUID.randomUUID());
+
+    assertThat(result.getResources().size(), equalTo(2));
+
+    var resultDeployedResources = result.getResources().get(0);
+    var inputDeployedResources = input.get(0).getDeployedResources();
+
+    assertThat(
+        resultDeployedResources.getDeployedResources().get(0).getResourceName(),
+        equalTo(inputDeployedResources.get(0).getResourceName()));
+  }
 
   private JobReport amalgamJobReport() {
     return new JobReport()

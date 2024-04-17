@@ -66,7 +66,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
             .version(version);
     try {
       var result = LzsRetry.retry(() -> client.createAzureLandingZone(body));
-      return typeAdapter.toApiCreateLandingZoneResult(result);
+      return typeAdapter.toApiCreateLandingZoneResultFromApiClient(result);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -80,7 +80,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
     var body = new DeleteAzureLandingZoneRequestBody().jobControl(new JobControl().id(jobId));
     try {
       var result = LzsRetry.retry(() -> client.deleteAzureLandingZone(body, landingZoneId));
-      return typeAdapter.toApiDeleteAzureLandingZoneResult(result);
+      return typeAdapter.toApiDeleteAzureLandingZoneResultFromApiClient(result);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -93,7 +93,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
     try {
       var result =
           LzsRetry.retry(() -> client.getDeleteAzureLandingZoneResult(landingZoneId, jobId));
-      return typeAdapter.toApiDeleteAzureLandingZoneJobResult(result);
+      return typeAdapter.toApiDeleteAzureLandingZoneJobResultFromApiClient(result);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -105,7 +105,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
     var client = getLandingZonesApi(bearerToken);
     try {
       var result = LzsRetry.retry(() -> client.getCreateAzureLandingZoneResult(jobId));
-      return typeAdapter.toApiAzureLandingZoneResult(result);
+      return typeAdapter.toApiAzureLandingZoneResultFromApiClient(result);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -217,7 +217,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
       var filtered =
           response.getResources().stream()
               .filter(group -> group.getPurpose().equalsIgnoreCase(resourcePurpose.toString()));
-      return typeAdapter.toApiResourcesList(filtered.toList());
+      return typeAdapter.toApiResourcesListFromApiClient(filtered.toList(), landingZoneId);
     } catch (ApiException e) {
       throw convertApiException(e);
     }
@@ -230,7 +230,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
 
     try {
       var response = client.getResourceQuotaResult(landingZoneId, resourceId);
-      return typeAdapter.toApiResourceQuota(landingZoneId, response);
+      return typeAdapter.toApiResourceQuotaFromApiClient(landingZoneId, response);
     } catch (ApiException e) {
       throw convertApiException(e);
     }

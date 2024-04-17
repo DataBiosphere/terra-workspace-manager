@@ -92,7 +92,7 @@ public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneServic
   @Override
   public ApiAzureLandingZone getAzureLandingZone(BearerToken bearerToken, UUID landingZoneId) {
     LandingZone landingZoneRecord = landingZoneService.getLandingZone(bearerToken, landingZoneId);
-    return typeAdapter.toApiAzureLandingZone(landingZoneRecord);
+    return typeAdapter.toApiAzureLandingZoneFromApiClient(landingZoneRecord);
   }
 
   @Override
@@ -106,7 +106,8 @@ public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneServic
       // The landing zone service returns one record in the list if landing zone exists
       // for a given billing profile.
       if (landingZones.size() == 1) {
-        result.addLandingzonesItem(typeAdapter.toApiAzureLandingZone(landingZones.get(0)));
+        result.addLandingzonesItem(
+            typeAdapter.toApiAzureLandingZoneFromApiClient(landingZones.get(0)));
       } else {
         throw new ConflictException(
             String.format(
@@ -122,7 +123,8 @@ public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneServic
   public ApiAzureLandingZoneList listLandingZones(BearerToken bearerToken) {
     List<LandingZone> landingZones = landingZoneService.listLandingZones(bearerToken);
     return new ApiAzureLandingZoneList()
-        .landingzones(landingZones.stream().map(typeAdapter::toApiAzureLandingZone).toList());
+        .landingzones(
+            landingZones.stream().map(typeAdapter::toApiAzureLandingZoneFromApiClient).toList());
   }
 
   @Override
