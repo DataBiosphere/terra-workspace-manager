@@ -1100,6 +1100,7 @@ public class SamService {
       return statusApi.getSystemStatus().getOk();
     } catch (ApiException e) {
       //  If any exception was thrown during the status check, return that the system is not OK.
+      logger.warn("Exception getting Sam status " + e.getMessage());
       return false;
     }
   }
