@@ -25,7 +25,7 @@ public class LzsRetry {
   private static final Duration INITIAL_WAIT = Duration.ofSeconds(10);
   private static final Duration OPERATION_TIMEOUT = Duration.ofSeconds(300);
 
-  // Tps calls which timeout will throw ApiExceptions wrapping SocketTimeoutExceptions and will have
+  // LZS calls which timeout will throw ApiExceptions wrapping SocketTimeoutExceptions and will have
   // an errorCode 0. This isn't a real HTTP status code, but we can check for it anyway.
   private static final int TIMEOUT_STATUS_CODE = 0;
 
@@ -55,7 +55,7 @@ public class LzsRetry {
   }
 
   /**
-   * Requests made through the Tps client library sometimes fail with timeouts, generally due to
+   * Requests made through the LZS client library sometimes fail with timeouts, generally due to
    * transient network or connection issues. When this happens, the client library will throw an API
    * exceptions with status code 0 wrapping a SocketTimeoutException. These errors should always be
    * retried.
@@ -127,20 +127,20 @@ public class LzsRetry {
   }
 
   /**
-   * Given an exception from Tps, either timeout and rethrow the error from Tps or sleep for
+   * Given an exception from LZS, either timeout and rethrow the error from LZS or sleep for
    * retryDuration. If the thread times out while sleeping, throw the initial exception.
    *
    * <p>With the current values of INITIAL_WAIT and MAXIMUM_WAIT, this will sleep with the pattern
    * 10, 20, 30, 30, 30... seconds.
    *
-   * @param previousException The error Tps threw
+   * @param previousException The error LZS threw
    * @throws E, InterruptedException
    */
   private <E extends Exception> void sleepOrTimeoutBeforeRetrying(E previousException)
       throws E, InterruptedException {
     if (operationTimeout.minus(retryDuration).isBefore(now())) {
       logger.error("LzsRetry: operation timed out after " + operationTimeout);
-      // If we timed out, throw the error from Tps that caused us to need to retry.
+      // If we timed out, throw the error from LZS that caused us to need to retry.
       throw previousException;
     }
     logger.info("LzsRetry: sleeping " + retryDuration.getSeconds() + " seconds");

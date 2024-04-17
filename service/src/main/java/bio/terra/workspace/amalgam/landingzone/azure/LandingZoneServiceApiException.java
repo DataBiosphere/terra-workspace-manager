@@ -40,7 +40,7 @@ public class LandingZoneServiceApiException extends ErrorReportException {
     super(message, cause, causes, statusCode);
   }
 
-  /** Get the HTTP status code of the underlying response from Policy Service. */
+  /** Get the HTTP status code of the underlying response from LZS. */
   public int getApiExceptionStatus() {
     return apiException.getCode();
   }

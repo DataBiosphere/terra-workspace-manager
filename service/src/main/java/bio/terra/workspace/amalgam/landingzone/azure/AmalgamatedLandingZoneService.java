@@ -101,7 +101,9 @@ public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneServic
     List<LandingZone> landingZones =
         landingZoneService.getLandingZonesByBillingProfile(bearerToken, billingProfileId);
     landingZones.forEach(
-        landingZone -> result.addLandingzonesItem(typeAdapter.toApiAzureLandingZone(landingZone)));
+        landingZone ->
+            result.addLandingzonesItem(
+                typeAdapter.toApiAzureLandingZoneFromApiClient(landingZone)));
 
     return result;
   }
