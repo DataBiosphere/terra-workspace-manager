@@ -44,7 +44,7 @@ public class LandingZoneApiDispatch {
 
   private final FeatureConfiguration features;
   private final SamService samService;
-  private final AmalgamatedLandingZoneService amalgamated;
+  private final WorkspaceLandingZoneService amalgamated;
 
   public LandingZoneApiDispatch(
       LandingZoneService landingZoneService, FeatureConfiguration features, SamService samService) {

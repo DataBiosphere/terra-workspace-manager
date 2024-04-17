@@ -1,6 +1,5 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
-import bio.terra.common.exception.ConflictException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
@@ -101,21 +100,9 @@ public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneServic
     ApiAzureLandingZoneList result = new ApiAzureLandingZoneList();
     List<LandingZone> landingZones =
         landingZoneService.getLandingZonesByBillingProfile(bearerToken, billingProfileId);
-    if (!landingZones.isEmpty()) {
-      // The enforced logic is 1:1 relation between Billing Profile and a Landing Zone.
-      // The landing zone service returns one record in the list if landing zone exists
-      // for a given billing profile.
-      if (landingZones.size() == 1) {
-        result.addLandingzonesItem(
-            typeAdapter.toApiAzureLandingZoneFromApiClient(landingZones.get(0)));
-      } else {
-        throw new ConflictException(
-            String.format(
-                "There are more than one landing zone found for the given billing profile: '%s'. Please"
-                    + " check the landing zone deployment is correct.",
-                billingProfileId));
-      }
-    }
+    landingZones.forEach(
+        landingZone -> result.addLandingzonesItem(typeAdapter.toApiAzureLandingZone(landingZone)));
+
     return result;
   }
 
