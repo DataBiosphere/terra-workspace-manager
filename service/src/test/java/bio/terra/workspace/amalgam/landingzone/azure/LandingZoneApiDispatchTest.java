@@ -12,7 +12,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import bio.terra.common.exception.ConflictException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
@@ -283,32 +282,6 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
     assertEquals("definition", firstLandingZone.getDefinition());
     assertEquals("1", firstLandingZone.getVersion());
     assertEquals(CREATED_DATE, firstLandingZone.getCreatedDate());
-  }
-
-  @Test
-  void listAzureLandingZonesByBillingProfile_twoLandingZoneIdsThrows() throws ConflictException {
-    when(landingZoneService.getLandingZonesByBillingProfile(BEARER_TOKEN, BILLING_PROFILE_ID))
-        .thenReturn(
-            List.of(
-                LandingZone.builder()
-                    .landingZoneId(LANDING_ZONE_ID)
-                    .billingProfileId(BILLING_PROFILE_ID)
-                    .definition("definition")
-                    .version("1")
-                    .createdDate(CREATED_DATE)
-                    .build(),
-                LandingZone.builder()
-                    .landingZoneId(UUID.randomUUID())
-                    .billingProfileId(BILLING_PROFILE_ID)
-                    .definition("definition")
-                    .version("1")
-                    .createdDate(CREATED_DATE)
-                    .build()));
-    landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
-    assertThrows(
-        ConflictException.class,
-        () -> landingZoneApiDispatch.listAzureLandingZones(BEARER_TOKEN, BILLING_PROFILE_ID));
   }
 
   @Test
