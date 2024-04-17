@@ -217,7 +217,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
       var filtered =
           response.getResources().stream()
               .filter(group -> group.getPurpose().equalsIgnoreCase(resourcePurpose.toString()));
-      return typeAdapter.toApiResourcesList(filtered);
+      return typeAdapter.toApiResourcesList(filtered.toList());
     } catch (ApiException e) {
       throw convertApiException(e);
     }

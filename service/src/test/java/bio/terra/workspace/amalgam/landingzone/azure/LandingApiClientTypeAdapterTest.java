@@ -11,13 +11,21 @@ import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.SubnetResourcePurpose;
 import bio.terra.landingzone.service.landingzone.azure.model.DeletedLandingZone;
+import bio.terra.landingzone.service.landingzone.azure.model.DeployedLandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZone;
 import bio.terra.landingzone.service.landingzone.azure.model.LandingZoneResource;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneCreation;
 import bio.terra.landingzone.service.landingzone.azure.model.StartLandingZoneDeletion;
+import bio.terra.lz.futureservice.model.AzureLandingZone;
+import bio.terra.lz.futureservice.model.AzureLandingZoneDeployedResource;
+import bio.terra.lz.futureservice.model.AzureLandingZoneDetails;
+import bio.terra.lz.futureservice.model.AzureLandingZoneResourcesList;
+import bio.terra.lz.futureservice.model.AzureLandingZoneResourcesPurposeGroup;
+import bio.terra.lz.futureservice.model.AzureLandingZoneResult;
 import bio.terra.lz.futureservice.model.CreateLandingZoneResult;
 import bio.terra.lz.futureservice.model.DeleteAzureLandingZoneJobResult;
 import bio.terra.lz.futureservice.model.DeleteAzureLandingZoneResult;
+import bio.terra.lz.futureservice.model.ResourceQuota;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import java.time.Instant;
@@ -222,25 +230,150 @@ class LandingApiClientTypeAdapterTest {
   }
 
   @Test
-  void toApiResourceQuota() {}
+  void toApiResourceQuota() {
+    var input =
+        new ResourceQuota()
+            .azureResourceId("fake_resource_id")
+            .landingZoneId(UUID.randomUUID())
+            .resourceType("fake_resource_type")
+            .quotaValues(Map.of("foo", "a", "bar", "b"));
+
+    var result =
+        new LandingApiClientTypeAdapter().toApiResourceQuota(input.getLandingZoneId(), input);
+
+    assertThat(result.getLandingZoneId(), equalTo(input.getLandingZoneId()));
+    assertThat(result.getResourceType(), equalTo(input.getResourceType()));
+    assertThat(result.getAzureResourceId(), equalTo(input.getAzureResourceId()));
+    assertThat(result.getQuotaValues(), equalTo(input.getQuotaValues()));
+  }
 
   @Test
-  void toApiAzureLandingZoneResult() {}
+  void testToApiResourceQuota() {
+    var lzId = UUID.randomUUID();
+    var input =
+        new bio.terra.landingzone.library.landingzones.management.quotas.ResourceQuota(
+            "fake_resource_id", "fake_resource_type", Map.of("foo", "a", "bar", "b"));
+
+    var result = new LandingApiClientTypeAdapter().toApiResourceQuota(lzId, input);
+
+    assertThat(result.getLandingZoneId(), equalTo(lzId));
+    assertThat(result.getResourceType(), equalTo(input.resourceType()));
+    assertThat(result.getAzureResourceId(), equalTo(input.resourceId()));
+    assertThat(result.getQuotaValues(), equalTo(input.quota()));
+  }
 
   @Test
-  void testToApiAzureLandingZoneResult() {}
+  void toApiAzureLandingZoneResult() {
+    var resources =
+        List.of(
+            new LandingZoneResource(
+                "fake_resource_1",
+                "fake",
+                Map.of("key1", "value1"),
+                "us-east",
+                Optional.of("resourceName"),
+                Optional.of("parent")));
+    var input =
+        new LandingZoneJobService.AsyncJobResult<DeployedLandingZone>()
+            .jobReport(amalgamJobReport())
+            .errorReport(amalgamErrorReport())
+            .result(new DeployedLandingZone(UUID.randomUUID(), resources));
+
+    var result = new LandingApiClientTypeAdapter().toApiAzureLandingZoneResult(input);
+
+    assertAmalgamatedErrorReport(input.getApiErrorReport(), result.getErrorReport());
+    assertAmalgamatedJobReport(input.getJobReport(), result.getJobReport());
+    assertThat(input.getResult().id(), equalTo(result.getLandingZone().getId()));
+    assertThat(
+        resources.get(0).resourceId(),
+        equalTo(result.getLandingZone().getResources().get(0).getResourceId()));
+    assertThat(
+        resources.get(0).resourceType(),
+        equalTo(result.getLandingZone().getResources().get(0).getResourceType()));
+    assertThat(
+        resources.get(0).region(),
+        equalTo(result.getLandingZone().getResources().get(0).getRegion()));
+    assertThat(
+        resources.get(0).tags(), equalTo(result.getLandingZone().getResources().get(0).getTags()));
+  }
 
   @Test
-  void testToApiAzureLandingZone() {}
+  void testToApiAzureLandingZoneResult() {
+    var resources =
+        List.of(
+            new AzureLandingZoneDeployedResource()
+                .resourceType("resource_type")
+                .resourceName("resource_name")
+                .resourceId("resource_id")
+                .tags(Map.of("key", "value")));
+    var input =
+        new AzureLandingZoneResult()
+            .errorReport(lzApiErrorReport())
+            .jobReport(lzApiJobReport())
+            .landingZone(new AzureLandingZoneDetails().id(UUID.randomUUID()).resources(resources));
+
+    var result = new LandingApiClientTypeAdapter().toApiAzureLandingZoneResult(input);
+    assertErrorReport(input.getErrorReport(), result.getErrorReport());
+    assertJobReport(input.getJobReport(), result.getJobReport());
+    assertThat(input.getLandingZone().getId(), equalTo(result.getLandingZone().getId()));
+    assertThat(
+        resources.get(0).getResourceId(),
+        equalTo(result.getLandingZone().getResources().get(0).getResourceId()));
+    assertThat(
+        resources.get(0).getResourceType(),
+        equalTo(result.getLandingZone().getResources().get(0).getResourceType()));
+    assertThat(
+        resources.get(0).getRegion(),
+        equalTo(result.getLandingZone().getResources().get(0).getRegion()));
+    assertThat(
+        resources.get(0).getTags(),
+        equalTo(result.getLandingZone().getResources().get(0).getTags()));
+  }
 
   @Test
-  void toApiResourcesList() {}
+  void testToApiAzureLandingZone() {
+    var input =
+        new AzureLandingZone()
+            .landingZoneId(UUID.randomUUID())
+            .definition("definition")
+            .version("v1")
+            .region("us-east")
+            .createdDate(new Date());
+
+    var result = new LandingApiClientTypeAdapter().toApiAzureLandingZone(input);
+
+    assertThat(input.getLandingZoneId(), equalTo(result.getLandingZoneId()));
+    assertThat(input.getDefinition(), equalTo(result.getDefinition()));
+    assertThat(input.getVersion(), equalTo(result.getVersion()));
+    assertThat(input.getRegion(), equalTo(result.getRegion()));
+    assertThat(input.getCreatedDate().toInstant(), equalTo(result.getCreatedDate().toInstant()));
+  }
+
+  @Test
+  void toApiResourcesList() {
+    var input =
+        new AzureLandingZoneResourcesList()
+            .resources(
+                List.of(
+                    new AzureLandingZoneResourcesPurposeGroup()
+                        .purpose("purpose1")
+                        .deployedResources(
+                            List.of(
+                                new AzureLandingZoneDeployedResource()
+                                    .resourceType("resource_type")))));
+
+    var result = new LandingApiClientTypeAdapter().toApiResourcesList(input);
+
+    var resultDeployedResources = result.getResources().get(0);
+    var inputDeployedResources = input.getResources().get(0).getDeployedResources();
+
+    assertThat(
+        resultDeployedResources.getDeployedResources().get(0),
+        equalTo(inputDeployedResources.get(0).getResourceName()));
+  }
 
   @Test
   void testToApiResourcesList() {}
-
-  @Test
-  void testToApiResourceQuota() {}
 
   private JobReport amalgamJobReport() {
     return new JobReport()

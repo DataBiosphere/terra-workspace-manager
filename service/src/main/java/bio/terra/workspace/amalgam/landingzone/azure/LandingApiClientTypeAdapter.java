@@ -24,15 +24,18 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDetails;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesList;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneJobResult;
 import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiResourceQuota;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Utilities for transforming from internal landing zone library types to externally facing API
@@ -149,6 +152,15 @@ public class LandingApiClientTypeAdapter {
         .quotaValues(resourceQuota.quota());
   }
 
+  public ApiResourceQuota toApiResourceQuota(
+      UUID landingZoneId, bio.terra.lz.futureservice.model.ResourceQuota response) {
+    return new ApiResourceQuota()
+        .landingZoneId(landingZoneId)
+        .azureResourceId(response.getAzureResourceId())
+        .resourceType(response.getResourceType())
+        .quotaValues(response.getQuotaValues());
+  }
+
   public ApiAzureLandingZoneResult toApiAzureLandingZoneResult(
       LandingZoneJobService.AsyncJobResult<DeployedLandingZone> jobResult) {
     ApiAzureLandingZoneDetails azureLandingZone = null;
@@ -166,7 +178,8 @@ public class LandingApiClientTypeAdapter {
                                           new ApiAzureLandingZoneDeployedResource()
                                               .region(resource.region())
                                               .resourceType(resource.resourceType())
-                                              .resourceId(resource.resourceId()))
+                                              .resourceId(resource.resourceId())
+                                              .tags(resource.tags()))
                                   .collect(Collectors.toList())))
               .orElse(null);
     }
@@ -196,7 +209,8 @@ public class LandingApiClientTypeAdapter {
                                           new ApiAzureLandingZoneDeployedResource()
                                               .region(resource.getRegion())
                                               .resourceType(resource.getResourceType())
-                                              .resourceId(resource.getResourceId()))
+                                              .resourceId(resource.getResourceId())
+                                              .tags(resource.getTags()))
                                   .toList()))
               .orElse(null);
     }
@@ -207,21 +221,41 @@ public class LandingApiClientTypeAdapter {
   }
 
   public ApiAzureLandingZone toApiAzureLandingZone(AzureLandingZone result) {
-    throw new RuntimeException("todo");
+    return new ApiAzureLandingZone()
+        .billingProfileId(result.getBillingProfileId())
+        .landingZoneId(result.getLandingZoneId())
+        .definition(result.getDefinition())
+        .version(result.getVersion())
+        .region(result.getRegion())
+        .createdDate(OffsetDateTime.ofInstant(result.getCreatedDate().toInstant(), ZoneOffset.UTC));
   }
 
   public ApiAzureLandingZoneResourcesList toApiResourcesList(
       AzureLandingZoneResourcesList response) {
-    throw new RuntimeException("todo");
+    var transformed =
+        response.getResources().stream()
+            .map(
+                resourcesByPurpose ->
+                    new ApiAzureLandingZoneResourcesPurposeGroup()
+                        .purpose(resourcesByPurpose.getPurpose())
+                        .deployedResources(
+                            resourcesByPurpose.getDeployedResources().stream()
+                                .map(
+                                    resource ->
+                                        new ApiAzureLandingZoneDeployedResource()
+                                            .resourceId(resource.getResourceId())
+                                            .resourceType(resource.getResourceType())
+                                            .resourceParentId(resource.getResourceParentId())
+                                            .region(resource.getRegion())
+                                            .tags(resource.getTags()))
+                                .toList()))
+            .toList();
+
+    return new ApiAzureLandingZoneResourcesList().resources(transformed).id(response.getId());
   }
 
   public ApiAzureLandingZoneResourcesList toApiResourcesList(
-      Stream<AzureLandingZoneResourcesPurposeGroup> filtered) {
-    throw new RuntimeException("todo");
-  }
-
-  public ApiResourceQuota toApiResourceQuota(
-      UUID landingZoneId, bio.terra.lz.futureservice.model.ResourceQuota response) {
+      List<AzureLandingZoneResourcesPurposeGroup> filtered) {
     throw new RuntimeException("todo");
   }
 }
