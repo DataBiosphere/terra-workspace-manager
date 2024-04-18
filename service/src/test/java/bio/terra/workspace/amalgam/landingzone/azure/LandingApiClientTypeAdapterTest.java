@@ -57,7 +57,6 @@ class LandingApiClientTypeAdapterTest {
     assertThat(result.getVersion(), equalTo("v1"));
     assertAmalgamatedJobReport(input.getJobReport(), result.getJobReport());
     assertAmalgamatedErrorReport(input.getApiErrorReport(), result.getErrorReport());
-    ;
   }
 
   @Test
