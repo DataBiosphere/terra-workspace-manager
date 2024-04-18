@@ -68,6 +68,10 @@ on:
         type: string
 
 env:
+  PROVIDER_TAG: '0.254.1088'
+  CONSUMER_BRANCH: 'aj-1705-identify-policy-snapshot-references'
+  CONSUMER_VERSION: '0.2.119-a2155cb'
+  CONSUMER_NAME: wds
   spring_profiles_active: human-readable-logging
   CAN_I_DEPLOY_RUN_NAME: 'can-i-deploy-${{ github.event.repository.name }}-${{ github.run_id }}-${{ github.run_attempt }}'
 
@@ -161,7 +165,8 @@ jobs:
           # for publishing the results of provider verification.
           if [[ -z "${{ inputs.pb-event-type }}" ]]; then
             echo "PROVIDER_BRANCH=${{ env.CURRENT_BRANCH }}" >> $GITHUB_ENV
-            echo "PROVIDER_VERSION=${{ needs.regulated-tag-job.outputs.new-tag }}" >> $GITHUB_ENV
+          # echo "PROVIDER_VERSION=${{ needs.regulated-tag-job.outputs.new-tag }}" >> $GITHUB_ENV
+            echo "PROVIDER_VERSION=${{ env.PROVIDER_TAG }}" >> $GITHUB_ENV
           else
             echo "PROVIDER_VERSION=${{ env.PROVIDER_TAG }}" >> $GITHUB_ENV
           fi
