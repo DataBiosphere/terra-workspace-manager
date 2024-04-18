@@ -1,5 +1,7 @@
 # Amalgam Package
 
+_NOTE_: This is a deprecated pattern and should not be used going forward.
+
 Amalgam (noun) _a mixture or blend._
 
 The WSM service app is configured to contain other Terra components. There are two reasons why we want to do this:
