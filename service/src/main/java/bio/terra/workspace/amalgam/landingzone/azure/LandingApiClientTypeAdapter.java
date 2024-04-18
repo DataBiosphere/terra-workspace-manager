@@ -35,7 +35,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Utilities for transforming from internal landing zone library types to externally facing API
@@ -181,7 +180,7 @@ public class LandingApiClientTypeAdapter {
                                               .resourceType(resource.resourceType())
                                               .resourceId(resource.resourceId())
                                               .tags(resource.tags()))
-                                  .collect(Collectors.toList())))
+                                  .toList()))
               .orElse(null);
     }
 
