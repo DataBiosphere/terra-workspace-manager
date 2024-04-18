@@ -46,7 +46,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
         new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
     this.config = config;
     this.typeAdapter = new LandingApiClientTypeAdapter();
-    logger.info("LZS base path = {}", config.getBasePath());
+    logger.info("LZS base path: '{}'", config.getBasePath());
   }
 
   @Override
