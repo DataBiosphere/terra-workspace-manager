@@ -23,7 +23,6 @@ import bio.terra.workspace.generated.model.ApiDeleteAzureLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiResourceQuota;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Utilities for transforming from internal landing zone library types to externally facing API
@@ -123,7 +122,7 @@ public class LandingApiClientTypeAdapter {
                                               .region(resource.region())
                                               .resourceType(resource.resourceType())
                                               .resourceId(resource.resourceId()))
-                                  .collect(Collectors.toList())))
+                                  .toList()))
               .orElse(null);
     }
 
