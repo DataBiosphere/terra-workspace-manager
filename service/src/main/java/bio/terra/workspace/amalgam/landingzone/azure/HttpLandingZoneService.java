@@ -1,6 +1,5 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
-import bio.terra.common.exception.ConflictException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.tracing.JakartaTracingFilter;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
@@ -140,18 +139,9 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
     try {
       var response = LzsRetry.retry(() -> client.listAzureLandingZones(billingProfileId));
       var landingZones = response.getLandingzones();
-      if (!landingZones.isEmpty()) {
-        if (landingZones.size() == 1) {
-          result.addLandingzonesItem(typeAdapter.toApiAzureLandingZone(landingZones.get(0)));
-        }
-      } else {
-        throw new ConflictException(
-            String.format(
-                "There are more than one landing zone found for the given billing profile: '%s'. Please"
-                    + " check the landing zone deployment is correct.",
-                billingProfileId));
-      }
-
+      landingZones.forEach(
+          landingZone ->
+              result.addLandingzonesItem(typeAdapter.toApiAzureLandingZone(landingZone)));
     } catch (ApiException e) {
       throw convertApiException(e);
     }
