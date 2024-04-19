@@ -61,14 +61,17 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
       new SpendProfileId(UUID.randomUUID().toString());
 
   private LandingZoneApiDispatch landingZoneApiDispatch;
-  @Mock private LandingZoneService landingZoneService;
   @Mock private FeatureConfiguration featureConfiguration;
   @Mock private WorkspaceService workspaceService;
+  @Mock private LandingZoneService landingZoneService;
   @Mock private LandingZoneServiceFactory landingZoneServiceFactory;
 
   @BeforeEach
   void setupLandingZoneTests() {
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
+    var amalgamted = new AmalgamatedLandingZoneService(landingZoneService);
+    when(landingZoneServiceFactory.getLandingZoneService()).thenReturn(amalgamted);
+
     landingZoneApiDispatch =
         new LandingZoneApiDispatch(
             featureConfiguration, mockSamService(), landingZoneServiceFactory);
