@@ -50,8 +50,6 @@ public interface WorkspaceLandingZoneService {
   ApiAzureLandingZoneList listLandingZonesByBillingProfile(
       BearerToken bearerToken, UUID billingProfileId) throws InterruptedException;
 
-  ApiAzureLandingZoneList listLandingZones(BearerToken bearerToken);
-
   String getLandingZoneRegion(BearerToken bearerToken, UUID landingZoneId)
       throws InterruptedException;
 
