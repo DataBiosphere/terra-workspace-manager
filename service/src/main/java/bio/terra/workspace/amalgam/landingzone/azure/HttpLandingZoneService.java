@@ -150,6 +150,11 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
   }
 
   @Override
+  public ApiAzureLandingZoneList listLandingZones(BearerToken bearerToken) {
+    throw new RuntimeException("todo");
+  }
+
+  @Override
   public String getLandingZoneRegion(BearerToken bearerToken, UUID landingZoneId)
       throws InterruptedException {
     var client = getLandingZonesApi(bearerToken);

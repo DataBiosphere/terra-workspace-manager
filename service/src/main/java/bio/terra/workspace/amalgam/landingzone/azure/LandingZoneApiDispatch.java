@@ -1,6 +1,5 @@
 package bio.terra.workspace.amalgam.landingzone.azure;
 
-import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
@@ -220,12 +219,13 @@ public class LandingZoneApiDispatch {
   public ApiAzureLandingZoneList listAzureLandingZones(
       BearerToken bearerToken, UUID billingProfileId) {
     features.azureEnabledCheck();
-    if (billingProfileId == null) {
-      throw new BadRequestException("billingProfileId is required");
+    if (billingProfileId != null) {
+      return Rethrow.onInterrupted(
+          () -> amalgamated.listLandingZonesByBillingProfile(bearerToken, billingProfileId),
+          "listLandingZonesByBillingProfile");
     }
     return Rethrow.onInterrupted(
-        () -> amalgamated.listLandingZonesByBillingProfile(bearerToken, billingProfileId),
-        "listLandingZonesByBillingProfile");
+        () -> amalgamated.listLandingZones(bearerToken), "listLandingZones");
   }
 
   public ApiResourceQuota getResourceQuota(

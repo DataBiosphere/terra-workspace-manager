@@ -109,6 +109,14 @@ public class AmalgamatedLandingZoneService implements WorkspaceLandingZoneServic
   }
 
   @Override
+  public ApiAzureLandingZoneList listLandingZones(BearerToken bearerToken) {
+    List<LandingZone> landingZones = landingZoneService.listLandingZones(bearerToken);
+    return new ApiAzureLandingZoneList()
+        .landingzones(
+            landingZones.stream().map(typeAdapter::toApiAzureLandingZoneFromApiClient).toList());
+  }
+
+  @Override
   public String getLandingZoneRegion(BearerToken bearerToken, UUID landingZoneId) {
     return landingZoneService.getLandingZoneRegion(bearerToken, landingZoneId);
   }
