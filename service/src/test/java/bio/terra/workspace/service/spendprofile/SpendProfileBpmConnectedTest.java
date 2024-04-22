@@ -8,6 +8,8 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterAll;

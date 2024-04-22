@@ -8,6 +8,8 @@ import bio.terra.workspace.common.BaseConnectedTest;
 import bio.terra.workspace.connected.UserAccessUtils;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import com.google.common.collect.ImmutableList;
 import io.opentelemetry.api.OpenTelemetry;
 import org.apache.commons.lang3.StringUtils;

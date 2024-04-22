@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.spendprofile;
+package bio.terra.workspace.service.spendprofile.model;
 
 import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.service.workspace.exceptions.NoAzureAppCoordinatesException;
@@ -20,7 +20,8 @@ public record SpendProfile(
     @Nullable String billingAccountId,
     @Nullable UUID tenantId,
     @Nullable UUID subscriptionId,
-    @Nullable String managedResourceGroupId) {
+    @Nullable String managedResourceGroupId,
+    @Nullable SpendProfileOrganization organization) {
 
   public SpendProfile {
     if (cloudPlatform == CloudPlatform.GCP) {
@@ -39,6 +40,6 @@ public record SpendProfile(
   }
 
   public static SpendProfile buildGcpSpendProfile(SpendProfileId id, String billingAccountId) {
-    return new SpendProfile(id, CloudPlatform.GCP, billingAccountId, null, null, null);
+    return new SpendProfile(id, CloudPlatform.GCP, billingAccountId, null, null, null, null);
   }
 }
