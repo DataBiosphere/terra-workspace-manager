@@ -416,7 +416,8 @@ public class LandingZoneApiControllerTest extends BaseAzureSpringBootUnitTest {
             .version("version")
             .createdDate(Instant.now().atOffset(ZoneOffset.UTC))
             .build();
-    when(mockLandingZoneService().listLandingZones(any())).thenReturn(List.of(landingZone));
+    when(mockLandingZoneService().getLandingZonesByBillingProfile(any(), eq(null)))
+        .thenReturn(List.of(landingZone));
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(addAuth(get(AZURE_LANDING_ZONE_PATH), USER_REQUEST))

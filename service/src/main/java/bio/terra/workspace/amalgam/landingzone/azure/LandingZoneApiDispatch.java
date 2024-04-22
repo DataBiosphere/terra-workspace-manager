@@ -225,7 +225,7 @@ public class LandingZoneApiDispatch {
           "listLandingZonesByBillingProfile");
     }
     return Rethrow.onInterrupted(
-        () -> amalgamated.listLandingZones(bearerToken), "listLandingZones");
+        () -> amalgamated.listLandingZonesByBillingProfile(bearerToken, null), "listLandingZones");
   }
 
   public ApiResourceQuota getResourceQuota(

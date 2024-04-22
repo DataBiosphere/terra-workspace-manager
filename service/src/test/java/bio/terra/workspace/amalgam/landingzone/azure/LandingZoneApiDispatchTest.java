@@ -296,7 +296,7 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
 
   @Test
   void listAzureLandingZones_Success() {
-    when(landingZoneService.listLandingZones(BEARER_TOKEN))
+    when(landingZoneService.getLandingZonesByBillingProfile(BEARER_TOKEN, null))
         .thenReturn(
             List.of(
                 LandingZone.builder()
@@ -319,7 +319,8 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
     ApiAzureLandingZoneList response =
         landingZoneApiDispatch.listAzureLandingZones(BEARER_TOKEN, null);
 
-    verify(landingZoneService, times(1)).listLandingZones(eq(BEARER_TOKEN));
+    verify(landingZoneService, times(1))
+        .getLandingZonesByBillingProfile(eq(BEARER_TOKEN), eq(null));
 
     assertNotNull(response);
     assertNotNull(response.getLandingzones());

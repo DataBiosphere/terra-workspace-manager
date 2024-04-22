@@ -27,6 +27,7 @@ import io.opentelemetry.api.OpenTelemetry;
 import jakarta.ws.rs.client.Client;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,7 +133,7 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
 
   @Override
   public ApiAzureLandingZoneList listLandingZonesByBillingProfile(
-      BearerToken bearerToken, UUID billingProfileId) throws InterruptedException {
+      BearerToken bearerToken, @Nullable UUID billingProfileId) throws InterruptedException {
     var client = getLandingZonesApi(bearerToken);
     ApiAzureLandingZoneList result = new ApiAzureLandingZoneList();
 
@@ -147,11 +148,6 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
     }
 
     return result;
-  }
-
-  @Override
-  public ApiAzureLandingZoneList listLandingZones(BearerToken bearerToken) {
-    throw new RuntimeException("todo");
   }
 
   @Override
