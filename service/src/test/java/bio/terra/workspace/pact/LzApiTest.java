@@ -38,8 +38,7 @@ public class LzApiTest {
   static final Map<String, String> contentTypeJsonHeader =
       Map.of("Content-Type", "application/json");
   static final UUID landingZoneId = UUID.fromString("a051c5f8-9de8-4b4f-a453-8f9645df9c7b");
-  static final String existingLandingZoneIdStateValue = "${landingZoneId}";
-
+  static final UUID asyncJobId = UUID.fromString("3b0db775-1916-42d2-aaeb-ebc7aea69eca");
   static final UUID billingProfileId = UUID.fromString("4955757a-b027-4b6c-b77b-4cba899864cd");
 
   static PactDslJsonBody landingZoneCreateRequestShape =
@@ -97,6 +96,28 @@ public class LzApiTest {
   }
 
   @Pact(consumer = "workspacemanager", provider = "lzs")
+  public RequestResponsePact createLandingZoneResult(PactDslWithProvider builder) {
+    var createResultResponseShape =
+        new PactDslJsonBody()
+            .object("jobReport")
+            .stringType("id")
+            .stringType("status", "RUNNING")
+            .closeObject();
+
+    return builder
+        .given("An existing landing zone creation job")
+        .uponReceiving("A request to get the landing zone creation job result")
+        .method("GET")
+        .pathFromProviderState(
+            "/api/landingzones/v1/azure/create-result/${deleteJobId}",
+            "/api/landingzones/v1/azure/create-result/%s".formatted(asyncJobId))
+        .willRespondWith()
+        .body(createResultResponseShape)
+        .status(HttpStatus.OK.value())
+        .toPact();
+  }
+
+  @Pact(consumer = "workspacemanager", provider = "lzs")
   public RequestResponsePact startDeleteLandingZone(PactDslWithProvider builder) {
     var deleteRequestShape =
         new PactDslJsonBody().object("jobControl").stringType("id").closeObject();
@@ -109,16 +130,58 @@ public class LzApiTest {
             .closeObject();
 
     return builder
+        .given("An existing landing zone")
         .uponReceiving("A request to delete a landing zone")
         .method("POST")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/%s".formatted(existingLandingZoneIdStateValue),
+            "/api/landingzones/v1/azure/${landingZoneId}",
             "/api/landingzones/v1/azure/%s".formatted(landingZoneId))
         .body(deleteRequestShape)
         .headers(contentTypeJsonHeader)
         .willRespondWith()
         .body(deleteResponseShape)
         .status(HttpStatus.ACCEPTED.value())
+        .toPact();
+  }
+
+  @Pact(consumer = "workspacemanager", provider = "lzs")
+  public RequestResponsePact deleteLandingZoneResult(PactDslWithProvider builder) {
+    var deleteResultResponseShape =
+        new PactDslJsonBody()
+            .uuid("landingZoneId", landingZoneId)
+            .object("jobReport")
+            .stringType("id")
+            .stringType("status", "RUNNING")
+            .closeObject();
+
+    return builder
+        .given("An existing landing zone deletion job")
+        .uponReceiving("A request to get the landing zone deletion job result")
+        .method("GET")
+        .pathFromProviderState(
+            "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${deleteJobId}",
+            "/api/landingzones/v1/azure/%s/delete-result/%s".formatted(landingZoneId, asyncJobId))
+        .willRespondWith()
+        .body(deleteResultResponseShape)
+        .status(HttpStatus.OK.value())
+        .toPact();
+  }
+
+  @Pact(consumer = "workspacemanager", provider = "lzs")
+  public RequestResponsePact deleteLandingZone_notAuthorized(PactDslWithProvider builder) {
+    var deleteRequestShape =
+        new PactDslJsonBody().object("jobControl").stringType("id").closeObject();
+
+    return builder
+        .uponReceiving("An unauthorized request to create a landing zone")
+        .method("POST")
+        .pathFromProviderState(
+            "/api/landingzones/v1/azure${landingZoneId}",
+            "/api/landingzones/v1/azure/%s".formatted(landingZoneId))
+        .body(deleteRequestShape)
+        .headers(contentTypeJsonHeader)
+        .willRespondWith()
+        .status(HttpStatus.UNAUTHORIZED.value())
         .toPact();
   }
 
@@ -149,6 +212,7 @@ public class LzApiTest {
             .closeArray();
 
     return builder
+        .given("A landing zone linked to a billing profile")
         .uponReceiving("A request to list landing zones for a billing profile")
         .method("GET")
         .path("/api/landingzones/v1/azure")
@@ -251,5 +315,34 @@ public class LzApiTest {
     var result =
         landingZoneService.startLandingZoneDeletionJob(
             new BearerToken("fake"), "fakeJobId", landingZoneId, "http://example.com");
+
+    assertNotNull(result);
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "deleteLandingZone_notAuthorized", pactVersion = PactSpecVersion.V3)
+  void testDeleteLandingZone_notAuthorized() {
+    assertThrows(
+        LandingZoneServiceAuthorizationException.class,
+        () ->
+            landingZoneService.startLandingZoneDeletionJob(
+                new BearerToken("fake"), "fakeJobId", landingZoneId, "http://example.com"));
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "deleteLandingZoneResult", pactVersion = PactSpecVersion.V3)
+  void testDeleteLandingZoneResult() throws InterruptedException {
+    var result =
+        landingZoneService.getDeleteLandingZoneResult(
+            new BearerToken("fake"), landingZoneId, asyncJobId.toString());
+    assertNotNull(result);
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "createLandingZoneResult", pactVersion = PactSpecVersion.V3)
+  void testCreateLandingZoneResult() throws InterruptedException {
+    var result =
+        landingZoneService.getAsyncJobResult(new BearerToken("fake"), asyncJobId.toString());
+    assertNotNull(result);
   }
 }
