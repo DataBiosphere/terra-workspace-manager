@@ -308,16 +308,7 @@ public class PolicyValidatorTest {
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
-    when(mockSpendProfileService.getSpendProfile(any(), any()))
-        .thenReturn(
-            new SpendProfile(
-                new SpendProfileId(UUID.randomUUID().toString()),
-                CloudPlatform.AZURE,
-                null,
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                UUID.randomUUID().toString(),
-                new SpendProfileOrganization(true)));
+    mockSpendProfileResponse(new SpendProfileOrganization(true));
 
     var errors =
         policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
@@ -337,16 +328,7 @@ public class PolicyValidatorTest {
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
-    when(mockSpendProfileService.getSpendProfile(any(), any()))
-        .thenReturn(
-            new SpendProfile(
-                new SpendProfileId(UUID.randomUUID().toString()),
-                CloudPlatform.AZURE,
-                null,
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                UUID.randomUUID().toString(),
-                new SpendProfileOrganization(true)));
+    mockSpendProfileResponse(new SpendProfileOrganization(true));
 
     var errors =
         policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
@@ -408,16 +390,7 @@ public class PolicyValidatorTest {
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
-    when(mockSpendProfileService.getSpendProfile(any(), any()))
-        .thenReturn(
-            new SpendProfile(
-                new SpendProfileId(UUID.randomUUID().toString()),
-                CloudPlatform.AZURE,
-                null,
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                UUID.randomUUID().toString(),
-                null));
+    mockSpendProfileResponse(null);
 
     var errors =
         policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
@@ -439,16 +412,7 @@ public class PolicyValidatorTest {
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
-    when(mockSpendProfileService.getSpendProfile(any(), any()))
-        .thenReturn(
-            new SpendProfile(
-                new SpendProfileId(UUID.randomUUID().toString()),
-                CloudPlatform.AZURE,
-                null,
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                UUID.randomUUID().toString(),
-                new SpendProfileOrganization(false)));
+    mockSpendProfileResponse(new SpendProfileOrganization(false));
 
     var errors =
         policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
@@ -466,5 +430,18 @@ public class PolicyValidatorTest {
         .sourcesObjectIds(Collections.emptyList())
         .attributes(tpsPolicyInputs)
         .effectiveAttributes(tpsPolicyInputs);
+  }
+
+  private void mockSpendProfileResponse(SpendProfileOrganization organization) {
+    when(mockSpendProfileService.getSpendProfile(any(), any()))
+        .thenReturn(
+            new SpendProfile(
+                new SpendProfileId(UUID.randomUUID().toString()),
+                CloudPlatform.AZURE,
+                null,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
+                organization));
   }
 }
