@@ -127,15 +127,15 @@ public class PolicyValidator {
       }
 
       var spendProfileId = workspace.getSpendProfileId();
-      if (spendProfileId.isPresent()) {
+      if (spendProfileId.isEmpty()) {
+        validationErrors.add("Data tracking requires an enterprise spend profile");
+      } else {
         var spendProfile = spendProfileService.getSpendProfile(spendProfileId.get(), userRequest);
         if (spendProfile == null
             || spendProfile.organization() == null
             || !spendProfile.organization().enterprise()) {
           validationErrors.add("Data tracking requires an enterprise spend profile");
         }
-      } else {
-        validationErrors.add("Data tracking requires an enterprise spend profile");
       }
     }
 

@@ -155,7 +155,6 @@ public class SpendProfileService {
     if (spendProfiles.containsKey(spendProfileId)) {
       spend = spendProfiles.get(spendProfileId);
     } else {
-      // profiles returned from BPM means we are auth'ed
       spend = getSpendProfileFromBpm(userRequest, spendProfileId);
     }
 
