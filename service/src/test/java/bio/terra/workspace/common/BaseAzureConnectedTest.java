@@ -9,6 +9,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.TestLandingZo
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -76,7 +77,8 @@ public class BaseAzureConnectedTest extends BaseSpringBootTest {
                 null,
                 UUID.fromString(azureTestUtils.getAzureCloudContext().getAzureTenantId()),
                 UUID.fromString(azureTestUtils.getAzureCloudContext().getAzureSubscriptionId()),
-                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId()));
+                azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
+                new SpendProfileOrganization(false)));
 
     return azureTestUtils.getSpendProfileId();
   }

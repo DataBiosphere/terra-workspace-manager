@@ -149,6 +149,19 @@ public class SpendProfileService {
         .collect(Collectors.toList());
   }
 
+  public SpendProfile getSpendProfile(
+      SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
+    SpendProfile spend;
+    if (spendProfiles.containsKey(spendProfileId)) {
+      spend = spendProfiles.get(spendProfileId);
+    } else {
+      // profiles returned from BPM means we are auth'ed
+      spend = getSpendProfileFromBpm(userRequest, spendProfileId);
+    }
+
+    return spend;
+  }
+
   @WithSpan
   private SpendProfile getSpendProfileFromBpm(
       AuthenticatedUserRequest userRequest, SpendProfileId spendProfileId) {

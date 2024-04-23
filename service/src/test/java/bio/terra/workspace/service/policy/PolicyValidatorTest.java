@@ -27,7 +27,10 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.Controll
 import bio.terra.workspace.service.resource.controlled.cloud.azure.storageContainer.ControlledAzureStorageContainerResource;
 import bio.terra.workspace.service.resource.controlled.cloud.gcp.gcsbucket.ControlledGcsBucketResource;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.Arrays;
@@ -50,17 +53,20 @@ public class PolicyValidatorTest {
   @Mock private WorkspaceDao mockWorkspaceDao;
   @Mock private AzureConfiguration mockAzureConfiguration;
   @Mock private TpsApiDispatch mockTpsApiDispatch;
+  @Mock private SpendProfileService mockSpendProfileService;
   private PolicyValidator policyValidator;
 
   @BeforeEach
   void setup() {
+
     policyValidator =
         new PolicyValidator(
             mockTpsApiDispatch,
             mockLandingZoneApiDispatch,
             mockAzureConfiguration,
             mockResourceDao,
-            mockWorkspaceDao);
+            mockWorkspaceDao,
+            mockSpendProfileService);
   }
 
   private static final AuthenticatedUserRequest userRequest =
@@ -274,14 +280,26 @@ public class PolicyValidatorTest {
   }
 
   @Test
-  void validateRequiredPoliciesForDataTracking_noErrorsWhenNoPolicy() {
+  void validateWorkspaceConformsToDataTrackingPolicy_noErrorsWhenNoPolicy() {
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
+            .spendProfileId(SPEND_PROFILE_ID)
+            .build();
+
     TpsPaoGetResult emptyPolicies = createPao();
-    var errors = policyValidator.validateRequiredPoliciesForDataTracking(emptyPolicies);
+    var errors =
+        policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
+            workspace, emptyPolicies, userRequest);
     assertTrue(errors.isEmpty());
   }
 
   @Test
-  void validateRequiredPoliciesForDataTracking_noErrorsWhenTrackedDataAndProtectedDataPolicies() {
+  void
+      validateWorkspaceConformsToDataTrackingPolicy_noErrorsWhenTrackedDataAndProtectedDataPolicies() {
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
+            .spendProfileId(SPEND_PROFILE_ID)
+            .build();
     TpsPaoGetResult policies =
         createPao(
             new TpsPolicyInput()
@@ -290,23 +308,155 @@ public class PolicyValidatorTest {
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
-    var errors = policyValidator.validateRequiredPoliciesForDataTracking(policies);
+    when(mockSpendProfileService.getSpendProfile(any(), any()))
+        .thenReturn(
+            new SpendProfile(
+                new SpendProfileId(UUID.randomUUID().toString()),
+                CloudPlatform.AZURE,
+                null,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
+                new SpendProfileOrganization(true)));
+
+    var errors =
+        policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
+            workspace, policies, userRequest);
     assertTrue(errors.isEmpty());
   }
 
   @Test
-  void validateRequiredPoliciesForDataTracking_reportsErrorForTrackingPolicyWithoutProtectedData() {
+  void
+      validateWorkspaceConformsToDataTrackingPolicy_reportsErrorForTrackingPolicyWithoutProtectedData() {
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
+            .spendProfileId(SPEND_PROFILE_ID)
+            .build();
     TpsPaoGetResult trackedDataPolicy =
         createPao(
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
+    when(mockSpendProfileService.getSpendProfile(any(), any()))
+        .thenReturn(
+            new SpendProfile(
+                new SpendProfileId(UUID.randomUUID().toString()),
+                CloudPlatform.AZURE,
+                null,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
+                new SpendProfileOrganization(true)));
 
-    PolicyValidator policyValidator = new PolicyValidator(mock(), mock(), mock(), mock(), mock());
-    var errors = policyValidator.validateRequiredPoliciesForDataTracking(trackedDataPolicy);
+    var errors =
+        policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
+            workspace, trackedDataPolicy, userRequest);
     assertEquals(1, errors.size());
   }
 
+  @Test
+  void validateWorkspaceConformsToDataTrackingPolicy_reportsErrorsForMissingSpendProfileId() {
+    Workspace workspace = WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID()).build();
+    TpsPaoGetResult policies =
+        createPao(
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME),
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
+
+    var errors =
+        policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
+            workspace, policies, userRequest);
+    assertEquals(1, errors.size());
+  }
+
+  @Test
+  void validateWorkspaceConformsToDataTrackingPolicy_reportsErrorsForMissingSpendProfile() {
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
+            .spendProfileId(SPEND_PROFILE_ID)
+            .build();
+    TpsPaoGetResult policies =
+        createPao(
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME),
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
+    when(mockSpendProfileService.getSpendProfile(any(), any())).thenReturn(null);
+
+    var errors =
+        policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
+            workspace, policies, userRequest);
+    assertEquals(1, errors.size());
+  }
+
+  @Test
+  void validateWorkspaceConformsToDataTrackingPolicy_reportsErrorsForMissingOrganization() {
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
+            .spendProfileId(SPEND_PROFILE_ID)
+            .build();
+    TpsPaoGetResult policies =
+        createPao(
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME),
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
+    when(mockSpendProfileService.getSpendProfile(any(), any()))
+        .thenReturn(
+            new SpendProfile(
+                new SpendProfileId(UUID.randomUUID().toString()),
+                CloudPlatform.AZURE,
+                null,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
+                null));
+
+    var errors =
+        policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
+            workspace, policies, userRequest);
+    assertEquals(1, errors.size());
+  }
+
+  @Test
+  void validateWorkspaceConformsToDataTrackingPolicy_reportsErrorsForNonEnterpriseOrganization() {
+    Workspace workspace =
+        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
+            .spendProfileId(SPEND_PROFILE_ID)
+            .build();
+    TpsPaoGetResult policies =
+        createPao(
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME),
+            new TpsPolicyInput()
+                .namespace(TpsUtilities.TERRA_NAMESPACE)
+                .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
+    when(mockSpendProfileService.getSpendProfile(any(), any()))
+        .thenReturn(
+            new SpendProfile(
+                new SpendProfileId(UUID.randomUUID().toString()),
+                CloudPlatform.AZURE,
+                null,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID().toString(),
+                new SpendProfileOrganization(false)));
+
+    var errors =
+        policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
+            workspace, policies, userRequest);
+    assertEquals(1, errors.size());
+  }
+
+  @Test
   private static TpsPaoGetResult createPao(TpsPolicyInput... inputs) {
     TpsPolicyInputs tpsPolicyInputs = new TpsPolicyInputs().inputs(Arrays.stream(inputs).toList());
     return new TpsPaoGetResult()
