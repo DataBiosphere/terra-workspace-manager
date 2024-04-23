@@ -420,7 +420,6 @@ public class PolicyValidatorTest {
     assertEquals(1, errors.size());
   }
 
-  @Test
   private static TpsPaoGetResult createPao(TpsPolicyInput... inputs) {
     TpsPolicyInputs tpsPolicyInputs = new TpsPolicyInputs().inputs(Arrays.stream(inputs).toList());
     return new TpsPaoGetResult()
