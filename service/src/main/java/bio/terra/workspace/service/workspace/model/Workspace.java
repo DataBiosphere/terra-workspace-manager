@@ -4,7 +4,7 @@ import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.db.model.DbWorkspace;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import bio.terra.workspace.service.workspace.exceptions.MissingRequiredFieldsException;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

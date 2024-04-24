@@ -13,9 +13,9 @@ import au.com.dius.pact.core.model.annotations.Pact;
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opentelemetry.api.OpenTelemetry;
 import java.util.Optional;
@@ -41,7 +41,10 @@ public class ProfileApiTest {
             .uuid("tenantId")
             .uuid("subscriptionId")
             .stringType("managedResourceGroupId")
-            .uuid("id");
+            .uuid("id")
+            .object("organization")
+            .booleanType("enterprise")
+            .closeObject();
     return builder
         .given("an Azure billing profile")
         .uponReceiving("A request to retrieve a billing profile")
@@ -64,7 +67,10 @@ public class ProfileApiTest {
         new PactDslJsonBody()
             .stringValue("cloudPlatform", CloudPlatform.GCP.toSql())
             .stringType("billingAccountId")
-            .uuid("id");
+            .uuid("id")
+            .object("organization")
+            .booleanType("enterprise")
+            .closeObject();
     return builder
         .given("a GCP billing profile")
         .uponReceiving("A request to retrieve a billing profile")

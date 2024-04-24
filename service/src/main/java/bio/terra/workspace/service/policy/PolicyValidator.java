@@ -10,6 +10,7 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.ArrayList;
@@ -24,18 +25,21 @@ public class PolicyValidator {
   private final AzureConfiguration azureConfiguration;
   private final ResourceDao resourceDao;
   private final WorkspaceDao workspaceDao;
+  private final SpendProfileService spendProfileService;
 
   public PolicyValidator(
       TpsApiDispatch tpsApiDispatch,
       LandingZoneApiDispatch landingZoneApiDispatch,
       AzureConfiguration azureConfiguration,
       ResourceDao resourceDao,
-      WorkspaceDao workspaceDao) {
+      WorkspaceDao workspaceDao,
+      SpendProfileService spendProfileService) {
     this.tpsApiDispatch = tpsApiDispatch;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.azureConfiguration = azureConfiguration;
     this.resourceDao = resourceDao;
     this.workspaceDao = workspaceDao;
+    this.spendProfileService = spendProfileService;
   }
 
   /** throws PolicyConflictException if workspace does not conform to any policy */
@@ -52,7 +56,8 @@ public class PolicyValidator {
         validateWorkspaceConformsToProtectedDataPolicy(workspace, policies, userRequest));
     validationErrors.addAll(
         validateWorkspaceConformsToGroupPolicy(workspace, policies, userRequest));
-    validationErrors.addAll(validateRequiredPoliciesForDataTracking(policies));
+    validationErrors.addAll(
+        validateWorkspaceConformsToDataTrackingPolicy(workspace, policies, userRequest));
 
     if (!validationErrors.isEmpty()) {
       throw new PolicyConflictException(validationErrors);
@@ -109,15 +114,32 @@ public class PolicyValidator {
     return validationErrors;
   }
 
-  public List<String> validateRequiredPoliciesForDataTracking(TpsPaoGetResult policies) {
+  public List<String> validateWorkspaceConformsToDataTrackingPolicy(
+      Workspace workspace, TpsPaoGetResult policies, AuthenticatedUserRequest userRequest) {
     var validationErrors = new ArrayList<String>();
     var hasTrackedDataPolicy =
         TpsUtilities.containsDataTrackingPolicy(policies.getEffectiveAttributes());
     var hasProtectedDataPolicy =
         TpsUtilities.containsProtectedDataPolicy(policies.getEffectiveAttributes());
-    if (hasTrackedDataPolicy && !hasProtectedDataPolicy) {
-      validationErrors.add("Data tracking requires a protected data policy");
+    if (hasTrackedDataPolicy) {
+      if (!hasProtectedDataPolicy) {
+        validationErrors.add("Data tracking requires a protected data policy");
+      }
+
+      var spendProfileId = workspace.getSpendProfileId();
+      if (spendProfileId.isEmpty()) {
+        validationErrors.add("Data tracking requires an enterprise spend profile");
+      } else {
+        var spendProfile =
+            spendProfileService.authorizeLinking(spendProfileId.get(), true, userRequest);
+        if (spendProfile == null
+            || spendProfile.organization() == null
+            || !spendProfile.organization().enterprise()) {
+          validationErrors.add("Data tracking requires an enterprise spend profile");
+        }
+      }
     }
+
     return validationErrors;
   }
 

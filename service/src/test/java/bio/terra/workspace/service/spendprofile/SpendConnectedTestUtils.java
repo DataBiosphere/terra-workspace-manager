@@ -1,6 +1,8 @@
 package bio.terra.workspace.service.spendprofile;
 
 import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
