@@ -81,9 +81,9 @@ public class SpendProfileService {
    */
   @WithSpan
   public SpendProfile authorizeLinking(
-      SpendProfileId spendProfileId, boolean bpmEnabled, AuthenticatedUserRequest userRequest) {
+      SpendProfileId spendProfileId, AuthenticatedUserRequest userRequest) {
 
-    SpendProfile spend = null;
+    SpendProfile spend;
     if (spendProfiles.containsKey(spendProfileId)) {
       if (!Rethrow.onInterrupted(
           () ->
@@ -96,20 +96,9 @@ public class SpendProfileService {
         throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
       }
       spend = spendProfiles.get(spendProfileId);
-    } else if (bpmEnabled) {
+    } else {
       // profiles returned from BPM means we are auth'ed
       spend = getSpendProfileFromBpm(userRequest, spendProfileId);
-    } else {
-      if (!Rethrow.onInterrupted(
-          () ->
-              samService.isAuthorized(
-                  userRequest,
-                  SamConstants.SamResource.SPEND_PROFILE,
-                  spendProfileId.getId(),
-                  SamConstants.SamSpendProfileAction.LINK),
-          "isAuthorized")) {
-        throw SpendUnauthorizedException.linkUnauthorized(spendProfileId);
-      }
     }
 
     if (spend == null) {

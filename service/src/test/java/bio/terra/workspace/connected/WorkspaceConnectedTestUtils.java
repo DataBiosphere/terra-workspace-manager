@@ -43,7 +43,7 @@ public class WorkspaceConnectedTestUtils {
     // make the authorize request.
     SpendProfile spendProfile =
         spendProfileService.authorizeLinking(
-            workspace.getSpendProfileId().orElseThrow(), features.isBpmGcpEnabled(), userRequest);
+            workspace.getSpendProfileId().orElseThrow(), userRequest);
 
     String gcpContextJobId = UUID.randomUUID().toString();
     workspaceService.createCloudContext(

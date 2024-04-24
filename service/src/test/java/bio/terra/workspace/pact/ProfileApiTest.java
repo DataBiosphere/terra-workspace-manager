@@ -104,7 +104,7 @@ public class ProfileApiTest {
     var spendProfileId = new SpendProfileId(dummyAzureProfileId);
     var service = new SpendProfileService(samService, config, OpenTelemetry.noop());
 
-    service.authorizeLinking(spendProfileId, true, userRequest);
+    service.authorizeLinking(spendProfileId, userRequest);
   }
 
   @Test
@@ -121,7 +121,7 @@ public class ProfileApiTest {
     var spendProfileId = new SpendProfileId(dummyGCPProfileId);
     var service = new SpendProfileService(samService, config, OpenTelemetry.noop());
 
-    service.authorizeLinking(spendProfileId, true, userRequest);
+    service.authorizeLinking(spendProfileId, userRequest);
   }
 
   @Test
@@ -139,6 +139,6 @@ public class ProfileApiTest {
     var service = new SpendProfileService(samService, config, OpenTelemetry.noop());
     assertThrows(
         SpendUnauthorizedException.class,
-        () -> service.authorizeLinking(spendProfileId, true, userRequest));
+        () -> service.authorizeLinking(spendProfileId, userRequest));
   }
 }
