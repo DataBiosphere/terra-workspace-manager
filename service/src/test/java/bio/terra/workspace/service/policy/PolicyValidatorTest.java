@@ -410,7 +410,7 @@ public class PolicyValidatorTest {
   }
 
   private void mockSpendProfileResponse(SpendProfileOrganization organization) {
-    when(mockSpendProfileService.getSpendProfile(any(), any()))
+    when(mockSpendProfileService.authorizeLinking(any(), anyBoolean(), any()))
         .thenReturn(
             new SpendProfile(
                 new SpendProfileId(UUID.randomUUID().toString()),
