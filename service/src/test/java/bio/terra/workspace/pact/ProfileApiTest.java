@@ -41,7 +41,10 @@ public class ProfileApiTest {
             .uuid("tenantId")
             .uuid("subscriptionId")
             .stringType("managedResourceGroupId")
-            .uuid("id");
+            .uuid("id")
+            .object("organization")
+            .booleanType("enterprise")
+            .closeObject();
     return builder
         .given("an Azure billing profile")
         .uponReceiving("A request to retrieve a billing profile")
@@ -64,7 +67,10 @@ public class ProfileApiTest {
         new PactDslJsonBody()
             .stringValue("cloudPlatform", CloudPlatform.GCP.toSql())
             .stringType("billingAccountId")
-            .uuid("id");
+            .uuid("id")
+            .object("organization")
+            .booleanType("enterprise")
+            .closeObject();
     return builder
         .given("a GCP billing profile")
         .uponReceiving("A request to retrieve a billing profile")
