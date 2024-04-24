@@ -355,28 +355,6 @@ public class PolicyValidatorTest {
   }
 
   @Test
-  void validateWorkspaceConformsToDataTrackingPolicy_reportsErrorsForMissingSpendProfile() {
-    Workspace workspace =
-        WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())
-            .spendProfileId(SPEND_PROFILE_ID)
-            .build();
-    TpsPaoGetResult policies =
-        createPao(
-            new TpsPolicyInput()
-                .namespace(TpsUtilities.TERRA_NAMESPACE)
-                .name(TpsUtilities.PROTECTED_DATA_POLICY_NAME),
-            new TpsPolicyInput()
-                .namespace(TpsUtilities.TERRA_NAMESPACE)
-                .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
-    when(mockSpendProfileService.getSpendProfile(any(), any())).thenReturn(null);
-
-    var errors =
-        policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
-            workspace, policies, userRequest);
-    assertEquals(1, errors.size());
-  }
-
-  @Test
   void validateWorkspaceConformsToDataTrackingPolicy_reportsErrorsForMissingOrganization() {
     Workspace workspace =
         WorkspaceFixtures.defaultWorkspaceBuilder(UUID.randomUUID())

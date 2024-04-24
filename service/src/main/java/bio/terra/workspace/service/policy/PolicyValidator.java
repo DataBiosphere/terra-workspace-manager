@@ -130,7 +130,8 @@ public class PolicyValidator {
       if (spendProfileId.isEmpty()) {
         validationErrors.add("Data tracking requires an enterprise spend profile");
       } else {
-        var spendProfile = spendProfileService.getSpendProfile(spendProfileId.get(), userRequest);
+        var spendProfile =
+            spendProfileService.authorizeLinking(spendProfileId.get(), true, userRequest);
         if (spendProfile == null
             || spendProfile.organization() == null
             || !spendProfile.organization().enterprise()) {
