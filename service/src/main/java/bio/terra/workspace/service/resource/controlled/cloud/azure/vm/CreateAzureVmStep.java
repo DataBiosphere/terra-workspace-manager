@@ -4,7 +4,11 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachineRequestData;
-import bio.terra.stairway.*;
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.Step;
+import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementException;
@@ -26,6 +30,7 @@ import com.azure.resourcemanager.compute.models.DiffDiskPlacement;
 import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.ImageReference;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
+import com.azure.resourcemanager.compute.models.VirtualMachinePriorityTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import java.util.Optional;
@@ -208,12 +213,12 @@ public class CreateAzureVmStep implements Step {
     var withCustomData = maybeAddCustomDataStep(withImage, creationParameters);
     var withExistingDisk = maybeAddExistingDiskStep(withCustomData, disk);
     var withEphemeralDisk = maybeAddEphemeralDiskStep(withExistingDisk, creationParameters);
+    var withSizeAndPriority = addSizeAndPriorityStep(withEphemeralDisk, creationParameters);
 
     var vmConfigurationFinalStep =
-        withEphemeralDisk
+        withSizeAndPriority
             .withTag("workspaceId", resource.getWorkspaceId().toString())
-            .withTag("resourceId", resource.getResourceId().toString())
-            .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
+            .withTag("resourceId", resource.getResourceId().toString());
 
     return vmConfigurationFinalStep;
   }
@@ -256,15 +261,48 @@ public class CreateAzureVmStep implements Step {
     if (creationParameters.getVmImage().getUri() != null) {
       return priorSteps.withSpecializedLinuxCustomImage(creationParameters.getVmImage().getUri());
     } else {
-      return priorSteps
-          .withSpecificLinuxImageVersion(
+      var withImage =
+          priorSteps.withSpecificLinuxImageVersion(
               new ImageReference()
                   .withPublisher(creationParameters.getVmImage().getPublisher())
                   .withOffer(creationParameters.getVmImage().getOffer())
                   .withSku(creationParameters.getVmImage().getSku())
-                  .withVersion(creationParameters.getVmImage().getVersion()))
-          .withRootUsername(creationParameters.getVmUser().getName())
-          .withRootPassword(creationParameters.getVmUser().getPassword());
+                  .withVersion(creationParameters.getVmImage().getVersion()));
+      return maybeAddSshUserStep(withImage, creationParameters);
     }
+  }
+
+  private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged maybeAddSshUserStep(
+      VirtualMachine.DefinitionStages.WithLinuxRootUsernameManagedOrUnmanaged priorSteps,
+      ApiAzureVmCreationParameters creationParameters) {
+    // Azure VMs require a root username, and either a password or public SSH key.
+    // - If a username/password was specified in the WSM request, set that on the Azure VM.
+    //   Note: IA-XXX exists to stop using the same username/password for all notebook VMs.
+    // - If a username/password is NOT specified in the WSM request, set the username to 'admin'
+    //   and set a null SSH public key, effectively disabling SSH.
+    // Key management for WSM-created VMs is not supported in Terra at this time.
+    if (creationParameters.getVmUser() != null) {
+      var vmUser = creationParameters.getVmUser();
+      return priorSteps.withRootUsername(vmUser.getName()).withRootPassword(vmUser.getPassword());
+    } else {
+      return priorSteps.withRootUsername("admin").withSsh(null);
+    }
+  }
+
+  private VirtualMachine.DefinitionStages.WithCreate addSizeAndPriorityStep(
+      VirtualMachine.DefinitionStages.WithManagedCreate priorSteps,
+      ApiAzureVmCreationParameters creationParameters) {
+    var priority =
+        Optional.ofNullable(creationParameters.getPriority())
+            .map(
+                creationPriority ->
+                    switch (creationPriority) {
+                      case SPOT -> VirtualMachinePriorityTypes.SPOT;
+                      default -> VirtualMachinePriorityTypes.REGULAR;
+                    })
+            .orElse(VirtualMachinePriorityTypes.REGULAR);
+    return priorSteps
+        .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()))
+        .withPriority(priority);
   }
 }

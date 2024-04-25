@@ -37,6 +37,7 @@ import com.azure.resourcemanager.compute.models.Disks;
 import com.azure.resourcemanager.compute.models.ImageReference;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineExtension;
+import com.azure.resourcemanager.compute.models.VirtualMachinePriorityTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachines;
 import com.azure.resourcemanager.network.NetworkManager;
@@ -266,6 +267,8 @@ public class CreateAzureVmStepTest extends BaseAzureSpringBootUnitTest {
     when(mockVmStage11.withTag(anyString(), anyString())).thenReturn(mockVmStage11a);
     when(mockVmStage11a.withTag(anyString(), anyString())).thenReturn(mockVmStage12);
     when(mockVmStage12.withSize(any(VirtualMachineSizeTypes.class))).thenReturn(mockVmStage12);
+    when(mockVmStage12.withPriority(any(VirtualMachinePriorityTypes.class)))
+        .thenReturn(mockVmStage12);
     when(mockVmStage12.defineNewExtension(anyString())).thenReturn(mockVmStage13);
     when(mockVmStage12.create(any(Context.class))).thenReturn(mockVm);
     when(mockVmStage13.withPublisher(anyString())).thenReturn(mockVmStage14);

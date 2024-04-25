@@ -61,8 +61,8 @@ paths:
           $ref: '#/components/responses/ServerError'
     post:
       summary: |
-        Delete a controlled Azure VM resource. This is async, because the 
-        operation can take a few minutes. OpenAPI does not support request body 
+        Delete a controlled Azure VM resource. This is async, because the
+        operation can take a few minutes. OpenAPI does not support request body
         in DELETE, but async state requires it. Hence this is a POST.
       operationId: deleteAzureVm
       tags: [ ControlledAzureResource ]
@@ -140,6 +140,10 @@ components:
           description: Supply base64 encoded custom data for vm. https://docs.microsoft.com/en-us/azure/virtual-machines/custom-data
           type: string
           format: base64
+        priority:
+          description: Priority of the VM (Regular or Spot). Defaults to Regular.
+          type: string
+          enum: [ 'REGULAR', 'SPOT' ]
 
     AzureVmImage:
       description: >-

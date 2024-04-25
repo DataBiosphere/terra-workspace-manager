@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.resource;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
-import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureVmImage;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
 import java.util.regex.Pattern;
@@ -186,8 +186,7 @@ public class AzureResourceValidationUtils {
     }
   }
 
-  public static void validate(ApiAzureVmCreationParameters apiAzureVmCreationParameters) {
-    var vmImage = apiAzureVmCreationParameters.getVmImage();
+  public static void validateAzureVmImage(ApiAzureVmImage vmImage) {
     if (StringUtils.isEmpty(vmImage.getUri())
         && StringUtils.isEmpty(vmImage.getPublisher())
         && StringUtils.isEmpty(vmImage.getOffer())
@@ -203,14 +202,6 @@ public class AzureResourceValidationUtils {
             || StringUtils.isEmpty(vmImage.getVersion()))) {
       throw new MissingRequiredFieldException(
           "Missing required fields for vmImage. Publisher, offer, sku, version should be defined.");
-    }
-    if (StringUtils.isEmpty(vmImage.getUri())
-        && (!StringUtils.isEmpty(vmImage.getPublisher())
-            && !StringUtils.isEmpty(vmImage.getOffer())
-            && !StringUtils.isEmpty(vmImage.getSku())
-            && !StringUtils.isEmpty(vmImage.getVersion()))) {
-      ResourceValidationUtils.checkFieldNonNull(
-          apiAzureVmCreationParameters.getVmUser(), "vmUser", "ApiAzureVmCreationParameters");
     }
   }
 }
