@@ -261,31 +261,15 @@ public class CreateAzureVmStep implements Step {
     if (creationParameters.getVmImage().getUri() != null) {
       return priorSteps.withSpecializedLinuxCustomImage(creationParameters.getVmImage().getUri());
     } else {
-      var withImage =
-          priorSteps.withSpecificLinuxImageVersion(
+      return priorSteps
+          .withSpecificLinuxImageVersion(
               new ImageReference()
                   .withPublisher(creationParameters.getVmImage().getPublisher())
                   .withOffer(creationParameters.getVmImage().getOffer())
                   .withSku(creationParameters.getVmImage().getSku())
-                  .withVersion(creationParameters.getVmImage().getVersion()));
-      return maybeAddSshUserStep(withImage, creationParameters);
-    }
-  }
-
-  private VirtualMachine.DefinitionStages.WithFromImageCreateOptionsManaged maybeAddSshUserStep(
-      VirtualMachine.DefinitionStages.WithLinuxRootUsernameManagedOrUnmanaged priorSteps,
-      ApiAzureVmCreationParameters creationParameters) {
-    // Azure VMs require a root username, and either a password or public SSH key.
-    // - If a username/password was specified in the WSM request, set that on the Azure VM.
-    //   Note: IA-XXX exists to stop using the same username/password for all notebook VMs.
-    // - If a username/password is NOT specified in the WSM request, set the username to 'admin'
-    //   and set a null SSH public key, effectively disabling SSH.
-    // Key management for WSM-created VMs is not supported in Terra at this time.
-    if (creationParameters.getVmUser() != null) {
-      var vmUser = creationParameters.getVmUser();
-      return priorSteps.withRootUsername(vmUser.getName()).withRootPassword(vmUser.getPassword());
-    } else {
-      return priorSteps.withRootUsername("admin").withSsh(null);
+                  .withVersion(creationParameters.getVmImage().getVersion()))
+          .withRootUsername(creationParameters.getVmUser().getName())
+          .withRootPassword(creationParameters.getVmUser().getPassword());
     }
   }
 

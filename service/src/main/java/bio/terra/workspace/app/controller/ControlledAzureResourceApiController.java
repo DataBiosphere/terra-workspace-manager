@@ -295,7 +295,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_VM);
 
-    AzureResourceValidationUtils.validateAzureVmImage(body.getAzureVm().getVmImage());
+    AzureResourceValidationUtils.validate(body.getAzureVm());
     ControlledAzureVmResource resource =
         buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
