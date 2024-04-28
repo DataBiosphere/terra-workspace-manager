@@ -44,9 +44,9 @@ jobs:
         uses: google-github-actions/auth@v1
         with:
           workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
-          service_account: 'dsp-tools-iap-access@dsp-tools-k8s.iam.gserviceaccount.com'
+          service_account: 'gha-iap-accessor@dsp-devops-super-prod.iam.gserviceaccount.com'
           token_format: 'id_token'
-          id_token_audience: '1038484894585-k8qvf7l876733laev0lm8kenfa2lj6bn.apps.googleusercontent.com'
+          id_token_audience: '257801540345-1gqi6qi66bjbssbv01horu9243el2r8b.apps.googleusercontent.com'
           id_token_include_email: true
           create_credentials_file: false
           export_environment_variables: false
@@ -62,7 +62,7 @@ jobs:
           set -exo pipefail
           
           ENV="staging"
-          SHERLOCK_URL="https://sherlock.dsp-devops.broadinstitute.org"
+          SHERLOCK_URL="https://sherlock.dsp-devops-prod.broadinstitute.org"
 
           OLD_TERRA_HELMFILE_DIR="integration/terra-helmfile"
           VERSIONS_FILE="${OLD_TERRA_HELMFILE_DIR}/versions/app/${ENV}.yaml"
