@@ -295,6 +295,8 @@ feature:
   temporary-grant-enabled: false
   # state-rule - see WsmResourceStateRule - default to original state rule
   state-rule: DELETE_ON_FAILURE
+  # lzs-enabled - Controls whether the landing zone service is call or the "amalgamated" version is used
+  lzs-enabled: false
 
 azure:
   customer:
