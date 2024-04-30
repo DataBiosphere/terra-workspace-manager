@@ -87,8 +87,7 @@ public class WorkspaceApiUtils {
     if (apiSpendProfile == null) {
       return null;
     }
-    return spendProfileService.authorizeLinking(
-        new SpendProfileId(apiSpendProfile), features.isBpmGcpEnabled(), userRequest);
+    return spendProfileService.authorizeLinking(new SpendProfileId(apiSpendProfile), userRequest);
   }
 
   /**

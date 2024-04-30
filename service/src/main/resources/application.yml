@@ -285,8 +285,6 @@ feature:
   alpha1-enabled: false
   # tps-enabled - Controls whether Terra Policy Service is called. It is always built into WSM
   tps-enabled: false
-  # bpm-enabled-gcp - Controls whether spend profile checks are made for GCP workspaces
-  bpm-gcp-enabled: false
   # temporary-grant-enabled - Controls whether temporary direct ACL grants are made on creates
   temporary-grant-enabled: false
   # state-rule - see WsmResourceStateRule - default to original state rule

@@ -501,9 +501,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .orElseThrow(() -> MissingSpendProfileException.forWorkspace(workspace.workspaceId()));
 
     // Make sure the caller is authorized to use the spend profile
-    SpendProfile spendProfile =
-        spendProfileService.authorizeLinking(
-            spendProfileId, features.isBpmGcpEnabled(), userRequest);
+    SpendProfile spendProfile = spendProfileService.authorizeLinking(spendProfileId, userRequest);
 
     workspaceService.createCloudContext(
         workspace, cloudPlatform, spendProfile, jobId, userRequest, resultPath);
@@ -630,9 +628,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
             .orElse(workspaceSpendProfileId);
     SpendProfile spendProfile = null;
     if (spendProfileId != null) {
-      spendProfile =
-          spendProfileService.authorizeLinking(
-              spendProfileId, features.isBpmGcpEnabled(), petRequest);
+      spendProfile = spendProfileService.authorizeLinking(spendProfileId, petRequest);
     }
 
     // Accept a target workspace id if one is provided. This allows Rawls to specify an

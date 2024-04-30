@@ -40,8 +40,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
         new SpendProfileService(
             samService, ImmutableList.of(profile), spendProfileConfiguration, OpenTelemetry.noop());
 
-    assertEquals(
-        profile, service.authorizeLinking(id, false, userAccessUtils.defaultUserAuthRequest()));
+    assertEquals(profile, service.authorizeLinking(id, userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
@@ -56,7 +55,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
 
     assertThrows(
         SpendUnauthorizedException.class,
-        () -> service.authorizeLinking(id, false, userAccessUtils.secondUserAuthRequest()));
+        () -> service.authorizeLinking(id, userAccessUtils.secondUserAuthRequest()));
   }
 
   @Test
@@ -69,7 +68,7 @@ class SpendProfileServiceTest extends BaseConnectedTest {
         SpendUnauthorizedException.class,
         () ->
             service.authorizeLinking(
-                new SpendProfileId("bar"), false, userAccessUtils.defaultUserAuthRequest()));
+                new SpendProfileId("bar"), userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
@@ -81,6 +80,6 @@ class SpendProfileServiceTest extends BaseConnectedTest {
         SpendProfile.buildGcpSpendProfile(
             spendUtils.defaultSpendId(), spendUtils.defaultBillingAccountId()),
         service.authorizeLinking(
-            spendUtils.defaultSpendId(), false, userAccessUtils.defaultUserAuthRequest()));
+            spendUtils.defaultSpendId(), userAccessUtils.defaultUserAuthRequest()));
   }
 }

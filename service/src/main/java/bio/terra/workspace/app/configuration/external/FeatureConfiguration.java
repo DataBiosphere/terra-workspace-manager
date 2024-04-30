@@ -18,7 +18,6 @@ public class FeatureConfiguration {
   private boolean azureControlPlaneEnabled;
   private boolean alpha1Enabled;
   private boolean tpsEnabled;
-  private boolean bpmGcpEnabled;
   private boolean temporaryGrantEnabled;
   private WsmResourceStateRule stateRule;
 
@@ -52,14 +51,6 @@ public class FeatureConfiguration {
 
   public void setTpsEnabled(boolean tpsEnabled) {
     this.tpsEnabled = tpsEnabled;
-  }
-
-  public boolean isBpmGcpEnabled() {
-    return bpmGcpEnabled;
-  }
-
-  public void setBpmGcpEnabled(boolean bpmGcpEnabled) {
-    this.bpmGcpEnabled = bpmGcpEnabled;
   }
 
   public boolean isTemporaryGrantEnabled() {
@@ -107,7 +98,6 @@ public class FeatureConfiguration {
     logger.info("Feature: azure-enabled: {}", isAzureControlPlaneEnabled());
     logger.info("Feature: alpha1-enabled: {}", isAlpha1Enabled());
     logger.info("Feature: tps-enabled: {}", isTpsEnabled());
-    logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());
     logger.info("Feature: temporary-grant-enabled: {}", isTemporaryGrantEnabled());
     logger.info("Feature: state-rule: {}", getStateRule());
   }

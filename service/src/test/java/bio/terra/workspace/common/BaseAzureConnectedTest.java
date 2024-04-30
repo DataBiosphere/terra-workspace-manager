@@ -66,10 +66,7 @@ public class BaseAzureConnectedTest extends BaseSpringBootTest {
   protected SpendProfileId initSpendProfileMock() {
     Mockito.when(
             mockSpendProfileService()
-                .authorizeLinking(
-                    Mockito.eq(azureTestUtils.getSpendProfileId()),
-                    Mockito.eq(true),
-                    Mockito.any()))
+                .authorizeLinking(Mockito.eq(azureTestUtils.getSpendProfileId()), Mockito.any()))
         .thenReturn(
             new SpendProfile(
                 azureTestUtils.getSpendProfileId(),

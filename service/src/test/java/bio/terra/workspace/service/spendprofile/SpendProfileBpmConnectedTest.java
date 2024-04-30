@@ -63,8 +63,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
   @DisabledIf("bpmUnavailable")
   void authorizeLinkingSuccess() {
     var linkedProfile =
-        spendProfileService.authorizeLinking(
-            profile.id(), true, userAccessUtils.thirdUserAuthRequest());
+        spendProfileService.authorizeLinking(profile.id(), userAccessUtils.thirdUserAuthRequest());
     assertEquals(linkedProfile.billingAccountId(), profile.billingAccountId());
     assertEquals(linkedProfile.id(), profile.id());
   }
@@ -76,7 +75,7 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
         SpendUnauthorizedException.class,
         () ->
             spendProfileService.authorizeLinking(
-                profile.id(), true, userAccessUtils.defaultUserAuthRequest()));
+                profile.id(), userAccessUtils.defaultUserAuthRequest()));
   }
 
   @Test
@@ -88,7 +87,6 @@ public class SpendProfileBpmConnectedTest extends BaseConnectedTest {
             () ->
                 spendProfileService.authorizeLinking(
                     new SpendProfileId(UUID.randomUUID().toString()),
-                    true,
                     userAccessUtils.thirdUserAuthRequest()));
     assert (ex.getStatusCode() == HttpStatus.FORBIDDEN);
   }
