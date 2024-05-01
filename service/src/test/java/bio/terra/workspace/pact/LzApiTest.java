@@ -1,5 +1,11 @@
 package bio.terra.workspace.pact;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anEmptyMap;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -14,11 +20,14 @@ import au.com.dius.pact.core.model.PactSpecVersion;
 import au.com.dius.pact.core.model.RequestResponsePact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import bio.terra.common.iam.BearerToken;
+import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
 import bio.terra.workspace.amalgam.landingzone.azure.HttpLandingZoneService;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneServiceAuthorizationException;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneServiceNotFoundException;
 import bio.terra.workspace.app.configuration.external.LandingZoneServiceConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneParameter;
+import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGroup;
+import bio.terra.workspace.generated.model.ApiJobReport;
 import io.opentelemetry.api.OpenTelemetry;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +49,7 @@ public class LzApiTest {
   static final UUID landingZoneId = UUID.fromString("a051c5f8-9de8-4b4f-a453-8f9645df9c7b");
   static final UUID asyncJobId = UUID.fromString("3b0db775-1916-42d2-aaeb-ebc7aea69eca");
   static final UUID billingProfileId = UUID.fromString("4955757a-b027-4b6c-b77b-4cba899864cd");
+  static final UUID azureResourceId = UUID.fromString("e3327645-1e8f-454d-bdae-fe06b4762542");
 
   static PactDslJsonBody landingZoneCreateRequestShape =
       new PactDslJsonBody()
@@ -101,7 +111,11 @@ public class LzApiTest {
         new PactDslJsonBody()
             .object("jobReport")
             .stringType("id")
-            .stringType("status", "RUNNING")
+            .stringType("status", "SUCCEEDED")
+            .date("completed")
+            .stringType("description")
+            .date("submitted")
+            .stringType("resultURL")
             .closeObject();
 
     return builder
@@ -151,7 +165,11 @@ public class LzApiTest {
             .uuid("landingZoneId", landingZoneId)
             .object("jobReport")
             .stringType("id")
-            .stringType("status", "RUNNING")
+            .stringType("status", "SUCCEEDED")
+            .date("completed")
+            .stringType("description")
+            .date("submitted")
+            .stringType("resultURL")
             .closeObject();
 
     return builder
@@ -182,6 +200,30 @@ public class LzApiTest {
         .headers(contentTypeJsonHeader)
         .willRespondWith()
         .status(HttpStatus.UNAUTHORIZED.value())
+        .toPact();
+  }
+
+  @Pact(consumer = "workspacemanager", provider = "lzs")
+  public RequestResponsePact getLandingZone(PactDslWithProvider builder) {
+    var getResultResponseShape =
+        new PactDslJsonBody()
+            .uuid("landingZoneId")
+            .uuid("billingProfileId")
+            .stringType("definition")
+            .stringType("version")
+            .stringType("region")
+            .date("createdDate");
+
+    return builder
+        .given("An existing landing zone")
+        .uponReceiving("A request to get a landing zone")
+        .method("GET")
+        .pathFromProviderState(
+            "/api/landingzones/v1/azure/${landingZoneId}",
+            "/api/landingzones/v1/azure/%s".formatted(landingZoneId))
+        .willRespondWith()
+        .body(getResultResponseShape)
+        .status(HttpStatus.OK.value())
         .toPact();
   }
 
@@ -248,9 +290,106 @@ public class LzApiTest {
         .toPact();
   }
 
+  @Pact(consumer = "workspacemanager", provider = "lzs")
+  public RequestResponsePact listLandingZoneDefinitions(PactDslWithProvider builder) {
+    var definitionsResponseShape =
+        new PactDslJsonBody()
+            .array("landingzones")
+            .object()
+            .stringType("definition")
+            .stringType("name")
+            .stringType("description")
+            .stringType("version")
+            .closeObject()
+            .closeArray();
+
+    return builder
+        .uponReceiving("A request to list landing zone defs")
+        .method("GET")
+        .path("/api/landingzones/definitions/v1/azure")
+        .willRespondWith()
+        .body(definitionsResponseShape)
+        .status(HttpStatus.OK.value())
+        .toPact();
+  }
+
+  @Pact(consumer = "workspacemanager", provider = "lzs")
+  public RequestResponsePact listAzureLandingZoneResources(PactDslWithProvider builder) {
+    var resourcesResponseShape =
+        new PactDslJsonBody()
+            .uuid("id")
+            .array("resources")
+            .object()
+            .stringType("description")
+            .stringType("purpose", "SHARED_RESOURCE")
+            .array("deployedResources")
+            .object()
+            .stringType("resourceId")
+            .stringType("resourceType")
+            .stringType("resourceName")
+            .stringType("resourceParentId")
+            .stringType("region")
+            .object("tags")
+            .closeObject()
+            .closeObject()
+            .closeArray()
+            .closeObject()
+            .object()
+            .stringType("description")
+            .stringType("purpose", "OTHER_PURPOSE")
+            .array("deployedResources")
+            .object()
+            .stringType("resourceId")
+            .stringType("resourceType")
+            .stringType("resourceName")
+            .stringType("resourceParentId")
+            .stringType("region")
+            .object("tags")
+            .closeObject()
+            .closeObject()
+            .closeArray()
+            .closeObject();
+
+    return builder
+        .given("An existing landing zone")
+        .uponReceiving("A request to list the landing zone resources")
+        .method("GET")
+        .pathFromProviderState(
+            "/api/landingzones/v1/azure/${landingZoneId}/resources",
+            "/api/landingzones/v1/azure/%s/resources".formatted(landingZoneId))
+        .willRespondWith()
+        .body(resourcesResponseShape)
+        .status(HttpStatus.OK.value())
+        .toPact();
+  }
+
+  @Pact(consumer = "workspacemanager", provider = "lzs")
+  public RequestResponsePact getResourceQuota(PactDslWithProvider builder) {
+    var quotaResponseShape =
+        new PactDslJsonBody()
+            .uuid("landingZoneId")
+            .stringType("azureResourceId")
+            .stringType("resourceType")
+            .object("quotaValues")
+            .closeObject();
+
+    return builder
+        .given("An existing landing zone")
+        .uponReceiving("A request to get a resource's quota")
+        .method("GET")
+        .pathFromProviderState(
+            "/api/landingzones/v1/azure/${landingZoneId}/resource-quota",
+            "/api/landingzones/v1/azure/%s/resource-quota".formatted(landingZoneId))
+        .query(String.format("azureResourceId=%s", azureResourceId))
+        .willRespondWith()
+        .body(quotaResponseShape)
+        .status(HttpStatus.OK.value())
+        .toPact();
+  }
+
   @Test
   @PactTestFor(pactMethod = "startCreateLandingZone", pactVersion = PactSpecVersion.V3)
-  void testStartCreateLandingZone() throws InterruptedException {
+  void startCreateLandingZone() throws InterruptedException {
     var result =
         landingZoneService.startLandingZoneCreationJob(
             new BearerToken("fake"),
@@ -268,7 +407,7 @@ public class LzApiTest {
 
   @Test
   @PactTestFor(pactMethod = "createLandingZone_notAuthorized", pactVersion = PactSpecVersion.V3)
-  void testStartCreateLandignZone_notAuthorized() {
+  void startCreateLandignZone_notAuthorized() {
     assertThrows(
         LandingZoneServiceAuthorizationException.class,
         () ->
@@ -285,7 +424,7 @@ public class LzApiTest {
 
   @Test
   @PactTestFor(pactMethod = "landingZoneNotFound", pactVersion = PactSpecVersion.V3)
-  void testLandingZoneNotFound() {
+  void landingZoneNotFound() {
     assertThrows(
         LandingZoneServiceNotFoundException.class,
         () -> landingZoneService.getAzureLandingZone(new BearerToken("fake"), landingZoneId));
@@ -293,25 +432,33 @@ public class LzApiTest {
 
   @Test
   @PactTestFor(pactMethod = "listLandingZonesForBillingProfile", pactVersion = PactSpecVersion.V3)
-  void testListLandingZonesForBillingProfile() throws InterruptedException {
+  void listLandingZonesForBillingProfile() throws InterruptedException {
     var result =
         landingZoneService.listLandingZonesByBillingProfile(
             new BearerToken("fake"), billingProfileId);
 
     assertNotNull(result);
+    assertThat(result.getLandingzones(), is(not(empty())));
   }
 
   @Test
   @PactTestFor(pactMethod = "listLandingZones", pactVersion = PactSpecVersion.V3)
-  void testListLandingZones() throws InterruptedException {
+  void listLandingZones() throws InterruptedException {
     var result = landingZoneService.listLandingZonesByBillingProfile(new BearerToken("fake"), null);
 
     assertNotNull(result);
+    assertThat(result.getLandingzones(), is(not(empty())));
+    assertNotNull(result.getLandingzones().get(0).getLandingZoneId());
+    assertNotNull(result.getLandingzones().get(0).getBillingProfileId());
+    assertNotNull(result.getLandingzones().get(0).getDefinition());
+    assertNotNull(result.getLandingzones().get(0).getRegion());
+    assertNotNull(result.getLandingzones().get(0).getVersion());
+    assertNotNull(result.getLandingzones().get(0).getCreatedDate());
   }
 
   @Test
   @PactTestFor(pactMethod = "startDeleteLandingZone", pactVersion = PactSpecVersion.V3)
-  void testDeleteLandingZone() throws InterruptedException {
+  void deleteLandingZone() throws InterruptedException {
     var result =
         landingZoneService.startLandingZoneDeletionJob(
             new BearerToken("fake"), "fakeJobId", landingZoneId, "http://example.com");
@@ -321,7 +468,7 @@ public class LzApiTest {
 
   @Test
   @PactTestFor(pactMethod = "deleteLandingZone_notAuthorized", pactVersion = PactSpecVersion.V3)
-  void testDeleteLandingZone_notAuthorized() {
+  void deleteLandingZone_notAuthorized() {
     assertThrows(
         LandingZoneServiceAuthorizationException.class,
         () ->
@@ -331,18 +478,104 @@ public class LzApiTest {
 
   @Test
   @PactTestFor(pactMethod = "deleteLandingZoneResult", pactVersion = PactSpecVersion.V3)
-  void testDeleteLandingZoneResult() throws InterruptedException {
+  void deleteLandingZoneResult() throws InterruptedException {
     var result =
         landingZoneService.getDeleteLandingZoneResult(
             new BearerToken("fake"), landingZoneId, asyncJobId.toString());
+
     assertNotNull(result);
+    assertJobReport(result.getJobReport());
   }
 
   @Test
   @PactTestFor(pactMethod = "createLandingZoneResult", pactVersion = PactSpecVersion.V3)
-  void testCreateLandingZoneResult() throws InterruptedException {
+  void createLandingZoneResult() throws InterruptedException {
     var result =
         landingZoneService.getAsyncJobResult(new BearerToken("fake"), asyncJobId.toString());
+
     assertNotNull(result);
+    assertJobReport(result.getJobReport());
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "getLandingZone", pactVersion = PactSpecVersion.V3)
+  void getLandingZoneRegion() throws InterruptedException {
+    var result = landingZoneService.getLandingZoneRegion(new BearerToken("fake"), landingZoneId);
+
+    assertNotNull(result);
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "getLandingZone", pactVersion = PactSpecVersion.V3)
+  void getAzureLandingZone() throws InterruptedException {
+    var result = landingZoneService.getAzureLandingZone(new BearerToken("fake"), landingZoneId);
+
+    assertNotNull(result);
+    assertNotNull(result.getCreatedDate());
+    assertNotNull(result.getBillingProfileId());
+    assertNotNull(result.getRegion());
+    assertNotNull(result.getVersion());
+    assertNotNull(result.getLandingZoneId());
+    assertNotNull(result.getDefinition());
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "listLandingZoneDefinitions", pactVersion = PactSpecVersion.V3)
+  void listLandingZoneDefinitions() throws InterruptedException {
+    var result = landingZoneService.listLandingZoneDefinitions(new BearerToken("fake"));
+
+    assertNotNull(result);
+    assertThat(result.getLandingzones(), is(not(empty())));
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "listAzureLandingZoneResources", pactVersion = PactSpecVersion.V3)
+  void listLandingZoneResources() throws InterruptedException {
+    var result =
+        landingZoneService.listResourcesWithPurposes(new BearerToken("fake"), landingZoneId);
+
+    assertNotNull(result);
+    assertThat(result.getResources(), is(not(empty())));
+    assertThat(result.getResources().get(0).getDeployedResources(), is(not(empty())));
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "listAzureLandingZoneResources", pactVersion = PactSpecVersion.V3)
+  void listLandingZoneResourcesMatchingPurpose() throws InterruptedException {
+    var result =
+        landingZoneService.listResourcesMatchingPurpose(
+            new BearerToken("fake"), landingZoneId, ResourcePurpose.SHARED_RESOURCE);
+
+    assertNotNull(result);
+    assertThat(result.getResources(), is(not(empty())));
+    var purposes =
+        result.getResources().stream().map(ApiAzureLandingZoneResourcesPurposeGroup::getPurpose);
+    assertThat(
+        purposes.allMatch(r -> r.equals(ResourcePurpose.SHARED_RESOURCE.getValue())),
+        equalTo(true));
+  }
+
+  @Test
+  @PactTestFor(pactMethod = "getResourceQuota", pactVersion = PactSpecVersion.V3)
+  void getResourceQuota() {
+    var result =
+        landingZoneService.getResourceQuota(
+            new BearerToken("fake"), landingZoneId, azureResourceId.toString());
+
+    assertNotNull(result);
+    assertNotNull(result.getAzureResourceId());
+    assertNotNull(result.getResourceType());
+    assertNotNull(result.getLandingZoneId());
+    assertNotNull(result.getQuotaValues());
+    assertThat(result.getQuotaValues(), is(anEmptyMap()));
+  }
+
+  void assertJobReport(ApiJobReport jobReport) {
+    assertNotNull(jobReport);
+    assertNotNull(jobReport.getId());
+    assertNotNull(jobReport.getCompleted());
+    assertNotNull(jobReport.getDescription());
+    assertNotNull(jobReport.getStatus());
+    assertNotNull(jobReport.getSubmitted());
   }
 }

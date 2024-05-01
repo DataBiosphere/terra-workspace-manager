@@ -110,8 +110,7 @@ public class LzsRetry {
 
   private boolean isRetryable(ApiException apiException) {
     return isTimeoutException(apiException)
-        || apiException.getCode() == HttpStatus.SC_FORBIDDEN
-        // || apiException.getCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR
+        || apiException.getCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR
         || apiException.getCode() == HttpStatus.SC_BAD_GATEWAY
         || apiException.getCode() == HttpStatus.SC_SERVICE_UNAVAILABLE
         || apiException.getCode() == HttpStatus.SC_GATEWAY_TIMEOUT;

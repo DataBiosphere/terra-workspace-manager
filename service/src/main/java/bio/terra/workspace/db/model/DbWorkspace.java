@@ -2,7 +2,7 @@ package bio.terra.workspace.db.model;
 
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.time.OffsetDateTime;
 import java.util.Map;

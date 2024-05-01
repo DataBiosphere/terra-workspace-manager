@@ -123,7 +123,6 @@ public class HttpLandingZoneService implements WorkspaceLandingZoneService {
       throws InterruptedException {
     var client = getLandingZonesApi(bearerToken);
     try {
-
       var result = LzsRetry.retry(() -> client.getAzureLandingZone(landingZoneId));
       return typeAdapter.toApiAzureLandingZone(result);
     } catch (ApiException e) {

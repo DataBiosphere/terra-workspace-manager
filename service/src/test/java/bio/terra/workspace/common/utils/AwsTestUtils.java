@@ -9,7 +9,7 @@ import bio.terra.aws.resource.discovery.Environment;
 import bio.terra.aws.resource.discovery.LandingZone;
 import bio.terra.aws.resource.discovery.Metadata;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.AwsCloudContext;
 import bio.terra.workspace.service.workspace.model.AwsCloudContextFields;
 import bio.terra.workspace.service.workspace.model.AwsCloudContextFields.AwsCloudContextV1;
