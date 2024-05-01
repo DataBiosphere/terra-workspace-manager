@@ -215,12 +215,9 @@ public class CreateAzureVmStep implements Step {
     var withEphemeralDisk = maybeAddEphemeralDiskStep(withExistingDisk, creationParameters);
     var withSizeAndPriority = addSizeAndPriorityStep(withEphemeralDisk, creationParameters);
 
-    var vmConfigurationFinalStep =
-        withSizeAndPriority
-            .withTag("workspaceId", resource.getWorkspaceId().toString())
-            .withTag("resourceId", resource.getResourceId().toString());
-
-    return vmConfigurationFinalStep;
+    return withSizeAndPriority
+        .withTag("workspaceId", resource.getWorkspaceId().toString())
+        .withTag("resourceId", resource.getResourceId().toString());
   }
 
   private VirtualMachine.DefinitionStages.WithManagedCreate maybeAddEphemeralDiskStep(
