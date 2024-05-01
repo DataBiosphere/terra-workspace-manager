@@ -28,7 +28,6 @@ env:
     terra-datarepo: ${TERRA_DATAREPO_URL:https://jade.datarepo-dev.broadinstitute.org}
     bpm: ${BPM_ADDRESS:https://bpm.dsde-dev.broadinstitute.org/}
     tps: ${TPS_ADDRESS:https://tps.dsde-dev.broadinstitute.org/}
-    lzs: ${LZS_ADDRESS:https://landingzone.dsde-dev.broadinstitute.org/}
   azure:
     customer:
       usage-attribute: ${AZURE_CUSTOMER_USAGE_ATTRIBUTE:}
@@ -152,9 +151,6 @@ workspace:
       id: wm-default-spend-profile
       # The billing account workspace-dev has access to.
       billing-account-id: 01A82E-CA8A14-367457
-
-  landing-zone:
-    base-path: ${env.urls.lzs}
 
   application:
     configurations:
@@ -295,8 +291,6 @@ feature:
   temporary-grant-enabled: false
   # state-rule - see WsmResourceStateRule - default to original state rule
   state-rule: DELETE_ON_FAILURE
-  # lzs-enabled - Controls whether the landing zone service is call or the "amalgamated" version is used
-  lzs-enabled: false
 
 azure:
   customer:

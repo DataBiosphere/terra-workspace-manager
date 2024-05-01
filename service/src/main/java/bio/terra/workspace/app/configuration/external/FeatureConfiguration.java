@@ -20,7 +20,6 @@ public class FeatureConfiguration {
   private boolean tpsEnabled;
   private boolean bpmGcpEnabled;
   private boolean temporaryGrantEnabled;
-  private boolean lzsEnabled;
   private WsmResourceStateRule stateRule;
 
   public boolean isAzureEnabled() {
@@ -61,14 +60,6 @@ public class FeatureConfiguration {
 
   public void setBpmGcpEnabled(boolean bpmGcpEnabled) {
     this.bpmGcpEnabled = bpmGcpEnabled;
-  }
-
-  public boolean isLzsEnabled() {
-    return lzsEnabled;
-  }
-
-  public void setLzsEnabled(boolean lzsEnabled) {
-    this.lzsEnabled = lzsEnabled;
   }
 
   public boolean isTemporaryGrantEnabled() {
@@ -119,7 +110,5 @@ public class FeatureConfiguration {
     logger.info("Feature: bpm-gcp-enabled: {}", isBpmGcpEnabled());
     logger.info("Feature: temporary-grant-enabled: {}", isTemporaryGrantEnabled());
     logger.info("Feature: state-rule: {}", getStateRule());
-    logger.info("Feature: lzs-enabled: {}", isLzsEnabled());
-    ;
   }
 }
