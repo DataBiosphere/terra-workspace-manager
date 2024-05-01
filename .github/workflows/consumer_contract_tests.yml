@@ -24,6 +24,8 @@ on:
 env:
   PUBLISH_CONTRACTS_RUN_NAME: 'publish-contracts-${{ github.event.repository.name }}-${{ github.run_id }}-${{ github.run_attempt }}'
   CAN_I_DEPLOY_RUN_NAME: 'can-i-deploy-${{ github.event.repository.name }}-${{ github.run_id }}-${{ github.run_attempt }}'
+  PACTS_ARTIFACT: wsm-pacts-${{ github.event.repository.name }}-${{ github.run_id }}
+  PACTS_OUTPUT_DIR: service/build/pacts
 
 jobs:
   bump-check:
@@ -110,7 +112,7 @@ jobs:
     needs: [ bump-check, init-github-context ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
     outputs:
-      pact-b64: ${{ steps.encode-pact.outputs.pact-b64 }}
+      pact-paths: ${{ steps.locate-pacts.outputs.pact-paths }}
 
     steps:
       - uses: actions/checkout@v3
@@ -123,30 +125,72 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
       - name: Run consumer tests
         run: ./gradlew pactTests
-      - name: Output consumer contract as non-breaking base64 string
-        id: encode-pact
+      - name: Locate pact files
+        id: locate-pacts
         run: |
-          NON_BREAKING_B64=$(cat service/build/pacts/workspacemanager-bpm.json | base64 -w 0)
-          echo "pact-b64=${NON_BREAKING_B64}" >> $GITHUB_OUTPUT
+          pactPaths=$(find "$PACTS_OUTPUT_DIR" -type f -name "*.json" | jq -cnR "[inputs]")
+          echo "pact-paths=$pactPaths" >> $GITHUB_OUTPUT
+      - name: Upload pact files to artifact
+        id: upload-pacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PACTS_ARTIFACT }}
+          path: ${{ env.PACTS_OUTPUT_DIR }}
+          retention-days: 1
 
   publish-contracts:
     runs-on: ubuntu-latest
     needs: [ bump-check, init-github-context, wsm-consumer-contract-tests, regulated-tag-job ]
+    strategy:
+      matrix:
+        pact_path: ${{ fromJson(needs.bpm-consumer-contract-tests.outputs.pact-paths) }}
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
     steps:
+      - name: Download pact files from artifact
+        id: download-pacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.PACTS_ARTIFACT }}
+          path: ${{ env.PACTS_OUTPUT_DIR }}
+
+      - name: Encode pact as non-breaking base64 string
+        id: encode-pact
+        run: |
+          nonBreakingB64=$(cat "${{ matrix.pact_path }}" | base64 -w 0)
+          echo "pact-b64=${nonBreakingB64}" >> $GITHUB_OUTPUT  
+
       - name: Dispatch to terra-github-workflows
         uses: broadinstitute/workflow-dispatch@v4.0.0
         with:
-          run-name: "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}"
+          run-name: "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}-${{ matrix.pact_path }}"
           workflow: .github/workflows/publish-contracts.yaml
           repo: broadinstitute/terra-github-workflows
           ref: refs/heads/main
           token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
           inputs: '{
-            "run-name": "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}",
-            "pact-b64": "${{ needs.wsm-consumer-contract-tests.outputs.pact-b64 }}",
+            "run-name": "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}-${{ matrix.pact_path }}",
+            "pact-b64": "${{ steps.encode-pact.outputs.pact-b64 }}",
             "repo-owner": "${{ github.repository_owner }}",
             "repo-name": "${{ github.event.repository.name }}",
             "repo-branch": "${{ needs.init-github-context.outputs.repo-branch }}",
             "release-tag": "${{ needs.regulated-tag-job.outputs.new-tag }}"
+          }'
+
+  can-i-deploy:
+    runs-on: ubuntu-latest
+    needs: [ bump-check, init-github-context, publish-contracts, regulated-tag-job ]
+    if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
+    steps:
+      - name: Dispatch to terra-github-workflows
+        uses: broadinstitute/workflow-dispatch@v4.0.0
+        with:
+          run-name: "${{ env.CAN_I_DEPLOY_RUN_NAME }}"
+          workflow: .github/workflows/can-i-deploy.yaml
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
+          inputs: '{
+            "run-name": "${{ env.CAN_I_DEPLOY_RUN_NAME }}",
+            "pacticipant": "workspacemanager",
+            "version": "${{ needs.regulated-tag-job.outputs.new-tag }}"
           }'
