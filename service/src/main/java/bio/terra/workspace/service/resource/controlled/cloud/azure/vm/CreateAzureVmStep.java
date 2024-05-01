@@ -33,6 +33,7 @@ import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachinePriorityTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.NetworkInterface;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -270,7 +271,8 @@ public class CreateAzureVmStep implements Step {
     }
   }
 
-  private VirtualMachine.DefinitionStages.WithCreate addSizeAndPriorityStep(
+  @VisibleForTesting
+  VirtualMachine.DefinitionStages.WithCreate addSizeAndPriorityStep(
       VirtualMachine.DefinitionStages.WithManagedCreate priorSteps,
       ApiAzureVmCreationParameters creationParameters) {
     var priority =

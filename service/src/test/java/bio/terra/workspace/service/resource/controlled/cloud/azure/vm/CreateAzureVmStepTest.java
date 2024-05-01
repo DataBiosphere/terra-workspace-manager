@@ -464,4 +464,57 @@ public class CreateAzureVmStepTest extends BaseAzureSpringBootUnitTest {
         .deleteByResourceGroup(
             mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName());
   }
+
+  @Test
+  void addSizeAndPriorityStep_regular() {
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters();
+
+    var createAzureVmStep =
+        new CreateAzureVmStep(
+            mockAzureConfig,
+            mockCrlService,
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
+            mockResourceDao);
+
+    var sizeCaptor = ArgumentCaptor.forClass(VirtualMachineSizeTypes.class);
+    var priorityCaptor = ArgumentCaptor.forClass(VirtualMachinePriorityTypes.class);
+
+    // Calculate the VM size and priority
+    createAzureVmStep.addSizeAndPriorityStep(mockVmStage11, creationParameters);
+
+    // Verify mock interactions
+    verify(mockVmStage11).withSize(sizeCaptor.capture());
+    assertThat(sizeCaptor.getValue(), equalTo(VirtualMachineSizeTypes.STANDARD_D2S_V3));
+
+    verify(mockVmStage12).withPriority(priorityCaptor.capture());
+    assertThat(priorityCaptor.getValue(), equalTo(VirtualMachinePriorityTypes.REGULAR));
+  }
+
+  @Test
+  void addSizeAndPriorityStep_spot() {
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters()
+            .priority(ApiAzureVmCreationParameters.PriorityEnum.SPOT);
+
+    var createAzureVmStep =
+        new CreateAzureVmStep(
+            mockAzureConfig,
+            mockCrlService,
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
+            mockResourceDao);
+
+    var sizeCaptor = ArgumentCaptor.forClass(VirtualMachineSizeTypes.class);
+    var priorityCaptor = ArgumentCaptor.forClass(VirtualMachinePriorityTypes.class);
+
+    // Calculate the VM size and priority
+    createAzureVmStep.addSizeAndPriorityStep(mockVmStage11, creationParameters);
+
+    // Verify mock interactions
+    verify(mockVmStage11).withSize(sizeCaptor.capture());
+    assertThat(sizeCaptor.getValue(), equalTo(VirtualMachineSizeTypes.STANDARD_D2S_V3));
+
+    verify(mockVmStage12).withPriority(priorityCaptor.capture());
+    assertThat(priorityCaptor.getValue(), equalTo(VirtualMachinePriorityTypes.SPOT));
+  }
 }
