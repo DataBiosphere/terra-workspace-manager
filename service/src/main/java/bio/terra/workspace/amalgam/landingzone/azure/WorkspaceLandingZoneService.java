@@ -31,32 +31,37 @@ public interface WorkspaceLandingZoneService {
       String version,
       List<ApiAzureLandingZoneParameter> parameters,
       UUID billingProfileId,
-      String asyncResultEndpoint);
+      String asyncResultEndpoint)
+      throws InterruptedException;
 
   ApiDeleteAzureLandingZoneResult startLandingZoneDeletionJob(
-      BearerToken bearerToken, String jobId, UUID landingZoneId, String resultEndpoint);
+      BearerToken bearerToken, String jobId, UUID landingZoneId, String resultEndpoint)
+      throws InterruptedException;
 
   ApiDeleteAzureLandingZoneJobResult getDeleteLandingZoneResult(
-      BearerToken bearerToken, UUID landingZoneId, String jobId);
+      BearerToken bearerToken, UUID landingZoneId, String jobId) throws InterruptedException;
 
-  ApiAzureLandingZoneResult getAsyncJobResult(BearerToken bearerToken, String jobId);
+  ApiAzureLandingZoneResult getAsyncJobResult(BearerToken bearerToken, String jobId)
+      throws InterruptedException;
 
-  ApiAzureLandingZone getAzureLandingZone(BearerToken bearerToken, UUID landingZoneId);
+  ApiAzureLandingZone getAzureLandingZone(BearerToken bearerToken, UUID landingZoneId)
+      throws InterruptedException;
 
   ApiAzureLandingZoneList listLandingZonesByBillingProfile(
-      BearerToken bearerToken, UUID billingProfileId);
+      BearerToken bearerToken, UUID billingProfileId) throws InterruptedException;
 
-  ApiAzureLandingZoneList listLandingZones(BearerToken bearerToken);
+  String getLandingZoneRegion(BearerToken bearerToken, UUID landingZoneId)
+      throws InterruptedException;
 
-  String getLandingZoneRegion(BearerToken bearerToken, UUID landingZoneId);
-
-  ApiAzureLandingZoneDefinitionList listLandingZoneDefinitions(BearerToken bearerToken);
+  ApiAzureLandingZoneDefinitionList listLandingZoneDefinitions(BearerToken bearerToken)
+      throws InterruptedException;
 
   ApiAzureLandingZoneResourcesList listResourcesWithPurposes(
-      BearerToken bearerToken, UUID landingZoneId);
+      BearerToken bearerToken, UUID landingZoneId) throws InterruptedException;
 
   ApiAzureLandingZoneResourcesList listResourcesMatchingPurpose(
-      BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose);
+      BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose)
+      throws InterruptedException;
 
   ApiResourceQuota getResourceQuota(BearerToken bearerToken, UUID landingZoneId, String resourceId);
 }

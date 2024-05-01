@@ -3,8 +3,8 @@ package bio.terra.workspace.amalgam.landingzone.azure;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.library.landingzones.deployment.LandingZonePurpose;
 import bio.terra.landingzone.library.landingzones.deployment.ResourcePurpose;
-import bio.terra.landingzone.service.landingzone.azure.LandingZoneService;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.generated.model.ApiAzureLandingZone;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDefinitionList;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
@@ -47,10 +47,10 @@ public class LandingZoneApiDispatch {
   private final WorkspaceLandingZoneService amalgamated;
 
   public LandingZoneApiDispatch(
-      LandingZoneService landingZoneService, FeatureConfiguration features, SamService samService) {
+      FeatureConfiguration features, SamService samService, LandingZoneServiceFactory lzsFactory) {
     this.features = features;
     this.samService = samService;
-    this.amalgamated = new AmalgamatedLandingZoneService(landingZoneService);
+    this.amalgamated = lzsFactory.getLandingZoneService();
   }
 
   public ApiCreateLandingZoneResult createAzureLandingZone(
@@ -66,15 +66,18 @@ public class LandingZoneApiDispatch {
     // Prevent deploying more than 1 landing zone per billing profile
     verifyLandingZoneDoesNotExistForBillingProfile(bearerToken, body);
 
-    return amalgamated.startLandingZoneCreationJob(
-        bearerToken,
-        body.getJobControl().getId(),
-        body.getLandingZoneId(),
-        body.getDefinition(),
-        body.getVersion(),
-        body.getParameters(),
-        body.getBillingProfileId(),
-        asyncResultEndpoint);
+    return Rethrow.onInterrupted(
+        () ->
+            amalgamated.startLandingZoneCreationJob(
+                bearerToken,
+                body.getJobControl().getId(),
+                body.getLandingZoneId(),
+                body.getDefinition(),
+                body.getVersion(),
+                body.getParameters(),
+                body.getBillingProfileId(),
+                asyncResultEndpoint),
+        "startLandingZoneCreationJob");
   }
 
   private void verifyLandingZoneDoesNotExistForBillingProfile(
@@ -82,17 +85,21 @@ public class LandingZoneApiDispatch {
     // TODO: Catching the exception is a temp solution.
     // A better approach would be to return an empty list instead of throwing an exception
     try {
-      amalgamated
-          .listLandingZonesByBillingProfile(bearerToken, body.getBillingProfileId())
-          .getLandingzones()
-          .stream()
-          .findFirst()
-          .ifPresent(
-              t -> {
-                throw new LandingZoneInvalidInputException(
-                    "A Landing Zone already exists in the requested billing profile");
-              });
-    } catch (bio.terra.landingzone.db.exception.LandingZoneNotFoundException ex) {
+      Rethrow.onInterrupted(
+          () ->
+              amalgamated
+                  .listLandingZonesByBillingProfile(bearerToken, body.getBillingProfileId())
+                  .getLandingzones()
+                  .stream()
+                  .findFirst()
+                  .ifPresent(
+                      t -> {
+                        throw new LandingZoneInvalidInputException(
+                            "A Landing Zone already exists in the requested billing profile");
+                      }),
+          "listLandingZonesByBillingProfile");
+    } catch (bio.terra.landingzone.db.exception.LandingZoneNotFoundException
+        | LandingZoneServiceNotFoundException ex) {
       logger.info("The billing profile does not have a landing zone. ", ex);
     }
   }
@@ -100,13 +107,15 @@ public class LandingZoneApiDispatch {
   public ApiAzureLandingZoneResult getCreateAzureLandingZoneResult(
       BearerToken bearerToken, String jobId) {
     features.azureEnabledCheck();
-    return amalgamated.getAsyncJobResult(bearerToken, jobId);
+    return Rethrow.onInterrupted(
+        () -> amalgamated.getAsyncJobResult(bearerToken, jobId), "getAsyncJobResult");
   }
 
   public ApiAzureLandingZoneDefinitionList listAzureLandingZonesDefinitions(
       BearerToken bearerToken) {
     features.azureEnabledCheck();
-    return amalgamated.listLandingZoneDefinitions(bearerToken);
+    return Rethrow.onInterrupted(
+        () -> amalgamated.listLandingZoneDefinitions(bearerToken), "listLandingZoneDefinitions");
   }
 
   public ApiDeleteAzureLandingZoneResult deleteLandingZone(
@@ -115,14 +124,19 @@ public class LandingZoneApiDispatch {
       ApiDeleteAzureLandingZoneRequestBody body,
       String resultEndpoint) {
     features.azureEnabledCheck();
-    return amalgamated.startLandingZoneDeletionJob(
-        bearerToken, body.getJobControl().getId(), landingZoneId, resultEndpoint);
+    return Rethrow.onInterrupted(
+        () ->
+            amalgamated.startLandingZoneDeletionJob(
+                bearerToken, body.getJobControl().getId(), landingZoneId, resultEndpoint),
+        "startLandingZoneDeletionJob");
   }
 
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResources(
       BearerToken bearerToken, UUID landingZoneId) {
     features.azureEnabledCheck();
-    return amalgamated.listResourcesWithPurposes(bearerToken, landingZoneId);
+    return Rethrow.onInterrupted(
+        () -> amalgamated.listResourcesWithPurposes(bearerToken, landingZoneId),
+        "listResourcesWithPurpose");
   }
 
   public Optional<ApiAzureLandingZoneDeployedResource> getSharedStorageAccount(
@@ -155,7 +169,9 @@ public class LandingZoneApiDispatch {
   public ApiAzureLandingZoneResourcesList listAzureLandingZoneResourcesByPurpose(
       BearerToken bearerToken, UUID landingZoneId, LandingZonePurpose resourcePurpose) {
     features.azureEnabledCheck();
-    return amalgamated.listResourcesMatchingPurpose(bearerToken, landingZoneId, resourcePurpose);
+    return Rethrow.onInterrupted(
+        () -> amalgamated.listResourcesMatchingPurpose(bearerToken, landingZoneId, resourcePurpose),
+        "listResourcesMatchingPurpose");
   }
 
   public UUID getLandingZoneId(BearerToken token, Workspace workspace) {
@@ -169,10 +185,11 @@ public class LandingZoneApiDispatch {
     }
 
     // getLandingZonesByBillingProfile returns a list. But it always contains only one item
-    return amalgamated
-        .listLandingZonesByBillingProfile(token, profileId.get())
-        .getLandingzones()
-        .stream()
+    var response =
+        Rethrow.onInterrupted(
+            () -> amalgamated.listLandingZonesByBillingProfile(token, profileId.get()),
+            "listLandingZonesByBillingProfile");
+    return response.getLandingzones().stream()
         .findFirst()
         .map(ApiAzureLandingZone::getLandingZoneId)
         .orElseThrow(
@@ -188,21 +205,27 @@ public class LandingZoneApiDispatch {
   public ApiDeleteAzureLandingZoneJobResult getDeleteAzureLandingZoneResult(
       BearerToken token, UUID landingZoneId, String jobId) {
     features.azureEnabledCheck();
-    return amalgamated.getDeleteLandingZoneResult(token, landingZoneId, jobId);
+    return Rethrow.onInterrupted(
+        () -> amalgamated.getDeleteLandingZoneResult(token, landingZoneId, jobId),
+        "getDeleteLandingZoneResult");
   }
 
   public ApiAzureLandingZone getAzureLandingZone(BearerToken bearerToken, UUID landingZoneId) {
     features.azureEnabledCheck();
-    return amalgamated.getAzureLandingZone(bearerToken, landingZoneId);
+    return Rethrow.onInterrupted(
+        () -> amalgamated.getAzureLandingZone(bearerToken, landingZoneId), "getAzureLandingZone");
   }
 
   public ApiAzureLandingZoneList listAzureLandingZones(
       BearerToken bearerToken, UUID billingProfileId) {
     features.azureEnabledCheck();
     if (billingProfileId != null) {
-      return amalgamated.listLandingZonesByBillingProfile(bearerToken, billingProfileId);
+      return Rethrow.onInterrupted(
+          () -> amalgamated.listLandingZonesByBillingProfile(bearerToken, billingProfileId),
+          "listLandingZonesByBillingProfile");
     }
-    return amalgamated.listLandingZones(bearerToken);
+    return Rethrow.onInterrupted(
+        () -> amalgamated.listLandingZonesByBillingProfile(bearerToken, null), "listLandingZones");
   }
 
   public ApiResourceQuota getResourceQuota(
@@ -255,6 +278,7 @@ public class LandingZoneApiDispatch {
   public String getLandingZoneRegionUsingWsmToken(UUID landingZoneId) {
     features.azureEnabledCheck();
     var token = new BearerToken(samService.getWsmServiceAccountToken());
-    return amalgamated.getLandingZoneRegion(token, landingZoneId);
+    return Rethrow.onInterrupted(
+        () -> amalgamated.getLandingZoneRegion(token, landingZoneId), "getLandingZoneRegion");
   }
 }
