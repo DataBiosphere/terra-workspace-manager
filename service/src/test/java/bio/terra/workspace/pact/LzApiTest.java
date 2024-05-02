@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import au.com.dius.pact.consumer.MockServer;
+import au.com.dius.pact.consumer.dsl.DslPart;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
 import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
@@ -51,17 +52,47 @@ public class LzApiTest {
   static final UUID billingProfileId = UUID.fromString("4955757a-b027-4b6c-b77b-4cba899864cd");
   static final UUID azureResourceId = UUID.fromString("e3327645-1e8f-454d-bdae-fe06b4762542");
 
-  static PactDslJsonBody landingZoneCreateRequestShape =
+  static DslPart jobReportShape =
       new PactDslJsonBody()
-          .stringType("landingZoneId")
+          .stringType("id")
+          .stringType("description")
+          .stringMatcher("status", "RUNNING|SUCCEEDED|FAILED")
+          .integerType("statusCode")
+          .datetime("submitted")
+          .datetime("completed")
+          .stringType("resultURL");
+
+  static DslPart errorReportShape =
+      new PactDslJsonBody().stringType("message").integerType("statusCode").object("causes");
+
+  static DslPart jobControlShape = new PactDslJsonBody().stringType("id");
+
+  static DslPart landingZoneCreateRequestShape =
+      new PactDslJsonBody()
+          .uuid("landingZoneId")
           .stringType("definition")
           .stringType("version")
           .uuid("billingProfileId")
-          .object("jobControl")
-          .stringType("id")
-          .closeObject()
-          .minArrayLike(
-              "parameters", 1, new PactDslJsonBody().stringType("key").stringType("value"));
+          .object("jobControl", jobControlShape)
+          .eachLike("parameters")
+          .stringType("key")
+          .stringType("value")
+          .closeArray();
+
+  static final DslPart resourceShape =
+      new PactDslJsonBody()
+          .stringType("resourceId")
+          .stringType("resourceType")
+          .stringType("resourceName")
+          .stringType("resourceParentId")
+          .stringType("region")
+          .object("tags");
+
+  static final DslPart resourcesByTypeShape =
+      new PactDslJsonBody()
+          .stringType("description")
+          .stringType("purpose", "SHARED_RESOURCE")
+          .eachLike("deployedResources", resourceShape);
 
   @BeforeEach
   void setup(MockServer mockServer) {
@@ -75,10 +106,10 @@ public class LzApiTest {
     var createResponseShape =
         new PactDslJsonBody()
             .uuid("landingZoneId")
-            .object("jobReport")
-            .stringType("id")
-            .stringType("status", "RUNNING")
-            .closeObject();
+            .stringType("definition")
+            .stringType("version")
+            .object("jobReport", jobReportShape)
+            .object("errorReport", errorReportShape);
 
     return builder
         .uponReceiving("A request to create a landing zone")
@@ -109,21 +140,23 @@ public class LzApiTest {
   public RequestResponsePact createLandingZoneResult(PactDslWithProvider builder) {
     var createResultResponseShape =
         new PactDslJsonBody()
-            .object("jobReport")
-            .stringType("id")
-            .stringType("status", "SUCCEEDED")
-            .date("completed")
-            .stringType("description")
-            .date("submitted")
-            .stringType("resultURL")
-            .closeObject();
+            .object("jobReport", jobReportShape)
+            .object("landingZone")
+            .uuid("id")
+            .eachLike("resources")
+            .stringType("resourceId")
+            .stringType("resourceType")
+            .stringType("resourceName")
+            .stringType("resourceId")
+            .stringType("region")
+            .object("tags");
 
     return builder
         .given("An existing landing zone creation job")
         .uponReceiving("A request to get the landing zone creation job result")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/create-result/${deleteJobId}",
+            "/api/landingzones/v1/azure/create-result/${asyncJobId}",
             "/api/landingzones/v1/azure/create-result/%s".formatted(asyncJobId))
         .willRespondWith()
         .body(createResultResponseShape)
@@ -136,12 +169,7 @@ public class LzApiTest {
     var deleteRequestShape =
         new PactDslJsonBody().object("jobControl").stringType("id").closeObject();
 
-    var deleteResponseShape =
-        new PactDslJsonBody()
-            .object("jobReport")
-            .stringType("id")
-            .stringType("status", "RUNNING")
-            .closeObject();
+    var deleteResponseShape = new PactDslJsonBody().object("jobReport", jobReportShape);
 
     return builder
         .given("An existing landing zone")
@@ -163,21 +191,15 @@ public class LzApiTest {
     var deleteResultResponseShape =
         new PactDslJsonBody()
             .uuid("landingZoneId", landingZoneId)
-            .object("jobReport")
-            .stringType("id")
-            .stringType("status", "SUCCEEDED")
-            .date("completed")
-            .stringType("description")
-            .date("submitted")
-            .stringType("resultURL")
-            .closeObject();
+            .object("jobReport", jobReportShape)
+            .object("errorReport", errorReportShape);
 
     return builder
         .given("An existing landing zone deletion job")
         .uponReceiving("A request to get the landing zone deletion job result")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${deleteJobId}",
+            "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${asyncJobId}",
             "/api/landingzones/v1/azure/%s/delete-result/%s".formatted(landingZoneId, asyncJobId))
         .willRespondWith()
         .body(deleteResultResponseShape)
@@ -187,8 +209,7 @@ public class LzApiTest {
 
   @Pact(consumer = "workspacemanager", provider = "lzs")
   public RequestResponsePact deleteLandingZone_notAuthorized(PactDslWithProvider builder) {
-    var deleteRequestShape =
-        new PactDslJsonBody().object("jobControl").stringType("id").closeObject();
+    var deleteRequestShape = new PactDslJsonBody().object("jobControl", jobControlShape);
 
     return builder
         .uponReceiving("An unauthorized request to create a landing zone")
@@ -212,7 +233,7 @@ public class LzApiTest {
             .stringType("definition")
             .stringType("version")
             .stringType("region")
-            .date("createdDate");
+            .datetime("createdDate");
 
     return builder
         .given("An existing landing zone")
@@ -249,9 +270,7 @@ public class LzApiTest {
             .stringType("definition")
             .stringType("version")
             .stringType("region")
-            .date("createdDate")
-            .closeObject()
-            .closeArray();
+            .date("createdDate");
 
     return builder
         .given("A landing zone linked to a billing profile")
@@ -269,16 +288,13 @@ public class LzApiTest {
   public RequestResponsePact listLandingZones(PactDslWithProvider builder) {
     var listResponseShape =
         new PactDslJsonBody()
-            .array("landingzones")
-            .object()
+            .eachLike("landingzones")
             .uuid("landingZoneId")
             .uuid("billingProfileId")
             .stringType("definition")
             .stringType("version")
             .stringType("region")
-            .date("createdDate")
-            .closeObject()
-            .closeArray();
+            .date("createdDate");
 
     return builder
         .uponReceiving("A request to list all landing zones")
@@ -294,14 +310,11 @@ public class LzApiTest {
   public RequestResponsePact listLandingZoneDefinitions(PactDslWithProvider builder) {
     var definitionsResponseShape =
         new PactDslJsonBody()
-            .array("landingzones")
-            .object()
+            .eachLike("landingzones")
             .stringType("definition")
             .stringType("name")
             .stringType("description")
-            .stringType("version")
-            .closeObject()
-            .closeArray();
+            .stringType("version");
 
     return builder
         .uponReceiving("A request to list landing zone defs")
@@ -316,39 +329,7 @@ public class LzApiTest {
   @Pact(consumer = "workspacemanager", provider = "lzs")
   public RequestResponsePact listAzureLandingZoneResources(PactDslWithProvider builder) {
     var resourcesResponseShape =
-        new PactDslJsonBody()
-            .uuid("id")
-            .array("resources")
-            .object()
-            .stringType("description")
-            .stringType("purpose", "SHARED_RESOURCE")
-            .array("deployedResources")
-            .object()
-            .stringType("resourceId")
-            .stringType("resourceType")
-            .stringType("resourceName")
-            .stringType("resourceParentId")
-            .stringType("region")
-            .object("tags")
-            .closeObject()
-            .closeObject()
-            .closeArray()
-            .closeObject()
-            .object()
-            .stringType("description")
-            .stringType("purpose", "OTHER_PURPOSE")
-            .array("deployedResources")
-            .object()
-            .stringType("resourceId")
-            .stringType("resourceType")
-            .stringType("resourceName")
-            .stringType("resourceParentId")
-            .stringType("region")
-            .object("tags")
-            .closeObject()
-            .closeObject()
-            .closeArray()
-            .closeObject();
+        new PactDslJsonBody().uuid("id").eachLike("resources", resourcesByTypeShape);
 
     return builder
         .given("An existing landing zone")
@@ -370,8 +351,7 @@ public class LzApiTest {
             .uuid("landingZoneId")
             .stringType("azureResourceId")
             .stringType("resourceType")
-            .object("quotaValues")
-            .closeObject();
+            .object("quotaValues");
 
     return builder
         .given("An existing landing zone")
