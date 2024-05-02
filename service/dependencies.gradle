@@ -43,7 +43,7 @@ dependencies {
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.30-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.319-SNAPSHOT')
+  implementation ('bio.terra:terra-landing-zone-service:0.0.327-SNAPSHOT')
   implementation ('bio.terra:landing-zone-service-client:0.0.319-SNAPSHOT')
 
   // Storage transfer service
