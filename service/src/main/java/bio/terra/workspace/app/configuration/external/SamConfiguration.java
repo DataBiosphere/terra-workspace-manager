@@ -12,7 +12,7 @@ public class SamConfiguration {
   /** URL of the SAM instance */
   private String basePath;
 
-  private Duration permissionsCacheTtl;
+  private Duration permissionsCacheLifetime;
 
   public String getBasePath() {
     return basePath;
@@ -22,11 +22,11 @@ public class SamConfiguration {
     this.basePath = basePath;
   }
 
-  public Duration getPermissionsCacheTtl() {
-    return permissionsCacheTtl;
+  public Duration getPermissionsCacheLifetime() {
+    return permissionsCacheLifetime;
   }
 
-  public void setPermissionsCacheTtl(Duration permissionsCacheTtl) {
-    this.permissionsCacheTtl = permissionsCacheTtl;
+  public void setPermissionsCacheLifetime(Duration permissionsCacheLifetime) {
+    this.permissionsCacheLifetime = permissionsCacheLifetime;
   }
 }

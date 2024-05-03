@@ -112,7 +112,7 @@ workspace:
 
   sam:
     base-path: ${env.urls.sam}
-    permissions-cache-ttl: "10s"
+    permissions-cache-lifetime: "10s"
 
   stairway-database:
     password: ${env.db.stairway.pass}

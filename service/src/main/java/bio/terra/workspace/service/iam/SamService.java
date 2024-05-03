@@ -111,7 +111,7 @@ public class SamService {
     this.samPermissionsCache =
         Collections.synchronizedMap(
             new PassiveExpiringMap<>(
-                Optional.ofNullable(samConfig.getPermissionsCacheTtl())
+                Optional.ofNullable(samConfig.getPermissionsCacheLifetime())
                     .map(Duration::toSeconds)
                     .orElse(10L),
                 TimeUnit.SECONDS));

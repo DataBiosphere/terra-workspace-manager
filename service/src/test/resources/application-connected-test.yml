@@ -22,4 +22,4 @@ workspace:
         billing-account-id:
 
   sam:
-    permissions-cache-ttl: "0s"
+    permissions-cache-lifetime: "0s"
