@@ -411,6 +411,7 @@ public class LzApiTest {
 
     assertNotNull(result);
     assertNotNull(result.getJobReport());
+    assertThat(true, equalTo(false));
   }
 
   @Test
