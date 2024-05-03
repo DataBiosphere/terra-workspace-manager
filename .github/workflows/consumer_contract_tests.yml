@@ -143,7 +143,7 @@ jobs:
     needs: [ bump-check, init-github-context, wsm-consumer-contract-tests, regulated-tag-job ]
     strategy:
       matrix:
-        pact_path: ${{ fromJson(needs.bpm-consumer-contract-tests.outputs.pact-paths) }}
+        pact_path: ${{ fromJson(needs.wsm-consumer-contract-tests.outputs.pact-paths) }}
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
     steps:
       - name: Download pact files from artifact
