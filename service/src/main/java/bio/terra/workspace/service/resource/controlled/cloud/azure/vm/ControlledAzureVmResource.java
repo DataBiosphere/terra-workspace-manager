@@ -145,7 +145,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getResourceDao()),
         cloudRetry);
     flight.addStep(
-        new AssignManagedIdentityAzureVmStep(
+        new AssignPetManagedIdentityAzureVmStep(
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getSamService(),
@@ -163,6 +163,14 @@ public class ControlledAzureVmResource extends ControlledResource {
     flight.addStep(
         new InstallCustomVmExtension(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), new VmExtensionHelper()),
+        cloudRetry);
+    flight.addStep(
+        new AssignActionManagedIdentitiesVmStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getSamService(),
+            userRequest,
+            this),
         cloudRetry);
   }
 

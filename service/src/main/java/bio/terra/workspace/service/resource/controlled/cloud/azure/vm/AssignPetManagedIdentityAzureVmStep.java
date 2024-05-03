@@ -15,16 +15,16 @@ import com.azure.resourcemanager.msi.MsiManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AssignManagedIdentityAzureVmStep implements Step {
+public class AssignPetManagedIdentityAzureVmStep implements Step {
 
   private static final Logger logger =
-      LoggerFactory.getLogger(AssignManagedIdentityAzureVmStep.class);
+      LoggerFactory.getLogger(AssignPetManagedIdentityAzureVmStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final SamService samService;
   private final ControlledAzureVmResource resource;
 
-  public AssignManagedIdentityAzureVmStep(
+  public AssignPetManagedIdentityAzureVmStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       SamService samService,
@@ -60,7 +60,7 @@ public class AssignManagedIdentityAzureVmStep implements Step {
 
       context.getWorkingMap().put(AzureVmHelper.WORKING_MAP_PET_ID, petManagedIdentityId);
 
-      return AzureVmHelper.assignPetManagedIdentityToVm(
+      return AzureVmHelper.assignManagedIdentityToVm(
           azureCloudContext,
           computeManager,
           msiManager,

@@ -12,6 +12,9 @@ public class SamConstants {
     public static final String CONTROLLED_APPLICATION_PRIVATE =
         "controlled-application-private-workspace-resource";
     public static final String SPEND_PROFILE = "spend-profile";
+    public static final String PRIVATE_AZURE_CONTAINER_REGISTRY =
+        "private_azure_container_registry";
+    public static final String PRIVATE_AZURE_STORAGE_ACCOUNT = "private_azure_storage_account";
 
     private SamResource() {}
   }
@@ -50,5 +53,17 @@ public class SamConstants {
     public static final String LINK = "link";
 
     private SamSpendProfileAction() {}
+  }
+
+  public static class SamPrivateAzureContainerRegistryAction {
+    public static final String IDENTIFY = "identify";
+
+    private SamPrivateAzureContainerRegistryAction() {}
+  }
+
+  public static class SamPrivateAzureStorageAccountAction {
+    public static final String IDENTIFY = "identify";
+
+    private SamPrivateAzureStorageAccountAction() {}
   }
 }

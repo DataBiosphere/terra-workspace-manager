@@ -35,7 +35,7 @@ import org.mockito.Mock;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("unit")
-public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpringBootUnitTest {
+public class AssignPetManagedIdentityAzureVmStepTest extends BaseAzureSpringBootUnitTest {
   private static final String STUB_STRING_RETURN = "stubbed-return";
   private static final String STUB_STRING_PET_MANAGED_IDENTITY = "stubbed-petManagedIdentity";
   private static final String STUB_STRING_OTHER_MANAGED_IDENTITY = "stubbed-otherManagedIdentity";
@@ -112,7 +112,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
   @Test
   void assignUserAssignedManagedIdentityToVm() throws InterruptedException {
     var assignManagedIdentityAzureVmStep =
-        new AssignManagedIdentityAzureVmStep(
+        new AssignPetManagedIdentityAzureVmStep(
             mockAzureConfig, mockCrlService, mockSamService, mockAzureVmResource);
 
     final StepResult stepResult = assignManagedIdentityAzureVmStep.doStep(mockFlightContext);
@@ -132,7 +132,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
   @Test
   void assignUserAssignedManagedIdentityToVm_alreadyAssigned() throws InterruptedException {
     var assignManagedIdentityAzureVmStep =
-        new AssignManagedIdentityAzureVmStep(
+        new AssignPetManagedIdentityAzureVmStep(
             mockAzureConfig, mockCrlService, mockSamService, mockAzureVmResource);
 
     Set<String> userAssignedManagedIdentities =
@@ -158,7 +158,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
   @Test
   void assignUserAssignedManagedIdentityToVm_noAssignedUser() throws InterruptedException {
     var assignManagedIdentityAzureVmStep =
-        new AssignManagedIdentityAzureVmStep(
+        new AssignPetManagedIdentityAzureVmStep(
             mockAzureConfig, mockCrlService, mockSamService, mockAzureVmResource);
 
     when(mockAzureVmResource.getAssignedUser()).thenReturn(Optional.empty());
@@ -178,7 +178,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
   @Test
   void undoAssignUserAssignedManagedIdentityToVm() throws InterruptedException {
     var assignManagedIdentityAzureVmStep =
-        new AssignManagedIdentityAzureVmStep(
+        new AssignPetManagedIdentityAzureVmStep(
             mockAzureConfig, mockCrlService, mockSamService, mockAzureVmResource);
 
     Set<String> userAssignedManagedIdentities = Set.of(STUB_STRING_PET_MANAGED_IDENTITY);
@@ -201,7 +201,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
   void undoAssignUserAssignedManagedIdentityToVm_noIdentitiesAssigned_noVmUpdate()
       throws InterruptedException {
     var assignManagedIdentityAzureVmStep =
-        new AssignManagedIdentityAzureVmStep(
+        new AssignPetManagedIdentityAzureVmStep(
             mockAzureConfig, mockCrlService, mockSamService, mockAzureVmResource);
 
     Set<String> userAssignedManagedIdentities = Set.of();

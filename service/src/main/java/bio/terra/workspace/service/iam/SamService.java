@@ -53,7 +53,7 @@ import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembership
 import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
 import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
-import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
+import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreateManagedIdentityRequest;
 import org.broadinstitute.dsde.workbench.client.sam.model.PolicyIdentifiers;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
@@ -209,8 +209,8 @@ public class SamService {
       throws InterruptedException {
     AzureApi azureApi = samAzureApi(getWsmServiceAccountToken());
 
-    GetOrCreatePetManagedIdentityRequest request =
-        new GetOrCreatePetManagedIdentityRequest()
+    GetOrCreateManagedIdentityRequest request =
+        new GetOrCreateManagedIdentityRequest()
             .subscriptionId(subscriptionId)
             .tenantId(tenantId)
             .managedResourceGroupName(managedResourceGroupId);
@@ -1216,6 +1216,42 @@ public class SamService {
       return Optional.of(ServiceAccountName.builder().email(saEmail).projectId(projectId).build());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Error getting user subject ID from Sam", apiException);
+    }
+  }
+
+  /** List Sam resource IDs for the calling user for the given resource type. */
+  public List<String> listResourceIds(AuthenticatedUserRequest userRequest, String resourceType)
+      throws InterruptedException {
+    ResourcesApi resourcesApi = samResourcesApi((userRequest.getRequiredToken()));
+    try {
+      List<UserResourcesResponse> resources =
+          SamRetry.retry(() -> resourcesApi.listResourcesAndPoliciesV2(resourceType));
+      return resources.stream()
+          .map(UserResourcesResponse::getResourceId)
+          .collect(Collectors.toList());
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create("Error listing resources from Sam", apiException);
+    }
+  }
+
+  /**
+   * Fetch an Action Managed Identity (if present) for the calling user for the given Sam resource
+   * type, id, and action.
+   */
+  public Optional<String> getActionManagedIdentity(
+      AuthenticatedUserRequest userRequest, String resourceType, String resourceId, String action)
+      throws InterruptedException {
+    AzureApi azureApi = samAzureApi(userRequest.getRequiredToken());
+    try {
+      return Optional.of(
+          SamRetry.retry(() -> azureApi.getActionManagedIdentity(resourceType, resourceId, action))
+              .getObjectId());
+    } catch (ApiException apiException) {
+      if (apiException.getCode() == HttpStatus.NOT_FOUND.value()) {
+        return Optional.empty();
+      }
+      throw SamExceptionFactory.create(
+          "Error retrieving action managed identity from Sam", apiException);
     }
   }
 

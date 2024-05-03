@@ -154,12 +154,12 @@ public final class AzureVmHelper {
     return StepResult.getStepResultSuccess();
   }
 
-  public static StepResult assignPetManagedIdentityToVm(
+  public static StepResult assignManagedIdentityToVm(
       AzureCloudContext azureCloudContext,
       ComputeManager computeManager,
       MsiManager msiManager,
       String vmName,
-      String petManagedIdentityId) {
+      String managedIdentityId) {
     Identity managedIdentity;
     VirtualMachine virtualMachine;
 
@@ -180,12 +180,12 @@ public final class AzureVmHelper {
     // Check if identity is already assigned to VM.
     try {
       Set<String> userAssignedMsiIds = virtualMachine.userAssignedManagedServiceIdentityIds();
-      if (userAssignedMsiIds != null && userAssignedMsiIds.contains(petManagedIdentityId)) {
+      if (userAssignedMsiIds != null && userAssignedMsiIds.contains(managedIdentityId)) {
         logger.info(
             "Azure VM {} in managed resource group {} is already assigned to user-assigned managed identity {}.",
             vmName,
             azureCloudContext.getAzureResourceGroupId(),
-            petManagedIdentityId);
+            managedIdentityId);
         return StepResult.getStepResultSuccess();
       }
     } catch (ManagementException e) {
@@ -199,13 +199,13 @@ public final class AzureVmHelper {
 
     // Retrieve identity object by the ID.
     try {
-      managedIdentity = msiManager.identities().getById(petManagedIdentityId);
+      managedIdentity = msiManager.identities().getById(managedIdentityId);
     } catch (ManagementException e) {
       // TODO: add logic to handle Identity Not Found case - there is no reason to retry in this
       // case.
       logger.info(
           "Error retrieving Azure managed identity {} in managed resource group {}.",
-          petManagedIdentityId,
+          managedIdentityId,
           azureCloudContext.getAzureResourceGroupId());
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     }
@@ -219,7 +219,7 @@ public final class AzureVmHelper {
     } catch (ManagementException e) {
       logger.info(
           "Error assigning managed identity {} to Azure VM {} in managed resource group {}.",
-          petManagedIdentityId,
+          managedIdentityId,
           vmName,
           azureCloudContext.getAzureResourceGroupId());
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, e);
