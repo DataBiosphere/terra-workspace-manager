@@ -20,6 +20,7 @@ import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamPermissionsCacheKey;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
@@ -504,19 +505,19 @@ public class SamService {
     String accessToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(accessToken);
 
-    return samPermissionsCache.computeIfAbsent(
-        key,
-        v -> {
-          try {
-            return SamRetry.retry(
+    if (samPermissionsCache.containsKey(key)) {
+      return samPermissionsCache.get(key);
+    } else {
+      try {
+        boolean authorization =
+            SamRetry.retry(
                 () -> resourceApi.resourcePermissionV2(iamResourceType, resourceId, action));
-          } catch (ApiException apiException) {
-            throw SamExceptionFactory.create(
-                "Error checking resource permission in Sam", apiException);
-          } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-        });
+        samPermissionsCache.put(key, authorization);
+        return authorization;
+      } catch (ApiException apiException) {
+        throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+      }
+    }
   }
 
   /**
@@ -543,20 +544,21 @@ public class SamService {
       throws InterruptedException {
     var key = new SamPermissionsCacheKey(iamResourceType, resourceId, action, userToCheck);
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    return samPermissionsCache.computeIfAbsent(
-        key,
-        v -> {
-          try {
-            return SamRetry.retry(
+
+    if (samPermissionsCache.containsKey(key)) {
+      return samPermissionsCache.get(key);
+    } else {
+      try {
+        boolean authorization =
+            SamRetry.retry(
                 () ->
                     resourceApi.resourceActionV2(iamResourceType, resourceId, action, userToCheck));
-          } catch (ApiException apiException) {
-            throw SamExceptionFactory.create(
-                "Error checking resource permission in Sam", apiException);
-          } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-        });
+        samPermissionsCache.put(key, authorization);
+        return authorization;
+      } catch (ApiException apiException) {
+        throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+      }
+    }
   }
 
   /**
