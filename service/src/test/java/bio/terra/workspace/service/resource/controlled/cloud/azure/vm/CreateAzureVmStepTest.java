@@ -37,6 +37,7 @@ import com.azure.resourcemanager.compute.models.Disks;
 import com.azure.resourcemanager.compute.models.ImageReference;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
 import com.azure.resourcemanager.compute.models.VirtualMachineExtension;
+import com.azure.resourcemanager.compute.models.VirtualMachinePriorityTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachines;
 import com.azure.resourcemanager.network.NetworkManager;
@@ -84,7 +85,6 @@ public class CreateAzureVmStepTest extends BaseAzureSpringBootUnitTest {
 
   @Mock private VirtualMachine.DefinitionStages.WithLinuxCreateManagedOrUnmanaged mockVmStage10;
   @Mock private VirtualMachine.DefinitionStages.WithManagedCreate mockVmStage11;
-  @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage11a;
   @Mock private VirtualMachine.DefinitionStages.WithCreate mockVmStage12;
 
   @Mock
@@ -263,9 +263,11 @@ public class CreateAzureVmStepTest extends BaseAzureSpringBootUnitTest {
     when(mockVmStage7a.withRootUsername(anyString())).thenReturn(mockVmStage7b);
     when(mockVmStage7b.withRootPassword(anyString())).thenReturn(mockVmStage10);
     when(mockVmStage10.withExistingDataDisk(any(Disk.class))).thenReturn(mockVmStage11);
-    when(mockVmStage11.withTag(anyString(), anyString())).thenReturn(mockVmStage11a);
-    when(mockVmStage11a.withTag(anyString(), anyString())).thenReturn(mockVmStage12);
-    when(mockVmStage12.withSize(any(VirtualMachineSizeTypes.class))).thenReturn(mockVmStage12);
+    when(mockVmStage11.withSize(any(VirtualMachineSizeTypes.class))).thenReturn(mockVmStage12);
+    when(mockVmStage12.withPriority(any(VirtualMachinePriorityTypes.class)))
+        .thenReturn(mockVmStage12);
+    when(mockVmStage12.withTag(anyString(), anyString())).thenReturn(mockVmStage12);
+    when(mockVmStage12.withTag(anyString(), anyString())).thenReturn(mockVmStage12);
     when(mockVmStage12.defineNewExtension(anyString())).thenReturn(mockVmStage13);
     when(mockVmStage12.create(any(Context.class))).thenReturn(mockVm);
     when(mockVmStage13.withPublisher(anyString())).thenReturn(mockVmStage14);
@@ -461,5 +463,58 @@ public class CreateAzureVmStepTest extends BaseAzureSpringBootUnitTest {
     verify(mockVms)
         .deleteByResourceGroup(
             mockAzureCloudContext.getAzureResourceGroupId(), creationParameters.getName());
+  }
+
+  @Test
+  void addSizeAndPriorityStep_regular() {
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters();
+
+    var createAzureVmStep =
+        new CreateAzureVmStep(
+            mockAzureConfig,
+            mockCrlService,
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
+            mockResourceDao);
+
+    var sizeCaptor = ArgumentCaptor.forClass(VirtualMachineSizeTypes.class);
+    var priorityCaptor = ArgumentCaptor.forClass(VirtualMachinePriorityTypes.class);
+
+    // Calculate the VM size and priority
+    createAzureVmStep.addSizeAndPriorityStep(mockVmStage11, creationParameters);
+
+    // Verify mock interactions
+    verify(mockVmStage11).withSize(sizeCaptor.capture());
+    assertThat(sizeCaptor.getValue(), equalTo(VirtualMachineSizeTypes.STANDARD_D2S_V3));
+
+    verify(mockVmStage12).withPriority(priorityCaptor.capture());
+    assertThat(priorityCaptor.getValue(), equalTo(VirtualMachinePriorityTypes.REGULAR));
+  }
+
+  @Test
+  void addSizeAndPriorityStep_spot() {
+    ApiAzureVmCreationParameters creationParameters =
+        ControlledAzureResourceFixtures.getAzureVmCreationParameters()
+            .priority(ApiAzureVmCreationParameters.PriorityEnum.SPOT);
+
+    var createAzureVmStep =
+        new CreateAzureVmStep(
+            mockAzureConfig,
+            mockCrlService,
+            ControlledAzureResourceFixtures.getAzureVm(creationParameters),
+            mockResourceDao);
+
+    var sizeCaptor = ArgumentCaptor.forClass(VirtualMachineSizeTypes.class);
+    var priorityCaptor = ArgumentCaptor.forClass(VirtualMachinePriorityTypes.class);
+
+    // Calculate the VM size and priority
+    createAzureVmStep.addSizeAndPriorityStep(mockVmStage11, creationParameters);
+
+    // Verify mock interactions
+    verify(mockVmStage11).withSize(sizeCaptor.capture());
+    assertThat(sizeCaptor.getValue(), equalTo(VirtualMachineSizeTypes.STANDARD_D2S_V3));
+
+    verify(mockVmStage12).withPriority(priorityCaptor.capture());
+    assertThat(priorityCaptor.getValue(), equalTo(VirtualMachinePriorityTypes.SPOT));
   }
 }
