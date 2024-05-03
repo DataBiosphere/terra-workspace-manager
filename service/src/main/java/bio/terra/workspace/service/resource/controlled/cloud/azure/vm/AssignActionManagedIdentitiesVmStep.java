@@ -17,6 +17,9 @@ import com.azure.resourcemanager.msi.MsiManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Queries Sam for any action managed identities for the calling user, and assigns them to the VM.
+ */
 public class AssignActionManagedIdentitiesVmStep implements Step {
   private static final Logger logger =
       LoggerFactory.getLogger(AssignActionManagedIdentitiesVmStep.class);
@@ -52,36 +55,36 @@ public class AssignActionManagedIdentitiesVmStep implements Step {
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
     MsiManager msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
 
-    // Query Sam for private_azure_storage_account resources the user has access to
+    // Query Sam for azure_managed_identity resources the user has access to
     var privateAzureStorageAccountResources =
         Rethrow.onInterrupted(
             () ->
                 samService.listResourceIds(
-                    userRequest, SamConstants.SamResource.PRIVATE_AZURE_STORAGE_ACCOUNT),
+                    userRequest, SamConstants.SamResource.AZURE_MANAGED_IDENTITY),
             "listSamResources");
 
     // Query Sam for action managed identities for the above resources
     var actionManagedIdentities =
         privateAzureStorageAccountResources.stream()
             .flatMap(
-                r ->
+                resource ->
                     Rethrow.onInterrupted(
                         () ->
                             samService
                                 .getActionManagedIdentity(
                                     userRequest,
-                                    SamConstants.SamResource.PRIVATE_AZURE_STORAGE_ACCOUNT,
-                                    r,
-                                    SamConstants.SamPrivateAzureStorageAccountAction.IDENTIFY)
+                                    SamConstants.SamResource.AZURE_MANAGED_IDENTITY,
+                                    resource,
+                                    SamConstants.SamAzureManagedIdentityAction.IDENTIFY)
                                 .stream(),
                         "getActionManagedIdentity"));
 
     // Assign each action managed identity to the VM. Short circuit if any assignment failed.
     return actionManagedIdentities
         .map(
-            i ->
+            identity ->
                 AzureVmHelper.assignManagedIdentityToVm(
-                    azureCloudContext, computeManager, msiManager, resource.getVmName(), i))
+                    azureCloudContext, computeManager, msiManager, resource.getVmName(), identity))
         .filter(a -> !a.isSuccess())
         .findFirst()
         .orElse(StepResult.getStepResultSuccess());
