@@ -30,6 +30,7 @@ import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -107,7 +108,12 @@ public class SamService {
             .addInterceptor(new OkHttpClientTracingInterceptor(openTelemetry))
             .build();
     this.samPermissionsCache =
-        Collections.synchronizedMap(new PassiveExpiringMap<>(10, TimeUnit.SECONDS));
+        Collections.synchronizedMap(
+            new PassiveExpiringMap<>(
+                Optional.ofNullable(samConfig.getPermissionsCacheTtl())
+                    .map(Duration::toSeconds)
+                    .orElse(10L),
+                TimeUnit.SECONDS));
   }
 
   private ApiClient getApiClient(String accessToken) {
