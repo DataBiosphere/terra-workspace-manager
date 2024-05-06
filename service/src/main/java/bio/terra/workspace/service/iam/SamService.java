@@ -20,6 +20,7 @@ import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamPermissionsCacheKey;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
@@ -30,6 +31,8 @@ import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +40,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import okhttp3.OkHttpClient;
+import org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsde.workbench.client.sam.ApiClient;
 import org.broadinstitute.dsde.workbench.client.sam.ApiException;
@@ -84,6 +89,7 @@ public class SamService {
   private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
   private final FeatureConfiguration features;
+  private final Map<SamPermissionsCacheKey, Boolean> samPermissionsCache;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
@@ -102,6 +108,13 @@ public class SamService {
             .newBuilder()
             .addInterceptor(new OkHttpClientTracingInterceptor(openTelemetry))
             .build();
+    this.samPermissionsCache =
+        Collections.synchronizedMap(
+            new PassiveExpiringMap<>(
+                Optional.ofNullable(samConfig.getPermissionsCacheLifetime())
+                    .map(Duration::toSeconds)
+                    .orElse(10L),
+                TimeUnit.SECONDS));
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -487,13 +500,23 @@ public class SamService {
       String resourceId,
       String action)
       throws InterruptedException {
+    var key =
+        new SamPermissionsCacheKey(iamResourceType, resourceId, action, userRequest.getEmail());
     String accessToken = userRequest.getRequiredToken();
     ResourcesApi resourceApi = samResourcesApi(accessToken);
-    try {
-      return SamRetry.retry(
-          () -> resourceApi.resourcePermissionV2(iamResourceType, resourceId, action));
-    } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+
+    if (samPermissionsCache.containsKey(key)) {
+      return samPermissionsCache.get(key);
+    } else {
+      try {
+        boolean authorization =
+            SamRetry.retry(
+                () -> resourceApi.resourcePermissionV2(iamResourceType, resourceId, action));
+        samPermissionsCache.put(key, authorization);
+        return authorization;
+      } catch (ApiException apiException) {
+        throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+      }
     }
   }
 
@@ -519,12 +542,22 @@ public class SamService {
       String userToCheck,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
+    var key = new SamPermissionsCacheKey(iamResourceType, resourceId, action, userToCheck);
     ResourcesApi resourceApi = samResourcesApi(userRequest.getRequiredToken());
-    try {
-      return SamRetry.retry(
-          () -> resourceApi.resourceActionV2(iamResourceType, resourceId, action, userToCheck));
-    } catch (ApiException apiException) {
-      throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+
+    if (samPermissionsCache.containsKey(key)) {
+      return samPermissionsCache.get(key);
+    } else {
+      try {
+        boolean authorization =
+            SamRetry.retry(
+                () ->
+                    resourceApi.resourceActionV2(iamResourceType, resourceId, action, userToCheck));
+        samPermissionsCache.put(key, authorization);
+        return authorization;
+      } catch (ApiException apiException) {
+        throw SamExceptionFactory.create("Error checking resource permission in Sam", apiException);
+      }
     }
   }
 

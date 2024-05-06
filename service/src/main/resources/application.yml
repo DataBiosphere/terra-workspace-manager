@@ -110,7 +110,9 @@ workspace:
     grant-hold-time: "15m"
     restrict-user-domain: ""
 
-  sam.base-path: ${env.urls.sam}
+  sam:
+    base-path: ${env.urls.sam}
+    permissions-cache-lifetime: "10s"
 
   stairway-database:
     password: ${env.db.stairway.pass}

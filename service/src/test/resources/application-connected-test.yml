@@ -20,3 +20,6 @@ workspace:
       # an empty profile to ensure we are resilient to empty spend profile env var values
       - id:
         billing-account-id:
+
+  sam:
+    permissions-cache-lifetime: "0s"
