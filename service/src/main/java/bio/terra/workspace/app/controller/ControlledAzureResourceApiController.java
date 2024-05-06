@@ -384,9 +384,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     Workspace workspace = validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
     AzureCloudContext cloudContext = workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE).castByEnum(CloudPlatform.AZURE);
+
       String userManagedIdentity = null;
       try {
-        logger.info("Email: " + userRequest.getEmail());
+        logger.info("Email: " + body.getCommon().getPrivateResourceUser().getUserName());
         logger.info("SubscriptionID: " + cloudContext.getAzureSubscriptionId());
         logger.info("Tenant ID: " + cloudContext.getAzureTenantId());
         logger.info("Resource Group ID: " + cloudContext.getAzureResourceGroupId());
