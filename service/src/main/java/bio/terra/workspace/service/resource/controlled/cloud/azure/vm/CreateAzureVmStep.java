@@ -4,7 +4,11 @@ import static bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKey
 
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.cloudres.azure.resourcemanager.compute.data.CreateVirtualMachineRequestData;
-import bio.terra.stairway.*;
+import bio.terra.stairway.FlightContext;
+import bio.terra.stairway.FlightMap;
+import bio.terra.stairway.Step;
+import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementException;
@@ -26,8 +30,10 @@ import com.azure.resourcemanager.compute.models.DiffDiskPlacement;
 import com.azure.resourcemanager.compute.models.Disk;
 import com.azure.resourcemanager.compute.models.ImageReference;
 import com.azure.resourcemanager.compute.models.VirtualMachine;
+import com.azure.resourcemanager.compute.models.VirtualMachinePriorityTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.NetworkInterface;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -208,14 +214,11 @@ public class CreateAzureVmStep implements Step {
     var withCustomData = maybeAddCustomDataStep(withImage, creationParameters);
     var withExistingDisk = maybeAddExistingDiskStep(withCustomData, disk);
     var withEphemeralDisk = maybeAddEphemeralDiskStep(withExistingDisk, creationParameters);
+    var withSizeAndPriority = addSizeAndPriorityStep(withEphemeralDisk, creationParameters);
 
-    var vmConfigurationFinalStep =
-        withEphemeralDisk
-            .withTag("workspaceId", resource.getWorkspaceId().toString())
-            .withTag("resourceId", resource.getResourceId().toString())
-            .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()));
-
-    return vmConfigurationFinalStep;
+    return withSizeAndPriority
+        .withTag("workspaceId", resource.getWorkspaceId().toString())
+        .withTag("resourceId", resource.getResourceId().toString());
   }
 
   private VirtualMachine.DefinitionStages.WithManagedCreate maybeAddEphemeralDiskStep(
@@ -266,5 +269,23 @@ public class CreateAzureVmStep implements Step {
           .withRootUsername(creationParameters.getVmUser().getName())
           .withRootPassword(creationParameters.getVmUser().getPassword());
     }
+  }
+
+  @VisibleForTesting
+  VirtualMachine.DefinitionStages.WithCreate addSizeAndPriorityStep(
+      VirtualMachine.DefinitionStages.WithManagedCreate priorSteps,
+      ApiAzureVmCreationParameters creationParameters) {
+    var priority =
+        Optional.ofNullable(creationParameters.getPriority())
+            .map(
+                creationPriority ->
+                    switch (creationPriority) {
+                      case SPOT -> VirtualMachinePriorityTypes.SPOT;
+                      default -> VirtualMachinePriorityTypes.REGULAR;
+                    })
+            .orElse(VirtualMachinePriorityTypes.REGULAR);
+    return priorSteps
+        .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()))
+        .withPriority(priority);
   }
 }
