@@ -38,7 +38,7 @@ import org.springframework.http.HttpStatus;
 /** Exercises LZS APIs concerned with job dispatch and async polling (creation, deletion, etc.) */
 @Tag("pact-test")
 @ExtendWith(PactConsumerTestExt.class)
-public class LzJobsApiPactTest {
+class LzJobsApiPactTest {
 
   HttpLandingZoneService landingZoneService;
 

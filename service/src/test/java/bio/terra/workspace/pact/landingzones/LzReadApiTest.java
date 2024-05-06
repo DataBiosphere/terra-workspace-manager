@@ -41,7 +41,7 @@ import org.springframework.http.HttpStatus;
  */
 @Tag("pact-test")
 @ExtendWith(PactConsumerTestExt.class)
-public class LzReadApiTest {
+class LzReadApiTest {
 
   HttpLandingZoneService landingZoneService;
 
