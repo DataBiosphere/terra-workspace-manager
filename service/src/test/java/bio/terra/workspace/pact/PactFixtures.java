@@ -5,11 +5,11 @@ import java.util.UUID;
 
 public class PactFixtures {
 
-// Note: the header must match exactly so pact doesn't add it's own
-// if "Content-type" is specified instead,
-// pact will also have a required header for "Content-Type: application/json; charset=UTF-8"
-// which will cause the request to fail to match,
-// since our client doesn't include the encoding in the content type header
+  // Note: the header must match exactly so pact doesn't add it's own
+  // if "Content-type" is specified instead,
+  // pact will also have a required header for "Content-Type: application/json; charset=UTF-8"
+  // which will cause the request to fail to match,
+  // since our client doesn't include the encoding in the content type header
   public static final Map<String, String> CONTENT_TYPE_JSON_HEADER =
       Map.of("Content-Type", "application/json");
 

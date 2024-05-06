@@ -47,7 +47,7 @@ public class LzJobsApiPactTest {
         new PactDslJsonBody()
             .stringType("id")
             .stringType("description")
-            .stringMatcher("status",  jobStatus.getValue())
+            .stringMatcher("status", jobStatus.getValue())
             .integerType("statusCode")
             .datetime("submitted")
             .stringType("resultURL");
@@ -78,16 +78,16 @@ public class LzJobsApiPactTest {
   static final DslPart jobControlShape = new PactDslJsonBody().stringType("id");
 
   static final DslPart landingZoneCreateRequestShape =
-          new PactDslJsonBody()
-                  .uuid("landingZoneId")
-                  .stringType("definition")
-                  .stringType("version")
-                  .uuid("billingProfileId")
-                  .object("jobControl", jobControlShape)
-                  .eachLike("parameters")
-                  .stringType("key")
-                  .stringType("value")
-                  .closeArray();
+      new PactDslJsonBody()
+          .uuid("landingZoneId")
+          .stringType("definition")
+          .stringType("version")
+          .uuid("billingProfileId")
+          .object("jobControl", jobControlShape)
+          .eachLike("parameters")
+          .stringType("key")
+          .stringType("value")
+          .closeArray();
 
   @Pact(consumer = "workspacemanager", provider = "lzs")
   public RequestResponsePact startCreateLandingZone_running(PactDslWithProvider builder) {
@@ -196,24 +196,22 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-
   @Pact(consumer = "workspacemanager", provider = "lzs")
   public RequestResponsePact startDeleteLandingZone_notAuthorized(PactDslWithProvider builder) {
     var deleteRequestShape = new PactDslJsonBody().object("jobControl", jobControlShape);
 
     return builder
-            .uponReceiving("An unauthorized request to delete a landing zone")
-            .method("POST")
-            .pathFromProviderState(
-                    "/api/landingzones/v1/azure${landingZoneId}",
-                    "/api/landingzones/v1/azure/%s".formatted(LANDING_ZONE_ID))
-            .body(deleteRequestShape)
-            .headers(CONTENT_TYPE_JSON_HEADER)
-            .willRespondWith()
-            .status(HttpStatus.UNAUTHORIZED.value())
-            .toPact();
+        .uponReceiving("An unauthorized request to delete a landing zone")
+        .method("POST")
+        .pathFromProviderState(
+            "/api/landingzones/v1/azure${landingZoneId}",
+            "/api/landingzones/v1/azure/%s".formatted(LANDING_ZONE_ID))
+        .body(deleteRequestShape)
+        .headers(CONTENT_TYPE_JSON_HEADER)
+        .willRespondWith()
+        .status(HttpStatus.UNAUTHORIZED.value())
+        .toPact();
   }
-
 
   @Pact(consumer = "workspacemanager", provider = "lzs")
   public RequestResponsePact getDeleteLandingZoneResult_success(PactDslWithProvider builder) {
@@ -319,7 +317,9 @@ public class LzJobsApiPactTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "startCreateLandingZone_notAuthorized", pactVersion = PactSpecVersion.V3)
+  @PactTestFor(
+      pactMethod = "startCreateLandingZone_notAuthorized",
+      pactVersion = PactSpecVersion.V3)
   void startCreateLandingZone_notAuthorized() {
     assertThrows(
         LandingZoneServiceAuthorizationException.class,
@@ -348,7 +348,9 @@ public class LzJobsApiPactTest {
   }
 
   @Test
-  @PactTestFor(pactMethod = "startDeleteLandingZone_notAuthorized", pactVersion = PactSpecVersion.V3)
+  @PactTestFor(
+      pactMethod = "startDeleteLandingZone_notAuthorized",
+      pactVersion = PactSpecVersion.V3)
   void startDeleteLandingZone_notAuthorized() {
     assertThrows(
         LandingZoneServiceAuthorizationException.class,
@@ -420,7 +422,8 @@ public class LzJobsApiPactTest {
     assertNotNull(jobReport.getDescription());
     assertNotNull(jobReport.getStatus());
     assertNotNull(jobReport.getSubmitted());
-    if (jobReport.getStatus() == ApiJobReport.StatusEnum.SUCCEEDED || jobReport.getStatus() == ApiJobReport.StatusEnum.FAILED) {
+    if (jobReport.getStatus() == ApiJobReport.StatusEnum.SUCCEEDED
+        || jobReport.getStatus() == ApiJobReport.StatusEnum.FAILED) {
       assertNotNull(jobReport.getCompleted());
     }
   }
