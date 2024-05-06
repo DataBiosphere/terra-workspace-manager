@@ -89,7 +89,7 @@ public class LzJobsApiPactTest {
           .stringType("value")
           .closeArray();
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact startCreateLandingZone_running(PactDslWithProvider builder) {
     return builder
         .uponReceiving("A request to create a landing zone")
@@ -103,7 +103,7 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact startCreateLandingZone_failed(PactDslWithProvider builder) {
     return builder
         .uponReceiving("A request to create a landing zone")
@@ -117,7 +117,7 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact startCreateLandingZone_notAuthorized(PactDslWithProvider builder) {
     return builder
         .uponReceiving("An unauthorized request to create a landing zone")
@@ -130,7 +130,7 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getCreateLandingZoneResult(PactDslWithProvider builder) {
     var createResultResponseShape =
         new PactDslJsonBody()
@@ -158,7 +158,7 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getCreateLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
         .given("An existing landing zone creation job")
@@ -172,7 +172,7 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact startDeleteLandingZone_running(PactDslWithProvider builder) {
     var deleteRequestShape =
         new PactDslJsonBody().object("jobControl").stringType("id").closeObject();
@@ -196,7 +196,7 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact startDeleteLandingZone_notAuthorized(PactDslWithProvider builder) {
     var deleteRequestShape = new PactDslJsonBody().object("jobControl", jobControlShape);
 
@@ -213,7 +213,7 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getDeleteLandingZoneResult_success(PactDslWithProvider builder) {
     var deleteResultResponseShape =
         new PactDslJsonBody()
@@ -234,7 +234,7 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getDeleteLandingZoneResult_failed(PactDslWithProvider builder) {
     var deleteResultResponseShape =
         new PactDslJsonBody()
@@ -256,7 +256,7 @@ public class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getDeleteLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
         .given("An existing landing zone deletion job")

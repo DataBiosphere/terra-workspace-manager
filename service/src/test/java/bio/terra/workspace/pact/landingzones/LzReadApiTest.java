@@ -69,7 +69,7 @@ public class LzReadApiTest {
     landingZoneService = new HttpLandingZoneService(OpenTelemetry.noop(), config);
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getLandingZone(PactDslWithProvider builder) {
     var getResultResponseShape =
         new PactDslJsonBody()
@@ -93,7 +93,7 @@ public class LzReadApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getLandingZone_notFound(PactDslWithProvider builder) {
     return builder
         .uponReceiving("A request for a non-existent landing zone")
@@ -104,7 +104,7 @@ public class LzReadApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact listLandingZonesForBillingProfile(PactDslWithProvider builder) {
     var listResponseShape =
         new PactDslJsonBody()
@@ -129,7 +129,7 @@ public class LzReadApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact listLandingZones(PactDslWithProvider builder) {
     var listResponseShape =
         new PactDslJsonBody()
@@ -151,7 +151,7 @@ public class LzReadApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact listLandingZoneDefinitions(PactDslWithProvider builder) {
     var definitionsResponseShape =
         new PactDslJsonBody()
@@ -171,7 +171,7 @@ public class LzReadApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact listAzureLandingZoneResources(PactDslWithProvider builder) {
     var resourcesResponseShape =
         new PactDslJsonBody().uuid("id").eachLike("resources", resourcesByTypeShape);
@@ -189,7 +189,7 @@ public class LzReadApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "lzs")
+  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getResourceQuota(PactDslWithProvider builder) {
     var quotaResponseShape =
         new PactDslJsonBody()
