@@ -382,18 +382,18 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     // validate the workspace and user access
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    logger.info("Request: " + userRequest.toString());
+    String userEmail = samService.getSamUser(userRequest).getEmail();
 
     Workspace workspace = validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
     AzureCloudContext cloudContext = workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE).castByEnum(CloudPlatform.AZURE);
 
       String userManagedIdentity = null;
       try {
-        logger.info("Email: " + userRequest.getEmail().substring(0,5));
+        logger.info("Email: " + userEmail);
         logger.info("SubscriptionID: " + cloudContext.getAzureSubscriptionId());
         logger.info("Tenant ID: " + cloudContext.getAzureTenantId());
         logger.info("Resource Group ID: " + cloudContext.getAzureResourceGroupId());
-          userManagedIdentity = samService.getOrCreateUserManagedIdentityForUser(userRequest.getEmail(), cloudContext.getAzureSubscriptionId(), cloudContext.getAzureTenantId(), cloudContext.getAzureResourceGroupId());
+          userManagedIdentity = samService.getOrCreateUserManagedIdentityForUser(userEmail, cloudContext.getAzureSubscriptionId(), cloudContext.getAzureTenantId(), cloudContext.getAzureResourceGroupId());
       } catch (InterruptedException e) {
           throw new RuntimeException(e);
       }
