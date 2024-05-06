@@ -15,7 +15,6 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolResourceFile;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolScaleSettings;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolStartTask;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolTaskContainerSettings;
-import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserAssignedIdentity;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserIdentity;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineImageReference;
@@ -117,19 +116,6 @@ public class MapperUtils {
   }
 
   public static class BatchPoolMapper {
-    public static List<BatchPoolUserAssignedManagedIdentity> mapListOfUserAssignedIdentities(
-        List<ApiAzureBatchPoolUserAssignedIdentity> userAssignedManagedIdentities) {
-      if (userAssignedManagedIdentities == null || userAssignedManagedIdentities.isEmpty()) {
-        return null;
-      }
-
-      return userAssignedManagedIdentities.stream()
-          .map(
-              i ->
-                  new BatchPoolUserAssignedManagedIdentity(
-                      i.getResourceGroupName(), i.getName(), i.getClientId()))
-          .collect(Collectors.toList());
-    }
 
     public static DeploymentConfiguration mapFrom(
         ApiAzureBatchPoolDeploymentConfiguration configuration) {

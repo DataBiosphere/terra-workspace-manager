@@ -49,7 +49,7 @@ components:
     AzureBatchPoolCreationParameters:
       description: |
         Batch Pool-specific properties to be set on creation. These are a subset of the values
-        accepted by the azure resource API
+        accepted by the azure resource API.
       type: object
       required: [ id, vmSize, deploymentConfiguration ]
       properties:
@@ -68,12 +68,6 @@ components:
         deploymentConfiguration:
           description: Batch pool deployment configuration properties.
           $ref: '#/components/schemas/AzureBatchPoolDeploymentConfiguration'
-        userAssignedIdentities:
-          description: |
-            User assigned identities associated with a batch pool. Batch pool supports up to 10 user assigned identities.
-          type: array
-          items:
-            $ref: '#/components/schemas/AzureBatchPoolUserAssignedIdentity'
         scaleSettings:
           description: |
             Scale settings for the pool Defines the desired size of the pool.

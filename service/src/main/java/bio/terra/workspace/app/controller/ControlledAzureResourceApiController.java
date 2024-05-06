@@ -3,7 +3,6 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapFrom;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfApplicationPackageReferences;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfMetadataItems;
-import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfUserAssignedIdentities;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
@@ -32,6 +31,7 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasPermissionsHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace.ControlledAzureKubernetesNamespaceResource;
@@ -47,12 +47,15 @@ import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
+import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
@@ -373,13 +376,39 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledAzureBatchPool> createAzureBatchPool(
-      UUID workspaceUuid, ApiCreateControlledAzureBatchPoolRequestBody body) {
+      UUID workspaceUuid, ApiCreateControlledAzureBatchPoolRequestBody body){
     features.azureEnabledCheck();
 
     // validate the workspace and user access
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
-    var workspace =
-        validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
+    Workspace workspace = validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
+    AzureCloudContext cloudContext = workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE).castByEnum(CloudPlatform.AZURE);
+      String userManagedIdentity = null;
+      try {
+        System.out.println("Email: " + userRequest.getEmail());
+        System.out.println("SubscriptionID: " + cloudContext.getAzureSubscriptionId());
+        System.out.println("Tenant ID: " + cloudContext.getAzureTenantId());
+        System.out.println("Resource Group ID: " + cloudContext.getAzureResourceGroupId());
+          userManagedIdentity = samService.getOrCreateUserManagedIdentityForUser(userRequest.getEmail(), cloudContext.getAzureSubscriptionId(), cloudContext.getAzureTenantId(), cloudContext.getAzureResourceGroupId());
+      } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+      }
+
+      System.out.println("Identity from Sam: " + userManagedIdentity);
+
+      String resourceGroupName = cloudContext.getAzureResourceGroupId();
+      System.out.println("Resource Group Name: " + resourceGroupName);
+
+      String[] tokens = userManagedIdentity.split("/");
+      String name = tokens[tokens.length-1];
+      System.out.println("Name from Split: " + userManagedIdentity);
+
+      UUID clientId = UUID.fromString(userManagedIdentity);
+    BatchPoolUserAssignedManagedIdentity azureUserAssignedManagedIdentity = new BatchPoolUserAssignedManagedIdentity(
+            resourceGroupName, name, clientId);
+      List<BatchPoolUserAssignedManagedIdentity> identites = new ArrayList<BatchPoolUserAssignedManagedIdentity>();
+      identites.add(azureUserAssignedManagedIdentity);
+      System.out.println("Created Identity:" + azureUserAssignedManagedIdentity.toString());
 
     ControlledResourceFields commonFields =
         toCommonFields(
@@ -396,9 +425,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .vmSize(body.getAzureBatchPool().getVmSize())
             .displayName(body.getAzureBatchPool().getDisplayName())
             .deploymentConfiguration(mapFrom(body.getAzureBatchPool().getDeploymentConfiguration()))
-            .userAssignedIdentities(
-                mapListOfUserAssignedIdentities(
-                    body.getAzureBatchPool().getUserAssignedIdentities()))
+                .userAssignedIdentities(identites)
             .scaleSettings(mapFrom(body.getAzureBatchPool().getScaleSettings()))
             .startTask(mapFrom(body.getAzureBatchPool().getStartTask()))
             .applicationPackages(
