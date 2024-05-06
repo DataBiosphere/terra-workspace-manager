@@ -61,20 +61,6 @@ public class LzJobsApiPactTest {
     return new PactDslJsonBody().stringType("message").integerType("statusCode");
   }
 
-  static DslPart jobControlShape = new PactDslJsonBody().stringType("id");
-
-  static DslPart landingZoneCreateRequestShape =
-      new PactDslJsonBody()
-          .uuid("landingZoneId")
-          .stringType("definition")
-          .stringType("version")
-          .uuid("billingProfileId")
-          .object("jobControl", jobControlShape)
-          .eachLike("parameters")
-          .stringType("key")
-          .stringType("value")
-          .closeArray();
-
   private DslPart buildCreateResponse(JobReport.StatusEnum jobStatus) {
     var createResponseShape =
         new PactDslJsonBody()
@@ -88,6 +74,20 @@ public class LzJobsApiPactTest {
     }
     return createResponseShape;
   }
+
+  static final DslPart jobControlShape = new PactDslJsonBody().stringType("id");
+
+  static final DslPart landingZoneCreateRequestShape =
+          new PactDslJsonBody()
+                  .uuid("landingZoneId")
+                  .stringType("definition")
+                  .stringType("version")
+                  .uuid("billingProfileId")
+                  .object("jobControl", jobControlShape)
+                  .eachLike("parameters")
+                  .stringType("key")
+                  .stringType("value")
+                  .closeArray();
 
   @Pact(consumer = "workspacemanager", provider = "lzs")
   public RequestResponsePact startCreateLandingZone_running(PactDslWithProvider builder) {
