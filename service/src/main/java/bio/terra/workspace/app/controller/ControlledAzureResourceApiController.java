@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONPropertyIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -385,30 +386,30 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     AzureCloudContext cloudContext = workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE).castByEnum(CloudPlatform.AZURE);
       String userManagedIdentity = null;
       try {
-        System.out.println("Email: " + userRequest.getEmail());
-        System.out.println("SubscriptionID: " + cloudContext.getAzureSubscriptionId());
-        System.out.println("Tenant ID: " + cloudContext.getAzureTenantId());
-        System.out.println("Resource Group ID: " + cloudContext.getAzureResourceGroupId());
+        logger.info("Email: " + userRequest.getEmail());
+        logger.info("SubscriptionID: " + cloudContext.getAzureSubscriptionId());
+        logger.info("Tenant ID: " + cloudContext.getAzureTenantId());
+        logger.info("Resource Group ID: " + cloudContext.getAzureResourceGroupId());
           userManagedIdentity = samService.getOrCreateUserManagedIdentityForUser(userRequest.getEmail(), cloudContext.getAzureSubscriptionId(), cloudContext.getAzureTenantId(), cloudContext.getAzureResourceGroupId());
       } catch (InterruptedException e) {
           throw new RuntimeException(e);
       }
 
-      System.out.println("Identity from Sam: " + userManagedIdentity);
+      logger.info("Identity from Sam: " + userManagedIdentity);
 
       String resourceGroupName = cloudContext.getAzureResourceGroupId();
-      System.out.println("Resource Group Name: " + resourceGroupName);
+      logger.info("Resource Group Name: " + resourceGroupName);
 
       String[] tokens = userManagedIdentity.split("/");
       String name = tokens[tokens.length-1];
-      System.out.println("Name from Split: " + userManagedIdentity);
+      logger.info("Name from Split: " + userManagedIdentity);
 
       UUID clientId = UUID.fromString(userManagedIdentity);
     BatchPoolUserAssignedManagedIdentity azureUserAssignedManagedIdentity = new BatchPoolUserAssignedManagedIdentity(
             resourceGroupName, name, clientId);
       List<BatchPoolUserAssignedManagedIdentity> identites = new ArrayList<BatchPoolUserAssignedManagedIdentity>();
       identites.add(azureUserAssignedManagedIdentity);
-      System.out.println("Created Identity:" + azureUserAssignedManagedIdentity.toString());
+      logger.info("Created Identity:" + azureUserAssignedManagedIdentity.toString());
 
     ControlledResourceFields commonFields =
         toCommonFields(

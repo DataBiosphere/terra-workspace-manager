@@ -5,6 +5,7 @@ import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfigura
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.SerializableString;
 import com.fasterxml.jackson.core.io.CharacterEscapes;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -67,6 +68,7 @@ public class BeanConfig {
             // Disable serialization Date as Timestamp so swagger shows date in the RFC3339
             // format, see details in PF-1855.
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setDefaultPropertyInclusion(Include.NON_ABSENT);
     objectMapper.getFactory().setCharacterEscapes(new HTMLCharacterEscapes());
     return objectMapper;
