@@ -36,14 +36,14 @@ dependencies {
   // Get stairway via TCL
   implementation("bio.terra:terra-common-lib:1.1.6-SNAPSHOT")
   // sam is not semantically versioned so force the version here
-  implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "v0.0.220"
+  implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "v0.0.224-c536ffc-SNAP"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
 
   // Cloud Resource Library
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.30-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.327-SNAPSHOT')
+  implementation ('bio.terra:terra-landing-zone-service:0.0.329-rt-tmp-SNAPSHOT')
   implementation ('bio.terra:landing-zone-service-client:0.0.319-SNAPSHOT')
 
   // Storage transfer service

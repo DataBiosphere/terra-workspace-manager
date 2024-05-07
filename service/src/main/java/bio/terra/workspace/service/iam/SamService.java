@@ -109,7 +109,7 @@ public class SamService {
     // across requests.
     ApiClient apiClient =
         new ApiClient().setHttpClient(commonHttpClient).setBasePath(samConfig.getBasePath());
-    apiClient.setAccessToken(accessToken);
+    apiClient.setBearerToken(accessToken);
     return apiClient;
   }
 
