@@ -403,15 +403,14 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       String resourceGroupName = cloudContext.getAzureResourceGroupId();
       logger.info("Resource Group Name: " + resourceGroupName);
 
-      String[] tokens = userManagedIdentity.split("/");
-      String name = tokens[tokens.length-1];
+      String name = userManagedIdentity.substring(userManagedIdentity.lastIndexOf("/"));
       logger.info("Name from Split: " + userManagedIdentity);
 
-      UUID clientId = UUID.fromString(userManagedIdentity);
+
     BatchPoolUserAssignedManagedIdentity azureUserAssignedManagedIdentity = new BatchPoolUserAssignedManagedIdentity(
-            resourceGroupName, name, clientId);
-      List<BatchPoolUserAssignedManagedIdentity> identites = new ArrayList<BatchPoolUserAssignedManagedIdentity>();
-      identites.add(azureUserAssignedManagedIdentity);
+            resourceGroupName, name, null);
+      List<BatchPoolUserAssignedManagedIdentity> identities = new ArrayList<BatchPoolUserAssignedManagedIdentity>();
+    identities.add(azureUserAssignedManagedIdentity);
       logger.info("Created Identity:" + azureUserAssignedManagedIdentity.toString());
 
     ControlledResourceFields commonFields =
@@ -429,7 +428,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .vmSize(body.getAzureBatchPool().getVmSize())
             .displayName(body.getAzureBatchPool().getDisplayName())
             .deploymentConfiguration(mapFrom(body.getAzureBatchPool().getDeploymentConfiguration()))
-                .userAssignedIdentities(identites)
+                .userAssignedIdentities(identities)
             .scaleSettings(mapFrom(body.getAzureBatchPool().getScaleSettings()))
             .startTask(mapFrom(body.getAzureBatchPool().getStartTask()))
             .applicationPackages(
