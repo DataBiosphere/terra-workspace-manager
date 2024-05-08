@@ -159,6 +159,14 @@ jobs:
           nonBreakingB64=$(cat "${{ matrix.pact_path }}" | base64 -w 0)
           echo "pact-b64=${nonBreakingB64}" >> $GITHUB_OUTPUT  
 
+      - name: Upload b64
+        id: upload-b64-pact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{ matrix.pact_path }}.b64"
+          path: ${{ env.PACTS_OUTPUT_DIR }}
+          retention-days: 1
+
       - name: Dispatch to terra-github-workflows
         uses: broadinstitute/workflow-dispatch@v4.0.0
         with:
@@ -169,7 +177,7 @@ jobs:
           token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
           inputs: '{
             "run-name": "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}-${{ matrix.pact_path }}",
-            "pact-artifact-name": "${{ env.PACTS_ARTIFACT }}",
+            "pact-artifact-name": "${{ matrix.pact_path }}.b64",
             "repo-run-id": "${{ github.run_id }}",
             "repo-owner": "${{ github.repository_owner }}",
             "repo-name": "${{ github.event.repository.name }}",
