@@ -377,42 +377,22 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @WithSpan
   @Override
   public ResponseEntity<ApiCreatedControlledAzureBatchPool> createAzureBatchPool(
-      UUID workspaceUuid, ApiCreateControlledAzureBatchPoolRequestBody body){
+      UUID workspaceUuid, ApiCreateControlledAzureBatchPoolRequestBody body) throws InterruptedException {
     features.azureEnabledCheck();
-
     // validate the workspace and user access
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     String userEmail = samService.getSamUser(userRequest).getEmail();
 
     Workspace workspace = validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
     AzureCloudContext cloudContext = workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE).castByEnum(CloudPlatform.AZURE);
-
-      String userManagedIdentity = null;
-      try {
-        logger.info("Email: " + userEmail);
-        logger.info("SubscriptionID: " + cloudContext.getAzureSubscriptionId());
-        logger.info("Tenant ID: " + cloudContext.getAzureTenantId());
-        logger.info("Resource Group ID: " + cloudContext.getAzureResourceGroupId());
-          userManagedIdentity = samService.getOrCreateUserManagedIdentityForUser(userEmail, cloudContext.getAzureSubscriptionId(), cloudContext.getAzureTenantId(), cloudContext.getAzureResourceGroupId());
-      } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-      }
-
-      logger.info("Identity from Sam: " + userManagedIdentity);
-
-      String resourceGroupName = cloudContext.getAzureResourceGroupId();
-      logger.info("Resource Group Name: " + resourceGroupName);
-
+    String userManagedIdentity = samService.getOrCreateUserManagedIdentityForUser(userEmail, cloudContext.getAzureSubscriptionId(), cloudContext.getAzureTenantId(), cloudContext.getAzureResourceGroupId());
 
     int lastSlashIndex = userManagedIdentity.lastIndexOf('/');
     String name = userManagedIdentity.substring(lastSlashIndex+1);
 
-
     BatchPoolUserAssignedManagedIdentity azureUserAssignedManagedIdentity = new BatchPoolUserAssignedManagedIdentity(
-            resourceGroupName, name, null);
-      List<BatchPoolUserAssignedManagedIdentity> identities = new ArrayList<BatchPoolUserAssignedManagedIdentity>();
-    identities.add(azureUserAssignedManagedIdentity);
-      logger.info("Created Identity:" + azureUserAssignedManagedIdentity);
+            cloudContext.getAzureResourceGroupId(), name, null);
+      List<BatchPoolUserAssignedManagedIdentity> identities = List.of(azureUserAssignedManagedIdentity);
 
     ControlledResourceFields commonFields =
         toCommonFields(
