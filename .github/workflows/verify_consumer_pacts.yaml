@@ -221,24 +221,23 @@ jobs:
           name: Test Reports
           path: service/build/reports
 
-# TODO reenable once we have sane pacts w/TPS
-#  can-i-deploy:
-#    # The can-i-deploy job will run as a result of a workspace manager PR.
-#    # It reports the pact verification statuses on all deployed environments.
-#    runs-on: ubuntu-latest
-#    if: ${{ inputs.pb-event-type == '' && needs.bump-check.outputs.is-bump == 'no' }}
-#    needs: [ verify-consumer-pact, bump-check ]
-#    steps:
-#      - name: Dispatch to terra-github-workflows
-#        uses: broadinstitute/workflow-dispatch@v4.0.0
-#        with:
-#          run-name: "${{ env.CAN_I_DEPLOY_RUN_NAME }}"
-#          workflow: .github/workflows/can-i-deploy.yaml
-#          repo: broadinstitute/terra-github-workflows
-#          ref: refs/heads/main
-#          token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
-#          inputs: '{
-#            "run-name": "${{ env.CAN_I_DEPLOY_RUN_NAME }}",
-#            "pacticipant": "workspacemanager",
-#            "version": "${{ needs.verify-consumer-pact.outputs.provider-version }}"
-#          }'
+  can-i-deploy:
+    # The can-i-deploy job will run as a result of a workspace manager PR.
+    # It reports the pact verification statuses on all deployed environments.
+    runs-on: ubuntu-latest
+    if: ${{ inputs.pb-event-type == '' && needs.bump-check.outputs.is-bump == 'no' }}
+    needs: [ verify-consumer-pact, bump-check ]
+    steps:
+      - name: Dispatch to terra-github-workflows
+        uses: broadinstitute/workflow-dispatch@v4.0.0
+        with:
+          run-name: "${{ env.CAN_I_DEPLOY_RUN_NAME }}"
+          workflow: .github/workflows/can-i-deploy.yaml
+          repo: broadinstitute/terra-github-workflows
+          ref: refs/heads/main
+          token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
+          inputs: '{
+            "run-name": "${{ env.CAN_I_DEPLOY_RUN_NAME }}",
+            "pacticipant": "workspacemanager",
+            "version": "${{ needs.verify-consumer-pact.outputs.provider-version }}"
+          }'
