@@ -25,7 +25,7 @@ dependencies {
   implementation group: "bio.terra", name: "datarepo-client", version: "2.13.0-SNAPSHOT"
   implementation group: "bio.terra", name:"billing-profile-manager-client", version: "0.1.536-SNAPSHOT"
   implementation group: "bio.terra", name:"terra-policy-client", version:"1.0.9-SNAPSHOT"
-  implementation group: "bio.terra", name:"terra-aws-resource-discovery", version:"v0.6.2-SNAPSHOT"
+  implementation group: "bio.terra", name:"terra-aws-resource-discovery", version:"v0.6.3-SNAPSHOT"
 
   // hk2 is required to use datarepo client, but not correctly exposed by the client
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2"
