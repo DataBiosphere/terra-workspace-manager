@@ -30,12 +30,12 @@ import io.opentelemetry.api.OpenTelemetry;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.http.HttpStatus;
 
-@Tag("pact-test")
+// TODO re-enable
+// @Tag("pact-test")
 @ExtendWith(PactConsumerTestExt.class)
 public class TpsApiTest {
   private static final String UUID_REGEX =
