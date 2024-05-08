@@ -165,11 +165,12 @@ jobs:
           run-name: "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}-${{ matrix.pact_path }}"
           workflow: .github/workflows/publish-contracts.yaml
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/main
+          ref: refs/heads/arh-pact-exp
           token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
           inputs: '{
             "run-name": "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}-${{ matrix.pact_path }}",
-            "pact-b64": "${{ steps.encode-pact.outputs.pact-b64 }}",
+            "pact-artifact-name": ${{ env.PACTS_ARTIFACT }}
+            "repo-run-id": ${{ github.run_id }}
             "repo-owner": "${{ github.repository_owner }}",
             "repo-name": "${{ github.event.repository.name }}",
             "repo-branch": "${{ needs.init-github-context.outputs.repo-branch }}",
