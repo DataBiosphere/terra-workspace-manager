@@ -118,7 +118,7 @@ class LzReadApiTest {
             .date("createdDate");
 
     return builder
-        .given("A landing zone linked to a billing profile")
+        .given("An existing landing zone linked to a billing profile")
         .uponReceiving("A request to list landing zones for a billing profile")
         .method("GET")
         .path("/api/landingzones/v1/azure")
@@ -142,6 +142,7 @@ class LzReadApiTest {
             .date("createdDate");
 
     return builder
+        .given("An existing landing zone")
         .uponReceiving("A request to list all landing zones")
         .method("GET")
         .path("/api/landingzones/v1/azure")
