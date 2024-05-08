@@ -177,7 +177,7 @@ jobs:
           token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
           inputs: '{
             "run-name": "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}-${{ matrix.pact_path }}",
-            "pact-artifact-name": "pact.b64",
+            "pact-artifact-name": "${{ steps.upload-b64-pact.outputs.artifact-id }}",
             "repo-run-id": "${{ github.run_id }}",
             "repo-owner": "${{ github.repository_owner }}",
             "repo-name": "${{ github.event.repository.name }}",
