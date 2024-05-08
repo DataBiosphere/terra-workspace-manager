@@ -16,7 +16,6 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolResourceFile;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolScaleSettings;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolStartTask;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolTaskContainerSettings;
-import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserAssignedIdentity;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserIdentity;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineImageReference;
@@ -27,7 +26,6 @@ import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiNetworkSecurityGroupRule;
 import bio.terra.workspace.generated.model.ApiPoolEndpointConfiguration;
 import bio.terra.workspace.generated.model.ApiPublicIpAddressConfiguration;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
 import com.azure.resourcemanager.batch.models.ApplicationPackageReference;
 import com.azure.resourcemanager.batch.models.AutoScaleSettings;
 import com.azure.resourcemanager.batch.models.AutoUserScope;
@@ -154,20 +152,6 @@ public class MapperUtils {
   }
 
   public static class BatchPoolMapper {
-    public static List<BatchPoolUserAssignedManagedIdentity> mapListOfUserAssignedIdentities(
-        List<ApiAzureBatchPoolUserAssignedIdentity> userAssignedManagedIdentities) {
-      if (userAssignedManagedIdentities == null || userAssignedManagedIdentities.isEmpty()) {
-        return null;
-      }
-
-      return userAssignedManagedIdentities.stream()
-          .map(
-              i ->
-                  new BatchPoolUserAssignedManagedIdentity(
-                      i.getResourceGroupName(), i.getName(), i.getClientId()))
-          .collect(Collectors.toList());
-    }
-
     public static DeploymentConfiguration mapFrom(
         ApiAzureBatchPoolDeploymentConfiguration configuration) {
       return Optional.ofNullable(configuration)

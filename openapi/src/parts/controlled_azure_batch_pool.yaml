@@ -70,8 +70,10 @@ components:
           $ref: '#/components/schemas/AzureBatchPoolDeploymentConfiguration'
         userAssignedIdentities:
           description: |
-            User assigned identities associated with a batch pool. Batch pool supports up to 10 user assigned identities.
+            WSM does not support specifying user assigned identities for batch pools. The pet service account
+            of the requester will automatically be assigned, assuming proper privileges.
           type: array
+          deprecated: true
           items:
             $ref: '#/components/schemas/AzureBatchPoolUserAssignedIdentity'
         scaleSettings:
