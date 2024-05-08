@@ -403,14 +403,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
       String resourceGroupName = cloudContext.getAzureResourceGroupId();
       logger.info("Resource Group Name: " + resourceGroupName);
 
+
     int lastSlashIndex = userManagedIdentity.lastIndexOf('/');
     String name = userManagedIdentity.substring(lastSlashIndex+1);
+
 
     BatchPoolUserAssignedManagedIdentity azureUserAssignedManagedIdentity = new BatchPoolUserAssignedManagedIdentity(
             resourceGroupName, name, null);
       List<BatchPoolUserAssignedManagedIdentity> identities = new ArrayList<BatchPoolUserAssignedManagedIdentity>();
     identities.add(azureUserAssignedManagedIdentity);
-      logger.info("Created Identity:" + azureUserAssignedManagedIdentity.toString());
+      logger.info("Created Identity:" + azureUserAssignedManagedIdentity);
 
     ControlledResourceFields commonFields =
         toCommonFields(
