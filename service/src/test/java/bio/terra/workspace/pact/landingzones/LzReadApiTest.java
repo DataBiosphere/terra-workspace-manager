@@ -94,16 +94,17 @@ class LzReadApiTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
-  public RequestResponsePact getLandingZone_notFound(PactDslWithProvider builder) {
-    return builder
-        .uponReceiving("A request for a non-existent landing zone")
-        .method("GET")
-        .path(String.format("/api/landingzones/v1/azure/%s", LANDING_ZONE_ID))
-        .willRespondWith()
-        .status(404)
-        .toPact();
-  }
+  // TODO Reenable when we are able to publish a full-size pact payload via GHA
+  //  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  //  public RequestResponsePact getLandingZone_notFound(PactDslWithProvider builder) {
+  //    return builder
+  //        .uponReceiving("A request for a non-existent landing zone")
+  //        .method("GET")
+  //        .path(String.format("/api/landingzones/v1/azure/%s", LANDING_ZONE_ID))
+  //        .willRespondWith()
+  //        .status(404)
+  //        .toPact();
+  //  }
 
   @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact listLandingZonesForBillingProfile(PactDslWithProvider builder) {

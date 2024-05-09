@@ -118,18 +118,19 @@ class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
-  public RequestResponsePact startCreateLandingZone_notAuthorized(PactDslWithProvider builder) {
-    return builder
-        .uponReceiving("An unauthorized request to create a landing zone")
-        .method("POST")
-        .path("/api/landingzones/v1/azure")
-        .body(landingZoneCreateRequestShape)
-        .headers(CONTENT_TYPE_JSON_HEADER)
-        .willRespondWith()
-        .status(HttpStatus.UNAUTHORIZED.value())
-        .toPact();
-  }
+  // Reenable when we are able to publish a full-size pact payload via GHA
+  //  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  //  public RequestResponsePact startCreateLandingZone_notAuthorized(PactDslWithProvider builder) {
+  //    return builder
+  //        .uponReceiving("An unauthorized request to create a landing zone")
+  //        .method("POST")
+  //        .path("/api/landingzones/v1/azure")
+  //        .body(landingZoneCreateRequestShape)
+  //        .headers(CONTENT_TYPE_JSON_HEADER)
+  //        .willRespondWith()
+  //        .status(HttpStatus.UNAUTHORIZED.value())
+  //        .toPact();
+  //  }
 
   @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getCreateLandingZoneResult(PactDslWithProvider builder) {
@@ -197,22 +198,23 @@ class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
-  public RequestResponsePact startDeleteLandingZone_notAuthorized(PactDslWithProvider builder) {
-    var deleteRequestShape = new PactDslJsonBody().object("jobControl", jobControlShape);
-
-    return builder
-        .uponReceiving("An unauthorized request to delete a landing zone")
-        .method("POST")
-        .pathFromProviderState(
-            "/api/landingzones/v1/azure${landingZoneId}",
-            "/api/landingzones/v1/azure/%s".formatted(LANDING_ZONE_ID))
-        .body(deleteRequestShape)
-        .headers(CONTENT_TYPE_JSON_HEADER)
-        .willRespondWith()
-        .status(HttpStatus.UNAUTHORIZED.value())
-        .toPact();
-  }
+  // Reenable when we are able to publish a full-size pact payload via GHA
+  //  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  //  public RequestResponsePact startDeleteLandingZone_notAuthorized(PactDslWithProvider builder) {
+  //    var deleteRequestShape = new PactDslJsonBody().object("jobControl", jobControlShape);
+  //
+  //    return builder
+  //        .uponReceiving("An unauthorized request to delete a landing zone")
+  //        .method("POST")
+  //        .pathFromProviderState(
+  //            "/api/landingzones/v1/azure${landingZoneId}",
+  //            "/api/landingzones/v1/azure/%s".formatted(LANDING_ZONE_ID))
+  //        .body(deleteRequestShape)
+  //        .headers(CONTENT_TYPE_JSON_HEADER)
+  //        .willRespondWith()
+  //        .status(HttpStatus.UNAUTHORIZED.value())
+  //        .toPact();
+  //  }
 
   @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getDeleteLandingZoneResult_success(PactDslWithProvider builder) {
