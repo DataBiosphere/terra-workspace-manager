@@ -12,6 +12,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -181,9 +182,12 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
             this),
         RetryRules.cloud());
     flight.addStep(
-        new FetchUserAssignedManagedIdentityStep(userRequest, flightBeanBag.getSamService(), this),
-        RetryRules.cloud()
-    );
+        new GetPetManagedIdentityStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getSamService(),
+            userRequest),
+        RetryRules.cloud());
     flight.addStep(
         new CreateAzureBatchPoolStep(
             flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),

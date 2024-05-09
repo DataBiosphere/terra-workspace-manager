@@ -11,6 +11,7 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.exception.UserAssignedManagedIdentityNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -71,13 +72,13 @@ public class CreateAzureBatchPoolStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
 
-    final BatchPoolUserAssignedManagedIdentity userAssignedManagedIdentity = context.
-            getWorkingMap()
-            .get(AzureBatchPoolHelper.BATCH_POOL_UAMI, BatchPoolUserAssignedManagedIdentity.class);
-    if (userAssignedManagedIdentity == null) {
-      logger.error("The user assigned managed identity has not been added to the working map. FetchUserAssignedManagedIdentityStep must be executed first.");
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
-    }
+    logger.info(String.format("Creating identity for '%s'", GetManagedIdentityStep.getManagedIdentityName(context)));
+
+    final BatchPoolUserAssignedManagedIdentity userAssignedManagedIdentity = new BatchPoolUserAssignedManagedIdentity(
+            azureCloudContext.getAzureResourceGroupId(),
+            GetManagedIdentityStep.getManagedIdentityName(context),
+            null);
+
     try {
       var batchPoolDefinition =
           batchManager

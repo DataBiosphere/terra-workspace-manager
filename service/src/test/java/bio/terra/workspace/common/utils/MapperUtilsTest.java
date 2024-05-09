@@ -45,32 +45,6 @@ import org.junit.jupiter.api.Test;
 public class MapperUtilsTest extends BaseSpringBootUnitTest {
 
   @Test
-  public void testNullableListOfUserAssignedIdentities() {
-    assertNull(MapperUtils.BatchPoolMapper.mapListOfUserAssignedIdentities(null));
-  }
-
-  @Test
-  public void testEmptyListOfUserAssignedIdentities() {
-    assertNull(MapperUtils.BatchPoolMapper.mapListOfUserAssignedIdentities(new ArrayList<>()));
-  }
-
-  @Test
-  public void testListOfUserAssignedIdentities() {
-    var identities =
-        List.of(
-            new ApiAzureBatchPoolUserAssignedIdentity()
-                .name("test")
-                .resourceGroupName("resGroupName"));
-
-    var result = MapperUtils.BatchPoolMapper.mapListOfUserAssignedIdentities(identities);
-
-    assertThat(result.size(), equalTo(identities.size()));
-    assertThat(result.get(0).name(), equalTo(identities.get(0).getName()));
-    assertThat(
-        result.get(0).resourceGroupName(), equalTo(identities.get(0).getResourceGroupName()));
-  }
-
-  @Test
   public void testNullableDeploymentConfiguration() {
     assertNull(
         MapperUtils.BatchPoolMapper.mapFrom((ApiAzureBatchPoolDeploymentConfiguration) null));

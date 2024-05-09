@@ -2,15 +2,18 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdent
 
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
+import bio.terra.stairway.StepStatus;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
+import java.util.Optional;
 
 /**
  * Gets an Azure Managed Identity for a user's pet.
@@ -23,7 +26,8 @@ public class GetPetManagedIdentityStep
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final SamService samService;
-  private final String userEmail;
+  private final Optional<String> userEmail;
+  private final Optional<AuthenticatedUserRequest> userRequest;
 
   public GetPetManagedIdentityStep(
       AzureConfiguration azureConfig,
@@ -33,15 +37,55 @@ public class GetPetManagedIdentityStep
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.samService = samService;
-    this.userEmail = userEmail;
+    this.userEmail = Optional.of(userEmail);
+    this.userRequest = Optional.empty();
+  }
+
+  // This constructor will fetch the user's email from sam using the user request.
+  public GetPetManagedIdentityStep(
+      AzureConfiguration azureConfig,
+      CrlService crlService,
+      SamService samService,
+      AuthenticatedUserRequest userRequest) {
+    this.azureConfig = azureConfig;
+    this.crlService = crlService;
+    this.samService = samService;
+    this.userEmail = Optional.empty();
+    this.userRequest = Optional.of(userRequest);
   }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+    Optional<String> userEmail = getUserEmail();
+    if (userEmail.isEmpty()) {
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new RuntimeException(
+              "User email or user request was not provided to the GetPetManagedIdentityStep. This is a bug."));
+    }
+    return fetchManagedIdentity(context, userEmail.get());
+  }
+
+  @Override
+  public StepResult undoStep(FlightContext context) throws InterruptedException {
+    // Nothing to undo
+    return StepResult.getStepResultSuccess();
+  }
+
+  private Optional<String> getUserEmail() throws InterruptedException {
+    if (userEmail.isEmpty() && userRequest.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(userEmail.orElse(samService.getUserEmailFromSam(userRequest.get())));
+  }
+
+  private StepResult fetchManagedIdentity(FlightContext context, String userEmail)
+      throws InterruptedException {
     final AzureCloudContext azureCloudContext =
         context
             .getWorkingMap()
             .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+
     var msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
 
     var objectId =
@@ -60,11 +104,5 @@ public class GetPetManagedIdentityStep
     } catch (ManagementException e) {
       return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(e), e);
     }
-  }
-
-  @Override
-  public StepResult undoStep(FlightContext context) throws InterruptedException {
-    // Nothing to undo
-    return StepResult.getStepResultSuccess();
   }
 }
