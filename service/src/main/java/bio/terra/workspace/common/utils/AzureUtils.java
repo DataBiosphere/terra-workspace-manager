@@ -95,21 +95,6 @@ public final class AzureUtils {
             apiAzureVmImage.getVersion());
   }
 
-  /**
-   * Sam returns a user assigned managed identity that looks like:
-   *  /subscriptions/.../resourcegroups/.../providers/Microsoft.ManagedIdentity/userAssignedIdentities/pet-asdf1234
-   *  This function returns just the account name (e.g. pet-asdf1234)
-   * @param uami Fully qualified path to a UAMI
-   * @return Name of the user assigned managed identity, which is a subset of the provided string.
-   */
-  public static String parseAccountNameFromUserAssignedManagedIdentity(String uami) {
-    if(uami == null || uami.isEmpty()) {
-      return "";
-    }
-    int lastSlashIndex = uami.lastIndexOf('/');
-    return uami.substring(lastSlashIndex+1);
-  }
-
   private static <T> Stream<T> nullSafeListToStream(Collection<T> collection) {
     return Optional.ofNullable(collection).stream().flatMap(Collection::stream);
   }

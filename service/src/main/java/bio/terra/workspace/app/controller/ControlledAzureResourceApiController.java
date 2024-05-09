@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.utils.AzureUtils.parseAccountNameFromUserAssignedManagedIdentity;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapFrom;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfApplicationPackageReferences;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfMetadataItems;
@@ -383,20 +382,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     var workspace =
         validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
-    String userEmail = samService.getSamUser(userRequest).getEmail();
 
     AzureCloudContext cloudContext = workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE).castByEnum(CloudPlatform.AZURE);
-
-      String userManagedIdentity = null;
-      try {
-          userManagedIdentity = samService.getOrCreateUserManagedIdentityForUser(userEmail, cloudContext.getAzureSubscriptionId(), cloudContext.getAzureTenantId(), cloudContext.getAzureResourceGroupId());
-      } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-      }
-      String petName = parseAccountNameFromUserAssignedManagedIdentity(userManagedIdentity);
-
-    BatchPoolUserAssignedManagedIdentity azureUserAssignedManagedIdentity = new BatchPoolUserAssignedManagedIdentity(
-            cloudContext.getAzureResourceGroupId(), petName, null);
 
     ControlledResourceFields commonFields =
         toCommonFields(
@@ -413,8 +400,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .vmSize(body.getAzureBatchPool().getVmSize())
             .displayName(body.getAzureBatchPool().getDisplayName())
             .deploymentConfiguration(mapFrom(body.getAzureBatchPool().getDeploymentConfiguration()))
-            .userAssignedIdentities(
-                List.of(azureUserAssignedManagedIdentity))
             .scaleSettings(mapFrom(body.getAzureBatchPool().getScaleSettings()))
             .startTask(mapFrom(body.getAzureBatchPool().getStartTask()))
             .applicationPackages(
