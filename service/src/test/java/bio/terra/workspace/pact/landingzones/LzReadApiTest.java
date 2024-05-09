@@ -31,6 +31,7 @@ import bio.terra.workspace.generated.model.ApiAzureLandingZoneResourcesPurposeGr
 import io.opentelemetry.api.OpenTelemetry;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -261,6 +262,7 @@ class LzReadApiTest {
     assertNotNull(result.getDefinition());
   }
 
+  @Disabled("Reenable when we are able to publish a full-size pact payload via GHA")
   @Test
   @PactTestFor(pactMethod = "getLandingZone_notFound", pactVersion = PactSpecVersion.V3)
   void landingZoneNotFound() {

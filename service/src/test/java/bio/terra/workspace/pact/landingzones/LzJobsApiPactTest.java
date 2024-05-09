@@ -30,6 +30,7 @@ import bio.terra.workspace.generated.model.ApiJobReport;
 import io.opentelemetry.api.OpenTelemetry;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -316,6 +317,7 @@ class LzJobsApiPactTest {
     assertErrorReport(result.getErrorReport());
   }
 
+  @Disabled("Reenable when we are able to publish a full-size pact payload via GHA")
   @Test
   @PactTestFor(
       pactMethod = "startCreateLandingZone_notAuthorized",
@@ -347,6 +349,7 @@ class LzJobsApiPactTest {
     assertNull(result.getErrorReport());
   }
 
+  @Disabled("Reenable when we are able to publish a full-size pact payload via GHA")
   @Test
   @PactTestFor(
       pactMethod = "startDeleteLandingZone_notAuthorized",
