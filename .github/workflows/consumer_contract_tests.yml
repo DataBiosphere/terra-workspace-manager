@@ -40,26 +40,26 @@ jobs:
         with:
           event-name: ${{ github.event_name }}
 
-# The primary objective of this section is to carefully control the dispatching of tags,
-# ensuring it only occurs during the 'Tag, publish, deploy' workflow.
-# However, a challenge arises with contract tests, as they require knowledge of the upcoming tag
-# before the actual deployment. To address this, we leverage the dry run feature provided by bumper.
-# This allows us to obtain the next tag for publishing contracts and verifying consumer pacts without
-# triggering the tag dispatch. This approach sidesteps the need for orchestrating multiple workflows,
-# simplifying our implementation.
-#
-# We regulate the tag job to meet the following requirements according to the trigger event type:
-# 1. pull_request event (due to opening or updating of PR branch):
-#      dry-run flag is set to false
-#         this allows the new semver tag #major.#minor.#patch-#commit to be used to identity pacticipant version for development purpose
-#         PR has no effect on the value of the latest tag in settings.gradle on disk
-# 2. PR merge to main, this triggers a push event on the main branch:
-#      dry-run flag is set to true
-#         this allows the new semver tag #major.#minor.#patch to be used to identity pacticipant version, and
-#         this action will not update the value of the latest tag in settings.gradle on disk
-#
-# Note: All workflows from the same PR merge should have the same copy of settings.gradle on disk,
-# which should be the one from the HEAD of the main branch before the workflow starts running
+  # The primary objective of this section is to carefully control the dispatching of tags,
+  # ensuring it only occurs during the 'Tag, publish, deploy' workflow.
+  # However, a challenge arises with contract tests, as they require knowledge of the upcoming tag
+  # before the actual deployment. To address this, we leverage the dry run feature provided by bumper.
+  # This allows us to obtain the next tag for publishing contracts and verifying consumer pacts without
+  # triggering the tag dispatch. This approach sidesteps the need for orchestrating multiple workflows,
+  # simplifying our implementation.
+  #
+  # We regulate the tag job to meet the following requirements according to the trigger event type:
+  # 1. pull_request event (due to opening or updating of PR branch):
+  #      dry-run flag is set to false
+  #         this allows the new semver tag #major.#minor.#patch-#commit to be used to identity pacticipant version for development purpose
+  #         PR has no effect on the value of the latest tag in settings.gradle on disk
+  # 2. PR merge to main, this triggers a push event on the main branch:
+  #      dry-run flag is set to true
+  #         this allows the new semver tag #major.#minor.#patch to be used to identity pacticipant version, and
+  #         this action will not update the value of the latest tag in settings.gradle on disk
+  #
+  # Note: All workflows from the same PR merge should have the same copy of settings.gradle on disk,
+  # which should be the one from the HEAD of the main branch before the workflow starts running
   regulated-tag-job:
     needs: [ bump-check ]
     if: ${{ needs.bump-check.outputs.is-bump == 'no' }}
@@ -159,26 +159,17 @@ jobs:
           nonBreakingB64=$(cat "${{ matrix.pact_path }}" | base64 -w 0)
           echo "pact-b64=${nonBreakingB64}" >> $GITHUB_OUTPUT  
 
-      - name: Upload b64
-        id: upload-b64-pact
-        uses: actions/upload-artifact@v4
-        with:
-          name: "pact.b64"
-          path: "${{ env.PACTS_OUTPUT_DIR }}/${{ matrix.pact_path }}"
-          retention-days: 1
-
       - name: Dispatch to terra-github-workflows
         uses: broadinstitute/workflow-dispatch@v4.0.0
         with:
           run-name: "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}-${{ matrix.pact_path }}"
           workflow: .github/workflows/publish-contracts.yaml
           repo: broadinstitute/terra-github-workflows
-          ref: refs/heads/arh-pact-exp
+          ref: refs/heads/main
           token: ${{ secrets.BROADBOT_TOKEN }} # github token for access to kick off a job in the private repo
           inputs: '{
             "run-name": "${{ env.PUBLISH_CONTRACTS_RUN_NAME }}-${{ matrix.pact_path }}",
-            "pact-artifact-name": "${{ steps.upload-b64-pact.outputs.artifact-id }}",
-            "repo-run-id": "${{ github.run_id }}",
+            "pact-b64": "${{ steps.encode-pact.outputs.pact-b64 }}",
             "repo-owner": "${{ github.repository_owner }}",
             "repo-name": "${{ github.event.repository.name }}",
             "repo-branch": "${{ needs.init-github-context.outputs.repo-branch }}",
