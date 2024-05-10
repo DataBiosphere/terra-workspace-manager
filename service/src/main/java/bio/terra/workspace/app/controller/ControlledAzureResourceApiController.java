@@ -381,11 +381,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var workspace =
         validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
 
-    AzureCloudContext cloudContext =
-        workspaceService
-            .validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE)
-            .castByEnum(CloudPlatform.AZURE);
-
     ControlledResourceFields commonFields =
         toCommonFields(
             workspaceUuid,
