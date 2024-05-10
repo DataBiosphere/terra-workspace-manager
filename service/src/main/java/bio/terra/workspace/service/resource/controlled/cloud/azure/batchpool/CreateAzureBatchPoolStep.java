@@ -23,9 +23,7 @@ import com.azure.resourcemanager.batch.models.PoolIdentityType;
 import com.azure.resourcemanager.batch.models.UserAssignedIdentities;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.models.Identity;
-
 import java.util.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,9 +70,12 @@ public class CreateAzureBatchPoolStep implements Step {
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL);
     }
 
-    logger.info(String.format("Creating identity for '%s'", GetManagedIdentityStep.getManagedIdentityName(context)));
+    logger.info(
+        String.format(
+            "Creating identity for '%s'", GetManagedIdentityStep.getManagedIdentityName(context)));
 
-    final BatchPoolUserAssignedManagedIdentity userAssignedManagedIdentity = new BatchPoolUserAssignedManagedIdentity(
+    final BatchPoolUserAssignedManagedIdentity userAssignedManagedIdentity =
+        new BatchPoolUserAssignedManagedIdentity(
             azureCloudContext.getAzureResourceGroupId(),
             GetManagedIdentityStep.getManagedIdentityName(context),
             null);
@@ -90,7 +91,12 @@ public class CreateAzureBatchPoolStep implements Step {
               .withDeploymentConfiguration(resource.getDeploymentConfiguration());
 
       batchPoolDefinition =
-          configureBatchPool(msiManager, batchPoolDefinition, resource, azureCloudContext, List.of(userAssignedManagedIdentity));
+          configureBatchPool(
+              msiManager,
+              batchPoolDefinition,
+              resource,
+              azureCloudContext,
+              List.of(userAssignedManagedIdentity));
       batchPoolDefinition.create(
           Defaults.buildContext(
               CreateBatchPoolRequestData.builder()
@@ -164,11 +170,11 @@ public class CreateAzureBatchPoolStep implements Step {
   }
 
   private Pool.DefinitionStages.WithCreate configureBatchPool(
-          MsiManager msiManager,
-          Pool.DefinitionStages.WithCreate batchPoolConfigurable,
-          ControlledAzureBatchPoolResource resource,
-          AzureCloudContext azureCloudContext,
-          List<BatchPoolUserAssignedManagedIdentity> uamiToAssign)
+      MsiManager msiManager,
+      Pool.DefinitionStages.WithCreate batchPoolConfigurable,
+      ControlledAzureBatchPoolResource resource,
+      AzureCloudContext azureCloudContext,
+      List<BatchPoolUserAssignedManagedIdentity> uamiToAssign)
       throws UserAssignedManagedIdentityNotFoundException {
 
     Optional.ofNullable(resource.getDisplayName())
@@ -193,8 +199,7 @@ public class CreateAzureBatchPoolStep implements Step {
       AzureCloudContext azureCloudContext,
       List<BatchPoolUserAssignedManagedIdentity> uamiToAssign)
       throws UserAssignedManagedIdentityNotFoundException {
-    if (uamiToAssign != null
-        && !uamiToAssign.isEmpty()) {
+    if (uamiToAssign != null && !uamiToAssign.isEmpty()) {
 
       Map<String, UserAssignedIdentities> userAssignedIdentitiesMap = new HashMap<>();
       for (var i : uamiToAssign) {

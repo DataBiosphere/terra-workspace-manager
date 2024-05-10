@@ -72,8 +72,10 @@ public class GetPetManagedIdentityStepTest extends BaseMockitoStrictStubbingTest
     verify(mockWorkingMap)
         .put(GetManagedIdentityStep.MANAGED_IDENTITY_CLIENT_ID, mockIdentity.clientId());
 
-    var stepWithRequest = new GetPetManagedIdentityStep(mockAzureConfig, mockCrlService, mockSamService, mockRequest);
-    assertThat(stepWithRequest.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
+    var stepWithRequest =
+        new GetPetManagedIdentityStep(mockAzureConfig, mockCrlService, mockSamService, mockRequest);
+    assertThat(
+        stepWithRequest.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
   }
 
   @Test

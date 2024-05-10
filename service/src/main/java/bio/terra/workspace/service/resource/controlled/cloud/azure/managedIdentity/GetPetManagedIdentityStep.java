@@ -73,10 +73,10 @@ public class GetPetManagedIdentityStep
   }
 
   private Optional<String> getUserEmail() throws InterruptedException {
-    if(userEmail.isPresent()) {
+    if (userEmail.isPresent()) {
       return userEmail;
     }
-    if(userRequest.isPresent()) {
+    if (userRequest.isPresent()) {
       return Optional.of(samService.getUserEmailFromSam(userRequest.get()));
     }
     return Optional.empty();

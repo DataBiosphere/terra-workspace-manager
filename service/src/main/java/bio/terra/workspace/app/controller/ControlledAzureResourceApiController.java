@@ -31,7 +31,6 @@ import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureStorageA
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasPermissionsHelper;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.ControlledAzureBatchPoolResource;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.database.ControlledAzureDatabaseResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace.ControlledAzureKubernetesNamespaceResource;
@@ -54,7 +53,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
@@ -383,7 +381,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var workspace =
         validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
 
-    AzureCloudContext cloudContext = workspaceService.validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE).castByEnum(CloudPlatform.AZURE);
+    AzureCloudContext cloudContext =
+        workspaceService
+            .validateWorkspaceAndContextState(workspaceUuid, CloudPlatform.AZURE)
+            .castByEnum(CloudPlatform.AZURE);
 
     ControlledResourceFields commonFields =
         toCommonFields(

@@ -26,7 +26,6 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolResourceFile;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolScaleSettings;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolStartTask;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolTaskContainerSettings;
-import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserAssignedIdentity;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolUserIdentity;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolVirtualMachineImageReference;

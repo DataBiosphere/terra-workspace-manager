@@ -102,9 +102,7 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
 
   @Test
   public void createBatchPoolUAMICantBeFoundFailure() throws InterruptedException {
-    resource =
-        buildDefaultResourceBuilder()
-            .build();
+    resource = buildDefaultResourceBuilder().build();
     initDeleteStep(resource);
     setupMocks(true);
     when(mockPoolDefinitionStateCreate.withIdentity(any()))
