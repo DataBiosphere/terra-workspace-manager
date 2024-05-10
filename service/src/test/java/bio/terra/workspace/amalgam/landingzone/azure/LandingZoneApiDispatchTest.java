@@ -12,7 +12,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import bio.terra.common.exception.ConflictException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.job.model.JobReport;
@@ -35,7 +34,7 @@ import bio.terra.workspace.generated.model.ApiCreateAzureLandingZoneRequestBody;
 import bio.terra.workspace.generated.model.ApiCreateLandingZoneResult;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import bio.terra.workspace.generated.model.ApiResourceQuota;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import java.time.Instant;
@@ -62,15 +61,20 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
       new SpendProfileId(UUID.randomUUID().toString());
 
   private LandingZoneApiDispatch landingZoneApiDispatch;
-  @Mock private LandingZoneService landingZoneService;
   @Mock private FeatureConfiguration featureConfiguration;
   @Mock private WorkspaceService workspaceService;
+  @Mock private LandingZoneService landingZoneService;
+  @Mock private LandingZoneServiceFactory landingZoneServiceFactory;
 
   @BeforeEach
   void setupLandingZoneTests() {
     when(featureConfiguration.isAzureEnabled()).thenReturn(true);
+    var amalgamted = new AmalgamatedLandingZoneService(landingZoneService);
+    when(landingZoneServiceFactory.getLandingZoneService()).thenReturn(amalgamted);
+
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
+        new LandingZoneApiDispatch(
+            featureConfiguration, mockSamService(), landingZoneServiceFactory);
   }
 
   @Test
@@ -92,7 +96,8 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
             eq(BEARER_TOKEN), eq(JOB_ID), any(LandingZoneRequest.class), any()))
         .thenReturn(createJobResult);
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
+        new LandingZoneApiDispatch(
+            featureConfiguration, mockSamService(), landingZoneServiceFactory);
 
     ApiCreateLandingZoneResult response =
         landingZoneApiDispatch.createAzureLandingZone(BEARER_TOKEN, request, resultEndpoint);
@@ -125,7 +130,8 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
         .thenReturn(landingZoneList);
 
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
+        new LandingZoneApiDispatch(
+            featureConfiguration, mockSamService(), landingZoneServiceFactory);
 
     assertThrows(
         LandingZoneInvalidInputException.class,
@@ -151,7 +157,8 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
         .thenReturn(createJobResult);
 
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
+        new LandingZoneApiDispatch(
+            featureConfiguration, mockSamService(), landingZoneServiceFactory);
 
     ApiCreateLandingZoneResult result =
         landingZoneApiDispatch.createAzureLandingZone(BEARER_TOKEN, request, resultEndpoint);
@@ -235,7 +242,8 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
             BEARER_TOKEN, LANDING_ZONE_ID, SubnetResourcePurpose.WORKSPACE_BATCH_SUBNET))
         .thenReturn(Collections.emptyList());
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
+        new LandingZoneApiDispatch(
+            featureConfiguration, mockSamService(), landingZoneServiceFactory);
 
     ApiAzureLandingZoneResourcesList response =
         landingZoneApiDispatch.listAzureLandingZoneResourcesByPurpose(
@@ -266,7 +274,8 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
                     .createdDate(CREATED_DATE)
                     .build()));
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
+        new LandingZoneApiDispatch(
+            featureConfiguration, mockSamService(), landingZoneServiceFactory);
     ApiAzureLandingZoneList response =
         landingZoneApiDispatch.listAzureLandingZones(BEARER_TOKEN, BILLING_PROFILE_ID);
 
@@ -286,34 +295,8 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
   }
 
   @Test
-  void listAzureLandingZonesByBillingProfile_twoLandingZoneIdsThrows() throws ConflictException {
-    when(landingZoneService.getLandingZonesByBillingProfile(BEARER_TOKEN, BILLING_PROFILE_ID))
-        .thenReturn(
-            List.of(
-                LandingZone.builder()
-                    .landingZoneId(LANDING_ZONE_ID)
-                    .billingProfileId(BILLING_PROFILE_ID)
-                    .definition("definition")
-                    .version("1")
-                    .createdDate(CREATED_DATE)
-                    .build(),
-                LandingZone.builder()
-                    .landingZoneId(UUID.randomUUID())
-                    .billingProfileId(BILLING_PROFILE_ID)
-                    .definition("definition")
-                    .version("1")
-                    .createdDate(CREATED_DATE)
-                    .build()));
-    landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
-    assertThrows(
-        ConflictException.class,
-        () -> landingZoneApiDispatch.listAzureLandingZones(BEARER_TOKEN, BILLING_PROFILE_ID));
-  }
-
-  @Test
   void listAzureLandingZones_Success() {
-    when(landingZoneService.listLandingZones(BEARER_TOKEN))
+    when(landingZoneService.getLandingZonesByBillingProfile(BEARER_TOKEN, null))
         .thenReturn(
             List.of(
                 LandingZone.builder()
@@ -331,11 +314,13 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
                     .createdDate(CREATED_DATE)
                     .build()));
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
+        new LandingZoneApiDispatch(
+            featureConfiguration, mockSamService(), landingZoneServiceFactory);
     ApiAzureLandingZoneList response =
         landingZoneApiDispatch.listAzureLandingZones(BEARER_TOKEN, null);
 
-    verify(landingZoneService, times(1)).listLandingZones(eq(BEARER_TOKEN));
+    verify(landingZoneService, times(1))
+        .getLandingZonesByBillingProfile(eq(BEARER_TOKEN), eq(null));
 
     assertNotNull(response);
     assertNotNull(response.getLandingzones());
@@ -398,7 +383,8 @@ public class LandingZoneApiDispatchTest extends BaseAzureSpringBootUnitTest {
                     SubnetResourcePurpose.WORKSPACE_STORAGE_SUBNET, listSubnets1,
                     ResourcePurpose.SHARED_RESOURCE, listResources1)));
     landingZoneApiDispatch =
-        new LandingZoneApiDispatch(landingZoneService, featureConfiguration, mockSamService());
+        new LandingZoneApiDispatch(
+            featureConfiguration, mockSamService(), landingZoneServiceFactory);
   }
 
   @Test

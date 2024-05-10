@@ -16,7 +16,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.exception.PolicyServiceDuplicateException;
 import bio.terra.workspace.service.resource.exception.PolicyConflictException;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import java.util.List;
 import java.util.UUID;

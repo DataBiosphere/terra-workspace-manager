@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.controller;
 
 import bio.terra.common.exception.ErrorReportException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * This module provides a top-level exception handler for controllers. All exceptions that rise
@@ -26,6 +28,13 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
   private final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+  // -- Handle both generic spring 404s and WSM specific 404s
+  @ExceptionHandler({NoResourceFoundException.class, NotFoundException.class})
+  public ResponseEntity<ApiErrorReport> noResourceFoundHandler() {
+    var report = new ApiErrorReport().message("Not found").statusCode(HttpStatus.NOT_FOUND.value());
+    return new ResponseEntity<>(report, HttpStatus.NOT_FOUND);
+  }
 
   // -- Error Report - one of our exceptions --
   @ExceptionHandler(ErrorReportException.class)

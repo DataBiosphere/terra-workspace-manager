@@ -2,6 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import bio.terra.landingzone.job.model.ErrorReport;
 import bio.terra.landingzone.job.model.JobReport;
+import bio.terra.lz.futureservice.model.AzureLandingZoneParameter;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolApplicationPackageReference;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolAutoScaleSettings;
 import bio.terra.workspace.generated.model.ApiAzureBatchPoolCloudServiceConfiguration;
@@ -70,6 +71,19 @@ public class MapperUtils {
   public static class LandingZoneMapper {
     private LandingZoneMapper() {}
 
+    public static List<AzureLandingZoneParameter> apiClientLandingZoneParametersFrom(
+        List<ApiAzureLandingZoneParameter> parametersList) {
+      return nullSafeListToStream(parametersList)
+          .map(
+              param -> {
+                var adapted = new AzureLandingZoneParameter();
+                adapted.setKey(param.getKey());
+                adapted.setValue(param.getValue());
+                return adapted;
+              })
+          .toList();
+    }
+
     public static HashMap<String, String> landingZoneParametersFrom(
         List<ApiAzureLandingZoneParameter> parametersList) {
       return nullSafeListToStream(parametersList)
@@ -100,12 +114,35 @@ public class MapperUtils {
           .completed(jobReport.getCompleted())
           .resultURL(jobReport.getResultURL());
     }
+
+    public static ApiJobReport fromLandingZoneApi(
+        bio.terra.lz.futureservice.model.JobReport jobReport) {
+      return new ApiJobReport()
+          .id(jobReport.getId())
+          .description(jobReport.getDescription())
+          .status(ApiJobReport.StatusEnum.valueOf(jobReport.getStatus().toString()))
+          .statusCode(jobReport.getStatusCode())
+          .submitted(jobReport.getSubmitted())
+          .completed(jobReport.getCompleted())
+          .resultURL(jobReport.getResultURL());
+    }
   }
 
   public static class ErrorReportMapper {
     private ErrorReportMapper() {}
 
     public static ApiErrorReport from(ErrorReport errorReport) {
+      if (errorReport == null) {
+        return null;
+      }
+      return new ApiErrorReport()
+          .message(errorReport.getMessage())
+          .statusCode(errorReport.getStatusCode())
+          .causes(errorReport.getCauses());
+    }
+
+    public static ApiErrorReport fromLandingZoneApi(
+        bio.terra.lz.futureservice.model.ErrorReport errorReport) {
       if (errorReport == null) {
         return null;
       }

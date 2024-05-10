@@ -1,7 +1,7 @@
 package bio.terra.workspace.service.workspace.exceptions;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 
 /**
  * Exception for an operation using a Spend Profile when a billing account is required and the Spend

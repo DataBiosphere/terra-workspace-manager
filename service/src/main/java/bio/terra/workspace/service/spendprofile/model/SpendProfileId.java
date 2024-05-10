@@ -1,4 +1,4 @@
-package bio.terra.workspace.service.spendprofile;
+package bio.terra.workspace.service.spendprofile.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -6,7 +6,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
-import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.CloudContextRequiredException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;

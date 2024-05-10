@@ -5,7 +5,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.db.WorkspaceDao;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
-import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateCloudContextException;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import java.util.UUID;

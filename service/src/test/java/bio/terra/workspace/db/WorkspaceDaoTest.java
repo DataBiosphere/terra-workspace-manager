@@ -28,7 +28,7 @@ import bio.terra.workspace.db.model.DbWorkspace;
 import bio.terra.workspace.db.model.DbWorkspaceDescription;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import bio.terra.workspace.service.workspace.GcpCloudContextService;
 import bio.terra.workspace.service.workspace.exceptions.DuplicateWorkspaceException;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;

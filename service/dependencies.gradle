@@ -23,9 +23,9 @@ dependencies {
 
   // Terra deps
   implementation group: "bio.terra", name: "datarepo-client", version: "2.13.0-SNAPSHOT"
-  implementation group: "bio.terra", name:"billing-profile-manager-client", version: "0.1.237-SNAPSHOT"
+  implementation group: "bio.terra", name:"billing-profile-manager-client", version: "0.1.536-SNAPSHOT"
   implementation group: "bio.terra", name:"terra-policy-client", version:"1.0.9-SNAPSHOT"
-  implementation group: "bio.terra", name:"terra-aws-resource-discovery", version:"v0.6.2-SNAPSHOT"
+  implementation group: "bio.terra", name:"terra-aws-resource-discovery", version:"v0.6.3-SNAPSHOT"
 
   // hk2 is required to use datarepo client, but not correctly exposed by the client
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2"
@@ -43,7 +43,8 @@ dependencies {
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.30-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.317-SNAPSHOT')
+  implementation ('bio.terra:terra-landing-zone-service:0.0.327-SNAPSHOT')
+  implementation ('bio.terra:landing-zone-service-client:0.0.319-SNAPSHOT')
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20230831-2.0.0'

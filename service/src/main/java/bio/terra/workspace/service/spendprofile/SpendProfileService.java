@@ -14,6 +14,9 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.spendprofile.exceptions.BillingProfileManagerServiceAPIException;
 import bio.terra.workspace.service.spendprofile.exceptions.SpendUnauthorizedException;
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.google.api.client.util.Strings;
 import com.google.common.annotations.VisibleForTesting;
@@ -23,6 +26,7 @@ import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.ws.rs.client.Client;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -140,6 +144,7 @@ public class SpendProfileService {
                     spendModel.getBillingAccountId(),
                     null,
                     null,
+                    null,
                     null))
         .collect(Collectors.toList());
   }
@@ -161,7 +166,10 @@ public class SpendProfileService {
               profile.getBillingAccountId(),
               profile.getTenantId(),
               profile.getSubscriptionId(),
-              profile.getManagedResourceGroupId());
+              profile.getManagedResourceGroupId(),
+              Optional.ofNullable(profile.getOrganization())
+                  .map(SpendProfileOrganization::new)
+                  .orElse(null));
     } catch (ApiException ex) {
       if (ex.getCode() == HttpStatus.FORBIDDEN.value()) {
         return null;

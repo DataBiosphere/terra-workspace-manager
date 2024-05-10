@@ -16,8 +16,9 @@ import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceState;
 import bio.terra.workspace.service.resource.model.WsmResourceStateRule;
-import bio.terra.workspace.service.spendprofile.SpendProfile;
-import bio.terra.workspace.service.spendprofile.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -160,6 +161,7 @@ public class AzureTestUtils {
         null,
         UUID.fromString(azureTestConfiguration.getTenantId()),
         UUID.fromString(azureTestConfiguration.getSubscriptionId()),
-        azureTestConfiguration.getManagedResourceGroupId());
+        azureTestConfiguration.getManagedResourceGroupId(),
+        new SpendProfileOrganization(false));
   }
 }

@@ -10,14 +10,14 @@ plugins {
 
 dependencies {
     // Google dependencies versioned by bom
-    implementation platform('com.google.cloud:libraries-bom:26.37.0')
+    implementation platform('com.google.cloud:libraries-bom:26.38.0')
     implementation "com.google.api-client:google-api-client"
     implementation "com.google.cloud:google-cloud-bigquery"
     implementation "com.google.cloud:google-cloud-storage"
 
     implementation "com.google.apis:google-api-services-iam:v1-rev20230914-2.0.0"
     implementation "com.google.apis:google-api-services-notebooks:v1-rev20231019-2.0.0"
-    implementation "com.google.apis:google-api-services-dataproc:v1-rev20240316-2.0.0"
+    implementation "com.google.apis:google-api-services-dataproc:v1-rev20240429-2.0.0"
 
     // Workspace Manager client library
     implementation project(":client")

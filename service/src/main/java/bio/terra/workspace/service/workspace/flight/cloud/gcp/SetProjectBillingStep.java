@@ -6,7 +6,7 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.spendprofile.SpendProfile;
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 
 /** A {@link Step} to set the billing account on the Google project. */

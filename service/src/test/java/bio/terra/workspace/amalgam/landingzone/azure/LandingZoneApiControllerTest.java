@@ -407,39 +407,6 @@ public class LandingZoneApiControllerTest extends BaseAzureSpringBootUnitTest {
   }
 
   @Test
-  void listAzureLandingZoneByBillingProfileIdConflictResponce() throws Exception {
-    LandingZone landingZone =
-        LandingZone.builder()
-            .landingZoneId(LANDING_ZONE_ID)
-            .billingProfileId(BILLING_PROFILE_ID)
-            .definition("definition")
-            .version("version")
-            .createdDate(Instant.now().atOffset(ZoneOffset.UTC))
-            .build();
-    when(mockLandingZoneService().getLandingZonesByBillingProfile(any(), eq(BILLING_PROFILE_ID)))
-        .thenReturn(
-            List.of(
-                landingZone,
-                LandingZone.builder()
-                    .landingZoneId(UUID.randomUUID())
-                    .billingProfileId(BILLING_PROFILE_ID)
-                    .definition("definition")
-                    .version("version")
-                    .createdDate(Instant.now().atOffset(ZoneOffset.UTC))
-                    .build()));
-
-    when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
-    mockMvc
-        .perform(
-            addAuth(
-                get(
-                    AZURE_LANDING_ZONE_PATH + "?billingProfileId={billingProfileId}",
-                    BILLING_PROFILE_ID),
-                USER_REQUEST))
-        .andExpect(status().isConflict());
-  }
-
-  @Test
   void listAzureLandingZonesSuccess() throws Exception {
     LandingZone landingZone =
         LandingZone.builder()
@@ -449,7 +416,8 @@ public class LandingZoneApiControllerTest extends BaseAzureSpringBootUnitTest {
             .version("version")
             .createdDate(Instant.now().atOffset(ZoneOffset.UTC))
             .build();
-    when(mockLandingZoneService().listLandingZones(any())).thenReturn(List.of(landingZone));
+    when(mockLandingZoneService().getLandingZonesByBillingProfile(any(), eq(null)))
+        .thenReturn(List.of(landingZone));
     when(mockFeatureConfiguration().isAzureEnabled()).thenReturn(true);
     mockMvc
         .perform(addAuth(get(AZURE_LANDING_ZONE_PATH), USER_REQUEST))

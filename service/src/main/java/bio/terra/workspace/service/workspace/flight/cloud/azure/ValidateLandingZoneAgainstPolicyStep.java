@@ -44,9 +44,8 @@ public class ValidateLandingZoneAgainstPolicyStep implements Step {
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     final BearerToken bearerToken = new BearerToken(userRequest.getRequiredToken());
-    var landingZoneId =
-        landingZoneApiDispatch.getLandingZoneId(
-            bearerToken, workspaceService.getWorkspace(workspaceUuid));
+    var workspace = workspaceService.getWorkspace(workspaceUuid);
+    var landingZoneId = landingZoneApiDispatch.getLandingZoneId(bearerToken, workspace);
     ResourceValidationUtils.validateRegionAgainstPolicy(
         tpsApiDispatch,
         workspaceUuid,
@@ -61,7 +60,9 @@ public class ValidateLandingZoneAgainstPolicyStep implements Step {
       validationErrors.addAll(
           policyValidator.validateLandingZoneSupportsProtectedData(landingZone));
     }
-    validationErrors.addAll(policyValidator.validateRequiredPoliciesForDataTracking(policies));
+    validationErrors.addAll(
+        policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
+            workspace, policies, userRequest));
     if (!validationErrors.isEmpty()) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL, new PolicyConflictException(validationErrors));
