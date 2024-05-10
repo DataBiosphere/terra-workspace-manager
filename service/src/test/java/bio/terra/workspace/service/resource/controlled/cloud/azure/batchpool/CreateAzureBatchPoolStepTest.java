@@ -70,7 +70,7 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
   @Test
   public void createBatchPoolWithUAMISuccess() throws InterruptedException {
     var uami = BatchPoolFixtures.createUamiWithName();
-    resource = buildDefaultResourceBuilder().userAssignedIdentities(List.of(uami)).build();
+    resource = buildDefaultResourceBuilder().build();
     initDeleteStep(resource);
     setupMocks(true);
     when(mockPoolDefinitionStateCreate.withIdentity(any()))
@@ -104,7 +104,6 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
   public void createBatchPoolUAMICantBeFoundFailure() throws InterruptedException {
     resource =
         buildDefaultResourceBuilder()
-            .userAssignedIdentities(List.of(BatchPoolFixtures.createUamiWithClientId()))
             .build();
     initDeleteStep(resource);
     setupMocks(true);

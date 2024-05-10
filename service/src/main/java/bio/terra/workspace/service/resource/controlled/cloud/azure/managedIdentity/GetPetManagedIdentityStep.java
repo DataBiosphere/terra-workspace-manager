@@ -73,10 +73,13 @@ public class GetPetManagedIdentityStep
   }
 
   private Optional<String> getUserEmail() throws InterruptedException {
-    if (userEmail.isEmpty() && userRequest.isEmpty()) {
-      return Optional.empty();
+    if(userEmail.isPresent()) {
+      return userEmail;
     }
-    return Optional.of(userEmail.orElse(samService.getUserEmailFromSam(userRequest.get())));
+    if(userRequest.isPresent()) {
+      return Optional.of(samService.getUserEmailFromSam(userRequest.get()));
+    }
+    return Optional.empty();
   }
 
   private StepResult fetchManagedIdentity(FlightContext context, String userEmail)

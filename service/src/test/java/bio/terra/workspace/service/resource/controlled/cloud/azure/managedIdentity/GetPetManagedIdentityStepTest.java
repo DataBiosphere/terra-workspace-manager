@@ -13,6 +13,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.utils.BaseMockitoStrictStubbingTest;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -41,6 +42,8 @@ public class GetPetManagedIdentityStepTest extends BaseMockitoStrictStubbingTest
   private final String testEmail = UUID.randomUUID() + "@example.com";
   @Mock private Identity mockIdentity;
 
+  @Mock private AuthenticatedUserRequest mockRequest;
+
   @Test
   void testSuccess() throws InterruptedException {
     createMockFlightContext();
@@ -51,6 +54,7 @@ public class GetPetManagedIdentityStepTest extends BaseMockitoStrictStubbingTest
             mockAzureCloudContext.getAzureTenantId(),
             mockAzureCloudContext.getAzureResourceGroupId()))
         .thenReturn(identityId);
+    when(mockSamService.getUserEmailFromSam(mockRequest)).thenReturn(testEmail);
     when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
     when(mockMsiManager.identities()).thenReturn(mockIdentities);
     when(mockIdentities.getById(identityId)).thenReturn(mockIdentity);
@@ -67,6 +71,9 @@ public class GetPetManagedIdentityStepTest extends BaseMockitoStrictStubbingTest
         .put(GetManagedIdentityStep.MANAGED_IDENTITY_PRINCIPAL_ID, mockIdentity.principalId());
     verify(mockWorkingMap)
         .put(GetManagedIdentityStep.MANAGED_IDENTITY_CLIENT_ID, mockIdentity.clientId());
+
+    var stepWithRequest = new GetPetManagedIdentityStep(mockAzureConfig, mockCrlService, mockSamService, mockRequest);
+    assertThat(stepWithRequest.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
   }
 
   @Test
