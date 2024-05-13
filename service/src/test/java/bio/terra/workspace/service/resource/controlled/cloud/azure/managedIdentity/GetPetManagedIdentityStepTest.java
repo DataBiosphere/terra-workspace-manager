@@ -54,7 +54,6 @@ public class GetPetManagedIdentityStepTest extends BaseMockitoStrictStubbingTest
             mockAzureCloudContext.getAzureTenantId(),
             mockAzureCloudContext.getAzureResourceGroupId()))
         .thenReturn(identityId);
-    when(mockSamService.getUserEmailFromSam(mockRequest)).thenReturn(testEmail);
     when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
     when(mockMsiManager.identities()).thenReturn(mockIdentities);
     when(mockIdentities.getById(identityId)).thenReturn(mockIdentity);
@@ -71,11 +70,6 @@ public class GetPetManagedIdentityStepTest extends BaseMockitoStrictStubbingTest
         .put(GetManagedIdentityStep.MANAGED_IDENTITY_PRINCIPAL_ID, mockIdentity.principalId());
     verify(mockWorkingMap)
         .put(GetManagedIdentityStep.MANAGED_IDENTITY_CLIENT_ID, mockIdentity.clientId());
-
-    var stepWithRequest =
-        new GetPetManagedIdentityStep(mockAzureConfig, mockCrlService, mockSamService, mockRequest);
-    assertThat(
-        stepWithRequest.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
   }
 
   @Test

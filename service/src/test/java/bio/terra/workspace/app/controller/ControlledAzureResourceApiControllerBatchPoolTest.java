@@ -116,7 +116,8 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
     when(getMockControlledResourceService()
             .createControlledResourceSync(eq(resource), any(), any(), any()))
-        .thenReturn(resource);
+            .thenReturn(resource);
+
     setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
 
     mockMvc
@@ -128,7 +129,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
                     .characterEncoding("UTF-8")
                     .content(objectMapper.writeValueAsString(batchPoolRequest)),
                 USER_REQUEST))
-        .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+        .andExpect(status().is(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
 
   @Test

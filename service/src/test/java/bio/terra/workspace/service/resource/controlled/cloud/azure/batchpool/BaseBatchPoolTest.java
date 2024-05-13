@@ -8,9 +8,11 @@ import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
+import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.batch.BatchManager;
@@ -29,6 +31,7 @@ public class BaseBatchPoolTest extends BaseAzureSpringBootUnitTest {
   public static final String BATCH_POOL_VM_SIZE = "Standard_D2s_v3";
   public static final String BATCH_POOL_DISPLAY_NAME = "batchPoolDisplayName";
   public static final String BATCH_POOL_RESOURCE_DESCRIPTION = "description";
+
   public static final DeploymentConfiguration DEPLOYMENT_CONFIGURATION =
       new DeploymentConfiguration()
           .withVirtualMachineConfiguration(
@@ -75,6 +78,7 @@ public class BaseBatchPoolTest extends BaseAzureSpringBootUnitTest {
     when(mockAzureCloudContext.getAzureTenantId()).thenReturn(TENANT_ID);
     when(mockAzureCloudContext.getAzureSubscriptionId()).thenReturn(SUBSCRIPTION_ID);
 
+
     // setup auth request
     when(mockAuthenticatedUserRequest.getRequiredToken()).thenReturn("FAKE_TOKEN");
 
@@ -86,6 +90,7 @@ public class BaseBatchPoolTest extends BaseAzureSpringBootUnitTest {
             WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
             AzureCloudContext.class))
         .thenReturn(mockAzureCloudContext);
+    when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, String.class)).thenReturn(BatchPoolFixtures.IDENTITY_NAME);
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockFlightContext.getInputParameters()).thenReturn(mockFlightMap);
   }
