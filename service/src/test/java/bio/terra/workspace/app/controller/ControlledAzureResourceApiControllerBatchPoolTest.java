@@ -116,7 +116,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
 
     when(getMockControlledResourceService()
             .createControlledResourceSync(eq(resource), any(), any(), any()))
-            .thenReturn(resource);
+        .thenReturn(resource);
 
     setupMockLandingZoneRegion(Region.GERMANY_CENTRAL);
 
