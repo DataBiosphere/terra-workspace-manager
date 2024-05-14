@@ -12,5 +12,4 @@ public class AzureBatchPoolHelper {
 
   public static final String PET_UAMI_FOUND =
       "Assigning Identity to Batch Pool. UserAssignedManagedIdentity='%s'";
-  public static final String BATCH_POOL_UAMI = "BatchPoolUAMI";
 }

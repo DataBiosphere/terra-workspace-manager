@@ -1,5 +1,7 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool;
 
+import static bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.AzureBatchPoolHelper.PET_UAMI_FOUND;
+
 import bio.terra.cloudres.azure.resourcemanager.batch.data.CreateBatchPoolRequestData;
 import bio.terra.cloudres.azure.resourcemanager.common.Defaults;
 import bio.terra.stairway.FlightContext;
@@ -71,8 +73,7 @@ public class CreateAzureBatchPoolStep implements Step {
     }
 
     logger.info(
-        String.format(
-            "Creating identity for '%s'", GetManagedIdentityStep.getManagedIdentityName(context)));
+        String.format(PET_UAMI_FOUND, GetManagedIdentityStep.getManagedIdentityName(context)));
 
     final BatchPoolUserAssignedManagedIdentity userAssignedManagedIdentity =
         new BatchPoolUserAssignedManagedIdentity(

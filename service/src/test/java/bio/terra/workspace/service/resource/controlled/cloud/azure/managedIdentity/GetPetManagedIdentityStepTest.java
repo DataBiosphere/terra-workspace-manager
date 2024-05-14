@@ -73,6 +73,35 @@ public class GetPetManagedIdentityStepTest extends BaseMockitoStrictStubbingTest
   }
 
   @Test
+  void testSuccessWithEmailFetch() throws InterruptedException {
+    createMockFlightContext();
+    var identityId = UUID.randomUUID().toString();
+    when(mockSamService.getOrCreateUserManagedIdentityForUser(
+            testEmail,
+            mockAzureCloudContext.getAzureSubscriptionId(),
+            mockAzureCloudContext.getAzureTenantId(),
+            mockAzureCloudContext.getAzureResourceGroupId()))
+        .thenReturn(identityId);
+    when(mockSamService.getUserEmailFromSam(mockRequest)).thenReturn(testEmail);
+    when(mockCrlService.getMsiManager(any(), any())).thenReturn(mockMsiManager);
+    when(mockMsiManager.identities()).thenReturn(mockIdentities);
+    when(mockIdentities.getById(identityId)).thenReturn(mockIdentity);
+    when(mockIdentity.name()).thenReturn(UUID.randomUUID().toString());
+    when(mockIdentity.principalId()).thenReturn(UUID.randomUUID().toString());
+    when(mockIdentity.clientId()).thenReturn(UUID.randomUUID().toString());
+
+    var step =
+        new GetPetManagedIdentityStep(mockAzureConfig, mockCrlService, mockSamService, mockRequest);
+    assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
+
+    verify(mockWorkingMap).put(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, mockIdentity.name());
+    verify(mockWorkingMap)
+        .put(GetManagedIdentityStep.MANAGED_IDENTITY_PRINCIPAL_ID, mockIdentity.principalId());
+    verify(mockWorkingMap)
+        .put(GetManagedIdentityStep.MANAGED_IDENTITY_CLIENT_ID, mockIdentity.clientId());
+  }
+
+  @Test
   void testFatal() throws InterruptedException {
     StepResult stepResult = testWithError(HttpStatus.NOT_FOUND);
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));

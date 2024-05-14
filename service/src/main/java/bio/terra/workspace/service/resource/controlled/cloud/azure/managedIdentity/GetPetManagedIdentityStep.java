@@ -41,7 +41,7 @@ public class GetPetManagedIdentityStep
     this.userRequest = Optional.empty();
   }
 
-  // This constructor will fetch the user's email from sam using the user request.
+  // This constructor will fetch the user's email from sam, using the user request.
   public GetPetManagedIdentityStep(
       AzureConfiguration azureConfig,
       CrlService crlService,

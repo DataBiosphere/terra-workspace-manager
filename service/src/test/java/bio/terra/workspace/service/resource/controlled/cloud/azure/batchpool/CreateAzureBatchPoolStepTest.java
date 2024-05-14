@@ -66,7 +66,6 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
 
   @Test
   public void createBatchPoolWithUAMISuccess() throws InterruptedException {
-    var uami = BatchPoolFixtures.createUamiWithName();
     resource = buildDefaultResourceBuilder().build();
     initDeleteStep(resource);
     setupMocks(true);
