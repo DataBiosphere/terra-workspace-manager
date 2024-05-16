@@ -86,7 +86,7 @@ public class ControlledAzureResourceApiControllerBatchPoolTest extends BaseAzure
   }
 
   @Test
-  public void createBatchPool400WithInconsistentUAMI() throws Exception {
+  public void createBatchPool500WithInconsistentUAMI() throws Exception {
     ApiControlledResourceCommonFields commonFields =
         ControlledResourceFixtures.makeDefaultControlledResourceFieldsApi();
 
