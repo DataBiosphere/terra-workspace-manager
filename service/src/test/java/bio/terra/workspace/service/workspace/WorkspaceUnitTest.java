@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.AdditionalMatchers.not;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
@@ -12,8 +14,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.SerializationException;
+import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.policy.model.TpsComponent;
 import bio.terra.policy.model.TpsObjectType;
 import bio.terra.policy.model.TpsPaoConflict;
@@ -40,6 +44,7 @@ import bio.terra.workspace.service.workspace.model.WorkspaceStage;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsde.workbench.client.sam.ApiException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -237,6 +242,64 @@ public class WorkspaceUnitTest extends BaseSpringBootUnitTest {
             SamConstants.SamResource.WORKSPACE,
             workspace.workspaceId().toString(),
             List.of("my-group"));
+  }
+
+  @Test
+  void linkPolicies_applyAuthDomainFails() throws InterruptedException {
+    // Arrange
+    Workspace workspace = WorkspaceFixtures.buildMcWorkspace();
+    UUID sourceId = UUID.randomUUID();
+    var groupInput =
+        new TpsPolicyInput()
+            .namespace("terra")
+            .name("group-constraint")
+            .addAdditionalDataItem(new TpsPolicyPair().key("group").value("my-group"));
+
+    // Policies can successfully be linked
+    when(mockTpsApiDispatch().linkPao(workspace.workspaceId(), sourceId, TpsUpdateMode.DRY_RUN))
+        .thenReturn(
+            new TpsPaoUpdateResult()
+                .resultingPao(
+                    new TpsPaoGetResult()
+                        .effectiveAttributes(new TpsPolicyInputs().addInputsItem(groupInput)))
+                .conflicts(List.of())
+                .updateApplied(false));
+    when(mockTpsApiDispatch()
+            .linkPao(workspace.workspaceId(), sourceId, TpsUpdateMode.FAIL_ON_CONFLICT))
+        .thenReturn(
+            new TpsPaoUpdateResult()
+                .resultingPao(
+                    new TpsPaoGetResult()
+                        .effectiveAttributes(new TpsPolicyInputs().addInputsItem(groupInput)))
+                .conflicts(List.of())
+                .updateApplied(true));
+
+    // Adding auth domain fails.
+    doThrow(SamExceptionFactory.create(new ApiException("Permission denied")))
+        .when(mockSamService())
+        .addGroupsToAuthDomain(
+            eq(USER_REQUEST),
+            eq(SamConstants.SamResource.WORKSPACE),
+            eq(workspace.workspaceId().toString()),
+            anyList());
+
+    // Act
+    assertThrows(
+        ErrorReportException.class,
+        () ->
+            workspaceService.linkPolicies(
+                workspace.workspaceId(),
+                new TpsPaoDescription()
+                    .objectId(sourceId)
+                    .component(TpsComponent.TDR)
+                    .objectType(TpsObjectType.SNAPSHOT),
+                TpsUpdateMode.FAIL_ON_CONFLICT,
+                USER_REQUEST));
+
+    // Assert
+    // Policies should not have been linked.
+    verify(mockTpsApiDispatch(), never())
+        .linkPao(eq(workspace.workspaceId()), eq(sourceId), not(eq(TpsUpdateMode.DRY_RUN)));
   }
 
   @Test
