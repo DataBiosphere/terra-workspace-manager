@@ -12,6 +12,7 @@ import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -39,7 +40,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
   private final String vmSize;
   private final String displayName;
   private final DeploymentConfiguration deploymentConfiguration;
-  private final List<BatchPoolUserAssignedManagedIdentity> userAssignedIdentities;
   private final ScaleSettings scaleSettings;
   private final StartTask startTask;
   private final List<ApplicationPackageReference> applicationPackages;
@@ -55,8 +55,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       @JsonProperty("vmSize") String vmSize,
       @JsonProperty("displayName") String displayName,
       @JsonProperty("deploymentConfiguration") DeploymentConfiguration deploymentConfiguration,
-      @JsonProperty("userAssignedIdentities")
-          List<BatchPoolUserAssignedManagedIdentity> userAssignedIdentities,
       @JsonProperty("scaleSettings") ScaleSettings scaleSettings,
       @JsonProperty("startTask") StartTask startTask,
       @JsonProperty("applicationPackages") List<ApplicationPackageReference> applicationPackages,
@@ -67,7 +65,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     this.vmSize = vmSize;
     this.displayName = displayName;
     this.deploymentConfiguration = deploymentConfiguration;
-    this.userAssignedIdentities = userAssignedIdentities;
     this.scaleSettings = scaleSettings;
     this.startTask = startTask;
     this.applicationPackages = applicationPackages;
@@ -81,7 +78,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       String vmSize,
       String displayName,
       DeploymentConfiguration deploymentConfiguration,
-      List<BatchPoolUserAssignedManagedIdentity> userAssignedIdentities,
       ScaleSettings scaleSettings,
       StartTask startTask,
       List<ApplicationPackageReference> applicationPackages,
@@ -92,7 +88,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     this.vmSize = vmSize;
     this.displayName = displayName;
     this.deploymentConfiguration = deploymentConfiguration;
-    this.userAssignedIdentities = userAssignedIdentities;
     this.scaleSettings = scaleSettings;
     this.startTask = startTask;
     this.applicationPackages = applicationPackages;
@@ -126,10 +121,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
 
   public DeploymentConfiguration getDeploymentConfiguration() {
     return deploymentConfiguration;
-  }
-
-  public List<BatchPoolUserAssignedManagedIdentity> getUserAssignedIdentities() {
-    return userAssignedIdentities;
   }
 
   public ScaleSettings getScaleSettings() {
@@ -189,6 +180,13 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
             userRequest,
             flightBeanBag.getLandingZoneBatchAccountFinder(),
             this),
+        RetryRules.cloud());
+    flight.addStep(
+        new GetPetManagedIdentityStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getSamService(),
+            userRequest),
         RetryRules.cloud());
     flight.addStep(
         new CreateAzureBatchPoolStep(
@@ -256,16 +254,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
             "Fixed scale settings and auto scale settings are mutually exclusive.");
       }
     }
-    if (userAssignedIdentities != null) {
-      long inconsistentUamiCount =
-          userAssignedIdentities.stream()
-              .filter(uami -> uami.name() != null && uami.clientId() != null)
-              .count();
-      if (inconsistentUamiCount > 0) {
-        throw new InconsistentFieldsException(
-            "User assigned managed identity name and clientId are mutually exclusive.");
-      }
-    }
   }
 
   public static ControlledAzureBatchPoolResource.Builder builder() {
@@ -311,12 +299,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
       return this;
     }
 
-    public ControlledAzureBatchPoolResource.Builder userAssignedIdentities(
-        List<BatchPoolUserAssignedManagedIdentity> userAssignedIdentities) {
-      this.userAssignedIdentities = userAssignedIdentities;
-      return this;
-    }
-
     public ControlledAzureBatchPoolResource.Builder scaleSettings(ScaleSettings scaleSettings) {
       this.scaleSettings = scaleSettings;
       return this;
@@ -351,7 +333,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
           vmSize,
           displayName,
           deploymentConfiguration,
-          userAssignedIdentities,
           scaleSettings,
           startTask,
           applicationPackages,

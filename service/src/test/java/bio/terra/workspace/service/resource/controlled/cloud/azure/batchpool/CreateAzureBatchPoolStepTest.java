@@ -16,10 +16,9 @@ import static org.mockito.Mockito.when;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.service.resource.controlled.exception.UserAssignedManagedIdentityNotFoundException;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.http.rest.PagedIterable;
 import com.azure.resourcemanager.batch.models.ApplicationPackageReference;
 import com.azure.resourcemanager.batch.models.BatchPoolIdentity;
 import com.azure.resourcemanager.batch.models.MetadataItem;
@@ -28,10 +27,8 @@ import com.azure.resourcemanager.batch.models.Pool;
 import com.azure.resourcemanager.batch.models.PoolIdentityType;
 import com.azure.resourcemanager.batch.models.ScaleSettings;
 import com.azure.resourcemanager.batch.models.StartTask;
-import com.azure.resourcemanager.msi.models.Identities;
-import com.azure.resourcemanager.msi.models.Identity;
-import java.util.Iterator;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -69,14 +66,11 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
 
   @Test
   public void createBatchPoolWithUAMISuccess() throws InterruptedException {
-    var uami = BatchPoolFixtures.createUamiWithName();
-    resource = buildDefaultResourceBuilder().userAssignedIdentities(List.of(uami)).build();
+    resource = buildDefaultResourceBuilder().build();
     initDeleteStep(resource);
     setupMocks(true);
     when(mockPoolDefinitionStateCreate.withIdentity(any()))
         .thenReturn(mockPoolDefinitionStateCreate);
-
-    setupMockQueryForUami(uami.name());
 
     StepResult stepResult = createAzureBatchPoolStep.doStep(mockFlightContext);
 
@@ -102,24 +96,17 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
 
   @Test
   public void createBatchPoolUAMICantBeFoundFailure() throws InterruptedException {
-    resource =
-        buildDefaultResourceBuilder()
-            .userAssignedIdentities(List.of(BatchPoolFixtures.createUamiWithClientId()))
-            .build();
+    resource = buildDefaultResourceBuilder().build();
     initDeleteStep(resource);
     setupMocks(true);
     when(mockPoolDefinitionStateCreate.withIdentity(any()))
         .thenReturn(mockPoolDefinitionStateCreate);
 
-    setupMockQueryForUami(null);
-
-    StepResult stepResult = createAzureBatchPoolStep.doStep(mockFlightContext);
-
-    assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_FATAL));
-    assertTrue(stepResult.getException().isPresent());
-    assertThat(
-        stepResult.getException().get().getClass(),
-        equalTo(UserAssignedManagedIdentityNotFoundException.class));
+    // simulate previous step not putting UAMI into the context.
+    when(mockWorkingMap.get(GetManagedIdentityStep.MANAGED_IDENTITY_NAME, String.class))
+        .thenReturn(null);
+    Assertions.assertThrows(
+        RuntimeException.class, () -> createAzureBatchPoolStep.doStep(mockFlightContext));
   }
 
   @Test
@@ -405,23 +392,5 @@ public class CreateAzureBatchPoolStepTest extends BaseBatchPoolTest {
         .thenReturn(mockBatchManager);
     when(mockCrlService.getMsiManager(any(AzureCloudContext.class), any(AzureConfiguration.class)))
         .thenReturn(mockMsiManager);
-  }
-
-  @SuppressWarnings("unchecked")
-  private void setupMockQueryForUami(String uamiName) {
-    Identities mockIdentities = mock(Identities.class);
-    PagedIterable<Identity> mockPagedIterable = mock(PagedIterable.class);
-    Iterator<Identity> iterator = mock(Iterator.class);
-    if (uamiName != null) {
-      when(iterator.hasNext()).thenReturn(true);
-      Identity mockIdentity = mock(Identity.class);
-      when(mockIdentity.name()).thenReturn(uamiName);
-      when(iterator.next()).thenReturn(mockIdentity);
-    } else {
-      when(iterator.hasNext()).thenReturn(false);
-    }
-    when(mockPagedIterable.iterator()).thenReturn(iterator);
-    when(mockIdentities.listByResourceGroup(any())).thenReturn(mockPagedIterable);
-    when(mockMsiManager.identities()).thenReturn(mockIdentities);
   }
 }
