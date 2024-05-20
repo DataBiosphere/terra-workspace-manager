@@ -111,13 +111,6 @@ jobs:
         ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
         ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
         ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
-    - name: "Publish to Artifactory (javax)"
-      if: steps.skiptest.outputs.is-bump == 'no'
-      run: ./gradlew :client-javax:artifactoryPublish --scan
-      env:
-        ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-        ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        ARTIFACTORY_REPO_KEY: "libs-snapshot-local"
     - name: Auth to Google
       if: steps.skiptest.outputs.is-bump == 'no'
       uses: google-github-actions/auth@v1
