@@ -214,7 +214,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     // are determined below.
     Workspace workspace =
         sasTokenWorkspaceCache.computeIfAbsent(
-            new WorkspaceCacheKey(userRequest, workspaceUuid),
+            new WorkspaceCacheKey(userRequest.getSubjectId(), workspaceUuid),
             v ->
                 workspaceService.validateWorkspaceAndAction(
                     userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ));
@@ -1002,4 +1002,4 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   }
 }
 
-record WorkspaceCacheKey(AuthenticatedUserRequest userRequest, UUID workspaceUuid) {}
+record WorkspaceCacheKey(String userSubjectId, UUID workspaceUuid) {}

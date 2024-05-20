@@ -64,7 +64,7 @@ public class AzureStorageAccessService {
   private final AzureConfiguration azureConfiguration;
   private final WorkspaceService workspaceService;
   private final Map<StorageAccountCoordinates, StorageData> storageAccountCache;
-  private final Map<AuthenticatedUserRequest, SamUser> samUserCache;
+  private final Map<String, SamUser> samUserCache;
   private final Map<StorageContainerResourceCacheKey, ControlledAzureStorageContainerResource>
       storageContainerResourceCache;
   private final Map<StorageContainerPermissionsCacheKey, List<String>>
@@ -105,7 +105,8 @@ public class AzureStorageAccessService {
       String desiredPermissions) {
     List<String> containerActions;
     var cacheKey =
-        new StorageContainerPermissionsCacheKey(userRequest, storageContainerUuid, samResourceName);
+        new StorageContainerPermissionsCacheKey(
+            userRequest.getSubjectId(), storageContainerUuid, samResourceName);
     if (storageContainerPermissionsCache.containsKey(cacheKey)) {
       containerActions = storageContainerPermissionsCache.get(cacheKey);
     } else {
@@ -208,7 +209,9 @@ public class AzureStorageAccessService {
       SasTokenOptions sasTokenOptions) {
     features.azureEnabledCheck();
 
-    var samUser = samUserCache.computeIfAbsent(userRequest, samService::getSamUser);
+    var samUser =
+        samUserCache.computeIfAbsent(
+            userRequest.getSubjectId(), v -> samService.getSamUser(userRequest));
     logger.info(
         "User {} [SubjectId={}] requesting SAS token for Azure storage container {} in workspace {}",
         samUser.getEmail(),
@@ -347,7 +350,8 @@ public class AzureStorageAccessService {
     // TODO this is redundant with what we're doing for storage account keys, they should be unified
     final ControlledAzureStorageContainerResource storageContainerResource =
         storageContainerResourceCache.computeIfAbsent(
-            new StorageContainerResourceCacheKey(userRequest, workspaceUuid, storageContainerUuid),
+            new StorageContainerResourceCacheKey(
+                userRequest.getSubjectId(), workspaceUuid, storageContainerUuid),
             v ->
                 controlledResourceMetadataManager
                     .validateControlledResourceAndAction(
@@ -399,7 +403,7 @@ public class AzureStorageAccessService {
 }
 
 record StorageContainerResourceCacheKey(
-    AuthenticatedUserRequest userRequest, UUID workspaceUuid, UUID storageContainerId) {}
+    String userSubjectId, UUID workspaceUuid, UUID storageContainerId) {}
 
 record StorageContainerPermissionsCacheKey(
-    AuthenticatedUserRequest userRequest, UUID storageContainerUuid, String samResourceName) {}
+    String userSubjectId, UUID storageContainerUuid, String samResourceName) {}
