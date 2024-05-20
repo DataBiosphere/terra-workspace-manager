@@ -65,10 +65,9 @@ public class AzureStorageAccessService {
   private final WorkspaceService workspaceService;
   private final Map<StorageAccountCoordinates, StorageData> storageAccountCache;
   private final Map<String, SamUser> samUserCache;
-  private final Map<StorageContainerResourceCacheKey, ControlledAzureStorageContainerResource>
+  private final Map<StorageContainerCacheKey, ControlledAzureStorageContainerResource>
       storageContainerResourceCache;
-  private final Map<StorageContainerPermissionsCacheKey, List<String>>
-      storageContainerPermissionsCache;
+  private final Map<StorageContainerCacheKey, List<String>> storageContainerPermissionsCache;
 
   @Autowired
   public AzureStorageAccessService(
@@ -104,9 +103,7 @@ public class AzureStorageAccessService {
       String samResourceName,
       String desiredPermissions) {
     List<String> containerActions;
-    var cacheKey =
-        new StorageContainerPermissionsCacheKey(
-            userRequest.getSubjectId(), storageContainerUuid, samResourceName);
+    var cacheKey = new StorageContainerCacheKey(userRequest.getSubjectId(), storageContainerUuid);
     if (storageContainerPermissionsCache.containsKey(cacheKey)) {
       containerActions = storageContainerPermissionsCache.get(cacheKey);
     } else {
@@ -350,8 +347,7 @@ public class AzureStorageAccessService {
     // TODO this is redundant with what we're doing for storage account keys, they should be unified
     final ControlledAzureStorageContainerResource storageContainerResource =
         storageContainerResourceCache.computeIfAbsent(
-            new StorageContainerResourceCacheKey(
-                userRequest.getSubjectId(), workspaceUuid, storageContainerUuid),
+            new StorageContainerCacheKey(userRequest.getSubjectId(), storageContainerUuid),
             v ->
                 controlledResourceMetadataManager
                     .validateControlledResourceAndAction(
@@ -402,8 +398,4 @@ public class AzureStorageAccessService {
   }
 }
 
-record StorageContainerResourceCacheKey(
-    String userSubjectId, UUID workspaceUuid, UUID storageContainerId) {}
-
-record StorageContainerPermissionsCacheKey(
-    String userSubjectId, UUID storageContainerUuid, String samResourceName) {}
+record StorageContainerCacheKey(String userSubjectId, UUID storageContainerId) {}
