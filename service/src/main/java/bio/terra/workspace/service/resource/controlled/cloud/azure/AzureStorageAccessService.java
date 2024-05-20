@@ -2,6 +2,7 @@ package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.iam.BearerToken;
+import bio.terra.common.iam.SamUser;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
@@ -29,12 +30,15 @@ import com.azure.storage.common.sas.SasProtocol;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +64,11 @@ public class AzureStorageAccessService {
   private final AzureConfiguration azureConfiguration;
   private final WorkspaceService workspaceService;
   private final Map<StorageAccountCoordinates, StorageData> storageAccountCache;
+  private final Map<AuthenticatedUserRequest, SamUser> samUserCache;
+  private final Map<StorageContainerResourceCacheKey, ControlledAzureStorageContainerResource>
+      storageContainerResourceCache;
+  private final Map<StorageContainerPermissionsCacheKey, List<String>>
+      storageContainerPermissionsCache;
 
   @Autowired
   public AzureStorageAccessService(
@@ -82,6 +91,11 @@ public class AzureStorageAccessService {
     this.azureConfiguration = azureConfiguration;
     this.workspaceService = workspaceService;
     this.storageAccountCache = new ConcurrentHashMap<>();
+    this.samUserCache = Collections.synchronizedMap(new PassiveExpiringMap<>(10, TimeUnit.SECONDS));
+    this.storageContainerResourceCache =
+        Collections.synchronizedMap(new PassiveExpiringMap<>(10, TimeUnit.SECONDS));
+    this.storageContainerPermissionsCache =
+        Collections.synchronizedMap(new PassiveExpiringMap<>(10, TimeUnit.SECONDS));
   }
 
   private BlobContainerSasPermission getSasTokenPermissions(
@@ -89,12 +103,20 @@ public class AzureStorageAccessService {
       UUID storageContainerUuid,
       String samResourceName,
       String desiredPermissions) {
-    final List<String> containerActions =
-        Rethrow.onInterrupted(
-            () ->
-                samService.listResourceActions(
-                    userRequest, samResourceName, storageContainerUuid.toString()),
-            "listResourceActions");
+    List<String> containerActions;
+    var cacheKey =
+        new StorageContainerPermissionsCacheKey(userRequest, storageContainerUuid, samResourceName);
+    if (storageContainerPermissionsCache.containsKey(cacheKey)) {
+      containerActions = storageContainerPermissionsCache.get(cacheKey);
+    } else {
+      containerActions =
+          Rethrow.onInterrupted(
+              () ->
+                  samService.listResourceActions(
+                      userRequest, samResourceName, storageContainerUuid.toString()),
+              "listResourceActions");
+      storageContainerPermissionsCache.put(cacheKey, containerActions);
+    }
 
     String possiblePermissions = "";
     for (String action : containerActions) {
@@ -186,7 +208,7 @@ public class AzureStorageAccessService {
       SasTokenOptions sasTokenOptions) {
     features.azureEnabledCheck();
 
-    var samUser = samService.getSamUser(userRequest);
+    var samUser = samUserCache.computeIfAbsent(userRequest, samService::getSamUser);
     logger.info(
         "User {} [SubjectId={}] requesting SAS token for Azure storage container {} in workspace {}",
         samUser.getEmail(),
@@ -324,13 +346,16 @@ public class AzureStorageAccessService {
     // TODO: PF-2823 Access control checks should be done in the controller layer
     // TODO this is redundant with what we're doing for storage account keys, they should be unified
     final ControlledAzureStorageContainerResource storageContainerResource =
-        controlledResourceMetadataManager
-            .validateControlledResourceAndAction(
-                userRequest,
-                workspaceUuid,
-                storageContainerUuid,
-                SamConstants.SamControlledResourceActions.READ_ACTION)
-            .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+        storageContainerResourceCache.computeIfAbsent(
+            new StorageContainerResourceCacheKey(userRequest, workspaceUuid, storageContainerUuid),
+            v ->
+                controlledResourceMetadataManager
+                    .validateControlledResourceAndAction(
+                        userRequest,
+                        workspaceUuid,
+                        storageContainerUuid,
+                        SamConstants.SamControlledResourceActions.READ_ACTION)
+                    .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER));
 
     StorageData maybeStorageData =
         storageAccountCache.get(new StorageAccountCoordinates(workspaceUuid, storageContainerUuid));
@@ -372,3 +397,9 @@ public class AzureStorageAccessService {
     return result;
   }
 }
+
+record StorageContainerResourceCacheKey(
+    AuthenticatedUserRequest userRequest, UUID workspaceUuid, UUID storageContainerId) {}
+
+record StorageContainerPermissionsCacheKey(
+    AuthenticatedUserRequest userRequest, UUID storageContainerUuid, String samResourceName) {}
