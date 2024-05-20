@@ -49,15 +49,7 @@ import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipRequest;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
-import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
-import org.broadinstitute.dsde.workbench.client.sam.model.PolicyIdentifiers;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
+import org.broadinstitute.dsde.workbench.client.sam.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -207,10 +199,10 @@ public class SamService {
   public String getOrCreateUserManagedIdentityForUser(
       String userEmail, String subscriptionId, String tenantId, String managedResourceGroupId)
       throws InterruptedException {
-    AzureApi azureApi = samAzureApi(getWsmServiceAccountToken());
 
-    GetOrCreatePetManagedIdentityRequest request =
-        new GetOrCreatePetManagedIdentityRequest()
+    AzureApi azureApi = samAzureApi(getWsmServiceAccountToken());
+    GetOrCreateManagedIdentityRequest request =
+        new GetOrCreateManagedIdentityRequest()
             .subscriptionId(subscriptionId)
             .tenantId(tenantId)
             .managedResourceGroupName(managedResourceGroupId);
