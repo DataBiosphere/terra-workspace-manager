@@ -21,7 +21,6 @@ pluginManagement {
 rootProject.name = 'terra-workspace-manager'
 include 'openapi'
 include 'client'
-include 'client-javax'
 include 'service'
 include 'integration'
 include 'azureDatabaseUtils'
