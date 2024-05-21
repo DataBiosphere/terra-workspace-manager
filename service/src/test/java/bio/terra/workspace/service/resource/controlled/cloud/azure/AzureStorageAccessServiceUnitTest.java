@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.atMost;
 
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.iam.BearerToken;
@@ -521,6 +522,50 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 storageContainerResource.getResourceId(),
                 userRequest,
                 new SasTokenOptions(ipRange, startTime, expiryTime, null, null)));
+  }
+
+  @Test
+  public void createAzureStorageContainerSasToken_cachesSamResults() throws InterruptedException {
+    var storageContainerResource =
+        buildStorageContainerResource(
+            PrivateResourceState.NOT_APPLICABLE,
+            AccessScopeType.ACCESS_SCOPE_SHARED,
+            ManagedByType.MANAGED_BY_USER);
+
+    when(mockSamService()
+            .listResourceActions(
+                ArgumentMatchers.eq(userRequest),
+                ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+                ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+        .thenReturn(
+            List.of(
+                SamConstants.SamControlledResourceActions.WRITE_ACTION,
+                SamConstants.SamControlledResourceActions.READ_ACTION));
+    setupMocks(storageContainerResource, true);
+
+    azureStorageAccessService.createAzureStorageContainerSasToken(
+        storageContainerResource.getWorkspaceId(),
+        storageContainerResource.getResourceId(),
+        userRequest,
+        new SasTokenOptions(null, startTime, expiryTime, null, null));
+    azureStorageAccessService.createAzureStorageContainerSasToken(
+        storageContainerResource.getWorkspaceId(),
+        storageContainerResource.getResourceId(),
+        userRequest,
+        new SasTokenOptions(null, startTime, expiryTime, null, null));
+
+    verify(mockSamService(), atMost(1)).getSamUser(userRequest);
+    verify(mockControlledResourceMetadataManager(), atMost(1))
+        .validateControlledResourceAndAction(
+            eq(userRequest),
+            eq(storageContainerResource.getWorkspaceId()),
+            eq(storageContainerResource.getResourceId()),
+            eq(SamConstants.SamControlledResourceActions.READ_ACTION));
+    verify(mockSamService(), atMost(1))
+        .listResourceActions(
+            ArgumentMatchers.eq(userRequest),
+            ArgumentMatchers.eq(SamConstants.SamResource.CONTROLLED_USER_SHARED),
+            ArgumentMatchers.eq(storageContainerResource.getResourceId().toString()));
   }
 
   /** Set up mocks behavior based on testing scenario */
