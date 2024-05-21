@@ -13,8 +13,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.AzureSasBundle;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.SasTokenOptions;
+import bio.terra.workspace.service.workspace.model.Workspace;
 import java.util.UUID;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -255,5 +257,45 @@ public class CreateAzureStorageContainerSasTokenTest extends BaseAzureSpringBoot
                     .queryParam("sasPermissions", permissions),
                 USER_REQUEST))
         .andExpect(status().is(HttpStatus.SC_BAD_REQUEST));
+  }
+
+  @Test
+  void createSASTokenCachesSamResponses() throws Exception {
+    when(mockWorkspaceService()
+            .validateWorkspaceAndAction(
+                any(), eq(workspaceId), eq(SamConstants.SamWorkspaceAction.READ)))
+        .thenReturn(
+            new Workspace(
+                workspaceId, "id", null, null, null, null, null, null, null, null, null, null));
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8"),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_OK));
+    mockMvc
+        .perform(
+            addAuth(
+                post(String.format(
+                        CONTROLLED_AZURE_STORAGE_CONTAINER_SAS_TOKEN_PATH_FORMAT,
+                        workspaceId,
+                        storageContainerId))
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .characterEncoding("UTF-8"),
+                USER_REQUEST))
+        .andExpect(status().is(HttpStatus.SC_OK));
+
+    Mockito.verify(mockAzureStorageAccessService(), times(2))
+        .createAzureStorageContainerSasToken(eq(workspaceId), eq(storageContainerId), any(), any());
+    Mockito.verify(mockWorkspaceService(), times(1))
+        .validateWorkspaceAndAction(
+            any(), eq(workspaceId), eq(SamConstants.SamWorkspaceAction.READ));
   }
 }
