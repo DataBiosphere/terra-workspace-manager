@@ -35,8 +35,9 @@ dependencies {
 
   // Get stairway via TCL
   implementation("bio.terra:terra-common-lib:1.1.11-SNAPSHOT")
-  // sam is not semantically versioned so force the version here
-  implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-73bc2d1"
+
+  // sam
+  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "v0.0.229"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
 
   // Cloud Resource Library
