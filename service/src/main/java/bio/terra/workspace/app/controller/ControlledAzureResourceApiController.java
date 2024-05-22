@@ -52,8 +52,12 @@ import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +75,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final AzureStorageAccessService azureControlledStorageResourceService;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final WsmResourceService wsmResourceService;
+  private final Map<WorkspaceCacheKey, Workspace> sasTokenWorkspaceCache;
 
   @Autowired
   public ControlledAzureResourceApiController(
@@ -103,6 +108,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.wsmResourceService = wsmResourceService;
+    this.sasTokenWorkspaceCache =
+        Collections.synchronizedMap(new PassiveExpiringMap<>(10, TimeUnit.SECONDS));
   }
 
   @WithSpan
@@ -206,8 +213,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     // You must have at least READ on the workspace to use this method. Actual permissions
     // are determined below.
     Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+        sasTokenWorkspaceCache.computeIfAbsent(
+            new WorkspaceCacheKey(userRequest.getSubjectId(), workspaceUuid),
+            v ->
+                workspaceService.validateWorkspaceAndAction(
+                    userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ));
     workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     ControllerValidationUtils.validateIpAddressRange(sasIpRange);
@@ -991,3 +1001,5 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return workspace;
   }
 }
+
+record WorkspaceCacheKey(String userSubjectId, UUID workspaceUuid) {}
