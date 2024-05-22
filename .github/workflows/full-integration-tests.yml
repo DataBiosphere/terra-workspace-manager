@@ -6,7 +6,7 @@ name: Full Integration Tests
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '0 8 * * *' # Run nightly at 3AM ET
+    - cron: '0 17 * * *' # Run nightly at 1pm ET
 
 jobs:
   full-integration-job:
