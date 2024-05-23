@@ -1,6 +1,7 @@
 package bio.terra.workspace.pact.landingzones;
 
 import static bio.terra.workspace.pact.PactFixtures.BILLING_PROFILE_ID;
+import static bio.terra.workspace.pact.PactFixtures.CONTENT_TYPE_JSON_HEADER;
 import static bio.terra.workspace.pact.PactFixtures.LANDING_ZONE_ID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anEmptyMap;
@@ -188,6 +189,7 @@ class LzReadApiTest {
             "/api/landingzones/v1/azure/%s/resources".formatted(LANDING_ZONE_ID))
         .willRespondWith()
         .body(resourcesResponseShape)
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .status(HttpStatus.OK.value())
         .toPact();
   }
@@ -211,6 +213,7 @@ class LzReadApiTest {
         .query(String.format("azureResourceId=%s", azureResourceId))
         .willRespondWith()
         .body(quotaResponseShape)
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .status(HttpStatus.OK.value())
         .toPact();
   }
