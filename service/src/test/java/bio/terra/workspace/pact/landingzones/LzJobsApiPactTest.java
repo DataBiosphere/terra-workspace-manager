@@ -30,7 +30,6 @@ import bio.terra.workspace.generated.model.ApiJobReport;
 import io.opentelemetry.api.OpenTelemetry;
 import java.util.List;
 import java.util.Map;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
