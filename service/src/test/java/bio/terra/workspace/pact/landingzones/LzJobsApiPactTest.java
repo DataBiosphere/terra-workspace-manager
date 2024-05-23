@@ -164,7 +164,7 @@ class LzJobsApiPactTest {
   public RequestResponsePact getCreateLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
         .given("An existing landing zone creation job")
-        .uponReceiving("A request to get the landing zone creation job result")
+        .uponReceiving("An unauthorized request to get the landing zone creation job result")
         .method("GET")
         .pathFromProviderState(
             "/api/landingzones/v1/azure//create-result/${ASYNC_JOB_ID}",
@@ -263,7 +263,7 @@ class LzJobsApiPactTest {
   public RequestResponsePact getDeleteLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
         .given("An existing landing zone deletion job")
-        .uponReceiving("A request to get the landing zone deletion job result")
+        .uponReceiving("An unauthorized request to get the landing zone deletion job result")
         .method("GET")
         .pathFromProviderState(
             "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${ASYNC_JOB_ID}",
