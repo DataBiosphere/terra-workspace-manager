@@ -29,6 +29,8 @@ import bio.terra.workspace.generated.model.ApiErrorReport;
 import bio.terra.workspace.generated.model.ApiJobReport;
 import io.opentelemetry.api.OpenTelemetry;
 import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -164,7 +166,8 @@ class LzJobsApiPactTest {
   public RequestResponsePact getCreateLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
         .given("An existing landing zone creation job")
-        .uponReceiving("An unauthorized request to get the landing zone creation job result")
+        .given("an unauthorized user", Map.of("email", "unauthed@example.com"))
+        .uponReceiving("a request to get the landing zone creation job result")
         .method("GET")
         .pathFromProviderState(
             "/api/landingzones/v1/azure//create-result/${ASYNC_JOB_ID}",
@@ -263,7 +266,8 @@ class LzJobsApiPactTest {
   public RequestResponsePact getDeleteLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
         .given("An existing landing zone deletion job")
-        .uponReceiving("An unauthorized request to get the landing zone deletion job result")
+        .given("an unauthorized user", Map.of("email", "unauthed@example.com"))
+        .uponReceiving("A request to get the landing zone deletion job result")
         .method("GET")
         .pathFromProviderState(
             "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${ASYNC_JOB_ID}",
