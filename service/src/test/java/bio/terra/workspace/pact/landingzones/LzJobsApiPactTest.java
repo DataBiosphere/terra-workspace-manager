@@ -173,7 +173,7 @@ class LzJobsApiPactTest {
             "/api/landingzones/v1/azure//create-result/${ASYNC_JOB_ID}",
             "/api/landingzones/v1/azure/create-result/%s".formatted(ASYNC_JOB_ID))
         .willRespondWith()
-        .status(HttpStatus.UNAUTHORIZED.value())
+        .status(HttpStatus.FORBIDDEN.value())
         .toPact();
   }
 
@@ -274,7 +274,7 @@ class LzJobsApiPactTest {
             "/api/landingzones/v1/azure/%s/delete-result/%s"
                 .formatted(LANDING_ZONE_ID, ASYNC_JOB_ID))
         .willRespondWith()
-        .status(HttpStatus.UNAUTHORIZED.value())
+        .status(HttpStatus.FORBIDDEN.value())
         .toPact();
   }
 
