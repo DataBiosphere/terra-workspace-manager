@@ -228,23 +228,23 @@ public class SamService {
    *     "586d120b-c4c-pull_image"
    */
   public Optional<String> getActionIdentityForUser(
-          String billingProfileId, AuthenticatedUserRequest request) throws InterruptedException {
+      String billingProfileId, AuthenticatedUserRequest request) throws InterruptedException {
 
     String token = getSamUser(request).getBearerToken().getToken();
     AzureApi azureApi = samAzureApi(token);
 
     try {
       ActionManagedIdentityResponse resp =
-              SamRetry.retry(
-                      () ->
-                              azureApi.getActionManagedIdentity(
-                                      SamConstants.SamActionManagedIdentity.RESOURCE_TYPE,
-                                      billingProfileId,
-                                      SamConstants.SamActionManagedIdentity.ACTION));
+          SamRetry.retry(
+              () ->
+                  azureApi.getActionManagedIdentity(
+                      SamConstants.SamActionManagedIdentity.RESOURCE_TYPE,
+                      billingProfileId,
+                      SamConstants.SamActionManagedIdentity.ACTION));
       return Optional.ofNullable(resp.getDisplayName());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
-              "Error fetching action managed identity from Sam.", apiException);
+          "Error fetching action managed identity from Sam.", apiException);
     }
   }
 
