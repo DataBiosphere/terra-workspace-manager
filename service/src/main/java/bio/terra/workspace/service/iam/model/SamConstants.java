@@ -51,4 +51,11 @@ public class SamConstants {
 
     private SamSpendProfileAction() {}
   }
+
+  public static class SamActionManagedIdentity {
+    public static final String RESOURCE_TYPE = "private_azure_container_registry";
+    public static final String ACTION = "pull_image";
+
+    private SamActionManagedIdentity() {}
+  }
 }

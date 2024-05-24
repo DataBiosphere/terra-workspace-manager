@@ -216,6 +216,39 @@ public class SamService {
   }
 
   /**
+   * Returns the 'Action Managed Identity' that the requesting user has access to, if one exists.
+   *
+   * @param billingProfileId By convention, this billingProfileId is equivalent to the Sam
+   *     resourceId. Also known as the 'SpendProfileId' in this codebase, when interacting with
+   *     Azure workspaces. It is used to uniquely identify an identity that may grant users access
+   *     to private Azure Container Registries.
+   * @param request The request from user asking for the identity. Used to impersonate the user when
+   *     querying Sam.
+   * @return Display name of the Action Identity, if one exists. Might look something like
+   *     "586d120b-c4c-pull_image"
+   */
+  public Optional<String> getActionIdentityForUser(
+          String billingProfileId, AuthenticatedUserRequest request) throws InterruptedException {
+
+    String token = getSamUser(request).getBearerToken().getToken();
+    AzureApi azureApi = samAzureApi(token);
+
+    try {
+      ActionManagedIdentityResponse resp =
+              SamRetry.retry(
+                      () ->
+                              azureApi.getActionManagedIdentity(
+                                      SamConstants.SamActionManagedIdentity.RESOURCE_TYPE,
+                                      billingProfileId,
+                                      SamConstants.SamActionManagedIdentity.ACTION));
+      return Optional.ofNullable(resp.getDisplayName());
+    } catch (ApiException apiException) {
+      throw SamExceptionFactory.create(
+              "Error fetching action managed identity from Sam.", apiException);
+    }
+  }
+
+  /**
    * Gets proxy group email.
    *
    * <p>This takes in userEmail instead of AuthenticatedUserRequest because of
