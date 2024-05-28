@@ -6,6 +6,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,7 +47,11 @@ public class GetActionManagedIdentityStep implements Step {
         workspaceId);
 
     Optional<String> actionIdentity =
-        samService.getActionIdentityForUser(billingProfileId, userRequest);
+        samService.getActionIdentityForUser(
+            SamConstants.SamResource.PRIVATE_AZURE_CONTAINER_REGISTRY,
+            SamConstants.SamPrivateAzureContainerRegistryAction.PULL_IMAGE,
+            billingProfileId,
+            userRequest);
     if (actionIdentity.isPresent()) {
       logger.info(
           "Fetched action managed identity '{}' from sam for workspace '{}'.",

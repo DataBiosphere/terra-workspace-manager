@@ -218,17 +218,21 @@ public class SamService {
   /**
    * Returns the 'Action Managed Identity' that the requesting user has access to, if one exists.
    *
-   * @param billingProfileId By convention, this billingProfileId is equivalent to the Sam
-   *     resourceId. Also known as the 'SpendProfileId' in this codebase, when interacting with
-   *     Azure workspaces. It is used to uniquely identify an identity that may grant users access
-   *     to private Azure Container Registries.
+   * @param samResourceType Type of the Sam resource. e.g. private_azure_container_registry
+   * @param samAction Action to perform on the resource. e.g. pull_image
+   * @param samResourceId Sam ID of the resource. UUID. For private ACR, by convention, the
+   *     resourceID is equivalent to the billingProfileID (a.k.a. SpendProfileId).
    * @param request The request from user asking for the identity. Used to impersonate the user when
    *     querying Sam.
    * @return Display name of the Action Identity, if one exists. Might look something like
    *     "586d120b-c4c-pull_image"
    */
   public Optional<String> getActionIdentityForUser(
-      String billingProfileId, AuthenticatedUserRequest request) throws InterruptedException {
+      String samResourceType,
+      String samAction,
+      String samResourceId,
+      AuthenticatedUserRequest request)
+      throws InterruptedException {
 
     String token = getSamUser(request).getBearerToken().getToken();
     AzureApi azureApi = samAzureApi(token);
@@ -236,11 +240,7 @@ public class SamService {
     try {
       ActionManagedIdentityResponse resp =
           SamRetry.retry(
-              () ->
-                  azureApi.getActionManagedIdentity(
-                      SamConstants.SamResource.PRIVATE_AZURE_CONTAINER_REGISTRY,
-                      billingProfileId,
-                      SamConstants.SamPrivateAzureContainerRegistryAction.PULL_IMAGE));
+              () -> azureApi.getActionManagedIdentity(samResourceType, samResourceId, samAction));
       return Optional.ofNullable(resp.getDisplayName());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
