@@ -241,10 +241,19 @@ public class SamService {
       ActionManagedIdentityResponse resp =
           SamRetry.retry(
               () -> azureApi.getActionManagedIdentity(samResourceType, samResourceId, samAction));
-      return Optional.ofNullable(resp.getDisplayName());
+      return Optional.ofNullable(resp.getObjectId());
     } catch (ApiException apiException) {
+      String infoStringTemplate = "Billing Profile: %s, Resource Type: %s, Action: %s";
+      if (apiException.getCode() == 404) {
+        logger.info(
+            "Action identity not found in Sam for "
+                + String.format(infoStringTemplate, samResourceId, samResourceType, samAction));
+        return Optional.empty();
+      }
       throw SamExceptionFactory.create(
-          "Error fetching action managed identity from Sam.", apiException);
+          "Error fetching action managed identity from Sam."
+              + String.format(infoStringTemplate, samResourceId, samResourceType, samAction),
+          apiException);
     }
   }
 
