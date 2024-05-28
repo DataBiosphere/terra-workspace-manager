@@ -149,11 +149,12 @@ class LzJobsApiPactTest {
             .object("tags");
 
     return builder
-        .given("An existing landing zone creation job")
+        .given(
+            "An existing landing zone creation job", Map.of("asyncJobId", ASYNC_JOB_ID.toString()))
         .uponReceiving("A request to get the landing zone creation job result")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/create-result/${ASYNC_JOB_ID}",
+            "/api/landingzones/v1/azure/create-result/${asyncJobId}",
             "/api/landingzones/v1/azure/create-result/%s".formatted(ASYNC_JOB_ID))
         .willRespondWith()
         .body(createResultResponseShape)
@@ -164,12 +165,13 @@ class LzJobsApiPactTest {
   @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getCreateLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
-        .given("An existing landing zone creation job")
+        .given(
+            "An existing landing zone creation job", Map.of("asyncJobId", ASYNC_JOB_ID.toString()))
         .given("an unauthorized user", Map.of("email", "unauthed@example.com"))
-        .uponReceiving("a request to get the landing zone creation job result")
+        .uponReceiving("A request to get the landing zone creation job result")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/create-result/${ASYNC_JOB_ID}",
+            "/api/landingzones/v1/azure/create-result/${asyncJobId}",
             "/api/landingzones/v1/azure/create-result/%s".formatted(ASYNC_JOB_ID))
         .willRespondWith()
         .status(HttpStatus.UNAUTHORIZED.value())
@@ -195,7 +197,6 @@ class LzJobsApiPactTest {
         .body(deleteRequestShape)
         .headers(CONTENT_TYPE_JSON_HEADER)
         .willRespondWith()
-        .headers(CONTENT_TYPE_JSON_HEADER)
         .body(deleteResponseShape)
         .status(HttpStatus.ACCEPTED.value())
         .toPact();
@@ -227,11 +228,16 @@ class LzJobsApiPactTest {
             .object("jobReport", buildJobReportShape(JobReport.StatusEnum.SUCCEEDED));
 
     return builder
-        .given("An existing successful landing zone deletion job")
+        .given(
+            "An existing landing zone deletion job",
+            Map.of(
+                "asyncJobId", ASYNC_JOB_ID.toString(),
+                "jobState",
+                    bio.terra.landingzone.job.model.JobReport.StatusEnum.SUCCEEDED.toString()))
         .uponReceiving("A request to get the landing zone deletion job result")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${ASYNC_JOB_ID}",
+            "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${asyncJobId}",
             "/api/landingzones/v1/azure/%s/delete-result/%s"
                 .formatted(LANDING_ZONE_ID, ASYNC_JOB_ID))
         .willRespondWith()
@@ -249,11 +255,15 @@ class LzJobsApiPactTest {
             .object("errorReport", buildErrorReportShape());
 
     return builder
-        .given("An existing failed landing zone deletion job")
+        .given(
+            "An existing landing zone deletion job",
+            Map.of(
+                "asyncJobId", ASYNC_JOB_ID.toString(),
+                "jobState", bio.terra.landingzone.job.model.JobReport.StatusEnum.FAILED.toString()))
         .uponReceiving("A request to get the landing zone deletion job result")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${ASYNC_JOB_ID}",
+            "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${asyncJobId}",
             "/api/landingzones/v1/azure/%s/delete-result/%s"
                 .formatted(LANDING_ZONE_ID, ASYNC_JOB_ID))
         .willRespondWith()
@@ -265,12 +275,18 @@ class LzJobsApiPactTest {
   @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
   public RequestResponsePact getDeleteLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
-        .given("An existing landing zone deletion job")
+        .given(
+            "An existing landing zone deletion job",
+            Map.of(
+                "asyncJobId",
+                ASYNC_JOB_ID.toString(),
+                "jobState",
+                bio.terra.landingzone.job.model.JobReport.StatusEnum.SUCCEEDED.toString()))
         .given("an unauthorized user", Map.of("email", "unauthed@example.com"))
         .uponReceiving("A request to get the landing zone deletion job result")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${ASYNC_JOB_ID}",
+            "/api/landingzones/v1/azure/${landingZoneId}/delete-result/${asyncJobId}",
             "/api/landingzones/v1/azure/%s/delete-result/%s"
                 .formatted(LANDING_ZONE_ID, ASYNC_JOB_ID))
         .willRespondWith()

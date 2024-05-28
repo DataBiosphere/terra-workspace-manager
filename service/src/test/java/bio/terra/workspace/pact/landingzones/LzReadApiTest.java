@@ -47,7 +47,7 @@ class LzReadApiTest {
 
   HttpLandingZoneService landingZoneService;
 
-  static final String DT_FORMAT = "yy-MM-dd'T'HH:mm:ss.SSS";
+  static final String DT_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
   static final UUID azureResourceId = UUID.fromString("e3327645-1e8f-454d-bdae-fe06b4762542");
 
@@ -88,7 +88,7 @@ class LzReadApiTest {
         .uponReceiving("A request to get a landing zone")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/${LANDING_ZONE_ID}",
+            "/api/landingzones/v1/azure/${landingZoneId}",
             "/api/landingzones/v1/azure/%s".formatted(LANDING_ZONE_ID))
         .willRespondWith()
         .body(getResultResponseShape)
@@ -186,7 +186,7 @@ class LzReadApiTest {
         .uponReceiving("A request to list the landing zone resources")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/${LANDING_ZONE_ID}/resources",
+            "/api/landingzones/v1/azure/${landingZoneId}/resources",
             "/api/landingzones/v1/azure/%s/resources".formatted(LANDING_ZONE_ID))
         .willRespondWith()
         .body(resourcesResponseShape)
@@ -209,7 +209,7 @@ class LzReadApiTest {
         .uponReceiving("A request to get a resource's quota")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure/${LANDING_ZONE_ID}/resource-quota",
+            "/api/landingzones/v1/azure/${landingZoneId}/resource-quota",
             "/api/landingzones/v1/azure/%s/resource-quota".formatted(LANDING_ZONE_ID))
         .query(String.format("azureResourceId=%s", azureResourceId))
         .willRespondWith()
