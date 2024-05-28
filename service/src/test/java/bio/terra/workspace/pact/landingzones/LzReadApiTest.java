@@ -129,7 +129,6 @@ class LzReadApiTest {
         .query(String.format("billingProfileId=%s", BILLING_PROFILE_ID))
         .willRespondWith()
         .body(listResponseShape)
-            .headers()
         .status(HttpStatus.OK.value())
         .toPact();
   }
