@@ -169,7 +169,7 @@ class LzJobsApiPactTest {
         .uponReceiving("a request to get the landing zone creation job result")
         .method("GET")
         .pathFromProviderState(
-            "/api/landingzones/v1/azure//create-result/${ASYNC_JOB_ID}",
+            "/api/landingzones/v1/azure/create-result/${ASYNC_JOB_ID}",
             "/api/landingzones/v1/azure/create-result/%s".formatted(ASYNC_JOB_ID))
         .willRespondWith()
         .status(HttpStatus.UNAUTHORIZED.value())
@@ -195,6 +195,7 @@ class LzJobsApiPactTest {
         .body(deleteRequestShape)
         .headers(CONTENT_TYPE_JSON_HEADER)
         .willRespondWith()
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .body(deleteResponseShape)
         .status(HttpStatus.ACCEPTED.value())
         .toPact();
