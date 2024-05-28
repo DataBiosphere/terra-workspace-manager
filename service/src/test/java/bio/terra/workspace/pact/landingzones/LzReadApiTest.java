@@ -62,7 +62,6 @@ class LzReadApiTest {
 
   static final DslPart resourcesByTypeShape =
       new PactDslJsonBody()
-          .stringType("description")
           .stringType("purpose", "SHARED_RESOURCE")
           .eachLike("deployedResources", resourceShape);
 
@@ -130,6 +129,7 @@ class LzReadApiTest {
         .query(String.format("billingProfileId=%s", BILLING_PROFILE_ID))
         .willRespondWith()
         .body(listResponseShape)
+            .headers()
         .status(HttpStatus.OK.value())
         .toPact();
   }
