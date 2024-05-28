@@ -37,7 +37,8 @@ public class GetActionManagedIdentityStepTest extends BaseMockitoStrictStubbingT
   @Test
   void testSuccess() throws InterruptedException {
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
-    Optional<String> fetchedIdentity = Optional.of("actionIdentity-1234");
+    Optional<String> fetchedIdentity = Optional.of("this/is/an/actionIdentity-1234");
+    String expectedIdentityNameInContext = "actionIdentity-1234";
     when(mockSamService.getActionIdentityForUser(
             SamConstants.SamResource.PRIVATE_AZURE_CONTAINER_REGISTRY,
             SamConstants.SamPrivateAzureContainerRegistryAction.PULL_IMAGE,
@@ -53,7 +54,8 @@ public class GetActionManagedIdentityStepTest extends BaseMockitoStrictStubbingT
 
     assertThat(step.doStep(mockFlightContext), equalTo(StepResult.getStepResultSuccess()));
 
-    verify(mockWorkingMap).put(GetActionManagedIdentityStep.ACTION_IDENTITY, fetchedIdentity.get());
+    verify(mockWorkingMap)
+        .put(GetActionManagedIdentityStep.ACTION_IDENTITY, expectedIdentityNameInContext);
   }
 
   @Test

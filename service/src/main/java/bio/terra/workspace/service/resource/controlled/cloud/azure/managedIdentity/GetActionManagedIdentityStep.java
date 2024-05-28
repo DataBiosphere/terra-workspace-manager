@@ -59,7 +59,7 @@ public class GetActionManagedIdentityStep implements Step {
           "Fetched action managed identity '{}' from sam for workspace '{}'.",
           actionIdentity.get(),
           workspaceId);
-      putActionIdentityInContext(context, actionIdentity.get());
+      putActionIdentityNameInContext(context, actionIdentity.get());
     } else {
       // NB: It is not an error if we fail to find an action identity,
       // it just means that the user doesn't have access to any private ACRs.
@@ -74,7 +74,12 @@ public class GetActionManagedIdentityStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
-  private void putActionIdentityInContext(FlightContext context, String actionIdentity) {
-    context.getWorkingMap().put(ACTION_IDENTITY, actionIdentity);
+  private void putActionIdentityNameInContext(FlightContext context, String actionIdentity) {
+    String identityName = actionIdentity;
+    int lastSlashIndex = actionIdentity.lastIndexOf('/');
+    if (lastSlashIndex != -1 || lastSlashIndex != identityName.length() - 1) {
+      identityName = identityName.substring(lastSlashIndex + 1);
+    }
+    context.getWorkingMap().put(ACTION_IDENTITY, identityName);
   }
 }

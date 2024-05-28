@@ -224,8 +224,8 @@ public class SamService {
    *     resourceID is equivalent to the billingProfileID (a.k.a. SpendProfileId).
    * @param request The request from user asking for the identity. Used to impersonate the user when
    *     querying Sam.
-   * @return Display name of the Action Identity, if one exists. Might look something like
-   *     "586d120b-c4c-pull_image"
+   * @return Fully qualified name of the identity. Might look something like
+   *     /subscriptions/62b22893-6bc1-46d9-8a90-806bb3cce3c9/resourcegroups/mrg-terra-dev-previ-20240104102401/providers/Microsoft.ManagedIdentity/userAssignedIdentities/586d120b-c4c-pull_image
    */
   public Optional<String> getActionIdentityForUser(
       String samResourceType,
