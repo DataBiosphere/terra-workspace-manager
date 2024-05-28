@@ -40,6 +40,7 @@ public class GetActionManagedIdentityStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+
     String billingProfileId = workspaceService.getWorkspace(workspaceId).spendProfileId().getId();
     logger.info(
         "Querying Sam for action identity using billing profile id '{}' in workspace '{}'",
@@ -52,6 +53,7 @@ public class GetActionManagedIdentityStep implements Step {
             SamConstants.SamPrivateAzureContainerRegistryAction.PULL_IMAGE,
             billingProfileId,
             userRequest);
+
     if (actionIdentity.isPresent()) {
       logger.info(
           "Fetched action managed identity '{}' from sam for workspace '{}'.",
