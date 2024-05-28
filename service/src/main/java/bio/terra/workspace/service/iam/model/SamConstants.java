@@ -12,6 +12,8 @@ public class SamConstants {
     public static final String CONTROLLED_APPLICATION_PRIVATE =
         "controlled-application-private-workspace-resource";
     public static final String SPEND_PROFILE = "spend-profile";
+    public static final String PRIVATE_AZURE_CONTAINER_REGISTRY =
+        "private_azure_container_registry";
 
     private SamResource() {}
   }
@@ -52,10 +54,9 @@ public class SamConstants {
     private SamSpendProfileAction() {}
   }
 
-  public static class SamActionManagedIdentity {
-    public static final String RESOURCE_TYPE = "private_azure_container_registry";
-    public static final String ACTION = "pull_image";
+  public static class SamPrivateAzureContainerRegistryAction {
+    public static final String PULL_IMAGE = "pull_image";
 
-    private SamActionManagedIdentity() {}
+    private SamPrivateAzureContainerRegistryAction() {}
   }
 }

@@ -238,9 +238,9 @@ public class SamService {
           SamRetry.retry(
               () ->
                   azureApi.getActionManagedIdentity(
-                      SamConstants.SamActionManagedIdentity.RESOURCE_TYPE,
+                      SamConstants.SamResource.PRIVATE_AZURE_CONTAINER_REGISTRY,
                       billingProfileId,
-                      SamConstants.SamActionManagedIdentity.ACTION));
+                      SamConstants.SamPrivateAzureContainerRegistryAction.PULL_IMAGE));
       return Optional.ofNullable(resp.getDisplayName());
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(

@@ -90,12 +90,19 @@ public class CreateAzureBatchPoolStep implements Step {
     if (maybeActionIdentity != null) {
       // This UAMI may/may not exist (and that's OK). It allows the user to pull images from a
       // private azure container repository.
-      logger.info("Assigning action managed identity {} to batch pool", maybeActionIdentity);
+      logger.info(
+          "Assigning action managed identity {} to batch pool resource {} in workspace '{}'",
+          maybeActionIdentity,
+          resource.getId(),
+          resource.getWsmResourceFields().getWorkspaceId().toString());
       uamiForBatchPool.add(
           new BatchPoolUserAssignedManagedIdentity(
               azureCloudContext.getAzureResourceGroupId(), maybeActionIdentity, null));
     } else {
-      logger.info("Skipping assigning any action managed identities to batch pool.");
+      logger.info(
+          "Skipping assigning any action managed identities to batch pool resource {} in workspace {}",
+          resource.getId(),
+          resource.getWsmResourceFields().getWorkspaceId().toString());
     }
 
     try {

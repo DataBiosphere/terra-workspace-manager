@@ -41,17 +41,23 @@ public class GetActionManagedIdentityStep implements Step {
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
     String billingProfileId = workspaceService.getWorkspace(workspaceId).spendProfileId().getId();
     logger.info(
-        "Querying Sam for action identity using billing profile id: '{}'", billingProfileId);
+        "Querying Sam for action identity using billing profile id '{}' in workspace '{}'",
+        billingProfileId,
+        workspaceId);
 
     Optional<String> actionIdentity =
         samService.getActionIdentityForUser(billingProfileId, userRequest);
     if (actionIdentity.isPresent()) {
-      logger.info("Fetched action managed identity '{}' from sam.", actionIdentity.get());
+      logger.info(
+          "Fetched action managed identity '{}' from sam for workspace '{}'.",
+          actionIdentity.get(),
+          workspaceId);
       putActionIdentityInContext(context, actionIdentity.get());
     } else {
       // NB: It is not an error if we fail to find an action identity,
       // it just means that the user doesn't have access to any private ACRs.
-      logger.info("No action identities found to assign to batch pool.");
+      logger.info(
+          "No action identities found to assign to batch pool in workspace '{}'", workspaceId);
     }
     return StepResult.getStepResultSuccess();
   }
