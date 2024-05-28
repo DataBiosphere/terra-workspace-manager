@@ -47,7 +47,7 @@ class LzReadApiTest {
 
   HttpLandingZoneService landingZoneService;
 
-  static final String DT_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+  static final String DT_FORMAT = "yy-MM-dd'T'HH:mm:ss.SSS";
 
   static final UUID azureResourceId = UUID.fromString("e3327645-1e8f-454d-bdae-fe06b4762542");
 
