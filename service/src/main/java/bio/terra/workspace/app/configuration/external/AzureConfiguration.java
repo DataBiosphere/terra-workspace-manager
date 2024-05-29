@@ -112,7 +112,9 @@ public class AzureConfiguration {
     this.azureDatabaseUtilLogsTailLines = azureDatabaseUtilLogsTailLines;
   }
 
-  public String getAuthTokenScope() { return authTokenScope; }
+  public String getAuthTokenScope() {
+    return authTokenScope;
+  }
 
   public void setAuthTokenScope(String authTokenScope) {
     this.authTokenScope = authTokenScope;

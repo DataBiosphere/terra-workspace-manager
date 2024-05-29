@@ -5,7 +5,6 @@ import bio.terra.workspace.common.utils.AuthUtils;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Arrays;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -27,7 +26,8 @@ public class PolicyServiceConfiguration {
   private final AzureConfiguration azureConfiguration;
 
   @Autowired
-  public PolicyServiceConfiguration(FeatureConfiguration features, AzureConfiguration azureConfiguration) {
+  public PolicyServiceConfiguration(
+      FeatureConfiguration features, AzureConfiguration azureConfiguration) {
     this.features = features;
     this.azureConfiguration = azureConfiguration;
   }
