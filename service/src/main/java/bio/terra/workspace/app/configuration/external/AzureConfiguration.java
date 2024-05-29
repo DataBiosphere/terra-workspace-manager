@@ -22,6 +22,7 @@ public class AzureConfiguration {
   private String azureDatabaseUtilImage;
   private Integer azureDatabaseUtilLogsTailLines;
   private String authTokenScope;
+  private String wsmServiceManagedIdentity;
 
   public String getManagedAppClientId() {
     return managedAppClientId;
@@ -118,5 +119,13 @@ public class AzureConfiguration {
 
   public void setAuthTokenScope(String authTokenScope) {
     this.authTokenScope = authTokenScope;
+  }
+
+  public String getWsmServiceManagedIdentity() {
+    return wsmServiceManagedIdentity;
+  }
+
+  public void setWsmServiceManagedIdentity(String wsmServiceManagedIdentity) {
+    this.wsmServiceManagedIdentity = wsmServiceManagedIdentity;
   }
 }

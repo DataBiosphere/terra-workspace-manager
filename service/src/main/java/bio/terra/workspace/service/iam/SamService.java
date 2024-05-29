@@ -968,6 +968,14 @@ public class SamService {
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
 
+    String wsmSa;
+    if (features.isAzureControlPlaneEnabled()) {
+      wsmSa = azureConfiguration.getWsmServiceManagedIdentity();
+    }
+    else  {
+      wsmSa = GcpUtils.getWsmSaEmail();
+    }
+
     // We need the WSM SA for setting controlled resource policies
     initializeWsmServiceAccount();
     FullyQualifiedResourceId workspaceParentFqId =
@@ -987,7 +995,8 @@ public class SamService {
             privateIamRole,
             assignedUserEmail,
             userRequest,
-            ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()));
+            ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()),
+            wsmSa);
     builder.addPolicies(resourceRequest);
 
     try {
@@ -1157,7 +1166,14 @@ public class SamService {
       }
     }
     // We always give WSM's service account the 'manager' role for admin control of workspaces.
-    String wsmSa = GcpUtils.getWsmSaEmail();
+    String wsmSa;
+    if (features.isAzureControlPlaneEnabled()) {
+      wsmSa = azureConfiguration.getWsmServiceManagedIdentity();
+    }
+    else  {
+      wsmSa = GcpUtils.getWsmSaEmail();
+    }
+
     policyMap.put(
         WsmIamRole.MANAGER.toSamRole(),
         new AccessPolicyMembershipRequest()

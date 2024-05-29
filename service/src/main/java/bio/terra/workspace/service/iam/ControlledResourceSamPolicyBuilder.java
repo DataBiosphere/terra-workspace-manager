@@ -2,7 +2,6 @@ package bio.terra.workspace.service.iam;
 
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.common.exception.InternalLogicException;
-import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
 import java.util.HashMap;
@@ -67,18 +66,21 @@ public class ControlledResourceSamPolicyBuilder {
   private final String privateUserEmail;
   private final AuthenticatedUserRequest userRequest;
   private final ControlledResourceCategory category;
+  private final String wsmSaEmail;
 
   public ControlledResourceSamPolicyBuilder(
       SamService samService,
       ControlledResourceIamRole privateIamRole,
       @Nullable String privateUserEmail,
       AuthenticatedUserRequest userRequest,
-      ControlledResourceCategory category) {
+      ControlledResourceCategory category,
+      String wsmSaEmail) {
     this.samService = samService;
     this.privateIamRole = privateIamRole;
     this.privateUserEmail = privateUserEmail;
     this.userRequest = userRequest;
     this.category = category;
+    this.wsmSaEmail = wsmSaEmail;
   }
 
   public void addPolicies(CreateResourceRequestV2 request) throws InterruptedException {
@@ -176,7 +178,7 @@ public class ControlledResourceSamPolicyBuilder {
       AccessPolicyMembershipRequest ownerPolicy =
           new AccessPolicyMembershipRequest()
               .addRolesItem(ControlledResourceIamRole.OWNER.toSamRole())
-              .addMemberEmailsItem(GcpUtils.getWsmSaEmail());
+              .addMemberEmailsItem(wsmSaEmail);
       request.putPoliciesItem(ControlledResourceIamRole.OWNER.toSamRole(), ownerPolicy);
     } catch (InternalServerErrorException e) {
       // In cases where WSM is not running as a service account (e.g. unit tests), the above call to
