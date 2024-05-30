@@ -154,7 +154,7 @@ public final class AzureVmHelper {
     return StepResult.getStepResultSuccess();
   }
 
-  public static StepResult assignPetManagedIdentityToVm(
+  public static StepResult assignManagedIdentityToVm(
       AzureCloudContext azureCloudContext,
       ComputeManager computeManager,
       MsiManager msiManager,

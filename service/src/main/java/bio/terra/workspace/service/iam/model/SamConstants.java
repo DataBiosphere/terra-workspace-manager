@@ -14,6 +14,7 @@ public class SamConstants {
     public static final String SPEND_PROFILE = "spend-profile";
     public static final String PRIVATE_AZURE_CONTAINER_REGISTRY =
         "private_azure_container_registry";
+    public static final String PRIVATE_AZURE_STORAGE_ACCOUNT = "private_azure_storage_account";
 
     private SamResource() {}
   }
@@ -58,5 +59,11 @@ public class SamConstants {
     public static final String PULL_IMAGE = "pull_image";
 
     private SamPrivateAzureContainerRegistryAction() {}
+  }
+
+  public static class SamPrivateAzureStorageAccount {
+    public static final String READ = "read";
+
+    private SamPrivateAzureStorageAccount() {}
   }
 }

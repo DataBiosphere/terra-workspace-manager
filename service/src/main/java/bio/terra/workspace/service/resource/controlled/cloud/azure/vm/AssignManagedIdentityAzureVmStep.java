@@ -12,6 +12,9 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.Contr
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.msi.MsiManager;
+import java.util.HashSet;
+import java.util.Set;
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,17 +40,25 @@ public class AssignManagedIdentityAzureVmStep implements Step {
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
-    // Note we only assign the VM to a managed identity if the resource has an assigned user.
-    // This step is a no-op otherwise.
+    final AzureCloudContext azureCloudContext =
+        context
+            .getWorkingMap()
+            .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
+
+    ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
+    MsiManager msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
+
+    Set<String> userAssignedIdentities = new HashSet<>();
+
+    // Add user assigned identities from the request, if any
+    if (CollectionUtils.isNotEmpty(
+        resource.getWsmControlledResourceFields().userAssignedIdentities())) {
+      userAssignedIdentities.addAll(
+          resource.getWsmControlledResourceFields().userAssignedIdentities());
+    }
+
+    // If there is a private resource user, request a pet for that user
     if (resource.getAssignedUser().isPresent()) {
-      final AzureCloudContext azureCloudContext =
-          context
-              .getWorkingMap()
-              .get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class);
-
-      ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-      MsiManager msiManager = crlService.getMsiManager(azureCloudContext, azureConfig);
-
       String petManagedIdentityId =
           Rethrow.onInterrupted(
               () ->
@@ -57,18 +68,25 @@ public class AssignManagedIdentityAzureVmStep implements Step {
                       azureCloudContext.getAzureTenantId(),
                       azureCloudContext.getAzureResourceGroupId()),
               "getPetManagedIdentity");
-
+      userAssignedIdentities.add(petManagedIdentityId);
       context.getWorkingMap().put(AzureVmHelper.WORKING_MAP_PET_ID, petManagedIdentityId);
-
-      return AzureVmHelper.assignPetManagedIdentityToVm(
-          azureCloudContext,
-          computeManager,
-          msiManager,
-          resource.getVmName(),
-          petManagedIdentityId);
     }
 
-    return StepResult.getStepResultSuccess();
+    logger.info(
+        "Assigning managed identities {} to VM resource {} in workspace {}",
+        String.join(",", userAssignedIdentities),
+        resource.getResourceId(),
+        resource.getWorkspaceId());
+
+    // Assign each managed identity to the VM. Short circuit if any assignment failed.
+    return userAssignedIdentities.stream()
+        .map(
+            identity ->
+                AzureVmHelper.assignManagedIdentityToVm(
+                    azureCloudContext, computeManager, msiManager, resource.getVmName(), identity))
+        .filter(a -> !a.isSuccess())
+        .findFirst()
+        .orElse(StepResult.getStepResultSuccess());
   }
 
   @Override

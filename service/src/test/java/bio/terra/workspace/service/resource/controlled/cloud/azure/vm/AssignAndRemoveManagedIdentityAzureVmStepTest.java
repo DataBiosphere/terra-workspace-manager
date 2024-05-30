@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -17,6 +18,7 @@ import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementError;
@@ -27,6 +29,7 @@ import com.azure.resourcemanager.compute.models.VirtualMachines;
 import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.msi.models.Identities;
 import com.azure.resourcemanager.msi.models.Identity;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +68,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
   @Mock private ControlledAzureVmResource mockAzureVmResource;
   @Mock private ManagementException mockException;
   @Mock private FlightMap mockWorkingMap;
+  @Mock private WsmControlledResourceFields mockControlledResourceFields;
 
   @BeforeEach
   public void setup() throws InterruptedException {
@@ -98,6 +102,8 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
 
     when(mockAzureVmResource.getVmName()).thenReturn(STUB_STRING_RETURN);
     when(mockAzureVmResource.getAssignedUser()).thenReturn(Optional.of(STUB_ASSIGNED_USER_EMAIL));
+    when(mockAzureVmResource.getWsmControlledResourceFields())
+        .thenReturn(mockControlledResourceFields);
 
     // Exception mock
     when(mockException.getValue())
@@ -127,6 +133,30 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
 
     // Verify Azure assignment call was made correctly
     verify(mockVmStageUpdate1).withExistingUserAssignedManagedServiceIdentity(mockIdentity);
+  }
+
+  @Test
+  void assignUserAssignedManagedIdentityToVm_fromRequest() throws InterruptedException {
+    when(mockControlledResourceFields.userAssignedIdentities())
+        .thenReturn(List.of(STUB_STRING_PET_MANAGED_IDENTITY, STUB_STRING_OTHER_MANAGED_IDENTITY));
+
+    var assignManagedIdentityAzureVmStep =
+        new AssignManagedIdentityAzureVmStep(
+            mockAzureConfig, mockCrlService, mockSamService, mockAzureVmResource);
+
+    final StepResult stepResult = assignManagedIdentityAzureVmStep.doStep(mockFlightContext);
+
+    // Verify step returns success
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+
+    // Verify Sam call was made correctly
+    verify(mockSamService)
+        .getOrCreateUserManagedIdentityForUser(
+            eq(STUB_ASSIGNED_USER_EMAIL), anyString(), anyString(), anyString());
+
+    // Verify Azure assignment call was made correctly
+    verify(mockVmStageUpdate1, times(2))
+        .withExistingUserAssignedManagedServiceIdentity(mockIdentity);
   }
 
   @Test

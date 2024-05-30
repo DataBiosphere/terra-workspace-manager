@@ -42,11 +42,18 @@ public abstract class ControlledResource extends WsmResource {
       ManagedByType managedBy,
       String applicationId,
       @Nullable PrivateResourceState privateResourceState,
-      String region) {
+      String region,
+      @Nullable List<String> userAssignedIdentities) {
     super(wsmResourceFields);
     this.wsmControlledResourceFields =
         new WsmControlledResourceFields(
-            assignedUser, privateResourceState, accessScope, managedBy, applicationId, region);
+            assignedUser,
+            privateResourceState,
+            accessScope,
+            managedBy,
+            applicationId,
+            region,
+            userAssignedIdentities);
   }
 
   /**

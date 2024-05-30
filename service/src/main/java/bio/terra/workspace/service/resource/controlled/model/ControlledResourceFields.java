@@ -7,6 +7,7 @@ import bio.terra.workspace.service.resource.ResourceValidationUtils;
 import bio.terra.workspace.service.resource.model.WsmResourceFields;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Objects;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -79,7 +80,8 @@ public class ControlledResourceFields extends WsmResourceFields {
             builder.accessScope,
             builder.managedBy,
             builder.applicationId,
-            builder.region);
+            builder.region,
+            builder.userAssignedIdentities);
     this.iamRole = builder.iamRole;
   }
 
@@ -150,6 +152,7 @@ public class ControlledResourceFields extends WsmResourceFields {
     private ManagedByType managedBy;
     @Nullable private String applicationId;
     @Nullable private String region;
+    @Nullable List<String> userAssignedIdentities;
 
     public Builder() {}
 
@@ -164,6 +167,7 @@ public class ControlledResourceFields extends WsmResourceFields {
       super.validate();
       ResourceValidationUtils.checkFieldNonNull(accessScope, "accessScope", RESOURCE_DESCRIPTIOR);
       ResourceValidationUtils.checkFieldNonNull(managedBy, "managedBy", RESOURCE_DESCRIPTIOR);
+      ResourceValidationUtils.validateUserAssignedIdentities(userAssignedIdentities, managedBy);
     }
 
     public Builder assignedUser(@Nullable String assignedUser) {
@@ -198,6 +202,11 @@ public class ControlledResourceFields extends WsmResourceFields {
 
     public Builder region(@Nullable String region) {
       this.region = region;
+      return this;
+    }
+
+    public Builder userAssignedIdentities(@Nullable List<String> userAssignedIdentities) {
+      this.userAssignedIdentities = userAssignedIdentities;
       return this;
     }
 
