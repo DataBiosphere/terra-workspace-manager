@@ -89,10 +89,11 @@ public class CrlService {
   @Autowired
   public CrlService(CrlConfiguration crlConfig) {
     this.crlConfig = crlConfig;
-
+    clientConfig = buildClientConfig();
+    
     if (crlConfig.getUseCrl()) {
       GoogleCredentials creds = getApplicationCredentials();
-      clientConfig = buildClientConfig();
+
       try {
         this.crlNotebooksCow = AIPlatformNotebooksCow.create(clientConfig, creds);
         this.crlDataprocCow = DataprocCow.create(clientConfig, creds);
