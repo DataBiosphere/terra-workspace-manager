@@ -90,7 +90,7 @@ public class CrlService {
   public CrlService(CrlConfiguration crlConfig) {
     this.crlConfig = crlConfig;
     clientConfig = buildClientConfig();
-    
+
     if (crlConfig.getUseCrl()) {
       GoogleCredentials creds = getApplicationCredentials();
 
@@ -107,7 +107,6 @@ public class CrlService {
         throw new CrlInternalException("Error creating resource manager wrapper", e);
       }
     } else {
-      clientConfig = null;
       crlNotebooksCow = null;
       crlDataprocCow = null;
       crlResourceManagerCow = null;
