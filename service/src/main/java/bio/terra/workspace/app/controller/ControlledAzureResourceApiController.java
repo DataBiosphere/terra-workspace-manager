@@ -45,6 +45,7 @@ import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
+import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -76,23 +77,24 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final WsmResourceService wsmResourceService;
   private final Map<WorkspaceCacheKey, Workspace> sasTokenWorkspaceCache;
+  private final SpendProfileService spendProfileService;
 
   @Autowired
   public ControlledAzureResourceApiController(
-      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-      HttpServletRequest request,
-      SamService samService,
-      FeatureConfiguration featureConfiguration,
-      FeatureService featureService,
-      JobService jobService,
-      JobApiUtils jobApiUtils,
-      ControlledResourceService controlledResourceService,
-      ControlledResourceMetadataManager controlledResourceMetadataManager,
-      WorkspaceService workspaceService,
-      AzureConfiguration azureConfiguration,
-      AzureStorageAccessService azureControlledStorageResourceService,
-      LandingZoneApiDispatch landingZoneApiDispatch,
-      WsmResourceService wsmResourceService) {
+          AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+          HttpServletRequest request,
+          SamService samService,
+          FeatureConfiguration featureConfiguration,
+          FeatureService featureService,
+          JobService jobService,
+          JobApiUtils jobApiUtils,
+          ControlledResourceService controlledResourceService,
+          ControlledResourceMetadataManager controlledResourceMetadataManager,
+          WorkspaceService workspaceService,
+          AzureConfiguration azureConfiguration,
+          AzureStorageAccessService azureControlledStorageResourceService,
+          LandingZoneApiDispatch landingZoneApiDispatch,
+          WsmResourceService wsmResourceService, SpendProfileService spendProfileService) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -110,6 +112,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.wsmResourceService = wsmResourceService;
     this.sasTokenWorkspaceCache =
         Collections.synchronizedMap(new PassiveExpiringMap<>(10, TimeUnit.SECONDS));
+    this.spendProfileService = spendProfileService;
   }
 
   @WithSpan
@@ -158,6 +161,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     var workspace =
         validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
+
+    var spendProfile = spendProfileService.getSpendProfileFromBpm(userRequest, workspace.spendProfileId());
+    Map<String, String> limits = spendProfile.organization().limits();
+    if (!limits.isEmpty()){
+      if (limits.containsKey("persistentdisk")){
+        if (body.getAzureDisk().getSize() > Integer.parseInt(limits.get("persistentdisk"))){
+          throw new ValidationException("Unable to create VM; Persistent disk must be less than " + limits.get("persistentdisk") + " gb");
+        }
+      }
+    }
 
     // create the resource
     ControlledResourceFields commonFields =
@@ -295,6 +308,17 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     var workspace =
         validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
+
+
+    var spendProfile = spendProfileService.getSpendProfileFromBpm(userRequest, workspace.spendProfileId());
+    Map<String, String> limits = spendProfile.organization().limits();
+    if (!limits.isEmpty()){
+      if (limits.containsKey("machinetypes")){
+        if (!limits.get("machinetypes").contains(body.getAzureVm().getVmSize())){
+          throw new ValidationException("Unable to create VM; " + body.getAzureVm().getVmSize() + " is not one of the permitted VMs: " + limits.get("machinetypes"));
+        }
+      }
+    }
 
     final ControlledResourceFields commonFields =
         toCommonFields(
