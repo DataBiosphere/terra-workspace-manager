@@ -216,6 +216,48 @@ public class SamService {
   }
 
   /**
+   * Returns the 'Action Managed Identity' that the requesting user has access to, if one exists.
+   *
+   * @param samResourceType Type of the Sam resource. e.g. private_azure_container_registry
+   * @param samAction Action to perform on the resource. e.g. pull_image
+   * @param samResourceId Sam ID of the resource. UUID. For private ACR, by convention, the
+   *     resourceID is equivalent to the billingProfileID (a.k.a. SpendProfileId).
+   * @param request The request from user asking for the identity. Used to impersonate the user when
+   *     querying Sam.
+   * @return Fully qualified name of the identity. Might look something like
+   *     /subscriptions/62b22893-6bc1-46d9-8a90-806bb3cce3c9/resourcegroups/mrg-terra-dev-previ-20240104102401/providers/Microsoft.ManagedIdentity/userAssignedIdentities/586d120b-c4c-pull_image
+   */
+  public Optional<String> getActionIdentityForUser(
+      String samResourceType,
+      String samAction,
+      String samResourceId,
+      AuthenticatedUserRequest request)
+      throws InterruptedException {
+
+    String token = getSamUser(request).getBearerToken().getToken();
+    AzureApi azureApi = samAzureApi(token);
+
+    try {
+      ActionManagedIdentityResponse resp =
+          SamRetry.retry(
+              () -> azureApi.getActionManagedIdentity(samResourceType, samResourceId, samAction));
+      return Optional.ofNullable(resp.getObjectId());
+    } catch (ApiException apiException) {
+      String infoStringTemplate = "Billing Profile: %s, Resource Type: %s, Action: %s";
+      if (apiException.getCode() == 404) {
+        logger.info(
+            "Action identity not found in Sam for "
+                + String.format(infoStringTemplate, samResourceId, samResourceType, samAction));
+        return Optional.empty();
+      }
+      throw SamExceptionFactory.create(
+          "Error fetching action managed identity from Sam."
+              + String.format(infoStringTemplate, samResourceId, samResourceType, samAction),
+          apiException);
+    }
+  }
+
+  /**
    * Gets proxy group email.
    *
    * <p>This takes in userEmail instead of AuthenticatedUserRequest because of
