@@ -150,7 +150,7 @@ public class SpendProfileService {
   }
 
   @WithSpan
-  private SpendProfile getSpendProfileFromBpm(
+  public SpendProfile getSpendProfileFromBpm(
       AuthenticatedUserRequest userRequest, SpendProfileId spendProfileId) {
     SpendProfile spend;
     var profileApi = getProfileApi(userRequest);
