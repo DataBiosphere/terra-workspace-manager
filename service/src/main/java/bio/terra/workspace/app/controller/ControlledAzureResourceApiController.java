@@ -81,20 +81,21 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
   @Autowired
   public ControlledAzureResourceApiController(
-          AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
-          HttpServletRequest request,
-          SamService samService,
-          FeatureConfiguration featureConfiguration,
-          FeatureService featureService,
-          JobService jobService,
-          JobApiUtils jobApiUtils,
-          ControlledResourceService controlledResourceService,
-          ControlledResourceMetadataManager controlledResourceMetadataManager,
-          WorkspaceService workspaceService,
-          AzureConfiguration azureConfiguration,
-          AzureStorageAccessService azureControlledStorageResourceService,
-          LandingZoneApiDispatch landingZoneApiDispatch,
-          WsmResourceService wsmResourceService, SpendProfileService spendProfileService) {
+      AuthenticatedUserRequestFactory authenticatedUserRequestFactory,
+      HttpServletRequest request,
+      SamService samService,
+      FeatureConfiguration featureConfiguration,
+      FeatureService featureService,
+      JobService jobService,
+      JobApiUtils jobApiUtils,
+      ControlledResourceService controlledResourceService,
+      ControlledResourceMetadataManager controlledResourceMetadataManager,
+      WorkspaceService workspaceService,
+      AzureConfiguration azureConfiguration,
+      AzureStorageAccessService azureControlledStorageResourceService,
+      LandingZoneApiDispatch landingZoneApiDispatch,
+      WsmResourceService wsmResourceService,
+      SpendProfileService spendProfileService) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -162,12 +163,16 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var workspace =
         validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
 
-    var spendProfile = spendProfileService.getSpendProfileFromBpm(userRequest, workspace.spendProfileId());
+    var spendProfile =
+        spendProfileService.getSpendProfileFromBpm(userRequest, workspace.spendProfileId());
     Map<String, String> limits = spendProfile.organization().limits();
-    if (!limits.isEmpty()){
-      if (limits.containsKey("persistentdisk")){
-        if (body.getAzureDisk().getSize() > Integer.parseInt(limits.get("persistentdisk"))){
-          throw new ValidationException("Unable to create VM; Persistent disk must be less than " + limits.get("persistentdisk") + " gb");
+    if (!limits.isEmpty()) {
+      if (limits.containsKey("persistentdisk")) {
+        if (body.getAzureDisk().getSize() > Integer.parseInt(limits.get("persistentdisk"))) {
+          throw new ValidationException(
+              "Unable to create VM; Persistent disk must be less than "
+                  + limits.get("persistentdisk")
+                  + " gb");
         }
       }
     }
@@ -309,13 +314,17 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var workspace =
         validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
 
-
-    var spendProfile = spendProfileService.getSpendProfileFromBpm(userRequest, workspace.spendProfileId());
+    var spendProfile =
+        spendProfileService.getSpendProfileFromBpm(userRequest, workspace.spendProfileId());
     Map<String, String> limits = spendProfile.organization().limits();
-    if (!limits.isEmpty()){
-      if (limits.containsKey("machinetypes")){
-        if (!limits.get("machinetypes").contains(body.getAzureVm().getVmSize())){
-          throw new ValidationException("Unable to create VM; " + body.getAzureVm().getVmSize() + " is not one of the permitted VMs: " + limits.get("machinetypes"));
+    if (!limits.isEmpty()) {
+      if (limits.containsKey("machinetypes")) {
+        if (!limits.get("machinetypes").contains(body.getAzureVm().getVmSize())) {
+          throw new ValidationException(
+              "Unable to create VM; "
+                  + body.getAzureVm().getVmSize()
+                  + " is not one of the permitted VMs: "
+                  + limits.get("machinetypes"));
         }
       }
     }
