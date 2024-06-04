@@ -91,7 +91,7 @@ class LzJobsApiPactTest {
           .stringType("value")
           .closeArray();
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  @Pact(consumer = "workspacemanager", provider = "landingzone")
   public RequestResponsePact startCreateLandingZone_running(PactDslWithProvider builder) {
     return builder
         .uponReceiving("A request to create a landing zone")
@@ -105,7 +105,7 @@ class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  @Pact(consumer = "workspacemanager", provider = "landingzone")
   public RequestResponsePact startCreateLandingZone_failed(PactDslWithProvider builder) {
     return builder
         .uponReceiving("A request to create a landing zone")
@@ -120,7 +120,7 @@ class LzJobsApiPactTest {
   }
 
   // Reenable when we are able to publish a full-size pact payload via GHA
-  //  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  //  @Pact(consumer = "workspacemanager", provider = "landingzone")
   //  public RequestResponsePact startCreateLandingZone_notAuthorized(PactDslWithProvider builder) {
   //    return builder
   //        .uponReceiving("An unauthorized request to create a landing zone")
@@ -133,7 +133,7 @@ class LzJobsApiPactTest {
   //        .toPact();
   //  }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  @Pact(consumer = "workspacemanager", provider = "landingzone")
   public RequestResponsePact getCreateLandingZoneResult(PactDslWithProvider builder) {
     var createResultResponseShape =
         new PactDslJsonBody()
@@ -162,7 +162,7 @@ class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  @Pact(consumer = "workspacemanager", provider = "landingzone")
   public RequestResponsePact getCreateLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
         .given(
@@ -178,7 +178,7 @@ class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  @Pact(consumer = "workspacemanager", provider = "landingzone")
   public RequestResponsePact startDeleteLandingZone_running(PactDslWithProvider builder) {
     var deleteRequestShape =
         new PactDslJsonBody().object("jobControl").stringType("id").closeObject();
@@ -203,7 +203,7 @@ class LzJobsApiPactTest {
   }
 
   // Reenable when we are able to publish a full-size pact payload via GHA
-  //  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  //  @Pact(consumer = "workspacemanager", provider = "landingzone")
   //  public RequestResponsePact startDeleteLandingZone_notAuthorized(PactDslWithProvider builder) {
   //    var deleteRequestShape = new PactDslJsonBody().object("jobControl", jobControlShape);
   //
@@ -220,7 +220,7 @@ class LzJobsApiPactTest {
   //        .toPact();
   //  }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  @Pact(consumer = "workspacemanager", provider = "landingzone")
   public RequestResponsePact getDeleteLandingZoneResult_success(PactDslWithProvider builder) {
     var deleteResultResponseShape =
         new PactDslJsonBody()
@@ -246,7 +246,7 @@ class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  @Pact(consumer = "workspacemanager", provider = "landingzone")
   public RequestResponsePact getDeleteLandingZoneResult_failed(PactDslWithProvider builder) {
     var deleteResultResponseShape =
         new PactDslJsonBody()
@@ -272,7 +272,7 @@ class LzJobsApiPactTest {
         .toPact();
   }
 
-  @Pact(consumer = "workspacemanager", provider = "terra-landing-zone-service")
+  @Pact(consumer = "workspacemanager", provider = "landingzone")
   public RequestResponsePact getDeleteLandingZoneResult_notAuthorized(PactDslWithProvider builder) {
     return builder
         .given(
