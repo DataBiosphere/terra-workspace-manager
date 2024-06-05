@@ -29,6 +29,8 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -210,7 +212,9 @@ public class ControlledAzureVmResource extends ControlledResource {
     // VMs default to Regular priority if not specified
     var priority = Optional.ofNullable(getPriority()).orElse(ApiAzureVmPriority.REGULAR);
     var userAssigedIdentities = new ApiAzureVmUserAssignedIdentities();
-    userAssigedIdentities.addAll(getUserAssignedIdentities());
+    if (CollectionUtils.isNotEmpty(getUserAssignedIdentities())) {
+      userAssigedIdentities.addAll(getUserAssignedIdentities());
+    }
     return new ApiAzureVmAttributes()
         .vmName(getVmName())
         .region(getRegion())
