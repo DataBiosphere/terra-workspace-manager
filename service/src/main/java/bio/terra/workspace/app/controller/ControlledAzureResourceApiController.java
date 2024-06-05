@@ -305,6 +305,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             WsmResourceType.CONTROLLED_AZURE_VM);
 
     AzureResourceValidationUtils.validateAzureVmImage(body.getAzureVm());
+    // Validate user-assigned managed identities can only be passed for application-managed VMs
     AzureResourceValidationUtils.validateAzureVmUserAssignedIdentities(
         body.getAzureVm().getUserAssignedIdentities(), commonFields.getManagedBy());
     ControlledAzureVmResource resource =

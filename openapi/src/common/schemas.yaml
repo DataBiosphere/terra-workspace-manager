@@ -56,12 +56,12 @@ components:
         - COPY_RESOURCE
         - COPY_REFERENCE
         - COPY_LINK_REFERENCE
-
+  
     ControlledResourceIamRole:
       description: Enum containing all IAM roles on controlled resources available to users
       type: string
       enum: [ 'READER', 'WRITER', 'EDITOR' ]
-
+  
     ControlledResourceMetadata:
       type: object
       properties:
@@ -77,7 +77,7 @@ components:
           description: |
             A valid region string representation of the cloud resource.
           type: string
-
+  
     ControlledResourceCommonFields:
       type: object
       required: [ name, cloningInstructions, accessScope, managedBy ]
@@ -153,7 +153,7 @@ components:
             URL where the result of the job can be retrieved. Equivalent to a
             Location header in HTTP.
           type: string
-
+  
     JobControl:
       type: object
       required: [ id ]
@@ -169,7 +169,7 @@ components:
       type: string
       description: Specifies the controller of the resource, workspace users or an application
       enum: [ 'USER', 'APPLICATION' ]
-
+  
     Name:
       type: string
       pattern: '^[a-zA-Z0-9][-_a-zA-Z0-9]{0,1023}$'
@@ -203,7 +203,7 @@ components:
           type: string
         privateResourceIamRole:
           $ref: '#/components/schemas/ControlledResourceIamRole'
-
+  
     PrivateResourceState:
       description: >-
         The possible states of ownership of a private resource. When a resource is abandoned, the
@@ -214,7 +214,7 @@ components:
       - ACTIVE
       - INITIALIZING
       - NOT_APPLICABLE
-
+  
     ReferenceResourceCommonFields:
       type: object
       required: [name, cloningInstructions]
