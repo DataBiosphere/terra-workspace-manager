@@ -591,10 +591,11 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
   @Test
   void validateAzureVmUserAssignedIdentities_invalid() {
+    var identities = List.of("ident1", "ident2");
     assertThrows(
         ValidationException.class,
         () ->
             AzureResourceValidationUtils.validateAzureVmUserAssignedIdentities(
-                List.of("ident1", "ident2"), ManagedByType.MANAGED_BY_USER));
+                identities, ManagedByType.MANAGED_BY_USER));
   }
 }

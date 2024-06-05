@@ -209,10 +209,10 @@ public class ControlledAzureVmResource extends ControlledResource {
 
   public ApiAzureVmAttributes toApiAttributes() {
     // VMs default to Regular priority if not specified
-    var priority = Optional.ofNullable(getPriority()).orElse(ApiAzureVmPriority.REGULAR);
-    var userAssigedIdentities = new ApiAzureVmUserAssignedIdentities();
+    var priorityAttr = Optional.ofNullable(getPriority()).orElse(ApiAzureVmPriority.REGULAR);
+    var userAssigedIdentitiesAttr = new ApiAzureVmUserAssignedIdentities();
     if (CollectionUtils.isNotEmpty(getUserAssignedIdentities())) {
-      userAssigedIdentities.addAll(getUserAssignedIdentities());
+      userAssigedIdentitiesAttr.addAll(getUserAssignedIdentities());
     }
     return new ApiAzureVmAttributes()
         .vmName(getVmName())
@@ -220,8 +220,8 @@ public class ControlledAzureVmResource extends ControlledResource {
         .vmSize(getVmSize())
         .vmImage(getVmImage())
         .diskId(getDiskId())
-        .priority(priority)
-        .userAssignedIdentities(userAssigedIdentities);
+        .priority(priorityAttr)
+        .userAssignedIdentities(userAssigedIdentitiesAttr);
   }
 
   public ApiAzureVmResource toApiResource() {
