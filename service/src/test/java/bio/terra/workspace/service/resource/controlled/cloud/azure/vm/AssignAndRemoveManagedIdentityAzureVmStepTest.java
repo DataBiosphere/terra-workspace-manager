@@ -137,7 +137,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
 
   @Test
   void assignUserAssignedManagedIdentityToVm_fromRequest() throws InterruptedException {
-    when(mockControlledResourceFields.userAssignedIdentities())
+    when(mockAzureVmResource.getUserAssignedIdentities())
         .thenReturn(List.of(STUB_STRING_PET_MANAGED_IDENTITY, STUB_STRING_OTHER_MANAGED_IDENTITY));
 
     var assignManagedIdentityAzureVmStep =

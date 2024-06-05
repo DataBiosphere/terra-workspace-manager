@@ -51,10 +51,8 @@ public class AssignManagedIdentityAzureVmStep implements Step {
     Set<String> userAssignedIdentities = new HashSet<>();
 
     // Add user assigned identities from the request, if any
-    if (CollectionUtils.isNotEmpty(
-        resource.getWsmControlledResourceFields().userAssignedIdentities())) {
-      userAssignedIdentities.addAll(
-          resource.getWsmControlledResourceFields().userAssignedIdentities());
+    if (CollectionUtils.isNotEmpty(resource.getUserAssignedIdentities())) {
+      userAssignedIdentities.addAll(resource.getUserAssignedIdentities());
     }
 
     // If there is a private resource user, request a pet for that user

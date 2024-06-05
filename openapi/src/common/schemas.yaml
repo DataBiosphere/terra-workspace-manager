@@ -77,8 +77,6 @@ components:
           description: |
             A valid region string representation of the cloud resource.
           type: string
-        userAssignedIdentities:
-          $ref: '#/components/schemas/UserAssignedIdentities'
 
     ControlledResourceCommonFields:
       type: object
@@ -101,8 +99,6 @@ components:
           format: uuid
         properties:
           $ref: '#/components/schemas/Properties'
-        userAssignedIdentities:
-          $ref: '#/components/schemas/UserAssignedIdentities'
 
     DefaultTableLifetime:
       description: Optional. Default lifetime (in seconds) for newly created tables.
@@ -357,14 +353,6 @@ components:
     Regions:
       type: array
       description: List of regions (e.g. us-central1, us-west1)
-      items:
-        uniqueItems: true
-        type: string
-
-    UserAssignedIdentities:
-      type: array
-      description: |
-        List of cloud identities to assign to the resource. Only accepted for application-managed resources.
       items:
         uniqueItems: true
         type: string

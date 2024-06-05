@@ -15,7 +15,6 @@ import bio.terra.workspace.db.exception.FieldSizeExceededException;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.resource.controlled.exception.RegionNotAllowedException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -30,7 +29,6 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,15 +145,6 @@ public class ResourceValidationUtils {
         String.format(
             "Cloning Instruction %s is not valid with Stewardship Type %s",
             cloningInstructions.toString(), stewardshipType));
-  }
-
-  public static void validateUserAssignedIdentities(
-      List<String> userAssignedIdentities, ManagedByType managedBy) {
-    if (CollectionUtils.isNotEmpty(userAssignedIdentities)
-        && managedBy != ManagedByType.MANAGED_BY_APPLICATION) {
-      throw new ValidationException(
-          "User-assigned identities may only be specified for application-managed resources");
-    }
   }
 
   // Region

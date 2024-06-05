@@ -389,7 +389,7 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> AzureResourceValidationUtils.validate(apiVmCreationParameters));
+        () -> AzureResourceValidationUtils.validateAzureVmImage(apiVmCreationParameters));
   }
 
   @Test
@@ -401,7 +401,7 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> AzureResourceValidationUtils.validate(apiVmCreationParameters));
+        () -> AzureResourceValidationUtils.validateAzureVmImage(apiVmCreationParameters));
   }
 
   @Test
@@ -417,7 +417,7 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> AzureResourceValidationUtils.validate(apiVmCreationParameters));
+        () -> AzureResourceValidationUtils.validateAzureVmImage(apiVmCreationParameters));
   }
 
   @Test
@@ -433,7 +433,7 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> AzureResourceValidationUtils.validate(apiVmCreationParameters));
+        () -> AzureResourceValidationUtils.validateAzureVmImage(apiVmCreationParameters));
   }
 
   @Test

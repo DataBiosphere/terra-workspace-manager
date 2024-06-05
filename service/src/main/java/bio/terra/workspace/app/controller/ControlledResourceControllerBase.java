@@ -85,7 +85,6 @@ public class ControlledResourceControllerBase extends ControllerBase {
     PrivateUserRole privateUserRole =
         computePrivateUserRole(workspaceUuid, apiCommonFields, userRequest);
     String userEmail = samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest);
-    List<String> userAssignedIdentities = apiCommonFields.getUserAssignedIdentities();
 
     if (!WSM_RESOURCE_WITHOUT_REGION_IN_CREATION_PARAMS.contains(wsmResourceType)) {
       checkArgument(
@@ -113,7 +112,6 @@ public class ControlledResourceControllerBase extends ControllerBase {
         .properties(PropertiesUtils.convertApiPropertyToMap(apiCommonFields.getProperties()))
         .createdByEmail(userEmail)
         .region(region)
-        .userAssignedIdentities(userAssignedIdentities)
         .build();
   }
 }

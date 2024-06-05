@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.resource.controlled.model;
 
 import bio.terra.workspace.db.model.DbResource;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -18,8 +17,7 @@ public record WsmControlledResourceFields(
     AccessScopeType accessScope,
     ManagedByType managedBy,
     @Nullable String applicationId,
-    @Nullable String region,
-    @Nullable List<String> userAssignedIdentities) {
+    @Nullable String region) {
 
   public static WsmControlledResourceFields fromDb(DbResource dbResource) {
     return new WsmControlledResourceFields(
@@ -28,9 +26,7 @@ public record WsmControlledResourceFields(
         dbResource.getAccessScope(),
         dbResource.getManagedBy(),
         dbResource.getApplicationId().orElse(null),
-        dbResource.getRegion(),
-        null // TODO add userAssignedIdentities to DB
-        );
+        dbResource.getRegion());
   }
 
   public static WsmControlledResourceFields fromControlledResource(
@@ -41,8 +37,6 @@ public record WsmControlledResourceFields(
         controlledResource.getAccessScope(),
         controlledResource.getManagedBy(),
         controlledResource.getApplicationId(),
-        controlledResource.getRegion(),
-        null // TODO add userAssignedIdentities to DB
-        );
+        controlledResource.getRegion());
   }
 }
