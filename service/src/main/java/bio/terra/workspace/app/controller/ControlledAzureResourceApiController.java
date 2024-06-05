@@ -334,6 +334,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(creationParameters.getDiskId())
+        .priority(creationParameters.getPriority())
+        .userAssignedIdentities(creationParameters.getUserAssignedIdentities())
         .build();
   }
 

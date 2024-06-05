@@ -29,11 +29,10 @@ import bio.terra.workspace.service.resource.model.WsmResourceType;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.collections4.CollectionUtils;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.collections4.CollectionUtils;
 
 public class ControlledAzureVmResource extends ControlledResource {
   private final String vmName;
