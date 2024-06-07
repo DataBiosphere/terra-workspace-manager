@@ -71,6 +71,7 @@ public class AssignManagedIdentityAzureVmStep implements Step {
     return StepResult.getStepResultSuccess();
   }
 
+  // TESTING
   @Override
   public StepResult undoStep(FlightContext context) throws InterruptedException {
     final AzureCloudContext azureCloudContext =
