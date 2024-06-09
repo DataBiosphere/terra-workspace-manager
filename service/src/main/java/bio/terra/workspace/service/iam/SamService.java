@@ -819,6 +819,10 @@ public class SamService {
     // We detect that an application is enabled in Sam by checking if the application has
     // the create-controlled-application-private action on the workspace.
     try {
+      logger.info(
+              "Checking SAM permission {} for {}",
+              SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
+              email);
       ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
       return resourcesApi.resourceActionV2(
           SamConstants.SamResource.WORKSPACE,
