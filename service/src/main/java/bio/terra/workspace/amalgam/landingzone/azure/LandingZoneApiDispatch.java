@@ -176,7 +176,7 @@ public class LandingZoneApiDispatch {
 
   public UUID getLandingZoneId(BearerToken token, Workspace workspace) {
     Optional<UUID> profileId = workspace.getSpendProfileId().map(sp -> UUID.fromString(sp.getId()));
-
+    logger.warn("Get landing zone for billing profile: {} workspace: {}", profileId.get(), workspace.getWorkspaceId());
     if (profileId.isEmpty()) {
       throw new LandingZoneNotFoundException(
           String.format(
@@ -189,6 +189,7 @@ public class LandingZoneApiDispatch {
         Rethrow.onInterrupted(
             () -> amalgamated.listLandingZonesByBillingProfile(token, profileId.get()),
             "listLandingZonesByBillingProfile");
+    logger.warn(response.toString());
     return response.getLandingzones().stream()
         .findFirst()
         .map(ApiAzureLandingZone::getLandingZoneId)
@@ -265,6 +266,7 @@ public class LandingZoneApiDispatch {
    */
   public String getLandingZoneRegionForWorkspaceUsingWsmToken(Workspace workspace) {
     var token = new BearerToken(samService.getWsmServiceAccountToken());
+    logger.warn("WSM Service Account token: {}", token);
     var lzId = getLandingZoneId(token, workspace);
     return getLandingZoneRegionUsingWsmToken(lzId);
   }
