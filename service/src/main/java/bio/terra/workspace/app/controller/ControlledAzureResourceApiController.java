@@ -245,6 +245,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Override
   public ResponseEntity<ApiCreatedControlledAzureStorageContainer> createAzureStorageContainer(
       UUID workspaceUuid, ApiCreateControlledAzureStorageContainerRequestBody body) {
+    logger.info("Create Azure Storage Container: {}", body.toString());
     features.azureEnabledCheck();
 
     // validate the workspace and user access
@@ -252,6 +253,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     var workspace =
         validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
 
+    logger.info("Found workspace");
     // create the resource
     final ControlledResourceFields commonFields =
         toCommonFields(
@@ -264,11 +266,13 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     ControlledAzureStorageContainerResource resource =
         buildControlledAzureStorageContainerResource(body.getAzureStorageContainer(), commonFields);
 
+    logger.info("Built resource");
     final ControlledAzureStorageContainerResource createdStorageContainer =
         controlledResourceService
             .createControlledResourceSync(
                 resource, commonFields.getIamRole(), userRequest, body.getAzureStorageContainer())
             .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+    logger.info("created container");
     UUID resourceUuid = createdStorageContainer.getResourceId();
     var response =
         new ApiCreatedControlledAzureStorageContainer()
