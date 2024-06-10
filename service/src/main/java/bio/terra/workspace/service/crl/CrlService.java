@@ -70,9 +70,6 @@ public class CrlService {
   /** The client name required by CRL. */
   private static final String CLIENT_NAME = "workspace";
 
-  /** How long to keep the resource before Janitor does the cleanup. */
-  private static final Duration TEST_RESOURCE_TIME_TO_LIVE = Duration.ofHours(1);
-
   @Value("${azure.customer.usage-attribute:}")
   private String azureCustomerUsageAttribute;
 
@@ -554,7 +551,7 @@ public class CrlService {
       builder.setCleanupConfig(
           CleanupConfig.builder()
               .setCleanupId(CLIENT_NAME + "-test")
-              .setTimeToLive(TEST_RESOURCE_TIME_TO_LIVE)
+              .setTimeToLive(Duration.ofHours(crlConfig.getJanitorTtlHours()))
               .setJanitorProjectId(crlConfig.getJanitorTrackResourceProjectId())
               .setJanitorTopicName(crlConfig.getJanitorTrackResourceTopicId())
               .setCredentials(getJanitorCredentials(crlConfig.getJanitorClientCredentialFilePath()))

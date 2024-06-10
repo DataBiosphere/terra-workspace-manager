@@ -33,6 +33,9 @@ public class CrlConfiguration {
   /** pubsub topic id to publish track resource to Janitor */
   private String janitorTrackResourceTopicId;
 
+  /** Number of hours before Janitor cleans up a tracked resource */
+  private int janitorTtlHours = 1;
+
   public boolean getUseCrl() {
     return useCrl;
   }
@@ -57,6 +60,10 @@ public class CrlConfiguration {
     return janitorTrackResourceTopicId;
   }
 
+  public int getJanitorTtlHours() {
+    return janitorTtlHours;
+  }
+
   public void setUseJanitor(boolean useJanitor) {
     this.useJanitor = useJanitor;
   }
@@ -71,5 +78,9 @@ public class CrlConfiguration {
 
   public void setJanitorTrackResourceTopicId(String janitorTrackResourceTopicId) {
     this.janitorTrackResourceTopicId = janitorTrackResourceTopicId;
+  }
+
+  public void setJanitorTtlHours(int janitorTtlHours) {
+    this.janitorTtlHours = janitorTtlHours;
   }
 }
