@@ -266,7 +266,7 @@ public class LandingZoneApiDispatch {
    */
   public String getLandingZoneRegionForWorkspaceUsingWsmToken(Workspace workspace) {
     var token = new BearerToken(samService.getWsmServiceAccountToken());
-    logger.warn("WSM Service Account token: {}", token);
+    logger.warn("WSM Service Account token: {}", token.getToken());
     var lzId = getLandingZoneId(token, workspace);
     return getLandingZoneRegionUsingWsmToken(lzId);
   }
