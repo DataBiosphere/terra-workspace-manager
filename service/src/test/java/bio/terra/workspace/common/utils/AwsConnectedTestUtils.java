@@ -46,7 +46,7 @@ public class AwsConnectedTestUtils {
             environment.getMetadata().getEnvironmentAlias(),
             /*workspaceSecurityGroups*/ null),
         new CloudContextCommonFields(
-            WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+            WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID,
             WsmResourceState.READY,
             /* flightId= */ null,
             /* error= */ null));

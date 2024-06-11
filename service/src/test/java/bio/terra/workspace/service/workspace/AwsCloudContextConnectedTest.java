@@ -136,7 +136,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
     AwsCloudContext createdCloudContext =
         awsCloudContextService.createCloudContext(
             "flightId",
-            WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+            WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID,
             WorkspaceFixtures.DEFAULT_USER_EMAIL,
             null);
     assertNotNull(createdCloudContext);
@@ -147,7 +147,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
         createdCloudContext.getContextFields());
     AwsTestUtils.assertCloudContextCommonFields(
         createdCloudContext.getCommonFields(),
-        WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+        WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID,
         WsmResourceState.CREATING,
         "flightId");
   }
@@ -171,7 +171,7 @@ public class AwsCloudContextConnectedTest extends BaseAwsConnectedTest {
 
     CloudContextCommonFields commonFields =
         new CloudContextCommonFields(
-            WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID, WsmResourceState.READY, "i", null);
+            WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID, WsmResourceState.READY, "i", null);
 
     // error - bad cloud context
     assertThrows(

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -53,7 +53,7 @@ public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
         createdCloudContext.getContextFields());
     AwsTestUtils.assertCloudContextCommonFields(
         createdCloudContext.getCommonFields(),
-        DEFAULT_SPEND_PROFILE_ID,
+            DEFAULT_GCP_SPEND_PROFILE_ID,
         WsmResourceState.READY,
         null);
 

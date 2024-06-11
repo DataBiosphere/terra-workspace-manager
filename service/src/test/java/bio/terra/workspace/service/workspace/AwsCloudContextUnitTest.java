@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.AwsTestUtils.ACCOUNT_ID;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_ENVIRONMENT;
@@ -56,7 +56,7 @@ public class AwsCloudContextUnitTest extends BaseAwsSpringBootUnitTest {
 
   private final AwsCloudContext awsCloudContext =
       AwsCloudContextService.createCloudContext(
-          "flightId", DEFAULT_SPEND_PROFILE_ID, AWS_ENVIRONMENT, AWS_WORKSPACE_SECURITY_GROUPS);
+          "flightId", DEFAULT_GCP_SPEND_PROFILE_ID, AWS_ENVIRONMENT, AWS_WORKSPACE_SECURITY_GROUPS);
 
   @Test
   void serdesTest() {
@@ -166,12 +166,12 @@ public class AwsCloudContextUnitTest extends BaseAwsSpringBootUnitTest {
   void createCloudContextTest() {
     AwsCloudContext createdCloudContext =
         AwsCloudContextService.createCloudContext(
-            "flightId", DEFAULT_SPEND_PROFILE_ID, AWS_ENVIRONMENT, AWS_WORKSPACE_SECURITY_GROUPS);
+            "flightId", DEFAULT_GCP_SPEND_PROFILE_ID, AWS_ENVIRONMENT, AWS_WORKSPACE_SECURITY_GROUPS);
     assertNotNull(createdCloudContext);
     AwsTestUtils.assertAwsCloudContextFields(AWS_METADATA, createdCloudContext.getContextFields());
     AwsTestUtils.assertCloudContextCommonFields(
         createdCloudContext.getCommonFields(),
-        DEFAULT_SPEND_PROFILE_ID,
+            DEFAULT_GCP_SPEND_PROFILE_ID,
         WsmResourceState.CREATING,
         "flightId");
   }

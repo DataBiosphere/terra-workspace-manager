@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.utils;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -96,7 +96,7 @@ public class AwsTestUtils {
             ENVIRONMENT_ALIAS,
             AWS_WORKSPACE_SECURITY_GROUPS),
         new CloudContextCommonFields(
-            DEFAULT_SPEND_PROFILE_ID,
+                DEFAULT_GCP_SPEND_PROFILE_ID,
             WsmResourceState.READY,
             /* flightId= */ null,
             /* error= */ null));

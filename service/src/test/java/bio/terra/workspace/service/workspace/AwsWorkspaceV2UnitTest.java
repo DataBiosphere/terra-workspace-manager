@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SAM_USER;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.utils.AwsTestUtils.AWS_ENVIRONMENT;
@@ -65,7 +65,7 @@ public class AwsWorkspaceV2UnitTest extends BaseAwsSpringBootUnitTest {
           null,
           null,
           CloudPlatform.AWS,
-          DEFAULT_SPEND_PROFILE,
+              DEFAULT_GCP_SPEND_PROFILE,
           null,
           jobId,
           USER_REQUEST);
@@ -79,7 +79,7 @@ public class AwsWorkspaceV2UnitTest extends BaseAwsSpringBootUnitTest {
           AWS_METADATA, createdCloudContext.getContextFields());
       AwsTestUtils.assertCloudContextCommonFields(
           createdCloudContext.getCommonFields(),
-          WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+          WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID,
           WsmResourceState.READY,
           null);
 

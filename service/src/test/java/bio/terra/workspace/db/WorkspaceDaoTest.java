@@ -1,6 +1,6 @@
 package bio.terra.workspace.db;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID;
 import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_USER_EMAIL;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_APPLICATION;
 import static bio.terra.workspace.common.utils.WorkspaceUnitTestUtils.POLICY_OWNER;
@@ -338,7 +338,7 @@ class WorkspaceDaoTest extends BaseSpringBootUnitTest {
       // Mismatched flight id
       String flightId = UUID.randomUUID().toString();
       workspaceDao.createCloudContextStart(
-          workspaceUuid, CloudPlatform.GCP, DEFAULT_SPEND_PROFILE_ID, flightId);
+          workspaceUuid, CloudPlatform.GCP, DEFAULT_GCP_SPEND_PROFILE_ID, flightId);
 
       String gcpContextString = makeCloudContext().serialize();
 
@@ -404,7 +404,7 @@ class WorkspaceDaoTest extends BaseSpringBootUnitTest {
     void workspaceCreateErrorDeserializes() {
       var flightId = UUID.randomUUID().toString();
       workspaceDao.createCloudContextStart(
-          workspaceUuid, CloudPlatform.GCP, DEFAULT_SPEND_PROFILE_ID, flightId);
+          workspaceUuid, CloudPlatform.GCP, DEFAULT_GCP_SPEND_PROFILE_ID, flightId);
       var exception = new FieldSizeExceededException("This is a random ErrorReportException");
       workspaceDao.createCloudContextFailure(
           workspaceUuid,
@@ -467,7 +467,7 @@ class WorkspaceDaoTest extends BaseSpringBootUnitTest {
         new GcpCloudContextFields(
             PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
         new CloudContextCommonFields(
-            DEFAULT_SPEND_PROFILE_ID,
+                DEFAULT_GCP_SPEND_PROFILE_ID,
             WsmResourceState.READY,
             /* flightId= */ null,
             /* error= */ null));

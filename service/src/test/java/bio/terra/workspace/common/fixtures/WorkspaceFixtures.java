@@ -15,6 +15,7 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -40,11 +41,17 @@ public class WorkspaceFixtures {
       new ApiProperty().key(Properties.VERSION).value("version 3");
   public static final ApiProperty USER_SET_PROPERTY =
       new ApiProperty().key("userkey").value("uservalue");
-  public static final String DEFAULT_SPEND_PROFILE_NAME = "wm-default-spend-profile";
-  public static final SpendProfileId DEFAULT_SPEND_PROFILE_ID =
-      new SpendProfileId(DEFAULT_SPEND_PROFILE_NAME);
-  public static final SpendProfile DEFAULT_SPEND_PROFILE =
-      SpendProfile.buildGcpSpendProfile(DEFAULT_SPEND_PROFILE_ID, "billingAccountId");
+  public static final String DEFAULT_GCP_SPEND_PROFILE_NAME = "wm-default-spend-profile";
+  public static final SpendProfileId DEFAULT_GCP_SPEND_PROFILE_ID =
+      new SpendProfileId(DEFAULT_GCP_SPEND_PROFILE_NAME);
+  public static final SpendProfile DEFAULT_GCP_SPEND_PROFILE =
+      SpendProfile.buildGcpSpendProfile(DEFAULT_GCP_SPEND_PROFILE_ID, "billingAccountId");
+  public static final String DEFAULT_AZURE_SPEND_PROFILE_NAME = "facade00-0000-4000-a000-000000000000";
+  public static final SpendProfileId DEFAULT_AZURE_SPEND_PROFILE_ID =
+          new SpendProfileId(DEFAULT_AZURE_SPEND_PROFILE_NAME);
+//  public static final SpendProfile DEFAULT_AZURE_SPEND_PROFILE =
+//          SpendProfile.buildAzureSpendProfile(DEFAULT_AZURE_SPEND_PROFILE_ID, UUID.fromString("decade00-0000-4000-a000-000000000000"), UUID.fromString("5ca1ab1e-0000-4000-a000-000000000000"), "default-MRG", new SpendProfileOrganization(false, ));
+
   public static final String DEFAULT_USER_EMAIL = "fake@gmail.com";
   public static final String DEFAULT_USER_SUBJECT_ID = "subjectId123456";
   public static final SamUser SAM_USER =
@@ -64,7 +71,7 @@ public class WorkspaceFixtures {
   }
 
   public static Workspace createDefaultMcWorkspace() {
-    return createDefaultMcWorkspace(DEFAULT_SPEND_PROFILE_ID);
+    return createDefaultMcWorkspace(DEFAULT_GCP_SPEND_PROFILE_ID);
   }
 
   public static Workspace createDefaultMcWorkspace(SpendProfileId spendProfileId) {
@@ -139,7 +146,7 @@ public class WorkspaceFixtures {
         .description("A test workspace created by createWorkspaceRequestBody")
         .userFacingId(getUserFacingId(workspaceId))
         .stage(stageModel)
-        .spendProfile(DEFAULT_SPEND_PROFILE_NAME)
+        .spendProfile(DEFAULT_GCP_SPEND_PROFILE_NAME)
         .properties(properties);
   }
 

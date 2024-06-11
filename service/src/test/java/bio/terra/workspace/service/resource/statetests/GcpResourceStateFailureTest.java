@@ -102,7 +102,7 @@ public class GcpResourceStateFailureTest extends BaseSpringBootUnitTest {
     workspaceDao.createCloudContextStart(
         workspace.getWorkspaceId(),
         CloudPlatform.GCP,
-        WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+        WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID,
         createContextFlightId);
 
     // GCP-Controlled Instance
@@ -332,7 +332,7 @@ public class GcpResourceStateFailureTest extends BaseSpringBootUnitTest {
     workspaceDao.createCloudContextStart(
         targetWorkspace.getWorkspaceId(),
         CloudPlatform.GCP,
-        WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID,
+        WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID,
         createContextFlightId);
 
     mockGcpApi.cloneControlledBqDatasetAsyncAndExpect(

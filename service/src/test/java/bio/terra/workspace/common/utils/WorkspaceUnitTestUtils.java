@@ -1,6 +1,6 @@
 package bio.terra.workspace.common.utils;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID;
 
 import bio.terra.workspace.common.fixtures.WorkspaceFixtures;
 import bio.terra.workspace.db.WorkspaceDao;
@@ -40,7 +40,7 @@ public class WorkspaceUnitTestUtils {
   public static DbCloudContext makeDbCloudContext(CloudPlatform cloudPlatform, String json) {
     return new DbCloudContext()
         .cloudPlatform(cloudPlatform)
-        .spendProfile(DEFAULT_SPEND_PROFILE_ID)
+        .spendProfile(DEFAULT_GCP_SPEND_PROFILE_ID)
         .contextJson(json)
         .state(WsmResourceState.READY)
         .flightId(null)
@@ -76,7 +76,7 @@ public class WorkspaceUnitTestUtils {
       WorkspaceDao workspaceDao, UUID workspaceUuid, String projectId) {
     String flightId = UUID.randomUUID().toString();
     workspaceDao.createCloudContextStart(
-        workspaceUuid, CloudPlatform.GCP, DEFAULT_SPEND_PROFILE_ID, flightId);
+        workspaceUuid, CloudPlatform.GCP, DEFAULT_GCP_SPEND_PROFILE_ID, flightId);
     workspaceDao.createCloudContextSuccess(
         workspaceUuid,
         CloudPlatform.GCP,
@@ -84,7 +84,7 @@ public class WorkspaceUnitTestUtils {
                 new GcpCloudContextFields(
                     projectId, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
                 new CloudContextCommonFields(
-                    DEFAULT_SPEND_PROFILE_ID,
+                        DEFAULT_GCP_SPEND_PROFILE_ID,
                     WsmResourceState.CREATING,
                     flightId,
                     /* error= */ null))

@@ -1,6 +1,6 @@
 package bio.terra.workspace.service.workspace;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_ID;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_ID;
 import static bio.terra.workspace.common.mocks.MockGcpApi.CONTROLLED_GCP_GCS_BUCKETS_PATH_FORMAT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -252,7 +252,7 @@ class GcpCloudContextConnectedTest extends BaseConnectedTest {
             .userFacingId("dest-user-facing-id")
             .displayName("Destination Workspace")
             .description("Copied from source")
-            .spendProfileId(DEFAULT_SPEND_PROFILE_ID)
+            .spendProfileId(DEFAULT_GCP_SPEND_PROFILE_ID)
             .build();
 
     String destinationLocation = "us-east1";
