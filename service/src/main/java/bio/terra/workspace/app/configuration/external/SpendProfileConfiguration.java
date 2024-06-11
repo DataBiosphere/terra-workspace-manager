@@ -1,8 +1,11 @@
 package bio.terra.workspace.app.configuration.external;
 
+import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -18,16 +21,16 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "workspace.spend")
 public class SpendProfileConfiguration {
   /** The Spend Profiles known to Workspace Manager. */
-  private List<SpendProfileModel> spendProfiles = new ArrayList<>();
+  private List<SpendProfile> spendProfiles = new ArrayList<>();
 
   /** URL of the billing profile manager instance */
   private String basePath;
 
-  public List<SpendProfileModel> getSpendProfiles() {
+  public List<SpendProfile> getSpendProfiles() {
     return ImmutableList.copyOf(spendProfiles);
   }
 
-  public void setSpendProfiles(List<SpendProfileModel> spendProfiles) {
+  public void setSpendProfiles(List<SpendProfile> spendProfiles) {
     this.spendProfiles = spendProfiles;
   }
 
@@ -47,6 +50,8 @@ public class SpendProfileConfiguration {
     /** The id of the Google Billing Account associated with the Spend Profile. */
     private String billingAccountId;
 
+    private Map<String, String> limits;
+
     public String getId() {
       return id;
     }
@@ -61,6 +66,14 @@ public class SpendProfileConfiguration {
 
     public void setBillingAccountId(String billingAccountId) {
       this.billingAccountId = billingAccountId;
+    }
+
+    public Map<String, String>  getLimits(){
+      return limits;
+    }
+
+    public void setLimits(Map<String, String> limits){
+      this.limits = limits;
     }
   }
 }

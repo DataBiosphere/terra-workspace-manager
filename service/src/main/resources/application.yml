@@ -152,6 +152,17 @@ workspace:
       id: wm-default-spend-profile
       # The billing account workspace-dev has access to.
       billing-account-id: 01A82E-CA8A14-367457
+      cloud-platform: GCP
+    - id: facade00-0000-4000-a000-000000000000
+      tenant-id: decade00-0000-4000-a000-000000000000
+      subscription-id: 5ca1ab1e-0000-4000-a000-000000000000
+      managed-resource-group-id: default-MRG
+      cloud-platform: AZURE
+      organization:
+        enterprise: false
+        limits:
+          persistent-disk: 32
+
 
   landing-zone:
     base-path: ${env.urls.lzs}

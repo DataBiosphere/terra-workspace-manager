@@ -13,6 +13,8 @@ import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
+
+import java.util.Collections;
 import java.util.UUID;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,7 +80,7 @@ public class BaseAzureConnectedTest extends BaseSpringBootTest {
                 UUID.fromString(azureTestUtils.getAzureCloudContext().getAzureTenantId()),
                 UUID.fromString(azureTestUtils.getAzureCloudContext().getAzureSubscriptionId()),
                 azureTestUtils.getAzureCloudContext().getAzureResourceGroupId(),
-                new SpendProfileOrganization(false)));
+                new SpendProfileOrganization(false, Collections.emptyMap())));
 
     return azureTestUtils.getSpendProfileId();
   }

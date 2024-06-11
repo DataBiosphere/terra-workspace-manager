@@ -57,7 +57,8 @@ public class SpendProfileService {
       OpenTelemetry openTelemetry) {
     this(
         samService,
-        adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
+//        adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
+            spendProfileConfiguration.getSpendProfiles(),
         spendProfileConfiguration,
         openTelemetry);
   }
@@ -134,9 +135,11 @@ public class SpendProfileService {
         .filter(
             // filter out empty profiles
             spendModel ->
-                !Strings.isNullOrEmpty(spendModel.getBillingAccountId())
-                    && !Strings.isNullOrEmpty(spendModel.getId()))
-        .map(
+                !Strings.isNullOrEmpty(spendModel.getId()))
+//    spendModel ->
+//            !Strings.isNullOrEmpty(spendModel.getBillingAccountId())
+//                    && !Strings.isNullOrEmpty(spendModel.getId()))
+    .map(
             spendModel ->
                 new SpendProfile(
                     new SpendProfileId(spendModel.getId()),

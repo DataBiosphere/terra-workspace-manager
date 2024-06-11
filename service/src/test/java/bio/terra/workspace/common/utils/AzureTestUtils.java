@@ -35,6 +35,7 @@ import com.azure.resourcemanager.msi.MsiManager;
 import com.azure.resourcemanager.postgresqlflexibleserver.PostgreSqlManager;
 import com.azure.resourcemanager.storage.StorageManager;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -162,6 +163,6 @@ public class AzureTestUtils {
         UUID.fromString(azureTestConfiguration.getTenantId()),
         UUID.fromString(azureTestConfiguration.getSubscriptionId()),
         azureTestConfiguration.getManagedResourceGroupId(),
-        new SpendProfileOrganization(false));
+        new SpendProfileOrganization(false, Collections.emptyMap()));
   }
 }

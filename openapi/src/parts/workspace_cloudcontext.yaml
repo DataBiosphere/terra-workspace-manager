@@ -151,6 +151,11 @@ components:
           type: string
         operationState:
           $ref: '#/components/schemas/OperationState'
+        limits:
+          description: compute or other limits imposed on workspace from billing profile
+          type: object
+          additionalProperties:
+            type: string
 
     AwsContext:
       type: object

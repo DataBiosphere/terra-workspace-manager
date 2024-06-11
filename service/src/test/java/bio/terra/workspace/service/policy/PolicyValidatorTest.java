@@ -308,7 +308,7 @@ public class PolicyValidatorTest {
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
-    mockSpendProfileResponse(new SpendProfileOrganization(true));
+    mockSpendProfileResponse(new SpendProfileOrganization(true, Collections.emptyMap()));
 
     var errors =
         policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
@@ -328,7 +328,7 @@ public class PolicyValidatorTest {
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
-    mockSpendProfileResponse(new SpendProfileOrganization(true));
+    mockSpendProfileResponse(new SpendProfileOrganization(true, Collections.emptyMap()));
 
     var errors =
         policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
@@ -390,7 +390,7 @@ public class PolicyValidatorTest {
             new TpsPolicyInput()
                 .namespace(TpsUtilities.TERRA_NAMESPACE)
                 .name(TpsUtilities.DATA_TRACKING_POLICY_NAME));
-    mockSpendProfileResponse(new SpendProfileOrganization(false));
+    mockSpendProfileResponse(new SpendProfileOrganization(false, Collections.emptyMap()));
 
     var errors =
         policyValidator.validateWorkspaceConformsToDataTrackingPolicy(
