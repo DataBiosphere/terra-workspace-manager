@@ -1,14 +1,18 @@
 package bio.terra.workspace.app.configuration.external;
 
-import bio.terra.workspace.service.spendprofile.model.SpendProfile;
+import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
+import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
+import javax.annotation.Nullable;
 
 /**
  * Configuration for Spend Profiles.
@@ -21,16 +25,16 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "workspace.spend")
 public class SpendProfileConfiguration {
   /** The Spend Profiles known to Workspace Manager. */
-  private List<SpendProfile> spendProfiles = new ArrayList<>();
+  private List<SpendProfileModel> spendProfiles = new ArrayList<>();
 
   /** URL of the billing profile manager instance */
   private String basePath;
 
-  public List<SpendProfile> getSpendProfiles() {
+  public List<SpendProfileModel> getSpendProfiles() {
     return ImmutableList.copyOf(spendProfiles);
   }
 
-  public void setSpendProfiles(List<SpendProfile> spendProfiles) {
+  public void setSpendProfiles(List<SpendProfileModel> spendProfiles) {
     this.spendProfiles = spendProfiles;
   }
 
@@ -51,6 +55,10 @@ public class SpendProfileConfiguration {
     private String billingAccountId;
 
     private Map<String, String> limits;
+    private CloudPlatform cloudPlatform;
+    private UUID tenantId;
+    private UUID subscriptionId;
+    private String managedResourceGroupId;
 
     public String getId() {
       return id;
@@ -68,12 +76,44 @@ public class SpendProfileConfiguration {
       this.billingAccountId = billingAccountId;
     }
 
-    public Map<String, String>  getLimits(){
+    public Map<String, String> getLimits() {
       return limits;
     }
 
-    public void setLimits(Map<String, String> limits){
+    public void setLimits(Map<String, String> limits) {
       this.limits = limits;
+    }
+
+    public CloudPlatform getCloudPlatform() {
+      return cloudPlatform;
+    }
+
+    public void setCloudPlatform(CloudPlatform cloudPlatform) {
+      this.cloudPlatform = cloudPlatform;
+    }
+
+    public UUID getTenantId() {
+      return tenantId;
+    }
+
+    public void setTenantId(UUID tenantId) {
+      this.tenantId = tenantId;
+    }
+
+    public UUID getSubscriptionId() {
+      return subscriptionId;
+    }
+
+    public void setSubscriptionId(UUID subscriptionId) {
+      this.subscriptionId = subscriptionId;
+    }
+
+    public String getManagedResourceGroupId() {
+      return managedResourceGroupId;
+    }
+
+    public void setManagedResourceGroupId(String managedResourceGroupId) {
+      this.managedResourceGroupId = managedResourceGroupId;
     }
   }
 }

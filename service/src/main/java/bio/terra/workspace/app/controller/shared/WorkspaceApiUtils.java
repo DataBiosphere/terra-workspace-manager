@@ -5,6 +5,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
+import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
 import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
@@ -133,9 +134,7 @@ public class WorkspaceApiUtils {
                 .map(GcpCloudContext::toApi)
                 .orElse(null))
         .azureContext(
-            Optional.ofNullable(workspaceDescriptions.azureCloudContext())
-                .map(AzureCloudContext::toApi)
-                .orElse(null))
+                buildAzureContext(workspaceDescriptions, workspace.getSpendProfileId().get()))
         .awsContext(
             Optional.ofNullable(workspaceDescriptions.awsCloudContext())
                 .map(AwsCloudContext::toApi)
@@ -155,5 +154,18 @@ public class WorkspaceApiUtils {
         .operationState(
             ControllerUtils.toApiOperationState(
                 workspace.flightId(), workspace.state(), workspace.error()));
+  }
+
+  private ApiAzureContext buildAzureContext(WorkspaceDescription workspaceDescription, SpendProfileId spendProfileId){
+    ApiAzureContext context = Optional.ofNullable(workspaceDescription.azureCloudContext())
+            .map(AzureCloudContext::toApi)
+            .orElse(null);
+    SpendProfile maybeSpendProfile = spendProfileService.getSpendProfileById(spendProfileId);
+    if (maybeSpendProfile != null){
+      if (maybeSpendProfile.organization() != null){
+        context.setLimits(maybeSpendProfile.organization().limits());
+      }
+    }
+    return context;
   }
 }

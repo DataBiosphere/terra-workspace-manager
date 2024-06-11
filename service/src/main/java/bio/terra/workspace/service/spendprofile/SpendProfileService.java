@@ -57,8 +57,8 @@ public class SpendProfileService {
       OpenTelemetry openTelemetry) {
     this(
         samService,
-//        adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
-            spendProfileConfiguration.getSpendProfiles(),
+        adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
+//            spendProfileConfiguration.getSpendProfiles(),
         spendProfileConfiguration,
         openTelemetry);
   }
@@ -141,15 +141,24 @@ public class SpendProfileService {
 //                    && !Strings.isNullOrEmpty(spendModel.getId()))
     .map(
             spendModel ->
-                new SpendProfile(
-                    new SpendProfileId(spendModel.getId()),
-                    CloudPlatform.GCP,
-                    spendModel.getBillingAccountId(),
-                    null,
-                    null,
-                    null,
-                    null))
+                    mapModelToSpendProfile(spendModel)
+                   )
         .collect(Collectors.toList());
+  }
+
+  private static SpendProfile mapModelToSpendProfile(SpendProfileConfiguration.SpendProfileModel spendModel){
+    return new SpendProfile(
+            new SpendProfileId(spendModel.getId()),
+            spendModel.getCloudPlatform(),
+            spendModel.getBillingAccountId(),
+            spendModel.getTenantId(),
+            spendModel.getSubscriptionId(),
+            spendModel.getManagedResourceGroupId(),
+            spendModel.getCloudPlatform() == CloudPlatform.AZURE ? new SpendProfileOrganization(false, spendModel.getLimits()) : null);
+  }
+
+  public SpendProfile getSpendProfileById(SpendProfileId spendProfileId){
+    return spendProfiles.getOrDefault(spendProfileId, null);
   }
 
   @WithSpan
