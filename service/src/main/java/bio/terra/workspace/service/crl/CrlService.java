@@ -181,7 +181,7 @@ public class CrlService {
   /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
   public ComputeManager getComputeManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    assertCrlInUse();
+    //assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
 
@@ -195,7 +195,7 @@ public class CrlService {
   /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
   public RelayManager getRelayManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    assertCrlInUse();
+    //assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     RelayManager.Configurable relayManagerConfigurable =
@@ -208,7 +208,7 @@ public class CrlService {
   /** Returns an Azure {@link StorageManager} configured for use with CRL. */
   public StorageManager getStorageManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    assertCrlInUse();
+    //assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
@@ -219,7 +219,7 @@ public class CrlService {
 
   public BatchManager getBatchManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    assertCrlInUse();
+    //assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
 
@@ -245,7 +245,7 @@ public class CrlService {
   /** Returns an Azure {@link MsiManager} configured for use with CRL. */
   public MsiManager getMsiManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    assertCrlInUse();
+    //assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
@@ -257,7 +257,7 @@ public class CrlService {
   /** Returns an Azure {@link MonitorManager} configured for use with CRL. */
   public MonitorManager getMonitorManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    assertCrlInUse();
+    //assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
@@ -268,7 +268,7 @@ public class CrlService {
 
   public ContainerServiceManager getContainerServiceManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    assertCrlInUse();
+    //assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
@@ -279,7 +279,7 @@ public class CrlService {
 
   public PostgreSqlManager getPostgreSqlManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    assertCrlInUse();
+    //assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configurePostgreSqlManager(
