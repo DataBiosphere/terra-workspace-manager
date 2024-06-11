@@ -524,6 +524,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return new ResponseEntity<>(response, getAsyncResponseCode(response.getJobReport()));
   }
 
+  // ignore
   private ResponseEntity<ApiDeleteControlledAzureResourceResult> deleteHelper(
       UUID workspaceUuid,
       UUID resourceUuid,
