@@ -58,7 +58,6 @@ public class SpendProfileService {
     this(
         samService,
         adaptConfigurationModels(spendProfileConfiguration.getSpendProfiles()),
-//            spendProfileConfiguration.getSpendProfiles(),
         spendProfileConfiguration,
         openTelemetry);
   }
@@ -134,30 +133,26 @@ public class SpendProfileService {
     return spendModels.stream()
         .filter(
             // filter out empty profiles
-            spendModel ->
-                !Strings.isNullOrEmpty(spendModel.getId()))
-//    spendModel ->
-//            !Strings.isNullOrEmpty(spendModel.getBillingAccountId())
-//                    && !Strings.isNullOrEmpty(spendModel.getId()))
-    .map(
-            spendModel ->
-                    mapModelToSpendProfile(spendModel)
-                   )
+            spendModel -> !Strings.isNullOrEmpty(spendModel.getId()))
+        .map(spendModel -> mapModelToSpendProfile(spendModel))
         .collect(Collectors.toList());
   }
 
-  private static SpendProfile mapModelToSpendProfile(SpendProfileConfiguration.SpendProfileModel spendModel){
+  private static SpendProfile mapModelToSpendProfile(
+      SpendProfileConfiguration.SpendProfileModel spendModel) {
     return new SpendProfile(
-            new SpendProfileId(spendModel.getId()),
-            spendModel.getCloudPlatform(),
-            spendModel.getBillingAccountId(),
-            spendModel.getTenantId(),
-            spendModel.getSubscriptionId(),
-            spendModel.getManagedResourceGroupId(),
-            spendModel.getCloudPlatform() == CloudPlatform.AZURE ? new SpendProfileOrganization(false, spendModel.getLimits()) : null);
+        new SpendProfileId(spendModel.getId()),
+        spendModel.getCloudPlatform(),
+        spendModel.getBillingAccountId(),
+        spendModel.getTenantId(),
+        spendModel.getSubscriptionId(),
+        spendModel.getManagedResourceGroupId(),
+        spendModel.getCloudPlatform() == CloudPlatform.AZURE
+            ? new SpendProfileOrganization(false, spendModel.getLimits())
+            : null);
   }
 
-  public SpendProfile getSpendProfileById(SpendProfileId spendProfileId){
+  public SpendProfile getSpendProfileById(SpendProfileId spendProfileId) {
     return spendProfiles.getOrDefault(spendProfileId, null);
   }
 

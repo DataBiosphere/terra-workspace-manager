@@ -55,7 +55,10 @@ public class MockWorkspaceV2Api {
         new ApiCreateWorkspaceV2Request()
             .id(UUID.randomUUID())
             .cloudPlatform(cloudPlatform)
-            .spendProfile(cloudPlatform == ApiCloudPlatform.AZURE ? WorkspaceFixtures.DEFAULT_AZURE_SPEND_PROFILE_NAME : WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_NAME)
+            .spendProfile(
+                cloudPlatform == ApiCloudPlatform.AZURE
+                    ? WorkspaceFixtures.DEFAULT_AZURE_SPEND_PROFILE_NAME
+                    : WorkspaceFixtures.DEFAULT_GCP_SPEND_PROFILE_NAME)
             .stage(ApiWorkspaceStageModel.MC_WORKSPACE)
             .jobControl(new ApiJobControl().id(jobId));
 

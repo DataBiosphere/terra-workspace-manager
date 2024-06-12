@@ -7,6 +7,7 @@ import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.stairway.FlightMap;
 import bio.terra.workspace.db.WorkspaceDao;
+import bio.terra.workspace.generated.model.ApiCloudPlatform;
 import bio.terra.workspace.generated.model.ApiCreateWorkspaceRequestBody;
 import bio.terra.workspace.generated.model.ApiProperties;
 import bio.terra.workspace.generated.model.ApiProperty;
@@ -15,7 +16,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.job.JobMapKeys;
 import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
-import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
@@ -46,11 +46,8 @@ public class WorkspaceFixtures {
       new SpendProfileId(DEFAULT_GCP_SPEND_PROFILE_NAME);
   public static final SpendProfile DEFAULT_GCP_SPEND_PROFILE =
       SpendProfile.buildGcpSpendProfile(DEFAULT_GCP_SPEND_PROFILE_ID, "billingAccountId");
-  public static final String DEFAULT_AZURE_SPEND_PROFILE_NAME = "facade00-0000-4000-a000-000000000000";
-  public static final SpendProfileId DEFAULT_AZURE_SPEND_PROFILE_ID =
-          new SpendProfileId(DEFAULT_AZURE_SPEND_PROFILE_NAME);
-//  public static final SpendProfile DEFAULT_AZURE_SPEND_PROFILE =
-//          SpendProfile.buildAzureSpendProfile(DEFAULT_AZURE_SPEND_PROFILE_ID, UUID.fromString("decade00-0000-4000-a000-000000000000"), UUID.fromString("5ca1ab1e-0000-4000-a000-000000000000"), "default-MRG", new SpendProfileOrganization(false, ));
+  public static final String DEFAULT_AZURE_SPEND_PROFILE_NAME =
+      "facade00-0000-4000-a000-000000000000";
 
   public static final String DEFAULT_USER_EMAIL = "fake@gmail.com";
   public static final String DEFAULT_USER_SUBJECT_ID = "subjectId123456";
@@ -67,7 +64,12 @@ public class WorkspaceFixtures {
    * <p>All values are mutable, and tests should change any they explicitly need.
    */
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody() {
-    return createWorkspaceRequestBody(ApiWorkspaceStageModel.MC_WORKSPACE);
+    return createWorkspaceRequestBody(ApiWorkspaceStageModel.MC_WORKSPACE, ApiCloudPlatform.GCP);
+  }
+
+  public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody(
+      ApiCloudPlatform apiCloudPlatform) {
+    return createWorkspaceRequestBody(ApiWorkspaceStageModel.MC_WORKSPACE, apiCloudPlatform);
   }
 
   public static Workspace createDefaultMcWorkspace() {
@@ -134,6 +136,26 @@ public class WorkspaceFixtures {
   }
 
   public static ApiCreateWorkspaceRequestBody createWorkspaceRequestBody(
+      ApiWorkspaceStageModel stageModel, ApiCloudPlatform apiCloudPlatform) {
+    UUID workspaceId = UUID.randomUUID();
+    ApiProperties properties = new ApiProperties();
+    properties.addAll(
+        ImmutableList.of(
+            TYPE_PROPERTY, SHORT_DESCRIPTION_PROPERTY, VERSION_PROPERTY, USER_SET_PROPERTY));
+    return new ApiCreateWorkspaceRequestBody()
+        .id(workspaceId)
+        .displayName(WORKSPACE_NAME)
+        .description("A test workspace created by createWorkspaceRequestBody")
+        .userFacingId(getUserFacingId(workspaceId))
+        .stage(stageModel)
+        .spendProfile(
+            apiCloudPlatform == ApiCloudPlatform.AZURE
+                ? DEFAULT_AZURE_SPEND_PROFILE_NAME
+                : DEFAULT_GCP_SPEND_PROFILE_NAME)
+        .properties(properties);
+  }
+
+  public static ApiCreateWorkspaceRequestBody createAzureWorkspaceRequestBody(
       ApiWorkspaceStageModel stageModel) {
     UUID workspaceId = UUID.randomUUID();
     ApiProperties properties = new ApiProperties();
@@ -146,7 +168,7 @@ public class WorkspaceFixtures {
         .description("A test workspace created by createWorkspaceRequestBody")
         .userFacingId(getUserFacingId(workspaceId))
         .stage(stageModel)
-        .spendProfile(DEFAULT_GCP_SPEND_PROFILE_NAME)
+        .spendProfile(DEFAULT_AZURE_SPEND_PROFILE_NAME)
         .properties(properties);
   }
 

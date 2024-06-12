@@ -114,7 +114,7 @@ public class RemoveUserFromWorkspaceFlightTest extends BaseConnectedTest {
     String makeContextJobId = UUID.randomUUID().toString();
     SpendProfile spendProfile =
         spendProfileService.authorizeLinking(
-                DEFAULT_GCP_SPEND_PROFILE_ID, features.isBpmGcpEnabled(), userRequest);
+            DEFAULT_GCP_SPEND_PROFILE_ID, features.isBpmGcpEnabled(), userRequest);
 
     workspaceService.createCloudContext(
         workspace, CloudPlatform.GCP, spendProfile, makeContextJobId, userRequest, null);

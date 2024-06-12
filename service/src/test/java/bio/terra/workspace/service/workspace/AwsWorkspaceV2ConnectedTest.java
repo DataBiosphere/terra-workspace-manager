@@ -53,7 +53,7 @@ public class AwsWorkspaceV2ConnectedTest extends BaseAwsConnectedTest {
         createdCloudContext.getContextFields());
     AwsTestUtils.assertCloudContextCommonFields(
         createdCloudContext.getCommonFields(),
-            DEFAULT_GCP_SPEND_PROFILE_ID,
+        DEFAULT_GCP_SPEND_PROFILE_ID,
         WsmResourceState.READY,
         null);
 

@@ -82,14 +82,30 @@ public class MockWorkspaceV1Api {
 
   public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
       @Nullable AuthenticatedUserRequest userRequest) throws Exception {
-    return createWorkspaceWithoutCloudContext(userRequest, ApiWorkspaceStageModel.MC_WORKSPACE);
+    return createWorkspaceWithoutCloudContext(
+        userRequest, ApiWorkspaceStageModel.MC_WORKSPACE, ApiCloudPlatform.GCP);
+  }
+
+  public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
+      @Nullable AuthenticatedUserRequest userRequest, ApiCloudPlatform apiCloudPlatform)
+      throws Exception {
+    return createWorkspaceWithoutCloudContext(
+        userRequest, ApiWorkspaceStageModel.MC_WORKSPACE, apiCloudPlatform);
   }
 
   public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
       @Nullable AuthenticatedUserRequest userRequest, ApiWorkspaceStageModel stageModel)
       throws Exception {
+    return createWorkspaceWithoutCloudContext(userRequest, stageModel, ApiCloudPlatform.GCP);
+  }
+
+  public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
+      @Nullable AuthenticatedUserRequest userRequest,
+      ApiWorkspaceStageModel stageModel,
+      ApiCloudPlatform apiCloudPlatform)
+      throws Exception {
     ApiCreateWorkspaceRequestBody request =
-        WorkspaceFixtures.createWorkspaceRequestBody(stageModel);
+        WorkspaceFixtures.createWorkspaceRequestBody(stageModel, apiCloudPlatform);
     String serializedResponse =
         mockMvcUtils.getSerializedResponseForPost(
             userRequest, WORKSPACES_V1_CREATE, objectMapper.writeValueAsString(request));
@@ -99,6 +115,17 @@ public class MockWorkspaceV1Api {
   public ApiCreatedWorkspace createWorkspaceWithoutCloudContext(
       @Nullable AuthenticatedUserRequest userRequest, ApiCreateWorkspaceRequestBody request)
       throws Exception {
+    String serializedResponse =
+        mockMvcUtils.getSerializedResponseForPost(
+            userRequest, WORKSPACES_V1_CREATE, objectMapper.writeValueAsString(request));
+    return objectMapper.readValue(serializedResponse, ApiCreatedWorkspace.class);
+  }
+
+  public ApiCreatedWorkspace createAzureWorkspaceWithoutCloudContext(
+      @Nullable AuthenticatedUserRequest userRequest, ApiWorkspaceStageModel stageModel)
+      throws Exception {
+    ApiCreateWorkspaceRequestBody request =
+        WorkspaceFixtures.createAzureWorkspaceRequestBody(stageModel);
     String serializedResponse =
         mockMvcUtils.getSerializedResponseForPost(
             userRequest, WORKSPACES_V1_CREATE, objectMapper.writeValueAsString(request));
@@ -144,7 +171,8 @@ public class MockWorkspaceV1Api {
 
   public ApiCreatedWorkspace createWorkspaceWithCloudContext(
       AuthenticatedUserRequest userRequest, ApiCloudPlatform apiCloudPlatform) throws Exception {
-    ApiCreatedWorkspace createdWorkspace = createWorkspaceWithoutCloudContext(userRequest);
+    ApiCreatedWorkspace createdWorkspace =
+        createWorkspaceWithoutCloudContext(userRequest, apiCloudPlatform);
     createCloudContextAndWait(userRequest, createdWorkspace.getId(), apiCloudPlatform);
     return createdWorkspace;
   }

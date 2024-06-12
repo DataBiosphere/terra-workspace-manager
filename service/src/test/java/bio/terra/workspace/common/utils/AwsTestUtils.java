@@ -96,7 +96,7 @@ public class AwsTestUtils {
             ENVIRONMENT_ALIAS,
             AWS_WORKSPACE_SECURITY_GROUPS),
         new CloudContextCommonFields(
-                DEFAULT_GCP_SPEND_PROFILE_ID,
+            DEFAULT_GCP_SPEND_PROFILE_ID,
             WsmResourceState.READY,
             /* flightId= */ null,
             /* error= */ null));

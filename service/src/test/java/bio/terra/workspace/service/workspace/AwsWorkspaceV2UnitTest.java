@@ -65,7 +65,7 @@ public class AwsWorkspaceV2UnitTest extends BaseAwsSpringBootUnitTest {
           null,
           null,
           CloudPlatform.AWS,
-              DEFAULT_GCP_SPEND_PROFILE,
+          DEFAULT_GCP_SPEND_PROFILE,
           null,
           jobId,
           USER_REQUEST);

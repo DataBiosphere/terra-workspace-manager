@@ -133,8 +133,7 @@ public class WorkspaceApiUtils {
             Optional.ofNullable(workspaceDescriptions.gcpCloudContext())
                 .map(GcpCloudContext::toApi)
                 .orElse(null))
-        .azureContext(
-                buildAzureContext(workspaceDescriptions, workspace.getSpendProfileId().get()))
+        .azureContext(buildAzureContext(workspaceDescriptions, workspace.getSpendProfileId().get()))
         .awsContext(
             Optional.ofNullable(workspaceDescriptions.awsCloudContext())
                 .map(AwsCloudContext::toApi)
@@ -156,13 +155,15 @@ public class WorkspaceApiUtils {
                 workspace.flightId(), workspace.state(), workspace.error()));
   }
 
-  private ApiAzureContext buildAzureContext(WorkspaceDescription workspaceDescription, SpendProfileId spendProfileId){
-    ApiAzureContext context = Optional.ofNullable(workspaceDescription.azureCloudContext())
+  private ApiAzureContext buildAzureContext(
+      WorkspaceDescription workspaceDescription, SpendProfileId spendProfileId) {
+    ApiAzureContext context =
+        Optional.ofNullable(workspaceDescription.azureCloudContext())
             .map(AzureCloudContext::toApi)
             .orElse(null);
     SpendProfile maybeSpendProfile = spendProfileService.getSpendProfileById(spendProfileId);
-    if (maybeSpendProfile != null){
-      if (maybeSpendProfile.organization() != null){
+    if (maybeSpendProfile != null) {
+      if (maybeSpendProfile.organization() != null) {
         context.setLimits(maybeSpendProfile.organization().limits());
       }
     }

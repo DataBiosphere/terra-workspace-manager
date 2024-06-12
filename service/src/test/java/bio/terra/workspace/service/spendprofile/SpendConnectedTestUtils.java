@@ -23,11 +23,11 @@ public class SpendConnectedTestUtils {
    */
   public SpendProfile defaultGcpSpendProfile() {
     if (defaultSpendProfile == null) {
-      defaultSpendProfile =
+      SpendProfileConfiguration.SpendProfileModel defaultModel =
           spendConfig.getSpendProfiles().get(0);
-//      defaultSpendProfile =
-//          SpendProfile.buildGcpSpendProfile(
-//              new SpendProfileId(defaultModel.getId()), defaultModel.getBillingAccountId());
+      defaultSpendProfile =
+          SpendProfile.buildGcpSpendProfile(
+              new SpendProfileId(defaultModel.getId()), defaultModel.getBillingAccountId());
     }
     return defaultSpendProfile;
   }

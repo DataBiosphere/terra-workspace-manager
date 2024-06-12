@@ -13,7 +13,6 @@ import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.Workspace;
-
 import java.util.Collections;
 import java.util.UUID;
 import org.mockito.Mockito;

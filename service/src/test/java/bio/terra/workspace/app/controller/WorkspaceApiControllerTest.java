@@ -37,22 +37,7 @@ import bio.terra.workspace.common.mocks.MockMvcUtils;
 import bio.terra.workspace.common.mocks.MockWorkspaceV1Api;
 import bio.terra.workspace.common.utils.TestUtils;
 import bio.terra.workspace.db.WorkspaceDao;
-import bio.terra.workspace.generated.model.ApiCloneResourceResult;
-import bio.terra.workspace.generated.model.ApiCloneWorkspaceResult;
-import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiCreatedWorkspace;
-import bio.terra.workspace.generated.model.ApiDataRepoSnapshotResource;
-import bio.terra.workspace.generated.model.ApiErrorReport;
-import bio.terra.workspace.generated.model.ApiProperty;
-import bio.terra.workspace.generated.model.ApiRegions;
-import bio.terra.workspace.generated.model.ApiResourceCloneDetails;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescription;
-import bio.terra.workspace.generated.model.ApiWorkspaceDescriptionList;
-import bio.terra.workspace.generated.model.ApiWorkspaceStageModel;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInput;
-import bio.terra.workspace.generated.model.ApiWsmPolicyInputs;
-import bio.terra.workspace.generated.model.ApiWsmPolicyPair;
-import bio.terra.workspace.generated.model.ApiWsmPolicyUpdateResult;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.SamConstants;
 import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
@@ -63,6 +48,8 @@ import bio.terra.workspace.service.logging.WorkspaceActivityLogService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.WorkspaceConstants.Properties;
+import com.azure.resourcemanager.resources.ResourceManager;
+import com.azure.resourcemanager.resources.models.ResourceGroups;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.time.OffsetDateTime;
@@ -73,6 +60,7 @@ import org.apache.http.HttpStatus;
 import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -107,6 +95,8 @@ public class WorkspaceApiControllerTest extends BaseSpringBootUnitTestMockDataRe
   @Autowired WorkspaceActivityLogService workspaceActivityLogService;
   @Autowired JobService jobService;
   @Autowired WorkspaceDao workspaceDao;
+  @Mock ResourceManager mockResourceManager;
+  @Mock ResourceGroups mockResourceGroups;
 
   private static TpsPaoGetResult emptyWorkspacePao() {
     return new TpsPaoGetResult()
@@ -437,12 +427,15 @@ public class WorkspaceApiControllerTest extends BaseSpringBootUnitTestMockDataRe
   @Test
   public void getWorkspace_includesLimits() throws Exception {
     when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
+    when(mockResourceManager.resourceGroups()).thenReturn(mockResourceGroups);
+    when(mockCrlService().getResourceManager(any(), any())).thenReturn(mockResourceManager);
     ApiCreatedWorkspace workspace =
-            mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
+        mockWorkspaceV1Api.createWorkspaceWithCloudContext(USER_REQUEST, ApiCloudPlatform.AZURE);
 
     ApiWorkspaceDescription gotWorkspace =
-            mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
-    assertEquals(0, gotWorkspace.getPolicies().size());
+        mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
+    assertNotNull(gotWorkspace.getAzureContext());
+    assertNotNull(gotWorkspace.getAzureContext().getLimits());
   }
 
   @Test

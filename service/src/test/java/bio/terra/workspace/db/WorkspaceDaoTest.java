@@ -467,7 +467,7 @@ class WorkspaceDaoTest extends BaseSpringBootUnitTest {
         new GcpCloudContextFields(
             PROJECT_ID, POLICY_OWNER, POLICY_WRITER, POLICY_READER, POLICY_APPLICATION),
         new CloudContextCommonFields(
-                DEFAULT_GCP_SPEND_PROFILE_ID,
+            DEFAULT_GCP_SPEND_PROFILE_ID,
             WsmResourceState.READY,
             /* flightId= */ null,
             /* error= */ null));

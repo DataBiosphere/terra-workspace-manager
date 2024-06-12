@@ -1,7 +1,6 @@
 package bio.terra.workspace.service.spendprofile.model;
 
 import bio.terra.profile.model.Organization;
-
 import java.util.Map;
 
 public record SpendProfileOrganization(boolean enterprise, Map<String, String> limits) {

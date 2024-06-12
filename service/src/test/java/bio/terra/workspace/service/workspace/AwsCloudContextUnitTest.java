@@ -166,12 +166,15 @@ public class AwsCloudContextUnitTest extends BaseAwsSpringBootUnitTest {
   void createCloudContextTest() {
     AwsCloudContext createdCloudContext =
         AwsCloudContextService.createCloudContext(
-            "flightId", DEFAULT_GCP_SPEND_PROFILE_ID, AWS_ENVIRONMENT, AWS_WORKSPACE_SECURITY_GROUPS);
+            "flightId",
+            DEFAULT_GCP_SPEND_PROFILE_ID,
+            AWS_ENVIRONMENT,
+            AWS_WORKSPACE_SECURITY_GROUPS);
     assertNotNull(createdCloudContext);
     AwsTestUtils.assertAwsCloudContextFields(AWS_METADATA, createdCloudContext.getContextFields());
     AwsTestUtils.assertCloudContextCommonFields(
         createdCloudContext.getCommonFields(),
-            DEFAULT_GCP_SPEND_PROFILE_ID,
+        DEFAULT_GCP_SPEND_PROFILE_ID,
         WsmResourceState.CREATING,
         "flightId");
   }
