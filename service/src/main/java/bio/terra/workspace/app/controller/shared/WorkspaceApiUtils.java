@@ -133,7 +133,8 @@ public class WorkspaceApiUtils {
             Optional.ofNullable(workspaceDescriptions.gcpCloudContext())
                 .map(GcpCloudContext::toApi)
                 .orElse(null))
-        .azureContext(buildAzureContext(workspaceDescriptions, workspace.getSpendProfileId().orElse(null)))
+        .azureContext(
+            buildAzureContext(workspaceDescriptions, workspace.getSpendProfileId().orElse(null)))
         .awsContext(
             Optional.ofNullable(workspaceDescriptions.awsCloudContext())
                 .map(AwsCloudContext::toApi)
