@@ -162,10 +162,8 @@ public class WorkspaceApiUtils {
             .map(AzureCloudContext::toApi)
             .orElse(null);
     SpendProfile maybeSpendProfile = spendProfileService.getSpendProfileById(spendProfileId);
-    if (maybeSpendProfile != null) {
-      if (maybeSpendProfile.organization() != null) {
-        context.setLimits(maybeSpendProfile.organization().limits());
-      }
+    if (context != null && maybeSpendProfile != null && maybeSpendProfile.organization() != null) {
+      context.setLimits(maybeSpendProfile.organization().limits());
     }
     return context;
   }

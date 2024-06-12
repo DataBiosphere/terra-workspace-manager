@@ -134,7 +134,7 @@ public class SpendProfileService {
         .filter(
             // filter out empty profiles
             spendModel -> !Strings.isNullOrEmpty(spendModel.getId()))
-        .map(spendModel -> mapModelToSpendProfile(spendModel))
+        .map(SpendProfileService::mapModelToSpendProfile)
         .collect(Collectors.toList());
   }
 
