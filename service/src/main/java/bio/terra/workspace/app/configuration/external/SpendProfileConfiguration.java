@@ -1,6 +1,5 @@
 package bio.terra.workspace.app.configuration.external;
 
-import bio.terra.workspace.service.spendprofile.model.SpendProfileOrganization;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;

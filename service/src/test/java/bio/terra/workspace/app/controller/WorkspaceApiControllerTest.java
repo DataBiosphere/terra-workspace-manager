@@ -1,10 +1,6 @@
 package bio.terra.workspace.app.controller;
 
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.DEFAULT_SPEND_PROFILE_NAME;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.SHORT_DESCRIPTION_PROPERTY;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.TYPE_PROPERTY;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.VERSION_PROPERTY;
-import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.WORKSPACE_NAME;
+import static bio.terra.workspace.common.fixtures.WorkspaceFixtures.*;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.addAuth;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.addJsonContentType;
@@ -307,7 +303,7 @@ public class WorkspaceApiControllerTest extends BaseSpringBootUnitTestMockDataRe
 
     ApiCloneWorkspaceResult cloneWorkspace =
         mockWorkspaceV1Api.cloneWorkspace(
-            USER_REQUEST, workspaceId, DEFAULT_SPEND_PROFILE_NAME, null, null);
+            USER_REQUEST, workspaceId, DEFAULT_GCP_SPEND_PROFILE_NAME, null, null);
     jobService.waitForJob(cloneWorkspace.getJobReport().getId());
 
     UUID destinationWorkspaceId = cloneWorkspace.getWorkspace().getDestinationWorkspaceId();
@@ -435,6 +431,17 @@ public class WorkspaceApiControllerTest extends BaseSpringBootUnitTestMockDataRe
 
     ApiWorkspaceDescription gotWorkspace =
         mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
+    assertEquals(0, gotWorkspace.getPolicies().size());
+  }
+
+  @Test
+  public void getWorkspace_includesLimits() throws Exception {
+    when(mockFeatureConfiguration().isTpsEnabled()).thenReturn(false);
+    ApiCreatedWorkspace workspace =
+            mockWorkspaceV1Api.createWorkspaceWithoutCloudContext(USER_REQUEST);
+
+    ApiWorkspaceDescription gotWorkspace =
+            mockWorkspaceV1Api.getWorkspace(USER_REQUEST, workspace.getId());
     assertEquals(0, gotWorkspace.getPolicies().size());
   }
 
