@@ -133,29 +133,32 @@ public class SpendProfileService {
     return spendModels.stream()
         .filter(
             // filter out empty profiles
-            spendModel -> !Strings.isNullOrEmpty(spendModel.getBillingAccountId())
+            spendModel ->
+                !Strings.isNullOrEmpty(spendModel.getBillingAccountId())
                     && !Strings.isNullOrEmpty(spendModel.getId()))
-            .map(
-                    spendModel ->
-                            new SpendProfile(
-                                    new SpendProfileId(spendModel.getId()),
-                                    CloudPlatform.GCP,
-                                    spendModel.getBillingAccountId(),
-                                    null,
-                                    null,
-                                    null,
-                                    null))
+        .map(
+            spendModel ->
+                new SpendProfile(
+                    new SpendProfileId(spendModel.getId()),
+                    CloudPlatform.GCP,
+                    spendModel.getBillingAccountId(),
+                    null,
+                    null,
+                    null,
+                    null))
         .collect(Collectors.toList());
   }
 
-  public SpendProfileConfiguration.SpendProfileModel getSpendProfileById(SpendProfileId spendProfileId) {
+  public SpendProfileConfiguration.SpendProfileModel getSpendProfileById(
+      SpendProfileId spendProfileId) {
     if (spendProfileId == null) {
       return null;
     }
     return spendProfileConfiguration.getSpendProfiles().stream()
-            .filter(spendModel -> spendModel.getId().equals(spendProfileId.getId()))
-            .findFirst()
-            .orElse(null);  }
+        .filter(spendModel -> spendModel.getId().equals(spendProfileId.getId()))
+        .findFirst()
+        .orElse(null);
+  }
 
   @WithSpan
   private SpendProfile getSpendProfileFromBpm(

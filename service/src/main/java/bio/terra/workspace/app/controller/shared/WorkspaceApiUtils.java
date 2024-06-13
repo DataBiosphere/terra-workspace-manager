@@ -163,7 +163,8 @@ public class WorkspaceApiUtils {
         Optional.ofNullable(workspaceDescription.azureCloudContext())
             .map(AzureCloudContext::toApi)
             .orElse(null);
-    SpendProfileConfiguration.SpendProfileModel maybeSpendProfile = spendProfileService.getSpendProfileById(spendProfileId);
+    SpendProfileConfiguration.SpendProfileModel maybeSpendProfile =
+        spendProfileService.getSpendProfileById(spendProfileId);
     if (context != null && maybeSpendProfile != null && maybeSpendProfile.getLimits() != null) {
       context.setLimits(maybeSpendProfile.getLimits());
     }
