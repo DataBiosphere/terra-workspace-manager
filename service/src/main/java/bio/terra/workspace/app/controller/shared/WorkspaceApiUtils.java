@@ -4,6 +4,7 @@ import static bio.terra.workspace.app.controller.shared.PropertiesUtils.convertM
 
 import bio.terra.policy.model.TpsPolicyInputs;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
+import bio.terra.workspace.app.configuration.external.SpendProfileConfiguration;
 import bio.terra.workspace.common.exception.FeatureNotSupportedException;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.generated.model.ApiProperties;
@@ -162,9 +163,9 @@ public class WorkspaceApiUtils {
         Optional.ofNullable(workspaceDescription.azureCloudContext())
             .map(AzureCloudContext::toApi)
             .orElse(null);
-    SpendProfile maybeSpendProfile = spendProfileService.getSpendProfileById(spendProfileId);
-    if (context != null && maybeSpendProfile != null && maybeSpendProfile.organization() != null) {
-      context.setLimits(maybeSpendProfile.organization().limits());
+    SpendProfileConfiguration.SpendProfileModel maybeSpendProfile = spendProfileService.getSpendProfileById(spendProfileId);
+    if (context != null && maybeSpendProfile != null && maybeSpendProfile.getLimits() != null) {
+      context.setLimits(maybeSpendProfile.getLimits());
     }
     return context;
   }

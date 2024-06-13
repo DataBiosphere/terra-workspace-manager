@@ -52,9 +52,6 @@ public class SpendProfileConfiguration {
 
     private Map<String, String> limits;
     private CloudPlatform cloudPlatform;
-    private UUID tenantId;
-    private UUID subscriptionId;
-    private String managedResourceGroupId;
 
     public String getId() {
       return id;
@@ -86,30 +83,6 @@ public class SpendProfileConfiguration {
 
     public void setCloudPlatform(CloudPlatform cloudPlatform) {
       this.cloudPlatform = cloudPlatform;
-    }
-
-    public UUID getTenantId() {
-      return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-      this.tenantId = tenantId;
-    }
-
-    public UUID getSubscriptionId() {
-      return subscriptionId;
-    }
-
-    public void setSubscriptionId(UUID subscriptionId) {
-      this.subscriptionId = subscriptionId;
-    }
-
-    public String getManagedResourceGroupId() {
-      return managedResourceGroupId;
-    }
-
-    public void setManagedResourceGroupId(String managedResourceGroupId) {
-      this.managedResourceGroupId = managedResourceGroupId;
     }
   }
 }

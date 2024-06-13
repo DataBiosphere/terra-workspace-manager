@@ -133,28 +133,29 @@ public class SpendProfileService {
     return spendModels.stream()
         .filter(
             // filter out empty profiles
-            spendModel -> !Strings.isNullOrEmpty(spendModel.getId()))
-        .map(SpendProfileService::mapModelToSpendProfile)
+            spendModel -> !Strings.isNullOrEmpty(spendModel.getBillingAccountId())
+                    && !Strings.isNullOrEmpty(spendModel.getId()))
+            .map(
+                    spendModel ->
+                            new SpendProfile(
+                                    new SpendProfileId(spendModel.getId()),
+                                    CloudPlatform.GCP,
+                                    spendModel.getBillingAccountId(),
+                                    null,
+                                    null,
+                                    null,
+                                    null))
         .collect(Collectors.toList());
   }
 
-  private static SpendProfile mapModelToSpendProfile(
-      SpendProfileConfiguration.SpendProfileModel spendModel) {
-    return new SpendProfile(
-        new SpendProfileId(spendModel.getId()),
-        spendModel.getCloudPlatform(),
-        spendModel.getBillingAccountId(),
-        spendModel.getTenantId(),
-        spendModel.getSubscriptionId(),
-        spendModel.getManagedResourceGroupId(),
-        spendModel.getCloudPlatform() == CloudPlatform.AZURE
-            ? new SpendProfileOrganization(false, spendModel.getLimits())
-            : null);
-  }
-
-  public SpendProfile getSpendProfileById(SpendProfileId spendProfileId) {
-    return spendProfiles.getOrDefault(spendProfileId, null);
-  }
+  public SpendProfileConfiguration.SpendProfileModel getSpendProfileById(SpendProfileId spendProfileId) {
+    if (spendProfileId == null) {
+      return null;
+    }
+    return spendProfileConfiguration.getSpendProfiles().stream()
+            .filter(spendModel -> spendModel.getId().equals(spendProfileId.getId()))
+            .findFirst()
+            .orElse(null);  }
 
   @WithSpan
   private SpendProfile getSpendProfileFromBpm(
