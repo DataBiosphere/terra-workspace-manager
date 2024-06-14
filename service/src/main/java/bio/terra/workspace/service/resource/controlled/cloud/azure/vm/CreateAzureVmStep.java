@@ -19,6 +19,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.exception.AzureNetworkInterfaceNameNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -88,7 +89,9 @@ public class CreateAzureVmStep implements Step {
 
     final Optional<String> petManagedIdentityId =
         Optional.ofNullable(
-            context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_PET_ID, String.class));
+            context
+                .getWorkingMap()
+                .get(GetManagedIdentityStep.MANAGED_IDENTITY_RESOURCE_ID, String.class));
 
     try {
       Optional<Disk> existingAzureDisk =
