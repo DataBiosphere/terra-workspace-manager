@@ -6,6 +6,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
@@ -52,7 +53,9 @@ public class AssignManagedIdentityAzureVmStep implements Step {
     // If there is a pet managed identity in the working map, add it
     final Optional<String> petManagedIdentityId =
         Optional.ofNullable(
-            context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_PET_ID, String.class));
+            context
+                .getWorkingMap()
+                .get(GetPetManagedIdentityStep.MANAGED_IDENTITY_RESOURCE_ID, String.class));
     petManagedIdentityId.ifPresent(userAssignedIdentities::add);
 
     logger.info(
