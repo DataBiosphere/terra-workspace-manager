@@ -46,6 +46,8 @@ public class AssignManagedIdentityAzureVmStep implements Step {
     Set<String> userAssignedIdentities = new HashSet<>();
 
     // Add user assigned identities from the request, if any
+    // Note: passing identities via request is only accepted for application-managed resources.
+    // The calling application is responsible for validating the identities with Sam.
     if (CollectionUtils.isNotEmpty(resource.getUserAssignedIdentities())) {
       userAssignedIdentities.addAll(resource.getUserAssignedIdentities());
     }
