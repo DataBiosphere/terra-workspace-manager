@@ -5,14 +5,13 @@ import bio.terra.stairway.Step;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
-import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.msi.MsiManager;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
@@ -24,17 +23,12 @@ public class AssignManagedIdentityAzureVmStep implements Step {
       LoggerFactory.getLogger(AssignManagedIdentityAzureVmStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
-  private final SamService samService;
   private final ControlledAzureVmResource resource;
 
   public AssignManagedIdentityAzureVmStep(
-      AzureConfiguration azureConfig,
-      CrlService crlService,
-      SamService samService,
-      ControlledAzureVmResource resource) {
+      AzureConfiguration azureConfig, CrlService crlService, ControlledAzureVmResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
-    this.samService = samService;
     this.resource = resource;
   }
 
@@ -55,20 +49,11 @@ public class AssignManagedIdentityAzureVmStep implements Step {
       userAssignedIdentities.addAll(resource.getUserAssignedIdentities());
     }
 
-    // If there is a private resource user, request a pet for that user
-    if (resource.getAssignedUser().isPresent()) {
-      String petManagedIdentityId =
-          Rethrow.onInterrupted(
-              () ->
-                  samService.getOrCreateUserManagedIdentityForUser(
-                      resource.getAssignedUser().get(),
-                      azureCloudContext.getAzureSubscriptionId(),
-                      azureCloudContext.getAzureTenantId(),
-                      azureCloudContext.getAzureResourceGroupId()),
-              "getPetManagedIdentity");
-      userAssignedIdentities.add(petManagedIdentityId);
-      context.getWorkingMap().put(AzureVmHelper.WORKING_MAP_PET_ID, petManagedIdentityId);
-    }
+    // If there is a pet managed identity in the working map, add it
+    final Optional<String> petManagedIdentityId =
+        Optional.ofNullable(
+            context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_PET_ID, String.class));
+    petManagedIdentityId.ifPresent(userAssignedIdentities::add);
 
     logger.info(
         "Assigning managed identities {} to VM resource {} in workspace {}",

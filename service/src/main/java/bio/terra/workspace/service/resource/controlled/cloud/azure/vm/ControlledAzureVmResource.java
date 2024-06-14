@@ -162,6 +162,7 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService()),
         cloudRetry);
+    flight.addStep(new GetPetManagedIdentityStep(flightBeanBag.getSamService(), this), cloudRetry);
     flight.addStep(
         new CreateAzureVmStep(
             flightBeanBag.getAzureConfig(),
@@ -171,10 +172,7 @@ public class ControlledAzureVmResource extends ControlledResource {
         cloudRetry);
     flight.addStep(
         new AssignManagedIdentityAzureVmStep(
-            flightBeanBag.getAzureConfig(),
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getSamService(),
-            this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new EnableVmLoggingStep(
