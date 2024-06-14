@@ -86,6 +86,7 @@ public class ControlledAzureResourceFixtures {
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.APPLICATION))
                 .region(DEFAULT_AZURE_RESOURCE_REGION)
                 .assignedUser(assignedUser)
+                .iamRole(ControlledResourceIamRole.EDITOR)
                 .build())
         .diskName(creationParameters.getName())
         .size(creationParameters.getSize());
@@ -295,6 +296,7 @@ public class ControlledAzureResourceFixtures {
                 .accessScope(AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS))
                 .managedBy(ManagedByType.fromApi(ApiManagedBy.APPLICATION))
                 .assignedUser(assignedUser)
+                .iamRole(ControlledResourceIamRole.EDITOR)
                 .build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
