@@ -15,6 +15,7 @@ import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.BaseAzureSpringBootUnitTest;
 import bio.terra.workspace.service.crl.CrlService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.model.WsmControlledResourceFields;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -100,7 +101,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
     when(mockFlightContext.getWorkingMap()).thenReturn(mockWorkingMap);
     when(mockWorkingMap.get(ControlledResourceKeys.AZURE_CLOUD_CONTEXT, AzureCloudContext.class))
         .thenReturn(mockAzureCloudContext);
-    when(mockWorkingMap.get(AzureVmHelper.WORKING_MAP_PET_ID, String.class))
+    when(mockWorkingMap.get(GetPetManagedIdentityStep.MANAGED_IDENTITY_RESOURCE_ID, String.class))
         .thenReturn(STUB_STRING_PET_MANAGED_IDENTITY);
   }
 
@@ -161,7 +162,8 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
     var assignManagedIdentityAzureVmStep =
         new AssignManagedIdentityAzureVmStep(mockAzureConfig, mockCrlService, mockAzureVmResource);
 
-    when(mockWorkingMap.get(AzureVmHelper.WORKING_MAP_PET_ID, String.class)).thenReturn(null);
+    when(mockWorkingMap.get(GetPetManagedIdentityStep.MANAGED_IDENTITY_RESOURCE_ID, String.class))
+        .thenReturn(null);
 
     final StepResult stepResult = assignManagedIdentityAzureVmStep.doStep(mockFlightContext);
 
