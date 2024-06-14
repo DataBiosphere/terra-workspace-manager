@@ -20,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -205,6 +206,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   public void createVmWithFailureMakeSureNetworkInterfaceIsNotAbandoned()
       throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    String userEmail = userAccessUtils.getDefaultUserEmail();
 
     ApiAzureVmCreationParameters creationParameters =
         ControlledAzureResourceFixtures.getInvalidAzureVmCreationParameters();
@@ -219,8 +221,10 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .name(getAzureName("vm"))
                     .description(getAzureName("vm-desc"))
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.APPLICATION))
+                    .assignedUser(userEmail)
+                    .iamRole(ControlledResourceIamRole.EDITOR)
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
