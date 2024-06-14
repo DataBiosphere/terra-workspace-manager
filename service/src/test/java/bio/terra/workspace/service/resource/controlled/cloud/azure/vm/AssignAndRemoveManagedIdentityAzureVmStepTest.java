@@ -67,7 +67,7 @@ public class AssignAndRemoveManagedIdentityAzureVmStepTest extends BaseAzureSpri
   @Mock private WsmControlledResourceFields mockControlledResourceFields;
 
   @BeforeEach
-  public void setup() throws InterruptedException {
+  public void setup() {
     // Computer manager mocks
     when(mockCrlService.getComputeManager(
             any(AzureCloudContext.class), any(AzureConfiguration.class)))
