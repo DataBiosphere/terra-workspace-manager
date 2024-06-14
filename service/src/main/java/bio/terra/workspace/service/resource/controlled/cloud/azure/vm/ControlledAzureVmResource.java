@@ -16,6 +16,7 @@ import bio.terra.workspace.generated.model.ApiAzureVmUserAssignedIdentities;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -162,7 +163,13 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getSamService(),
             flightBeanBag.getWorkspaceService()),
         cloudRetry);
-    flight.addStep(new GetPetManagedIdentityStep(flightBeanBag.getSamService(), this), cloudRetry);
+    flight.addStep(
+        new GetPetManagedIdentityStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getSamService(),
+            getAssignedUser().orElseThrow()),
+        cloudRetry);
     flight.addStep(
         new CreateAzureVmStep(
             flightBeanBag.getAzureConfig(),
