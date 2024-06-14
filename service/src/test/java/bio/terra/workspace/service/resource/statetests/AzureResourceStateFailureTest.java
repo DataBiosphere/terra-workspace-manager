@@ -171,7 +171,9 @@ public class AzureResourceStateFailureTest extends BaseSpringBootUnitTest {
     // AZURE-Controlled Disk
     var diskResource =
         ControlledAzureResourceFixtures.makeDefaultAzureDiskBuilder(
-                ControlledAzureResourceFixtures.getAzureDiskCreationParameters(), workspaceUuid)
+                ControlledAzureResourceFixtures.getAzureDiskCreationParameters(),
+                workspaceUuid,
+                "test@email.com")
             .build();
     ControlledResourceFixtures.insertControlledResourceRow(resourceDao, diskResource);
 
