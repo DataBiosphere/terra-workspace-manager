@@ -283,7 +283,8 @@ public abstract class ControlledResource extends WsmResource {
       @Nullable String name,
       @Nullable String description,
       String createByEmail,
-      String region) {
+      String region,
+      @Nullable String applicationId) {
 
     var cloneResourceCommonFields =
         ControlledResourceFields.builder()
@@ -305,6 +306,8 @@ public abstract class ControlledResource extends WsmResource {
     // override name and description if provided
     cloneResourceCommonFields.name(name == null ? getName() : name);
     cloneResourceCommonFields.description(description == null ? getDescription() : description);
+    cloneResourceCommonFields.applicationId(
+        applicationId == null ? getApplicationId() : applicationId);
     return cloneResourceCommonFields.build();
   }
 
