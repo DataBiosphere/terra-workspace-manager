@@ -5,6 +5,7 @@ import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
+import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -62,26 +63,23 @@ import org.slf4j.LoggerFactory;
 public class ControlledResourceSamPolicyBuilder {
   private final Logger logger = LoggerFactory.getLogger(ControlledResourceSamPolicyBuilder.class);
 
-  private final SamService samService;
   private final ControlledResourceIamRole privateIamRole;
   private final String privateUserEmail;
-  private final AuthenticatedUserRequest userRequest;
   private final ControlledResourceCategory category;
+  @Nullable private final WsmWorkspaceApplication application;
 
   public ControlledResourceSamPolicyBuilder(
-      SamService samService,
       ControlledResourceIamRole privateIamRole,
       @Nullable String privateUserEmail,
-      AuthenticatedUserRequest userRequest,
-      ControlledResourceCategory category) {
-    this.samService = samService;
+      ControlledResourceCategory category,
+      @Nullable WsmWorkspaceApplication application) {
     this.privateIamRole = privateIamRole;
     this.privateUserEmail = privateUserEmail;
-    this.userRequest = userRequest;
     this.category = category;
+    this.application = application;
   }
 
-  public void addPolicies(CreateResourceRequestV2 request) throws InterruptedException {
+  public void addPolicies(CreateResourceRequestV2 request) {
     Map<ControlledResourceIamRole, AccessPolicyMembershipRequest> policyMap;
 
     // Owner is always WSM SA
@@ -110,19 +108,29 @@ public class ControlledResourceSamPolicyBuilder {
           throw new InternalLogicException(
               "Flight should never see application-shared with a user email");
         }
+
+        if (application == null) {
+          throw new InternalLogicException(
+              "Attempting to create an application controlled resource with no application");
+        }
         // Application is always editor on its resources; other policies are inherited
         AccessPolicyMembershipRequest editorPolicy =
             new AccessPolicyMembershipRequest()
                 .addRolesItem(ControlledResourceIamRole.EDITOR.toSamRole());
-        addApplicationResourceEditorPolicy(editorPolicy, userRequest);
+        addApplicationResourceEditorPolicy(editorPolicy, application);
         request.putPoliciesItem(ControlledResourceIamRole.EDITOR.toSamRole(), editorPolicy);
         break;
 
       case APPLICATION_PRIVATE:
+        if (application == null) {
+          throw new InternalLogicException(
+              "Attempting to create an application controlled resource with no application");
+        }
+
         policyMap = makeInitialPolicyMap();
         // Application is always editor
         addApplicationResourceEditorPolicy(
-            policyMap.get(ControlledResourceIamRole.EDITOR), userRequest);
+            policyMap.get(ControlledResourceIamRole.EDITOR), application);
         // if we have an assigned user, set up their permission
         if (privateUserEmail != null) {
           policyMap.get(privateIamRole).addMemberEmailsItem(privateUserEmail);
@@ -192,13 +200,10 @@ public class ControlledResourceSamPolicyBuilder {
    * Find the email of the application and add it to the incoming policy.
    *
    * @param editorPolicy editor policy
-   * @param userRequest authenticated user - the application in this case
    * @throws InterruptedException on interrupt while waiting on retries
    */
   private void addApplicationResourceEditorPolicy(
-      AccessPolicyMembershipRequest editorPolicy, AuthenticatedUserRequest userRequest)
-      throws InterruptedException {
-    String applicationEmail = samService.getUserEmailFromSam(userRequest);
-    editorPolicy.addMemberEmailsItem(applicationEmail);
+      AccessPolicyMembershipRequest editorPolicy, WsmWorkspaceApplication application) {
+    editorPolicy.addMemberEmailsItem(application.getApplication().getServiceAccount());
   }
 }
