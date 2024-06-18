@@ -105,6 +105,10 @@ public class AzureTestUtils {
     inputs.put(WorkspaceFlightMapKeys.WORKSPACE_ID, workspaceUuid.toString());
     inputs.put(JobMapKeys.AUTH_USER_INFO.getKeyName(), userRequest);
     inputs.put(ResourceKeys.RESOURCE_STATE_RULE, WsmResourceStateRule.DELETE_ON_FAILURE);
+    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
+      inputs.put(
+          ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, ControlledResourceIamRole.EDITOR);
+    }
     return inputs;
   }
 
@@ -117,10 +121,6 @@ public class AzureTestUtils {
     if (creationParameters != null) {
       inputs.put(
           WorkspaceFlightMapKeys.ControlledResourceKeys.CREATION_PARAMETERS, creationParameters);
-    }
-    if (resource.getAccessScope() == AccessScopeType.ACCESS_SCOPE_PRIVATE) {
-      inputs.put(
-          ControlledResourceKeys.PRIVATE_RESOURCE_IAM_ROLE, ControlledResourceIamRole.EDITOR);
     }
     return inputs;
   }

@@ -304,7 +304,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_VM);
 
-    AzureResourceValidationUtils.validate(body.getAzureVm());
+    AzureResourceValidationUtils.validateAzureVmImage(body.getAzureVm());
+    // Validate user-assigned managed identities can only be passed for application-managed VMs
+    AzureResourceValidationUtils.validateAzureVmUserAssignedIdentities(
+        body.getAzureVm().getUserAssignedIdentities(), commonFields.getManagedBy());
     ControlledAzureVmResource resource =
         buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
@@ -331,6 +334,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(creationParameters.getDiskId())
+        .priority(creationParameters.getPriority())
+        .userAssignedIdentities(creationParameters.getUserAssignedIdentities())
         .build();
   }
 

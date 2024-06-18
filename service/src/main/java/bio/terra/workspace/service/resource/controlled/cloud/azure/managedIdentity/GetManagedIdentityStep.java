@@ -8,6 +8,7 @@ public interface GetManagedIdentityStep {
   String MANAGED_IDENTITY_PRINCIPAL_ID = "MANAGED_IDENTITY_PRINCIPAL_ID";
   String MANAGED_IDENTITY_CLIENT_ID = "MANAGED_IDENTITY_CLIENT_ID";
   String MANAGED_IDENTITY_NAME = "MANAGED_IDENTITY_NAME";
+  String MANAGED_IDENTITY_RESOURCE_ID = "MANAGED_IDENTITY_RESOURCE_ID";
 
   static String getManagedIdentityPrincipalId(FlightContext context) {
     return FlightUtils.getRequired(
@@ -31,5 +32,6 @@ public interface GetManagedIdentityStep {
     context.getWorkingMap().put(MANAGED_IDENTITY_PRINCIPAL_ID, identity.principalId());
     context.getWorkingMap().put(MANAGED_IDENTITY_CLIENT_ID, identity.clientId());
     context.getWorkingMap().put(MANAGED_IDENTITY_NAME, identity.name());
+    context.getWorkingMap().put(MANAGED_IDENTITY_RESOURCE_ID, identity.id());
   }
 }

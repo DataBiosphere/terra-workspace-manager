@@ -20,6 +20,7 @@ import bio.terra.workspace.generated.model.ApiAzureDiskCreationParameters;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.generated.model.ApiManagedBy;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.job.JobService;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.ControlledResourceService;
@@ -84,14 +85,14 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   @Test
   public void createAndDeleteAzureVmControlledResource() throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    String userEmail = userAccessUtils.getDefaultUserEmail();
 
     ApiAzureVmCreationParameters creationParameters =
         ControlledAzureResourceFixtures.getAzureVmCreationParameters();
 
-    // TODO: make this application-private resource once the POC supports it
     ControlledAzureVmResource resource =
         ControlledAzureResourceFixtures.makeDefaultControlledAzureVmResourceBuilder(
-                creationParameters, workspaceUuid, diskResource.getResourceId())
+                creationParameters, workspaceUuid, diskResource.getResourceId(), userEmail)
             .build();
 
     // Submit a VM creation flight and verify the resource exists in the workspace.
@@ -137,11 +138,11 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   public void createAndDeleteAzureVmControlledResourceWithCustomScriptExtension()
       throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    String userEmail = userAccessUtils.getDefaultUserEmail();
 
     ApiAzureVmCreationParameters creationParameters =
         ControlledAzureResourceFixtures.getAzureVmCreationParametersWithCustomScriptExtension();
 
-    // TODO: make this application-private resource once the POC supports it
     UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
@@ -152,8 +153,9 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .name(getAzureName("vm"))
                     .description(getAzureName("vm-desc"))
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.APPLICATION))
+                    .assignedUser(userEmail)
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
@@ -204,6 +206,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   public void createVmWithFailureMakeSureNetworkInterfaceIsNotAbandoned()
       throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    String userEmail = userAccessUtils.getDefaultUserEmail();
 
     ApiAzureVmCreationParameters creationParameters =
         ControlledAzureResourceFixtures.getInvalidAzureVmCreationParameters();
@@ -218,8 +221,10 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .name(getAzureName("vm"))
                     .description(getAzureName("vm-desc"))
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.APPLICATION))
+                    .assignedUser(userEmail)
+                    .iamRole(ControlledResourceIamRole.EDITOR)
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
@@ -290,12 +295,12 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
   public void createAndDeleteAzureVmControlledResourceWithEphemeralDisk()
       throws InterruptedException {
     AuthenticatedUserRequest userRequest = userAccessUtils.defaultUserAuthRequest();
+    String userEmail = userAccessUtils.getDefaultUserEmail();
 
     ApiAzureVmCreationParameters creationParameters =
         ControlledAzureResourceFixtures
             .getAzureVmCreationParametersWithEphemeralOsDiskAndCustomData();
 
-    // TODO: make this application-private resource once the POC supports it
     UUID resourceId = UUID.randomUUID();
     ControlledAzureVmResource resource =
         ControlledAzureVmResource.builder()
@@ -306,8 +311,9 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .name(getAzureName("vm"))
                     .description(getAzureName("vm-desc"))
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                    .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                    .accessScope(AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS))
+                    .managedBy(ManagedByType.fromApi(ApiManagedBy.APPLICATION))
+                    .assignedUser(userEmail)
                     .build())
             .vmName(creationParameters.getName())
             .vmSize(creationParameters.getVmSize())
@@ -409,10 +415,9 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
     ApiAzureDiskCreationParameters creationParameters =
         ControlledAzureResourceFixtures.getAzureDiskCreationParameters();
 
-    // TODO: make this application-private resource once the POC supports it
     ControlledAzureDiskResource resource =
         ControlledAzureResourceFixtures.makeDefaultAzureDiskBuilder(
-                creationParameters, workspaceUuid)
+                creationParameters, workspaceUuid, userAccessUtils.getDefaultUserEmail())
             .build();
 
     // Submit a Disk creation flight.
