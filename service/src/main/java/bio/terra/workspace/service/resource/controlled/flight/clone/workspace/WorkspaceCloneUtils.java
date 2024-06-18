@@ -69,7 +69,8 @@ public class WorkspaceCloneUtils {
                 name,
                 description,
                 createdByEmail,
-                region))
+                region,
+                null))
         .build();
   }
 

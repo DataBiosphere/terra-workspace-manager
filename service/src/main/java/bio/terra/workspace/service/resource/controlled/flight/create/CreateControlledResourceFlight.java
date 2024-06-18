@@ -70,6 +70,7 @@ public class CreateControlledResourceFlight extends Flight {
             resource,
             privateResourceIamRole,
             resource.getAssignedUser().orElse(null),
+            flightBeanBag.getApplicationService(),
             userRequest));
 
     // Get the cloud context and store it in the working map

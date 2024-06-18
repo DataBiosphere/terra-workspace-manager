@@ -66,6 +66,7 @@ public class ControlledResourceSamPolicyBuilder {
   private final ControlledResourceIamRole privateIamRole;
   private final String privateUserEmail;
   private final AuthenticatedUserRequest userRequest;
+  @Nullable private final String applicationEmail;
   private final ControlledResourceCategory category;
 
   public ControlledResourceSamPolicyBuilder(
@@ -73,11 +74,13 @@ public class ControlledResourceSamPolicyBuilder {
       ControlledResourceIamRole privateIamRole,
       @Nullable String privateUserEmail,
       AuthenticatedUserRequest userRequest,
+      @Nullable String applicationEmail,
       ControlledResourceCategory category) {
     this.samService = samService;
     this.privateIamRole = privateIamRole;
     this.privateUserEmail = privateUserEmail;
     this.userRequest = userRequest;
+    this.applicationEmail = applicationEmail;
     this.category = category;
   }
 
@@ -114,7 +117,11 @@ public class ControlledResourceSamPolicyBuilder {
         AccessPolicyMembershipRequest editorPolicy =
             new AccessPolicyMembershipRequest()
                 .addRolesItem(ControlledResourceIamRole.EDITOR.toSamRole());
-        addApplicationResourceEditorPolicy(editorPolicy, userRequest);
+        if (applicationEmail != null) {
+          editorPolicy.addMemberEmailsItem(applicationEmail);
+        } else {
+          addApplicationResourceEditorPolicy(editorPolicy, userRequest);
+        }
         request.putPoliciesItem(ControlledResourceIamRole.EDITOR.toSamRole(), editorPolicy);
         break;
 

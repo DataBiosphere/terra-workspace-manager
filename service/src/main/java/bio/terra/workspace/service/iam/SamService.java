@@ -991,6 +991,7 @@ public class SamService {
       ControlledResource resource,
       @Nullable ControlledResourceIamRole privateIamRole,
       @Nullable String assignedUserEmail,
+      @Nullable String applicationEmail,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
 
@@ -1013,6 +1014,7 @@ public class SamService {
             privateIamRole,
             assignedUserEmail,
             userRequest,
+            applicationEmail,
             ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()));
     builder.addPolicies(resourceRequest);
 
