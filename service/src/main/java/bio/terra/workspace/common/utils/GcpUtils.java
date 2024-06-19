@@ -141,12 +141,14 @@ public class GcpUtils {
   }
 
   public static String getWsmSaEmail() {
-    try {
+    /*try {
       return getWsmSaEmail(GoogleCredentials.getApplicationDefault());
     } catch (IOException e) {
       throw new SaCredentialsMissingException(
           "Unable to find WSM service account credentials. Ensure WSM is actually running as a service account");
-    }
+    }*/
+    // TODO HACK Remove me
+    return "90d2e10c-0bbb-48e6-935e-9df9b1989998@uami.terra.bio";
   }
 
   /**
