@@ -848,7 +848,7 @@ public class SamService {
       var policy =
           resourcesApi.getPolicyV2(
               SamResource.WORKSPACE, workspaceUuid.toString(), WsmIamRole.APPLICATION.toSamRole());
-      return policy.getMemberEmails().stream().anyMatch(e -> e.equalsIgnoreCase(email));
+      return policy.getMemberEmails().stream().anyMatch(email::equalsIgnoreCase);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error querying role in Sam", apiException);
     }
