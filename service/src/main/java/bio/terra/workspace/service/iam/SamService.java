@@ -21,6 +21,7 @@ import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
@@ -51,15 +52,7 @@ import org.broadinstitute.dsde.workbench.client.sam.api.GoogleApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.ResourcesApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.StatusApi;
 import org.broadinstitute.dsde.workbench.client.sam.api.UsersApi;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyMembershipRequest;
-import org.broadinstitute.dsde.workbench.client.sam.model.AccessPolicyResponseEntryV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.CreateResourceRequestV2;
-import org.broadinstitute.dsde.workbench.client.sam.model.FullyQualifiedResourceId;
-import org.broadinstitute.dsde.workbench.client.sam.model.GetOrCreatePetManagedIdentityRequest;
-import org.broadinstitute.dsde.workbench.client.sam.model.PolicyIdentifiers;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserIdInfo;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserResourcesResponse;
-import org.broadinstitute.dsde.workbench.client.sam.model.UserStatusInfo;
+import org.broadinstitute.dsde.workbench.client.sam.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -215,10 +208,10 @@ public class SamService {
   public String getOrCreateUserManagedIdentityForUser(
       String userEmail, String subscriptionId, String tenantId, String managedResourceGroupId)
       throws InterruptedException {
-    AzureApi azureApi = samAzureApi(getWsmServiceAccountToken());
 
-    GetOrCreatePetManagedIdentityRequest request =
-        new GetOrCreatePetManagedIdentityRequest()
+    AzureApi azureApi = samAzureApi(getWsmServiceAccountToken());
+    GetOrCreateManagedIdentityRequest request =
+        new GetOrCreateManagedIdentityRequest()
             .subscriptionId(subscriptionId)
             .tenantId(tenantId)
             .managedResourceGroupName(managedResourceGroupId);
@@ -228,6 +221,48 @@ public class SamService {
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
           "Error getting user assigned managed identity from Sam", apiException);
+    }
+  }
+
+  /**
+   * Returns the 'Action Managed Identity' that the requesting user has access to, if one exists.
+   *
+   * @param samResourceType Type of the Sam resource. e.g. private_azure_container_registry
+   * @param samAction Action to perform on the resource. e.g. pull_image
+   * @param samResourceId Sam ID of the resource. UUID. For private ACR, by convention, the
+   *     resourceID is equivalent to the billingProfileID (a.k.a. SpendProfileId).
+   * @param request The request from user asking for the identity. Used to impersonate the user when
+   *     querying Sam.
+   * @return Fully qualified name of the identity. Might look something like
+   *     /subscriptions/62b22893-6bc1-46d9-8a90-806bb3cce3c9/resourcegroups/mrg-terra-dev-previ-20240104102401/providers/Microsoft.ManagedIdentity/userAssignedIdentities/586d120b-c4c-pull_image
+   */
+  public Optional<String> getActionIdentityForUser(
+      String samResourceType,
+      String samAction,
+      String samResourceId,
+      AuthenticatedUserRequest request)
+      throws InterruptedException {
+
+    String token = getSamUser(request).getBearerToken().getToken();
+    AzureApi azureApi = samAzureApi(token);
+
+    try {
+      ActionManagedIdentityResponse resp =
+          SamRetry.retry(
+              () -> azureApi.getActionManagedIdentity(samResourceType, samResourceId, samAction));
+      return Optional.ofNullable(resp.getObjectId());
+    } catch (ApiException apiException) {
+      String infoStringTemplate = "Billing Profile: %s, Resource Type: %s, Action: %s";
+      if (apiException.getCode() == 404) {
+        logger.info(
+            "Action identity not found in Sam for "
+                + String.format(infoStringTemplate, samResourceId, samResourceType, samAction));
+        return Optional.empty();
+      }
+      throw SamExceptionFactory.create(
+          "Error fetching action managed identity from Sam."
+              + String.format(infoStringTemplate, samResourceId, samResourceType, samAction),
+          apiException);
     }
   }
 
@@ -816,19 +851,16 @@ public class SamService {
   @WithSpan
   public boolean isApplicationEnabledInSam(
       UUID workspaceUuid, String email, AuthenticatedUserRequest userRequest) {
-    // We detect that an application is enabled in Sam by checking if the application has
-    // the create-controlled-application-private action on the workspace.
     try {
       logger.info(
               "Checking SAM permission {} for {}",
               SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
               email);
       ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
-      return resourcesApi.resourceActionV2(
-          SamConstants.SamResource.WORKSPACE,
-          workspaceUuid.toString(),
-          SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
-          email);
+      var policy =
+          resourcesApi.getPolicyV2(
+              SamResource.WORKSPACE, workspaceUuid.toString(), WsmIamRole.APPLICATION.toSamRole());
+      return policy.getMemberEmails().stream().anyMatch(e -> e.equalsIgnoreCase(email));
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error querying role in Sam", apiException);
     }

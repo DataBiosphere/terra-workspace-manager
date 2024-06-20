@@ -17,6 +17,7 @@ public class TestFlightContext implements FlightContext {
   private FlightStatus flightStatus = FlightStatus.QUEUED;
   private Direction direction = Direction.DO;
   private String stepClassName = TestUtils.appendRandomNumber("stepClassName");
+  private StepResult result = new StepResult(StepStatus.STEP_RESULT_SUCCESS);
 
   @Override
   public Object getApplicationContext() {
@@ -95,7 +96,12 @@ public class TestFlightContext implements FlightContext {
 
   @Override
   public StepResult getResult() {
-    return null;
+    return result;
+  }
+
+  public TestFlightContext result(StepResult result) {
+    this.result = result;
+    return this;
   }
 
   @Override

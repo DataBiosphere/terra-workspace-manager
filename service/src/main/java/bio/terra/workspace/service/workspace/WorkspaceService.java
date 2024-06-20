@@ -937,6 +937,10 @@ public class WorkspaceService {
     if (tpsUpdateMode == TpsUpdateMode.DRY_RUN) {
       return dryRun;
     } else {
+      // Any necessary auth domain updates must be successfully applied *before* recording policies
+      // in TPS.
+      patchWorkspaceAuthDomain(workspaceId, userRequest, paoBeforeUpdate, dryRun);
+
       var updateResult =
           Rethrow.onInterrupted(
               () -> tpsApiDispatch.linkPao(workspaceId, sourcePaoId.getObjectId(), tpsUpdateMode),
@@ -960,8 +964,6 @@ public class WorkspaceService {
             sourcePaoId.getObjectId(),
             userRequest.getEmail());
       }
-
-      patchWorkspaceAuthDomain(workspaceId, userRequest, paoBeforeUpdate, dryRun);
 
       return updateResult;
     }

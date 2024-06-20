@@ -34,17 +34,18 @@ dependencies {
   implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.2.0'
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:1.1.6-SNAPSHOT")
-  // sam is not semantically versioned so force the version here
-  implementation force: true, group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "0.1-73bc2d1"
+  implementation("bio.terra:terra-common-lib:1.1.11-SNAPSHOT")
+
+  // sam
+  implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "v0.0.234"
   implementation group: "bio.terra", name: "terra-resource-buffer-client", version: "0.198.42-SNAPSHOT"
 
   // Cloud Resource Library
-  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.30-SNAPSHOT"
+  implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.31-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.327-SNAPSHOT')
-  implementation ('bio.terra:landing-zone-service-client:0.0.319-SNAPSHOT')
+  implementation ('bio.terra:terra-landing-zone-service:0.0.334-SNAPSHOT')
+  implementation ('bio.terra:landing-zone-service-client:0.0.334-SNAPSHOT')
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20230831-2.0.0'
@@ -72,6 +73,11 @@ dependencies {
 
   implementation group: "commons-validator", name: "commons-validator", version: "1.7"
   implementation group: "io.kubernetes", name: "client-java", version: "20.0.1" // Do not use -legacy versions
+  constraints {
+    implementation('org.bouncycastle:bcprov-jdk18on:1.78') {
+      because 'https://broadworkbench.atlassian.net/browse/WOR-1652'
+    }
+  }
 
   // OpenAPI (swagger) deps
   implementation gradle.librarySwaggerAnnotations

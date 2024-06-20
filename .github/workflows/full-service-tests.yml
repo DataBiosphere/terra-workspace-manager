@@ -72,7 +72,7 @@ jobs:
         cat << EOF > "config/local-properties.yml"
         workspace:
           policy:
-            base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
+            base-path: https://tps.dsde-dev.broadinstitute.org/
           cli:
             server-name: broad-dev
           azure:

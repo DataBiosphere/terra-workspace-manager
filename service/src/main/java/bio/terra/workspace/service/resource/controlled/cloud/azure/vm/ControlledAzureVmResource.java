@@ -10,10 +10,13 @@ import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes;
 import bio.terra.workspace.db.model.UniquenessCheckAttributes.UniquenessScope;
 import bio.terra.workspace.generated.model.ApiAzureVmAttributes;
+import bio.terra.workspace.generated.model.ApiAzureVmPriority;
 import bio.terra.workspace.generated.model.ApiAzureVmResource;
+import bio.terra.workspace.generated.model.ApiAzureVmUserAssignedIdentities;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -30,12 +33,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.apache.commons.collections4.CollectionUtils;
 
 public class ControlledAzureVmResource extends ControlledResource {
   private final String vmName;
   private final String vmSize;
   private final String vmImage;
   private final UUID diskId;
+  private final ApiAzureVmPriority priority;
+  private final List<String> userAssignedIdentities;
 
   @JsonCreator
   public ControlledAzureVmResource(
@@ -45,22 +51,34 @@ public class ControlledAzureVmResource extends ControlledResource {
       @JsonProperty("vmName") String vmName,
       @JsonProperty("vmSize") String vmSize,
       @JsonProperty("vmImage") String vmImage,
-      @JsonProperty("diskId") UUID diskId) {
+      @JsonProperty("diskId") UUID diskId,
+      @JsonProperty("priority") ApiAzureVmPriority priority,
+      @JsonProperty("userAssignedIdentities") List<String> userAssignedIdentities) {
     super(resourceFields, controlledResourceFields);
     this.vmName = vmName;
     this.vmSize = vmSize;
     this.vmImage = vmImage;
     this.diskId = diskId;
+    this.priority = priority;
+    this.userAssignedIdentities = userAssignedIdentities;
     validate();
   }
 
   private ControlledAzureVmResource(
-      ControlledResourceFields common, String vmName, String vmSize, String vmImage, UUID diskId) {
+      ControlledResourceFields common,
+      String vmName,
+      String vmSize,
+      String vmImage,
+      UUID diskId,
+      ApiAzureVmPriority priority,
+      List<String> userAssignedIdentities) {
     super(common);
     this.vmName = vmName;
     this.vmImage = vmImage;
     this.vmSize = vmSize;
     this.diskId = diskId;
+    this.priority = priority;
+    this.userAssignedIdentities = userAssignedIdentities;
     validate();
   }
 
@@ -90,6 +108,14 @@ public class ControlledAzureVmResource extends ControlledResource {
 
   public UUID getDiskId() {
     return diskId;
+  }
+
+  public ApiAzureVmPriority getPriority() {
+    return priority;
+  }
+
+  public List<String> getUserAssignedIdentities() {
+    return userAssignedIdentities;
   }
 
   // -- getters not included in serialization --
@@ -138,6 +164,13 @@ public class ControlledAzureVmResource extends ControlledResource {
             flightBeanBag.getWorkspaceService()),
         cloudRetry);
     flight.addStep(
+        new GetPetManagedIdentityStep(
+            flightBeanBag.getAzureConfig(),
+            flightBeanBag.getCrlService(),
+            flightBeanBag.getSamService(),
+            getAssignedUser().orElseThrow()),
+        cloudRetry);
+    flight.addStep(
         new CreateAzureVmStep(
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
@@ -146,10 +179,7 @@ public class ControlledAzureVmResource extends ControlledResource {
         cloudRetry);
     flight.addStep(
         new AssignManagedIdentityAzureVmStep(
-            flightBeanBag.getAzureConfig(),
-            flightBeanBag.getCrlService(),
-            flightBeanBag.getSamService(),
-            this),
+            flightBeanBag.getAzureConfig(), flightBeanBag.getCrlService(), this),
         cloudRetry);
     flight.addStep(
         new EnableVmLoggingStep(
@@ -183,12 +213,20 @@ public class ControlledAzureVmResource extends ControlledResource {
   public void addUpdateSteps(UpdateResourceFlight flight, FlightBeanBag flightBeanBag) {}
 
   public ApiAzureVmAttributes toApiAttributes() {
+    // VMs default to Regular priority if not specified
+    var priorityAttr = Optional.ofNullable(getPriority()).orElse(ApiAzureVmPriority.REGULAR);
+    var userAssigedIdentitiesAttr = new ApiAzureVmUserAssignedIdentities();
+    if (CollectionUtils.isNotEmpty(getUserAssignedIdentities())) {
+      userAssigedIdentitiesAttr.addAll(getUserAssignedIdentities());
+    }
     return new ApiAzureVmAttributes()
         .vmName(getVmName())
         .region(getRegion())
         .vmSize(getVmSize())
         .vmImage(getVmImage())
-        .diskId(getDiskId());
+        .diskId(getDiskId())
+        .priority(priorityAttr)
+        .userAssignedIdentities(userAssigedIdentitiesAttr);
   }
 
   public ApiAzureVmResource toApiResource() {
@@ -271,6 +309,8 @@ public class ControlledAzureVmResource extends ControlledResource {
     private String vmSize;
     private String vmImage;
     private UUID diskId;
+    private ApiAzureVmPriority priority;
+    private List<String> userAssignedIdentities;
 
     public Builder common(ControlledResourceFields common) {
       this.common = common;
@@ -297,8 +337,20 @@ public class ControlledAzureVmResource extends ControlledResource {
       return this;
     }
 
+    public ControlledAzureVmResource.Builder priority(ApiAzureVmPriority priority) {
+      this.priority = priority;
+      return this;
+    }
+
+    public ControlledAzureVmResource.Builder userAssignedIdentities(
+        List<String> userAssignedIdentities) {
+      this.userAssignedIdentities = userAssignedIdentities;
+      return this;
+    }
+
     public ControlledAzureVmResource build() {
-      return new ControlledAzureVmResource(common, vmName, vmSize, vmImage, diskId);
+      return new ControlledAzureVmResource(
+          common, vmName, vmSize, vmImage, diskId, priority, userAssignedIdentities);
     }
   }
 }

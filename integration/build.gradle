@@ -10,7 +10,7 @@ plugins {
 
 dependencies {
     // Google dependencies versioned by bom
-    implementation platform('com.google.cloud:libraries-bom:26.38.0')
+    implementation platform('com.google.cloud:libraries-bom:26.41.0')
     implementation "com.google.api-client:google-api-client"
     implementation "com.google.cloud:google-cloud-bigquery"
     implementation "com.google.cloud:google-cloud-storage"
@@ -29,7 +29,7 @@ dependencies {
     implementation 'bio.terra:terra-test-runner:0.2.0-SNAPSHOT'
 
     // Use Terra Common Library on client side to retry direct Sam calls
-    implementation("bio.terra:terra-common-lib:1.1.6-SNAPSHOT") {
+    implementation("bio.terra:terra-common-lib:1.1.11-SNAPSHOT") {
         exclude group: "org.broadinstitute.dsde.workbench", module: "sam-client_2.13"
     }
 

@@ -310,7 +310,7 @@ workspace:
     sas-token-expiry-time-minutes-offset: 60
     sas-token-expiry-time-maximum-minutes-offset: 1440
   policy:
-    base-path: https://tps.wsmtest-eng.bee.envs-terra.bio/
+    base-path: https://tps.dsde-dev.broadinstitute.org/
   cli:
     server-name: broad-dev
 feature:

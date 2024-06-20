@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InconsistentFieldsException;
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.app.configuration.external.GitRepoReferencedResourceConfiguration;
 import bio.terra.workspace.common.BaseSpringBootUnitTest;
 import bio.terra.workspace.common.fixtures.ControlledGcpResourceFixtures;
@@ -21,6 +22,7 @@ import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceContainerImag
 import bio.terra.workspace.generated.model.ApiGcpAiNotebookInstanceVmImage;
 import bio.terra.workspace.service.resource.controlled.exception.RegionNotAllowedException;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.resource.model.StewardshipType;
@@ -389,7 +391,7 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> AzureResourceValidationUtils.validate(apiVmCreationParameters));
+        () -> AzureResourceValidationUtils.validateAzureVmImage(apiVmCreationParameters));
   }
 
   @Test
@@ -401,7 +403,7 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> AzureResourceValidationUtils.validate(apiVmCreationParameters));
+        () -> AzureResourceValidationUtils.validateAzureVmImage(apiVmCreationParameters));
   }
 
   @Test
@@ -417,7 +419,7 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> AzureResourceValidationUtils.validate(apiVmCreationParameters));
+        () -> AzureResourceValidationUtils.validateAzureVmImage(apiVmCreationParameters));
   }
 
   @Test
@@ -433,7 +435,7 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
 
     assertThrows(
         MissingRequiredFieldException.class,
-        () -> AzureResourceValidationUtils.validate(apiVmCreationParameters));
+        () -> AzureResourceValidationUtils.validateAzureVmImage(apiVmCreationParameters));
   }
 
   @Test
@@ -571,5 +573,29 @@ public class ResourceValidationUtilsTest extends BaseSpringBootUnitTest {
     assertThrows(
         InvalidReferenceException.class,
         () -> AzureResourceValidationUtils.validateAzureDiskName("$invalidDiskName$"));
+  }
+
+  @Test
+  void validateAzureVmUserAssignedIdentities_valid() {
+    AzureResourceValidationUtils.validateAzureVmUserAssignedIdentities(
+        List.of("ident1", "ident2"), ManagedByType.MANAGED_BY_APPLICATION);
+  }
+
+  @Test
+  void validateAzureVmUserAssignedIdentities_valid_empty() {
+    AzureResourceValidationUtils.validateAzureVmUserAssignedIdentities(
+        List.of(), ManagedByType.MANAGED_BY_USER);
+    AzureResourceValidationUtils.validateAzureVmUserAssignedIdentities(
+        List.of(), ManagedByType.MANAGED_BY_APPLICATION);
+  }
+
+  @Test
+  void validateAzureVmUserAssignedIdentities_invalid() {
+    var identities = List.of("ident1", "ident2");
+    assertThrows(
+        ValidationException.class,
+        () ->
+            AzureResourceValidationUtils.validateAzureVmUserAssignedIdentities(
+                identities, ManagedByType.MANAGED_BY_USER));
   }
 }

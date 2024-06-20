@@ -14,6 +14,7 @@ import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -126,7 +127,10 @@ public class EnableVmLoggingStep implements Step {
             .withMinorVersionAutoUpgrade();
 
     // use the pet identity if one is defined, otherwise a system identity will be used
-    Optional.ofNullable(context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_PET_ID, String.class))
+    Optional.ofNullable(
+            context
+                .getWorkingMap()
+                .get(GetManagedIdentityStep.MANAGED_IDENTITY_RESOURCE_ID, String.class))
         .ifPresentOrElse(
             (petId ->
                 extension.withPublicSetting(

@@ -3,7 +3,6 @@ package bio.terra.workspace.app.controller;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapFrom;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfApplicationPackageReferences;
 import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfMetadataItems;
-import static bio.terra.workspace.common.utils.MapperUtils.BatchPoolMapper.mapListOfUserAssignedIdentities;
 
 import bio.terra.common.exception.ApiException;
 import bio.terra.common.exception.ValidationException;
@@ -53,8 +52,12 @@ import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +75,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   private final AzureStorageAccessService azureControlledStorageResourceService;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final WsmResourceService wsmResourceService;
+  private final Map<WorkspaceCacheKey, Workspace> sasTokenWorkspaceCache;
 
   @Autowired
   public ControlledAzureResourceApiController(
@@ -104,6 +108,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     this.azureControlledStorageResourceService = azureControlledStorageResourceService;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.wsmResourceService = wsmResourceService;
+    this.sasTokenWorkspaceCache =
+        Collections.synchronizedMap(new PassiveExpiringMap<>(10, TimeUnit.SECONDS));
   }
 
   @WithSpan
@@ -207,8 +213,11 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     // You must have at least READ on the workspace to use this method. Actual permissions
     // are determined below.
     Workspace workspace =
-        workspaceService.validateWorkspaceAndAction(
-            userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ);
+        sasTokenWorkspaceCache.computeIfAbsent(
+            new WorkspaceCacheKey(userRequest.getSubjectId(), workspaceUuid),
+            v ->
+                workspaceService.validateWorkspaceAndAction(
+                    userRequest, workspaceUuid, SamConstants.SamWorkspaceAction.READ));
     workspaceService.validateWorkspaceAndContextState(workspace, CloudPlatform.AZURE);
 
     ControllerValidationUtils.validateIpAddressRange(sasIpRange);
@@ -305,7 +314,10 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             userRequest,
             WsmResourceType.CONTROLLED_AZURE_VM);
 
-    AzureResourceValidationUtils.validate(body.getAzureVm());
+    AzureResourceValidationUtils.validateAzureVmImage(body.getAzureVm());
+    // Validate user-assigned managed identities can only be passed for application-managed VMs
+    AzureResourceValidationUtils.validateAzureVmUserAssignedIdentities(
+        body.getAzureVm().getUserAssignedIdentities(), commonFields.getManagedBy());
     ControlledAzureVmResource resource =
         buildControlledAzureVmResource(body.getAzureVm(), commonFields);
 
@@ -332,6 +344,8 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
         .vmSize(creationParameters.getVmSize())
         .vmImage(AzureUtils.getVmImageData(creationParameters.getVmImage()))
         .diskId(creationParameters.getDiskId())
+        .priority(creationParameters.getPriority())
+        .userAssignedIdentities(creationParameters.getUserAssignedIdentities())
         .build();
   }
 
@@ -406,9 +420,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
             .vmSize(body.getAzureBatchPool().getVmSize())
             .displayName(body.getAzureBatchPool().getDisplayName())
             .deploymentConfiguration(mapFrom(body.getAzureBatchPool().getDeploymentConfiguration()))
-            .userAssignedIdentities(
-                mapListOfUserAssignedIdentities(
-                    body.getAzureBatchPool().getUserAssignedIdentities()))
             .scaleSettings(mapFrom(body.getAzureBatchPool().getScaleSettings()))
             .startTask(mapFrom(body.getAzureBatchPool().getStartTask()))
             .applicationPackages(
@@ -1005,3 +1016,5 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     return workspace;
   }
 }
+
+record WorkspaceCacheKey(String userSubjectId, UUID workspaceUuid) {}

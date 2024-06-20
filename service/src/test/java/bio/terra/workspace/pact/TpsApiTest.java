@@ -1,6 +1,7 @@
 package bio.terra.workspace.pact;
 
 import static au.com.dius.pact.consumer.dsl.LambdaDsl.newJsonBody;
+import static bio.terra.workspace.pact.PactFixtures.CONTENT_TYPE_JSON_HEADER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -39,13 +40,6 @@ import org.springframework.http.HttpStatus;
 public class TpsApiTest {
   private static final String UUID_REGEX =
       "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-
-  // Note: the header must match exactly so pact doesn't add it's own
-  // if "Content-type" is specified instead,
-  // pact will also have a required header for "Content-Type: application/json; charset=UTF-8"
-  // which will cause the request to fail to match,
-  // since our client doesn't include the encoding in the content type header
-  static Map<String, String> contentTypeJsonHeader = Map.of("Content-Type", "application/json");
 
   // The policy ids aren't significant - hardcoded instead of random to avoid changing the pact on
   // every run
@@ -118,7 +112,7 @@ public class TpsApiTest {
         .method("POST")
         .path("/api/policy/v1alpha1/pao")
         .body(workspacePolicyCreateRequestShape)
-        .headers(contentTypeJsonHeader)
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .toPact();
@@ -143,7 +137,7 @@ public class TpsApiTest {
         .method("POST")
         .path("/api/policy/v1alpha1/pao")
         .body(workspacePolicyCreateRequestShape)
-        .headers(contentTypeJsonHeader)
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .willRespondWith()
         .status(HttpStatus.CONFLICT.value())
         .toPact();
@@ -263,7 +257,7 @@ public class TpsApiTest {
         .given(secondPolicyState)
         .uponReceiving("A request to link the policies")
         .method("POST")
-        .headers(contentTypeJsonHeader)
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .body(linkRequestShape)
         .pathFromProviderState(
             "/api/policy/v1alpha1/pao/%s/link".formatted(existingPolicyProviderStateValue),
@@ -300,7 +294,7 @@ public class TpsApiTest {
         .given(secondPolicyState)
         .uponReceiving("A request to link the policies")
         .method("POST")
-        .headers(contentTypeJsonHeader)
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .body(linkRequestShape)
         .pathFromProviderState(
             "/api/policy/v1alpha1/pao/%s/merge".formatted(existingPolicyProviderStateValue),
@@ -335,7 +329,7 @@ public class TpsApiTest {
         .uponReceiving("A request to update a policy")
         .method("PUT")
         .body(updateRequestShape)
-        .headers(contentTypeJsonHeader)
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .pathFromProviderState(
             "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyProviderStateValue),
             "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
@@ -372,7 +366,7 @@ public class TpsApiTest {
         .uponReceiving("A request to update a policy")
         .method("PATCH")
         .body(updateRequestShape)
-        .headers(contentTypeJsonHeader)
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .pathFromProviderState(
             "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyProviderStateValue),
             "/api/policy/v1alpha1/pao/%s".formatted(existingPolicyId))
@@ -427,7 +421,7 @@ public class TpsApiTest {
         .body(tpsPolicyInputsObjectShape)
         .path("/api/policy/v1alpha1/location/list-valid")
         .matchQuery("platform", cloudPlatformTpsRegex)
-        .headers(contentTypeJsonHeader)
+        .headers(CONTENT_TYPE_JSON_HEADER)
         .willRespondWith()
         .status(HttpStatus.OK.value())
         .body(new PactDslJsonArray().stringType())
