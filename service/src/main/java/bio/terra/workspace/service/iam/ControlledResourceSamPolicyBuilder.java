@@ -200,7 +200,7 @@ public class ControlledResourceSamPolicyBuilder {
    * Find the email of the application and add it to the incoming policy.
    *
    * @param editorPolicy editor policy
-   * @throws InterruptedException on interrupt while waiting on retries
+   * @param application Application being added to the policy
    */
   private void addApplicationResourceEditorPolicy(
       AccessPolicyMembershipRequest editorPolicy, WsmWorkspaceApplication application) {

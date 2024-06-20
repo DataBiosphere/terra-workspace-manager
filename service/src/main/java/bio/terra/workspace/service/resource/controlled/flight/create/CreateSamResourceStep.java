@@ -8,9 +8,6 @@ import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
-import bio.terra.workspace.service.workspace.WsmApplicationService;
-import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +19,7 @@ public class CreateSamResourceStep implements Step {
   private final ControlledResourceIamRole privateResourceIamRole;
   private final String assignedUserEmail;
   private final AuthenticatedUserRequest userRequest;
-  private final WsmApplicationService applicationService;
+
   private final Logger logger = LoggerFactory.getLogger(CreateSamResourceStep.class);
 
   public CreateSamResourceStep(
@@ -30,34 +27,19 @@ public class CreateSamResourceStep implements Step {
       ControlledResource resource,
       @Nullable ControlledResourceIamRole privateResourceIamRole,
       @Nullable String assignedUserEmail,
-      WsmApplicationService applicationService,
       AuthenticatedUserRequest userRequest) {
     this.samService = samService;
     this.resource = resource;
     this.privateResourceIamRole = privateResourceIamRole;
     this.assignedUserEmail = assignedUserEmail;
     this.userRequest = userRequest;
-    this.applicationService = applicationService;
   }
 
   @Override
   public StepResult doStep(FlightContext flightContext)
       throws InterruptedException, RetryException {
-    if (resource.getManagedBy().equals(ManagedByType.MANAGED_BY_APPLICATION)) {
-      WsmWorkspaceApplication app =
-          applicationService.getWorkspaceApplication(
-              resource.getWorkspaceId(), resource.getApplicationId());
-
-      samService.createControlledResource(
-          resource,
-          privateResourceIamRole,
-          assignedUserEmail,
-          app.getApplication().getServiceAccount(),
-          userRequest);
-    } else {
-      samService.createControlledResource(
-          resource, privateResourceIamRole, assignedUserEmail, null, userRequest);
-    }
+    samService.createControlledResource(
+        resource, privateResourceIamRole, assignedUserEmail, userRequest);
     return StepResult.getStepResultSuccess();
   }
 

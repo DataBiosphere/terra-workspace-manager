@@ -996,7 +996,6 @@ public class SamService {
       ControlledResource resource,
       @Nullable ControlledResourceIamRole privateIamRole,
       @Nullable String assignedUserEmail,
-      @Nullable String applicationEmail,
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
 
@@ -1017,8 +1016,9 @@ public class SamService {
     // so it always gets the appropriate permissions (the user request is not always
     // from the application, i.e., when a resource is cloned)
     WsmWorkspaceApplication app = null;
-    if (resource.getCategory().equals(ControlledResourceCategory.APPLICATION_PRIVATE)
-        || resource.getCategory().equals(ControlledResourceCategory.APPLICATION_SHARED)) {
+    if (resource.getApplicationId() != null
+        && (resource.getCategory().equals(ControlledResourceCategory.APPLICATION_PRIVATE)
+            || resource.getCategory().equals(ControlledResourceCategory.APPLICATION_SHARED))) {
       app =
           applicationService.getWorkspaceApplicationByWorkspaceId(
               resource.getWorkspaceId(), resource.getApplicationId());

@@ -223,6 +223,7 @@ public class AzureControlledVmResourceFlightTest extends BaseAzureConnectedTest 
                     .cloningInstructions(CloningInstructions.COPY_RESOURCE)
                     .accessScope(AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS))
                     .managedBy(ManagedByType.fromApi(ApiManagedBy.APPLICATION))
+                    .applicationId("leo")
                     .assignedUser(userEmail)
                     .iamRole(ControlledResourceIamRole.EDITOR)
                     .build())
