@@ -11,7 +11,7 @@ import bio.terra.workspace.service.workspace.exceptions.InvalidApplicationConfig
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.WsmApplicationKeys;
 import bio.terra.workspace.service.workspace.flight.application.AbleEnum;
-import bio.terra.workspace.service.workspace.flight.application.ApplicationAbleFlight;
+import bio.terra.workspace.service.workspace.flight.application.ApplicationAbleFlightV2;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WsmApplication;
@@ -105,7 +105,7 @@ public class WsmApplicationService {
             .newJob()
             .jobId(jobId)
             .description(description)
-            .flightClass(ApplicationAbleFlight.class)
+            .flightClass(ApplicationAbleFlightV2.class)
             .userRequest(userRequest)
             .workspaceId(workspace.getWorkspaceId().toString())
             .operationType(
