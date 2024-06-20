@@ -20,6 +20,7 @@ import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
@@ -842,15 +843,12 @@ public class SamService {
   @WithSpan
   public boolean isApplicationEnabledInSam(
       UUID workspaceUuid, String email, AuthenticatedUserRequest userRequest) {
-    // We detect that an application is enabled in Sam by checking if the application has
-    // the create-controlled-application-private action on the workspace.
     try {
       ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
-      return resourcesApi.resourceActionV2(
-          SamConstants.SamResource.WORKSPACE,
-          workspaceUuid.toString(),
-          SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
-          email);
+      var policy =
+          resourcesApi.getPolicyV2(
+              SamResource.WORKSPACE, workspaceUuid.toString(), WsmIamRole.APPLICATION.toSamRole());
+      return policy.getMemberEmails().stream().anyMatch(email::equalsIgnoreCase);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error querying role in Sam", apiException);
     }
