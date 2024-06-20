@@ -20,6 +20,7 @@ import bio.terra.workspace.common.fixtures.ControlledAzureResourceFixtures;
 import bio.terra.workspace.common.utils.AzureUtils;
 import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
+import bio.terra.workspace.generated.model.ApiAzureVmPriority;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
 import bio.terra.workspace.service.resource.model.WsmResource;
@@ -495,7 +496,7 @@ public class CreateAzureVmStepTest extends BaseAzureSpringBootUnitTest {
   void addSizeAndPriorityStep_spot() {
     ApiAzureVmCreationParameters creationParameters =
         ControlledAzureResourceFixtures.getAzureVmCreationParameters()
-            .priority(ApiAzureVmCreationParameters.PriorityEnum.SPOT);
+            .priority(ApiAzureVmPriority.SPOT);
 
     var createAzureVmStep =
         new CreateAzureVmStep(
