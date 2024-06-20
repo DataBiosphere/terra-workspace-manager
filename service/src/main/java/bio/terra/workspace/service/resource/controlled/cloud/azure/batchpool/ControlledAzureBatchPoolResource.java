@@ -177,7 +177,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
         new VerifyAzureBatchPoolCanBeCreatedStep(
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
-            userRequest,
+            flightBeanBag.getSamService(),
             flightBeanBag.getLandingZoneBatchAccountFinder(),
             this),
         RetryRules.cloud());
