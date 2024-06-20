@@ -56,7 +56,7 @@ public class CreateSamResourceStep implements Step {
           userRequest);
     } else {
       samService.createControlledResource(
-              resource, privateResourceIamRole, assignedUserEmail, null, userRequest);
+          resource, privateResourceIamRole, assignedUserEmail, null, userRequest);
     }
     return StepResult.getStepResultSuccess();
   }
