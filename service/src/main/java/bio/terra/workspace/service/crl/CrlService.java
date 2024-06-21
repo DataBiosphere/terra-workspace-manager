@@ -25,7 +25,6 @@ import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenc
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.http.policy.UserAgentPolicy;
-import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.batch.BatchManager;

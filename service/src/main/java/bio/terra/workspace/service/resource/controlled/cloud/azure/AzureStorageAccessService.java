@@ -279,7 +279,7 @@ public class AzureStorageAccessService {
         token,
         String.format(
             Locale.ROOT,
-            //"https://%s.blob.core.windows.net/%s?%s",
+            // "https://%s.blob.core.windows.net/%s?%s",
             "https://%s.blob.core.usgovcloudapi.net/%s?%s",
             storageData.storageAccountName(),
             resourceName,

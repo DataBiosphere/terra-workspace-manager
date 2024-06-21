@@ -18,10 +18,10 @@ public class AzureCloudContextFields {
 
   @JsonCreator
   public AzureCloudContextFields(
-          @JsonProperty("azureTenantId") String azureTenantId,
-          @JsonProperty("azureSubscriptionId") String azureSubscriptionId,
-          @JsonProperty("azureResourceGroupId") String azureResourceGroupId,
-          @JsonProperty("azureEnvironment") AzureEnvironment azureEnvironment) {
+      @JsonProperty("azureTenantId") String azureTenantId,
+      @JsonProperty("azureSubscriptionId") String azureSubscriptionId,
+      @JsonProperty("azureResourceGroupId") String azureResourceGroupId,
+      @JsonProperty("azureEnvironment") AzureEnvironment azureEnvironment) {
     this.azureTenantId = azureTenantId;
     this.azureSubscriptionId = azureSubscriptionId;
     this.azureResourceGroupId = azureResourceGroupId;
@@ -37,10 +37,9 @@ public class AzureCloudContextFields {
   }
 
   public AzureEnvironment getAzureEnvironment() {
-    //return AzureEnvironment.AZURE;
+    // return AzureEnvironment.AZURE;
     return azureEnvironment;
   }
-
 
   public String getAzureResourceGroupId() {
     return azureResourceGroupId;
@@ -65,14 +64,16 @@ public class AzureCloudContextFields {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(azureTenantId, azureSubscriptionId, azureResourceGroupId, azureEnvironment);
+    return Objects.hashCode(
+        azureTenantId, azureSubscriptionId, azureResourceGroupId, azureEnvironment);
   }
 
   // -- serdes for the AzureCloudContext --
 
   public String serialize() {
     AzureCloudContextV100 dbContext =
-        AzureCloudContextV100.from(azureTenantId, azureSubscriptionId, azureResourceGroupId, azureEnvironment);
+        AzureCloudContextV100.from(
+            azureTenantId, azureSubscriptionId, azureResourceGroupId, azureEnvironment);
     return DbSerDes.toJson(dbContext);
   }
 
@@ -83,7 +84,10 @@ public class AzureCloudContextFields {
         throw new InvalidSerializedVersionException("Invalid serialized version");
       }
       return new AzureCloudContextFields(
-          result.azureTenantId, result.azureSubscriptionId, result.azureResourceGroupId, result.azureEnvironment);
+          result.azureTenantId,
+          result.azureSubscriptionId,
+          result.azureResourceGroupId,
+          result.azureEnvironment);
 
     } catch (SerializationException e) {
       throw new InvalidSerializedVersionException("Invalid serialized version", e);
@@ -107,7 +111,10 @@ public class AzureCloudContextFields {
     @JsonProperty public AzureEnvironment azureEnvironment;
 
     public static AzureCloudContextV100 from(
-        String tenantId, String subscriptionId, String resourceGroupId, AzureEnvironment environment) {
+        String tenantId,
+        String subscriptionId,
+        String resourceGroupId,
+        AzureEnvironment environment) {
       AzureCloudContextV100 result = new AzureCloudContextV100();
       result.azureTenantId = tenantId;
       result.azureSubscriptionId = subscriptionId;
