@@ -14,6 +14,7 @@ import bio.terra.workspace.service.workspace.AzureCloudContextService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContextFields;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
+import com.azure.core.management.AzureEnvironment;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.StorageAccount;
 import com.azure.resourcemanager.storage.models.StorageAccountKey;
@@ -33,7 +34,7 @@ public class StorageAccountKeyProviderUnitTest extends BaseAzureSpringBootUnitTe
     var azureConfiguration = new AzureConfiguration();
     var azureCloudContext =
         new AzureCloudContext(
-            new AzureCloudContextFields("fake", "fake", "fake"),
+            new AzureCloudContextFields("fake", "fake", "fake", AzureEnvironment.AZURE),
             new CloudContextCommonFields(
                 new SpendProfileId("fake"),
                 WsmResourceState.READY,

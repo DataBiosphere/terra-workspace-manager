@@ -3,6 +3,7 @@ package bio.terra.workspace.service.workspace.model;
 import bio.terra.workspace.common.exception.InternalLogicException;
 import bio.terra.workspace.db.model.DbCloudContext;
 import bio.terra.workspace.generated.model.ApiAzureContext;
+import com.azure.core.management.AzureEnvironment;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,6 +34,11 @@ public class AzureCloudContext implements CloudContext {
   @JsonIgnore
   public String getAzureSubscriptionId() {
     return contextFields.getAzureSubscriptionId();
+  }
+
+  @JsonIgnore
+  public AzureEnvironment getAzureEnvironment() {
+    return contextFields.getAzureEnvironment();
   }
 
   @JsonIgnore
