@@ -17,7 +17,7 @@ dependencies {
 
     implementation "com.google.apis:google-api-services-iam:v1-rev20230914-2.0.0"
     implementation "com.google.apis:google-api-services-notebooks:v1-rev20231019-2.0.0"
-    implementation "com.google.apis:google-api-services-dataproc:v1-rev20240429-2.0.0"
+    implementation "com.google.apis:google-api-services-dataproc:v1-rev20240617-2.0.0"
 
     // Workspace Manager client library
     implementation project(":client")
