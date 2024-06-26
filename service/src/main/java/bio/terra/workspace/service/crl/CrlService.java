@@ -574,7 +574,7 @@ public class CrlService {
     return new AzureProfile(
         azureCloudContext.getAzureTenantId(),
         azureCloudContext.getAzureSubscriptionId(),
-        AzureEnvironment.AZURE);
+        AzureEnvironment.AZURE_US_GOVERNMENT);
   }
 
   @VisibleForTesting
