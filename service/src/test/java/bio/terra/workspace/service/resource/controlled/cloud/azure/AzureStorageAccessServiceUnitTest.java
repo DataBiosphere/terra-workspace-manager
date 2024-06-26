@@ -597,7 +597,9 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
     when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
     when(mockCrlService().getStorageManager(any(), any())).thenReturn(mockStorageManager);
     when(mockEndpoints.blob())
-        .thenReturn(String.format("https://%s.blob.core.windows.net", "mockStorageAccountName"));
+        // .thenReturn(String.format("https://%s.blob.core.windows.net", "mockStorageAccountName"));
+        .thenReturn(
+            String.format("https://%s.blob.core.usgovcloudapi.net", "mockStorageAccountName"));
     when(mockPublicEndpoints.primary()).thenReturn(mockEndpoints);
     when(mockStorageAccount.name()).thenReturn("mockStorageAccountName");
     when(mockStorageAccount.endPoints()).thenReturn(mockPublicEndpoints);
