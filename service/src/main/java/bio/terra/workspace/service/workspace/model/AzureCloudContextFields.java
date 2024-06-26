@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
+//import org.springframework.core.env.Environment;
 
 public class AzureCloudContextFields {
   private final String azureTenantId;
@@ -73,7 +74,7 @@ public class AzureCloudContextFields {
   public String serialize() {
     AzureCloudContextV100 dbContext =
         AzureCloudContextV100.from(
-            azureTenantId, azureSubscriptionId, azureResourceGroupId, azureEnvironment);
+            azureTenantId, azureSubscriptionId, azureResourceGroupId, /*azureEnvironment*/ AzureEnvironment.AZURE_US_GOVERNMENT);
     return DbSerDes.toJson(dbContext);
   }
 
@@ -87,7 +88,8 @@ public class AzureCloudContextFields {
           result.azureTenantId,
           result.azureSubscriptionId,
           result.azureResourceGroupId,
-          result.azureEnvironment);
+          // result.azureEnvironment,
+          AzureEnvironment.AZURE_US_GOVERNMENT);
 
     } catch (SerializationException e) {
       throw new InvalidSerializedVersionException("Invalid serialized version", e);
@@ -119,7 +121,8 @@ public class AzureCloudContextFields {
       result.azureTenantId = tenantId;
       result.azureSubscriptionId = subscriptionId;
       result.azureResourceGroupId = resourceGroupId;
-      result.azureEnvironment = environment;
+      // result.azureEnvironment = environment;
+      result.azureEnvironment = AzureEnvironment.AZURE_US_GOVERNMENT;
       return result;
     }
   }
