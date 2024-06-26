@@ -120,12 +120,7 @@ public class WsmApplicationService {
 
   public WsmWorkspaceApplication getWorkspaceApplication(
       Workspace workspace, String applicationId) {
-    return getWorkspaceApplicationByWorkspaceId(workspace.getWorkspaceId(), applicationId);
-  }
-
-  public WsmWorkspaceApplication getWorkspaceApplicationByWorkspaceId(
-      UUID workspaceId, String applicationId) {
-    return applicationDao.getWorkspaceApplication(workspaceId, applicationId);
+    return getWorkspaceApplication(workspace.getWorkspaceId(), applicationId);
   }
 
   public WsmWorkspaceApplication getWorkspaceApplication(UUID workspaceId, String applicationId) {

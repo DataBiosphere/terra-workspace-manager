@@ -1020,7 +1020,7 @@ public class SamService {
         && (resource.getCategory().equals(ControlledResourceCategory.APPLICATION_PRIVATE)
             || resource.getCategory().equals(ControlledResourceCategory.APPLICATION_SHARED))) {
       app =
-          applicationService.getWorkspaceApplicationByWorkspaceId(
+          applicationService.getWorkspaceApplication(
               resource.getWorkspaceId(), resource.getApplicationId());
     }
 
