@@ -1,7 +1,5 @@
 package bio.terra.workspace.service.resource.statetests;
 
-// import static
-// bio.terra.workspace.common.mocks.MockAzureApi.CLONE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
 import static bio.terra.workspace.common.mocks.MockAzureApi.*;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;

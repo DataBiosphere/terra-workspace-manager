@@ -279,7 +279,7 @@ public class AzureStorageAccessService {
         token,
         String.format(
             Locale.ROOT,
-            azureConfiguration.getAzureGovEnabled()
+            Boolean.TRUE.equals(azureConfiguration.getAzureGovEnabled())
                 ? "https://%s.blob.core.govcloudapi.net/%s?%s"
                 : "https://%s.blob.core.windows.net/%s?%s",
             storageData.storageAccountName(),
