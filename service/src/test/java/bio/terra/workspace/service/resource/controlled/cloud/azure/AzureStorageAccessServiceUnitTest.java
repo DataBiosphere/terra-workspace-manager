@@ -132,7 +132,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
     }
     assertThat("SAS grants correct permissions", permissionsRegex.matcher(sas).find());
     assertThat(
-        "SAS contains user subject ID in content dispostion query parameter",
+        "SAS contains user subject ID in content disposition query parameter",
         contentDispositionRegex.matcher(sas).find());
   }
 
@@ -411,6 +411,76 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
   }
 
   @Test
+  void createAzureStorageContainerSasUrl_AzureCommercial() throws InterruptedException {
+    when(mockAzureConfiguration.getAzureGovEnabled()).thenReturn(false);
+    var blobName = "foo/the/bar.baz";
+
+    var storageContainerResource =
+            buildStorageContainerResource(
+                    PrivateResourceState.ACTIVE,
+                    AccessScopeType.ACCESS_SCOPE_PRIVATE,
+                    ManagedByType.MANAGED_BY_APPLICATION);
+    when(mockSamService()
+            .listResourceActions(
+                    ArgumentMatchers.eq(userRequest),
+                    ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+                    ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+            .thenReturn(
+                    List.of(
+                            SamConstants.SamControlledResourceActions.READ_ACTION,
+                            SamConstants.SamControlledResourceActions.WRITE_ACTION));
+    setupMocks(storageContainerResource, true);
+
+
+
+    var result =
+            azureStorageAccessService.createAzureStorageContainerSasToken(
+                    storageContainerResource.getWorkspaceId(),
+                    storageContainerResource.getResourceId(),
+                    userRequest,
+                    new SasTokenOptions(null, startTime, expiryTime, blobName, null));
+
+    assertTrue(
+            result
+                    .sasUrl()
+                    .contains("core.windows.net"));
+  }
+
+  @Test
+  void createAzureStorageContainerSasUrl_AzureGovernment() throws InterruptedException {
+    when(mockAzureConfiguration.getAzureGovEnabled()).thenReturn(true);
+    var blobName = "foo/the/bar.baz";
+
+    var storageContainerResource =
+            buildStorageContainerResource(
+                    PrivateResourceState.ACTIVE,
+                    AccessScopeType.ACCESS_SCOPE_PRIVATE,
+                    ManagedByType.MANAGED_BY_APPLICATION);
+    when(mockSamService()
+            .listResourceActions(
+                    ArgumentMatchers.eq(userRequest),
+                    ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+                    ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+            .thenReturn(
+                    List.of(
+                            SamConstants.SamControlledResourceActions.READ_ACTION,
+                            SamConstants.SamControlledResourceActions.WRITE_ACTION));
+    setupMocks(storageContainerResource, true);
+
+    var result =
+            azureStorageAccessService.createAzureStorageContainerSasToken(
+                    storageContainerResource.getWorkspaceId(),
+                    storageContainerResource.getResourceId(),
+                    userRequest,
+                    new SasTokenOptions(null, startTime, expiryTime, blobName, null));
+
+     assertTrue(
+            result
+                    .sasUrl()
+                    .contains("core.govcloudapi.net"));
+  }
+
+  @Test
   public void createAzureStorageContainerSasToken_basedOnLzSharedStorageAccount_Success()
       throws InterruptedException {
     var storageContainerResource =
@@ -597,8 +667,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
     when(mockStorageManager.storageAccounts()).thenReturn(mockStorageAccounts);
     when(mockCrlService().getStorageManager(any(), any())).thenReturn(mockStorageManager);
     when(mockEndpoints.blob())
-        // .thenReturn(String.format("https://%s.blob.core.windows.net", "mockStorageAccountName"));
-            .thenReturn(String.format("https://%s.blob.core.usgovcloudapi.net", "mockStorageAccountName"));
+        .thenReturn(String.format("https://%s.blob.core.windows.net", "mockStorageAccountName"));
     when(mockPublicEndpoints.primary()).thenReturn(mockEndpoints);
     when(mockStorageAccount.name()).thenReturn("mockStorageAccountName");
     when(mockStorageAccount.endPoints()).thenReturn(mockPublicEndpoints);

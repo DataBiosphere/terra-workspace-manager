@@ -9,24 +9,20 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
-//import org.springframework.core.env.Environment;
 
 public class AzureCloudContextFields {
   private final String azureTenantId;
   private final String azureSubscriptionId;
   private final String azureResourceGroupId;
-  private final AzureEnvironment azureEnvironment;
 
   @JsonCreator
   public AzureCloudContextFields(
       @JsonProperty("azureTenantId") String azureTenantId,
       @JsonProperty("azureSubscriptionId") String azureSubscriptionId,
-      @JsonProperty("azureResourceGroupId") String azureResourceGroupId,
-      @JsonProperty("azureEnvironment") AzureEnvironment azureEnvironment) {
+      @JsonProperty("azureResourceGroupId") String azureResourceGroupId) {
     this.azureTenantId = azureTenantId;
     this.azureSubscriptionId = azureSubscriptionId;
     this.azureResourceGroupId = azureResourceGroupId;
-    this.azureEnvironment = azureEnvironment;
   }
 
   public String getAzureTenantId() {
@@ -35,11 +31,6 @@ public class AzureCloudContextFields {
 
   public String getAzureSubscriptionId() {
     return azureSubscriptionId;
-  }
-
-  public AzureEnvironment getAzureEnvironment() {
-    // return AzureEnvironment.AZURE;
-    return azureEnvironment;
   }
 
   public String getAzureResourceGroupId() {
@@ -59,22 +50,19 @@ public class AzureCloudContextFields {
     if (!(o instanceof AzureCloudContextFields that)) return false;
     return Objects.equal(azureTenantId, that.azureTenantId)
         && Objects.equal(azureSubscriptionId, that.azureSubscriptionId)
-        && Objects.equal(azureResourceGroupId, that.azureResourceGroupId)
-        && Objects.equal(azureEnvironment, that.azureEnvironment);
+        && Objects.equal(azureResourceGroupId, that.azureResourceGroupId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(
-        azureTenantId, azureSubscriptionId, azureResourceGroupId, azureEnvironment);
+    return Objects.hashCode(azureTenantId, azureSubscriptionId, azureResourceGroupId);
   }
 
   // -- serdes for the AzureCloudContext --
 
   public String serialize() {
     AzureCloudContextV100 dbContext =
-        AzureCloudContextV100.from(
-            azureTenantId, azureSubscriptionId, azureResourceGroupId, /*azureEnvironment*/ AzureEnvironment.AZURE_US_GOVERNMENT);
+        AzureCloudContextV100.from(azureTenantId, azureSubscriptionId, azureResourceGroupId);
     return DbSerDes.toJson(dbContext);
   }
 
@@ -85,11 +73,7 @@ public class AzureCloudContextFields {
         throw new InvalidSerializedVersionException("Invalid serialized version");
       }
       return new AzureCloudContextFields(
-          result.azureTenantId,
-          result.azureSubscriptionId,
-          result.azureResourceGroupId,
-          // result.azureEnvironment,
-          AzureEnvironment.AZURE_US_GOVERNMENT);
+          result.azureTenantId, result.azureSubscriptionId, result.azureResourceGroupId);
 
     } catch (SerializationException e) {
       throw new InvalidSerializedVersionException("Invalid serialized version", e);
@@ -113,16 +97,11 @@ public class AzureCloudContextFields {
     @JsonProperty public AzureEnvironment azureEnvironment;
 
     public static AzureCloudContextV100 from(
-        String tenantId,
-        String subscriptionId,
-        String resourceGroupId,
-        AzureEnvironment environment) {
+        String tenantId, String subscriptionId, String resourceGroupId) {
       AzureCloudContextV100 result = new AzureCloudContextV100();
       result.azureTenantId = tenantId;
       result.azureSubscriptionId = subscriptionId;
       result.azureResourceGroupId = resourceGroupId;
-      // result.azureEnvironment = environment;
-      result.azureEnvironment = AzureEnvironment.AZURE_US_GOVERNMENT;
       return result;
     }
   }

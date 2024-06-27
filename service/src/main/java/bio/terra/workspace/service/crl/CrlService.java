@@ -25,6 +25,7 @@ import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenc
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.http.policy.UserAgentPolicy;
+import com.azure.core.management.AzureEnvironment;
 import com.azure.core.management.profile.AzureProfile;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.resourcemanager.batch.BatchManager;
@@ -69,6 +70,8 @@ public class CrlService {
   /** The client name required by CRL. */
   private static final String CLIENT_NAME = "workspace";
 
+  private final AzureConfiguration azureConfiguration;
+
   @Value("${azure.customer.usage-attribute:}")
   private String azureCustomerUsageAttribute;
 
@@ -83,7 +86,7 @@ public class CrlService {
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(CrlConfiguration crlConfig) {
+  public CrlService(CrlConfiguration crlConfig, AzureConfiguration azureConfiguration) {
     this.crlConfig = crlConfig;
 
     if (crlConfig.getUseCrl()) {
@@ -111,6 +114,7 @@ public class CrlService {
       crlIamCow = null;
       crlServiceUsageCow = null;
     }
+    this.azureConfiguration = azureConfiguration;
   }
 
   /**
@@ -570,10 +574,17 @@ public class CrlService {
   }
 
   private AzureProfile getAzureProfile(AzureCloudContext azureCloudContext) {
-    return new AzureProfile(
-        azureCloudContext.getAzureTenantId(),
-        azureCloudContext.getAzureSubscriptionId(),
-        azureCloudContext.getAzureEnvironment());
+    if (azureConfiguration.getAzureGovEnabled()) {
+      return new AzureProfile(
+          azureCloudContext.getAzureTenantId(),
+          azureCloudContext.getAzureSubscriptionId(),
+          AzureEnvironment.AZURE_US_GOVERNMENT);
+    } else {
+      return new AzureProfile(
+          azureCloudContext.getAzureTenantId(),
+          azureCloudContext.getAzureSubscriptionId(),
+          AzureEnvironment.AZURE);
+    }
   }
 
   @VisibleForTesting

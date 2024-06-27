@@ -16,7 +16,6 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.GcpCloudContext;
 import bio.terra.workspace.service.workspace.model.GcpCloudContextFields;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import com.azure.core.management.AzureEnvironment;
 import java.util.UUID;
 
 /** Utilities for working with workspaces in unit tests. */
@@ -104,8 +103,7 @@ public class WorkspaceUnitTestUtils {
         workspaceUuid,
         CloudPlatform.AZURE,
         new AzureCloudContext(
-                new AzureCloudContextFields(
-                    "fake-tenant", "fake-subscription", "fake-mrg", AzureEnvironment.AZURE),
+                new AzureCloudContextFields("fake-tenant", "fake-subscription", "fake-mrg"),
                 new CloudContextCommonFields(
                     billingProfileId, WsmResourceState.CREATING, flightId, null))
             .serialize(),

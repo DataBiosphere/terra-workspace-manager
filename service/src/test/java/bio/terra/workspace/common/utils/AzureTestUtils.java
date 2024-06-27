@@ -29,7 +29,6 @@ import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
-import com.azure.core.management.AzureEnvironment;
 import com.azure.resourcemanager.compute.ComputeManager;
 import com.azure.resourcemanager.containerservice.ContainerServiceManager;
 import com.azure.resourcemanager.msi.MsiManager;
@@ -146,8 +145,7 @@ public class AzureTestUtils {
         new AzureCloudContextFields(
             azureTestConfiguration.getTenantId(),
             azureTestConfiguration.getSubscriptionId(),
-            azureTestConfiguration.getManagedResourceGroupId(),
-            AzureEnvironment.AZURE),
+            azureTestConfiguration.getManagedResourceGroupId()),
         new CloudContextCommonFields(
             getSpendProfileId(), WsmResourceState.READY, /* flightId= */ null, /* error= */ null));
   }

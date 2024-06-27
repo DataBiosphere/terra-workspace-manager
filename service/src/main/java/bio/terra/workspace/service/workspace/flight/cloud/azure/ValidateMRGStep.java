@@ -12,7 +12,6 @@ import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import bio.terra.workspace.service.workspace.model.AzureCloudContextFields;
 import bio.terra.workspace.service.workspace.model.CloudContextCommonFields;
-import com.azure.core.management.AzureEnvironment;
 import com.azure.resourcemanager.resources.ResourceManager;
 
 public class ValidateMRGStep implements Step {
@@ -34,8 +33,7 @@ public class ValidateMRGStep implements Step {
             new AzureCloudContextFields(
                 spendProfile.tenantId().toString(),
                 spendProfile.subscriptionId().toString(),
-                spendProfile.managedResourceGroupId(),
-                AzureEnvironment.AZURE),
+                spendProfile.managedResourceGroupId()),
             new CloudContextCommonFields(
                 spendProfile.id(),
                 WsmResourceState.CREATING,

@@ -21,6 +21,15 @@ public class AzureConfiguration {
   private List<String> protectedDataLandingZoneDefs;
   private String azureDatabaseUtilImage;
   private Integer azureDatabaseUtilLogsTailLines;
+  private Boolean azureGovEnabled;
+
+  public Boolean getAzureGovEnabled() {
+    return azureGovEnabled;
+  }
+
+  public void setAzureGovEnabled(Boolean azureGovEnabled) {
+    this.azureGovEnabled = azureGovEnabled;
+  }
 
   public String getManagedAppClientId() {
     return managedAppClientId;
