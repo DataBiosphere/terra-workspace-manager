@@ -416,34 +416,29 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
     var blobName = "foo/the/bar.baz";
 
     var storageContainerResource =
-            buildStorageContainerResource(
-                    PrivateResourceState.ACTIVE,
-                    AccessScopeType.ACCESS_SCOPE_PRIVATE,
-                    ManagedByType.MANAGED_BY_APPLICATION);
+        buildStorageContainerResource(
+            PrivateResourceState.ACTIVE,
+            AccessScopeType.ACCESS_SCOPE_PRIVATE,
+            ManagedByType.MANAGED_BY_APPLICATION);
     when(mockSamService()
             .listResourceActions(
-                    ArgumentMatchers.eq(userRequest),
-                    ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
-                    ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
-            .thenReturn(
-                    List.of(
-                            SamConstants.SamControlledResourceActions.READ_ACTION,
-                            SamConstants.SamControlledResourceActions.WRITE_ACTION));
+                ArgumentMatchers.eq(userRequest),
+                ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+                ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+        .thenReturn(
+            List.of(
+                SamConstants.SamControlledResourceActions.READ_ACTION,
+                SamConstants.SamControlledResourceActions.WRITE_ACTION));
     setupMocks(storageContainerResource, true);
 
-
-
     var result =
-            azureStorageAccessService.createAzureStorageContainerSasToken(
-                    storageContainerResource.getWorkspaceId(),
-                    storageContainerResource.getResourceId(),
-                    userRequest,
-                    new SasTokenOptions(null, startTime, expiryTime, blobName, null));
+        azureStorageAccessService.createAzureStorageContainerSasToken(
+            storageContainerResource.getWorkspaceId(),
+            storageContainerResource.getResourceId(),
+            userRequest,
+            new SasTokenOptions(null, startTime, expiryTime, blobName, null));
 
-    assertTrue(
-            result
-                    .sasUrl()
-                    .contains("core.windows.net"));
+    assertTrue(result.sasUrl().contains("core.windows.net"));
   }
 
   @Test
@@ -452,32 +447,29 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
     var blobName = "foo/the/bar.baz";
 
     var storageContainerResource =
-            buildStorageContainerResource(
-                    PrivateResourceState.ACTIVE,
-                    AccessScopeType.ACCESS_SCOPE_PRIVATE,
-                    ManagedByType.MANAGED_BY_APPLICATION);
+        buildStorageContainerResource(
+            PrivateResourceState.ACTIVE,
+            AccessScopeType.ACCESS_SCOPE_PRIVATE,
+            ManagedByType.MANAGED_BY_APPLICATION);
     when(mockSamService()
             .listResourceActions(
-                    ArgumentMatchers.eq(userRequest),
-                    ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
-                    ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
-            .thenReturn(
-                    List.of(
-                            SamConstants.SamControlledResourceActions.READ_ACTION,
-                            SamConstants.SamControlledResourceActions.WRITE_ACTION));
+                ArgumentMatchers.eq(userRequest),
+                ArgumentMatchers.eq(storageContainerResource.getCategory().getSamResourceName()),
+                ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
+        .thenReturn(
+            List.of(
+                SamConstants.SamControlledResourceActions.READ_ACTION,
+                SamConstants.SamControlledResourceActions.WRITE_ACTION));
     setupMocks(storageContainerResource, true);
 
     var result =
-            azureStorageAccessService.createAzureStorageContainerSasToken(
-                    storageContainerResource.getWorkspaceId(),
-                    storageContainerResource.getResourceId(),
-                    userRequest,
-                    new SasTokenOptions(null, startTime, expiryTime, blobName, null));
+        azureStorageAccessService.createAzureStorageContainerSasToken(
+            storageContainerResource.getWorkspaceId(),
+            storageContainerResource.getResourceId(),
+            userRequest,
+            new SasTokenOptions(null, startTime, expiryTime, blobName, null));
 
-     assertTrue(
-            result
-                    .sasUrl()
-                    .contains("core.govcloudapi.net"));
+    assertTrue(result.sasUrl().contains("core.govcloudapi.net"));
   }
 
   @Test
