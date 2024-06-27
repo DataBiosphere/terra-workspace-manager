@@ -574,7 +574,7 @@ public class CrlService {
   }
 
   private AzureProfile getAzureProfile(AzureCloudContext azureCloudContext) {
-    if (azureConfiguration.getAzureGovEnabled()) {
+    if (Boolean.TRUE.equals(azureConfiguration.getAzureGovEnabled())) {
       return new AzureProfile(
           azureCloudContext.getAzureTenantId(),
           azureCloudContext.getAzureSubscriptionId(),
