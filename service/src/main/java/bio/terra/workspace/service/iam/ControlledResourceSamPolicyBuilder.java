@@ -87,6 +87,10 @@ public class ControlledResourceSamPolicyBuilder {
 
     switch (category) {
       case USER_SHARED:
+        if (privateIamRole != null || privateUserEmail != null) {
+          throw new InternalLogicException(
+              "User shared resources may not be assigned to a private user email");
+        }
         // All other policies are inherited - nothing more to do
         break;
 
@@ -107,6 +111,11 @@ public class ControlledResourceSamPolicyBuilder {
         if (privateUserEmail != null) {
           throw new InternalLogicException(
               "Flight should never see application-shared with a user email");
+        }
+
+        if (privateIamRole != null) {
+          throw new InternalLogicException(
+              "Attempting to create an application controlled resource with a private IAM role");
         }
 
         if (application == null) {

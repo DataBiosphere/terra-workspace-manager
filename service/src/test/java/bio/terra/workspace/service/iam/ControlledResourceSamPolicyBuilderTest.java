@@ -2,6 +2,7 @@ package bio.terra.workspace.service.iam;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.workspace.common.BaseSpringBootUnitTest;
@@ -37,7 +38,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
   }
 
   @Test
-  void addPolicies_userPrivateWihtoutPrivateEmailFails() {
+  void addPolicies_userPrivateWithoutPrivateEmailFails() {
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
             ControlledResourceIamRole.DELETER, null, ControlledResourceCategory.USER_PRIVATE, null);
@@ -47,16 +48,53 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
   }
 
   @Test
+  void addPolicies_userShared() {
+    var policyBuilder =
+        new ControlledResourceSamPolicyBuilder(
+            null, null, ControlledResourceCategory.USER_SHARED, null);
+    var request = new CreateResourceRequestV2();
+
+    policyBuilder.addPolicies(request);
+
+    assertThat(
+        request.getPolicies().get(ControlledResourceIamRole.OWNER.toSamRole()).getMemberEmails(),
+        contains(GcpUtils.getWsmSaEmail()));
+    assertThat(
+        request.getPolicies().containsKey(ControlledResourceIamRole.EDITOR.toSamRole()),
+        equalTo(false));
+    assertThat(
+        request.getPolicies().containsKey(ControlledResourceIamRole.WRITER.toSamRole()),
+        equalTo(false));
+    assertThat(
+        request.getPolicies().containsKey(ControlledResourceIamRole.READER.toSamRole()),
+        equalTo(false));
+    assertThat(
+        request.getPolicies().containsKey(ControlledResourceIamRole.DELETER.toSamRole()),
+        equalTo(false));
+  }
+
+  @Test
+  void addPolicies_userSharedWithPrivateIamFails() {
+    // the use of EDITOR here is arbitrary, specifying any private IAM role should throw
+    var policyBuilder =
+        new ControlledResourceSamPolicyBuilder(
+            ControlledResourceIamRole.EDITOR, null, ControlledResourceCategory.USER_SHARED, null);
+    var request = new CreateResourceRequestV2();
+
+    assertThrows(
+        InternalLogicException.class,
+        () -> policyBuilder.addPolicies(request),
+        "Specifying a private IAM role for a shared resource is invalid");
+  }
+
+  @Test
   void addPolicies_applicationShared() {
     var app =
         new WsmWorkspaceApplication()
             .application(new WsmApplication().serviceAccount("fake-svc@example.com"));
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
-            ControlledResourceIamRole.READER,
-            null,
-            ControlledResourceCategory.APPLICATION_SHARED,
-            app);
+            null, null, ControlledResourceCategory.APPLICATION_SHARED, app);
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -70,7 +108,29 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
   }
 
   @Test
+  void addPolicies_applicationSharedFailsWithPrivateIamRole() {
+    var app =
+        new WsmWorkspaceApplication()
+            .application(new WsmApplication().serviceAccount("fake-svc@example.com"));
+    var policyBuilder =
+        new ControlledResourceSamPolicyBuilder(
+            ControlledResourceIamRole.EDITOR,
+            null,
+            ControlledResourceCategory.APPLICATION_SHARED,
+            app);
+    var request = new CreateResourceRequestV2();
+
+    assertThrows(
+        InternalLogicException.class,
+        () -> policyBuilder.addPolicies(request),
+        "Specifying a private IAM role on an application shared resource is invalid");
+  }
+
+  @Test
   void addPolicies_applicationSharedWithNoAppFails() {
+    // ensure an application shared resource cannot have a user with a private IAM role on it
+    // (tho choice of EDITOR for the private IAM role is arbitrary--any value will cause an
+    // exception.
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
             ControlledResourceIamRole.EDITOR,
@@ -89,7 +149,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             .application(new WsmApplication().serviceAccount("fake-svc@example.com"));
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
-            ControlledResourceIamRole.DELETER,
+            ControlledResourceIamRole.EDITOR,
             "fake@example.com",
             ControlledResourceCategory.APPLICATION_SHARED,
             app);
