@@ -74,20 +74,6 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
   }
 
   @Test
-  void addPolicies_userSharedWithPrivateIamFails() {
-    // the use of EDITOR here is arbitrary, specifying any private IAM role should throw
-    var policyBuilder =
-        new ControlledResourceSamPolicyBuilder(
-            ControlledResourceIamRole.EDITOR, null, ControlledResourceCategory.USER_SHARED, null);
-    var request = new CreateResourceRequestV2();
-
-    assertThrows(
-        InternalLogicException.class,
-        () -> policyBuilder.addPolicies(request),
-        "Specifying a private IAM role for a shared resource is invalid");
-  }
-
-  @Test
   void addPolicies_applicationShared() {
     var app =
         new WsmWorkspaceApplication()

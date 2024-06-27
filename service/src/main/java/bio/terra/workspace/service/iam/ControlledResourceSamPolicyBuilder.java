@@ -88,8 +88,7 @@ public class ControlledResourceSamPolicyBuilder {
     switch (category) {
       case USER_SHARED:
         if (privateIamRole != null || privateUserEmail != null) {
-          throw new InternalLogicException(
-              "User shared resources may not be assigned to a private user email");
+          logger.warn("User shared resources may not be assigned to a private user email");
         }
         // All other policies are inherited - nothing more to do
         break;
