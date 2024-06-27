@@ -69,8 +69,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description,
                 createdByEmail,
-                region,
-                null))
+                region))
         .build();
   }
 
@@ -105,8 +104,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description,
                 createdByEmail,
-                region == null ? sourceDataset.getRegion() : region,
-                sourceDataset.getApplicationId()))
+                region == null ? sourceDataset.getRegion() : region))
         .build();
   }
 
@@ -130,8 +128,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description,
                 createdByEmail,
-                region,
-                sourceBucket.getApplicationId()))
+                region))
         .build();
   }
 
@@ -157,8 +154,7 @@ public class WorkspaceCloneUtils {
                 name,
                 description,
                 createdByEmail,
-                sourceFlex.getRegion(),
-                sourceFlex.getApplicationId()))
+                sourceFlex.getRegion()))
         .build();
   }
 }

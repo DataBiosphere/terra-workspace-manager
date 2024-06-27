@@ -106,8 +106,7 @@ public class CopyControlledAzureDatabaseDefinitionStep implements Step {
                     destinationResourceName,
                     description,
                     samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
-                    sourceDatabase.getRegion(),
-                    sourceDatabase.getApplicationId()))
+                    sourceDatabase.getRegion()))
             .build();
 
     ControlledResourceIamRole iamRole =

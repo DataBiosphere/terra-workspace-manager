@@ -90,8 +90,7 @@ public class CopyAzureManagedIdentityDefinitionStep implements Step {
                     destinationResourceName,
                     description,
                     samService.getUserEmailFromSamAndRethrowOnInterrupt(userRequest),
-                    sourceIdentity.getRegion(),
-                    sourceIdentity.getApplicationId()))
+                    sourceIdentity.getRegion()))
             .build();
 
     ControlledResourceIamRole iamRole =
