@@ -2,14 +2,7 @@ package bio.terra.workspace.service.resource.statetests;
 
 // import static
 // bio.terra.workspace.common.mocks.MockAzureApi.CLONE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.mocks.MockAzureApi.CONTROLLED_AZURE_VM_PATH_FORMAT;
-import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_BATCH_POOL_PATH_FORMAT;
-import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_DISK_PATH_FORMAT;
-import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT;
-import static bio.terra.workspace.common.mocks.MockAzureApi.CREATE_CONTROLLED_AZURE_VM_PATH_FORMAT;
+import static bio.terra.workspace.common.mocks.MockAzureApi.*;
 import static bio.terra.workspace.common.mocks.MockMvcUtils.USER_REQUEST;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -27,12 +20,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.db.WorkspaceDao;
 // import bio.terra.workspace.generated.model.ApiCloneControlledAzureStorageContainerRequest;
 // import bio.terra.workspace.generated.model.ApiCloningInstructionsEnum;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureBatchPoolRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureDiskRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureStorageContainerRequestBody;
-import bio.terra.workspace.generated.model.ApiCreateControlledAzureVmRequestBody;
-import bio.terra.workspace.generated.model.ApiDeleteControlledAzureResourceRequest;
-import bio.terra.workspace.generated.model.ApiJobControl;
+import bio.terra.workspace.generated.model.*;
 import bio.terra.workspace.service.resource.referenced.ReferencedResourceService;
 import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
@@ -228,7 +216,7 @@ public class AzureResourceStateFailureTest extends BaseSpringBootUnitTest {
         objectMapper.writeValueAsString(vmDeleteBody));
   }
 
-  /* @Test
+  @Test
   void testAzureResourceCloneValidation() throws Exception {
     // Fake up a READY workspace and a READY cloud context
     Workspace workspace = WorkspaceFixtures.createDefaultMcWorkspace(billingProfileId);
@@ -265,5 +253,5 @@ public class AzureResourceStateFailureTest extends BaseSpringBootUnitTest {
         storageResource.getResourceId(),
         CLONE_CONTROLLED_AZURE_STORAGE_CONTAINER_PATH_FORMAT,
         objectMapper.writeValueAsString(storageCloneBody));
-  }*/
+  }
 }
