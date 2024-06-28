@@ -95,6 +95,9 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
 
   @Test
   void addPolicies_applicationSharedFailsWithPrivateIamRole() {
+    // ensure an application shared resource cannot have a user with a private IAM role on it
+    // (the choice of EDITOR for the private IAM role is arbitrary--any value will cause an
+    // exception.)
     var app =
         new WsmWorkspaceApplication()
             .application(new WsmApplication().serviceAccount("fake-svc@example.com"));
@@ -114,18 +117,17 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
 
   @Test
   void addPolicies_applicationSharedWithNoAppFails() {
-    // ensure an application shared resource cannot have a user with a private IAM role on it
-    // (tho choice of EDITOR for the private IAM role is arbitrary--any value will cause an
-    // exception.
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
-            ControlledResourceIamRole.EDITOR,
-            null,
-            ControlledResourceCategory.APPLICATION_SHARED,
-            null);
+            null, null, ControlledResourceCategory.APPLICATION_SHARED, null);
     var request = new CreateResourceRequestV2();
 
-    assertThrows(InternalLogicException.class, () -> policyBuilder.addPolicies(request));
+    var thrown =
+        assertThrows(InternalLogicException.class, () -> policyBuilder.addPolicies(request));
+
+    assertThat(
+        thrown.getMessage(),
+        equalTo("Attempting to create an application controlled resource with no application"));
   }
 
   @Test
@@ -141,7 +143,12 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             app);
     var request = new CreateResourceRequestV2();
 
-    assertThrows(InternalLogicException.class, () -> policyBuilder.addPolicies(request));
+    var thrown =
+        assertThrows(InternalLogicException.class, () -> policyBuilder.addPolicies(request));
+
+    assertThat(
+        thrown.getMessage(),
+        equalTo("Flight should never see application-shared with a user email"));
   }
 
   @Test
@@ -170,11 +177,16 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
             ControlledResourceIamRole.EDITOR,
-            null,
+            "fake@fake.com",
             ControlledResourceCategory.APPLICATION_PRIVATE,
             null);
     var request = new CreateResourceRequestV2();
 
-    assertThrows(InternalLogicException.class, () -> policyBuilder.addPolicies(request));
+    var thrown =
+        assertThrows(InternalLogicException.class, () -> policyBuilder.addPolicies(request));
+
+    assertThat(
+        thrown.getMessage(),
+        equalTo("Attempting to create an application controlled resource with no application"));
   }
 }
