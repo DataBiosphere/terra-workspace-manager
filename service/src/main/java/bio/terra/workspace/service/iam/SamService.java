@@ -24,6 +24,8 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
+import bio.terra.workspace.service.workspace.WsmApplicationService;
+import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -77,6 +79,7 @@ public class SamService {
   private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
   private final FeatureConfiguration features;
+  private final WsmApplicationService applicationService;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
@@ -84,10 +87,12 @@ public class SamService {
       SamConfiguration samConfig,
       FeatureConfiguration features,
       SamUserFactory samUserFactory,
-      OpenTelemetry openTelemetry) {
+      OpenTelemetry openTelemetry,
+      WsmApplicationService applicationService) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.features = features;
+    this.applicationService = applicationService;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -1005,13 +1010,24 @@ public class SamService {
             .parent(workspaceParentFqId)
             .authDomain(List.of());
 
+    // include the stewarding application when building our policy
+    // so it always gets the appropriate permissions (the user request is not always
+    // from the application, i.e., when a resource is cloned)
+    WsmWorkspaceApplication app = null;
+    if (resource.getApplicationId() != null
+        && (resource.getCategory().equals(ControlledResourceCategory.APPLICATION_PRIVATE)
+            || resource.getCategory().equals(ControlledResourceCategory.APPLICATION_SHARED))) {
+      app =
+          applicationService.getWorkspaceApplication(
+              resource.getWorkspaceId(), resource.getApplicationId());
+    }
+
     var builder =
         new ControlledResourceSamPolicyBuilder(
-            this,
             privateIamRole,
             assignedUserEmail,
-            userRequest,
-            ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()));
+            ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()),
+            app);
     builder.addPolicies(resourceRequest);
 
     try {

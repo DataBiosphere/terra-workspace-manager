@@ -13,6 +13,15 @@ workspace:
     use-crl: true
     use-janitor: true
 
+
+  application:
+    configurations:
+      leo:
+        name: Leonardo
+        description: Leonardo application SA
+        service-account: leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
+        state: operating
+
   spend:
     spend-profiles:
       - id: wm-default-spend-profile
