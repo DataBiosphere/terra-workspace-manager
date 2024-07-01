@@ -165,6 +165,7 @@ workspace:
         state: operating
 
   azure:
+    azure-gov-enabled: false
     sas-token-start-time-minutes-offset: 15
     sas-token-expiry-time-minutes-offset: 60
     sas-token-expiry-time-maximum-minutes-offset: 1440

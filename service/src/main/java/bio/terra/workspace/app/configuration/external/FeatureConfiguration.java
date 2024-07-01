@@ -120,6 +120,5 @@ public class FeatureConfiguration {
     logger.info("Feature: temporary-grant-enabled: {}", isTemporaryGrantEnabled());
     logger.info("Feature: state-rule: {}", getStateRule());
     logger.info("Feature: lzs-enabled: {}", isLzsEnabled());
-    ;
   }
 }
