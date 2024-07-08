@@ -30,6 +30,7 @@ import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.controlled.model.PrivateResourceState;
 import bio.terra.workspace.service.resource.model.CloningInstructions;
 import bio.terra.workspace.service.workspace.AzureCloudContextService;
+import com.azure.core.management.AzureEnvironment;
 import com.azure.resourcemanager.storage.StorageManager;
 import com.azure.resourcemanager.storage.models.Endpoints;
 import com.azure.resourcemanager.storage.models.PublicEndpoints;
@@ -152,6 +153,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 ArgumentMatchers.eq(storageContainerResource.getResourceId().toString())))
         .thenReturn(List.of(SamConstants.SamControlledResourceActions.READ_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -184,6 +186,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.WRITE_ACTION,
                 SamConstants.SamControlledResourceActions.READ_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -249,6 +252,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.WRITE_ACTION,
                 SamConstants.SamControlledResourceActions.READ_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -283,6 +287,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.WRITE_ACTION,
                 SamConstants.SamControlledResourceActions.READ_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -311,6 +316,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.WRITE_ACTION,
                 SamConstants.SamControlledResourceActions.READ_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -395,6 +401,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.READ_ACTION,
                 SamConstants.SamControlledResourceActions.WRITE_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -412,7 +419,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
 
   @Test
   void createAzureStorageContainerSasUrl_AzureCommercial() throws InterruptedException {
-    when(mockAzureConfiguration.getAzureEnvironment()).thenReturn("AZURE");
+
     var blobName = "foo/the/bar.baz";
 
     var storageContainerResource =
@@ -430,6 +437,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.READ_ACTION,
                 SamConstants.SamControlledResourceActions.WRITE_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -443,7 +451,6 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
 
   @Test
   void createAzureStorageContainerSasUrl_AzureGovernment() throws InterruptedException {
-    when(mockAzureConfiguration.getAzureEnvironment()).thenReturn("AZURE_US_GOVERNMENT");
     var blobName = "foo/the/bar.baz";
 
     var storageContainerResource =
@@ -461,6 +468,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.READ_ACTION,
                 SamConstants.SamControlledResourceActions.WRITE_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any()))
+        .thenReturn(AzureEnvironment.AZURE_US_GOVERNMENT);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -469,7 +478,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
             userRequest,
             new SasTokenOptions(null, startTime, expiryTime, blobName, null));
 
-    assertTrue(result.sasUrl().contains("core.govcloudapi.net"));
+    assertTrue(result.sasUrl().contains("core.usgovcloudapi.net"));
   }
 
   @Test
@@ -492,6 +501,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.WRITE_ACTION,
                 SamConstants.SamControlledResourceActions.READ_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -536,6 +546,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.READ_ACTION,
                 SamConstants.SamControlledResourceActions.WRITE_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
@@ -604,6 +615,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.WRITE_ACTION,
                 SamConstants.SamControlledResourceActions.READ_ACTION));
     setupMocks(storageContainerResource, true);
+    when(mockCrlService().getAzureEnvironmentFromName(any())).thenReturn(AzureEnvironment.AZURE);
 
     azureStorageAccessService.createAzureStorageContainerSasToken(
         storageContainerResource.getWorkspaceId(),
