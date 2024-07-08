@@ -287,8 +287,7 @@ public class AzureStorageAccessService {
             storageData.storageAccountName(),
             azureEnv.getStorageEndpointSuffix(),
             resourceName,
-            token
-        ),
+            token),
         sha256hex);
   }
 
