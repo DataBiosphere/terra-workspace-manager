@@ -4,7 +4,6 @@ import bio.terra.common.exception.SerializationException;
 import bio.terra.workspace.db.DbSerDes;
 import bio.terra.workspace.generated.model.ApiAzureContext;
 import bio.terra.workspace.service.workspace.exceptions.InvalidSerializedVersionException;
-import com.azure.core.management.AzureEnvironment;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
@@ -94,7 +93,6 @@ public class AzureCloudContextFields {
     @JsonProperty public String azureTenantId;
     @JsonProperty public String azureSubscriptionId;
     @JsonProperty public String azureResourceGroupId;
-    @JsonProperty public AzureEnvironment azureEnvironment;
 
     public static AzureCloudContextV100 from(
         String tenantId, String subscriptionId, String resourceGroupId) {
