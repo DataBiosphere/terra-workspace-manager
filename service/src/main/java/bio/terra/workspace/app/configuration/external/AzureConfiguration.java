@@ -1,6 +1,7 @@
 package bio.terra.workspace.app.configuration.external;
 
 import java.util.List;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -21,14 +22,14 @@ public class AzureConfiguration {
   private List<String> protectedDataLandingZoneDefs;
   private String azureDatabaseUtilImage;
   private Integer azureDatabaseUtilLogsTailLines;
-  private Boolean azureGovEnabled;
+  private String azureEnvironment;
 
-  public Boolean getAzureGovEnabled() {
-    return azureGovEnabled;
+  public String getAzureEnvironment() {
+    return azureEnvironment;
   }
 
-  public void setAzureGovEnabled(Boolean azureGovEnabled) {
-    this.azureGovEnabled = azureGovEnabled;
+  public void setAzureEnvironment(String azureEnvironment) {
+    this.azureEnvironment = azureEnvironment;
   }
 
   public String getManagedAppClientId() {

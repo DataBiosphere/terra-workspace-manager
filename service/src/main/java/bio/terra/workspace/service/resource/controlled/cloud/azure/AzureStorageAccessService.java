@@ -266,25 +266,29 @@ public class AzureStorageAccessService {
                 URLDecoder.decode(sig, StandardCharsets.UTF_8))
             .toUpperCase();
 
+    var azureEnv = crlService.getAzureEnvironmentFromName(azureConfiguration.getAzureEnvironment());
+
     logger.info(
-        "SAS token with expiry time of {} generated for user {} [SubjectId={}] on container {} in workspace {} [sha256 = {}]",
+        "SAS token with expiry time of {} generated for user {} [SubjectId={}] on container {} in workspace {} [sha256 = {}] [AzureEnvironment portal = {}]",
         sasTokenOptions.expiryTime(),
         samUser.getEmail(),
         samUser.getSubjectId(),
         storageContainerUuid,
         workspaceUuid,
-        sha256hex);
+        sha256hex,
+        // Azure JDK doesn't have a name attribute on AzureEnvironment, log the portal url instead
+        azureEnv.getPortal());
 
     return new AzureSasBundle(
         token,
         String.format(
             Locale.ROOT,
-            Boolean.TRUE.equals(azureConfiguration.getAzureGovEnabled())
-                ? "https://%s.blob.core.govcloudapi.net/%s?%s"
-                : "https://%s.blob.core.windows.net/%s?%s",
+            "https://%s.blob%s/%s?%s",
             storageData.storageAccountName(),
+            azureEnv.getStorageEndpointSuffix(),
             resourceName,
-            token),
+            token
+        ),
         sha256hex);
   }
 

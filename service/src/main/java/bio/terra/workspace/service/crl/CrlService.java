@@ -574,16 +574,21 @@ public class CrlService {
   }
 
   private AzureProfile getAzureProfile(AzureCloudContext azureCloudContext) {
-    if (Boolean.TRUE.equals(azureConfiguration.getAzureGovEnabled())) {
-      return new AzureProfile(
-          azureCloudContext.getAzureTenantId(),
-          azureCloudContext.getAzureSubscriptionId(),
-          AzureEnvironment.AZURE_US_GOVERNMENT);
-    } else {
-      return new AzureProfile(
-          azureCloudContext.getAzureTenantId(),
-          azureCloudContext.getAzureSubscriptionId(),
-          AzureEnvironment.AZURE);
+    return new AzureProfile(
+        azureCloudContext.getAzureTenantId(),
+        azureCloudContext.getAzureSubscriptionId(),
+        getAzureEnvironmentFromName(azureConfiguration.getAzureEnvironment()));
+  }
+
+  public AzureEnvironment getAzureEnvironmentFromName(String envName) {
+    try {
+      return switch (envName) {
+        case "AZURE_US_GOVERNMENT" -> AzureEnvironment.AZURE_US_GOVERNMENT;
+        case "AZURE_CHINA" -> AzureEnvironment.AZURE_CHINA;
+        default -> AzureEnvironment.AZURE;
+      };
+    } catch (IllegalArgumentException e) {
+      return AzureEnvironment.AZURE;
     }
   }
 

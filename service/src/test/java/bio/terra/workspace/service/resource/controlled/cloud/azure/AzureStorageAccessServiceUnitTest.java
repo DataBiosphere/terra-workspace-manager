@@ -412,7 +412,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
 
   @Test
   void createAzureStorageContainerSasUrl_AzureCommercial() throws InterruptedException {
-    when(mockAzureConfiguration.getAzureGovEnabled()).thenReturn(false);
+    when(mockAzureConfiguration.getAzureEnvironment()).thenReturn("AZURE");
     var blobName = "foo/the/bar.baz";
 
     var storageContainerResource =
@@ -443,7 +443,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
 
   @Test
   void createAzureStorageContainerSasUrl_AzureGovernment() throws InterruptedException {
-    when(mockAzureConfiguration.getAzureGovEnabled()).thenReturn(true);
+    when(mockAzureConfiguration.getAzureEnvironment()).thenReturn("AZURE_US_GOVERNMENT");
     var blobName = "foo/the/bar.baz";
 
     var storageContainerResource =
