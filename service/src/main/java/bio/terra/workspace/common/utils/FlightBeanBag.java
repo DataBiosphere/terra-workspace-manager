@@ -37,7 +37,10 @@ import bio.terra.workspace.service.workspace.GcpCloudSyncRoleMapping;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import com.google.api.services.storagetransfer.v1.Storagetransfer;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -49,7 +52,7 @@ import org.springframework.stereotype.Component;
  * types without casting.
  */
 @Component
-public class FlightBeanBag {
+public class FlightBeanBag implements ApplicationContextAware {
   private final ApplicationDao applicationDao;
   private final GcpCloudContextService gcpCloudContextService;
   private final AzureCloudContextService azureCloudContextService;
@@ -87,6 +90,7 @@ public class FlightBeanBag {
   private final KubernetesClientProvider kubernetesClientProvider;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
   private final WsmApplicationService applicationService;
+  private ApplicationContext applicationContext;
 
   @Lazy
   @Autowired
@@ -317,5 +321,14 @@ public class FlightBeanBag {
 
   public WsmApplicationService getApplicationService() {
     return applicationService;
+  }
+
+  @Override
+  public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    this.applicationContext = applicationContext;
+  }
+
+  public <T> T getBean(Class<T> clazz) {
+    return applicationContext.getBean(clazz);
   }
 }
