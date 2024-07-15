@@ -87,9 +87,9 @@ public class ProfileApiTest {
   @Pact(consumer = "workspacemanager", provider = "bpm")
   public RequestResponsePact billingProfileUnAvailable(PactDslWithProvider builder) {
     return builder
+        .given("a missing billing profile")
         .uponReceiving("A request to retrieve a billing profile")
         .method("GET")
-        // there's no state set on this pact, so this id won't exist in bpm
         .path(String.format("/api/profiles/v1/%s", dummyAzureProfileId))
         .willRespondWith()
         .status(403)
