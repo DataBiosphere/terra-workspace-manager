@@ -34,7 +34,7 @@ dependencies {
   implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.2.0'
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:1.1.11-SNAPSHOT")
+  implementation("bio.terra:terra-common-lib:1.1.16-SNAPSHOT")
 
   // sam
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "v0.0.234"
