@@ -13,6 +13,7 @@ import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetActionManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.exception.UserAssignedManagedIdentityNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
@@ -75,11 +76,34 @@ public class CreateAzureBatchPoolStep implements Step {
     logger.info(
         String.format(PET_UAMI_FOUND, GetManagedIdentityStep.getManagedIdentityName(context)));
 
-    final BatchPoolUserAssignedManagedIdentity userAssignedManagedIdentity =
+    List<BatchPoolUserAssignedManagedIdentity> uamiForBatchPool = new ArrayList<>();
+
+    // This UAMI is required. It is the user's pet and allows them to run compute.
+    uamiForBatchPool.add(
         new BatchPoolUserAssignedManagedIdentity(
             azureCloudContext.getAzureResourceGroupId(),
             GetManagedIdentityStep.getManagedIdentityName(context),
-            null);
+            null));
+
+    String maybeActionIdentity =
+        context.getWorkingMap().get(GetActionManagedIdentityStep.ACTION_IDENTITY, String.class);
+    if (maybeActionIdentity != null) {
+      // This UAMI may/may not exist (and that's OK). It allows the user to pull images from a
+      // private azure container repository.
+      logger.info(
+          "Assigning action managed identity {} to batch pool resource {} in workspace '{}'",
+          maybeActionIdentity,
+          resource.getId(),
+          resource.getWsmResourceFields().getWorkspaceId().toString());
+      uamiForBatchPool.add(
+          new BatchPoolUserAssignedManagedIdentity(
+              azureCloudContext.getAzureResourceGroupId(), maybeActionIdentity, null));
+    } else {
+      logger.info(
+          "Skipping assigning any action managed identities to batch pool resource {} in workspace {}",
+          resource.getId(),
+          resource.getWsmResourceFields().getWorkspaceId().toString());
+    }
 
     try {
       var batchPoolDefinition =
@@ -93,11 +117,7 @@ public class CreateAzureBatchPoolStep implements Step {
 
       batchPoolDefinition =
           configureBatchPool(
-              msiManager,
-              batchPoolDefinition,
-              resource,
-              azureCloudContext,
-              List.of(userAssignedManagedIdentity));
+              msiManager, batchPoolDefinition, resource, azureCloudContext, uamiForBatchPool);
       batchPoolDefinition.create(
           Defaults.buildContext(
               CreateBatchPoolRequestData.builder()

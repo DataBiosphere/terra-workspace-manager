@@ -11,7 +11,7 @@ import bio.terra.workspace.generated.model.ApiAzureBatchPoolResource;
 import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
 import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
 import bio.terra.workspace.service.resource.AzureResourceValidationUtils;
-import bio.terra.workspace.service.resource.controlled.cloud.azure.batchpool.model.BatchPoolUserAssignedManagedIdentity;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetActionManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetPetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.flight.create.CreateControlledResourceFlight;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
@@ -177,7 +177,7 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
         new VerifyAzureBatchPoolCanBeCreatedStep(
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
-            userRequest,
+            flightBeanBag.getSamService(),
             flightBeanBag.getLandingZoneBatchAccountFinder(),
             this),
         RetryRules.cloud());
@@ -186,6 +186,13 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
             flightBeanBag.getAzureConfig(),
             flightBeanBag.getCrlService(),
             flightBeanBag.getSamService(),
+            userRequest),
+        RetryRules.cloud());
+    flight.addStep(
+        new GetActionManagedIdentityStep(
+            flightBeanBag.getSamService(),
+            flightBeanBag.getWorkspaceService(),
+            getWorkspaceId(),
             userRequest),
         RetryRules.cloud());
     flight.addStep(
@@ -266,7 +273,6 @@ public class ControlledAzureBatchPoolResource extends ControlledResource {
     private String vmSize;
     private String displayName;
     private DeploymentConfiguration deploymentConfiguration;
-    private List<BatchPoolUserAssignedManagedIdentity> userAssignedIdentities;
     private ScaleSettings scaleSettings;
     private StartTask startTask;
     private List<ApplicationPackageReference> applicationPackages;

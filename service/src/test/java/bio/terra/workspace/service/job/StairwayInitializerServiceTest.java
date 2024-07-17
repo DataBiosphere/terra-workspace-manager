@@ -14,6 +14,7 @@ import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.StairwayLoggingHook;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
 import bio.terra.workspace.common.annotations.Unit;
+import bio.terra.workspace.common.logging.FlightMetricsHook;
 import bio.terra.workspace.common.logging.WorkspaceActivityLogHook;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +35,8 @@ class StairwayInitializerServiceTest {
   @Mock private WorkspaceActivityLogHook workspaceActivityLogHook;
   @Mock private StairwayComponent stairwayComponent;
   @Mock private FlightBeanBag flightBeanBag;
+  @Mock private FlightMetricsHook flightMetricsHook;
+
   private StairwayInitializerService stairwayInitializerService;
 
   @BeforeEach
@@ -46,7 +49,8 @@ class StairwayInitializerServiceTest {
             stairwayComponent,
             flightBeanBag,
             mock(ObjectMapper.class),
-            OpenTelemetry.noop());
+            OpenTelemetry.noop(),
+            flightMetricsHook);
   }
 
   @Test
@@ -75,6 +79,7 @@ class StairwayInitializerServiceTest {
         contains(
             instanceOf(StairwayLoggingHook.class),
             instanceOf(MonitoringHook.class),
+            is(flightMetricsHook),
             is(workspaceActivityLogHook)));
     assertThat(
         "Stairway is initialized with exception serializer",

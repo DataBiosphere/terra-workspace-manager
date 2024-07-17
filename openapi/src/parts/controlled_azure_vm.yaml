@@ -141,9 +141,9 @@ components:
           type: string
           format: base64
         priority:
-          description: Priority of the VM (Regular or Spot). Defaults to Regular.
-          type: string
-          enum: [ 'REGULAR', 'SPOT' ]
+          $ref: '#/components/schemas/AzureVmPriority'
+        userAssignedIdentities:
+          $ref: '#/components/schemas/AzureVmUserAssignedIdentities'
 
     AzureVmImage:
       description: >-
@@ -243,6 +243,20 @@ components:
         password:
           description: Specifies the SSH root password for the Linux virtual machine
           type: string
+
+    AzureVmPriority:
+      description: Priority of the VM (Regular or Spot). Defaults to Regular.
+      type: string
+      enum: [ 'REGULAR', 'SPOT' ]
+
+    AzureVmUserAssignedIdentities:
+      description: |
+        List of user-assigned managed identities to assign to the VM.
+        Only accepted for application-managed resources.
+      type: array
+      items:
+        uniqueItems: true
+        type: string
 
     CreateControlledAzureVmRequestBody:
       description: Payload for requesting a new controlled Azure VM resource.

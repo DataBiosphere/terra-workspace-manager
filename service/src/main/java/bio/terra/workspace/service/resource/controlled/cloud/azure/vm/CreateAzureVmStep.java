@@ -19,6 +19,7 @@ import bio.terra.workspace.db.ResourceDao;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.disk.ControlledAzureDiskResource;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.managedIdentity.GetManagedIdentityStep;
 import bio.terra.workspace.service.resource.controlled.exception.AzureNetworkInterfaceNameNotFoundException;
 import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
@@ -34,6 +35,8 @@ import com.azure.resourcemanager.compute.models.VirtualMachinePriorityTypes;
 import com.azure.resourcemanager.compute.models.VirtualMachineSizeTypes;
 import com.azure.resourcemanager.network.models.NetworkInterface;
 import com.google.common.annotations.VisibleForTesting;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -84,6 +87,12 @@ public class CreateAzureVmStep implements Step {
     final String subnetName =
         context.getWorkingMap().get(AzureVmHelper.WORKING_MAP_SUBNET_NAME, String.class);
 
+    final Optional<String> petManagedIdentityId =
+        Optional.ofNullable(
+            context
+                .getWorkingMap()
+                .get(GetManagedIdentityStep.MANAGED_IDENTITY_RESOURCE_ID, String.class));
+
     try {
       Optional<Disk> existingAzureDisk =
           diskResource.map(
@@ -132,7 +141,8 @@ public class CreateAzureVmStep implements Step {
               existingAzureDisk,
               azureCloudContext.getAzureResourceGroupId(),
               creationParameters,
-              region);
+              region,
+              petManagedIdentityId);
 
       var createdVm =
           virtualMachineDefinition.create(
@@ -201,7 +211,8 @@ public class CreateAzureVmStep implements Step {
       Optional<Disk> disk,
       String azureResourceGroupId,
       ApiAzureVmCreationParameters creationParameters,
-      Region region) {
+      Region region,
+      Optional<String> petManagedIdentityId) {
     var vmConfigurationCommonStep =
         computeManager
             .virtualMachines()
@@ -215,8 +226,9 @@ public class CreateAzureVmStep implements Step {
     var withExistingDisk = maybeAddExistingDiskStep(withCustomData, disk);
     var withEphemeralDisk = maybeAddEphemeralDiskStep(withExistingDisk, creationParameters);
     var withSizeAndPriority = addSizeAndPriorityStep(withEphemeralDisk, creationParameters);
+    var withUserData = maybeAddUserData(withSizeAndPriority, petManagedIdentityId);
 
-    return withSizeAndPriority
+    return withUserData
         .withTag("workspaceId", resource.getWorkspaceId().toString())
         .withTag("resourceId", resource.getResourceId().toString());
   }
@@ -287,5 +299,14 @@ public class CreateAzureVmStep implements Step {
     return priorSteps
         .withSize(VirtualMachineSizeTypes.fromString(resource.getVmSize()))
         .withPriority(priority);
+  }
+
+  private VirtualMachine.DefinitionStages.WithCreate maybeAddUserData(
+      VirtualMachine.DefinitionStages.WithCreate priorSteps,
+      Optional<String> petManagedIdentityId) {
+    return petManagedIdentityId
+        .map(petId -> Base64.getEncoder().encodeToString(petId.getBytes(StandardCharsets.UTF_8)))
+        .map(priorSteps::withUserData)
+        .orElse(priorSteps);
   }
 }

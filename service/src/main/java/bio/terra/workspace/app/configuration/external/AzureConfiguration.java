@@ -21,6 +21,15 @@ public class AzureConfiguration {
   private List<String> protectedDataLandingZoneDefs;
   private String azureDatabaseUtilImage;
   private Integer azureDatabaseUtilLogsTailLines;
+  private String azureEnvironment;
+
+  public String getAzureEnvironment() {
+    return azureEnvironment;
+  }
+
+  public void setAzureEnvironment(String azureEnvironment) {
+    this.azureEnvironment = azureEnvironment;
+  }
 
   public String getManagedAppClientId() {
     return managedAppClientId;

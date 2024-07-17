@@ -21,6 +21,10 @@ components:
           description: A valid WSM identifier for an Azure Disk that corresponds to a valid azure resource
           type: string
           format: uuid
+        priority:
+          $ref: '#/components/schemas/AzureVmPriority'
+        userAssignedIdentities:
+          $ref: '#/components/schemas/AzureVmUserAssignedIdentities'
 
     AzureVmResource:
       type: object

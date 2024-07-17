@@ -300,7 +300,8 @@ public abstract class ControlledResource extends WsmResource {
                     ? PrivateResourceState.INITIALIZING
                     : PrivateResourceState.NOT_APPLICABLE)
             .createdByEmail(createByEmail)
-            .region(region);
+            .region(region)
+            .applicationId(getApplicationId());
 
     // override name and description if provided
     cloneResourceCommonFields.name(name == null ? getName() : name);

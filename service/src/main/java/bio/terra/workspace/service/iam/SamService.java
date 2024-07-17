@@ -20,9 +20,12 @@ import bio.terra.workspace.service.iam.model.AccessibleWorkspace;
 import bio.terra.workspace.service.iam.model.ControlledResourceIamRole;
 import bio.terra.workspace.service.iam.model.RoleBinding;
 import bio.terra.workspace.service.iam.model.SamConstants;
+import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
+import bio.terra.workspace.service.workspace.WsmApplicationService;
+import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -76,6 +79,7 @@ public class SamService {
   private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
   private final FeatureConfiguration features;
+  private final WsmApplicationService applicationService;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
@@ -83,10 +87,12 @@ public class SamService {
       SamConfiguration samConfig,
       FeatureConfiguration features,
       SamUserFactory samUserFactory,
-      OpenTelemetry openTelemetry) {
+      OpenTelemetry openTelemetry,
+      WsmApplicationService applicationService) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.features = features;
+    this.applicationService = applicationService;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -212,6 +218,48 @@ public class SamService {
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create(
           "Error getting user assigned managed identity from Sam", apiException);
+    }
+  }
+
+  /**
+   * Returns the 'Action Managed Identity' that the requesting user has access to, if one exists.
+   *
+   * @param samResourceType Type of the Sam resource. e.g. private_azure_container_registry
+   * @param samAction Action to perform on the resource. e.g. pull_image
+   * @param samResourceId Sam ID of the resource. UUID. For private ACR, by convention, the
+   *     resourceID is equivalent to the billingProfileID (a.k.a. SpendProfileId).
+   * @param request The request from user asking for the identity. Used to impersonate the user when
+   *     querying Sam.
+   * @return Fully qualified name of the identity. Might look something like
+   *     /subscriptions/62b22893-6bc1-46d9-8a90-806bb3cce3c9/resourcegroups/mrg-terra-dev-previ-20240104102401/providers/Microsoft.ManagedIdentity/userAssignedIdentities/586d120b-c4c-pull_image
+   */
+  public Optional<String> getActionIdentityForUser(
+      String samResourceType,
+      String samAction,
+      String samResourceId,
+      AuthenticatedUserRequest request)
+      throws InterruptedException {
+
+    String token = getSamUser(request).getBearerToken().getToken();
+    AzureApi azureApi = samAzureApi(token);
+
+    try {
+      ActionManagedIdentityResponse resp =
+          SamRetry.retry(
+              () -> azureApi.getActionManagedIdentity(samResourceType, samResourceId, samAction));
+      return Optional.ofNullable(resp.getObjectId());
+    } catch (ApiException apiException) {
+      String infoStringTemplate = "Billing Profile: %s, Resource Type: %s, Action: %s";
+      if (apiException.getCode() == 404) {
+        logger.info(
+            "Action identity not found in Sam for "
+                + String.format(infoStringTemplate, samResourceId, samResourceType, samAction));
+        return Optional.empty();
+      }
+      throw SamExceptionFactory.create(
+          "Error fetching action managed identity from Sam."
+              + String.format(infoStringTemplate, samResourceId, samResourceType, samAction),
+          apiException);
     }
   }
 
@@ -800,15 +848,12 @@ public class SamService {
   @WithSpan
   public boolean isApplicationEnabledInSam(
       UUID workspaceUuid, String email, AuthenticatedUserRequest userRequest) {
-    // We detect that an application is enabled in Sam by checking if the application has
-    // the create-controlled-application-private action on the workspace.
     try {
       ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
-      return resourcesApi.resourceActionV2(
-          SamConstants.SamResource.WORKSPACE,
-          workspaceUuid.toString(),
-          SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
-          email);
+      var policy =
+          resourcesApi.getPolicyV2(
+              SamResource.WORKSPACE, workspaceUuid.toString(), WsmIamRole.APPLICATION.toSamRole());
+      return policy.getMemberEmails().stream().anyMatch(email::equalsIgnoreCase);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error querying role in Sam", apiException);
     }
@@ -965,13 +1010,24 @@ public class SamService {
             .parent(workspaceParentFqId)
             .authDomain(List.of());
 
+    // include the stewarding application when building our policy
+    // so it always gets the appropriate permissions (the user request is not always
+    // from the application, i.e., when a resource is cloned)
+    WsmWorkspaceApplication app = null;
+    if (resource.getApplicationId() != null
+        && (resource.getCategory().equals(ControlledResourceCategory.APPLICATION_PRIVATE)
+            || resource.getCategory().equals(ControlledResourceCategory.APPLICATION_SHARED))) {
+      app =
+          applicationService.getWorkspaceApplication(
+              resource.getWorkspaceId(), resource.getApplicationId());
+    }
+
     var builder =
         new ControlledResourceSamPolicyBuilder(
-            this,
             privateIamRole,
             assignedUserEmail,
-            userRequest,
-            ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()));
+            ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()),
+            app);
     builder.addPolicies(resourceRequest);
 
     try {

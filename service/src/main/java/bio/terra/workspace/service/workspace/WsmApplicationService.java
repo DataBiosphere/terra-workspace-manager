@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -119,7 +120,11 @@ public class WsmApplicationService {
 
   public WsmWorkspaceApplication getWorkspaceApplication(
       Workspace workspace, String applicationId) {
-    return applicationDao.getWorkspaceApplication(workspace.getWorkspaceId(), applicationId);
+    return getWorkspaceApplication(workspace.getWorkspaceId(), applicationId);
+  }
+
+  public WsmWorkspaceApplication getWorkspaceApplication(UUID workspaceId, String applicationId) {
+    return applicationDao.getWorkspaceApplication(workspaceId, applicationId);
   }
 
   public List<WsmWorkspaceApplication> listWorkspaceApplications(

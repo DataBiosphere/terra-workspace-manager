@@ -1,11 +1,15 @@
 package bio.terra.workspace.service.resource;
 
 import bio.terra.common.exception.MissingRequiredFieldException;
+import bio.terra.common.exception.ValidationException;
 import bio.terra.workspace.generated.model.ApiAzureVmCreationParameters;
+import bio.terra.workspace.service.resource.controlled.model.ManagedByType;
 import bio.terra.workspace.service.resource.exception.InvalidNameException;
 import bio.terra.workspace.service.resource.referenced.exception.InvalidReferenceException;
+import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,7 +190,8 @@ public class AzureResourceValidationUtils {
     }
   }
 
-  public static void validate(ApiAzureVmCreationParameters apiAzureVmCreationParameters) {
+  public static void validateAzureVmImage(
+      ApiAzureVmCreationParameters apiAzureVmCreationParameters) {
     var vmImage = apiAzureVmCreationParameters.getVmImage();
     if (StringUtils.isEmpty(vmImage.getUri())
         && StringUtils.isEmpty(vmImage.getPublisher())
@@ -211,6 +216,15 @@ public class AzureResourceValidationUtils {
             && !StringUtils.isEmpty(vmImage.getVersion()))) {
       ResourceValidationUtils.checkFieldNonNull(
           apiAzureVmCreationParameters.getVmUser(), "vmUser", "ApiAzureVmCreationParameters");
+    }
+  }
+
+  public static void validateAzureVmUserAssignedIdentities(
+      List<String> userAssignedIdentities, ManagedByType managedBy) {
+    if (CollectionUtils.isNotEmpty(userAssignedIdentities)
+        && managedBy != ManagedByType.MANAGED_BY_APPLICATION) {
+      throw new ValidationException(
+          "User-assigned identities may only be specified for application-managed resources");
     }
   }
 }

@@ -6,6 +6,7 @@ import bio.terra.common.stairway.StairwayComponent;
 import bio.terra.common.stairway.StairwayLoggingHook;
 import bio.terra.stairway.StairwayMapper;
 import bio.terra.workspace.app.configuration.external.StairwayDatabaseConfiguration;
+import bio.terra.workspace.common.logging.FlightMetricsHook;
 import bio.terra.workspace.common.logging.WorkspaceActivityLogHook;
 import bio.terra.workspace.common.utils.FlightBeanBag;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
@@ -27,6 +28,7 @@ public class StairwayInitializerService {
   private final FlightBeanBag flightBeanBag;
   private final ObjectMapper objectMapper;
   private final OpenTelemetry openTelemetry;
+  private final FlightMetricsHook flightMetricsHook;
 
   @Autowired
   public StairwayInitializerService(
@@ -36,7 +38,8 @@ public class StairwayInitializerService {
       StairwayComponent stairwayComponent,
       FlightBeanBag flightBeanBag,
       ObjectMapper objectMapper,
-      OpenTelemetry openTelemetry) {
+      OpenTelemetry openTelemetry,
+      FlightMetricsHook flightMetricsHook) {
     this.dataSourceManager = dataSourceManager;
     this.stairwayDatabaseConfiguration = stairwayDatabaseConfiguration;
     this.workspaceActivityLogHook = workspaceActivityLogHook;
@@ -44,6 +47,7 @@ public class StairwayInitializerService {
     this.flightBeanBag = flightBeanBag;
     this.objectMapper = objectMapper;
     this.openTelemetry = openTelemetry;
+    this.flightMetricsHook = flightMetricsHook;
   }
 
   /**
@@ -59,6 +63,7 @@ public class StairwayInitializerService {
             .context(flightBeanBag)
             .addHook(new StairwayLoggingHook())
             .addHook(new MonitoringHook(openTelemetry))
+            .addHook(flightMetricsHook)
             .addHook(workspaceActivityLogHook)
             .exceptionSerializer(new StairwayExceptionSerializer(objectMapper)));
   }

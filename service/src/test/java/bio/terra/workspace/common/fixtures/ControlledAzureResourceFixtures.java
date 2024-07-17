@@ -75,16 +75,19 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ControlledAzureDiskResource.Builder makeDefaultAzureDiskBuilder(
-      ApiAzureDiskCreationParameters creationParameters, UUID workspaceId) {
+      ApiAzureDiskCreationParameters creationParameters, UUID workspaceId, String assignedUser) {
     return ControlledAzureDiskResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceId)
                 .name(getAzureName("disk"))
                 .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.APPLICATION))
+                .applicationId("leo")
                 .region(DEFAULT_AZURE_RESOURCE_REGION)
+                .assignedUser(assignedUser)
+                .iamRole(ControlledResourceIamRole.EDITOR)
                 .build())
         .diskName(creationParameters.getName())
         .size(creationParameters.getSize());
@@ -281,15 +284,21 @@ public class ControlledAzureResourceFixtures {
   }
 
   public static ControlledAzureVmResource.Builder makeDefaultControlledAzureVmResourceBuilder(
-      ApiAzureVmCreationParameters creationParameters, UUID workspaceId, UUID diskResourceId) {
+      ApiAzureVmCreationParameters creationParameters,
+      UUID workspaceId,
+      UUID diskResourceId,
+      String assignedUser) {
     return ControlledAzureVmResource.builder()
         .common(
             ControlledResourceFixtures.makeDefaultControlledResourceFieldsBuilder()
                 .workspaceUuid(workspaceId)
                 .name(getAzureName("vm"))
                 .cloningInstructions(CloningInstructions.COPY_RESOURCE)
-                .accessScope(AccessScopeType.fromApi(ApiAccessScope.SHARED_ACCESS))
-                .managedBy(ManagedByType.fromApi(ApiManagedBy.USER))
+                .accessScope(AccessScopeType.fromApi(ApiAccessScope.PRIVATE_ACCESS))
+                .managedBy(ManagedByType.fromApi(ApiManagedBy.APPLICATION))
+                .applicationId("leo")
+                .assignedUser(assignedUser)
+                .iamRole(ControlledResourceIamRole.EDITOR)
                 .build())
         .vmName(creationParameters.getName())
         .vmSize(creationParameters.getVmSize())
