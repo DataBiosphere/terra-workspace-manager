@@ -5,11 +5,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.*;
 
 import bio.terra.common.iam.BearerToken;
+import bio.terra.lz.futureservice.client.ApiException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.FlightMap;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneApiDispatch;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneServiceApiException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
@@ -31,6 +33,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @Tag("unit")
@@ -53,7 +56,7 @@ public class DeleteAzureDatabaseStepUnitTest {
   @BeforeEach
   void setup() {
     when(context.getWorkingMap()).thenReturn(workingMap);
-    when(postgresManager.databases()).thenReturn(databases);
+    Mockito.lenient().when(postgresManager.databases()).thenReturn(databases);
     when(workingMap.get(
             WorkspaceFlightMapKeys.ControlledResourceKeys.AZURE_CLOUD_CONTEXT,
             AzureCloudContext.class))
@@ -140,6 +143,37 @@ public class DeleteAzureDatabaseStepUnitTest {
             workspaceService,
             workspaceId);
     assertThat(step.doStep(context), equalTo(StepResult.getStepResultSuccess()));
+  }
+
+  @Test
+  void lzsManagementExceptionReturnsSuccess() throws Exception {
+    var landingZoneId = UUID.randomUUID();
+    var workspaceId = UUID.randomUUID();
+    var workspace = mock(Workspace.class);
+    when(workspaceService.getWorkspace(workspaceId)).thenReturn(workspace);
+    var token = new BearerToken("test-token");
+    when(samService.getWsmServiceAccountToken()).thenReturn(token.getToken());
+    when(landingZoneApiDispatch.getLandingZoneId(token, workspace)).thenReturn(landingZoneId);
+    // Message and code of actual exception returned from LZS
+    var apiException =
+        new ApiException(
+            500,
+            "Status code 403, \"{\"error\":{\"code\":\"AuthorizationFailed\",\"message\":\"The client 'a305fdb2-74c8-4637-bb57-9499afee87ad' with object id 'a305fdb2-74c8-4637-bb57-9499afee87ad' does not have authorization to perform action 'Microsoft.Resources/subscriptions/resourcegroups/read' over scope '/subscriptions/df547342-9cfd-44ef-a6dd-df0ede32f1e3/resourcegroups/terraDemo1' or the scope is invalid. If access was recently granted, please refresh your credentials.\"}}\"");
+    doThrow(new LandingZoneServiceApiException(apiException))
+        .when(landingZoneApiDispatch)
+        .getSharedDatabase(token, landingZoneId);
+    var step =
+        new DeleteAzureDatabaseStep(
+            azureConfig,
+            crlService,
+            resource,
+            landingZoneApiDispatch,
+            samService,
+            workspaceService,
+            workspaceId);
+
+    assertThat(step.doStep(context), equalTo(StepResult.getStepResultSuccess()));
+    verify(landingZoneApiDispatch).getSharedDatabase(token, landingZoneId);
   }
 
   @Test

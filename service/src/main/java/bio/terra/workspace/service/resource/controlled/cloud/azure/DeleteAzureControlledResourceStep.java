@@ -1,8 +1,10 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import bio.terra.lz.futureservice.client.ApiException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneServiceApiException;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
 import com.azure.core.management.exception.ManagementException;
@@ -70,6 +72,18 @@ public abstract class DeleteAzureControlledResourceStep implements DeleteControl
       // retry any other non-4xx errors
       return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(ex), ex);
     }
+
+    // When retrieving shared resources from the landing zone,
+    // LZS can encounter the same management exceptions as above
+    // To detect this, we need to examine the message for those error codes
+    if (e instanceof LandingZoneServiceApiException && e.getCause() instanceof ApiException) {
+      var msg = e.getCause().getMessage();
+      if (msg != null
+          && missingResourceManagementCodes.stream().anyMatch(code -> msg.contains(code))) {
+        return StepResult.getStepResultSuccess();
+      }
+    }
+
     return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
   }
 }
