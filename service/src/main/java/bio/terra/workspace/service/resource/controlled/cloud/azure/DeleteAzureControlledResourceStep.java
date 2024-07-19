@@ -7,6 +7,7 @@ import bio.terra.stairway.StepStatus;
 import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneServiceApiException;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import com.azure.core.management.exception.ManagementException;
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +17,14 @@ import org.springframework.http.HttpStatus;
  * Common base class for deleting Azure resources. Wraps the Azure resource deletion logic with
  * handling for common exceptions.
  */
-public abstract class DeleteAzureControlledResourceStep implements DeleteControlledResourceStep {
+public abstract class DeleteAzureControlledResourceStep<R extends ControlledResource>
+    implements DeleteControlledResourceStep {
+
+  protected final R resource;
+
+  protected DeleteAzureControlledResourceStep(R resource) {
+    this.resource = resource;
+  }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {

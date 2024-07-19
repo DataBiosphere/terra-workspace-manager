@@ -21,12 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** A step for deleting a controlled Azure Storage Con resource. */
-public class DeleteAzureStorageContainerStep extends DeleteAzureControlledResourceStep {
+public class DeleteAzureStorageContainerStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureStorageContainerResource> {
   private static final Logger logger =
       LoggerFactory.getLogger(DeleteAzureStorageContainerStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
-  private final ControlledAzureStorageContainerResource resource;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;
   private final WorkspaceService workspaceService;
@@ -38,9 +38,9 @@ public class DeleteAzureStorageContainerStep extends DeleteAzureControlledResour
       SamService samService,
       ControlledAzureStorageContainerResource resource,
       WorkspaceService workspaceService) {
+    super(resource);
     this.crlService = crlService;
     this.azureConfig = azureConfig;
-    this.resource = resource;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
     this.workspaceService = workspaceService;

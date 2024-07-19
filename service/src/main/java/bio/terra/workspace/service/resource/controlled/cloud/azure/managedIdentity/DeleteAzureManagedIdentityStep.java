@@ -14,20 +14,20 @@ import org.slf4j.LoggerFactory;
  * A step for deleting a controlled Azure Managed Identity resource. This step uses the following
  * process to actually delete the Azure Managed Identity.
  */
-public class DeleteAzureManagedIdentityStep extends DeleteAzureControlledResourceStep {
+public class DeleteAzureManagedIdentityStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureManagedIdentityResource> {
   private static final Logger logger =
       LoggerFactory.getLogger(DeleteAzureManagedIdentityStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
-  private final ControlledAzureManagedIdentityResource resource;
 
   public DeleteAzureManagedIdentityStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       ControlledAzureManagedIdentityResource resource) {
+    super(resource);
     this.crlService = crlService;
     this.azureConfig = azureConfig;
-    this.resource = resource;
   }
 
   @Override

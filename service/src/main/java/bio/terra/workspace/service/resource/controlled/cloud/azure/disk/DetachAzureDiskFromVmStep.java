@@ -24,18 +24,18 @@ import org.slf4j.LoggerFactory;
  * functionality of detaching data disk from a virtual machine before disk deletion. It is not
  * possible to delete a disk without detaching it.
  */
-public class DetachAzureDiskFromVmStep extends DeleteAzureControlledResourceStep {
+public class DetachAzureDiskFromVmStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureDiskResource> {
   private static final Logger logger = LoggerFactory.getLogger(DetachAzureDiskFromVmStep.class);
 
   private final CrlService crlService;
   private final AzureConfiguration azureConfig;
-  private final ControlledAzureDiskResource resource;
 
   public DetachAzureDiskFromVmStep(
       AzureConfiguration azureConfig, CrlService crlService, ControlledAzureDiskResource resource) {
+    super(resource);
     this.crlService = crlService;
     this.azureConfig = azureConfig;
-    this.resource = resource;
   }
 
   @Override

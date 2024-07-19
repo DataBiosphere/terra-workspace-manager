@@ -5,24 +5,25 @@ import bio.terra.stairway.StepResult;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.kubernetesNamespace.ControlledAzureKubernetesNamespaceResource;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys.ControlledResourceKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteFederatedCredentialStep extends DeleteAzureControlledResourceStep {
+public class DeleteFederatedCredentialStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureKubernetesNamespaceResource> {
   private static final Logger logger = LoggerFactory.getLogger(DeleteFederatedCredentialStep.class);
-  public final String k8sNamespace;
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final MissingIdentityBehavior missingIdentityBehavior;
 
   public DeleteFederatedCredentialStep(
-      String k8sNamespace,
       AzureConfiguration azureConfig,
       CrlService crlService,
-      MissingIdentityBehavior missingIdentityBehavior) {
-    this.k8sNamespace = k8sNamespace;
+      MissingIdentityBehavior missingIdentityBehavior,
+      ControlledAzureKubernetesNamespaceResource resource) {
+    super(resource);
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.missingIdentityBehavior = missingIdentityBehavior;
@@ -49,7 +50,10 @@ public class DeleteFederatedCredentialStep extends DeleteAzureControlledResource
         .manager()
         .serviceClient()
         .getFederatedIdentityCredentials()
-        .delete(azureCloudContext.getAzureResourceGroupId(), uamiName, k8sNamespace);
+        .delete(
+            azureCloudContext.getAzureResourceGroupId(),
+            uamiName,
+            resource.getKubernetesNamespace());
     return StepResult.getStepResultSuccess();
   }
 

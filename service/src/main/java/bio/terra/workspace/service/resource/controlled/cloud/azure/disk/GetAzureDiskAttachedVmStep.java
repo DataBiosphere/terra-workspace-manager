@@ -21,19 +21,19 @@ import org.slf4j.LoggerFactory;
  * 'undo' operation at DetachAzureDiskFromVmStep, and we need to guarantee its persistence - which
  * we can't guarantee if it is from the 'do' portion of the same step.
  */
-public class GetAzureDiskAttachedVmStep extends DeleteAzureControlledResourceStep {
+public class GetAzureDiskAttachedVmStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureDiskResource> {
 
   private static final Logger logger = LoggerFactory.getLogger(GetAzureDiskAttachedVmStep.class);
 
   private final CrlService crlService;
   private final AzureConfiguration azureConfig;
-  private final ControlledAzureDiskResource resource;
 
   public GetAzureDiskAttachedVmStep(
       AzureConfiguration azureConfig, CrlService crlService, ControlledAzureDiskResource resource) {
+    super(resource);
     this.crlService = crlService;
     this.azureConfig = azureConfig;
-    this.resource = resource;
   }
 
   @Override

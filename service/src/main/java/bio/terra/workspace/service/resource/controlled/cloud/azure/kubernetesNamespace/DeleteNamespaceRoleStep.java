@@ -10,19 +10,19 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteNamespaceRoleStep extends DeleteAzureControlledResourceStep {
+public class DeleteNamespaceRoleStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureKubernetesNamespaceResource> {
   private static final Logger logger = LoggerFactory.getLogger(DeleteNamespaceRoleStep.class);
   private final UUID workspaceId;
   private final AzureDatabaseUtilsRunner azureDatabaseUtilsRunner;
-  private final ControlledAzureKubernetesNamespaceResource resource;
 
   public DeleteNamespaceRoleStep(
       UUID workspaceId,
       AzureDatabaseUtilsRunner azureDatabaseUtilsRunner,
       ControlledAzureKubernetesNamespaceResource resource) {
+    super(resource);
     this.workspaceId = workspaceId;
     this.azureDatabaseUtilsRunner = azureDatabaseUtilsRunner;
-    this.resource = resource;
   }
 
   private String getDeletePodName() {

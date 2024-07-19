@@ -21,11 +21,11 @@ import org.slf4j.LoggerFactory;
  * A step for deleting a controlled Azure Database resource. This step uses the following process to
  * actually delete the Azure Database.
  */
-public class DeleteAzureDatabaseStep extends DeleteAzureControlledResourceStep {
+public class DeleteAzureDatabaseStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureDatabaseResource> {
   private static final Logger logger = LoggerFactory.getLogger(DeleteAzureDatabaseStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
-  private final ControlledAzureDatabaseResource resource;
   private final LandingZoneApiDispatch landingZoneApiDispatch;
   private final SamService samService;
   private final WorkspaceService workspaceService;
@@ -39,9 +39,9 @@ public class DeleteAzureDatabaseStep extends DeleteAzureControlledResourceStep {
       SamService samService,
       WorkspaceService workspaceService,
       UUID workspaceId) {
+    super(resource);
     this.crlService = crlService;
     this.azureConfig = azureConfig;
-    this.resource = resource;
     this.landingZoneApiDispatch = landingZoneApiDispatch;
     this.samService = samService;
     this.workspaceService = workspaceService;

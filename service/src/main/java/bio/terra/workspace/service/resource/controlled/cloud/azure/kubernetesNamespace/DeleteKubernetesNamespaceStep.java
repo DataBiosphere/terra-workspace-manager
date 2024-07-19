@@ -18,19 +18,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
-public class DeleteKubernetesNamespaceStep extends DeleteAzureControlledResourceStep {
+public class DeleteKubernetesNamespaceStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureKubernetesNamespaceResource> {
   private static final Logger logger = LoggerFactory.getLogger(DeleteKubernetesNamespaceStep.class);
   private final UUID workspaceId;
   private final KubernetesClientProvider kubernetesClientProvider;
-  private final ControlledAzureKubernetesNamespaceResource resource;
 
   public DeleteKubernetesNamespaceStep(
       UUID workspaceId,
       KubernetesClientProvider kubernetesClientProvider,
       ControlledAzureKubernetesNamespaceResource resource) {
+    super(resource);
     this.workspaceId = workspaceId;
     this.kubernetesClientProvider = kubernetesClientProvider;
-    this.resource = resource;
   }
 
   @Override
