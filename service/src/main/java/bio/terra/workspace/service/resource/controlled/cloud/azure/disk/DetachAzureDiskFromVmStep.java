@@ -7,7 +7,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
+import bio.terra.workspace.service.resource.controlled.cloud.azure.DeleteAzureControlledResourceStep;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
 import com.azure.core.management.exception.ManagementException;
 import com.azure.resourcemanager.compute.ComputeManager;
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * functionality of detaching data disk from a virtual machine before disk deletion. It is not
  * possible to delete a disk without detaching it.
  */
-public class DetachAzureDiskFromVmStep implements DeleteControlledResourceStep {
+public class DetachAzureDiskFromVmStep extends DeleteAzureControlledResourceStep {
   private static final Logger logger = LoggerFactory.getLogger(DetachAzureDiskFromVmStep.class);
 
   private final CrlService crlService;
@@ -39,68 +39,74 @@ public class DetachAzureDiskFromVmStep implements DeleteControlledResourceStep {
   }
 
   @Override
-  public StepResult doStep(FlightContext context) throws InterruptedException, RetryException {
+  public StepResult deleteResource(FlightContext context)
+      throws InterruptedException, RetryException {
     final AzureCloudContext azureCloudContext =
         DeleteAzureDiskFlightUtils.getAzureCloudContext(context);
     final String diskResourceId =
         DeleteAzureDiskFlightUtils.getAzureDiskResourceId(azureCloudContext, resource);
     ComputeManager computeManager = crlService.getComputeManager(azureCloudContext, azureConfig);
-    try {
-      var disk = computeManager.disks().getById(diskResourceId);
-      if (!disk.isAttachedToVirtualMachine()) {
-        logger.info(
-            "Disk {} in MRG {} for workspace {} is not attached to vm.",
-            resource.getResourceId(),
-            azureCloudContext.getAzureResourceGroupId(),
-            resource.getWorkspaceId());
-        return StepResult.getStepResultSuccess();
-      }
-      var vm = getVirtualMachine(computeManager, disk.virtualMachineId());
-      if (vm.isEmpty()) {
-        // this is unlikely event - disk is attached, but the vm cannot be found; let's retry
-        logger.warn(
-            "Disk {} in MRG {} for workspace {} is attached to vm, but vm cannot be found. Retrying.",
-            resource.getResourceId(),
-            azureCloudContext.getAzureResourceGroupId(),
-            resource.getWorkspaceId());
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
-      }
-      var attachedDisk = tryToFindAttachedDisk(vm.get(), resource.getDiskName());
-      if (attachedDisk.isPresent()) {
-        detachDisk(vm.get(), attachedDisk.get().getKey());
-      } else {
-        // this is unlikely event - disk is attached, but the vm doesn't
-        // have it in the list of attached disks; let's retry
-        logger.warn(
-            "Disk {} in MRG {} for workspace {} is attached, but not found in the list of attached disk for vm {}.",
-            resource.getResourceId(),
-            azureCloudContext.getAzureResourceGroupId(),
-            resource.getWorkspaceId(),
-            disk.virtualMachineId());
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
-      }
-    } catch (ManagementException ex) {
-      if (AzureManagementExceptionUtils.isExceptionCode(
-          ex, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
-        logger.info(
-            "Disk {} does not exist in MRG {} for workspace {}.",
-            resource.getResourceId(),
-            azureCloudContext.getAzureResourceGroupId(),
-            resource.getWorkspaceId());
-        return StepResult.getStepResultSuccess();
-      }
-      if (AzureManagementExceptionUtils.isExceptionCode(
-          ex, AzureManagementExceptionUtils.OPERATION_NOT_ALLOWED)) {
-        logger.error(
-            "Failed attempt to detach disk {} from vm in MRG {} for workspace {}.",
-            resource.getResourceId(),
-            azureCloudContext.getAzureResourceGroupId(),
-            resource.getWorkspaceId());
-        return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
-      }
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, ex);
+    var disk = computeManager.disks().getById(diskResourceId);
+    if (!disk.isAttachedToVirtualMachine()) {
+      logger.info(
+          "Disk {} in MRG {} for workspace {} is not attached to vm.",
+          resource.getResourceId(),
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getWorkspaceId());
+      return StepResult.getStepResultSuccess();
+    }
+    var vm = getVirtualMachine(computeManager, disk.virtualMachineId());
+    if (vm.isEmpty()) {
+      // this is unlikely event - disk is attached, but the vm cannot be found; let's retry
+      logger.warn(
+          "Disk {} in MRG {} for workspace {} is attached to vm, but vm cannot be found. Retrying.",
+          resource.getResourceId(),
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getWorkspaceId());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
+    }
+    var attachedDisk = tryToFindAttachedDisk(vm.get(), resource.getDiskName());
+    if (attachedDisk.isPresent()) {
+      detachDisk(vm.get(), attachedDisk.get().getKey());
+    } else {
+      // this is unlikely event - disk is attached, but the vm doesn't
+      // have it in the list of attached disks; let's retry
+      logger.warn(
+          "Disk {} in MRG {} for workspace {} is attached, but not found in the list of attached disk for vm {}.",
+          resource.getResourceId(),
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getWorkspaceId(),
+          disk.virtualMachineId());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY);
     }
     return StepResult.getStepResultSuccess();
+  }
+
+  @Override
+  protected StepResult handleResourceDeleteException(Exception e, FlightContext context) {
+    final AzureCloudContext azureCloudContext =
+        DeleteAzureDiskFlightUtils.getAzureCloudContext(context);
+    if (e instanceof ManagementException ex
+        && AzureManagementExceptionUtils.isExceptionCode(
+            ex, AzureManagementExceptionUtils.RESOURCE_NOT_FOUND)) {
+      logger.info(
+          "Disk '{}' does not exist in MRG {} for workspace {}.",
+          resource.getResourceId(),
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getWorkspaceId());
+      return StepResult.getStepResultSuccess();
+    } else if (e instanceof ManagementException ex
+        && AzureManagementExceptionUtils.isExceptionCode(
+            ex, AzureManagementExceptionUtils.OPERATION_NOT_ALLOWED)) {
+      logger.error(
+          "Failed attempt to detach disk {} from vm in MRG {} for workspace {}.",
+          resource.getResourceId(),
+          azureCloudContext.getAzureResourceGroupId(),
+          resource.getWorkspaceId());
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, ex);
+    } else {
+      return super.handleResourceDeleteException(e, context);
+    }
   }
 
   @Override
