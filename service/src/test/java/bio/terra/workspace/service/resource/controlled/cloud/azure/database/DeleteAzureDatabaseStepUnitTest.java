@@ -17,6 +17,7 @@ import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.iam.SamService;
+import bio.terra.workspace.service.resource.model.WsmResourceType;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -162,6 +163,7 @@ public class DeleteAzureDatabaseStepUnitTest {
     doThrow(new LandingZoneServiceApiException(apiException))
         .when(landingZoneApiDispatch)
         .getSharedDatabase(token, landingZoneId);
+    when(resource.getResourceType()).thenReturn(WsmResourceType.CONTROLLED_AZURE_DATABASE);
     var step =
         new DeleteAzureDatabaseStep(
             azureConfig,
