@@ -89,7 +89,6 @@ public abstract class DeleteAzureControlledResourceStep<R extends ControlledReso
     // LZS can encounter the same management exceptions as above
     // To detect this, we need to examine the message for those error codes
     if (e instanceof LandingZoneServiceApiException && e.getCause() instanceof ApiException apiEx) {
-      // var msg = apiEx.getMessage();
       var code =
           Optional.ofNullable(apiEx.getMessage())
               .flatMap(
@@ -98,7 +97,6 @@ public abstract class DeleteAzureControlledResourceStep<R extends ControlledReso
                           .filter(c -> msg.contains(c))
                           .findFirst());
       if (code.isPresent()) {
-        // && missingResourceManagementCodes.stream().anyMatch(code -> msg.contains(code))) {
         logger.debug(
             "LZS encountered management exception {} when deleting resource {} from workspace {}",
             code.get(),
