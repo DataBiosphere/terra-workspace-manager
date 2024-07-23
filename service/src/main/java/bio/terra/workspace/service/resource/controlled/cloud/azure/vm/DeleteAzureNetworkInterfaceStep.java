@@ -11,21 +11,21 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteAzureNetworkInterfaceStep extends DeleteAzureControlledResourceStep {
+public class DeleteAzureNetworkInterfaceStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureVmResource> {
   private static final Logger logger =
       LoggerFactory.getLogger(CreateAzureNetworkInterfaceStep.class);
 
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   // Network interface is not a freestanding WSM resource. It is tightly coupled to the Vm.
-  private final ControlledAzureVmResource resource;
   private final String networkInterfaceName;
 
   public DeleteAzureNetworkInterfaceStep(
       AzureConfiguration azureConfig, CrlService crlService, ControlledAzureVmResource resource) {
+    super(resource);
     this.crlService = crlService;
     this.azureConfig = azureConfig;
-    this.resource = resource;
     this.networkInterfaceName = String.format("nic-%s", resource.getVmName());
   }
 

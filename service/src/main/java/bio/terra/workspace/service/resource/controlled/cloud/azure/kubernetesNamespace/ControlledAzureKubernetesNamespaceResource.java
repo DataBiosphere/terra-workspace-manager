@@ -283,10 +283,10 @@ public class ControlledAzureKubernetesNamespaceResource extends ControlledResour
       return List.of(
           getGetManagedIdentityStep(flightBeanBag, MissingIdentityBehavior.ALLOW_MISSING),
           new DeleteFederatedCredentialStep(
-              getKubernetesNamespace(),
               flightBeanBag.getAzureConfig(),
               flightBeanBag.getCrlService(),
-              MissingIdentityBehavior.ALLOW_MISSING));
+              MissingIdentityBehavior.ALLOW_MISSING,
+              this));
     } else {
       return List.of();
     }

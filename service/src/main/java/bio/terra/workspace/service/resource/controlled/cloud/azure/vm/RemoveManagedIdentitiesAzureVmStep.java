@@ -12,18 +12,18 @@ import com.azure.resourcemanager.compute.ComputeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RemoveManagedIdentitiesAzureVmStep extends DeleteAzureControlledResourceStep {
+public class RemoveManagedIdentitiesAzureVmStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureVmResource> {
   private static final Logger logger =
       LoggerFactory.getLogger(RemoveManagedIdentitiesAzureVmStep.class);
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
-  private final ControlledAzureVmResource resource;
 
   public RemoveManagedIdentitiesAzureVmStep(
       AzureConfiguration azureConfig, CrlService crlService, ControlledAzureVmResource resource) {
+    super(resource);
     this.azureConfig = azureConfig;
     this.crlService = crlService;
-    this.resource = resource;
   }
 
   @Override
