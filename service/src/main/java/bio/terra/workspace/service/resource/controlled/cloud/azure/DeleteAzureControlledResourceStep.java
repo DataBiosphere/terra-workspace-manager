@@ -98,10 +98,10 @@ public abstract class DeleteAzureControlledResourceStep<R extends ControlledReso
                           .findFirst());
       if (code.isPresent()) {
         logger.debug(
-            "LZS encountered management exception {} when deleting resource {} from workspace {}",
-            code.get(),
+            "Unable to delete resource {} from workspace {}, because LZS encountered management exception {}: Returning success for delete step",
             resource.getResourceType().name(),
-            resource.getWorkspaceId());
+            resource.getWorkspaceId(),
+            code.get());
         return StepResult.getStepResultSuccess();
       }
     }
@@ -109,7 +109,7 @@ public abstract class DeleteAzureControlledResourceStep<R extends ControlledReso
     if (e instanceof LandingZoneNotFoundException) {
       // If the landing zone is not present, it's probably because it was removed directly
       logger.debug(
-          "Unable to delete resource {} from workspace {}, because no landing zone was found in LZS",
+          "Unable to delete resource {} from workspace {}, because no landing zone was found in LZS: Returning success for delete step",
           resource.getResourceType().name(),
           resource.getWorkspaceId());
       return StepResult.getStepResultSuccess();
