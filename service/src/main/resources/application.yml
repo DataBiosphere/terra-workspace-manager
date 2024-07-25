@@ -162,7 +162,7 @@ workspace:
       leo:
         name: Leonardo
         description: Leonardo application SA
-        service-account: leonardo-prod@broad-dsde-prod.iam.gserviceaccount.com
+        service-account: leonardo-dev@broad-dsde-dev.iam.gserviceaccount.com
         state: operating
 
   azure:
@@ -295,7 +295,7 @@ feature:
   # tps-enabled - Controls whether Terra Policy Service is called. It is always built into WSM
   tps-enabled: false
   # bpm-enabled-gcp - Controls whether spend profile checks are made for GCP workspaces
-  bpm-gcp-enabled: false
+  bpm-gcp-enabled: true
   # temporary-grant-enabled - Controls whether temporary direct ACL grants are made on creates
   temporary-grant-enabled: false
   # state-rule - see WsmResourceStateRule - default to original state rule

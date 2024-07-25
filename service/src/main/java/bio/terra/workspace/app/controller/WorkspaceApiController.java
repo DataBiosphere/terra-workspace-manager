@@ -40,6 +40,10 @@ import bio.terra.workspace.generated.model.ApiJobResult;
 import bio.terra.workspace.generated.model.ApiMergeCheckRequest;
 import bio.terra.workspace.generated.model.ApiProperty;
 import bio.terra.workspace.generated.model.ApiRegions;
+import bio.terra.workspace.generated.model.ApiResourceAttributesUnion;
+import bio.terra.workspace.generated.model.ApiResourceDescription;
+import bio.terra.workspace.generated.model.ApiResourceList;
+import bio.terra.workspace.generated.model.ApiResourceMetadata;
 import bio.terra.workspace.generated.model.ApiRoleBinding;
 import bio.terra.workspace.generated.model.ApiRoleBindingList;
 import bio.terra.workspace.generated.model.ApiUpdateWorkspaceRequestBody;
@@ -63,7 +67,11 @@ import bio.terra.workspace.service.petserviceaccount.PetSaService;
 import bio.terra.workspace.service.policy.TpsApiConversionUtils;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
+import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
+import bio.terra.workspace.service.resource.model.StewardshipType;
+import bio.terra.workspace.service.resource.model.WsmResource;
+import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
@@ -79,14 +87,18 @@ import bio.terra.workspace.service.workspace.model.OperationType;
 import bio.terra.workspace.service.workspace.model.Workspace;
 import bio.terra.workspace.service.workspace.model.WorkspaceDescription;
 import bio.terra.workspace.service.workspace.model.WorkspaceStage;
+import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +119,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
   private final WorkspaceV2Api workspaceV2Api;
   private final WorkspaceApiUtils workspaceApiUtils;
   private final AwsCloudContextService awsCloudContextService;
+  private final WsmResourceService wsmResourceService;
 
   @Autowired
   public WorkspaceApiController(
@@ -125,7 +138,8 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
       SpendProfileService spendProfileService,
       WorkspaceV2Api workspaceV2Api,
       WorkspaceApiUtils workspaceApiUtils,
-      AwsCloudContextService awsCloudContextService) {
+      AwsCloudContextService awsCloudContextService,
+      WsmResourceService wsmResourceService) {
     super(
         authenticatedUserRequestFactory,
         request,
@@ -143,6 +157,7 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
     this.workspaceV2Api = workspaceV2Api;
     this.workspaceApiUtils = workspaceApiUtils;
     this.awsCloudContextService = awsCloudContextService;
+    this.wsmResourceService = wsmResourceService;
   }
 
   // For the WorkspaceV2 interfaces, dispatch to a separate module for the implementation
@@ -253,12 +268,38 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceService.getWorkspaceDescriptions(
             userRequest, offset, limit, WsmIamRole.fromApiModel(minimumHighestRole));
 
+    Map<UUID, List<WsmResource>> workspaceResources = new HashMap<>();
+    workspaceDescriptions.forEach(
+            workspace -> {
+              List<WsmResource> wsmResources =
+                      wsmResourceService.enumerateResources(
+                              workspace.workspace().workspaceId(),
+                              null,
+                              null,
+                              0,
+                              10000);
+              workspaceResources.put(workspace.workspace().workspaceId(), wsmResources);
+            }
+    );
+
     var response =
         new ApiWorkspaceDescriptionList()
             .workspaces(
                 workspaceDescriptions.stream()
                     .map(workspaceApiUtils::buildApiWorkspaceDescription)
                     .toList());
+
+    response.getWorkspaces().forEach(
+            workspaceDesc -> {
+              if (workspaceResources.containsKey(workspaceDesc.getId())) {
+                List<ApiResourceDescription> apiResourceDescriptionList =
+                        workspaceResources.get(workspaceDesc.getId()).stream().map(this::makeApiResourceDescription).toList();
+                var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
+
+                workspaceDesc.setResources(apiResourceList);
+              }
+            }
+    );
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -279,9 +320,31 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     ApiWorkspaceDescription desc =
         workspaceApiUtils.buildApiWorkspaceDescription(workspaceDescription);
+
+    List<WsmResource> wsmResources =
+            wsmResourceService.enumerateResources(
+                    uuid,
+                    null,
+                    null,
+                    0,
+                    10000);
+
+    List<ApiResourceDescription> apiResourceDescriptionList =
+            wsmResources.stream().map(this::makeApiResourceDescription).collect(Collectors.toList());
+
+    var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
+    desc.resources(apiResourceList);
+
     logger.info("Got workspace {} for {}", desc, userRequest.getEmail());
 
     return new ResponseEntity<>(desc, HttpStatus.OK);
+  }
+
+  @VisibleForTesting
+  public ApiResourceDescription makeApiResourceDescription(WsmResource wsmResource) {
+    ApiResourceMetadata common = wsmResource.toApiMetadata();
+    ApiResourceAttributesUnion union = wsmResource.toApiAttributesUnion();
+    return new ApiResourceDescription().metadata(common).resourceAttributes(union);
   }
 
   @WithSpan

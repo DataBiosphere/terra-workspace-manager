@@ -848,6 +848,8 @@ components:
             type: string
         operationState:
           $ref: '#/components/schemas/OperationState'
+        resources:
+          $ref: '#/components/schemas/ResourceList'
 
     WorkspaceDescriptionList:
       type: object
