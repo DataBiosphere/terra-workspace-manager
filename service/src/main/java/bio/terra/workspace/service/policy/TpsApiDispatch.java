@@ -31,8 +31,8 @@ import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.client.Client;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +65,10 @@ public class TpsApiDispatch {
         new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
 
     logger.info("TPS base path: '{}'", policyServiceConfiguration.getBasePath());
+  }
+
+  public void verifyConfiguration() {
+    policyApi();
   }
 
   // -- Policy Attribute Object Interface --
@@ -338,7 +342,7 @@ public class TpsApiDispatch {
       return new TpsApi(
           getApiClient(policyServiceConfiguration.getAccessToken())
               .setBasePath(policyServiceConfiguration.getBasePath()));
-    } catch (IOException e) {
+    } catch (InternalServerErrorException e) {
       throw new PolicyServiceAuthorizationException(
           String.format(
               "Error reading or parsing credentials file at %s",

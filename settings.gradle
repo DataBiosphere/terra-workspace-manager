@@ -1,4 +1,4 @@
-// This pluginManagement block is needed for resolving the test-runner plugin.
+    // This pluginManagement block is needed for resolving the test-runner plugin.
 // It has to live in settings even though it only applies to the integration project.
 pluginManagement {
     repositories {
@@ -27,7 +27,7 @@ include 'azureDatabaseUtils'
 
 // -- Global Variables --
 // For defining shared state and common dependencies
-gradle.ext.wsmVersion = "ARH-SNAPSHOT"
+gradle.ext.wsmVersion = "0.254.1138-SNAPSHOT"
 
 // Single place to define the versions of dependencies shared between components.
 gradle.ext.librarySwaggerAnnotations = "io.swagger.core.v3:swagger-annotations:2.2.22"

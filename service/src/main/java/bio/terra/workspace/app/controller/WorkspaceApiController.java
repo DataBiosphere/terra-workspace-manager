@@ -69,9 +69,7 @@ import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.policy.model.PolicyExplainResult;
 import bio.terra.workspace.service.resource.WsmResourceService;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
-import bio.terra.workspace.service.resource.model.StewardshipType;
 import bio.terra.workspace.service.resource.model.WsmResource;
-import bio.terra.workspace.service.resource.model.WsmResourceFamily;
 import bio.terra.workspace.service.spendprofile.SpendProfileService;
 import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.spendprofile.model.SpendProfileId;
@@ -98,7 +96,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -270,17 +267,12 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
 
     Map<UUID, List<WsmResource>> workspaceResources = new HashMap<>();
     workspaceDescriptions.forEach(
-            workspace -> {
-              List<WsmResource> wsmResources =
-                      wsmResourceService.enumerateResources(
-                              workspace.workspace().workspaceId(),
-                              null,
-                              null,
-                              0,
-                              10000);
-              workspaceResources.put(workspace.workspace().workspaceId(), wsmResources);
-            }
-    );
+        workspace -> {
+          List<WsmResource> wsmResources =
+              wsmResourceService.enumerateResources(
+                  workspace.workspace().workspaceId(), null, null, 0, 10000);
+          workspaceResources.put(workspace.workspace().workspaceId(), wsmResources);
+        });
 
     var response =
         new ApiWorkspaceDescriptionList()
@@ -289,17 +281,20 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
                     .map(workspaceApiUtils::buildApiWorkspaceDescription)
                     .toList());
 
-    response.getWorkspaces().forEach(
+    response
+        .getWorkspaces()
+        .forEach(
             workspaceDesc -> {
               if (workspaceResources.containsKey(workspaceDesc.getId())) {
                 List<ApiResourceDescription> apiResourceDescriptionList =
-                        workspaceResources.get(workspaceDesc.getId()).stream().map(this::makeApiResourceDescription).toList();
+                    workspaceResources.get(workspaceDesc.getId()).stream()
+                        .map(this::makeApiResourceDescription)
+                        .toList();
                 var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
 
                 workspaceDesc.setResources(apiResourceList);
               }
-            }
-    );
+            });
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
@@ -322,15 +317,10 @@ public class WorkspaceApiController extends ControllerBase implements WorkspaceA
         workspaceApiUtils.buildApiWorkspaceDescription(workspaceDescription);
 
     List<WsmResource> wsmResources =
-            wsmResourceService.enumerateResources(
-                    uuid,
-                    null,
-                    null,
-                    0,
-                    10000);
+        wsmResourceService.enumerateResources(uuid, null, null, 0, 10000);
 
     List<ApiResourceDescription> apiResourceDescriptionList =
-            wsmResources.stream().map(this::makeApiResourceDescription).collect(Collectors.toList());
+        wsmResources.stream().map(this::makeApiResourceDescription).collect(Collectors.toList());
 
     var apiResourceList = new ApiResourceList().resources(apiResourceDescriptionList);
     desc.resources(apiResourceList);

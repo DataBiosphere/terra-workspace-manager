@@ -44,14 +44,14 @@ public class PolicyServiceConfiguration {
     return clientCredentialFilePath;
   }
 
-  public String getAccessToken() throws IOException {
+  public String getAccessToken() {
     try {
       return AuthUtils.getAccessToken(
           features.isAzureControlPlaneEnabled(),
           POLICY_SERVICE_ACCOUNT_SCOPES,
           clientCredentialFilePath);
     } catch (IOException e) {
-      throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
+      throw new InternalServerErrorException("Internal server error retrieving policy service client credentials", e);
     }
   }
 }

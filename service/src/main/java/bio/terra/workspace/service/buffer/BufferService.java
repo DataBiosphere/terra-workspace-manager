@@ -36,6 +36,10 @@ public class BufferService {
         new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
   }
 
+  public void verifyConfiguration() {
+    this.bufferServiceConfiguration.getAccessToken();
+  }
+
   private ApiClient getApiClient(String accessToken) {
     ApiClient client =
         new ApiClient()

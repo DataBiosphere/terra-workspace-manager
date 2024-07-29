@@ -8,11 +8,14 @@ import bio.terra.workspace.common.utils.FlightUtils;
 import bio.terra.workspace.service.crl.CrlService;
 import bio.terra.workspace.service.spendprofile.model.SpendProfile;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** A {@link Step} to set the billing account on the Google project. */
 public class SetProjectBillingStep implements Step {
   private final CrlService crlService;
   private final SpendProfile spendProfile;
+  private final Logger logger = LoggerFactory.getLogger(SetProjectBillingStep.class);
 
   public SetProjectBillingStep(CrlService crlService, SpendProfile spendProfile) {
     this.crlService = crlService;
@@ -25,6 +28,10 @@ public class SetProjectBillingStep implements Step {
     var projectId =
         FlightUtils.getRequired(workingMap, WorkspaceFlightMapKeys.GCP_PROJECT_ID, String.class);
 
+    logger.info(
+        "Setting project billing on project {} to billing account {}",
+        projectId,
+        spendProfile.billingAccountId());
     crlService.updateGcpProjectBilling(projectId, spendProfile.billingAccountId());
     return StepResult.getStepResultSuccess();
   }

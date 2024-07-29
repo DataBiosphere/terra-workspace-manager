@@ -66,7 +66,7 @@ public class BufferServiceConfiguration {
     return clientCredentialFilePath;
   }
 
-  public String getAccessToken() throws IOException {
+  public String getAccessToken() {
     try {
       if (features.isAzureControlPlaneEnabled()) {
         throw new InternalServerErrorException(
@@ -79,7 +79,8 @@ public class BufferServiceConfiguration {
         return token.getTokenValue();
       }
     } catch (IOException e) {
-      throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
+      throw new InternalServerErrorException(
+          "Internal server error retrieving buffer service client credentials", e);
     }
   }
 }
