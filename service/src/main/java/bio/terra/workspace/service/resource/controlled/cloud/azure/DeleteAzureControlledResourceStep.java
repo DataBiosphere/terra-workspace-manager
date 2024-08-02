@@ -1,20 +1,34 @@
 package bio.terra.workspace.service.resource.controlled.cloud.azure;
 
+import bio.terra.landingzone.db.exception.LandingZoneNotFoundException;
+import bio.terra.lz.futureservice.client.ApiException;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import bio.terra.workspace.amalgam.landingzone.azure.LandingZoneServiceApiException;
 import bio.terra.workspace.common.exception.AzureManagementExceptionUtils;
 import bio.terra.workspace.service.resource.controlled.flight.delete.DeleteControlledResourceStep;
+import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import com.azure.core.management.exception.ManagementException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 /**
  * Common base class for deleting Azure resources. Wraps the Azure resource deletion logic with
  * handling for common exceptions.
  */
-public abstract class DeleteAzureControlledResourceStep implements DeleteControlledResourceStep {
+public abstract class DeleteAzureControlledResourceStep<R extends ControlledResource>
+    implements DeleteControlledResourceStep {
+  private final Logger logger = LoggerFactory.getLogger(getClass());
+  protected final R resource;
+
+  protected DeleteAzureControlledResourceStep(R resource) {
+    this.resource = resource;
+  }
 
   @Override
   public StepResult doStep(FlightContext context) throws InterruptedException {
@@ -69,6 +83,36 @@ public abstract class DeleteAzureControlledResourceStep implements DeleteControl
 
       // retry any other non-4xx errors
       return new StepResult(AzureManagementExceptionUtils.maybeRetryStatus(ex), ex);
+    }
+
+    // When retrieving shared resources from the landing zone,
+    // LZS can encounter the same management exceptions as above
+    // To detect this, we need to examine the message for those error codes
+    if (e instanceof LandingZoneServiceApiException && e.getCause() instanceof ApiException apiEx) {
+      var code =
+          Optional.ofNullable(apiEx.getMessage())
+              .flatMap(
+                  msg ->
+                      missingResourceManagementCodes.stream()
+                          .filter(c -> msg.contains(c))
+                          .findFirst());
+      if (code.isPresent()) {
+        logger.debug(
+            "Unable to delete resource {} from workspace {}, because LZS encountered management exception {}: Returning success for delete step",
+            resource.getResourceType().name(),
+            resource.getWorkspaceId(),
+            code.get());
+        return StepResult.getStepResultSuccess();
+      }
+    }
+
+    if (e instanceof LandingZoneNotFoundException) {
+      // If the landing zone is not present, it's probably because it was removed directly
+      logger.debug(
+          "Unable to delete resource {} from workspace {}, because no landing zone was found in LZS: Returning success for delete step",
+          resource.getResourceType().name(),
+          resource.getWorkspaceId());
+      return StepResult.getStepResultSuccess();
     }
     return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
   }

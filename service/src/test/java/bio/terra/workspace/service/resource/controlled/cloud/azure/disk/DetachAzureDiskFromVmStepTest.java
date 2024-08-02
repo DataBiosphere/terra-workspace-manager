@@ -32,6 +32,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -123,6 +125,23 @@ class DetachAzureDiskFromVmStepTest {
 
     assertThat(stepResult.getStepStatus(), equalTo(StepStatus.STEP_RESULT_FAILURE_RETRY));
     verify(virtualMachineUpdateMock, never()).withoutDataDisk(diskLun);
+    verify(virtualMachineUpdateMock, never()).apply();
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {"SubscriptionNotFound", "InvalidAuthenticationTokenTenant", "AuthorizationFailed"})
+  void doStep_missingMRGManagementExceptionsReturnsSuccess(String exceptionCode)
+      throws InterruptedException {
+    setupCommonMocks();
+    when(computeManagerMock.disks()).thenReturn(disksMock);
+    ManagementException missingMRGExceptionMock = setupManagementExceptionMock(exceptionCode);
+    when(disksMock.getById(any())).thenThrow(missingMRGExceptionMock);
+
+    StepResult stepResult = detachAzureDiskFromVmStep.doStep(flightContextMock);
+
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+    verify(disksMock).getById(any());
     verify(virtualMachineUpdateMock, never()).apply();
   }
 

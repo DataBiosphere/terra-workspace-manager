@@ -19,23 +19,23 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteAzureBatchPoolStep extends DeleteAzureControlledResourceStep {
+public class DeleteAzureBatchPoolStep
+    extends DeleteAzureControlledResourceStep<ControlledAzureBatchPoolResource> {
   private static final Logger logger = LoggerFactory.getLogger(DeleteAzureBatchPoolStep.class);
 
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
   private final LandingZoneBatchAccountFinder landingZoneBatchAccountFinder;
-  private final ControlledAzureBatchPoolResource resource;
 
   public DeleteAzureBatchPoolStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
       LandingZoneBatchAccountFinder landingZoneBatchAccountFinder,
       ControlledAzureBatchPoolResource resource) {
+    super(resource);
     this.azureConfig = azureConfig;
     this.crlService = crlService;
     this.landingZoneBatchAccountFinder = landingZoneBatchAccountFinder;
-    this.resource = resource;
   }
 
   @Override

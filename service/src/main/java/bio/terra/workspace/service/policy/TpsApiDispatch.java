@@ -113,7 +113,16 @@ public class TpsApiDispatch {
       return pao.get();
     }
     // Workspace doesn't have a PAO, so create an empty one for it.
-    createPao(objectId, null, component, objectType);
+    try {
+      createPao(objectId, null, component, objectType);
+    } catch (PolicyServiceDuplicateException e) {
+      // If the PAO wasn't returned above, but creating a new one threw a duplicate exception, the
+      // original PAO has been deleted and we cannot recreate a new one. PAOs are only deleted when
+      // the associated object (workspace, spend-profile) has been deleted. We return null here to
+      // handle the race condition where WSM is returning a workspace that is in the process
+      // of being deleted.
+      return null;
+    }
     return getPao(objectId);
   }
 

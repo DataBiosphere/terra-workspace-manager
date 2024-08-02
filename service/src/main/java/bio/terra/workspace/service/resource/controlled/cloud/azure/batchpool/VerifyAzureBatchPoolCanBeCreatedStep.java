@@ -8,7 +8,7 @@ import bio.terra.stairway.exception.RetryException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.generated.model.ApiAzureLandingZoneDeployedResource;
 import bio.terra.workspace.service.crl.CrlService;
-import bio.terra.workspace.service.iam.AuthenticatedUserRequest;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.exception.ResourceNotFoundException;
 import bio.terra.workspace.service.workspace.flight.WorkspaceFlightMapKeys;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
@@ -24,19 +24,19 @@ public class VerifyAzureBatchPoolCanBeCreatedStep implements Step {
 
   private final AzureConfiguration azureConfig;
   private final CrlService crlService;
-  private final AuthenticatedUserRequest userRequest;
+  private final SamService samService;
   private final LandingZoneBatchAccountFinder landingZoneBatchAccountFinder;
   private final ControlledAzureBatchPoolResource resource;
 
   public VerifyAzureBatchPoolCanBeCreatedStep(
       AzureConfiguration azureConfig,
       CrlService crlService,
-      AuthenticatedUserRequest userRequest,
+      SamService samService,
       LandingZoneBatchAccountFinder landingZoneBatchAccountFinder,
       ControlledAzureBatchPoolResource resource) {
     this.azureConfig = azureConfig;
     this.crlService = crlService;
-    this.userRequest = userRequest;
+    this.samService = samService;
     this.landingZoneBatchAccountFinder = landingZoneBatchAccountFinder;
     this.resource = resource;
   }
@@ -62,7 +62,8 @@ public class VerifyAzureBatchPoolCanBeCreatedStep implements Step {
   private StepResult validateBatchAccountExists(
       AzureCloudContext azureCloudContext, FlightContext context, BatchManager batchManager) {
     Optional<ApiAzureLandingZoneDeployedResource> existingSharedBatchAccount =
-        landingZoneBatchAccountFinder.find(userRequest.getRequiredToken(), resource);
+        landingZoneBatchAccountFinder.find(samService.getWsmServiceAccountToken(), resource);
+
     if (existingSharedBatchAccount.isPresent()) {
       BatchAccount batchAccount =
           batchManager.batchAccounts().getById(existingSharedBatchAccount.get().getResourceId());

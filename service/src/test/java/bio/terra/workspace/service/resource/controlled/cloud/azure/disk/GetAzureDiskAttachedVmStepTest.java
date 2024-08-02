@@ -25,6 +25,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -82,6 +84,20 @@ class GetAzureDiskAttachedVmStepTest {
     setupCommonMocks();
     ManagementException resourceNotFoundExceptionMock =
         setupManagementExceptionMock("ResourceNotFound");
+    when(disksMock.getById(anyString())).thenThrow(resourceNotFoundExceptionMock);
+
+    StepResult stepResult = getAzureDiskAttachedVmStep.doStep(flightContextMock);
+    assertThat(stepResult, equalTo(StepResult.getStepResultSuccess()));
+    verify(flightWorkingMapMock, never()).put(any(), any());
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {"SubscriptionNotFound", "InvalidAuthenticationTokenTenant", "AuthorizationFailed"})
+  void doStep_missingMRGManagementExceptionsReturnsSuccess(String exceptionCode)
+      throws InterruptedException {
+    setupCommonMocks();
+    ManagementException resourceNotFoundExceptionMock = setupManagementExceptionMock(exceptionCode);
     when(disksMock.getById(anyString())).thenThrow(resourceNotFoundExceptionMock);
 
     StepResult stepResult = getAzureDiskAttachedVmStep.doStep(flightContextMock);

@@ -25,6 +25,8 @@ import bio.terra.workspace.service.iam.model.SamConstants.SamResource;
 import bio.terra.workspace.service.iam.model.WsmIamRole;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResource;
 import bio.terra.workspace.service.resource.controlled.model.ControlledResourceCategory;
+import bio.terra.workspace.service.workspace.WsmApplicationService;
+import bio.terra.workspace.service.workspace.model.WsmWorkspaceApplication;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -80,6 +82,7 @@ public class SamService {
   private final OkHttpClient commonHttpClient;
   private final FeatureConfiguration features;
   private final AzureConfiguration azureConfiguration;
+  private final WsmApplicationService applicationService;
   private boolean wsmServiceAccountInitialized;
 
   @Autowired
@@ -88,11 +91,13 @@ public class SamService {
       FeatureConfiguration features,
       AzureConfiguration azureConfiguration,
       SamUserFactory samUserFactory,
-      OpenTelemetry openTelemetry) {
+      OpenTelemetry openTelemetry,
+      WsmApplicationService applicationService) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.features = features;
     this.azureConfiguration = azureConfiguration;
+    this.applicationService = applicationService;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
         new ApiClient()
@@ -860,7 +865,7 @@ public class SamService {
       var policy =
           resourcesApi.getPolicyV2(
               SamResource.WORKSPACE, workspaceUuid.toString(), WsmIamRole.APPLICATION.toSamRole());
-      return policy.getMemberEmails().stream().anyMatch(e -> e.equalsIgnoreCase(email));
+      return policy.getMemberEmails().stream().anyMatch(email::equalsIgnoreCase);
     } catch (ApiException apiException) {
       throw SamExceptionFactory.create("Sam error querying role in Sam", apiException);
     }
@@ -1025,13 +1030,25 @@ public class SamService {
             .parent(workspaceParentFqId)
             .authDomain(List.of());
 
+    // include the stewarding application when building our policy
+    // so it always gets the appropriate permissions (the user request is not always
+    // from the application, i.e., when a resource is cloned)
+    WsmWorkspaceApplication app = null;
+    if (resource.getApplicationId() != null
+        && (resource.getCategory().equals(ControlledResourceCategory.APPLICATION_PRIVATE)
+            || resource.getCategory().equals(ControlledResourceCategory.APPLICATION_SHARED))) {
+      app =
+          applicationService.getWorkspaceApplication(
+              resource.getWorkspaceId(), resource.getApplicationId());
+    }
+
     var builder =
         new ControlledResourceSamPolicyBuilder(
-            this,
             privateIamRole,
             assignedUserEmail,
             userRequest,
             ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()),
+            app,
             wsmSa);
     builder.addPolicies(resourceRequest);
 

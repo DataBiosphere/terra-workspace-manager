@@ -30,6 +30,7 @@ env:
     tps: ${TPS_ADDRESS:https://tps.dsde-dev.broadinstitute.org/}
     lzs: ${LZS_ADDRESS:https://landingzone.dsde-dev.broadinstitute.org/}
   azure:
+    environment: ${AZURE_ENVIRONMENT:AZURE}
     customer:
       usage-attribute: ${AZURE_CUSTOMER_USAGE_ATTRIBUTE:}
 
@@ -173,6 +174,7 @@ workspace:
     protected-data-landing-zone-defs: ["ProtectedDataResourcesFactory"]
     azure-database-util-image: "us.gcr.io/broad-dsp-gcr-public/azure-database-utils:${version.gitHash}"
     azure-database-util-logs-tail-lines: 1000
+    azure-environment: ${env.azure.environment}
 
 terra.common:
   kubernetes:

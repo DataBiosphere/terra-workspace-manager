@@ -23,6 +23,15 @@ public class AzureConfiguration {
   private Integer azureDatabaseUtilLogsTailLines;
   private String authTokenScope;
   private String wsmServiceManagedIdentity;
+  private String azureEnvironment;
+
+  public String getAzureEnvironment() {
+    return azureEnvironment;
+  }
+
+  public void setAzureEnvironment(String azureEnvironment) {
+    this.azureEnvironment = azureEnvironment;
+  }
 
   public String getManagedAppClientId() {
     return managedAppClientId;

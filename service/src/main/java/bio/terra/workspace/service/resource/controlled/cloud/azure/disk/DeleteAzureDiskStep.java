@@ -27,6 +27,7 @@ public class DeleteAzureDiskStep extends DeleteAzureControlledResourceStep {
 
   public DeleteAzureDiskStep(
       AzureConfiguration azureConfig, CrlService crlService, ControlledAzureDiskResource resource) {
+    super(resource);
     this.crlService = crlService;
     this.azureConfig = azureConfig;
     this.resource = resource;

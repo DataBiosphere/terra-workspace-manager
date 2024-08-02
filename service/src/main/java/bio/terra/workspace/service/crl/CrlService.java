@@ -70,6 +70,8 @@ public class CrlService {
   /** The client name required by CRL. */
   private static final String CLIENT_NAME = "workspace";
 
+  private final AzureConfiguration azureConfiguration;
+
   @Value("${azure.customer.usage-attribute:}")
   private String azureCustomerUsageAttribute;
 
@@ -84,7 +86,7 @@ public class CrlService {
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(CrlConfiguration crlConfig) {
+  public CrlService(CrlConfiguration crlConfig, AzureConfiguration azureConfiguration) {
     this.crlConfig = crlConfig;
     clientConfig = buildClientConfig();
 
@@ -112,6 +114,7 @@ public class CrlService {
       crlIamCow = null;
       crlServiceUsageCow = null;
     }
+    this.azureConfiguration = azureConfiguration;
   }
 
   /**
@@ -573,7 +576,19 @@ public class CrlService {
     return new AzureProfile(
         azureCloudContext.getAzureTenantId(),
         azureCloudContext.getAzureSubscriptionId(),
-        AzureEnvironment.AZURE);
+        getAzureEnvironmentFromName(azureConfiguration.getAzureEnvironment()));
+  }
+
+  public AzureEnvironment getAzureEnvironmentFromName(String envName) {
+    try {
+      return switch (envName.toUpperCase()) {
+        case "AZURE_US_GOVERNMENT" -> AzureEnvironment.AZURE_US_GOVERNMENT;
+        case "AZURE_CHINA" -> AzureEnvironment.AZURE_CHINA;
+        default -> AzureEnvironment.AZURE;
+      };
+    } catch (IllegalArgumentException e) {
+      return AzureEnvironment.AZURE;
+    }
   }
 
   @VisibleForTesting
