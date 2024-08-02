@@ -1046,7 +1046,6 @@ public class SamService {
         new ControlledResourceSamPolicyBuilder(
             privateIamRole,
             assignedUserEmail,
-            userRequest,
             ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()),
             app,
             wsmSa);
