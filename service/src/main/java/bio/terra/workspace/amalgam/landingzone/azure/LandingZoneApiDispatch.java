@@ -66,7 +66,7 @@ public class LandingZoneApiDispatch {
     // Prevent deploying more than 1 landing zone per billing profile
     verifyLandingZoneDoesNotExistForBillingProfile(bearerToken, body);
 
-    return Rethrow.onInterrupted(
+    var result = Rethrow.onInterrupted(
         () ->
             amalgamated.startLandingZoneCreationJob(
                 bearerToken,
@@ -78,6 +78,13 @@ public class LandingZoneApiDispatch {
                 body.getBillingProfileId(),
                 asyncResultEndpoint),
         "startLandingZoneCreationJob");
+
+    logger.info(result.getJobReport().getId());
+    if (result.getErrorReport() != null) {
+      logger.info(result.getErrorReport().getStatusCode() + " " + result.getErrorReport().getMessage());
+    }
+
+    return result;
   }
 
   private void verifyLandingZoneDoesNotExistForBillingProfile(
