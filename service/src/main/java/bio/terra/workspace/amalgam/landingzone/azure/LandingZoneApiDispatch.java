@@ -63,28 +63,35 @@ public class LandingZoneApiDispatch {
         body.getDefinition(),
         body.getVersion());
 
-    // Prevent deploying more than 1 landing zone per billing profile
-    verifyLandingZoneDoesNotExistForBillingProfile(bearerToken, body);
+    try {
+      // Prevent deploying more than 1 landing zone per billing profile
+      verifyLandingZoneDoesNotExistForBillingProfile(bearerToken, body);
 
-    var result = Rethrow.onInterrupted(
-        () ->
-            amalgamated.startLandingZoneCreationJob(
-                bearerToken,
-                body.getJobControl().getId(),
-                body.getLandingZoneId(),
-                body.getDefinition(),
-                body.getVersion(),
-                body.getParameters(),
-                body.getBillingProfileId(),
-                asyncResultEndpoint),
-        "startLandingZoneCreationJob");
+      var result = Rethrow.onInterrupted(
+          () ->
+              amalgamated.startLandingZoneCreationJob(
+                  bearerToken,
+                  body.getJobControl().getId(),
+                  body.getLandingZoneId(),
+                  body.getDefinition(),
+                  body.getVersion(),
+                  body.getParameters(),
+                  body.getBillingProfileId(),
+                  asyncResultEndpoint),
+          "startLandingZoneCreationJob");
 
-    logger.info(result.getJobReport().getId());
-    if (result.getErrorReport() != null) {
-      logger.info(result.getErrorReport().getStatusCode() + " " + result.getErrorReport().getMessage());
+      logger.info("JOB ID" + result.getJobReport().getId());
+      if (result.getErrorReport() != null) {
+        logger.info("ERROR: " + result.getErrorReport().getStatusCode() + " " + result.getErrorReport().getMessage());
+      } else {
+        logger.debug("NO ERROR");
+      }
+      return result;
     }
-
-    return result;
+    catch (Exception e) {
+      logger.warn(e.getMessage());
+      throw e;
+    }
   }
 
   private void verifyLandingZoneDoesNotExistForBillingProfile(
