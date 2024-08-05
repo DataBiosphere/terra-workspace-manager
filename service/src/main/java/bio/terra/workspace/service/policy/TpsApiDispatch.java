@@ -2,6 +2,7 @@ package bio.terra.workspace.service.policy;
 
 import bio.terra.common.logging.RequestIdFilter;
 import bio.terra.common.tracing.JakartaTracingFilter;
+import bio.terra.policy.api.PublicApi;
 import bio.terra.policy.api.TpsApi;
 import bio.terra.policy.client.ApiClient;
 import bio.terra.policy.client.ApiException;
@@ -44,9 +45,10 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+/** A service for integrating with the Terra Policy Service (TPS). */
+@Service
 public class TpsApiDispatch {
   private static final Logger logger = LoggerFactory.getLogger(TpsApiDispatch.class);
   private final FeatureConfiguration features;
@@ -92,9 +94,34 @@ public class TpsApiDispatch {
     }
   }
 
-  /** Verify that we can read the needed TPS client credentials and create a TPS API client. */
+  /**
+   * Verify that we can read the needed TPS client credentials and create a TPS API client.
+   *
+   * @throws bio.terra.common.exception.InternalServerErrorException exception if the application is
+   *     misconfigured
+   */
   public void verifyConfiguration() {
     this.policyServiceConfiguration.getAccessToken();
+  }
+
+  /**
+   * Check the status of TPS.
+   *
+   * @return true if the service is up and running
+   */
+  public boolean status() {
+    try {
+      var publicApi =
+          new PublicApi(
+              getApiClient(policyServiceConfiguration.getAccessToken())
+                  .setBasePath(policyServiceConfiguration.getBasePath()));
+
+      publicApi.getStatus();
+      return true;
+    } catch (ApiException e) {
+      logger.error("Error querying TPS API status", e);
+      return false;
+    }
   }
 
   /**

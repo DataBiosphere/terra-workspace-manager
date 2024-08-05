@@ -1,10 +1,12 @@
 package bio.terra.workspace.service.buffer;
 
 import bio.terra.buffer.api.BufferApi;
+import bio.terra.buffer.api.UnauthenticatedApi;
 import bio.terra.buffer.client.ApiClient;
 import bio.terra.buffer.client.ApiException;
 import bio.terra.buffer.model.HandoutRequestBody;
 import bio.terra.buffer.model.ResourceInfo;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.common.logging.RequestIdFilter;
 import bio.terra.common.tracing.JakartaTracingFilter;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
@@ -12,16 +14,15 @@ import bio.terra.workspace.service.buffer.exception.BufferServiceAPIException;
 import bio.terra.workspace.service.buffer.exception.BufferServiceAuthorizationException;
 import io.opentelemetry.api.OpenTelemetry;
 import jakarta.ws.rs.client.Client;
-import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /** A service for integrating with the Resource Buffer Service. */
-@Component
+@Service
 public class BufferService {
   private final Logger logger = LoggerFactory.getLogger(BufferService.class);
 
@@ -36,8 +37,33 @@ public class BufferService {
         new ApiClient().getHttpClient().register(new JakartaTracingFilter(openTelemetry));
   }
 
+  /**
+   * Verify that the Buffer Service configuration is valid.
+   *
+   * @throws InternalServerErrorException if the application is misconfigured
+   */
   public void verifyConfiguration() {
     this.bufferServiceConfiguration.getAccessToken();
+  }
+
+  /**
+   * Check the status of the Buffer Service.
+   *
+   * @return true if the service is up and running
+   */
+  public boolean status() {
+    try {
+      var unauthenticatedApi =
+          new UnauthenticatedApi(
+              new ApiClient()
+                  .setHttpClient(commonHttpClient)
+                  .setBasePath(bufferServiceConfiguration.getInstanceUrl()));
+      var result = unauthenticatedApi.serviceStatus();
+      return result.isOk();
+    } catch (ApiException e) {
+      logger.error("Error querying Buffer API status", e);
+      return false;
+    }
   }
 
   private ApiClient getApiClient(String accessToken) {
@@ -50,7 +76,7 @@ public class BufferService {
     return client;
   }
 
-  private BufferApi bufferApi(String instanceUrl) throws IOException {
+  private BufferApi bufferApi(String instanceUrl) {
     return new BufferApi(
         getApiClient(bufferServiceConfiguration.getAccessToken()).setBasePath(instanceUrl));
   }
@@ -72,12 +98,6 @@ public class BufferService {
           bufferServiceConfiguration.getPoolId(),
           bufferServiceConfiguration.getInstanceUrl());
       return info;
-    } catch (IOException e) {
-      throw new BufferServiceAuthorizationException(
-          String.format(
-              "Error reading or parsing credentials file at %s",
-              bufferServiceConfiguration.getClientCredentialFilePath()),
-          e.getCause());
     } catch (ApiException e) {
       if (e.getCode() == HttpStatus.UNAUTHORIZED.value()) {
         throw new BufferServiceAuthorizationException(
