@@ -32,7 +32,6 @@ import bio.terra.workspace.service.workspace.model.CloudPlatform;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.ws.rs.client.Client;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -91,6 +90,11 @@ public class TpsApiDispatch {
     } catch (ApiException e) {
       throw convertApiException(e);
     }
+  }
+
+  /** Verify that we can read the needed TPS client credentials and create a TPS API client. */
+  public void verifyConfiguration() {
+    this.policyServiceConfiguration.getAccessToken();
   }
 
   /**
@@ -334,17 +338,9 @@ public class TpsApiDispatch {
   }
 
   private TpsApi policyApi() {
-    try {
-      return new TpsApi(
-          getApiClient(policyServiceConfiguration.getAccessToken())
-              .setBasePath(policyServiceConfiguration.getBasePath()));
-    } catch (IOException e) {
-      throw new PolicyServiceAuthorizationException(
-          String.format(
-              "Error reading or parsing credentials file at %s",
-              policyServiceConfiguration.getClientCredentialFilePath()),
-          e.getCause());
-    }
+    return new TpsApi(
+        getApiClient(policyServiceConfiguration.getAccessToken())
+            .setBasePath(policyServiceConfiguration.getBasePath()));
   }
 
   private RuntimeException convertApiException(ApiException ex) {
