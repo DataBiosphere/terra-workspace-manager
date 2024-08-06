@@ -6,9 +6,7 @@ import bio.terra.landingzone.library.LandingZoneMain;
 import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
-import bio.terra.workspace.common.utils.Rethrow;
 import bio.terra.workspace.service.buffer.BufferService;
-import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.StairwayInitializerService;
 import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
@@ -29,7 +27,6 @@ public final class StartupInitializer {
     WsmApplicationService appService = applicationContext.getBean(WsmApplicationService.class);
     FeatureConfiguration featureConfiguration =
         applicationContext.getBean(FeatureConfiguration.class);
-    SamService samService = applicationContext.getBean(SamService.class);
 
     // Log the state of the feature flags
     featureConfiguration.logFeatures();
@@ -56,9 +53,6 @@ public final class StartupInitializer {
       var bufferService = applicationContext.getBean(BufferService.class);
       bufferService.verifyConfiguration();
     }
-
-    Rethrow.onInterrupted(
-        samService::initializeWsmServiceAccount, "Initialize WSM service account with Sam");
 
     // Process the WSM application configuration
     appService.configure();
