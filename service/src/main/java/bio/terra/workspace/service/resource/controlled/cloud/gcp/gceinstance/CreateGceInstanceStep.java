@@ -196,7 +196,7 @@ public class CreateGceInstanceStep implements Step {
                 .setInitializeParams(
                     new AttachedDiskInitializeParams()
                         .setSourceImage(creationParameters.getVmImage())
-                        .setDiskSizeGb(100L)),
+                        .setDiskSizeGb(creationParameters.getBootDiskSizeGb())),
             new AttachedDisk()
                 .setBoot(false)
                 .setDeviceName(DATA_DISK_NAME)
