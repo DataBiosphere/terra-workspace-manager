@@ -283,7 +283,7 @@ public class SamService {
    * Register WSM's service account as a user in Sam if it isn't already. This should only need to
    * register with Sam once per environment, so it is implemented lazily.
    */
-  private void initializeWsmServiceAccount() throws InterruptedException {
+  public void initializeWsmServiceAccount() throws InterruptedException {
     if (!wsmServiceAccountInitialized) {
       final String wsmAccessToken;
       try {

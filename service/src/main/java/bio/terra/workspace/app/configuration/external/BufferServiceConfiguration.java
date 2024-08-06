@@ -66,7 +66,7 @@ public class BufferServiceConfiguration {
     return clientCredentialFilePath;
   }
 
-  public String getAccessToken() throws IOException {
+  public String getAccessToken() {
     try {
       if (features.isAzureControlPlaneEnabled()) {
         throw new InternalServerErrorException(

@@ -10,10 +10,14 @@ import bio.terra.common.db.DataSourceManager;
 import bio.terra.common.migrate.LiquibaseMigrator;
 import bio.terra.landingzone.job.LandingZoneJobService;
 import bio.terra.landingzone.library.configuration.LandingZoneDatabaseConfiguration;
+import bio.terra.workspace.app.configuration.external.BufferServiceConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.WorkspaceDatabaseConfiguration;
 import bio.terra.workspace.common.annotations.Unit;
+import bio.terra.workspace.service.buffer.BufferService;
+import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.job.StairwayInitializerService;
+import bio.terra.workspace.service.policy.TpsApiDispatch;
 import bio.terra.workspace.service.workspace.WsmApplicationService;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +42,10 @@ class StartupInitializerTest {
   @Mock private LandingZoneJobService landingZoneJobService;
   @Mock private DataSource wsmDataSource;
   @Mock private DataSource lzsDataSource;
+  @Mock private SamService samService;
+  @Mock private TpsApiDispatch tpsApiDispatch;
+  @Mock private BufferService bufferService;
+  @Mock private BufferServiceConfiguration bufferServiceConfiguration;
 
   private enum DatabaseInitializationInstruction {
     INITIALIZE,
@@ -47,7 +55,7 @@ class StartupInitializerTest {
 
   @ParameterizedTest
   @EnumSource(value = DatabaseInitializationInstruction.class)
-  void initialize(DatabaseInitializationInstruction dbInstruction) {
+  void initialize(DatabaseInitializationInstruction dbInstruction) throws InterruptedException {
     when(context.getBean(DataSourceManager.class)).thenReturn(dataSourceManager);
     when(context.getBean(WorkspaceDatabaseConfiguration.class))
         .thenReturn(workspaceDatabaseConfiguration);
@@ -59,9 +67,16 @@ class StartupInitializerTest {
         .thenReturn(landingZoneDatabaseConfiguration);
     when(context.getBean("landingZoneJobService", LandingZoneJobService.class))
         .thenReturn(landingZoneJobService);
+    when(context.getBean(SamService.class)).thenReturn(samService);
+    when(context.getBean(BufferServiceConfiguration.class)).thenReturn(bufferServiceConfiguration);
+    when(context.getBean(BufferService.class)).thenReturn(bufferService);
+    when(context.getBean(TpsApiDispatch.class)).thenReturn(tpsApiDispatch);
 
+    when(featureConfiguration.isTpsEnabled()).thenReturn(true);
+    when(bufferServiceConfiguration.getEnabled()).thenReturn(true);
     when(dataSourceManager.initializeDataSource(workspaceDatabaseConfiguration))
         .thenReturn(wsmDataSource);
+
     switch (dbInstruction) {
       case INITIALIZE -> {
         when(workspaceDatabaseConfiguration.isInitializeOnStart()).thenReturn(true);
@@ -95,5 +110,6 @@ class StartupInitializerTest {
     verify(stairwayInitializerService).initialize();
     verify(wsmApplicationService).configure();
     verify(landingZoneJobService).initialize();
+    verify(samService).initializeWsmServiceAccount();
   }
 }
