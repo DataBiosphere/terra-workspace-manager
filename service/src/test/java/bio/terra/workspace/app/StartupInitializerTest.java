@@ -67,7 +67,6 @@ class StartupInitializerTest {
         .thenReturn(landingZoneDatabaseConfiguration);
     when(context.getBean("landingZoneJobService", LandingZoneJobService.class))
         .thenReturn(landingZoneJobService);
-    when(context.getBean(SamService.class)).thenReturn(samService);
     when(context.getBean(BufferServiceConfiguration.class)).thenReturn(bufferServiceConfiguration);
     when(context.getBean(BufferService.class)).thenReturn(bufferService);
     when(context.getBean(TpsApiDispatch.class)).thenReturn(tpsApiDispatch);
@@ -110,6 +109,5 @@ class StartupInitializerTest {
     verify(stairwayInitializerService).initialize();
     verify(wsmApplicationService).configure();
     verify(landingZoneJobService).initialize();
-    verify(samService).initializeWsmServiceAccount();
   }
 }
