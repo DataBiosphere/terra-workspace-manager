@@ -4,6 +4,7 @@ import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.workspace.generated.model.ApiErrorReport;
 import jakarta.validation.ConstraintViolationException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.retry.backoff.BackOffInterruptedException;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -44,7 +47,6 @@ public class GlobalExceptionHandler {
 
   // -- validation exceptions - we don't control the exception raised
   @ExceptionHandler({
-    MethodArgumentNotValidException.class,
     MethodArgumentTypeMismatchException.class,
     HttpMessageNotReadableException.class,
     HttpRequestMethodNotSupportedException.class,
@@ -64,6 +66,31 @@ public class GlobalExceptionHandler {
         new ApiErrorReport()
             .message(validationErrorMessage)
             .statusCode(HttpStatus.BAD_REQUEST.value());
+    return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
+  }
+
+  /** Give back the fields missing from the request that caused the exception. */
+  @ExceptionHandler({MethodArgumentNotValidException.class})
+  public ResponseEntity<ApiErrorReport> methodArgNotValidHandler(
+      MethodArgumentNotValidException ex) {
+    final List<String> errors = new ArrayList<>();
+    for (final FieldError error : ex.getBindingResult().getFieldErrors()) {
+      errors.add(error.getField() + ": " + error.getDefaultMessage());
+    }
+    for (final ObjectError error : ex.getBindingResult().getGlobalErrors()) {
+      errors.add(error.getObjectName() + ": " + error.getDefaultMessage());
+    }
+
+    String validationErrorMessage =
+        "Request could not be parsed or was invalid: "
+            + ex.getClass().getSimpleName()
+            + ". Ensure that all types are correct and that enums have valid values.";
+    ApiErrorReport errorReport =
+        new ApiErrorReport()
+            .message(validationErrorMessage)
+            .statusCode(HttpStatus.BAD_REQUEST.value())
+            .causes(errors);
+
     return new ResponseEntity<>(errorReport, HttpStatus.BAD_REQUEST);
   }
 
