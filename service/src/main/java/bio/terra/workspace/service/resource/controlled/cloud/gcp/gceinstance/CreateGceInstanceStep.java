@@ -270,7 +270,7 @@ public class CreateGceInstanceStep implements Step {
                 .setAccessConfigs(
                     List.of(
                         new AccessConfig().setType(EXTERNAL_IP_TYPE).setName(EXTERNAL_IP_NAME)))));
-    instance.setTags(new Tags().setItems(List.of("ssh-through-iap-allowed", "workbench", "leonardo")));
+    instance.setTags(new Tags().setItems(List.of("ssh-through-iap-allowed", "workbench")));
   }
 
   @Override
