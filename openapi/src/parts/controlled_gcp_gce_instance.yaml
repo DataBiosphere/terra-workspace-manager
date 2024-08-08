@@ -179,7 +179,7 @@ components:
         GCE instance specific properties to be set on creation. These are a subset of the
         values accepted by the GCP Compute API. See https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert
       type: object
-      required: [ machineType ]
+      required: [ machineType, vmImage ]
       properties:
         instanceId:
           description: >-
