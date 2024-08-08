@@ -196,7 +196,8 @@ public class CreateGceInstanceStep implements Step {
                 .setInitializeParams(
                     new AttachedDiskInitializeParams()
                         .setSourceImage(creationParameters.getVmImage())
-                        .setDiskSizeGb(100L)),
+                        // If null, defaults to the size of the source image
+                        .setDiskSizeGb(creationParameters.getBootDiskSizeGb())),
             new AttachedDisk()
                 .setBoot(false)
                 .setDeviceName(DATA_DISK_NAME)
@@ -204,6 +205,7 @@ public class CreateGceInstanceStep implements Step {
                 .setInitializeParams(
                     new AttachedDiskInitializeParams()
                         .setDiskType(creationParameters.getDataDiskType())
+                        // If null, defaults to 500G
                         .setDiskSizeGb(creationParameters.getDataDiskSizeGb()))));
 
     instance.setServiceAccounts(
