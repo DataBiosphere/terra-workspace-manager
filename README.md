@@ -5,49 +5,48 @@ integration test projects.
 
 * [Overview](#overview)
 * [WSM Client](#wsm-client)
-  * [Usage (Gradle)](#usage-gradle)
-  * [Publishing and Versioning](#publishing-and-versioning)
-    * [Compatible Changes of Significance](#compatible-changes-of-significance)
-    * [Incompatible Changes](#incompatible-changes)
+    * [Usage (Gradle)](#usage-gradle)
+    * [Publishing and Versioning](#publishing-and-versioning)
+        * [Compatible Changes of Significance](#compatible-changes-of-significance)
+        * [Incompatible Changes](#incompatible-changes)
 * [Deployment](#deployment)
-  * [On commit to main](#on-commit-to-main)
+    * [On commit to main](#on-commit-to-main)
 * [Setup](#setup)
-  * [Prerequisites:](#prerequisites)
-    * [Postgres](#postgres)
-    * [JDK](#jdk)
-    * [Configuring IntelliJ SDK](#configuring-intellij-sdk)
-    * [Python3](#python3)
-  * [Database Configuration](#database-configuration)
-    * [Option A: Docker Postgres (common)](#option-a-docker-postgres-common)
-    * [Option B: Local Postgres](#option-b-local-postgres)
-  * [IntelliJ Setup](#intellij-setup)
+    * [Prerequisites:](#prerequisites)
+        * [Postgres](#postgres)
+        * [JDK](#jdk)
+        * [Configuring IntelliJ SDK](#configuring-intellij-sdk)
+        * [Python3](#python3)
+    * [Database Configuration](#database-configuration)
+        * [Docker Postgres](#running-the-postgres-container)
+    * [IntelliJ Setup](#intellij-setup)
 * [Running](#running)
-  * [Writing Configuration](#writing-configuration)
-  * [Code Coverage](#code-coverage)
-  * [Running Workspace Manager Locally](#running-workspace-manager-locally)
-  * [OpenAPI V3 - formerly swagger](#openapi-v3---formerly-swagger)
+    * [Writing Configuration](#writing-configuration)
+    * [Code Coverage](#code-coverage)
+    * [Running Workspace Manager Locally](#running-workspace-manager-locally)
+    * [OpenAPI V3 - formerly swagger](#openapi-v3---formerly-swagger)
 * [Code walk-through](#code-walk-through)
-  * [Dependencies](#dependencies)
-  * [Workspace Manager Service](#workspace-manager-service)
-    * [Layering](#layering)
-    * [REST API Class Usage](#rest-api-class-usage)
-    * [Spring Boot](#spring-boot)
-  * [Service Code Structure](#service-code-structure)
-  * [GitHub Actions](#github-actions)
+    * [Dependencies](#dependencies)
+    * [Workspace Manager Service](#workspace-manager-service)
+        * [Layering](#layering)
+        * [REST API Class Usage](#rest-api-class-usage)
+        * [Spring Boot](#spring-boot)
+    * [Service Code Structure](#service-code-structure)
+    * [GitHub Actions](#github-actions)
 * [Tests](#tests)
-  * [Running tests](#running-tests)
-  * [Unit Tests](#unit-tests)
-  * [Connected Tests](#connected-tests)
-  * [Integration Tests](#integration-tests)
-  * [Making tests fast](#making-tests-fast)
-    * [Create one workspace/context/resource for entire test](#create-one-workspacecontextresource-for-entire-test)
-    * [For local runs, skip workspace/context creation](#for-local-runs-skip-workspacecontext-creation)
-  * [Cleaning up workspaces in tests](#cleaning-up-workspaces-in-tests)
+    * [Running tests](#running-tests)
+    * [Unit Tests](#unit-tests)
+    * [Connected Tests](#connected-tests)
+    * [Integration Tests](#integration-tests)
+    * [Making tests fast](#making-tests-fast)
+        * [Create one workspace/context/resource for entire test](#create-one-workspacecontextresource-for-entire-test)
+        * [For local runs, skip workspace/context creation](#for-local-runs-skip-workspacecontext-creation)
+    * [Cleaning up workspaces in tests](#cleaning-up-workspaces-in-tests)
 * [Adding a new flight](#adding-a-new-flight)
 * [Logging During Test Runs](#logging-during-test-runs)
-  * [Seeing Log Output](#seeing-log-output)
-  * [Human Readable Logging](#human-readable-logging)
-  * [Controlling Log Level](#controlling-log-level)
+    * [Seeing Log Output](#seeing-log-output)
+    * [Human Readable Logging](#human-readable-logging)
+    * [Controlling Log Level](#controlling-log-level)
 * [Update custom IAM role permissions for GCP projects.](#update-custom-iam-role-permissions-for-gcp-projects)
 * [Tips](#tips)
 
@@ -57,6 +56,7 @@ WSM provides workspaces; contexts for holding the work of
 individuals and teams. A _workspace_ has members that are granted some role on the
 workspace (OWNER, READER, WRITER). The members can create and manage _resources_ in the
 workspace. There are two types of resources:
+
 - _controlled resources_ are cloud resources (e.g., buckets) whose attributes,
   permissions, and lifecycle are controlled by the Workspace Manager. Controlled resources
   are created and managed using Workspace Manager APIs.
@@ -82,20 +82,22 @@ have WRITER on the workspace, then you can write the resource.
 Private resources are available to a single member of the workspace. At the present time,
 a private resource is available only to its creator.
 
-WSM has latent support for _applications_. No applications exist at this time. The concept
-is that an application is a distinguished service account. Owners of the workspace can
-control which applications are allowed access to the workspace. If an application is given
+WSM has latent support for _applications_. [Leonardo](https://github.com/DataBiosphere/leonardo) is the only
+supported application at this time. The concept is that an application is a distinguished service account. Owners of 
+the workspace can control which applications are allowed access to the workspace. If an application is given
 access, then it can create application-owned resources. The goal is to allow applications
 to create constellations of resources that support the application, and not let them be
 messed with by workspace READERS and WRITERS.
 
 ## WSM Client
+
 Workspace Manager publishes an API client library generated from its OpenAPI Spec v3
 interface definition.
 
 ### Usage (Gradle)
 
 Include the Broad Artifactory repositories:
+
 ```gradle
 repositories {
     maven {
@@ -105,9 +107,11 @@ repositories {
 ```
 
 Add a dependency like
+
 ```gradle
 implementation(group: 'bio.terra', name: 'workspace-manager-client', version: 'x.x.x')
 ```
+
 See [settings.gradle](settings.gradle) for the latest version information.
 
 ### Publishing and Versioning
@@ -118,6 +122,7 @@ track through the release process, we use a variation of semantic versioning.
 
 By default, the patch version is incremented after each merge to main. You can cause other
 parts of the version to be changed as follows.
+
 - To bump the minor version, put the string `#minor` in your commit message. The minor
   version will be incremented and the patch version will be set to 0: `major.minor.0`
 - To bump the major version, put the string `#major` in your commit message. The minor and
@@ -137,24 +142,26 @@ Incompatible changes require incrementing the major version number. In our curre
 of development, we are allowing for some incompatible API changes in the feature-locked
 parts of the API without releasing a version `1.0.0`.
 
-## Deployment
-
-To push versions of this repository to different environments (including per-developer
-integration environments), update the
-[terra-helmfile deployment definitions](https://github.com/broadinstitute/terra-helmfile).
-
 ### On commit to main
+
 1. New commit is merged to main
-2. [The tag-publish workflow](https://github.com/DataBiosphere/terra-workspace-manager/blob/dev/.github/workflows/tag-publish.yml) is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch) with the new version for the service to the [terra-helmfile repo](https://github.com/broadinstitute/terra-helmfile).
-3. This updates the default [version mapping for the app in question](https://github.com/broadinstitute/terra-helmfile/blob/master/versions.yaml).
-4. [Our deployment of ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications) monitors the above repo, and any environments in which the app is set to auto-sync will immediately pick up the new version of the image. If the app is not set to auto-sync in an environment, it can be manually synced via the ArgoCD UI or API.
+2. [The tag-publish workflow](https://github.com/DataBiosphere/terra-workspace-manager/blob/dev/.github/workflows/tag-publish.yml)
+   is triggered. It builds the image, tags the image & commit, and pushes the image to GCR. It then sends
+   a [dispatch](https://help.github.com/en/actions/reference/events-that-trigger-workflows#external-events-repository_dispatch)
+   with the new version for the service to the [terra-helmfile repo](https://github.com/broadinstitute/terra-helmfile).
+3. This updates the
+   default [version mapping for the app in question](https://github.com/broadinstitute/terra-helmfile/blob/master/versions.yaml).
+4. [Our deployment of ArgoCD](https://ap-argocd.dsp-devops.broadinstitute.org/applications) monitors the above repo, and
+   any environments in which the app is set to auto-sync will immediately pick up the new version of the image. If the
+   app is not set to auto-sync in an environment, it can be manually synced via the ArgoCD UI or API.
 
 ## Release to Upper Environments (Staging, Prod)
 
 WSM follows standards for deployment via DSP DevOps services
 ([Beehive](https://beehive.dsp-devops.broadinstitute.org/)).
 
-For more information on how to release WSM to upper environments (including on demand via independent release), please see
+For more information on how to release WSM to upper environments (including on demand via independent release), please
+see
 [Releasing our Code](https://broadworkbench.atlassian.net/wiki/spaces/WOR/pages/2974449675/Releasing+our+Code)
 in Confluence.
 
@@ -162,32 +169,8 @@ in Confluence.
 
 ### Prerequisites:
 
-#### Postgres
-We are currently using Postgres 13.1.
-
-By default, tests will run Postgres in a Docker container. You do not have to run a local version of Postgres.
-If you decide to install a local version, you have choices:
-- Directly from the Postgresql website: https://www.postgresql.org/download/
-- Via homebrew:
-```sh
-brew install postgresql@13
-```
-- By installing the Mac application: [Postgresql app](https://postgresapp.com/downloads.html). This
-  is the easiest. Just make sure to download the right version. It'll manage things for you and has a
-  useful menulet where the server can be turned on and off. Don't forget to create a server if you
-  go this route.
-
-In order to run tests using a local Postgres instance, you'll need to set the `TEST_LOCAL_DB` environment variable
-to point to a local postgres URI, e.g:
-```
-export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'
-export TEST_SINGLE_THREAD='true'
-```
-You **must** use `export` here for the value to be visible to Gradle. `TEST_LOCAL_DB=...` will not work!
-Note that parallel tests using a shared database may interfere with each other -
-[set the `TEST_SINGLE_THREAD` env var](service/gradle/testing.gradle) to restrict tests to a single thread.
-
 #### JDK
+
 We use the Adoptium JDK version 17. (At this writing, the Mac x86 version is 17.0.2+8).
 You learn about it at [Adoptium](https://adoptium.net/).
 
@@ -205,6 +188,7 @@ manage the active version:
 ```
 
 You can install the JDK from IntelliJ::
+
 - File menu
 - Project Structure...
 - Under Project Settings select Project
@@ -214,6 +198,7 @@ You can install the JDK from IntelliJ::
 - Select Eclipse Temurin
 
 If you use homebrew, you can do this instead:
+
 ```sh
     brew tap homebrew/cask-versions
     brew install --cask temurin17
@@ -231,13 +216,15 @@ To switch between jdk versions, modify `.bash_profile` and run `jenv` as [descri
 
 You will need to configure IntelliJ to use a particular SDK. Here are settings you may need to
 make:
+
 - IntelliJIdea | Preferences... | Build, Execution, Deployment | Build Tools | Gradle - set Gradle
   JVM to your JDK 17
 - File | Project Structure... | Project Settings | Project | Project SDK
-  - set Project SDK to your JDK 17 SDK
-  - set Project Language Level to 17
+    - set Project SDK to your JDK 17 SDK
+    - set Project Language Level to 17
 
 #### Python3
+
 We are currently using Python 3.9.10
 
 The build and the integration tests assume `python3` and its built-in module `venv` are available. The
@@ -249,6 +236,7 @@ of python. Follow the instructions [here](https://github.com/pyenv/pyenv#homebre
 install pyenv.
 
 Then use `pyenv` to install the right version of python like so:
+
 ```
 pyenv install 3.9.10
 ```
@@ -258,6 +246,7 @@ is that it is built in so does not require extra installation steps.
 However, it is not so useful as a developer tools because it has no way to de-activate a virtual
 environment. Consider installing `virtualenv` for your developer use. It can be installed using
 `pip` like so:
+
 ```
 python3 -m pip install virtualenv
 ```
@@ -276,41 +265,41 @@ If you are not using homebrew, `jq`'s site lists a variety of ways to
 [install the tool](https://jqlang.github.io/jq/download/) as well.
 
 ### Database Configuration
+
 Workspace Manager Service relies on a Postgresql database server containing two databases:
 one for the service itself, and one for
 [Stairway](https://github.com/DataBiosphere/stairway). For unit and connected tests, this will default
-to using a Docker container. As long as you can run a container, you do not need to do any setup to run unit or connected tests.
+to using a Docker container. As long as you can run a container, you do not need to do any setup to run unit or
+connected tests.
 
-For running WSM locally, there are two options for running
-the Postgres server:
+For running WSM locally, Docker is the preferred method for running the database.
 
-#### Option A: Docker Postgres (common)
 ##### Running the Postgres Container
+
 To start a postgres container configured with the necessary databases:
+
 ```sh
 ./service/local-dev/run_postgres.sh start
 ```
+
 To stop the container:
+
 ```sh
 ./service/local-dev/run_postgres.sh stop
 ```
+
 Note that the contents of the database is not saved between container runs.
 
 ##### Connecting to the Postgres Container
-Use `psql` to connect to databases within the started database container. For database `wsm_db` use user `dbuser` with password `dbpwd` like this:
+
+Use `psql` to connect to databases within the started database container. For database `wsm_db` use user `dbuser` with
+password `dbpwd` like this:
+
 ```sh
 PGPASSWORD=dbpwd psql postgresql://127.0.0.1:5432/wsm_db -U dbuser
 ```
+
 For the Stairway database `wsm_stairway` use user `stairwayuser` with password `stairwaypwd`.
-
-#### Option B: Local Postgres
-##### Database Configuration
-
-To set up Workspace Manager's required database, run the following command, which will create the DB's and users for unit tests, Stairway, and the app itself:
-
-```sh
-psql -f service/local-dev/local-postgres-init.sql
-```
 
 ### IntelliJ Setup
 
@@ -331,8 +320,7 @@ psql -f service/local-dev/local-postgres-init.sql
 
 Running WSM and the Test Runner integration tests requires many service accounts and database
 coordinates. That information is stored in Broad's Vault server. We do not want the main
-code to directly depend on Vault. For example, Verily's Terra deployment will not use
-Vault. So the code depends on files that hold the information.
+code to directly depend on Vault. So the code depends on files that hold the information.
 
 The `scripts/write-config.sh` script is used to collect all of the needed data from vault and
 store it in files in the gradle `${rootDir}` in the directory `config/`. Having a Broad Institute
@@ -342,11 +330,13 @@ One advantage of having the config written in gradle `${rootDir}` is that it is 
 github actions that run our CI/CD process.
 
 View current usage information for `write-config.sh` by entering
+
 ```sh
 ./scripts/write-config.sh help
 ```
 
 ### Code Coverage
+
 We use Jacoco to generate code coverage reports. Coverage information is written
 to `service/build/jacoco/{task_name}.exec`, and the `combinedJaCoCoReport`
 gradle task will generate a single combined report for all test tasks run on
@@ -375,6 +365,7 @@ instrumented with Jacoco coverage tracking. This is useful for tracking
 integration test coverage, but may incur a small performance cost.
 
 ### OpenAPI V3 - formerly swagger
+
 A swagger-ui page is available at /swagger-ui.html on any running instance. For
 local WSM:
 
@@ -383,9 +374,7 @@ local WSM:
 For Broad deployment, those are:
 
 - dev: https://workspace.dsde-dev.broadinstitute.org/swagger-ui.html
-- alpha: https://workspace.dsde-alpha.broadinstitute.org/swagger-ui.html
 - staging: https://workspace.dsde-staging.broadinstitute.org/swagger-ui.html
-- perf: https://workspace.dsde-perf.broadinstitute.org/swagger-ui.html
 - prod: https://workspace.dsde-prod.broadinstitute.org/swagger-ui.html
 
 If you can't load any of the swagger pages, check that you are on **non-split** VPN before troubleshooting further.
@@ -400,13 +389,16 @@ Broad deployment of Terra needs to maintain a FedRamp approval level in order to
 Government data.
 
 We use [gradle](https://gradle.org/) as our build tool. The repository is organized as a
-composite build, with common build logic pulled into [convention plugins](https://docs.gradle.org/current/samples/sample_convention_plugins.html).
+composite build, with common build logic pulled
+into [convention plugins](https://docs.gradle.org/current/samples/sample_convention_plugins.html).
 There are three mostly independent projects:
+
 - _service_ - the Workspace Manager Service
 - _client_ - the OpenAPI-generated client
 - _integration_ - the TestRunner-based integration test project
 
 The build structure is:
+
 ```
 terra-workspace-manager
   |
@@ -436,17 +428,27 @@ Artifactory server. That is where supporting libraries are published and where w
 the WSM client
 
 ### Workspace Manager Service
+
 The bulk of the code is in the `service` project. This section describes that project.
 
 #### Layering
 
 Workspace Manager's logic for handling requests is broken into several layers. From highest to lowest:
-- Controllers (`app/controller/`): this layer performs access checks, validates input, invokes services to do the work, and packages the service output into the response. Every controller endpoint should perform an authorization check as one of the first steps, or else clearly document why it isn't doing so.
-- Services (`service/`): this layer is where most work is done. Each Service class wraps an external service or a collection of related internal functions. These functions may launch [Stairway](https://github.com/DataBiosphere/stairway) Flights to perform work as a transaction. See [README](README.md#Service Code Structure) for a more detailed description of each service.
-- Flights (`service/**/flight`): collections of [Stairway](https://github.com/DataBiosphere/stairway) individual logical steps which are performed in order as a transaction. Individual steps may call service or DAO methods.
-- Data Access Objects (DAOs) (`db/`): wrappers around the WSM database. Methods that interact with the database directly live here, and Services call DAO methods rather than the database directly.
+
+- Controllers (`app/controller/`): this layer performs access checks, validates input, invokes services to do the work,
+  and packages the service output into the response. Every controller endpoint should perform an authorization check as
+  one of the first steps, or else clearly document why it isn't doing so.
+- Services (`service/`): this layer is where most work is done. Each Service class wraps an external service or a
+  collection of related internal functions. These functions may
+  launch [Stairway](https://github.com/DataBiosphere/stairway) Flights to perform work as a transaction.
+  See [README](README.md#Service Code Structure) for a more detailed description of each service.
+- Flights (`service/**/flight`): collections of [Stairway](https://github.com/DataBiosphere/stairway) individual logical
+  steps which are performed in order as a transaction. Individual steps may call service or DAO methods.
+- Data Access Objects (DAOs) (`db/`): wrappers around the WSM database. Methods that interact with the database directly
+  live here, and Services call DAO methods rather than the database directly.
 
 #### REST API Class Usage
+
 In general, API class objects are converted to and from internal WSM objects in the Controller layer.
 There are two exceptions to this rule.
 
@@ -458,11 +460,13 @@ Second, we create API response objects within flight steps. That allows the JobS
 job response.
 
 #### Spring Boot
+
 The service project uses Spring Boot as the framework for REST servers. The objective is to use a minimal set
 of Spring features; there are many ways to do the same thing and we would like to constrain ourselves
 to a common set of techniques.
 
 ##### Configuration
+
 We only use YAML configuration. We never use XML or .properties files.
 
 In general, we use type-safe configuration parameters as shown here:
@@ -477,6 +481,7 @@ but it may be useful for debugging unexpected configurations. See Spring Boot's
 for the exact priority order of configurations.
 
 ##### Initialization
+
 When the applications starts, Spring wires up the components based on the profiles in place.
 Setting different profiles allows different components to be included. This technique is used
 as the way to choose the cloud platform (Google, Azure, AWS) code to include.
@@ -486,6 +491,7 @@ to perform initialization of the application between the point of having the ent
 the point of opening the port to start accepting REST requests.
 
 ##### Annotating Singletons
+
 The typical pattern when using Spring is to make singleton classes for each service, controller, and DAO.
 You do not have to write the class with its own singleton support. Instead, annotate the class with
 the appropriate Spring annotation. Here are ones we use:
@@ -496,11 +502,13 @@ the appropriate Spring annotation. Here are ones we use:
 - `@Configuration` Definition of properties
 
 ##### Common Annotations
+
 There are other annotations that are handy to know about.
 
 Use `@Nullable` to mark method interface and return parameters that can be null.
 
 ###### Autowiring
+
 Spring wires up the singletons and other beans when the application is launched.
 That allows us to use Spring profiles to control the collection of code that is
 run for different environments. Perhaps obviously, you can only autowire singletons to each other. You cannot autowire
@@ -511,6 +519,7 @@ The preferred method of autowiring, is to put the annotation on the constructor
 of the class. Spring will autowire all the inputs to the constructor.
 
 ```java
+
 @Component
 public class Foo {
     private final Bar bar;
@@ -528,6 +537,7 @@ Spring will pass in the instances of Bar and Fribble into the constructor.
 It is possible to autowire a specific class member, but that is rarely necessary:
 
 ```java
+
 @Component
 public class Foo {
     @Autowired
@@ -536,12 +546,13 @@ public class Foo {
 ```
 
 ###### REST Annotations
+
 - `@RequestBody` Marks the controller input parameter receiving the body of the request
 - `@PathVariable("x")` Marks the controller input parameter receiving the parameter `x`
 - `@RequestParam("y")` Marks the controller input parameter receiving the query parameter`y`
 
-
 ###### JSON Annotations
+
 We use the Jackson JSON library for serializing objects to and from JSON. Most of the time, you don't need to
 use JSON annotations. It is sufficient to provide setter/getter methods for class members
 and let Jackson figure things out with introspection. There are cases where it needs help
@@ -556,8 +567,8 @@ The common JSON annotations are:
 
 For more details see [Jackson JSON Documentation](https://github.com/FasterXML/jackson-docs)
 
-
 ### Service Code Structure
+
 This section explains the code structure of the template. Here is the directory structure:
 
 ```
@@ -586,10 +597,12 @@ src/main/
         workspace/
   resources/
 ```
+
 - `app/` For the top of the application, including Main and the StartupInitializer
 - `app/configuration/` For all of the bean and property definitions
 - `app/controller/` For the REST controllers. The controllers typically do very little.
-  They perform access checks and validate input, invoke a service to do the work, and package the service output into the response. The
+  They perform access checks and validate input, invoke a service to do the work, and package the service output into
+  the response. The
   controller package also defines the global exception handling.
 - `common/` For common models, exceptions, and utilities.
   shared by more than one service.
@@ -651,21 +664,24 @@ We currently have these workflows:
 For integration tests, see [Integration README](integration/README.md).
 
 ### Unit Tests
+
 The unit tests are written using JUnit. The implementations are in
 `src/test/java/bio/terra/workspace/`.
 Some unit tests depend on the availability of a running Postgresql server.
 
 Here are common annotations that may be used when setting up a unit test suite:
+
 - `@BaseTest` - custom annotation to set active profiles used for all tests (including human-readable logging)
 - `@Unit` - custom annotation to set tags and active profiles used for all unit tests
 - `@ExtendWith(MockitoExtension.class)` - extension to use mocks in tests with strict stubbing by default
-- `@SpringBootTest(classes = {ClassToLoad.class, ...})` - annotation to run Spring Boot tests, limiting the ApplicationContext to the component classes under test
+- `@SpringBootTest(classes = {ClassToLoad.class, ...})` - annotation to run Spring Boot tests, limiting the
+  ApplicationContext to the component classes under test
 
 Historically, we have used `@SpringBootTest` to load a full ApplicationContext for our application to use in testing.
 But overusing this initialization when we only need to facilitate pure unit tests, mocking, and/or a small subset of
 context configuration leads to long-running test suites and disincentivizes writing unit-testable code.
 
-When adding new unit tests, consider the narrowest required slice of initialization.  If the code you are testing is
+When adding new unit tests, consider the narrowest required slice of initialization. If the code you are testing is
 difficult to unit test, it would likely benefit from modification.
 
 #### Spring Boot Tests
@@ -681,17 +697,20 @@ specified in these bases. That helps us control the number of unique combination
 The test base classes can be found in `src/test/java/bio/terra/workspace/common/`.
 
 The current inheritance for Spring Boot unit test base classes looks like this:
+
 - `BaseSpringBootTest` - the base class for Spring Boot unit and connected tests
-  - `BaseSpringBootUnitTestMocks` - the base set of mocks shared by all Spring Boot unit tests
-    - `BaseSpringBootUnitTest` - enables the right test tags and profiles for Spring Boot unit tests
-      - `BaseSpringBootUnitTestMockDataRepoService` - adds one more mock; used by several tests
-      - `BaseSpringBootUnitTestMockGcpCloudContextService` - adds one more mock; used by several tests
-    - `BaseAzureSpringBootUnitTest` - adds mocks shared by azure Spring Boot unit tests and enables the right test tags and profiles
+    - `BaseSpringBootUnitTestMocks` - the base set of mocks shared by all Spring Boot unit tests
+        - `BaseSpringBootUnitTest` - enables the right test tags and profiles for Spring Boot unit tests
+            - `BaseSpringBootUnitTestMockDataRepoService` - adds one more mock; used by several tests
+            - `BaseSpringBootUnitTestMockGcpCloudContextService` - adds one more mock; used by several tests
+        - `BaseAzureSpringBootUnitTest` - adds mocks shared by azure Spring Boot unit tests and enables the right test
+          tags and profiles
 
 We keep the Azure tests separated from the general tests, because the Azure feature is not live in all environments.
 Those tests will not successfully run in those environments.
 
 ### Connected Tests
+
 The connected tests are also written using JUnit.
 The implementations are mixed in with the unit tests in
 `src/test/java/bio/terra/workspace/`. Connected tests derive from `common/BaseConnectedTest.java`.
@@ -701,7 +720,8 @@ to use dependent services such as Sam, Buffer, and TDR. The config collecting pr
 secrets maintained in Vault in the Broad Institute environment.
 
 In general, developers writing new endpoints should add MockMVC-based unit or
-connected tests to test their code (example: [WorkspaceApiControllerTest](service/src/test/java/bio/terra/workspace/app/configuration/external/controller/WorkspaceApiControllerTest.java)).
+connected tests to test their code (
+example: [WorkspaceApiControllerTest](service/src/test/java/bio/terra/workspace/app/configuration/external/controller/WorkspaceApiControllerTest.java)).
 These tests let us act as if we're making HTTP calls against a local server
 and validate the full request lifecycle through all
 the [layers of WSM](#layering), whereas the previous style of
@@ -713,6 +733,7 @@ connectedTests are run as part of PR checks and connectedPlus tests run longer
 and executed as part of nightly sanity tests.
 
 ### Integration Tests
+
 Integration testing is done using
 [Test Runner](https://github.com/DataBiosphere/terra-test-runner).
 The integration tests live in the `integration` project. Consult the integration
@@ -778,7 +799,9 @@ creation. These changes should not be merged.
 
 - [Comment out these lines](https://cs.github.com/DataBiosphere/terra-workspace-manager/blob/05dba30e7f597690c46c95a974d31bde532bcbbd/service/src/main/java/bio/terra/workspace/app/StartupInitializer.java?q=startupinitializer#L33-L37)
   When test starts postgres, DB won't be wiped.
-- Comment out [`cleanup()`](https://github.com/DataBiosphere/terra-workspace-manager/blob/0764301d03814ab13e6cce5291e191201bddd205/service/src/test/java/bio/terra/workspace/app/controller/ControlledGcpResourceApiControllerBqDatasetTest.java#L132-L133) in your test,
+- Comment
+  out [`cleanup()`](https://github.com/DataBiosphere/terra-workspace-manager/blob/0764301d03814ab13e6cce5291e191201bddd205/service/src/test/java/bio/terra/workspace/app/controller/ControlledGcpResourceApiControllerBqDatasetTest.java#L132-L133)
+  in your test,
   so workspaces aren't deleted at the end of the test.
 - Run a test so that `setup()` creates workspace(s). Get workspace ID from
   DB:
@@ -832,7 +855,7 @@ in response to a SourceClear finding, you may want to run a scan off of a featur
 
 You can trigger WSM's SCA scan on demand via its
 [Github Action](https://github.com/broadinstitute/dsp-appsec-sourceclear-github-actions/actions/workflows/java-python-wsm.yaml),
-and optionally specify a Github ref (branch, tag, or SHA) to check out from the repo to scan.  By default,
+and optionally specify a Github ref (branch, tag, or SHA) to check out from the repo to scan. By default,
 the scan is run off of WSM's `main` branch.
 
 High-level results are outputted in the Github Actions run.
@@ -852,7 +875,8 @@ High-level results are outputted to the terminal.
 
 Full results including dependency graphs are uploaded to
 [Veracode](https://sca.analysiscenter.veracode.com/workspaces/jppForw/projects/204681/issues)
-(if running off of a feature branch, navigate to Project Details > Selected Branch > Change to select your feature branch).
+(if running off of a feature branch, navigate to Project Details > Selected Branch > Change to select your feature
+branch).
 You can request a Veracode account to view full results from #dsp-infosec-champions.
 
 ## Adding a new flight
@@ -868,33 +892,41 @@ in the database and log a `DELETE` activity in `WorkspaceActivityLogHook`.
 ## Logging During Test Runs
 
 ### Seeing Log Output
+
 The default logging set in the `build.gradle` file does not show the log messages written
 to the console. The default setup is:
+
 ```
     testLogging {
         events = ["passed", "failed", "skipped", "started"]
     }
 ```
+
 You can add events to the logging so that you see the log details:
+
 ```
         events = ["passed", "failed", "skipped", "started", "standard_error", "standard_out"]
 ```
 
 ### Human Readable Logging
+
 The default log format is a JSON format that presents well in Log Explorer, but is not so
 easy to read. You get human readable logging by setting the `human-readable-logging`
 Spring profile.
 
 You can do this in any of the many ways to provide properties to Spring. A simple way is
 by setting the environment variable as:
+
 ```sh
 export spring_profiles_include=human-readable-logging
 ```
 
 ### Controlling Log Level
+
 By default logging at INFO level and above are displayed. You can change the logging level
 by setting yet another Spring property. For example, you can set all things terra to log
 at debug level by adding this to a property YAML file (such as application.yaml):
+
 ```
 logging.level.bio.terra: debug
 # Print SQL queries
@@ -902,8 +934,10 @@ logging.level.org.springframework.jdbc.core: trace
 # Print SQL transactions
 logging.level.org.springframework.transaction.interceptor
 ```
+
 You can be more precise by putting more of the path in. You can use YAML syntax to include
 multiple entries, something like (but I did not test this):
+
 ```shell script
 logging:
   level:
@@ -916,6 +950,7 @@ logging:
                 ControlledGcsBucketResource: debug
                 ControlledBigQueryDatasetResource: warn
 ```
+
 And you can use an environment variable instead of editing a property file.
 
 If you are also using human readable logging, then you can create the file
@@ -923,6 +958,7 @@ If you are also using human readable logging, then you can create the file
 Spring auto-magically searches for properties files for the active profiles.
 
 ## Update custom IAM role permissions for GCP projects.
+
 For project level permissions, update `CloudSyncRoleMapping`. For resource
 level permissions, update `CustomGcpIamRoleMapping`.
 
@@ -932,10 +968,12 @@ allow existing workspaces to contains the new permissions, a SAM admin must
 run the `Admin` api `syncIamRoles` endpoint.
 
 For each environment:
+
 - dry run, check GCP logs to confirm new permissions/GCP projects as expected.
 - wet run.
 
 ## Tips
+
 - Check out [gdub](https://github.com/gdubw/gdub), it'll save you typing `./gradlew` over
   and over, and also takes care of knowing when you're not in the root directory, so you
   don't have to figure out the appropriate number of `../`s.
@@ -944,17 +982,21 @@ For each environment:
   service code while running integration tests or using Swagger UI. To edit it, click on
   it (in the upper right of the window), and click `Edit Configurations`.
 
-  - The environment variable GOOGLE_APPLICATION_CREDENTIALS must be set to the path to wsm-sa.json
-    in the `config` directory. If this variable is missing, you may get a mysterious
-    Oauth2 error when setting up a spending profile (or have other undefined behavior).
-  - The Working Directory should be set to the full path to the `service` directory
-  - For readable logs, put `human-readable-logging` in the `Active Profiles` field.
-  - You can get live-ish reloading of for the local Swagger UI by adding the following
-    override parameter:
-    `spring.resources.static-locations:file:src/main/resources/api`. It's not true live
-    reloading, you still have to refresh the browser, but at least you don't have to
-    restart the server.
-    ![Main Run Configuration Dialog](docs/images/main_run_config.png)
-- To run unit and connected tests with a local DB (which can be helpful for examining DB contents after testing), set the `TEST_LOCAL_DB` environment variable
-  to point to a local postgres URI, e.g `export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'`. See [above](#postgres) for setting up a local DB.
-  - Note that parallel tests using a shared database may interfere with each other - [you can set the `TEST_SINGLE_THREAD` env var](service/gradle/testing.gradle) to restrict tests to a single thread.
+    - The environment variable GOOGLE_APPLICATION_CREDENTIALS must be set to the path to wsm-sa.json
+      in the `config` directory. If this variable is missing, you may get a mysterious
+      Oauth2 error when setting up a spending profile (or have other undefined behavior).
+    - The Working Directory should be set to the full path to the `service` directory
+    - For readable logs, put `human-readable-logging` in the `Active Profiles` field.
+    - You can get live-ish reloading of for the local Swagger UI by adding the following
+      override parameter:
+      `spring.resources.static-locations:file:src/main/resources/api`. It's not true live
+      reloading, you still have to refresh the browser, but at least you don't have to
+      restart the server.
+      ![Main Run Configuration Dialog](docs/images/main_run_config.png)
+- To run unit and connected tests with a local DB (which can be helpful for examining DB contents after testing), set
+  the `TEST_LOCAL_DB` environment variable
+  to point to a local postgres URI, e.g `export TEST_LOCAL_DB='postgresql://127.0.0.1:5432'`. See [above](#postgres) for
+  setting up a local DB.
+    - Note that parallel tests using a shared database may interfere with each
+      other - [you can set the `TEST_SINGLE_THREAD` env var](service/gradle/testing.gradle) to restrict tests to a
+      single thread.
