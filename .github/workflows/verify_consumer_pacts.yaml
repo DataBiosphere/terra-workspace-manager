@@ -216,7 +216,7 @@ jobs:
           ./gradlew --build-cache verifyPacts --scan
       - name: Upload Test Reports
         if: always()
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: Test Reports
           path: service/build/reports
