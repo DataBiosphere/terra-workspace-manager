@@ -16,6 +16,7 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
@@ -71,6 +72,7 @@ public class CrlService {
   private static final String CLIENT_NAME = "workspace";
 
   private final AzureConfiguration azureConfiguration;
+  private final FeatureConfiguration features;
 
   @Value("${azure.customer.usage-attribute:}")
   private String azureCustomerUsageAttribute;
@@ -86,7 +88,9 @@ public class CrlService {
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(CrlConfiguration crlConfig, AzureConfiguration azureConfiguration) {
+  public CrlService(CrlConfiguration crlConfig,
+                    AzureConfiguration azureConfiguration,
+                    FeatureConfiguration featureConfiguration) {
     this.crlConfig = crlConfig;
     clientConfig = buildClientConfig();
 
@@ -115,6 +119,7 @@ public class CrlService {
       crlServiceUsageCow = null;
     }
     this.azureConfiguration = azureConfiguration;
+    this.features = featureConfiguration;
   }
 
   /**
@@ -181,7 +186,7 @@ public class CrlService {
   /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
   public ComputeManager getComputeManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    //assertCrlInUse();
+    assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
 
@@ -195,7 +200,7 @@ public class CrlService {
   /** Returns an Azure {@link ComputeManager} configured for use with CRL. */
   public RelayManager getRelayManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    //assertCrlInUse();
+    assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     RelayManager.Configurable relayManagerConfigurable =
@@ -208,7 +213,7 @@ public class CrlService {
   /** Returns an Azure {@link StorageManager} configured for use with CRL. */
   public StorageManager getStorageManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    //assertCrlInUse();
+    assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
@@ -219,7 +224,7 @@ public class CrlService {
 
   public BatchManager getBatchManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    //assertCrlInUse();
+    assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
 
@@ -245,7 +250,7 @@ public class CrlService {
   /** Returns an Azure {@link MsiManager} configured for use with CRL. */
   public MsiManager getMsiManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    //assertCrlInUse();
+    assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
@@ -257,7 +262,7 @@ public class CrlService {
   /** Returns an Azure {@link MonitorManager} configured for use with CRL. */
   public MonitorManager getMonitorManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    //assertCrlInUse();
+    assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
@@ -268,7 +273,7 @@ public class CrlService {
 
   public ContainerServiceManager getContainerServiceManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    //assertCrlInUse();
+    assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(
@@ -279,7 +284,7 @@ public class CrlService {
 
   public PostgreSqlManager getPostgreSqlManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
-    //assertCrlInUse();
+    assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configurePostgreSqlManager(
@@ -603,7 +608,7 @@ public class CrlService {
   }
 
   private void assertCrlInUse() {
-    if (!crlConfig.getUseCrl()) {
+    if (!crlConfig.getUseCrl() && !features.isAzureControlPlaneEnabled()) {
       throw new CrlNotInUseException("Attempt to use CRL when it is set not to be used");
     }
   }
