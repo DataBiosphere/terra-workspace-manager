@@ -10,7 +10,7 @@ plugins {
 
 dependencies {
     // Google dependencies versioned by bom
-    implementation platform('com.google.cloud:libraries-bom:26.47.0')
+    implementation platform('com.google.cloud:libraries-bom:26.48.0')
     implementation "com.google.api-client:google-api-client"
     implementation "com.google.cloud:google-cloud-bigquery"
     implementation "com.google.cloud:google-cloud-storage"
