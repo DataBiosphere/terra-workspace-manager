@@ -88,9 +88,10 @@ public class CrlService {
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(CrlConfiguration crlConfig,
-                    AzureConfiguration azureConfiguration,
-                    FeatureConfiguration featureConfiguration) {
+  public CrlService(
+      CrlConfiguration crlConfig,
+      AzureConfiguration azureConfiguration,
+      FeatureConfiguration featureConfiguration) {
     this.crlConfig = crlConfig;
     clientConfig = buildClientConfig();
 
@@ -238,6 +239,7 @@ public class CrlService {
   /** Returns an Azure {@link ResourceManager} configured for use with CRL. */
   public ResourceManager getResourceManager(
       AzureCloudContext azureCloudContext, AzureConfiguration azureConfig) {
+    assertCrlInUse();
     final var azureCreds = getManagedAppCredentials(azureConfig);
     final var azureProfile = getAzureProfile(azureCloudContext);
     return configureAzureResourceManager(

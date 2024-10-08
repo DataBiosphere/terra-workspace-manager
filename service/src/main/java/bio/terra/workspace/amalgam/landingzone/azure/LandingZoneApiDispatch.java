@@ -67,28 +67,28 @@ public class LandingZoneApiDispatch {
       // Prevent deploying more than 1 landing zone per billing profile
       verifyLandingZoneDoesNotExistForBillingProfile(bearerToken, body);
 
-      var result = Rethrow.onInterrupted(
-          () ->
-              amalgamated.startLandingZoneCreationJob(
-                  bearerToken,
-                  body.getJobControl().getId(),
-                  body.getLandingZoneId(),
-                  body.getDefinition(),
-                  body.getVersion(),
-                  body.getParameters(),
-                  body.getBillingProfileId(),
-                  asyncResultEndpoint),
-          "startLandingZoneCreationJob");
-
-      logger.info("JOB ID" + result.getJobReport().getId());
+      var result =
+          Rethrow.onInterrupted(
+              () ->
+                  amalgamated.startLandingZoneCreationJob(
+                      bearerToken,
+                      body.getJobControl().getId(),
+                      body.getLandingZoneId(),
+                      body.getDefinition(),
+                      body.getVersion(),
+                      body.getParameters(),
+                      body.getBillingProfileId(),
+                      asyncResultEndpoint),
+              "startLandingZoneCreationJob");
       if (result.getErrorReport() != null) {
-        logger.info("ERROR: " + result.getErrorReport().getStatusCode() + " " + result.getErrorReport().getMessage());
-      } else {
-        logger.debug("NO ERROR");
+        logger.warn(
+            "Error creating landing zone. Status code:"
+                + result.getErrorReport().getStatusCode()
+                + " message:"
+                + result.getErrorReport().getMessage());
       }
       return result;
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       logger.warn(e.getMessage());
       throw e;
     }
@@ -190,7 +190,7 @@ public class LandingZoneApiDispatch {
 
   public UUID getLandingZoneId(BearerToken token, Workspace workspace) {
     Optional<UUID> profileId = workspace.getSpendProfileId().map(sp -> UUID.fromString(sp.getId()));
-    logger.warn("Get landing zone for billing profile: {} workspace: {}", profileId.get(), workspace.getWorkspaceId());
+
     if (profileId.isEmpty()) {
       throw new LandingZoneNotFoundException(
           String.format(
@@ -203,7 +203,6 @@ public class LandingZoneApiDispatch {
         Rethrow.onInterrupted(
             () -> amalgamated.listLandingZonesByBillingProfile(token, profileId.get()),
             "listLandingZonesByBillingProfile");
-    logger.warn(response.toString());
     return response.getLandingzones().stream()
         .findFirst()
         .map(ApiAzureLandingZone::getLandingZoneId)
@@ -280,7 +279,6 @@ public class LandingZoneApiDispatch {
    */
   public String getLandingZoneRegionForWorkspaceUsingWsmToken(Workspace workspace) {
     var token = new BearerToken(samService.getWsmServiceAccountToken());
-    logger.warn("WSM Service Account token: {}", token.getToken());
     var lzId = getLandingZoneId(token, workspace);
     return getLandingZoneRegionUsingWsmToken(lzId);
   }

@@ -857,10 +857,6 @@ public class SamService {
   public boolean isApplicationEnabledInSam(
       UUID workspaceUuid, String email, AuthenticatedUserRequest userRequest) {
     try {
-      logger.info(
-              "Checking SAM permission {} for {}",
-              SamConstants.SamWorkspaceAction.CREATE_CONTROLLED_USER_PRIVATE,
-              email);
       ResourcesApi resourcesApi = samResourcesApi(userRequest.getRequiredToken());
       var policy =
           resourcesApi.getPolicyV2(
@@ -1012,8 +1008,7 @@ public class SamService {
     String wsmSa;
     if (features.isAzureControlPlaneEnabled()) {
       wsmSa = azureConfiguration.getWsmServiceManagedIdentity();
-    }
-    else  {
+    } else {
       wsmSa = GcpUtils.getWsmSaEmail();
     }
 
@@ -1221,8 +1216,7 @@ public class SamService {
     String wsmSa;
     if (features.isAzureControlPlaneEnabled()) {
       wsmSa = azureConfiguration.getWsmServiceManagedIdentity();
-    }
-    else  {
+    } else {
       wsmSa = GcpUtils.getWsmSaEmail();
     }
 

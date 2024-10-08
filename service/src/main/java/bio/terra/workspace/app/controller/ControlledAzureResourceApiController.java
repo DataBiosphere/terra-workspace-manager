@@ -254,7 +254,6 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
   @Override
   public ResponseEntity<ApiCreatedControlledAzureStorageContainer> createAzureStorageContainer(
       UUID workspaceUuid, ApiCreateControlledAzureStorageContainerRequestBody body) {
-    logger.info("Create Azure Storage Container: {}", body.toString());
     features.azureEnabledCheck();
 
     // validate the workspace and user access
@@ -264,33 +263,31 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
 
     logger.info("Found workspace");
     try {
+      // create the resource
       final ControlledResourceFields commonFields =
-              toCommonFields(
-                      workspaceUuid,
-                      body.getCommon(),
-                      landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace),
-                      userRequest,
-                      WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
+          toCommonFields(
+              workspaceUuid,
+              body.getCommon(),
+              landingZoneApiDispatch.getLandingZoneRegionForWorkspaceUsingWsmToken(workspace),
+              userRequest,
+              WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
 
       ControlledAzureStorageContainerResource resource =
-              buildControlledAzureStorageContainerResource(body.getAzureStorageContainer(), commonFields);
+          buildControlledAzureStorageContainerResource(
+              body.getAzureStorageContainer(), commonFields);
 
-      // create the resource
-      logger.info("Built resource");
       final ControlledAzureStorageContainerResource createdStorageContainer =
-              controlledResourceService
-                      .createControlledResourceSync(
-                              resource, commonFields.getIamRole(), userRequest, body.getAzureStorageContainer())
-                      .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
-      logger.info("created container");
+          controlledResourceService
+              .createControlledResourceSync(
+                  resource, commonFields.getIamRole(), userRequest, body.getAzureStorageContainer())
+              .castByEnum(WsmResourceType.CONTROLLED_AZURE_STORAGE_CONTAINER);
       UUID resourceUuid = createdStorageContainer.getResourceId();
       var response =
-              new ApiCreatedControlledAzureStorageContainer()
-                      .resourceId(resourceUuid)
-                      .azureStorageContainer(createdStorageContainer.toApiResource());
+          new ApiCreatedControlledAzureStorageContainer()
+              .resourceId(resourceUuid)
+              .azureStorageContainer(createdStorageContainer.toApiResource());
       return new ResponseEntity<>(response, HttpStatus.OK);
-    } catch (Exception e)
-    {
+    } catch (Exception e) {
       logger.error(e.getMessage());
       throw e;
     }
