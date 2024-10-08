@@ -260,7 +260,7 @@ public class ControlledAzureResourceApiController extends ControlledResourceCont
     final AuthenticatedUserRequest userRequest = getAuthenticatedInfo();
     var workspace =
         validateWorkspaceResourceCreationPermissions(userRequest, workspaceUuid, body.getCommon());
-    
+
     try {
       // create the resource
       final ControlledResourceFields commonFields =
