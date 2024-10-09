@@ -63,21 +63,35 @@ public class LandingZoneApiDispatch {
         body.getDefinition(),
         body.getVersion());
 
-    // Prevent deploying more than 1 landing zone per billing profile
-    verifyLandingZoneDoesNotExistForBillingProfile(bearerToken, body);
+    try {
+      // Prevent deploying more than 1 landing zone per billing profile
+      verifyLandingZoneDoesNotExistForBillingProfile(bearerToken, body);
 
-    return Rethrow.onInterrupted(
-        () ->
-            amalgamated.startLandingZoneCreationJob(
-                bearerToken,
-                body.getJobControl().getId(),
-                body.getLandingZoneId(),
-                body.getDefinition(),
-                body.getVersion(),
-                body.getParameters(),
-                body.getBillingProfileId(),
-                asyncResultEndpoint),
-        "startLandingZoneCreationJob");
+      var result =
+          Rethrow.onInterrupted(
+              () ->
+                  amalgamated.startLandingZoneCreationJob(
+                      bearerToken,
+                      body.getJobControl().getId(),
+                      body.getLandingZoneId(),
+                      body.getDefinition(),
+                      body.getVersion(),
+                      body.getParameters(),
+                      body.getBillingProfileId(),
+                      asyncResultEndpoint),
+              "startLandingZoneCreationJob");
+      if (result.getErrorReport() != null) {
+        logger.warn(
+            "Error creating landing zone. Status code:"
+                + result.getErrorReport().getStatusCode()
+                + " message:"
+                + result.getErrorReport().getMessage());
+      }
+      return result;
+    } catch (Exception e) {
+      logger.warn(e.getMessage());
+      throw e;
+    }
   }
 
   private void verifyLandingZoneDoesNotExistForBillingProfile(

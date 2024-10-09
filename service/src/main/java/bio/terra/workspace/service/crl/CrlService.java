@@ -16,6 +16,7 @@ import bio.terra.cloudres.google.storage.StorageCow;
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.CrlConfiguration;
+import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.common.utils.GcpUtils;
 import bio.terra.workspace.service.crl.exception.CrlInternalException;
 import bio.terra.workspace.service.crl.exception.CrlNotInUseException;
@@ -71,6 +72,7 @@ public class CrlService {
   private static final String CLIENT_NAME = "workspace";
 
   private final AzureConfiguration azureConfiguration;
+  private final FeatureConfiguration features;
 
   @Value("${azure.customer.usage-attribute:}")
   private String azureCustomerUsageAttribute;
@@ -86,12 +88,16 @@ public class CrlService {
   private final ServiceUsageCow crlServiceUsageCow;
 
   @Autowired
-  public CrlService(CrlConfiguration crlConfig, AzureConfiguration azureConfiguration) {
+  public CrlService(
+      CrlConfiguration crlConfig,
+      AzureConfiguration azureConfiguration,
+      FeatureConfiguration featureConfiguration) {
     this.crlConfig = crlConfig;
+    clientConfig = buildClientConfig();
 
     if (crlConfig.getUseCrl()) {
       GoogleCredentials creds = getApplicationCredentials();
-      clientConfig = buildClientConfig();
+
       try {
         this.crlNotebooksCow = AIPlatformNotebooksCow.create(clientConfig, creds);
         this.crlDataprocCow = DataprocCow.create(clientConfig, creds);
@@ -105,7 +111,6 @@ public class CrlService {
         throw new CrlInternalException("Error creating resource manager wrapper", e);
       }
     } else {
-      clientConfig = null;
       crlNotebooksCow = null;
       crlDataprocCow = null;
       crlResourceManagerCow = null;
@@ -115,6 +120,7 @@ public class CrlService {
       crlServiceUsageCow = null;
     }
     this.azureConfiguration = azureConfiguration;
+    this.features = featureConfiguration;
   }
 
   /**
@@ -604,7 +610,7 @@ public class CrlService {
   }
 
   private void assertCrlInUse() {
-    if (!crlConfig.getUseCrl()) {
+    if (!crlConfig.getUseCrl() && !features.isAzureControlPlaneEnabled()) {
       throw new CrlNotInUseException("Attempt to use CRL when it is set not to be used");
     }
   }
