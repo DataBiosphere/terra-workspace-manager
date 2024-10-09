@@ -25,7 +25,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             "fake@example.com",
             ControlledResourceCategory.USER_PRIVATE,
             null,
-            "wsm-serviceaccount@terra.bio");
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -46,7 +46,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             null,
             ControlledResourceCategory.USER_PRIVATE,
             null,
-            "wsm-serviceaccount@terra.bio");
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     assertThrows(InternalLogicException.class, () -> policyBuilder.addPolicies(request));
@@ -60,7 +60,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             null,
             ControlledResourceCategory.USER_SHARED,
             null,
-            "wsm-serviceaccount@terra.bio");
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -93,7 +93,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             null,
             ControlledResourceCategory.APPLICATION_SHARED,
             app,
-            "wsm-serviceaccount@terra.bio");
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -120,7 +120,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             null,
             ControlledResourceCategory.APPLICATION_SHARED,
             app,
-            "wsm-serviceaccount@terra.bio");
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     assertThrows(
@@ -137,7 +137,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             null,
             ControlledResourceCategory.APPLICATION_SHARED,
             null,
-            "wsm-serviceaccount@terra.bio");
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     var thrown =
@@ -159,7 +159,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             "fake@example.com",
             ControlledResourceCategory.APPLICATION_SHARED,
             app,
-            "wsm-serviceaccount@terra.bio");
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     var thrown =
@@ -179,7 +179,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             ControlledResourceCategory.APPLICATION_PRIVATE,
             new WsmWorkspaceApplication()
                 .application(new WsmApplication().serviceAccount("fake-svc@example.com")),
-            "wsm-serviceaccount@terra.bio");
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -200,7 +200,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             "fake@fake.com",
             ControlledResourceCategory.APPLICATION_PRIVATE,
             null,
-            "wsm-serviceaccount@terra.bio");
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     var thrown =
