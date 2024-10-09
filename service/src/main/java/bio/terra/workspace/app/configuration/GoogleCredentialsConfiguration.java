@@ -17,7 +17,7 @@ public class GoogleCredentialsConfiguration {
   }
 
   @Bean
-  @Profile("!unit-test")
+  @Profile("!unit-test & !azure")
   public GoogleCredentials getGoogleCredentials() {
     try {
       GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
