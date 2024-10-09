@@ -24,7 +24,8 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             ControlledResourceIamRole.EDITOR,
             "fake@example.com",
             ControlledResourceCategory.USER_PRIVATE,
-            null);
+            null,
+            "wsm-serviceaccount@terra.bio");
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -41,7 +42,11 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
   void addPolicies_userPrivateWithoutPrivateEmailFails() {
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
-            ControlledResourceIamRole.DELETER, null, ControlledResourceCategory.USER_PRIVATE, null);
+            ControlledResourceIamRole.DELETER,
+            null,
+            ControlledResourceCategory.USER_PRIVATE,
+            null,
+            "wsm-serviceaccount@terra.bio");
     var request = new CreateResourceRequestV2();
 
     assertThrows(InternalLogicException.class, () -> policyBuilder.addPolicies(request));
