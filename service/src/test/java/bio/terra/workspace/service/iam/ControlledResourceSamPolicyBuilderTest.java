@@ -56,11 +56,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
   void addPolicies_userShared() {
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
-            null,
-            null,
-            ControlledResourceCategory.USER_SHARED,
-            null,
-            GcpUtils.getWsmSaEmail());
+            null, null, ControlledResourceCategory.USER_SHARED, null, GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
