@@ -19,12 +19,12 @@ updates:
       timezone: "America/New_York"
     target-branch: "main"
     reviewers:
-      - "@DataBiosphere/broadworkspaces"
+      - "@DataBiosphere/broad-core-services"
     labels:
       - "dependency"
       - "gradle"
     commit-message:
-      prefix: "[WOR-1448]"
+      prefix: "[CORE-69]"
     ignore:
       - dependency-name: "com.google.apis:google-api-services-iam"
       - dependency-name: "com.google.apis:google-api-services-notebooks"
