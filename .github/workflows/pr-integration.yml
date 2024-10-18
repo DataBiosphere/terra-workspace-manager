@@ -94,7 +94,7 @@ jobs:
         MATRIX_CONTEXT: ${{ toJson(matrix) }}
       with:
         status: ${{ job.status }}
-        channel: "#dsp-workspaces-test-alerts"
+        channel: "#dsp-core-services-alerts"
         username: "WSM push to main branch"
         author_name: "integrationTest"
         icon_emoji: ":triangular_ruler:"
