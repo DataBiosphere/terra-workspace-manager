@@ -11,6 +11,7 @@ pluginManagement {
                 }
             }
         }
+        mavenLocal()
         maven {
             url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
         }
