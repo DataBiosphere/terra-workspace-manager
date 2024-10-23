@@ -24,7 +24,8 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             ControlledResourceIamRole.EDITOR,
             "fake@example.com",
             ControlledResourceCategory.USER_PRIVATE,
-            null);
+            null,
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -41,7 +42,11 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
   void addPolicies_userPrivateWithoutPrivateEmailFails() {
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
-            ControlledResourceIamRole.DELETER, null, ControlledResourceCategory.USER_PRIVATE, null);
+            ControlledResourceIamRole.DELETER,
+            null,
+            ControlledResourceCategory.USER_PRIVATE,
+            null,
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     assertThrows(InternalLogicException.class, () -> policyBuilder.addPolicies(request));
@@ -51,7 +56,7 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
   void addPolicies_userShared() {
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
-            null, null, ControlledResourceCategory.USER_SHARED, null);
+            null, null, ControlledResourceCategory.USER_SHARED, null, GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -80,7 +85,11 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             .application(new WsmApplication().serviceAccount("fake-svc@example.com"));
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
-            null, null, ControlledResourceCategory.APPLICATION_SHARED, app);
+            null,
+            null,
+            ControlledResourceCategory.APPLICATION_SHARED,
+            app,
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -106,7 +115,8 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             ControlledResourceIamRole.EDITOR,
             null,
             ControlledResourceCategory.APPLICATION_SHARED,
-            app);
+            app,
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     assertThrows(
@@ -119,7 +129,11 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
   void addPolicies_applicationSharedWithNoAppFails() {
     var policyBuilder =
         new ControlledResourceSamPolicyBuilder(
-            null, null, ControlledResourceCategory.APPLICATION_SHARED, null);
+            null,
+            null,
+            ControlledResourceCategory.APPLICATION_SHARED,
+            null,
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     var thrown =
@@ -140,7 +154,8 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             ControlledResourceIamRole.EDITOR,
             "fake@example.com",
             ControlledResourceCategory.APPLICATION_SHARED,
-            app);
+            app,
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     var thrown =
@@ -159,7 +174,8 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             "fake@example.com",
             ControlledResourceCategory.APPLICATION_PRIVATE,
             new WsmWorkspaceApplication()
-                .application(new WsmApplication().serviceAccount("fake-svc@example.com")));
+                .application(new WsmApplication().serviceAccount("fake-svc@example.com")),
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     policyBuilder.addPolicies(request);
@@ -179,7 +195,8 @@ class ControlledResourceSamPolicyBuilderTest extends BaseSpringBootUnitTest {
             ControlledResourceIamRole.EDITOR,
             "fake@fake.com",
             ControlledResourceCategory.APPLICATION_PRIVATE,
-            null);
+            null,
+            GcpUtils.getWsmSaEmail());
     var request = new CreateResourceRequestV2();
 
     var thrown =

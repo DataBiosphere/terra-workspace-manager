@@ -4,6 +4,7 @@ import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.workspace.common.utils.AuthUtils;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -22,10 +23,13 @@ public class PolicyServiceConfiguration {
       ImmutableList.of("openid", "email", "profile");
 
   private final FeatureConfiguration features;
+  private final AzureConfiguration azureConfiguration;
 
   @Autowired
-  public PolicyServiceConfiguration(FeatureConfiguration features) {
+  public PolicyServiceConfiguration(
+      FeatureConfiguration features, AzureConfiguration azureConfiguration) {
     this.features = features;
+    this.azureConfiguration = azureConfiguration;
   }
 
   public String getBasePath() {
@@ -49,6 +53,7 @@ public class PolicyServiceConfiguration {
       return AuthUtils.getAccessToken(
           features.isAzureControlPlaneEnabled(),
           POLICY_SERVICE_ACCOUNT_SCOPES,
+          Arrays.asList(azureConfiguration.getAuthTokenScope()),
           clientCredentialFilePath);
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);

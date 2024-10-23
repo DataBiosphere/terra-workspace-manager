@@ -10,6 +10,7 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.common.sam.SamRetry;
 import bio.terra.common.sam.exception.SamExceptionFactory;
 import bio.terra.common.tracing.OkHttpClientTracingInterceptor;
+import bio.terra.workspace.app.configuration.external.AzureConfiguration;
 import bio.terra.workspace.app.configuration.external.FeatureConfiguration;
 import bio.terra.workspace.app.configuration.external.SamConfiguration;
 import bio.terra.workspace.common.exception.InternalLogicException;
@@ -33,6 +34,7 @@ import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +81,7 @@ public class SamService {
   private final SamUserFactory samUserFactory;
   private final OkHttpClient commonHttpClient;
   private final FeatureConfiguration features;
+  private final AzureConfiguration azureConfiguration;
   private final WsmApplicationService applicationService;
   private boolean wsmServiceAccountInitialized;
 
@@ -86,12 +89,14 @@ public class SamService {
   public SamService(
       SamConfiguration samConfig,
       FeatureConfiguration features,
+      AzureConfiguration azureConfiguration,
       SamUserFactory samUserFactory,
       OpenTelemetry openTelemetry,
       WsmApplicationService applicationService) {
     this.samConfig = samConfig;
     this.samUserFactory = samUserFactory;
     this.features = features;
+    this.azureConfiguration = azureConfiguration;
     this.applicationService = applicationService;
     this.wsmServiceAccountInitialized = false;
     this.commonHttpClient =
@@ -154,7 +159,10 @@ public class SamService {
   public String getWsmServiceAccountToken() {
     try {
       return AuthUtils.getAccessToken(
-          features.isAzureControlPlaneEnabled(), SAM_OAUTH_SCOPES, null);
+          features.isAzureControlPlaneEnabled(),
+          SAM_OAUTH_SCOPES,
+          Arrays.asList(azureConfiguration.getAuthTokenScope()),
+          null);
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
     }
@@ -997,6 +1005,13 @@ public class SamService {
       AuthenticatedUserRequest userRequest)
       throws InterruptedException {
 
+    String wsmSa;
+    if (features.isAzureControlPlaneEnabled()) {
+      wsmSa = azureConfiguration.getWsmServiceManagedIdentity();
+    } else {
+      wsmSa = GcpUtils.getWsmSaEmail();
+    }
+
     // We need the WSM SA for setting controlled resource policies
     initializeWsmServiceAccount();
     FullyQualifiedResourceId workspaceParentFqId =
@@ -1027,7 +1042,8 @@ public class SamService {
             privateIamRole,
             assignedUserEmail,
             ControlledResourceCategory.get(resource.getAccessScope(), resource.getManagedBy()),
-            app);
+            app,
+            wsmSa);
     builder.addPolicies(resourceRequest);
 
     try {
@@ -1150,6 +1166,7 @@ public class SamService {
       return statusApi.getSystemStatus().getOk();
     } catch (ApiException e) {
       //  If any exception was thrown during the status check, return that the system is not OK.
+      logger.warn("Exception getting Sam status " + e.getMessage());
       return false;
     }
   }
@@ -1196,7 +1213,13 @@ public class SamService {
       }
     }
     // We always give WSM's service account the 'manager' role for admin control of workspaces.
-    String wsmSa = GcpUtils.getWsmSaEmail();
+    String wsmSa;
+    if (features.isAzureControlPlaneEnabled()) {
+      wsmSa = azureConfiguration.getWsmServiceManagedIdentity();
+    } else {
+      wsmSa = GcpUtils.getWsmSaEmail();
+    }
+
     policyMap.put(
         WsmIamRole.MANAGER.toSamRole(),
         new AccessPolicyMembershipRequest()
