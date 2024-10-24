@@ -589,7 +589,7 @@ public class CrlService {
   public AzureEnvironment getAzureEnvironmentFromName(String envName) {
     try {
       return switch (envName.toUpperCase()) {
-        case "AZURE_US_GOVERNMENT" -> AzureEnvironment.AZURE_US_GOVERNMENT;
+        case "AZURE_GOV" -> AzureEnvironment.AZURE_US_GOVERNMENT;
         case "AZURE_CHINA" -> AzureEnvironment.AZURE_CHINA;
         default -> AzureEnvironment.AZURE;
       };
