@@ -583,20 +583,9 @@ public class CrlService {
     return new AzureProfile(
         azureCloudContext.getAzureTenantId(),
         azureCloudContext.getAzureSubscriptionId(),
-        getAzureEnvironmentFromName(azureConfiguration.getAzureEnvironment()));
+        azureConfiguration.getAzureEnvironment());
   }
 
-  public AzureEnvironment getAzureEnvironmentFromName(String envName) {
-    try {
-      return switch (envName.toUpperCase()) {
-        case "AZURE_GOV" -> AzureEnvironment.AZURE_US_GOVERNMENT;
-        case "AZURE_CHINA" -> AzureEnvironment.AZURE_CHINA;
-        default -> AzureEnvironment.AZURE;
-      };
-    } catch (IllegalArgumentException e) {
-      return AzureEnvironment.AZURE;
-    }
-  }
 
   @VisibleForTesting
   public ClientConfig getClientConfig() {
