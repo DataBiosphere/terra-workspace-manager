@@ -39,6 +39,8 @@ public class AzureConfiguration {
     }
   }
 
+  public String getAzureEnvironmentConfigString(){return this.azureEnvironment;}
+
   public void setAzureEnvironment(String azureEnvironment) {
     this.azureEnvironment = azureEnvironment;
   }
