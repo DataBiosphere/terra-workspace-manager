@@ -1,10 +1,14 @@
+azureEnvironmentConfig:
+  AZURE_GOV: ${DB_SERVER_NAME}.postgres.database.usgovcloudapi.net
+  AZURE: ${DB_SERVER_NAME}.postgres.database.azure.com
+
 env:
   db:
-    host: '#{"${AZURE_ENVIRONMENT:}".equals("AZURE_GOV")?${DB_SERVER_NAME}.postgres.database.usgovcloudapi.net:5432":"${DB_SERVER_NAME}.postgres.database.azure.com:5432"}'
-    #host: ${DB_SERVER_NAME}.postgres.database.azure.com:5432
-    url: '#{"${AZURE_ENVIRONMENT:}".equals("AZURE_GOV")?${DB_SERVER_NAME}.postgres.database.usgovcloudapi.net":"${DB_SERVER_NAME}.postgres.database.azure.com"}'
-    #url: ${DB_SERVER_NAME}.postgres.database.azure.com
     port: 5432
+    host: ${azureEnvironmentConfig.${AZURE_ENVIRONMENT:AZURE}}\:${env.db.port}
+    #host: ${DB_SERVER_NAME}.postgres.database.azure.com:5432
+    url: ${azureEnvironmentConfig.${AZURE_ENVIRONMENT:AZURE}}
+    #url: ${DB_SERVER_NAME}.postgres.database.azure.com
     user: ${ADMIN_DB_USER_NAME}
     connectToDatabase: ${CONNECT_TO_DATABASE:postgres}
   params:
