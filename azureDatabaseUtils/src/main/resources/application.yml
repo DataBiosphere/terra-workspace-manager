@@ -5,7 +5,7 @@ azureEnvironmentConfig:
 env:
   db:
     port: 5432
-    host: ${azureEnvironmentConfig.${AZURE_ENVIRONMENT:AZURE}}\:${env.db.port}
+    host: ${azureEnvironmentConfig.${AZURE_ENVIRONMENT:AZURE}}:5432
     #host: ${DB_SERVER_NAME}.postgres.database.azure.com:5432
     url: ${azureEnvironmentConfig.${AZURE_ENVIRONMENT:AZURE}}
     #url: ${DB_SERVER_NAME}.postgres.database.azure.com
