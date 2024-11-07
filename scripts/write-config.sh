@@ -113,7 +113,7 @@ function dogsm {
     local dosecretproject=$1
     local dovaultpath=$2
     local dofilename=$3
-    gcloud secrets versions access latest --project $dosecretproject --secret $dovaultpath > "${dofilename}"
+    gcloud secrets versions access latest --project "${dosecretproject}" --secret "${dovaultpath}" > "${dofilename}"
 }
 
 # Read a GSM secret into an output file, decoding from base64
