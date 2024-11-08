@@ -140,7 +140,7 @@ workspace:
     enabled: true
     client-credential-file-path: ../config/buffer-client-sa.json
     instanceUrl: https://buffer.tools.integ.envs.broadinstitute.org
-    poolId: workspace_manager_v11
+    poolId: workspace_manager_v12
 
   policy:
     client-credential-file-path: ../config/policy-client-sa.json
