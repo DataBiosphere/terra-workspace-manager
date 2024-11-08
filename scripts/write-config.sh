@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# write-config.sh extracts configuration information from vault and writes it to a set of files
+# write-config.sh extracts configuration information from GSM and writes it to a set of files
 # in a directory. This simplifies access to the secrets from other scripts and applications.
 #
 # This is intended as a replacement for render_config.sh in the service project and the
@@ -61,29 +61,18 @@
 
 function usage {
   cat <<EOF
-Usage: $0 [<target>] [<vaulttoken>] [<outputdir>] [<vaultenv>]"
+Usage: $0 [<target>] [<outputdir>]"
 
   <target> can be:
     local - for testing against a local (bootRun) WSM
     dev - uses secrets from the dev environment
-    alpha - alpha test environment
-    staging - release staging environment
     help or ? - print this help
     clean - removes all files from the output directory
-    * - anything else is assumed to be a personal environment using the terra-kernel-k8s
   If <target> is not specified, then use the envvar WSM_WRITE_CONFIG
   If WSM_WRITE_CONFIG is not specified, then use local
 
-  <vaulttoken> defaults to the token found in ~/.vault-token.
-
   <outputdir> defaults to "../config/" relative to the script. When run from the gradle rootdir, it will be
   in the expected place for automation.
-
-  <vaultenv> can be:
-    docker - run a docker image containing vault
-    local  - run the vault installed locally
-  If <vaultenv> is not specified, then use the envvar WSM_VAULT_ENV
-  If WSM_VAULT_ENV is not specified, then we use docker
 EOF
  exit 1
 }
@@ -93,15 +82,8 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null  && pwd )"
 default_outputdir="${script_dir}/config"
 default_target=${WSM_WRITE_CONFIG:-local}
 target=${1:-$default_target}
-vaulttoken=${2:-$(cat "$HOME"/.vault-token)}
-outputdir=${3:-$default_outputdir}
-default_vaultenv=${WSM_VAULT_ENV:-docker}
-vaultenv=${4:-$default_vaultenv}
-
-# The vault paths are irregular, so we map the target into three variables:
-# k8senv    - the kubernetes environment: alpha, staging, dev, or integration
-# namespace - the namespace in the k8s env: alpha, staging, dev, or the target for personal environments
-# fcenv     - the firecloud delegated service account environment: dev, alpha, staging
+outputdir=${2:-$default_outputdir}
+fcenv="dev"
 
 case $target in
     help | ?)
@@ -111,37 +93,6 @@ case $target in
     clean)
         rm "${outputdir}"/* &> /dev/null
         exit 0
-        ;;
-
-    local)
-        k8senv=integration
-        namespace=wsmtest
-        fcenv=dev
-        ;;
-
-    dev)
-        k8senv=dev
-        namespace=dev
-        fcenv=dev
-        ;;
-
-    alpha)
-        k8senv=alpha
-        namespace=alpha
-        fcenv=alpha
-        ;;
-
-    staging)
-        k8senv=staging
-        namespace=staging
-        fcenv=staging
-        ;;
-
-
-    *) # personal env
-        k8senv=integration
-        namespace=$target
-        fcenv=dev
         ;;
 esac
 
@@ -157,90 +108,80 @@ if [ -e "${outputdir}/target.txt" ]; then
     fi
 fi
 
-# Run vault either using a docker container or using the installed vault
-function dovault {
-    local dovaultpath=$1
-    local dofilename=$2
-    case $vaultenv in
-        docker)
-            docker run --rm -e VAULT_TOKEN="${vaulttoken}" broadinstitute/dsde-toolbox:dev \
-                   vault read -format=json "${dovaultpath}" > "${dofilename}"
-            ;;
-
-        local)
-            VAULT_TOKEN="${vaulttoken}" VAULT_ADDR="https://clotho.broadinstitute.org:8200" \
-                   vault read -format=json "${dovaultpath}" > "${dofilename}"
-            ;;
-    esac
+# Fetch a secret from GSM
+function dogsm {
+    local dosecretproject=$1
+    local dosecretname=$2
+    local dofilename=$3
+    gcloud secrets versions access latest --project "${dosecretproject}" --secret "${dosecretname}" > "${dofilename}"
 }
 
-# Read a vault path into an output file, decoding from base64
+# Read a GSM secret into an output file, decoding from base64
 # To detect missing tokens, we need to capture the docker result before
 # doing the rest of the pipeline.
-function vaultgetb64 {
-    vaultpath=$1
-    filename=$2
+function gsmgetb64 {
+    secretproject=$1
+    secretname=$2
+    filename=$3
     fntmpfile=$(mktemp)
-    dovault "${vaultpath}" "${fntmpfile}"
+    dogsm "${secretproject}" "${secretname}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
-    jq -r .data.key "${fntmpfile}" | base64 -d > "${filename}"
+    jq -r .key "${fntmpfile}" | base64 -d > "${filename}"
 }
 
-# Read a vault path into an output file
-function vaultget {
-    vaultpath=$1
-    filename=$2
+# Read a GSM secret into an output file
+function gsmget {
+    secretproject=$1
+    secretname=$2
+    filename=$3
     fntmpfile=$(mktemp)
-    dovault "${vaultpath}" "${fntmpfile}"
+    dogsm "${secretproject}" "${secretname}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
-    jq -r .data "${fntmpfile}" > "${filename}"
+    jq -r . "${fntmpfile}" > "${filename}"
 }
 
-# Read database data from a vault path into a set of files
-function vaultgetdb {
-    vaultpath=$1
-    fileprefix=$2
+# Read database data from a GSM secret into a set of files
+function gsmgetdb {
+    secretproject=$1
+    secretname=$2
+    fileprefix=$3
     fntmpfile=$(mktemp)
-    dovault "${vaultpath}" "${fntmpfile}"
+    dogsm "${secretproject}" "${secretname}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
-    datafile=$(mktemp)
-    jq -r .data "${fntmpfile}" > "${datafile}"
-    jq -r '.db' "${datafile}" > "${outputdir}/${fileprefix}-name.txt"
-    jq -r '.password' "${datafile}" > "${outputdir}/${fileprefix}-password.txt"
-    jq -r '.username' "${datafile}" > "${outputdir}/${fileprefix}-username.txt"
+    jq -r '.db' "${fntmpfile}" > "${outputdir}/${fileprefix}-name.txt"
+    jq -r '.password' "${fntmpfile}" > "${outputdir}/${fileprefix}-password.txt"
+    jq -r '.username' "${fntmpfile}" > "${outputdir}/${fileprefix}-username.txt"
 }
 
-vaultget "secret/dsde/firecloud/${fcenv}/common/firecloud-account.json" "${outputdir}/user-delegated-sa.json"
-vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/app-sa" "${outputdir}/wsm-sa.json"
+gsmget "broad-dsde-${fcenv}" "firecloud-sa" "${outputdir}/user-delegated-sa.json"
+
+if [ "${target}" = "local" ]; then
+    gsmget "broad-dsde-qa" "workspacemanager-wsmtest-sa" "${outputdir}/wsm-sa.json"
+else
+    gsmgetb64 "broad-dsde-${fcenv}" "wsm-sa-b64" "${outputdir}/wsm-sa.json"
+fi
 
 # Janitor SA is only available in integration
-if [ "${k8senv}" = "integration" ]; then
-    vaultgetb64 "secret/dsde/terra/kernel/integration/tools/crl_janitor/client-sa" "${outputdir}/janitor-client-sa.json"
+if [ "${target}" = "local" ]; then
+    gsmgetb64 "broad-dsde-qa" "crljanitor-client-sa" "${outputdir}/janitor-client-sa.json"
 else
     echo "No janitor credentials for target ${target}"
 fi
 
-# Buffer SA naming is irregular
-if [ "${k8senv}" = "integration" ]; then
-    vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/tools/buffer/client-sa" "${outputdir}/buffer-client-sa.json"
+if [ "${target}" = "local" ]; then
+    gsmget "broad-dsde-qa" "buffer-client-tools-sa" "${outputdir}/buffer-client-sa.json"
 else
-    vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/buffer/client-sa" "${outputdir}/buffer-client-sa.json"
+    gsmgetb64 "broad-dsde-${fcenv}" "buffer-client-sa-b64" "${outputdir}/buffer-client-sa.json"
 fi
 
-# Policy SA is only setup for dev at this time
-if [ "${k8senv}" = "integration" ]; then
-    vaultgetb64 "secret/dsde/terra/kernel/dev/dev/tps/client-sa" "${outputdir}/policy-client-sa.json"
-elif [ "${k8senv}" = "dev" ]; then
-    vaultgetb64 "secret/dsde/terra/kernel/dev/dev/tps/client-sa" "${outputdir}/policy-client-sa.json"
-else
-    echo "No policy credentials for target ${target}"
-fi
+# Policy SA is only stored in broad-dsde-qa although it's the SA for dev
+gsmgetb64 "broad-dsde-qa" "tps-client-sa" "${outputdir}/policy-client-sa.json"
 
-# Test Runner SA
-vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-sa" "${outputdir}/testrunner-sa.json"
+# Test Runner SA.
+gsmgetb64 "broad-dsde-qa" "testrunner-sa-b64" "${outputdir}/testrunner-sa.json"
 
 # Test Runner Kubernetes SA
 #
@@ -249,11 +190,11 @@ vaultgetb64 "secret/dsde/terra/kernel/integration/common/testrunner/testrunner-s
 # { "data":  { "ca.crt": <base64-cert>, "token": <base64-token> } }
 # The cert is left base64 encoded, because that is how it is used in the K8s API. The token is decoded.
 tmpfile=$(mktemp)
-vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/testrunner-k8s-sa" "${tmpfile}"
+gsmgetb64 "broad-dsde-${fcenv}" "testrunner-k8s-sa-b64" "${tmpfile}"
 result=$?
-if [ $result -ne 0 -a "${k8senv}" = "integration" ]; then
+if [ $result -ne 0 -a "${target}" = "local" ]; then
     echo "No test runner credentials for target ${target}. Falling back to wsmtest credentials."
-    vaultgetb64 "secret/dsde/terra/kernel/integration/wsmtest/testrunner-k8s-sa" "${tmpfile}"
+    gsmgetb64 "broad-dsde-qa" "testrunner-k8s-sa-b64" "${tmpfile}"
     result=$?
 fi
 if [ $result -ne 0 ]; then
@@ -268,9 +209,19 @@ fi
 # 2. Build the full db connection name
 #    note: some instances do not have the full name, project, region. We default to the integration k8s values
 # 3. Get the database information (user, pw, name) for db and stairway db
-vaultgetb64 "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/sqlproxy-sa" "${outputdir}/sqlproxy-sa.json"
+
+if [ "${target}" = "local" ]; then
+  gsmget "broad-dsde-qa" "workspacemanager-wsmtest-sqlproxy-sa" "${outputdir}/sqlproxy-sa.json"
+else
+  gsmgetb64 "broad-dsde-${fcenv}" "wsm-sqlproxy-sa-b64" "${outputdir}/sqlproxy-sa.json"
+fi
+
 tmpfile=$(mktemp)
-vaultget "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/instance" "${tmpfile}"
+if [ "${target}" = "local" ]; then
+  gsmget "broad-dsde-qa" "wsmtest-wsm-postgres-instance" "${tmpfile}"
+else
+  gsmget "broad-dsde-${fcenv}" "wsm-postgres-instance" "${tmpfile}"
+fi
 instancename=$(jq -r '.name' "${tmpfile}")
 instanceproject=$(jq -r '.project' "${tmpfile}")
 instanceregion=$(jq -r '.region' "${tmpfile}")
@@ -282,13 +233,18 @@ if [ "$instanceregion" == "null" ];
 fi
 echo "${instanceproject}:${instanceregion}:${instancename}" > "${outputdir}/db-connection-name.txt"
 
-vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/db-creds" "db"
-vaultgetdb "secret/dsde/terra/kernel/${k8senv}/${namespace}/workspace/postgres/stairway-db-creds" "stairway-db"
+if [ "${target}" = "local" ]; then
+  gsmgetdb "broad-dsde-qa" "wsmtest-wsm-db-creds" "db"
+  gsmgetdb "broad-dsde-qa" "wsmtest-wsm-stairway-db-creds" "stairway-db"
+else
+  gsmgetdb "broad-dsde-${fcenv}" "wsm-postgres-db-creds" "db"
+  gsmgetdb "broad-dsde-${fcenv}" "wsm-stairway-db-creds" "stairway-db"
+fi
 
 # Write the test application configuration into the local-properties.yml file
 if [ "$target" == "local" ]; then
   tmpfile=$(mktemp)
-  vaultget "secret/dsde/terra/azure/dev/workspacemanager/managed-app-publisher" "${tmpfile}"
+  gsmget "broad-dsde-dev" "wsm-managed-app-publisher" "${tmpfile}"
   clientid=$(jq -r '."client-id"' "${tmpfile}" )
   clientsecret=$(jq -r '."client-secret"' "${tmpfile}" )
   tenantid=$(jq -r '."tenant-id"' "${tmpfile}" )
