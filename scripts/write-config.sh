@@ -111,9 +111,9 @@ fi
 # Fetch a secret from GSM
 function dogsm {
     local dosecretproject=$1
-    local dovaultpath=$2
+    local dosecretname=$2
     local dofilename=$3
-    gcloud secrets versions access latest --project "${dosecretproject}" --secret "${dovaultpath}" > "${dofilename}"
+    gcloud secrets versions access latest --project "${dosecretproject}" --secret "${dosecretname}" > "${dofilename}"
 }
 
 # Read a GSM secret into an output file, decoding from base64
@@ -121,10 +121,10 @@ function dogsm {
 # doing the rest of the pipeline.
 function gsmgetb64 {
     secretproject=$1
-    vaultpath=$2
+    secretname=$2
     filename=$3
     fntmpfile=$(mktemp)
-    dogsm "${secretproject}" "${vaultpath}" "${fntmpfile}"
+    dogsm "${secretproject}" "${secretname}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
     jq -r .key "${fntmpfile}" | base64 -d > "${filename}"
@@ -133,10 +133,10 @@ function gsmgetb64 {
 # Read a GSM secret into an output file
 function gsmget {
     secretproject=$1
-    vaultpath=$2
+    secretname=$2
     filename=$3
     fntmpfile=$(mktemp)
-    dogsm "${secretproject}" "${vaultpath}" "${fntmpfile}"
+    dogsm "${secretproject}" "${secretname}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
     jq -r . "${fntmpfile}" > "${filename}"
@@ -145,10 +145,10 @@ function gsmget {
 # Read database data from a GSM secret into a set of files
 function gsmgetdb {
     secretproject=$1
-    vaultpath=$2
+    secretname=$2
     fileprefix=$3
     fntmpfile=$(mktemp)
-    dogsm "${secretproject}" "${vaultpath}" "${fntmpfile}"
+    dogsm "${secretproject}" "${secretname}" "${fntmpfile}"
     result=$?
     if [ $result -ne 0 ]; then return $result; fi
     jq -r '.db' "${fntmpfile}" > "${outputdir}/${fileprefix}-name.txt"
