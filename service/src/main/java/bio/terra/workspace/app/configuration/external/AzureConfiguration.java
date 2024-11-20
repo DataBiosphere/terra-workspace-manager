@@ -29,7 +29,7 @@ public class AzureConfiguration {
 
   public AzureEnvironment getAzureEnvironment() {
     try {
-      return switch (azureEnvironment.toUpperCase()) {
+      return switch (azureEnvironment) {
         case "AzureUSGovernmentCloud" -> AzureEnvironment.AZURE_US_GOVERNMENT;
         case "AzureCloud" -> AzureEnvironment.AZURE;
         default -> AzureEnvironment.AZURE;
