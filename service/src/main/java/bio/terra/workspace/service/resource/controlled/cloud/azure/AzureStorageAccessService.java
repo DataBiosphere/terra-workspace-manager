@@ -266,7 +266,7 @@ public class AzureStorageAccessService {
                 URLDecoder.decode(sig, StandardCharsets.UTF_8))
             .toUpperCase();
 
-    var azureEnv = crlService.getAzureEnvironmentFromName(azureConfiguration.getAzureEnvironment());
+    var azureEnv = azureConfiguration.getAzureEnvironment();
 
     logger.info(
         "SAS token with expiry time of {} generated for user {} [SubjectId={}] on container {} in workspace {} [sha256 = {}] [AzureEnvironment portal = {}]",
