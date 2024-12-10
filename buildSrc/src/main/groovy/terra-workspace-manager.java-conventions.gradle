@@ -7,7 +7,7 @@ plugins {
     id 'com.srcclr.gradle'
 }
 
-def useMavenLocal = true
+def useMavenLocal = false
 repositories {
     if (useMavenLocal) {
         mavenLocal()
