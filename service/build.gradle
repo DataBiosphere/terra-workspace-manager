@@ -43,7 +43,7 @@ def googleCredentialsFile = "${rootDir}/config/wsm-sa.json"
 task jacocoBootRun(type: org.springframework.boot.gradle.tasks.run.BootRun) {
     environment.put("GOOGLE_APPLICATION_CREDENTIALS", "${googleCredentialsFile}")
     classpath = sourceSets.main.runtimeClasspath
-    main("bio.terra.workspace.app.Main")
+    mainClass = "bio.terra.workspace.app.Main"
 }
 jacoco {
     applyTo jacocoBootRun
