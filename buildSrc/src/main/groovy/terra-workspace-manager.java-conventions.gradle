@@ -39,7 +39,7 @@ task combinedJaCoCoReport(type: JacocoReport) {
     sourceDirectories.setFrom(files(project.sourceSets.main.allSource.srcDirs))
 
     reports {
-        xml.enabled(true)
+        xml.required = true
         xml.destination = file("$buildDir/reports/jacoco/test/jacoco.xml")
     }
 
