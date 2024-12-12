@@ -5,7 +5,7 @@ plugins {
     id 'application'
 
     // Terra Test Runner Plugin.
-    id 'bio.terra.test-runner-plugin' version '0.2.0-SNAPSHOT'
+    id 'bio.terra.test-runner-plugin' version '0.2.1-SNAPSHOT'
 }
 
 dependencies {
