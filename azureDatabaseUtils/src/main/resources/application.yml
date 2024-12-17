@@ -1,12 +1,13 @@
 azureEnvironmentConfig:
-  AzureUSGovernmentCloud: ${DB_SERVER_NAME}.postgres.database.usgovcloudapi.net
-  AzureCloud: ${DB_SERVER_NAME}.postgres.database.azure.com
+  dbHostNames:
+    AzureUSGovernmentCloud: ${DB_SERVER_NAME}.postgres.database.usgovcloudapi.net
+    AzureCloud: ${DB_SERVER_NAME}.postgres.database.azure.com
 
 env:
   db:
     port: 5432
-    host: ${azureEnvironmentConfig.${AZURE_ENVIRONMENT:AzureCloud}}:5432
-    url: ${azureEnvironmentConfig.${AZURE_ENVIRONMENT:AzureCloud}}
+    host: ${azureEnvironmentConfig.dbHostNames.${AZURE_ENVIRONMENT:AzureCloud}}:5432
+    url: ${azureEnvironmentConfig.dbHostNames.${AZURE_ENVIRONMENT:AzureCloud}}
     user: ${ADMIN_DB_USER_NAME}
     connectToDatabase: ${CONNECT_TO_DATABASE:postgres}
   params:
