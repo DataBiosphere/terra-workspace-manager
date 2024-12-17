@@ -6,9 +6,7 @@ env:
   db:
     port: 5432
     host: ${azureEnvironmentConfig.${AZURE_ENVIRONMENT:AzureCloud}}:5432
-    #host: ${DB_SERVER_NAME}.postgres.database.azure.com:5432
     url: ${azureEnvironmentConfig.${AZURE_ENVIRONMENT:AzureCloud}}
-    #url: ${DB_SERVER_NAME}.postgres.database.azure.com
     user: ${ADMIN_DB_USER_NAME}
     connectToDatabase: ${CONNECT_TO_DATABASE:postgres}
   params:
