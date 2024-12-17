@@ -1,6 +1,8 @@
 package bio.terra.workspace.app.configuration.external;
 
 import java.util.List;
+
+import com.azure.core.management.AzureEnvironment;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -25,9 +27,19 @@ public class AzureConfiguration {
   private String wsmServiceManagedIdentity;
   private String azureEnvironment;
 
-  public String getAzureEnvironment() {
-    return azureEnvironment;
+  public AzureEnvironment getAzureEnvironment() {
+    try {
+      return switch (azureEnvironment) {
+        case "AzureUSGovernmentCloud" -> AzureEnvironment.AZURE_US_GOVERNMENT;
+        case "AzureCloud" -> AzureEnvironment.AZURE;
+        default -> AzureEnvironment.AZURE;
+      };
+    } catch (IllegalArgumentException e) {
+      return AzureEnvironment.AZURE;
+    }
   }
+
+  public String getAzureEnvironmentConfigString(){return this.azureEnvironment;}
 
   public void setAzureEnvironment(String azureEnvironment) {
     this.azureEnvironment = azureEnvironment;
@@ -137,4 +149,6 @@ public class AzureConfiguration {
   public void setWsmServiceManagedIdentity(String wsmServiceManagedIdentity) {
     this.wsmServiceManagedIdentity = wsmServiceManagedIdentity;
   }
+
+
 }
