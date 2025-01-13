@@ -61,7 +61,7 @@ public class CloneAllResourcesFlight extends Flight {
         break;
       case CONTROLLED:
         switch (resourceCloneInputs.getResource().getResourceType()) {
-            // GCP
+          // GCP
           case CONTROLLED_GCP_GCS_BUCKET -> {
             addStep(
                 new LaunchCloneGcsBucketResourceFlightStep(
@@ -88,11 +88,11 @@ public class CloneAllResourcesFlight extends Flight {
                     resourceCloneInputs.getFlightId()),
                 RetryRules.cloudLongRunning());
           }
-            // CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE: not supported
-            // CONTROLLED_GCP_GCE_INSTANCE: not supported
-            // CONTROLLED_GCP_DATAPROC_CLUSTER: not supported
+          // CONTROLLED_GCP_AI_NOTEBOOK_INSTANCE: not supported
+          // CONTROLLED_GCP_GCE_INSTANCE: not supported
+          // CONTROLLED_GCP_DATAPROC_CLUSTER: not supported
 
-            // Azure
+          // Azure
           case CONTROLLED_AZURE_STORAGE_CONTAINER -> {
             addStep(
                 new LaunchCloneControlledAzureStorageContainerResourceFlightStep(
@@ -133,14 +133,14 @@ public class CloneAllResourcesFlight extends Flight {
                 RetryRules.shortDatabase());
           }
 
-            // CONTROLLED_AZURE_DISK, CONTROLLED_AZURE_VM, CONTROLLED_AZURE_BATCH_POOL: not
-            // supported / implemented
+          // CONTROLLED_AZURE_DISK, CONTROLLED_AZURE_VM, CONTROLLED_AZURE_BATCH_POOL: not
+          // supported / implemented
 
-            // AWS
-            // TODO(BENCH-694): support clone CONTROLLED_AWS_S3_STORAGE_FOLDER
-            // CONTROLLED_AWS_SAGEMAKER_NOTEBOOK: not supported
+          // AWS
+          // TODO(BENCH-694): support clone CONTROLLED_AWS_S3_STORAGE_FOLDER
+          // CONTROLLED_AWS_SAGEMAKER_NOTEBOOK: not supported
 
-            // Flexible
+          // Flexible
           case CONTROLLED_FLEXIBLE_RESOURCE -> {
             addStep(
                 new LaunchCloneControlledFlexibleResourceFlightStep(

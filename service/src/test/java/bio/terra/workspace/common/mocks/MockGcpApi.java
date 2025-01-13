@@ -266,9 +266,9 @@ public class MockGcpApi {
           failureSteps.put(
               SetNoOpBucketCloneResponseStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
         }
-          // Avoid undoing creation of a bucket we have copied data into by failing the flight
-          // earlier
-          // as the deletion can often take > 1h on the GCP side.
+        // Avoid undoing creation of a bucket we have copied data into by failing the flight
+        // earlier
+        // as the deletion can often take > 1h on the GCP side.
         case RESOURCE, DEFINITION -> {
           failureSteps.put(
               CopyGcsBucketDefinitionStep.class.getName(), StepStatus.STEP_RESULT_FAILURE_FATAL);
