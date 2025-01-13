@@ -152,12 +152,14 @@ public class WorkspaceDao {
       """;
 
   private static final String WORKSPACE_CONTEXT_BY_WORKSPACE_ID_QUERY =
-      WORKSPACE_CONTEXT_SELECT + """
+      WORKSPACE_CONTEXT_SELECT
+          + """
       WHERE W.workspace_id = :workspace_id
       """;
 
   private static final String WORKSPACE_CONTEXT_BY_USER_FACING_ID_QUERY =
-      WORKSPACE_CONTEXT_SELECT + """
+      WORKSPACE_CONTEXT_SELECT
+          + """
       WHERE user_facing_id = :user_facing_id
       """;
 

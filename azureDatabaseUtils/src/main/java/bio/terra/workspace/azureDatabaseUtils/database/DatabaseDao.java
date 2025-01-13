@@ -74,7 +74,9 @@ public class DatabaseDao {
       jdbcTemplate.update(
           """
               CREATE ROLE "%s"
-              """.formatted(roleName), Map.of());
+              """
+              .formatted(roleName),
+          Map.of());
       return true;
     } catch (BadSqlGrammarException e) {
       // ignore if the role already exists
@@ -97,7 +99,9 @@ public class DatabaseDao {
       jdbcTemplate.update(
           """
               DROP ROLE "%s"
-              """.formatted(roleName), Map.of());
+              """
+              .formatted(roleName),
+          Map.of());
       return true;
     } catch (BadSqlGrammarException e) {
       // ignore if the role already deleted
@@ -114,14 +118,17 @@ public class DatabaseDao {
     jdbcTemplate.update(
         """
         GRANT "%s" TO "%s"
-        """.formatted(targetRoleName, roleName), Map.of());
+        """
+            .formatted(targetRoleName, roleName),
+        Map.of());
   }
 
   public void reassignOwner(String roleName, String targetRoleName) {
     jdbcTemplate.update(
         """
         REASSIGN OWNED BY "%s" TO "%s"
-        """.formatted(roleName, targetRoleName),
+        """
+            .formatted(roleName, targetRoleName),
         Map.of());
   }
 
@@ -150,7 +157,9 @@ public class DatabaseDao {
     jdbcTemplate.update(
         """
         ALTER ROLE "%s" NOLOGIN
-        """.formatted(roleName), Map.of());
+        """
+            .formatted(roleName),
+        Map.of());
   }
 
   public void restoreLoginPrivileges(String roleName) {
@@ -159,7 +168,9 @@ public class DatabaseDao {
     jdbcTemplate.update(
         """
         ALTER ROLE "%s" LOGIN
-        """.formatted(roleName), Map.of());
+        """
+            .formatted(roleName),
+        Map.of());
   }
 
   /**

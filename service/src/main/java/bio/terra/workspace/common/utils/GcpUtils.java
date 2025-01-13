@@ -97,16 +97,16 @@ public class GcpUtils {
       Code code = Code.values()[intCode];
       String errorMessage = operation.getOperationAdapter().getError().getMessage();
       switch (code) {
-          // 400
+        // 400
         case INVALID_ARGUMENT, OUT_OF_RANGE, FAILED_PRECONDITION ->
             throw new BadRequestException(errorMessage);
-          // 401
+        // 401
         case UNAUTHENTICATED -> throw new UnauthorizedException(errorMessage);
-          // 403 - This includes the "CPU quota limit exceeded" error for AI notebooks.
+        // 403 - This includes the "CPU quota limit exceeded" error for AI notebooks.
         case PERMISSION_DENIED -> throw new ForbiddenException(errorMessage);
-          // 409
+        // 409
         case ALREADY_EXISTS, ABORTED -> throw new ConflictException(errorMessage);
-          // 429
+        // 429
         case RESOURCE_EXHAUSTED -> throw new BadRequestException(errorMessage);
         default ->
             throw new RetryException(

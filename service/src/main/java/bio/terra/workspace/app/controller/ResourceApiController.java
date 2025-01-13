@@ -148,10 +148,10 @@ public class ResourceApiController extends ControllerBase implements ResourceApi
             throw workspaceException;
           }
         }
-          // there's no valid case where the user will be able to access a referenced resource,
-          // but not the workspace itself
+        // there's no valid case where the user will be able to access a referenced resource,
+        // but not the workspace itself
         case REFERENCED -> throw workspaceException;
-          // if no access, throw original exception to avoid leaking information on resource
+        // if no access, throw original exception to avoid leaking information on resource
         default -> throw workspaceException;
       }
     }
