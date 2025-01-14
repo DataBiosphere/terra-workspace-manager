@@ -1,8 +1,13 @@
+azureEnvironmentConfig:
+  dbHostNames:
+    AzureUSGovernmentCloud: ${DB_SERVER_NAME}.postgres.database.usgovcloudapi.net
+    AzureCloud: ${DB_SERVER_NAME}.postgres.database.azure.com
+
 env:
   db:
-    host: ${DB_SERVER_NAME}.postgres.database.azure.com:5432
-    url: ${DB_SERVER_NAME}.postgres.database.azure.com
     port: 5432
+    host: ${azureEnvironmentConfig.dbHostNames.${AZURE_ENVIRONMENT:AzureCloud}}:5432
+    url: ${azureEnvironmentConfig.dbHostNames.${AZURE_ENVIRONMENT:AzureCloud}}
     user: ${ADMIN_DB_USER_NAME}
     connectToDatabase: ${CONNECT_TO_DATABASE:postgres}
   params:
@@ -16,6 +21,7 @@ env:
     blobContainerName: ${BLOB_CONTAINER_NAME}
     blobContainerUrlAuthenticated: ${BLOB_CONTAINER_URL_AUTHENTICATED}
     encryptionKey: ${ENCRYPTION_KEY}
+    azureEnvironment: ${AZURE_ENVIRONMENT}
 
 
 spring:

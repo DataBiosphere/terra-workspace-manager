@@ -54,6 +54,7 @@ public class PolicyServiceConfiguration {
           features.isAzureControlPlaneEnabled(),
           POLICY_SERVICE_ACCOUNT_SCOPES,
           Arrays.asList(azureConfiguration.getAuthTokenScope()),
+          azureConfiguration.getAzureEnvironment(),
           clientCredentialFilePath);
     } catch (IOException e) {
       throw new InternalServerErrorException("Internal server error retrieving WSM credentials", e);
