@@ -587,7 +587,7 @@ public class CrlService {
   }
 
   public AzureEnvironment getAzureEnvironmentFromName(String azureEnvironment) {
-      return azureConfiguration.getAzureEnvironmentFromString(azureEnvironment);
+    return azureConfiguration.getAzureEnvironmentFromString(azureEnvironment);
   }
 
   @VisibleForTesting

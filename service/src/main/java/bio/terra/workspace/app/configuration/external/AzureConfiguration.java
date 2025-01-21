@@ -30,7 +30,7 @@ public class AzureConfiguration {
     return getAzureEnvironmentFromString(azureEnvironment);
   }
 
-  public AzureEnvironment getAzureEnvironmentFromString(String azureEnvironment){
+  public AzureEnvironment getAzureEnvironmentFromString(String azureEnvironment) {
     try {
       return switch (azureEnvironment) {
         case "AzureUSGovernmentCloud" -> AzureEnvironment.AZURE_US_GOVERNMENT;
@@ -41,7 +41,6 @@ public class AzureConfiguration {
       return AzureEnvironment.AZURE;
     }
   }
-
 
   public String getAzureEnvironmentConfigString() {
     return this.azureEnvironment;
