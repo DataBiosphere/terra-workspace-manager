@@ -21,7 +21,8 @@ public class AuthUtils {
       String credentialsPath)
       throws IOException {
     if (isAzureControlPlaneEnabled) {
-      TokenCredential credential = new DefaultAzureCredentialBuilder()
+      TokenCredential credential =
+          new DefaultAzureCredentialBuilder()
               .authorityHost(azureEnvironment.getActiveDirectoryEndpoint())
               .build();
       // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid,
