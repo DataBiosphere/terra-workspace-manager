@@ -79,6 +79,7 @@ public class AzureDatabaseUtilsRunner {
   public static final String PARAM_CONNECT_TO_DATABASE = "CONNECT_TO_DATABASE";
   public static final String PARAM_NEW_DB_USER_NAME = "NEW_DB_USER_NAME";
   public static final String PARAM_NEW_DB_USER_OID = "NEW_DB_USER_OID";
+  public static final String PARAM_AZURE_ENVIRONMENT = "AZURE_ENVIRONMENT";
 
   // Workflow cloning - TODO: which params can be reused?
   public static final String PARAM_BLOB_FILE_NAME = "BLOB_FILE_NAME";
@@ -597,6 +598,10 @@ public class AzureDatabaseUtilsRunner {
                     () -> new IllegalStateException("No shared database admin identity found")));
 
     List<V1EnvVar> envVarsWithCommonArgs = new ArrayList<>();
+    envVarsWithCommonArgs.add(
+        new V1EnvVar()
+            .name(PARAM_AZURE_ENVIRONMENT)
+            .value(azureConfig.getAzureEnvironmentConfigString()));
     envVarsWithCommonArgs.add(new V1EnvVar().name(PARAM_DB_SERVER_NAME).value(dbServerName));
     envVarsWithCommonArgs.add(new V1EnvVar().name(PARAM_ADMIN_DB_USER_NAME).value(adminDbUserName));
     envVarsWithCommonArgs.addAll(envVars);
