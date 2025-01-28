@@ -2,6 +2,7 @@ package bio.terra.workspace.common.utils;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
+import com.azure.core.management.AzureEnvironment;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -16,10 +17,14 @@ public class AuthUtils {
       boolean isAzureControlPlaneEnabled,
       Collection<String> gcpScopes,
       Collection<String> azureScopes,
+      AzureEnvironment azureEnvironment,
       String credentialsPath)
       throws IOException {
     if (isAzureControlPlaneEnabled) {
-      TokenCredential credential = new DefaultAzureCredentialBuilder().build();
+      TokenCredential credential =
+          new DefaultAzureCredentialBuilder()
+              .authorityHost(azureEnvironment.getActiveDirectoryEndpoint())
+              .build();
       // The Microsoft Authentication Library (MSAL) currently specifies offline_access, openid,
       // profile, and email by default in authorization and token requests.
       com.azure.core.credential.AccessToken token =
