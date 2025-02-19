@@ -73,6 +73,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
     when(mockSamService().getSamUser(userRequest))
         .thenReturn(new SamUser("example@example.com", "123ABC", new BearerToken("token")));
     when(mockSamService().getWsmServiceAccountToken()).thenReturn("wsm-token");
+    when(mockAzureConfiguration.getAzureEnvironment()).thenReturn(AzureEnvironment.AZURE);
     azureStorageAccessService =
         new AzureStorageAccessService(
             mockSamService(),
@@ -468,7 +469,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.READ_ACTION,
                 SamConstants.SamControlledResourceActions.WRITE_ACTION));
     setupMocks(storageContainerResource, true);
-    when(mockCrlService().getAzureEnvironmentFromName(any()))
+    when(mockAzureConfiguration.getAzureEnvironment())
         .thenReturn(AzureEnvironment.AZURE_US_GOVERNMENT);
 
     var result =
