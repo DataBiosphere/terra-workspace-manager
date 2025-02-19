@@ -17,8 +17,6 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
-import com.azure.core.management.AzureEnvironment;
-import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1EnvVar;
@@ -47,14 +45,12 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
   @Mock private KubernetesClientProvider mockKubernetesClientProvider;
   @Mock private AzureCloudContext mockAzureCloudContext;
   @Mock private CoreV1Api mockCoreV1Api;
-  @Mock private ApiClient mockApiClient;
   @Captor private ArgumentCaptor<V1Pod> podCaptor;
   @Mock private ApiAzureLandingZoneDeployedResource mockDatabase;
   @Mock private ApiAzureLandingZoneDeployedResource mockAdminIdentity;
 
   @BeforeEach
   public void createAzureDatabaseUtilsRunner() {
-    when(mockAzureConfig.getAzureEnvironment()).thenReturn(AzureEnvironment.AZURE);
     azureDatabaseUtilsRunner =
         new AzureDatabaseUtilsRunner(
             mockAzureConfig,
@@ -200,8 +196,6 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
     when(mockKubernetesClientProvider.createCoreApiClient(
             any(AzureCloudContext.class), any(UUID.class)))
         .thenReturn(Optional.of(mockCoreV1Api));
-
-    when(mockCoreV1Api.getApiClient()).thenReturn(mockApiClient);
 
     var createRequest = mock(CoreV1Api.APIcreateNamespacedPodRequest.class);
     when(mockCoreV1Api.createNamespacedPod(any(), podCaptor.capture())).thenReturn(createRequest);

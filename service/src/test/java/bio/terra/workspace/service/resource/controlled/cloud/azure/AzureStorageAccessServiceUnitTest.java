@@ -471,8 +471,8 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
     setupMocks(storageContainerResource, true);
     when(mockAzureConfiguration.getAzureEnvironment())
         .thenReturn(AzureEnvironment.AZURE_US_GOVERNMENT);
-    when(mockCrlService().getAzureEnvironmentFromName(any()))
-        .thenReturn(AzureEnvironment.AZURE_US_GOVERNMENT);
+//    when(mockCrlService().getAzureEnvironmentFromName(any()))
+//        .thenReturn(AzureEnvironment.AZURE_US_GOVERNMENT);
 
     var result =
         azureStorageAccessService.createAzureStorageContainerSasToken(
