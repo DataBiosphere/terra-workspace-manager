@@ -470,7 +470,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
                 SamConstants.SamControlledResourceActions.WRITE_ACTION));
     setupMocks(storageContainerResource, true);
     when(mockAzureConfiguration.getAzureEnvironment())
-            .thenReturn(AzureEnvironment.AZURE_US_GOVERNMENT);
+        .thenReturn(AzureEnvironment.AZURE_US_GOVERNMENT);
     when(mockCrlService().getAzureEnvironmentFromName(any()))
         .thenReturn(AzureEnvironment.AZURE_US_GOVERNMENT);
 
