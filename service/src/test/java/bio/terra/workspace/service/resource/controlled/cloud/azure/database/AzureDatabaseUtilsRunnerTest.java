@@ -17,6 +17,7 @@ import bio.terra.workspace.service.iam.SamService;
 import bio.terra.workspace.service.resource.controlled.cloud.azure.KubernetesClientProvider;
 import bio.terra.workspace.service.workspace.WorkspaceService;
 import bio.terra.workspace.service.workspace.model.AzureCloudContext;
+import com.azure.core.management.AzureEnvironment;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1EnvVar;
@@ -51,6 +52,7 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
 
   @BeforeEach
   public void createAzureDatabaseUtilsRunner() {
+    when(mockAzureConfig.getAzureEnvironment()).thenReturn(AzureEnvironment.AZURE);
     azureDatabaseUtilsRunner =
         new AzureDatabaseUtilsRunner(
             mockAzureConfig,

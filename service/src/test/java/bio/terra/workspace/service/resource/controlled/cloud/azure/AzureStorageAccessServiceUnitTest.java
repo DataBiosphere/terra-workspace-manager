@@ -73,6 +73,7 @@ public class AzureStorageAccessServiceUnitTest extends BaseAzureSpringBootUnitTe
     when(mockSamService().getSamUser(userRequest))
         .thenReturn(new SamUser("example@example.com", "123ABC", new BearerToken("token")));
     when(mockSamService().getWsmServiceAccountToken()).thenReturn("wsm-token");
+    when(mockAzureConfiguration.getAzureEnvironment()).thenReturn(AzureEnvironment.AZURE);
     azureStorageAccessService =
         new AzureStorageAccessService(
             mockSamService(),
