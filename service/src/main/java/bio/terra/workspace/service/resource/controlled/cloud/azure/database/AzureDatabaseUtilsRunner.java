@@ -598,7 +598,6 @@ public class AzureDatabaseUtilsRunner {
                     () -> new IllegalStateException("No shared database admin identity found")));
 
     List<V1EnvVar> envVarsWithCommonArgs = new ArrayList<>();
-    logger.warn("~~~~~~~~~~ AZURE_ENVIRONMENT: {}", azureConfig.getAzureEnvironmentConfigString());
     envVarsWithCommonArgs.add(
         new V1EnvVar()
             .name(PARAM_AZURE_ENVIRONMENT)
