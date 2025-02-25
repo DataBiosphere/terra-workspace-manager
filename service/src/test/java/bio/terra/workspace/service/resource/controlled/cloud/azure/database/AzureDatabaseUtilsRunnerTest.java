@@ -49,7 +49,7 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
   @Mock private ApiAzureLandingZoneDeployedResource mockDatabase;
   @Mock private ApiAzureLandingZoneDeployedResource mockAdminIdentity;
 
-  private final String AZURE_ENV = "AzureCloud";
+  private final String AZURE_ENV = "AZURE";
 
   @BeforeEach
   public void createAzureDatabaseUtilsRunner() {
