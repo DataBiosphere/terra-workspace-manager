@@ -51,6 +51,7 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
 
   @BeforeEach
   public void createAzureDatabaseUtilsRunner() {
+    when(mockAzureConfig.getAzureEnvironmentConfigString()).thenReturn("AzureCloud");
     azureDatabaseUtilsRunner =
         new AzureDatabaseUtilsRunner(
             mockAzureConfig,
