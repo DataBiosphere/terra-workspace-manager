@@ -30,7 +30,7 @@ env:
     tps: ${TPS_ADDRESS:https://tps.dsde-dev.broadinstitute.org/}
     lzs: ${LZS_ADDRESS:https://landingzone.dsde-dev.broadinstitute.org/}
   azure:
-    environment: ${AZURE_ENVIRONMENT:AZURE}
+    environment: ${AZURE_ENVIRONMENT:AzureCloud}
     customer:
       usage-attribute: ${AZURE_CUSTOMER_USAGE_ATTRIBUTE:}
 

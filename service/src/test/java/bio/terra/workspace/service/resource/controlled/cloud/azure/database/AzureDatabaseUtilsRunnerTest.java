@@ -49,8 +49,11 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
   @Mock private ApiAzureLandingZoneDeployedResource mockDatabase;
   @Mock private ApiAzureLandingZoneDeployedResource mockAdminIdentity;
 
+  private final String AZURE_ENV = "AzureCloud";
+
   @BeforeEach
   public void createAzureDatabaseUtilsRunner() {
+    when(mockAzureConfig.getAzureEnvironmentConfigString()).thenReturn(AZURE_ENV);
     azureDatabaseUtilsRunner =
         new AzureDatabaseUtilsRunner(
             mockAzureConfig,
@@ -171,6 +174,8 @@ public class AzureDatabaseUtilsRunnerTest extends BaseMockitoStrictStubbingTest 
     var expectedEnvWithCommon = new HashMap<>(expectedEnv);
     expectedEnvWithCommon.putAll(
         Map.of(
+            "AZURE_ENVIRONMENT",
+            AZURE_ENV,
             "DB_SERVER_NAME",
             mockDatabase.getResourceId(),
             "ADMIN_DB_USER_NAME",
