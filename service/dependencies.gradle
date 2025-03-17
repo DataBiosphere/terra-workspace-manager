@@ -31,10 +31,10 @@ dependencies {
   implementation group: "org.glassfish.jersey.inject", name: "jersey-hk2"
 
   // OpenTelemetry @WithSpan annotations:
-  implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.2.0'
+  implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.12.0'
 
   // Get stairway via TCL
-  implementation("bio.terra:terra-common-lib:1.1.21-SNAPSHOT")
+  implementation("bio.terra:terra-common-lib:1.1.38-SNAPSHOT")
 
   // sam
   implementation group: "org.broadinstitute.dsde.workbench", name: "sam-client_2.13", version: "v0.0.332"
