@@ -321,6 +321,10 @@ otel:
   sdk:
     disabled: false # set to true to disable all open telemetry features
 
+  instrumentation:
+    common:
+      default-enabled: false
+
   springboot:
     resource:
       attributes:
