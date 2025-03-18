@@ -47,8 +47,8 @@ dependencies {
   implementation group: 'bio.terra', name: 'terra-cloud-resource-lib', version: "1.2.31-SNAPSHOT"
 
   // Terra Landing Zone Service
-  implementation ('bio.terra:terra-landing-zone-service:0.0.367-SNAPSHOT')
-  implementation ('bio.terra:landing-zone-service-client:0.0.367-SNAPSHOT')
+  implementation ('bio.terra:terra-landing-zone-service:0.0.390-SNAPSHOT')
+  implementation ('bio.terra:landing-zone-service-client:0.0.390-SNAPSHOT')
 
   // Storage transfer service
   implementation group: 'com.google.apis', name: 'google-api-services-storagetransfer', version: 'v1-rev20230831-2.0.0'
@@ -58,7 +58,6 @@ dependencies {
   implementation group: "com.fasterxml.jackson.core", name: "jackson-core"
   implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
   implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
-  implementation group: "org.apache.commons", name: "commons-collections4", version: "4.4" // previously pulled in by client-java
 
   // Deps whose versions are controlled by Spring
   implementation group: "jakarta.validation", name: "jakarta.validation-api"
