@@ -58,6 +58,7 @@ dependencies {
   implementation group: "com.fasterxml.jackson.core", name: "jackson-core"
   implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava'
   implementation group: "org.webjars", name: "webjars-locator-core", version: "0.46"
+  implementation group: "org.apache.commons", name: "commons-collections4", version: "4.4" // previously pulled in by client-java
 
   // Deps whose versions are controlled by Spring
   implementation group: "jakarta.validation", name: "jakarta.validation-api"
@@ -75,7 +76,9 @@ dependencies {
   implementation group: "io.micrometer", name: "micrometer-registry-prometheus"
 
   implementation group: "commons-validator", name: "commons-validator", version: "1.7"
-  // implementation group: "io.kubernetes", name: "client-java", version: "20.0.1" // Do not use -legacy versions
+  // Should match the version used in terra-common-lib
+  // Do not use -legacy versions
+  implementation group: "io.kubernetes", name: "client-java", version: "23.0.0"
   constraints {
     implementation('org.bouncycastle:bcprov-jdk18on:1.78') {
       because 'https://broadworkbench.atlassian.net/browse/WOR-1652'

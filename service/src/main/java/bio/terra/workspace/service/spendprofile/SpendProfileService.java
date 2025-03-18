@@ -224,7 +224,7 @@ public class SpendProfileService {
   @VisibleForTesting
   public void deleteProfile(UUID profileId, AuthenticatedUserRequest userRequest) {
     try {
-      getProfileApi(userRequest).deleteProfile(profileId);
+      getProfileApi(userRequest).deleteProfile(profileId, userRequest.getSubjectId());
     } catch (ApiException e) {
       throw new BillingProfileManagerServiceAPIException(e);
     }
