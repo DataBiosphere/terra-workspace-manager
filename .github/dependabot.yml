@@ -14,7 +14,7 @@ updates:
           - "minor"
           - "patch"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       time: "06:00"
       timezone: "America/New_York"
     target-branch: "main"
