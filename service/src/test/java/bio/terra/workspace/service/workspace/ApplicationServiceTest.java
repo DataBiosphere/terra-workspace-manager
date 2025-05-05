@@ -5,6 +5,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -139,7 +140,9 @@ public class ApplicationServiceTest extends BaseSpringBootUnitTest {
     enumerateCheck(false, false, false);
 
     // enable leo - should work
-    appService.enableWorkspaceApplication(USER_REQUEST, workspace, LEO_ID);
+    var result = appService.enableWorkspaceApplication(USER_REQUEST, workspace, LEO_ID);
+    assertNotNull(result);
+    assertTrue(result.isEnabled());
 
     // enable carmen - should fail - deprecated
     assertThrows(
