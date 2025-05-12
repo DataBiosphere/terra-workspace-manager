@@ -36,7 +36,7 @@ runs:
             started=0
             break
           fi
-          sleep 1
+          sleep 3
         done
         if [ "${started}" -eq "1" ]
         then
