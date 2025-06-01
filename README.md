@@ -101,7 +101,7 @@ Include the Broad Artifactory repositories:
 ```gradle
 repositories {
     maven {
-        url "https://broadinstitute.jfrog.io/broadinstitute/libs-snapshot-local/"
+        url "https://us-central1-maven.pkg.dev/dsp-artifact-registry/libs-snapshot/"
     }
 }
 ```
