@@ -5,7 +5,7 @@ plugins {
     id "com.google.cloud.tools.jib" version "3.4.5"
     id "de.undercouch.download" version "5.6.0"
     id 'org.gradle.test-retry' version '1.6.2'
-    id "org.sonarqube" version "6.1.0.5360"
+    id "org.sonarqube" version "6.2.0.5505"
 }
 
 // constants visible to all .gradle files in this project
