@@ -18,8 +18,6 @@ updates:
       time: "06:00"
       timezone: "America/New_York"
     target-branch: "main"
-    reviewers:
-      - "@DataBiosphere/broad-core-services"
     labels:
       - "dependency"
       - "gradle"
