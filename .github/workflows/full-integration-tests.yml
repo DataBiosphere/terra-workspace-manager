@@ -5,8 +5,9 @@
 name: Full Integration Tests
 on:
   workflow_dispatch: {}
-  schedule:
-    - cron: '0 8 * * *' # Run nightly at 3AM ET
+  # David An 2025-07-16: disabled schedule as part of decommissioning WSM.
+  # schedule:
+  #   - cron: '0 8 * * *' # Run nightly at 3AM ET
 
 jobs:
   full-integration-job:
